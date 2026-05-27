@@ -1,0 +1,36 @@
+import { assertMatch } from "@std/assert";
+import { basename, join, toFileUrl } from "@std/path";
+import { escapeHtml, renderMarkdown } from "../../src/markdown/html.ts";
+import { renderPreviewPage } from "../../src/preview/page.ts";
+
+const fixturePath = join(Deno.cwd(), "test", "e2e", "fixtures", "comprehensive.md");
+
+Deno.test("renders a comprehensive markdown fixture into a preview page", async () => {
+  const markdown = await Deno.readTextFile(fixturePath);
+  const html = renderPreviewPage({
+    title: escapeHtml(basename(fixturePath)),
+    fileUrl: toFileUrl(fixturePath).href,
+    body: renderMarkdown(markdown)
+  });
+
+  assertMatch(html, /<title>comprehensive\.md<\/title>/);
+  assertMatch(html, /<h1>Comprehensive Document<\/h1>/);
+  assertMatch(html, /<strong>bold<\/strong>/);
+  assertMatch(html, /<em>italic<\/em>/);
+  assertMatch(html, /<del>deleted<\/del>/);
+  assertMatch(html, /<code>inline code<\/code>/);
+  assertMatch(html, /<a href="https:\/\/example\.com">a link<\/a>/);
+  assertMatch(html, /<img src="image\.png" alt="an image" title="Image title">/);
+  assertMatch(html, /<ul>\n<li>unordered one<\/li>\n<li>unordered <strong>two<\/strong><\/li>\n<\/ul>/);
+  assertMatch(html, /<ol>\n<li>ordered one<\/li>\n<li>ordered two<\/li>\n<\/ol>/);
+  assertMatch(html, /<blockquote>/);
+  assertMatch(html, /<hr>/);
+  assertMatch(html, /<table>/);
+  assertMatch(html, /<th style="text-align: center">Status<\/th>/);
+  assertMatch(html, /<td style="text-align: right">2<\/td>/);
+  assertMatch(html, /<pre><code class="language-js">console\.log\(&quot;&lt;escaped&gt;&quot;\);<\/code><\/pre>/);
+  assertMatch(html, /<pre class="mermaid">graph TD\n  CLI\[CLI\] --&gt; Server\[Server\]/);
+  assertMatch(html, /import mermaid from "\/assets\/mermaid\.esm\.min\.mjs"/);
+  assertMatch(html, /<pre><code class="language-md">```mermaid\n/);
+  assertMatch(html, /&lt;script&gt;alert\(&quot;nope&quot;\)&lt;\/script&gt;/);
+});

@@ -1,0 +1,9 @@
+{
+  "name": "mdview",
+  "version": "0.1.0",
+  "description": "Preview a Markdown file in a local browser-friendly server.",
+  "private": true,
+  "devDependencies": {
+    "mermaid": "11.15.0"
+  }
+}
