@@ -1,3 +1,23 @@
+import hljs from "highlight.js/core";
+import bash from "highlight.js/languages/bash";
+import cpp from "highlight.js/languages/cpp";
+import csharp from "highlight.js/languages/csharp";
+import css from "highlight.js/languages/css";
+import diff from "highlight.js/languages/diff";
+import go from "highlight.js/languages/go";
+import java from "highlight.js/languages/java";
+import javascript from "highlight.js/languages/javascript";
+import json from "highlight.js/languages/json";
+import markdown from "highlight.js/languages/markdown";
+import php from "highlight.js/languages/php";
+import python from "highlight.js/languages/python";
+import ruby from "highlight.js/languages/ruby";
+import rust from "highlight.js/languages/rust";
+import sql from "highlight.js/languages/sql";
+import typescript from "highlight.js/languages/typescript";
+import xml from "highlight.js/languages/xml";
+import yaml from "highlight.js/languages/yaml";
+// @ts-ignore esm.sh provides a default export; the upstream DefinitelyTyped package uses export =.
 import MarkdownIt from "markdown-it";
 
 type RenderEnv = {
@@ -11,6 +31,36 @@ type RendererRule = (
   env: RenderEnv,
   self: { renderToken: RendererRule },
 ) => string;
+
+const registerLanguage = (name: string, language: unknown) =>
+  hljs.registerLanguage(
+    name,
+    language as Parameters<typeof hljs.registerLanguage>[1],
+  );
+
+registerLanguage("bash", bash);
+registerLanguage("cpp", cpp);
+registerLanguage("csharp", csharp);
+registerLanguage("css", css);
+registerLanguage("diff", diff);
+registerLanguage("go", go);
+registerLanguage("java", java);
+registerLanguage("javascript", javascript);
+registerLanguage("json", json);
+registerLanguage("markdown", markdown);
+registerLanguage("php", php);
+registerLanguage("python", python);
+registerLanguage("ruby", ruby);
+registerLanguage("rust", rust);
+registerLanguage("sql", sql);
+registerLanguage("typescript", typescript);
+registerLanguage("xml", xml);
+registerLanguage("yaml", yaml);
+hljs.registerAliases(["js", "jsx"], { languageName: "javascript" });
+hljs.registerAliases(["ts", "tsx"], { languageName: "typescript" });
+hljs.registerAliases(["sh", "shell", "zsh"], { languageName: "bash" });
+hljs.registerAliases(["md"], { languageName: "markdown" });
+hljs.registerAliases(["yml"], { languageName: "yaml" });
 
 export const escapeHtml = (value: string): string =>
   value
@@ -45,6 +95,22 @@ const headingId = (text: string, env: RenderEnv): string => {
 
 const trimFinalNewline = (value: string): string => value.replace(/\n$/, "");
 
+const renderHighlightedCode = (code: string, language: string | undefined) => {
+  const languageClass = language
+    ? ` class="hljs language-${escapeAttribute(language)}"`
+    : ' class="hljs"';
+
+  if (!language || !hljs.getLanguage(language)) {
+    return `<pre><code${languageClass}>${escapeHtml(code)}</code></pre>\n`;
+  }
+
+  const highlighted = hljs.highlight(code, {
+    language,
+    ignoreIllegals: true,
+  }).value;
+  return `<pre><code${languageClass}>${highlighted}</code></pre>\n`;
+};
+
 const createMarkdownRenderer = (): MarkdownIt => {
   const markdown = new MarkdownIt({
     html: false,
@@ -74,10 +140,7 @@ const createMarkdownRenderer = (): MarkdownIt => {
       return `<pre class="mermaid">${escapeHtml(code)}</pre>\n`;
     }
 
-    const languageClass = language
-      ? ` class="language-${escapeAttribute(language)}"`
-      : "";
-    return `<pre><code${languageClass}>${escapeHtml(code)}</code></pre>\n`;
+    return renderHighlightedCode(code, language);
   }) as RendererRule;
 
   return markdown;

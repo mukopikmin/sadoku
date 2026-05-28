@@ -154,6 +154,127 @@ export const previewThemeCss = `
         font-size: 0.85rem;
       }
 
+      .hljs {
+        color: var(--color-text);
+      }
+
+      .hljs-comment,
+      .hljs-quote {
+        color: var(--color-text-muted);
+      }
+
+      .hljs-keyword,
+      .hljs-selector-tag,
+      .hljs-subst {
+        color: #cf222e;
+      }
+
+      .hljs-literal,
+      .hljs-number,
+      .hljs-tag .hljs-attr,
+      .hljs-template-variable,
+      .hljs-variable {
+        color: #953800;
+      }
+
+      .hljs-doctag,
+      .hljs-string,
+      .hljs-title,
+      .hljs-section,
+      .hljs-selector-id {
+        color: #0a3069;
+      }
+
+      .hljs-type,
+      .hljs-class .hljs-title,
+      .hljs-built_in,
+      .hljs-builtin-name {
+        color: #8250df;
+      }
+
+      .hljs-attr,
+      .hljs-attribute,
+      .hljs-name,
+      .hljs-selector-class,
+      .hljs-selector-attr,
+      .hljs-selector-pseudo {
+        color: #116329;
+      }
+
+      .hljs-symbol,
+      .hljs-bullet,
+      .hljs-link,
+      .hljs-meta {
+        color: #0969da;
+      }
+
+      .hljs-deletion {
+        color: #82071e;
+        background: #ffebe9;
+      }
+
+      .hljs-addition {
+        color: #116329;
+        background: #dafbe1;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .hljs-keyword,
+        .hljs-selector-tag,
+        .hljs-subst {
+          color: #ff7b72;
+        }
+
+        .hljs-literal,
+        .hljs-number,
+        .hljs-tag .hljs-attr,
+        .hljs-template-variable,
+        .hljs-variable {
+          color: #ffa657;
+        }
+
+        .hljs-doctag,
+        .hljs-string,
+        .hljs-title,
+        .hljs-section,
+        .hljs-selector-id {
+          color: #a5d6ff;
+        }
+
+        .hljs-type,
+        .hljs-class .hljs-title,
+        .hljs-built_in,
+        .hljs-builtin-name {
+          color: #d2a8ff;
+        }
+
+        .hljs-attr,
+        .hljs-attribute,
+        .hljs-name,
+        .hljs-selector-class,
+        .hljs-selector-attr,
+        .hljs-selector-pseudo {
+          color: #7ee787;
+        }
+
+        .hljs-symbol,
+        .hljs-bullet,
+        .hljs-link,
+        .hljs-meta {
+          color: #79c0ff;
+        }
+
+        .hljs-deletion {
+          color: #ffdcd7;
+          background: #67060c;
+        }
+
+        .hljs-addition {
+          color: #aff5b4;
+          background: #033a16;
+        }
+      }
+
       blockquote {
         padding: 0 1em;
         border-left: 0.25em solid var(--color-border);
