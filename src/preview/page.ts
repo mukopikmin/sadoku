@@ -8,7 +8,7 @@ export const renderPreviewPage = (
   { title, body, fileUrl }: PreviewPageOptions,
 ): string =>
   `<!doctype html>
-<html lang="en">
+<html lang="und">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,8 +16,8 @@ export const renderPreviewPage = (
     <style>
       :root {
         color-scheme: light dark;
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.6;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", "Noto Sans JP", sans-serif;
+        line-height: 1.75;
       }
 
       body {
@@ -42,7 +42,7 @@ export const renderPreviewPage = (
       }
 
       h1, h2, h3, h4, h5, h6 {
-        line-height: 1.25;
+        line-height: 1.35;
         margin: 1.5em 0 0.5em;
       }
 
@@ -72,7 +72,7 @@ export const renderPreviewPage = (
         border-radius: 4px;
         padding: 0.12em 0.3em;
         background: color-mix(in srgb, CanvasText 10%, transparent);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "UDEV Gothic", "BIZ UDGothic", "Noto Sans Mono CJK JP", "Liberation Mono", monospace;
         font-size: 0.92em;
       }
 
