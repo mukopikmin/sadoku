@@ -42,27 +42,15 @@ export const parseArgs = (argv: string[]): CliOptions => {
         port: "3334",
       },
       string: ["host", "port"],
-      unknown: () => true,
+      unknown: (arg) => {
+        if (!arg.startsWith("-")) return true;
+        throw new CliUsageError(`Unknown option: ${arg}`);
+      },
     });
   } catch (error) {
     throw new CliUsageError(
       error instanceof Error ? error.message : String(error),
     );
-  }
-
-  const knownKeys = new Set([
-    "_",
-    "h",
-    "help",
-    "host",
-    "p",
-    "port",
-    "v",
-    "version",
-  ]);
-  const unknownKey = Object.keys(flags).find((key) => !knownKeys.has(key));
-  if (unknownKey) {
-    throw new CliUsageError(`Unknown option: --${unknownKey}`);
   }
 
   if (flags._.length > 1) {
