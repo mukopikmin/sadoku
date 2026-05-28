@@ -25,6 +25,34 @@ Deno.test("parses tables", () => {
   );
 });
 
+Deno.test("parses nested lists", () => {
+  assertEquals(
+    parseMarkdown("- parent\n  - child\n  - child two\n- sibling\n"),
+    [
+      {
+        type: "list",
+        ordered: false,
+        items: [
+          {
+            text: "parent",
+            children: [
+              {
+                type: "list",
+                ordered: false,
+                items: [
+                  { text: "child", children: [] },
+                  { text: "child two", children: [] },
+                ],
+              },
+            ],
+          },
+          { text: "sibling", children: [] },
+        ],
+      },
+    ],
+  );
+});
+
 Deno.test("parses mermaid fences separately from code fences", () => {
   assertEquals(parseMarkdown("```mermaid\ngraph TD\n  A --> B\n```\n"), [
     {

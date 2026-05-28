@@ -35,7 +35,7 @@ Deno.test("renders a comprehensive markdown fixture into a preview page", async 
   );
   assertMatch(
     html,
-    /<ul>\n<li>unordered one<\/li>\n<li>unordered <strong>two<\/strong><\/li>\n<\/ul>/,
+    /<ul>\n<li>unordered one<\/li>\n<li>unordered <strong>two<\/strong>\n<ul>\n<li>nested unordered\n<ol>\n<li>nested ordered<\/li>\n<\/ol><\/li>\n<\/ul><\/li>\n<\/ul>/,
   );
   assertMatch(
     html,

@@ -1,3 +1,8 @@
+export type MarkdownListItem = {
+  text: string;
+  children: MarkdownBlock[];
+};
+
 export type MarkdownBlock =
   | { type: "heading"; level: number; text: string }
   | { type: "paragraph"; text: string }
@@ -10,7 +15,7 @@ export type MarkdownBlock =
     alignments: Array<"left" | "center" | "right" | undefined>;
     rows: string[][];
   }
-  | { type: "list"; ordered: boolean; items: string[] }
+  | { type: "list"; ordered: boolean; items: MarkdownListItem[] }
   | { type: "hr" };
 
 const isBlank = (line: string): boolean => line.trim() === "";
@@ -84,18 +89,61 @@ const collectList = (
   start: number,
   ordered: boolean,
 ): [MarkdownBlock, number] => {
-  const items: string[] = [];
+  const startMatch = lines[start].match(/^(\s*)(?:[-*+]|\d+[.)])\s+(.*)$/);
+  const indent = startMatch?.[1].length ?? 0;
+  const [items, nextIndex] = collectListItems(lines, start, ordered, indent);
+
+  return [{ type: "list", ordered, items }, nextIndex];
+};
+
+const collectListItems = (
+  lines: string[],
+  start: number,
+  ordered: boolean,
+  indent: number,
+): [MarkdownListItem[], number] => {
+  const items: MarkdownListItem[] = [];
   let index = start;
   const pattern = ordered ? /^(\s*)\d+[.)]\s+(.*)$/ : /^(\s*)[-*+]\s+(.*)$/;
 
   while (index < lines.length) {
     const match = lines[index].match(pattern);
     if (!match) break;
-    items.push(match[2].trim());
+    const itemIndent = match[1].length;
+    if (itemIndent !== indent) break;
+
+    const item: MarkdownListItem = {
+      text: match[2].trim(),
+      children: [],
+    };
     index += 1;
+
+    while (index < lines.length) {
+      const childMatch = lines[index].match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
+      if (!childMatch) break;
+
+      const childIndent = childMatch[1].length;
+      if (childIndent <= itemIndent) break;
+
+      const childOrdered = /^\d+[.)]$/.test(childMatch[2]);
+      const [childItems, nextIndex] = collectListItems(
+        lines,
+        index,
+        childOrdered,
+        childIndent,
+      );
+      item.children.push({
+        type: "list",
+        ordered: childOrdered,
+        items: childItems,
+      });
+      index = nextIndex;
+    }
+
+    items.push(item);
   }
 
-  return [{ type: "list", ordered, items }, index];
+  return [items, index];
 };
 
 const collectTable = (

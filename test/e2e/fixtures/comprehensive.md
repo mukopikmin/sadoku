@@ -7,6 +7,8 @@ Intro paragraph with **bold**, _italic_, ~~deleted~~, `inline code`,
 
 - unordered one
 - unordered **two**
+  - nested unordered
+    1. nested ordered
 
 1. ordered one
 2. ordered two

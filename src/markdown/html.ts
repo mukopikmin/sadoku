@@ -160,7 +160,13 @@ const renderBlock = (block: MarkdownBlock, context: RenderContext): string => {
       return renderTable(block);
     case "list": {
       const tag = block.ordered ? "ol" : "ul";
-      const items = block.items.map((item) => `<li>${renderInline(item)}</li>`)
+      const items = block.items
+        .map((item) => {
+          const children = item.children.length === 0
+            ? ""
+            : `\n${renderMarkdownBlocks(item.children, context)}`;
+          return `<li>${renderInline(item.text)}${children}</li>`;
+        })
         .join("\n");
       return `<${tag}>\n${items}\n</${tag}>`;
     }

@@ -80,6 +80,28 @@ Deno.test("renders markdown tables", () => {
   assertMatch(html, /<td style="text-align: right">20<\/td>/);
 });
 
+Deno.test("renders nested lists inside parent list items", () => {
+  const html = renderMarkdown(`- parent
+  - child
+    1. ordered child
+- sibling
+`);
+
+  assertEquals(
+    html,
+    `<ul>
+<li>parent
+<ul>
+<li>child
+<ol>
+<li>ordered child</li>
+</ol></li>
+</ul></li>
+<li>sibling</li>
+</ul>`,
+  );
+});
+
 Deno.test("renders mermaid code fences for browser-side diagrams", () => {
   const html = renderMarkdown(`\`\`\`mermaid
 graph TD
