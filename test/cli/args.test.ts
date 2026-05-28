@@ -40,6 +40,14 @@ Deno.test("throws usage errors for invalid options", () => {
     CliUsageError,
   );
   assertInstanceOf(
+    assertThrows(() => parseArgs(["README.md", "--port"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
+    assertThrows(() => parseArgs(["README.md", "--host"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
     assertThrows(() => parseArgs(["a.md", "b.md"])),
     CliUsageError,
   );

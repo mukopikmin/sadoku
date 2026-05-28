@@ -9,6 +9,7 @@
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1.0.19",
+    "@std/cli/parse-args": "jsr:@std/cli@1.0.28/parse-args",
     "@std/path": "jsr:@std/path@1.1.4",
     "highlight.js/core": "https://esm.sh/highlight.js@11.11.1/lib/core",
     "highlight.js/languages/bash": "https://esm.sh/highlight.js@11.11.1/lib/languages/bash",

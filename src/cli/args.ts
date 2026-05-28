@@ -1,3 +1,5 @@
+import { parseArgs as parseCliArgs } from "@std/cli/parse-args";
+
 export type CliOptions = {
   file: string | undefined;
   host: string;
@@ -21,51 +23,62 @@ Options:
 `;
 
 export const parseArgs = (argv: string[]): CliOptions => {
-  const options: CliOptions = {
-    file: undefined,
-    host: "127.0.0.1",
-    port: 3334,
-  };
-
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-
-    if (arg === "-h" || arg === "--help") {
-      options.help = true;
-      continue;
-    }
-
-    if (arg === "-p" || arg === "--port") {
-      const value = argv[index + 1];
-      if (!value) throw new CliUsageError(`${arg} requires a value.`);
-      const port = Number(value);
-      if (!Number.isInteger(port) || port < 1 || port > 65535) {
-        throw new CliUsageError(`Invalid port: ${value}`);
+    if (arg === "--host" || arg === "--port" || arg === "-p") {
+      if (!argv[index + 1]) {
+        throw new CliUsageError(`${arg} requires a value.`);
       }
-      options.port = port;
       index += 1;
       continue;
     }
-
-    if (arg === "--host") {
-      const value = argv[index + 1];
-      if (!value) throw new CliUsageError("--host requires a value.");
-      options.host = value;
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith("-")) {
+    if (
+      arg.startsWith("-") &&
+      arg !== "--help" &&
+      arg !== "-h"
+    ) {
       throw new CliUsageError(`Unknown option: ${arg}`);
     }
-
-    if (options.file) {
-      throw new CliUsageError(
-        "Only one Markdown file can be previewed at a time.",
-      );
-    }
-    options.file = arg;
   }
+
+  let flags: ReturnType<typeof parseCliArgs>;
+  try {
+    flags = parseCliArgs(argv, {
+      alias: {
+        h: "help",
+        p: "port",
+      },
+      boolean: ["help"],
+      default: {
+        host: "127.0.0.1",
+        port: "3334",
+      },
+      string: ["host", "port"],
+      unknown: () => true,
+    });
+  } catch (error) {
+    throw new CliUsageError(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  if (flags._.length > 1) {
+    throw new CliUsageError(
+      "Only one Markdown file can be previewed at a time.",
+    );
+  }
+
+  const port = Number(flags.port);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new CliUsageError(`Invalid port: ${flags.port}`);
+  }
+
+  const options: CliOptions = {
+    file: flags._[0]?.toString(),
+    host: flags.host?.toString() ?? "127.0.0.1",
+    port,
+  };
+  if (flags.help) options.help = true;
 
   return options;
 };
