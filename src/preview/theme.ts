@@ -2,7 +2,6 @@ export const previewThemeCss = `
       :root {
         color-scheme: light dark;
         --color-canvas: #ffffff;
-        --color-page: #f6f8fa;
         --color-canvas-subtle: #f6f8fa;
         --color-border: #d0d7de;
         --color-border-muted: #d8dee4;
@@ -18,7 +17,6 @@ export const previewThemeCss = `
       @media (prefers-color-scheme: dark) {
         :root {
           --color-canvas: #0d1117;
-          --color-page: #010409;
           --color-canvas-subtle: #161b22;
           --color-border: #30363d;
           --color-border-muted: #21262d;
@@ -32,27 +30,21 @@ export const previewThemeCss = `
 
       body {
         margin: 0;
-        background: var(--color-page);
+        background: var(--color-canvas);
         color: var(--color-text);
       }
 
       main {
         box-sizing: border-box;
         width: min(100%, 980px);
-        margin: 24px auto 48px;
-        border: 1px solid var(--color-border-muted);
-        border-radius: 8px;
-        background: var(--color-canvas);
-        padding: 32px 40px 64px;
-        box-shadow: 0 8px 24px #1f232814;
+        margin: 0 auto;
+        padding: 32px 32px 64px;
       }
 
       header {
-        margin: -32px -40px 32px;
+        margin-bottom: 32px;
         border-bottom: 1px solid var(--color-border-muted);
-        border-radius: 8px 8px 0 0;
-        background: var(--color-canvas-subtle);
-        padding: 14px 40px;
+        padding-bottom: 16px;
         color: var(--color-text-muted);
         font-size: 0.85rem;
       }
@@ -143,7 +135,7 @@ export const previewThemeCss = `
         border-radius: 6px;
         padding: 0.2em 0.4em;
         background: var(--color-code-bg);
-        font-family: "UDEV Gothic", "BIZ UDGothic", "Noto Sans Mono CJK JP", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, Monaco, "UDEV Gothic", "BIZ UDGothic", "Noto Sans Mono CJK JP", monospace;
         font-size: 0.85em;
       }
 
@@ -212,17 +204,7 @@ export const previewThemeCss = `
 
       @media (max-width: 640px) {
         main {
-          margin: 0;
-          border-width: 0;
-          border-radius: 0;
           padding: 24px 16px 48px;
-          box-shadow: none;
-        }
-
-        header {
-          margin: -24px -16px 24px;
-          border-radius: 0;
-          padding: 12px 16px;
         }
       }
 `;
