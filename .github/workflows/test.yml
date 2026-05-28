@@ -27,7 +27,7 @@ jobs:
         run: deno fmt --check
 
       - name: Type check
-        run: deno check --lock=deno.lock src/main.ts scripts/vendor_mermaid.ts scripts/compile.ts
+        run: deno check --lock=deno.lock src/main.ts scripts/vendor_mermaid.ts scripts/compile.ts scripts/install_macos.ts
 
       - name: Test
         run: deno test --allow-read --lock=deno.lock test

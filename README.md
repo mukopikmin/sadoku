@@ -29,6 +29,14 @@ deno task compile
 ./mdview README.md
 ```
 
+On macOS, you can build in a temporary directory and install the binary to
+`$HOME/.local/bin/mdview`:
+
+```sh
+npm install
+deno task install:mac
+```
+
 Options:
 
 ```sh

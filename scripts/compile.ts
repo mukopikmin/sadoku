@@ -4,6 +4,21 @@ const hiddenPackagePath = new URL(
   import.meta.url,
 );
 
+const parseOutputPath = (args: string[]): string => {
+  const outputIndex = args.indexOf("--output");
+  if (outputIndex === -1) return "mdview";
+
+  const outputPath = args[outputIndex + 1];
+  if (!outputPath) {
+    console.error("Missing value for --output.");
+    Deno.exit(1);
+  }
+
+  return outputPath;
+};
+
+const outputPath = parseOutputPath(Deno.args);
+
 const command = new Deno.Command(Deno.execPath(), {
   args: [
     "compile",
@@ -15,7 +30,7 @@ const command = new Deno.Command(Deno.execPath(), {
     "--include",
     "src/vendor/mermaid/chunks/mermaid.esm.min",
     "--output",
-    "mdview",
+    outputPath,
     "src/main.ts",
   ],
   stdout: "inherit",
