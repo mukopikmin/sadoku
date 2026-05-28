@@ -30,6 +30,12 @@ Deno.test("parses help", () => {
   assertMatch(usage, /Defaults to 3334/);
 });
 
+Deno.test("parses version", () => {
+  assertEquals(parseArgs(["--version"]).version, true);
+  assertEquals(parseArgs(["-v"]).version, true);
+  assertMatch(usage, /--version/);
+});
+
 Deno.test("throws usage errors for invalid options", () => {
   assertInstanceOf(
     assertThrows(() => parseArgs(["README.md", "--port", "nope"])),
@@ -37,6 +43,14 @@ Deno.test("throws usage errors for invalid options", () => {
   );
   assertInstanceOf(
     assertThrows(() => parseArgs(["README.md", "--unknown"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
+    assertThrows(() => parseArgs(["README.md", "--port"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
+    assertThrows(() => parseArgs(["README.md", "--host"])),
     CliUsageError,
   );
   assertInstanceOf(
