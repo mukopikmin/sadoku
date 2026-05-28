@@ -17,7 +17,7 @@ const main = async (): Promise<void> => {
   const preview = await startPreviewServer({
     file: options.file,
     host: options.host,
-    port: options.port
+    port: options.port,
   });
 
   console.log(`Serving ${preview.filePath}`);

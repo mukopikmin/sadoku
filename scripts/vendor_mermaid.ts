@@ -5,7 +5,7 @@ const vendorRoot = join(Deno.cwd(), "src", "vendor", "mermaid");
 
 const requiredSources = [
   "mermaid.esm.min.mjs",
-  join("chunks", "mermaid.esm.min")
+  join("chunks", "mermaid.esm.min"),
 ];
 
 const exists = async (path: string): Promise<boolean> => {
@@ -18,12 +18,18 @@ const exists = async (path: string): Promise<boolean> => {
   }
 };
 
-const copyRecursive = async (source: string, destination: string): Promise<void> => {
+const copyRecursive = async (
+  source: string,
+  destination: string,
+): Promise<void> => {
   const sourceStat = await Deno.stat(source);
   if (sourceStat.isDirectory) {
     await Deno.mkdir(destination, { recursive: true });
     for await (const entry of Deno.readDir(source)) {
-      await copyRecursive(join(source, entry.name), join(destination, entry.name));
+      await copyRecursive(
+        join(source, entry.name),
+        join(destination, entry.name),
+      );
     }
     return;
   }
@@ -33,7 +39,9 @@ const copyRecursive = async (source: string, destination: string): Promise<void>
 };
 
 if (!(await exists(sourceRoot))) {
-  console.error("Missing node_modules/mermaid. Run `npm install` before vendoring Mermaid.");
+  console.error(
+    "Missing node_modules/mermaid. Run `npm install` before vendoring Mermaid.",
+  );
   Deno.exit(1);
 }
 

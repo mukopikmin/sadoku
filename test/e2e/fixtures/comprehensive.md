@@ -1,6 +1,7 @@
 # Comprehensive Document
 
-Intro paragraph with **bold**, *italic*, ~~deleted~~, `inline code`, [a link](https://example.com), and ![an image](image.png "Image title").
+Intro paragraph with **bold**, _italic_, ~~deleted~~, `inline code`,
+[a link](https://example.com), and ![an image](image.png "Image title").
 
 ## Lists
 
@@ -10,15 +11,14 @@ Intro paragraph with **bold**, *italic*, ~~deleted~~, `inline code`, [a link](ht
 1. ordered one
 2. ordered two
 
-> Quoted **text**
-> with a second line.
+> Quoted **text** with a second line.
 
 ---
 
 | Feature | Status | Owner |
 | ------- | :----: | ----: |
-| Table | yes | 1 |
-| Mermaid | yes | 2 |
+| Table   |  yes   |     1 |
+| Mermaid |  yes   |     2 |
 
 ```js
 console.log("<escaped>");

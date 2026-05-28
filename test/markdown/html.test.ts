@@ -14,22 +14,55 @@ console.log("<ok>");
 \`\`\`
 `);
 
-  assertMatch(html, /<h1>Title<\/h1>/);
+  assertMatch(
+    html,
+    /<h1 id="title"><a class="heading-anchor" href="#title">Title<\/a><\/h1>/,
+  );
   assertMatch(html, /<strong>world<\/strong>/);
   assertMatch(html, /<ul>\n<li>one<\/li>\n<li>two<\/li>\n<\/ul>/);
-  assertMatch(html, /<pre><code class="language-js">console\.log\(&quot;&lt;ok&gt;&quot;\);<\/code><\/pre>/);
+  assertMatch(
+    html,
+    /<pre><code class="language-js">console\.log\(&quot;&lt;ok&gt;&quot;\);<\/code><\/pre>/,
+  );
+});
+
+Deno.test("renders stable heading anchor links", () => {
+  const html = renderMarkdown(`# Title!
+
+## Title!
+
+### **Rich** \`Heading\`
+`);
+
+  assertMatch(
+    html,
+    /<h1 id="title"><a class="heading-anchor" href="#title">Title!<\/a><\/h1>/,
+  );
+  assertMatch(
+    html,
+    /<h2 id="title-1"><a class="heading-anchor" href="#title-1">Title!<\/a><\/h2>/,
+  );
+  assertMatch(
+    html,
+    /<h3 id="rich-heading"><a class="heading-anchor" href="#rich-heading"><strong>Rich<\/strong> <code>Heading<\/code><\/a><\/h3>/,
+  );
 });
 
 Deno.test("escapes raw html", () => {
-  assertEquals(renderMarkdown("<script>alert(1)</script>"), "<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>");
+  assertEquals(
+    renderMarkdown("<script>alert(1)</script>"),
+    "<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>",
+  );
 });
 
 Deno.test("renders links and images with titles", () => {
-  const html = renderMarkdown('[site](https://example.com "Site title") ![logo](logo.png "Logo title")');
+  const html = renderMarkdown(
+    '[site](https://example.com "Site title") ![logo](logo.png "Logo title")',
+  );
 
   assertEquals(
     html,
-    '<p><a href="https://example.com" title="Site title">site</a> <img src="logo.png" alt="logo" title="Logo title"></p>'
+    '<p><a href="https://example.com" title="Site title">site</a> <img src="logo.png" alt="logo" title="Logo title"></p>',
   );
 });
 
@@ -54,8 +87,11 @@ graph TD
 \`\`\`
 `);
 
-  assertEquals(html, `<pre class="mermaid">graph TD
-  A --&gt; B</pre>`);
+  assertEquals(
+    html,
+    `<pre class="mermaid">graph TD
+  A --&gt; B</pre>`,
+  );
 });
 
 Deno.test("renders longer code fences without treating nested shorter fences as blocks", () => {

@@ -4,7 +4,10 @@ export type PreviewPageOptions = {
   fileUrl: string;
 };
 
-export const renderPreviewPage = ({ title, body, fileUrl }: PreviewPageOptions): string => `<!doctype html>
+export const renderPreviewPage = (
+  { title, body, fileUrl }: PreviewPageOptions,
+): string =>
+  `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -49,6 +52,15 @@ export const renderPreviewPage = ({ title, body, fileUrl }: PreviewPageOptions):
 
       a {
         color: LinkText;
+      }
+
+      .heading-anchor {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .heading-anchor:hover {
+        text-decoration: underline;
       }
 
       img {

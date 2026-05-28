@@ -2,7 +2,8 @@
 
 `mdview` is a small CLI for previewing a single Markdown file in your browser.
 
-Run it with a Markdown file path, and it starts a local HTTP server that renders the file as HTML.
+Run it with a Markdown file path, and it starts a local HTTP server that renders
+the file as HTML.
 
 ## Usage
 
@@ -34,20 +35,22 @@ Options:
 mdview README.md --port 4000 --host 127.0.0.1
 ```
 
-The server reads the Markdown file on each request, so refreshing the page shows recent edits.
+The server reads the Markdown file on each request, so refreshing the page shows
+recent edits.
 
 ## Supported Markdown
 
-- headings, paragraphs, lists, blockquotes, links, images, inline code, and fenced code blocks
+- headings, paragraphs, lists, blockquotes, links, images, inline code, and
+  fenced code blocks
 - GitHub-style tables
 - Mermaid diagrams through fenced `mermaid` code blocks
 
 Example:
 
 ````md
-| Name | Count |
-| ---- | ----: |
-| alpha | 1 |
+| Name  | Count |
+| ----- | ----: |
+| alpha |     1 |
 
 ```mermaid
 graph TD
@@ -55,9 +58,11 @@ graph TD
 ```
 ````
 
-Mermaid rendering is served from vendored local assets when a page contains a Mermaid block.
+Mermaid rendering is served from vendored local assets when a page contains a
+Mermaid block.
 
-The vendored Mermaid assets are generated from the npm dependency and are not meant to be edited by hand:
+The vendored Mermaid assets are generated from the npm dependency and are not
+meant to be edited by hand:
 
 ```sh
 npm install

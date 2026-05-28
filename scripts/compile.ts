@@ -1,5 +1,8 @@
 const packagePath = new URL("../package.json", import.meta.url);
-const hiddenPackagePath = new URL("../package.json.compile-hidden", import.meta.url);
+const hiddenPackagePath = new URL(
+  "../package.json.compile-hidden",
+  import.meta.url,
+);
 
 const command = new Deno.Command(Deno.execPath(), {
   args: [
@@ -13,10 +16,10 @@ const command = new Deno.Command(Deno.execPath(), {
     "src/vendor/mermaid/chunks/mermaid.esm.min",
     "--output",
     "mdview",
-    "src/main.ts"
+    "src/main.ts",
   ],
   stdout: "inherit",
-  stderr: "inherit"
+  stderr: "inherit",
 });
 
 try {

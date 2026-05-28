@@ -24,7 +24,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
     file: undefined,
     host: "127.0.0.1",
-    port: 3334
+    port: 3334,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -60,7 +60,9 @@ export const parseArgs = (argv: string[]): CliOptions => {
     }
 
     if (options.file) {
-      throw new CliUsageError("Only one Markdown file can be previewed at a time.");
+      throw new CliUsageError(
+        "Only one Markdown file can be previewed at a time.",
+      );
     }
     options.file = arg;
   }

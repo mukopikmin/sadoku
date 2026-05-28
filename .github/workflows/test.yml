@@ -1,0 +1,33 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Deno
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.8.0
+
+      - name: Check formatting
+        run: deno fmt --check
+
+      - name: Type check
+        run: deno check --lock=deno.lock src/main.ts scripts/vendor_mermaid.ts scripts/compile.ts
+
+      - name: Test
+        run: deno test --allow-read --lock=deno.lock test

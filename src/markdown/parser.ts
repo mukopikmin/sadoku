@@ -4,7 +4,12 @@ export type MarkdownBlock =
   | { type: "code"; language: string | undefined; code: string }
   | { type: "mermaid"; language: string | undefined; code: string }
   | { type: "blockquote"; blocks: MarkdownBlock[] }
-  | { type: "table"; headers: string[]; alignments: Array<"left" | "center" | "right" | undefined>; rows: string[][] }
+  | {
+    type: "table";
+    headers: string[];
+    alignments: Array<"left" | "center" | "right" | undefined>;
+    rows: string[][];
+  }
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "hr" };
 
@@ -15,7 +20,9 @@ const splitTableRow = (line: string): string[] => {
   return trimmed.split("|").map((cell) => cell.trim());
 };
 
-const parseTableDivider = (line: string): Array<"left" | "center" | "right" | undefined> | undefined => {
+const parseTableDivider = (
+  line: string,
+): Array<"left" | "center" | "right" | undefined> | undefined => {
   const cells = splitTableRow(line);
   if (cells.length === 0) return undefined;
 
@@ -57,7 +64,10 @@ const isBlockStart = (lines: string[], index: number): boolean => {
   );
 };
 
-const collectParagraph = (lines: string[], start: number): [MarkdownBlock, number] => {
+const collectParagraph = (
+  lines: string[],
+  start: number,
+): [MarkdownBlock, number] => {
   const paragraph: string[] = [];
   let index = start;
 
@@ -69,7 +79,11 @@ const collectParagraph = (lines: string[], start: number): [MarkdownBlock, numbe
   return [{ type: "paragraph", text: paragraph.join(" ") }, index];
 };
 
-const collectList = (lines: string[], start: number, ordered: boolean): [MarkdownBlock, number] => {
+const collectList = (
+  lines: string[],
+  start: number,
+  ordered: boolean,
+): [MarkdownBlock, number] => {
   const items: string[] = [];
   let index = start;
   const pattern = ordered ? /^(\s*)\d+[.)]\s+(.*)$/ : /^(\s*)[-*+]\s+(.*)$/;
@@ -84,7 +98,10 @@ const collectList = (lines: string[], start: number, ordered: boolean): [Markdow
   return [{ type: "list", ordered, items }, index];
 };
 
-const collectTable = (lines: string[], start: number): [MarkdownBlock, number] => {
+const collectTable = (
+  lines: string[],
+  start: number,
+): [MarkdownBlock, number] => {
   const headers = splitTableRow(lines[start]);
   const alignments = parseTableDivider(lines[start + 1]);
   if (!alignments) {
@@ -94,7 +111,9 @@ const collectTable = (lines: string[], start: number): [MarkdownBlock, number] =
   const rows: string[][] = [];
   let index = start + 2;
 
-  while (index < lines.length && lines[index].includes("|") && !isBlank(lines[index])) {
+  while (
+    index < lines.length && lines[index].includes("|") && !isBlank(lines[index])
+  ) {
     rows.push(splitTableRow(lines[index]));
     index += 1;
   }
@@ -122,7 +141,8 @@ export const parseMarkdown = (markdown: string): MarkdownBlock[] => {
       index += 1;
       while (
         index < lines.length &&
-        !(/^`+\s*$/.test(lines[index].trim()) && lines[index].trim().length >= fence[1].length)
+        !(/^`+\s*$/.test(lines[index].trim()) &&
+          lines[index].trim().length >= fence[1].length)
       ) {
         code.push(lines[index]);
         index += 1;
@@ -133,14 +153,18 @@ export const parseMarkdown = (markdown: string): MarkdownBlock[] => {
       blocks.push({
         type: language?.toLowerCase() === "mermaid" ? "mermaid" : "code",
         language,
-        code: code.join("\n")
+        code: code.join("\n"),
       });
       continue;
     }
 
     const heading = line.match(/^(#{1,6})\s+(.*)$/);
     if (heading) {
-      blocks.push({ type: "heading", level: heading[1].length, text: heading[2].trim() });
+      blocks.push({
+        type: "heading",
+        level: heading[1].length,
+        text: heading[2].trim(),
+      });
       index += 1;
       continue;
     }
@@ -157,7 +181,10 @@ export const parseMarkdown = (markdown: string): MarkdownBlock[] => {
         quote.push(lines[index].replace(/^>\s?/, ""));
         index += 1;
       }
-      blocks.push({ type: "blockquote", blocks: parseMarkdown(quote.join("\n")) });
+      blocks.push({
+        type: "blockquote",
+        blocks: parseMarkdown(quote.join("\n")),
+      });
       continue;
     }
 

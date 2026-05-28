@@ -4,7 +4,7 @@ import { parseMarkdown } from "../../src/markdown/parser.ts";
 Deno.test("parses markdown into block objects", () => {
   assertEquals(parseMarkdown("# Title\n\nHello\n"), [
     { type: "heading", level: 1, text: "Title" },
-    { type: "paragraph", text: "Hello" }
+    { type: "paragraph", text: "Hello" },
   ]);
 });
 
@@ -19,9 +19,9 @@ Deno.test("parses tables", () => {
         type: "table",
         headers: ["Name", "Count"],
         alignments: [undefined, "right"],
-        rows: [["alpha", "1"]]
-      }
-    ]
+        rows: [["alpha", "1"]],
+      },
+    ],
   );
 });
 
@@ -30,7 +30,7 @@ Deno.test("parses mermaid fences separately from code fences", () => {
     {
       type: "mermaid",
       language: "mermaid",
-      code: "graph TD\n  A --> B"
-    }
+      code: "graph TD\n  A --> B",
+    },
   ]);
 });
