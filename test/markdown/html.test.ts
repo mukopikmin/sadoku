@@ -104,6 +104,26 @@ Deno.test("renders nested lists inside parent list items", () => {
   );
 });
 
+Deno.test("renders task list checkboxes", () => {
+  const html = renderMarkdown(`- [ ] todo
+- [x] done
+- [X] also done
+`);
+
+  assertMatch(
+    html,
+    /<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled> todo<\/li>/,
+  );
+  assertMatch(
+    html,
+    /<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled checked> done<\/li>/,
+  );
+  assertMatch(
+    html,
+    /<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled checked> also done<\/li>/,
+  );
+});
+
 Deno.test("renders mermaid code fences for browser-side diagrams", () => {
   const html = renderMarkdown(`\`\`\`mermaid
 graph TD

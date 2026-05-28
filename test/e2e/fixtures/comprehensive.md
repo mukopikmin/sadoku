@@ -13,6 +13,9 @@ Intro paragraph with **bold**, _italic_, ~~deleted~~, `inline code`,
 1. ordered one
 2. ordered two
 
+- [ ] unchecked task
+- [x] checked task
+
 > Quoted **text** with a second line.
 
 ---
