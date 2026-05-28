@@ -1,4 +1,5 @@
 {
+  "nodeModulesDir": "auto",
   "tasks": {
     "start": "deno run --allow-read --allow-net src/main.ts",
     "test": "deno test --allow-read test",
@@ -8,6 +9,7 @@
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1.0.19",
-    "@std/path": "jsr:@std/path@1.1.4"
+    "@std/path": "jsr:@std/path@1.1.4",
+    "markdown-it": "npm:markdown-it@14.1.0"
   }
 }

@@ -75,9 +75,9 @@ Deno.test("renders markdown tables", () => {
 
   assertMatch(html, /<table>/);
   assertMatch(html, /<th>Name<\/th>/);
-  assertMatch(html, /<th style="text-align: right">Count<\/th>/);
+  assertMatch(html, /<th style="text-align:right">Count<\/th>/);
   assertMatch(html, /<td><strong>beta<\/strong><\/td>/);
-  assertMatch(html, /<td style="text-align: right">20<\/td>/);
+  assertMatch(html, /<td style="text-align:right">20<\/td>/);
 });
 
 Deno.test("renders nested lists inside parent list items", () => {
@@ -95,8 +95,10 @@ Deno.test("renders nested lists inside parent list items", () => {
 <li>child
 <ol>
 <li>ordered child</li>
-</ol></li>
-</ul></li>
+</ol>
+</li>
+</ul>
+</li>
 <li>sibling</li>
 </ul>`,
   );
