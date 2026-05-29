@@ -66,6 +66,13 @@ Deno.test("renders links and images with titles", () => {
   );
 });
 
+Deno.test("autolinks plain urls", () => {
+  assertEquals(
+    renderMarkdown("Visit https://example.com/path?q=1."),
+    '<p>Visit <a href="https://example.com/path?q=1">https://example.com/path?q=1</a>.</p>',
+  );
+});
+
 Deno.test("renders markdown tables", () => {
   const html = renderMarkdown(`| Name | Count |
 | ---- | ----: |

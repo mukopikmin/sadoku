@@ -190,7 +190,7 @@ const renderHighlightedCode = (code: string, language: string | undefined) => {
 const createMarkdownRenderer = (): MarkdownIt => {
   const markdown = new MarkdownIt({
     html: false,
-    linkify: false,
+    linkify: true,
     typographer: false,
   });
   applyTaskListRule(markdown as unknown as TaskListMarkdown);
