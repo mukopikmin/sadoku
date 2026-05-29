@@ -131,6 +131,20 @@ Deno.test("renders task list checkboxes", () => {
   );
 });
 
+Deno.test("highlights Kotlin code fences", () => {
+  const html = renderMarkdown(`\`\`\`kotlin
+fun main() {
+    println("Hello")
+}
+\`\`\`
+`);
+
+  assertMatch(html, /<pre><code class="hljs language-kotlin">/);
+  assertMatch(html, /<span class="hljs-keyword">fun<\/span>/);
+  assertMatch(html, /<span class="hljs-title">main<\/span>/);
+  assertMatch(html, /<span class="hljs-string">&quot;Hello&quot;<\/span>/);
+});
+
 Deno.test("renders mermaid code fences for browser-side diagrams", () => {
   const html = renderMarkdown(`\`\`\`mermaid
 graph TD

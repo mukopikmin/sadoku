@@ -20,6 +20,7 @@
     "highlight.js/languages/java": "https://esm.sh/highlight.js@11.11.1/lib/languages/java",
     "highlight.js/languages/javascript": "https://esm.sh/highlight.js@11.11.1/lib/languages/javascript",
     "highlight.js/languages/json": "https://esm.sh/highlight.js@11.11.1/lib/languages/json",
+    "highlight.js/languages/kotlin": "https://esm.sh/highlight.js@11.11.1/lib/languages/kotlin",
     "highlight.js/languages/markdown": "https://esm.sh/highlight.js@11.11.1/lib/languages/markdown",
     "highlight.js/languages/php": "https://esm.sh/highlight.js@11.11.1/lib/languages/php",
     "highlight.js/languages/python": "https://esm.sh/highlight.js@11.11.1/lib/languages/python",
