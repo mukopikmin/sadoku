@@ -10,6 +10,7 @@ Deno.test("uses the default host and port", () => {
   assertEquals(parseArgs(["README.md"]), {
     file: "README.md",
     host: "127.0.0.1",
+    open: true,
     port: 3334,
   });
 });
@@ -20,9 +21,19 @@ Deno.test("parses host and port options", () => {
     {
       file: "README.md",
       host: "0.0.0.0",
+      open: true,
       port: 4000,
     },
   );
+});
+
+Deno.test("parses no-open option", () => {
+  assertEquals(parseArgs(["README.md", "--no-open"]), {
+    file: "README.md",
+    host: "127.0.0.1",
+    open: false,
+    port: 3334,
+  });
 });
 
 Deno.test("parses help", () => {

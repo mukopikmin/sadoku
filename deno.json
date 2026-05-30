@@ -1,7 +1,7 @@
 {
   "nodeModulesDir": "auto",
   "tasks": {
-    "start": "deno run --allow-read --allow-net src/main.ts",
+    "start": "deno run --allow-read --allow-net --allow-run src/main.ts",
     "test": "deno test --allow-read test",
     "vendor:mermaid": "deno run --allow-read --allow-write scripts/vendor_mermaid.ts",
     "compile": "deno task vendor:mermaid && deno run --allow-read --allow-write --allow-run=deno scripts/compile.ts",

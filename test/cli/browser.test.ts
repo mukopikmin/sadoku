@@ -1,0 +1,24 @@
+import { assertEquals } from "@std/assert";
+import { buildOpenBrowserCommand } from "../../src/cli/browser.ts";
+
+Deno.test("builds browser open commands for supported platforms", () => {
+  assertEquals(buildOpenBrowserCommand("http://127.0.0.1:3334/", "darwin"), {
+    command: "open",
+    args: ["http://127.0.0.1:3334/"],
+  });
+  assertEquals(buildOpenBrowserCommand("http://127.0.0.1:3334/", "linux"), {
+    command: "xdg-open",
+    args: ["http://127.0.0.1:3334/"],
+  });
+  assertEquals(buildOpenBrowserCommand("http://127.0.0.1:3334/", "windows"), {
+    command: "cmd",
+    args: ["/c", "start", "", "http://127.0.0.1:3334/"],
+  });
+});
+
+Deno.test("returns undefined for unsupported platforms", () => {
+  assertEquals(
+    buildOpenBrowserCommand("http://127.0.0.1:3334/", "freebsd"),
+    undefined,
+  );
+});
