@@ -25,8 +25,38 @@ ${previewThemeCss}
       ${body}
     </main>
     ${renderMermaidScript(body)}
+    ${renderHotReloadScript()}
   </body>
 </html>`;
+
+const renderHotReloadScript = (): string =>
+  `<script>
+      (() => {
+        let currentVersion;
+
+        const checkForChanges = async () => {
+          try {
+            const response = await fetch("/__mdview/status", { cache: "no-store" });
+            if (!response.ok) return;
+
+            const status = await response.json();
+            if (!currentVersion) {
+              currentVersion = status.version;
+              return;
+            }
+
+            if (status.version !== currentVersion) {
+              window.location.reload();
+            }
+          } catch {
+            // Keep the current preview visible if the development server restarts.
+          }
+        };
+
+        checkForChanges();
+        window.setInterval(checkForChanges, 500);
+      })();
+    </script>`;
 
 const renderMermaidScript = (body: string): string => {
   if (!body.includes('class="mermaid"')) return "";

@@ -15,10 +15,28 @@ export type StartedPreviewServer = {
   server: Deno.HttpServer<Deno.NetAddr>;
 };
 
+export const buildFileVersion = (fileStat: Deno.FileInfo): string =>
+  `${fileStat.mtime?.getTime() ?? 0}:${fileStat.size}`;
+
 export const createPreviewHandler =
   (filePath: string): Deno.ServeHandler => async (request) => {
     try {
       const requestUrl = new URL(request.url);
+      if (requestUrl.pathname === "/__mdview/status") {
+        const fileStat = await Deno.stat(filePath).catch(() => undefined);
+        return new Response(
+          JSON.stringify({
+            version: fileStat?.isFile ? buildFileVersion(fileStat) : "missing",
+          }),
+          {
+            headers: {
+              "content-type": "application/json; charset=utf-8",
+              "cache-control": "no-store",
+            },
+          },
+        );
+      }
+
       if (requestUrl.pathname.startsWith("/assets/")) {
         const asset = await readMermaidAsset(requestUrl.pathname);
         if (!asset) {

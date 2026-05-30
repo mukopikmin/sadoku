@@ -55,6 +55,8 @@ Deno.test("renders a comprehensive markdown fixture into a preview page", async 
     /<pre class="mermaid">graph TD\n  CLI\[CLI\] --&gt; Server\[Server\]/,
   );
   assertMatch(html, /import mermaid from "\/assets\/mermaid\.esm\.min\.mjs"/);
+  assertMatch(html, /fetch\("\/__mdview\/status", \{ cache: "no-store" \}\)/);
+  assertMatch(html, /window\.location\.reload\(\)/);
   assertMatch(html, /<pre><code class="hljs language-md">/);
   assertMatch(html, /<span class="hljs-code">```mermaid\n/);
   assertMatch(html, /&lt;script&gt;alert\(&quot;nope&quot;\)&lt;\/script&gt;/);
