@@ -3,7 +3,7 @@
 `mdview` is a small CLI for previewing a single Markdown file in your browser.
 
 Run it with a Markdown file path, and it starts a local HTTP server that renders
-the file as HTML.
+the file as HTML, then opens the preview in your default browser.
 
 ## Usage
 
@@ -13,7 +13,7 @@ After compiling or installing the CLI:
 mdview README.md
 ```
 
-Then open the printed local URL in your browser.
+The printed local URL is also available if you want to open it manually.
 
 During development, you can run the CLI with Deno:
 
@@ -41,6 +41,7 @@ Options:
 
 ```sh
 mdview README.md --port 4000 --host 127.0.0.1
+mdview README.md --no-open
 ```
 
 The server reads the Markdown file on each request, so refreshing the page shows

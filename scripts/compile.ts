@@ -26,6 +26,7 @@ const command = new Deno.Command(Deno.execPath(), {
     "--no-check",
     "--allow-read",
     "--allow-net",
+    "--allow-run",
     "--include",
     "src/vendor/mermaid/mermaid.esm.min.mjs",
     "--include",

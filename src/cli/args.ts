@@ -3,6 +3,7 @@ import { parseArgs as parseCliArgs } from "@std/cli/parse-args";
 export type CliOptions = {
   file: string | undefined;
   host: string;
+  open: boolean;
   port: number;
   help?: boolean;
   version?: boolean;
@@ -17,11 +18,13 @@ export class CliUsageError extends Error {
   }
 }
 
-export const usage = `Usage: mdview <file.md> [--port <port>] [--host <host>]
+export const usage =
+  `Usage: mdview <file.md> [--port <port>] [--host <host>] [--no-open]
 
 Options:
   -p, --port   Port to bind. Defaults to 3334.
   --host       Host to bind. Defaults to 127.0.0.1.
+  --no-open    Do not open the preview in your browser automatically.
   -v, --version
                Show version.
   -h, --help   Show this help message.
@@ -36,7 +39,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         p: "port",
         v: "version",
       },
-      boolean: ["help", "version"],
+      boolean: ["help", "no-open", "version"],
       default: {
         host: "127.0.0.1",
         port: "3334",
@@ -70,6 +73,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
     file: flags._[0]?.toString(),
     host: flags.host?.toString() ?? "127.0.0.1",
+    open: !flags["no-open"],
     port,
   };
   if (flags.help) options.help = true;
