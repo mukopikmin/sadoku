@@ -41,6 +41,14 @@ Deno.test("renders a comprehensive markdown fixture into a preview page", async 
     html,
     /<ol>\n<li>ordered one<\/li>\n<li>ordered two<\/li>\n<\/ol>/,
   );
+  assertMatch(
+    html,
+    /<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled> unchecked task<\/li>/,
+  );
+  assertMatch(
+    html,
+    /<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled checked> checked task<\/li>/,
+  );
   assertMatch(html, /<blockquote>/);
   assertMatch(html, /<hr>/);
   assertMatch(html, /<table>/);

@@ -131,6 +131,15 @@ export const previewThemeCss = `
         margin-bottom: 0;
       }
 
+      .task-list-item {
+        list-style-type: none;
+      }
+
+      .task-list-item-checkbox {
+        margin: 0 0.5em 0.2em -1.5em;
+        vertical-align: middle;
+      }
+
       code {
         border-radius: 6px;
         padding: 0.2em 0.4em;

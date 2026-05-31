@@ -8,6 +8,7 @@ import go from "highlight.js/languages/go";
 import java from "highlight.js/languages/java";
 import javascript from "highlight.js/languages/javascript";
 import json from "highlight.js/languages/json";
+import kotlin from "highlight.js/languages/kotlin";
 import markdown from "highlight.js/languages/markdown";
 import php from "highlight.js/languages/php";
 import python from "highlight.js/languages/python";
@@ -32,6 +33,30 @@ type RendererRule = (
   self: { renderToken: RendererRule },
 ) => string;
 
+type MarkdownToken = {
+  attrJoin?: (name: string, value: string) => void;
+  children?: MarkdownToken[];
+  content: string;
+  type: string;
+};
+
+type TaskListState = {
+  Token: new (type: string, tag: string, nesting: number) => MarkdownToken;
+  tokens: MarkdownToken[];
+};
+
+type TaskListMarkdown = {
+  core: {
+    ruler: {
+      after: (
+        afterName: string,
+        ruleName: string,
+        rule: (state: TaskListState) => void,
+      ) => void;
+    };
+  };
+};
+
 const registerLanguage = (name: string, language: unknown) =>
   hljs.registerLanguage(
     name,
@@ -47,6 +72,7 @@ registerLanguage("go", go);
 registerLanguage("java", java);
 registerLanguage("javascript", javascript);
 registerLanguage("json", json);
+registerLanguage("kotlin", kotlin);
 registerLanguage("markdown", markdown);
 registerLanguage("php", php);
 registerLanguage("python", python);
@@ -95,6 +121,58 @@ const headingId = (text: string, env: RenderEnv): string => {
 
 const trimFinalNewline = (value: string): string => value.replace(/\n$/, "");
 
+const applyTaskListRule = (markdown: TaskListMarkdown): void => {
+  markdown.core.ruler.after(
+    "inline",
+    "task_list_items",
+    (state: TaskListState) => {
+      const tokens = state.tokens;
+
+      for (let index = 0; index < tokens.length; index += 1) {
+        const listItemToken = tokens[index];
+        if (listItemToken.type !== "list_item_open") continue;
+
+        let inlineTokenIndex = -1;
+        for (
+          let tokenIndex = index + 1;
+          tokenIndex < tokens.length;
+          tokenIndex += 1
+        ) {
+          const token = tokens[tokenIndex];
+          if (token.type === "list_item_close") break;
+          if (token.type === "inline") {
+            inlineTokenIndex = tokenIndex;
+            break;
+          }
+        }
+        if (inlineTokenIndex === -1) continue;
+
+        const inlineToken = tokens[inlineTokenIndex];
+        const taskMarker = inlineToken.content.match(/^\[([ xX])\]\s+/);
+        if (!taskMarker) continue;
+
+        const checked = taskMarker[1].toLowerCase() === "x";
+        listItemToken.attrJoin?.("class", "task-list-item");
+        inlineToken.content = inlineToken.content.slice(taskMarker[0].length);
+
+        const textToken = inlineToken.children?.find((child: MarkdownToken) =>
+          child.type === "text"
+        );
+        if (textToken) {
+          textToken.content = textToken.content.slice(taskMarker[0].length);
+        }
+
+        const checkboxToken = new state.Token("html_inline", "", 0);
+        checkboxToken.content =
+          `<input class="task-list-item-checkbox" type="checkbox" disabled${
+            checked ? " checked" : ""
+          }> `;
+        inlineToken.children?.unshift(checkboxToken);
+      }
+    },
+  );
+};
+
 const renderHighlightedCode = (code: string, language: string | undefined) => {
   const languageClass = language
     ? ` class="hljs language-${escapeAttribute(language)}"`
@@ -114,9 +192,10 @@ const renderHighlightedCode = (code: string, language: string | undefined) => {
 const createMarkdownRenderer = (): MarkdownIt => {
   const markdown = new MarkdownIt({
     html: false,
-    linkify: false,
+    linkify: true,
     typographer: false,
   });
+  applyTaskListRule(markdown as unknown as TaskListMarkdown);
   markdown.renderer.rules.heading_open = ((tokens, index, _options, env) => {
     const token = tokens[index];
     const inlineToken = tokens[index + 1];
