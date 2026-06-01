@@ -45,7 +45,8 @@ mdview README.md --no-open
 ```
 
 The server reads the Markdown file on each request, so refreshing the page shows
-recent edits.
+recent edits. The browser preview also reloads automatically when the Markdown
+file changes.
 
 ## Supported Markdown
 
