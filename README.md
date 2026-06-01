@@ -87,7 +87,11 @@ file changes.
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Headings, paragraphs, lists, blockquotes, links, and images | Supported | Rendered through Markdown-it. |
+| Headings and paragraphs | Supported | Rendered through Markdown-it. |
+| Bold and italic emphasis | Supported | `**bold**` and `_italic_` render as emphasis. |
+| Unordered, ordered, and nested lists | Supported | Nested unordered and ordered lists are preserved. |
+| Blockquotes and horizontal rules | Supported | Standard quote blocks and thematic breaks render normally. |
+| Links and images | Supported | Link and image titles are preserved. |
 | Inline code and fenced code blocks | Supported | Fenced code blocks are escaped by default. |
 | Heading anchor links | Supported | Headings get stable `id` attributes and clickable anchors. |
 | Plain URL autolinks | Supported | Plain URLs are converted to links. |
@@ -97,19 +101,6 @@ file changes.
 | Syntax highlighting | Supported | Common code fence languages are highlighted with highlight.js. |
 | Mermaid diagrams | Supported | Fenced `mermaid` code blocks render in the browser. |
 | Raw HTML | Not supported | Raw HTML is escaped for safer previews. |
-
-Example:
-
-````md
-| Name  | Count |
-| ----- | ----: |
-| alpha |     1 |
-
-```mermaid
-graph TD
-  A --> B
-```
-````
 
 Mermaid rendering is served from vendored local assets when a page contains a
 Mermaid block.
