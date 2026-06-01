@@ -29,6 +29,9 @@ deno task compile --version 0.1.0
 ./mdview README.md
 ```
 
+If `--version` is omitted, the compiled binary reports the development version
+`0.0.0-dev`. Pass the release version explicitly when building release binaries.
+
 Or build release archives under `dist/`:
 
 ```sh
@@ -54,7 +57,12 @@ Windows is packaged as `.zip`. `dist/checksums.txt` and per-archive `.sha256`
 files are generated for the final archives.
 
 The release build uses the system `tar` command for `.tar.gz` archives and the
-system `zip` command for the Windows archive.
+system `zip` command for the Windows archive. A full release build requires both
+commands. A single-target build only requires the archive command for that
+target.
+
+For native targets, the release build starts the compiled binary on
+`127.0.0.1:39731` to verify that bundled Mermaid assets can be served.
 
 On macOS, you can build in a temporary directory and install the binary to
 `$HOME/.local/bin/mdview`:
@@ -79,7 +87,12 @@ file changes.
 
 - headings, paragraphs, lists, blockquotes, links, images, inline code, and
   fenced code blocks
+- heading anchor links
+- plain URL autolinks
+- task list checkboxes
+- strikethrough
 - GitHub-style tables
+- syntax highlighting for common code fence languages
 - Mermaid diagrams through fenced `mermaid` code blocks
 
 Example:
