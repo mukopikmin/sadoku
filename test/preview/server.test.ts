@@ -1,6 +1,9 @@
 import { assertEquals } from "@std/assert";
 
-import { createPreviewHandler } from "../../src/preview/server.ts";
+import {
+  createPreviewHandler,
+  formatPreviewReloadLog,
+} from "../../src/preview/server.ts";
 
 Deno.test("serves hot reload events as an SSE stream", async () => {
   const filePath = "test/e2e/fixtures/comprehensive.md";
@@ -18,4 +21,14 @@ Deno.test("serves hot reload events as an SSE stream", async () => {
   assertEquals(response.headers.get("connection"), "keep-alive");
 
   await response.body?.cancel();
+});
+
+Deno.test("formats server-side hot reload log messages", () => {
+  assertEquals(
+    formatPreviewReloadLog(
+      "/tmp/example.md",
+      new Date("2026-06-01T07:55:00.000Z"),
+    ),
+    "[2026-06-01T07:55:00.000Z] Reloading preview after Markdown change: /tmp/example.md",
+  );
 });
