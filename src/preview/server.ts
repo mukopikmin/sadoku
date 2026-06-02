@@ -1,4 +1,5 @@
 import { basename, dirname, resolve, toFileUrl } from "@std/path";
+import { formatLogMessage, logError } from "../log.ts";
 import { escapeHtml, renderMarkdown } from "../markdown/html.ts";
 import { readMermaidAsset } from "./assets.ts";
 import { renderPreviewPage } from "./page.ts";
@@ -16,6 +17,19 @@ export type StartedPreviewServer = {
 };
 
 const reloadEvent = new TextEncoder().encode("event: reload\ndata: {}\n\n");
+
+export const formatPreviewReloadLog = (
+  filePath: string,
+  timestamp: Date,
+): string =>
+  formatLogMessage(
+    `Reloading preview after Markdown change: ${filePath}`,
+    timestamp,
+  );
+
+export const logPreviewReload = (filePath: string): void => {
+  console.log(formatPreviewReloadLog(filePath, new Date()));
+};
 
 export const createHotReloadEventStream = (
   filePath: string,
@@ -48,6 +62,7 @@ export const createHotReloadEventStream = (
               continue;
             }
 
+            logPreviewReload(filePath);
             controller.enqueue(reloadEvent);
           }
         } catch (error) {
@@ -146,7 +161,7 @@ export const startPreviewServer = async (
 
   server.finished.catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {
-      console.error(
+      logError(
         `Server stopped unexpectedly: ${
           error instanceof Error ? error.message : String(error)
         }`,
