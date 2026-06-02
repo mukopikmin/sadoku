@@ -1,6 +1,7 @@
 type MermaidApi = {
-  initialize: (options: { startOnLoad: boolean; theme: "dark" | "default" }) =>
-    void;
+  initialize: (
+    options: { startOnLoad: boolean; theme: "dark" | "default" },
+  ) => void;
   run: (options: { nodes: HTMLElement[] }) => Promise<void>;
 };
 
