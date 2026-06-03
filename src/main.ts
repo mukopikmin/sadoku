@@ -2,7 +2,7 @@
 import { CliUsageError, parseArgs, usage, version } from "./cli/args.ts";
 import { openBrowser } from "./cli/browser.ts";
 import { logInfo } from "./log.ts";
-import { startPreviewServer } from "./preview/server.ts";
+import { startPreviewServer } from "./server/preview.ts";
 
 const main = async (): Promise<void> => {
   const options = parseArgs(Deno.args);
@@ -24,6 +24,7 @@ const main = async (): Promise<void> => {
   const preview = await startPreviewServer({
     file: options.file,
     host: options.host,
+    keepAlive: options.keepAlive,
     port: options.port,
   });
 
