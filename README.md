@@ -23,6 +23,12 @@ Use a different port:
 mdview README.md --port 4000
 ```
 
+Bind to a specific host and port:
+
+```sh
+mdview README.md --host 127.0.0.1 --port 4000
+```
+
 Print the URL without opening a browser:
 
 ```sh
