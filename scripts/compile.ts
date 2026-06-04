@@ -25,6 +25,7 @@ const command = new Deno.Command(Deno.execPath(), {
     "--node-modules-dir=none",
     "--no-check",
     "--allow-read",
+    "--allow-write",
     "--allow-net",
     "--allow-run",
     "--allow-env=BROWSER",
