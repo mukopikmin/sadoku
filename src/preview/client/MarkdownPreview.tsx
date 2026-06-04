@@ -289,11 +289,6 @@ export const MarkdownPreview = ({
       onUpdateComment,
     };
     return {
-      blockquote: createCommentableComponent(
-        "blockquote",
-        commentsByLine,
-        commentCallbacks,
-      ),
       h1: createCommentableComponent("h1", commentsByLine, commentCallbacks),
       h2: createCommentableComponent("h2", commentsByLine, commentCallbacks),
       h3: createCommentableComponent("h3", commentsByLine, commentCallbacks),

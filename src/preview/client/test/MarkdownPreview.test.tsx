@@ -181,4 +181,19 @@ Body
     expect(container.querySelector('[data-source-line="3"] p')?.textContent)
       .toBe("Body");
   });
+
+  it("does not add duplicate source line controls for blockquotes", () => {
+    const { container } = renderMarkdown(`> Quoted text
+`);
+
+    expect(container.querySelector("blockquote p")?.textContent).toBe(
+      "Quoted text",
+    );
+    expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
+      1,
+    );
+    expect(
+      screen.getAllByRole("button", { name: "Add comment on line 1" }),
+    ).toHaveLength(1);
+  });
 });
