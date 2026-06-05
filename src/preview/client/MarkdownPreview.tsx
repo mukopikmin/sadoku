@@ -55,6 +55,7 @@ const CommentableBlock = ({
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
+  const hasStaleComments = comments.some((comment) => comment.stale);
 
   const handleCreate = async () => {
     const body = draft.trim();
@@ -114,8 +115,15 @@ const CommentableBlock = ({
         {children}
       </div>
       {(isAdding || comments.length > 0 || error) && (
-        <div className="comment-thread">
-          <div className="comment-thread-heading">Line {line}</div>
+        <div
+          className={hasStaleComments
+            ? "comment-thread comment-thread-stale"
+            : "comment-thread"}
+        >
+          <div className="comment-thread-heading">
+            Line {line}
+            {hasStaleComments && <span>Stale</span>}
+          </div>
           {comments.map((comment) => (
             <div className="comment-item" key={comment.id}>
               {editingCommentId === comment.id
@@ -148,6 +156,12 @@ const CommentableBlock = ({
                 )
                 : (
                   <>
+                    {comment.stale && (
+                      <div className="comment-stale-source">
+                        Originally line {comment.originalLine}:{" "}
+                        <code>{comment.sourceText ?? ""}</code>
+                      </div>
+                    )}
                     <div className="comment-body">{comment.body}</div>
                     <div className="comment-actions">
                       <button
