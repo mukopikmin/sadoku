@@ -37,7 +37,7 @@ jobs:
         run: deno fmt --check
 
       - name: Type check
-        run: deno check --lock=deno.lock src/main.ts scripts/compile.ts scripts/install_macos.ts
+        run: deno check --lock=deno.lock src/main.ts scripts/compile.ts scripts/install_macos.ts scripts/generate_third_party_notices.ts scripts/build_release.ts
 
       - name: Test client
         run: npm test
