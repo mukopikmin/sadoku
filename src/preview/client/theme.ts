@@ -331,7 +331,28 @@ export const previewThemeCss = `
       }
 
       .commentable-content {
+        isolation: isolate;
         position: relative;
+      }
+
+      .commentable-content::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: -4px -8px;
+        border-radius: 6px;
+        background: transparent;
+        pointer-events: none;
+        transition: background-color 120ms ease;
+      }
+
+      .commentable-block:has(.comment-thread) > .commentable-content::before {
+        background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+      }
+
+      .commentable-block:hover > .commentable-content::before,
+      .commentable-block:focus-within > .commentable-content::before {
+        background: color-mix(in srgb, var(--color-accent) 14%, transparent);
       }
 
       .comment-line-button {
