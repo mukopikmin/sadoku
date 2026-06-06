@@ -21,6 +21,7 @@ export type MarkdownPreviewProps = {
   markdown: string;
   onCreateComment: (line: number, body: string) => Promise<void>;
   onDeleteComment: (id: string) => Promise<void>;
+  onResolveComment: (id: string) => Promise<void>;
   onUpdateComment: (id: string, body: string) => Promise<void>;
 };
 
@@ -45,6 +46,7 @@ type CommentableBlockProps = {
   line: number;
   onCreateComment: (line: number, body: string) => Promise<void>;
   onDeleteComment: (id: string) => Promise<void>;
+  onResolveComment: (id: string) => Promise<void>;
   onUpdateComment: (id: string, body: string) => Promise<void>;
 };
 
@@ -59,6 +61,7 @@ const CommentableBlock = ({
   line,
   onCreateComment,
   onDeleteComment,
+  onResolveComment,
   onUpdateComment,
 }: CommentableBlockProps) => {
   const [draft, setDraft] = useState("");
@@ -109,6 +112,18 @@ const CommentableBlock = ({
     setError(undefined);
     try {
       await onDeleteComment(id);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleResolve = async (id: string) => {
+    setIsSaving(true);
+    setError(undefined);
+    try {
+      await onResolveComment(id);
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -171,6 +186,13 @@ const CommentableBlock = ({
                   <>
                     <div className="comment-body">{comment.body}</div>
                     <div className="comment-actions">
+                      <button
+                        disabled={isSaving}
+                        onClick={() => handleResolve(comment.id)}
+                        type="button"
+                      >
+                        Resolve
+                      </button>
                       <button
                         disabled={isSaving}
                         onClick={() => {
@@ -254,7 +276,10 @@ const createCommentableComponent = (
   commentsByLine: Map<number, PreviewComment[]>,
   props: Pick<
     MarkdownPreviewProps,
-    "onCreateComment" | "onDeleteComment" | "onUpdateComment"
+    | "onCreateComment"
+    | "onDeleteComment"
+    | "onResolveComment"
+    | "onUpdateComment"
   >,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
@@ -270,6 +295,7 @@ const createCommentableComponent = (
         line={line}
         onCreateComment={props.onCreateComment}
         onDeleteComment={props.onDeleteComment}
+        onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
       >
         {element}
@@ -282,7 +308,10 @@ const createCommentableListItem = (
   commentsByLine: Map<number, PreviewComment[]>,
   props: Pick<
     MarkdownPreviewProps,
-    "onCreateComment" | "onDeleteComment" | "onUpdateComment"
+    | "onCreateComment"
+    | "onDeleteComment"
+    | "onResolveComment"
+    | "onUpdateComment"
   >,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
@@ -301,6 +330,7 @@ const createCommentableListItem = (
           line={line}
           onCreateComment={props.onCreateComment}
           onDeleteComment={props.onDeleteComment}
+          onResolveComment={props.onResolveComment}
           onUpdateComment={props.onUpdateComment}
         >
           {children}
@@ -314,7 +344,10 @@ const createCommentablePre = (
   commentsByLine: Map<number, PreviewComment[]>,
   props: Pick<
     MarkdownPreviewProps,
-    "onCreateComment" | "onDeleteComment" | "onUpdateComment"
+    | "onCreateComment"
+    | "onDeleteComment"
+    | "onResolveComment"
+    | "onUpdateComment"
   >,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
@@ -333,6 +366,7 @@ const createCommentablePre = (
         line={line}
         onCreateComment={props.onCreateComment}
         onDeleteComment={props.onDeleteComment}
+        onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
       >
         {element}
@@ -346,6 +380,7 @@ export const MarkdownPreview = ({
   markdown,
   onCreateComment,
   onDeleteComment,
+  onResolveComment,
   onUpdateComment,
 }: MarkdownPreviewProps) => {
   const commentsByLine = useMemo(() => {
@@ -363,6 +398,7 @@ export const MarkdownPreview = ({
     const commentCallbacks = {
       onCreateComment,
       onDeleteComment,
+      onResolveComment,
       onUpdateComment,
     };
     return {
@@ -388,7 +424,13 @@ export const MarkdownPreview = ({
         );
       },
     };
-  }, [commentsByLine, onCreateComment, onDeleteComment, onUpdateComment]);
+  }, [
+    commentsByLine,
+    onCreateComment,
+    onDeleteComment,
+    onResolveComment,
+    onUpdateComment,
+  ]);
 
   return (
     <ReactMarkdown

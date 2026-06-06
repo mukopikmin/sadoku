@@ -208,6 +208,7 @@ export const App = () => {
               markdown={state.document.markdown}
               onCreateComment={handleCreateComment}
               onDeleteComment={handleDeleteComment}
+              onResolveComment={handleResolveComment}
               onUpdateComment={handleUpdateComment}
             />
           )
