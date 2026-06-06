@@ -4,12 +4,16 @@ import type { PreviewComment } from "./comments";
 export type CommentListProps = {
   comments: PreviewComment[];
   onDeleteComment: (id: string) => Promise<void>;
+  onReopenComment: (id: string) => Promise<void>;
+  onResolveComment: (id: string) => Promise<void>;
   onUpdateComment: (id: string, body: string) => Promise<void>;
 };
 
 type CommentListItemProps = {
   comment: PreviewComment;
   onDeleteComment: (id: string) => Promise<void>;
+  onReopenComment: (id: string) => Promise<void>;
+  onResolveComment: (id: string) => Promise<void>;
   onUpdateComment: (id: string, body: string) => Promise<void>;
 };
 
@@ -24,6 +28,8 @@ const formatLineLabel = (comment: PreviewComment): string => {
 const CommentListItem = ({
   comment,
   onDeleteComment,
+  onReopenComment,
+  onResolveComment,
   onUpdateComment,
 }: CommentListItemProps) => {
   const [draft, setDraft] = useState(comment.body);
@@ -57,11 +63,38 @@ const CommentListItem = ({
     }
   };
 
+  const handleResolve = async () => {
+    setIsSaving(true);
+    setError(undefined);
+    try {
+      await onResolveComment(comment.id);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReopen = async () => {
+    setIsSaving(true);
+    setError(undefined);
+    try {
+      await onReopenComment(comment.id);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <article className="comment-list-item">
       <div className="comment-list-meta">
         <span>{formatLineLabel(comment)}</span>
-        {comment.stale && <span className="comment-state">Stale</span>}
+        {comment.resolved && <span className="comment-state">Resolved</span>}
+        {!comment.resolved && comment.stale && (
+          <span className="comment-state">Stale</span>
+        )}
       </div>
       {comment.sourceText && (
         <div className="comment-source-block">
@@ -104,6 +137,25 @@ const CommentListItem = ({
           <>
             <div className="comment-body">{comment.body}</div>
             <div className="comment-actions">
+              {comment.resolved
+                ? (
+                  <button
+                    disabled={isSaving}
+                    onClick={handleReopen}
+                    type="button"
+                  >
+                    Reopen
+                  </button>
+                )
+                : (
+                  <button
+                    disabled={isSaving}
+                    onClick={handleResolve}
+                    type="button"
+                  >
+                    Resolve
+                  </button>
+                )}
               <button
                 disabled={isSaving}
                 onClick={() => setIsEditing(true)}
@@ -126,16 +178,26 @@ const CommentListItem = ({
   );
 };
 
-type CommentSectionProps = {
-  comments: PreviewComment[];
-  emptyText: string;
-  title: string;
-} & Pick<CommentListProps, "onDeleteComment" | "onUpdateComment">;
+type CommentSectionProps =
+  & {
+    comments: PreviewComment[];
+    emptyText: string;
+    title: string;
+  }
+  & Pick<
+    CommentListProps,
+    | "onDeleteComment"
+    | "onReopenComment"
+    | "onResolveComment"
+    | "onUpdateComment"
+  >;
 
 const CommentSection = ({
   comments,
   emptyText,
   onDeleteComment,
+  onReopenComment,
+  onResolveComment,
   onUpdateComment,
   title,
 }: CommentSectionProps) => (
@@ -150,6 +212,8 @@ const CommentSection = ({
               comment={comment}
               key={comment.id}
               onDeleteComment={onDeleteComment}
+              onReopenComment={onReopenComment}
+              onResolveComment={onResolveComment}
               onUpdateComment={onUpdateComment}
             />
           ))}
@@ -161,10 +225,17 @@ const CommentSection = ({
 export const CommentList = ({
   comments,
   onDeleteComment,
+  onReopenComment,
+  onResolveComment,
   onUpdateComment,
 }: CommentListProps) => {
-  const activeComments = comments.filter((comment) => !comment.stale);
-  const staleComments = comments.filter((comment) => comment.stale);
+  const activeComments = comments.filter((comment) =>
+    !comment.resolved && !comment.stale
+  );
+  const staleComments = comments.filter((comment) =>
+    !comment.resolved && comment.stale
+  );
+  const resolvedComments = comments.filter((comment) => comment.resolved);
 
   return (
     <div className="comment-list">
@@ -172,6 +243,8 @@ export const CommentList = ({
         comments={activeComments}
         emptyText="No active comments."
         onDeleteComment={onDeleteComment}
+        onReopenComment={onReopenComment}
+        onResolveComment={onResolveComment}
         onUpdateComment={onUpdateComment}
         title={`Active comments (${activeComments.length})`}
       />
@@ -179,8 +252,19 @@ export const CommentList = ({
         comments={staleComments}
         emptyText="No stale comments."
         onDeleteComment={onDeleteComment}
+        onReopenComment={onReopenComment}
+        onResolveComment={onResolveComment}
         onUpdateComment={onUpdateComment}
         title={`Stale comments (${staleComments.length})`}
+      />
+      <CommentSection
+        comments={resolvedComments}
+        emptyText="No resolved comments."
+        onDeleteComment={onDeleteComment}
+        onReopenComment={onReopenComment}
+        onResolveComment={onResolveComment}
+        onUpdateComment={onUpdateComment}
+        title={`Resolved comments (${resolvedComments.length})`}
       />
     </div>
   );
