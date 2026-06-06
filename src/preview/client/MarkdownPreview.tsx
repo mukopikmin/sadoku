@@ -151,7 +151,6 @@ const CommentableBlock = ({
       </div>
       {(isAdding || comments.length > 0 || error) && (
         <div className="comment-thread">
-          <div className="comment-thread-heading">Line {line}</div>
           {comments.map((comment) => (
             <div className="comment-item" key={comment.id}>
               {editingCommentId === comment.id
@@ -183,35 +182,38 @@ const CommentableBlock = ({
                   </>
                 )
                 : (
-                  <div className="comment-row">
-                    <div className="comment-body">{comment.body}</div>
-                    <div className="comment-actions">
-                      <button
-                        disabled={isSaving}
-                        onClick={() => handleResolve(comment.id)}
-                        type="button"
-                      >
-                        Resolve
-                      </button>
-                      <button
-                        disabled={isSaving}
-                        onClick={() => {
-                          setEditingCommentId(comment.id);
-                          setEditDraft(comment.body);
-                        }}
-                        type="button"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        disabled={isSaving}
-                        onClick={() => handleDelete(comment.id)}
-                        type="button"
-                      >
-                        Delete
-                      </button>
+                  <>
+                    <div className="comment-item-header">
+                      <div className="comment-thread-heading">Line {line}</div>
+                      <div className="comment-actions">
+                        <button
+                          disabled={isSaving}
+                          onClick={() => handleResolve(comment.id)}
+                          type="button"
+                        >
+                          Resolve
+                        </button>
+                        <button
+                          disabled={isSaving}
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditDraft(comment.body);
+                          }}
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          disabled={isSaving}
+                          onClick={() => handleDelete(comment.id)}
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                    <div className="comment-body">{comment.body}</div>
+                  </>
                 )}
             </div>
           ))}
