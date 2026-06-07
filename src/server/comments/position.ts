@@ -1,8 +1,5 @@
-import type {
-  PreviewComment,
-  PreviewCommentsDocument,
-} from "./comment_types.ts";
-import { readCommentsDocument } from "./comment_storage.ts";
+import type { PreviewComment, PreviewCommentsDocument } from "./types.ts";
+import { readCommentsDocument } from "./storage.ts";
 
 const lineSearchRadius = 40;
 

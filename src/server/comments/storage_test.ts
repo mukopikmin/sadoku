@@ -1,12 +1,12 @@
 import { assertEquals, assertRejects } from "@std/assert";
 
-import type { PreviewCommentsDocument } from "./comment_types.ts";
+import type { PreviewCommentsDocument } from "./types.ts";
 import {
   getCommentsFilePath,
   readCommentsDocument,
   writeCommentsDocument,
-} from "./comment_storage.ts";
-import { createTempMarkdown, removeTempMarkdown } from "./test_helpers.ts";
+} from "./storage.ts";
+import { createTempMarkdown, removeTempMarkdown } from "../test_helpers.ts";
 
 Deno.test("returns an empty comments document when storage does not exist", async () => {
   const filePath = await createTempMarkdown();

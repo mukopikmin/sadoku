@@ -1,7 +1,4 @@
-import type {
-  PreviewComment,
-  PreviewCommentsDocument,
-} from "./comment_types.ts";
+import type { PreviewComment, PreviewCommentsDocument } from "./types.ts";
 
 export const getCommentsFilePath = (markdownFilePath: string): string =>
   `${markdownFilePath}.mdview-comments.json`;

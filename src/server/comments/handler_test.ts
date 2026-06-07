@@ -1,11 +1,11 @@
 import { assertEquals, assertMatch } from "@std/assert";
 
-import { createPreviewHandler } from "./preview.ts";
+import { createPreviewHandler } from "../preview.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,
   serveHandlerInfo,
-} from "./test_helpers.ts";
+} from "../test_helpers.ts";
 
 const requestComments = async (
   handler: Deno.ServeHandler,

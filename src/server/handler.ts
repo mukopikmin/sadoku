@@ -1,6 +1,6 @@
 import { basename, resolve } from "@std/path";
 import { handlePreviewAssetRequest } from "./assets.ts";
-import { handleCommentsRequest } from "./comments.ts";
+import { handleCommentsRequest } from "./comments/handler.ts";
 import { handlePreviewDocumentRequest } from "./document.ts";
 import { createHotReloadEventStream } from "./events.ts";
 import { textResponse } from "./responses.ts";
