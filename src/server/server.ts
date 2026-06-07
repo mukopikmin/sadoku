@@ -15,6 +15,64 @@ export type StartedPreviewServer = {
   server: Deno.HttpServer<Deno.NetAddr>;
 };
 
+type PreviewShutdownSchedulerOptions = {
+  delayMs?: number;
+  filePath: string;
+  keepAlive?: boolean;
+  shutdown: () => Promise<void>;
+};
+
+export const createPreviewShutdownScheduler = (
+  options: PreviewShutdownSchedulerOptions,
+): {
+  onEventStreamClose: () => void;
+  onEventStreamOpen: () => void;
+} => {
+  let eventStreamCount = 0;
+  let shutdownTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const scheduleShutdown = () => {
+    if (
+      options.keepAlive || eventStreamCount > 0 ||
+      shutdownTimer !== undefined
+    ) {
+      return;
+    }
+    shutdownTimer = setTimeout(() => {
+      shutdownTimer = undefined;
+      if (eventStreamCount === 0) {
+        logPreviewClosed(options.filePath);
+        options.shutdown().catch((error) => {
+          logError(
+            `Failed to shut down after preview closed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        });
+      }
+    }, options.delayMs ?? 1000);
+  };
+
+  const cancelShutdown = () => {
+    if (shutdownTimer === undefined) return;
+    clearTimeout(shutdownTimer);
+    shutdownTimer = undefined;
+  };
+
+  return {
+    onEventStreamOpen: () => {
+      if (options.keepAlive) return;
+      eventStreamCount += 1;
+      cancelShutdown();
+    },
+    onEventStreamClose: () => {
+      if (options.keepAlive) return;
+      eventStreamCount = Math.max(0, eventStreamCount - 1);
+      scheduleShutdown();
+    },
+  };
+};
+
 export const formatPreviewClosedLog = (
   filePath: string,
   timestamp: Date,
@@ -37,32 +95,14 @@ export const startPreviewServer = async (
     throw new Error(`Markdown file not found: ${filePath}`);
   }
 
-  let eventStreamCount = 0;
-  let shutdownTimer: ReturnType<typeof setTimeout> | undefined;
-  const scheduleShutdown = () => {
-    if (eventStreamCount > 0 || shutdownTimer !== undefined) return;
-    shutdownTimer = setTimeout(() => {
-      shutdownTimer = undefined;
-      if (eventStreamCount === 0) {
-        logPreviewClosed(filePath);
-        server.shutdown().catch((error) => {
-          logError(
-            `Failed to shut down after preview closed: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          );
-        });
-      }
-    }, 1000);
-  };
+  let server: Deno.HttpServer<Deno.NetAddr>;
+  const shutdownScheduler = createPreviewShutdownScheduler({
+    filePath,
+    keepAlive: options.keepAlive,
+    shutdown: () => server.shutdown(),
+  });
 
-  const cancelShutdown = () => {
-    if (shutdownTimer === undefined) return;
-    clearTimeout(shutdownTimer);
-    shutdownTimer = undefined;
-  };
-
-  const server = Deno.serve(
+  server = Deno.serve(
     {
       hostname: options.host,
       port: options.port,
@@ -70,18 +110,7 @@ export const startPreviewServer = async (
         // The CLI prints the canonical URL after startPreviewServer resolves.
       },
     },
-    createPreviewHandler(filePath, {
-      onEventStreamOpen: () => {
-        if (options.keepAlive) return;
-        eventStreamCount += 1;
-        cancelShutdown();
-      },
-      onEventStreamClose: () => {
-        if (options.keepAlive) return;
-        eventStreamCount = Math.max(0, eventStreamCount - 1);
-        scheduleShutdown();
-      },
-    }),
+    createPreviewHandler(filePath, shutdownScheduler),
   );
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;
