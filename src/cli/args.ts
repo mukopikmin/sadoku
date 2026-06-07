@@ -22,7 +22,7 @@ export const usage =
   `Usage: mdview <file.md> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
 
 Options:
-  -p, --port   Port to bind. Defaults to 3334.
+  -p, --port   Starting port to bind. Defaults to 3334.
   --host       Host to bind. Defaults to 127.0.0.1.
   --no-open    Do not open the preview in your browser automatically.
   --keep-alive Keep the server running after the browser tab is closed.
