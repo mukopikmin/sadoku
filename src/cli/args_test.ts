@@ -4,12 +4,7 @@ import {
   assertMatch,
   assertThrows,
 } from "@std/assert";
-import {
-  CliUsageError,
-  parseArgs,
-  usage,
-  version,
-} from "../../src/cli/args.ts";
+import { CliUsageError, parseArgs, usage, version } from "./args.ts";
 
 Deno.test("uses the default host and port", () => {
   assertEquals(parseArgs(["README.md"]), {
