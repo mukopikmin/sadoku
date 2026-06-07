@@ -1,6 +1,6 @@
 import { assertEquals } from "@std/assert";
 
-import { handlePreviewAssetRequest } from "../../src/server/assets.ts";
+import { handlePreviewAssetRequest } from "./assets.ts";
 
 Deno.test("rejects missing and traversing asset paths", async () => {
   for (

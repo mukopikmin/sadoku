@@ -1,6 +1,6 @@
 import { assertEquals, assertMatch } from "@std/assert";
 
-import { createPreviewHandler } from "../../src/server/preview.ts";
+import { createPreviewHandler } from "./preview.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,

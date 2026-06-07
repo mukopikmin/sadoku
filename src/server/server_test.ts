@@ -4,7 +4,7 @@ import {
   createPreviewShutdownScheduler,
   type StartedPreviewServer,
   startPreviewServer,
-} from "../../src/server/server.ts";
+} from "./server.ts";
 import { createTempMarkdown, removeTempMarkdown } from "./test_helpers.ts";
 
 const wait = (milliseconds: number): Promise<void> =>

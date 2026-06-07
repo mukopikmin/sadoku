@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 
-import { renderSpaShell } from "../../src/server/shell.ts";
+import { renderSpaShell } from "./shell.ts";
 
 Deno.test("escapes all HTML-sensitive characters in the SPA title", () => {
   const html = renderSpaShell(`<&>"' title`);

@@ -5,7 +5,7 @@ import {
   noStoreJson,
   notFoundResponse,
   textResponse,
-} from "../../src/server/responses.ts";
+} from "./responses.ts";
 
 Deno.test("builds consistent shared responses", async () => {
   const text = textResponse("bad", 400);

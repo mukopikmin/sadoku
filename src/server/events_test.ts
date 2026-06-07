@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { resolve } from "@std/path";
 
-import { createHotReloadEventStream } from "../../src/server/events.ts";
+import { createHotReloadEventStream } from "./events.ts";
 
 const readWithTimeout = async (
   reader: ReadableStreamDefaultReader<Uint8Array>,

@@ -1,11 +1,11 @@
 import { assertEquals } from "@std/assert";
 
-import type { PreviewComment } from "../../src/server/comment_types.ts";
+import type { PreviewComment } from "./comment_types.ts";
 import {
   getLineText,
   hashSourceText,
   resolveCommentPosition,
-} from "../../src/server/comment_position.ts";
+} from "./comment_position.ts";
 
 const createComment = (
   overrides: Partial<PreviewComment> = {},
