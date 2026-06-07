@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { buildOpenBrowserCommand } from "../../src/cli/browser.ts";
+import { buildOpenBrowserCommand } from "./browser.ts";
 
 Deno.test("builds browser open commands for supported platforms", () => {
   assertEquals(buildOpenBrowserCommand("http://127.0.0.1:3334/", "darwin"), {

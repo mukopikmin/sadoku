@@ -1,9 +1,9 @@
 import { assertEquals } from "@std/assert";
 
-import { createPreviewHandler } from "../../src/server/preview.ts";
+import { createPreviewHandler } from "../../src/server/mod.ts";
 
 Deno.test("serves hot reload events as an SSE stream", async () => {
-  const filePath = "test/e2e/fixtures/comprehensive.md";
+  const filePath = "test/integration/fixtures/comprehensive.md";
   const response = await createPreviewHandler(filePath)(
     new Request("http://127.0.0.1:3334/__mdview/events"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -21,7 +21,7 @@ Deno.test("serves hot reload events as an SSE stream", async () => {
 });
 
 Deno.test("serves the preview client asset", async () => {
-  const filePath = "test/e2e/fixtures/comprehensive.md";
+  const filePath = "test/integration/fixtures/comprehensive.md";
   const response = await createPreviewHandler(filePath)(
     new Request("http://127.0.0.1:3334/assets/client.js"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -39,7 +39,7 @@ Deno.test("serves the preview client asset", async () => {
 });
 
 Deno.test("serves the SPA shell", async () => {
-  const filePath = "test/e2e/fixtures/comprehensive.md";
+  const filePath = "test/integration/fixtures/comprehensive.md";
   const response = await createPreviewHandler(filePath)(
     new Request("http://127.0.0.1:3334/"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -57,7 +57,7 @@ Deno.test("serves the SPA shell", async () => {
 });
 
 Deno.test("serves the raw preview document for the SPA", async () => {
-  const filePath = "test/e2e/fixtures/comprehensive.md";
+  const filePath = "test/integration/fixtures/comprehensive.md";
   const response = await createPreviewHandler(filePath)(
     new Request("http://127.0.0.1:3334/__mdview/document"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,

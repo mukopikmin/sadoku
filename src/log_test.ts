@@ -1,6 +1,6 @@
 import { assertEquals } from "@std/assert";
 
-import { formatLogMessage } from "../src/log.ts";
+import { formatLogMessage } from "./log.ts";
 
 Deno.test("formats log messages with ISO timestamps", () => {
   assertEquals(

@@ -1,25 +1,19 @@
-import type { PreviewComment } from "./comment_types.ts";
+import type { PreviewComment } from "./types.ts";
 import {
   getLineText,
   hashSourceText,
   readResolvedCommentsDocument,
   resolveCommentPosition,
-} from "./comment_position.ts";
-import {
-  readCommentsDocument,
-  writeCommentsDocument,
-} from "./comment_storage.ts";
+} from "./position.ts";
+import { readCommentsDocument, writeCommentsDocument } from "./storage.ts";
 import {
   methodNotAllowedResponse,
   noStoreJson,
   notFoundResponse,
   textResponse,
-} from "./responses.ts";
+} from "../responses.ts";
 
-export type {
-  PreviewComment,
-  PreviewCommentsDocument,
-} from "./comment_types.ts";
+export type { PreviewComment, PreviewCommentsDocument } from "./types.ts";
 
 const parseJsonBody = async (request: Request): Promise<unknown> => {
   try {
