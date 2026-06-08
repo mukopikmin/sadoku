@@ -69,6 +69,15 @@ automatically when the Markdown file changes.
 By default, the server stops after the browser tab is closed. Use `--keep-alive`
 when you want to leave the server running.
 
+Comments are stored outside the Markdown file's directory so they do not appear
+as repository changes. The default comments directory is:
+
+- macOS: `~/Library/Application Support/mdview/comments`
+- Linux: `$XDG_DATA_HOME/mdview/comments`, or `~/.local/share/mdview/comments`
+- Windows: `%APPDATA%\mdview\comments`
+
+Set `MDVIEW_COMMENTS_DIR` to choose a different comments directory.
+
 ## Options
 
 | Option              | Description                                                | Default                |

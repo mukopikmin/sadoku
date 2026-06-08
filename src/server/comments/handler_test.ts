@@ -1,10 +1,13 @@
 import { assertEquals, assertMatch } from "@std/assert";
+import { dirname } from "@std/path";
 
+import { getCommentsFilePath } from "./storage.ts";
 import { createPreviewHandler } from "../mod.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,
   serveHandlerInfo,
+  withTempCommentsDirectory,
 } from "../test_helpers.ts";
 
 const requestComments = async (
@@ -17,7 +20,16 @@ const requestComments = async (
     serveHandlerInfo,
   );
 
-Deno.test("validates comment creation input", async () => {
+const testWithTempComments = (
+  name: string,
+  fn: () => Promise<void>,
+): void => {
+  Deno.test(name, async () => {
+    await withTempCommentsDirectory(fn);
+  });
+};
+
+testWithTempComments("validates comment creation input", async () => {
   const filePath = await createTempMarkdown();
   const handler = createPreviewHandler(filePath);
   const cases: Array<{
@@ -72,7 +84,7 @@ Deno.test("validates comment creation input", async () => {
   }
 });
 
-Deno.test("trims comment bodies before storing them", async () => {
+testWithTempComments("trims comment bodies before storing them", async () => {
   const filePath = await createTempMarkdown();
   const handler = createPreviewHandler(filePath);
   try {
@@ -97,56 +109,63 @@ Deno.test("trims comment bodies before storing them", async () => {
   }
 });
 
-Deno.test("returns not found for missing comments and unknown actions", async () => {
-  const filePath = await createTempMarkdown();
-  const handler = createPreviewHandler(filePath);
-  try {
-    const cases: Array<[string, string, string]> = [
-      ["PUT", "/__mdview/comments/missing", "Comment not found."],
-      ["DELETE", "/__mdview/comments/missing", "Comment not found."],
-      ["POST", "/__mdview/comments/missing/resolve", "Comment not found."],
-      ["POST", "/__mdview/comments/missing/reopen", "Comment not found."],
-      ["POST", "/__mdview/comments/missing/unknown", "Not found."],
-      ["GET", "/__mdview/comments/", "Comment not found."],
-    ];
+testWithTempComments(
+  "returns not found for missing comments and unknown actions",
+  async () => {
+    const filePath = await createTempMarkdown();
+    const handler = createPreviewHandler(filePath);
+    try {
+      const cases: Array<[string, string, string]> = [
+        ["PUT", "/__mdview/comments/missing", "Comment not found."],
+        ["DELETE", "/__mdview/comments/missing", "Comment not found."],
+        ["POST", "/__mdview/comments/missing/resolve", "Comment not found."],
+        ["POST", "/__mdview/comments/missing/reopen", "Comment not found."],
+        ["POST", "/__mdview/comments/missing/unknown", "Not found."],
+        ["GET", "/__mdview/comments/", "Comment not found."],
+      ];
 
-    for (const [method, pathname, expected] of cases) {
-      const response = await requestComments(handler, pathname, {
-        method,
-        headers: { "content-type": "application/json" },
-        body: method === "PUT"
-          ? JSON.stringify({ body: "Updated" })
-          : undefined,
-      });
+      for (const [method, pathname, expected] of cases) {
+        const response = await requestComments(handler, pathname, {
+          method,
+          headers: { "content-type": "application/json" },
+          body: method === "PUT"
+            ? JSON.stringify({ body: "Updated" })
+            : undefined,
+        });
 
-      assertEquals(response.status, 404);
-      assertEquals(await response.text(), expected);
+        assertEquals(response.status, 404);
+        assertEquals(await response.text(), expected);
+      }
+    } finally {
+      await removeTempMarkdown(filePath);
     }
-  } finally {
-    await removeTempMarkdown(filePath);
-  }
-});
+  },
+);
 
-Deno.test("returns method not allowed for unsupported comment methods", async () => {
+testWithTempComments(
+  "returns method not allowed for unsupported comment methods",
+  async () => {
+    const filePath = await createTempMarkdown();
+    const handler = createPreviewHandler(filePath);
+    try {
+      const response = await requestComments(
+        handler,
+        "/__mdview/comments/comment-1",
+        { method: "PATCH" },
+      );
+
+      assertEquals(response.status, 405);
+      assertEquals(await response.text(), "Method not allowed.");
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  },
+);
+
+testWithTempComments("accepts URL-encoded comment identifiers", async () => {
   const filePath = await createTempMarkdown();
-  const handler = createPreviewHandler(filePath);
-  try {
-    const response = await requestComments(
-      handler,
-      "/__mdview/comments/comment-1",
-      { method: "PATCH" },
-    );
-
-    assertEquals(response.status, 405);
-    assertEquals(await response.text(), "Method not allowed.");
-  } finally {
-    await removeTempMarkdown(filePath);
-  }
-});
-
-Deno.test("accepts URL-encoded comment identifiers", async () => {
-  const filePath = await createTempMarkdown();
-  const commentsPath = `${filePath}.mdview-comments.json`;
+  const commentsPath = getCommentsFilePath(filePath);
+  await Deno.mkdir(dirname(commentsPath), { recursive: true });
   await Deno.writeTextFile(
     commentsPath,
     JSON.stringify({
