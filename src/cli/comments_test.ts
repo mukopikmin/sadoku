@@ -3,9 +3,11 @@ import { basename, join } from "@std/path";
 
 import {
   formatCommentFilesTable,
+  inspectComments,
   listCommentFiles,
   type ListedCommentFile,
   removeCommentFile,
+  resolveComments,
   shouldRemoveCommentFile,
 } from "./comments.ts";
 import {
@@ -106,6 +108,107 @@ Deno.test("parses confirmation answers for removing comment files", () => {
   assertEquals(shouldRemoveCommentFile(" yes "), true);
   assertEquals(shouldRemoveCommentFile(""), false);
   assertEquals(shouldRemoveCommentFile("n"), false);
+});
+
+Deno.test("inspects unresolved comments with updated positions", async () => {
+  await withTempCommentsDirectory(async () => {
+    const filePath = await createTempMarkdown("# Title\n\nAdded\nBody\n");
+    try {
+      await writeCommentsDocument(filePath, {
+        comments: [
+          {
+            body: "Revise this.",
+            createdAt: "2026-06-08T13:00:00.000Z",
+            id: "comment-1",
+            line: 3,
+            originalLine: 3,
+            resolved: false,
+            sourceHash: "428a1095",
+            sourceText: "Body",
+            stale: false,
+            updatedAt: "2026-06-08T13:00:00.000Z",
+          },
+          {
+            body: "Done.",
+            createdAt: "2026-06-08T13:00:00.000Z",
+            id: "comment-2",
+            line: 1,
+            originalLine: 1,
+            resolved: true,
+            stale: false,
+            updatedAt: "2026-06-08T13:00:00.000Z",
+          },
+        ],
+        filePath,
+      });
+
+      const document = await inspectComments(filePath);
+
+      assertEquals(document.filePath, filePath);
+      assertEquals(document.comments.length, 1);
+      assertEquals(document.comments[0].id, "comment-1");
+      assertEquals(document.comments[0].line, 4);
+      assertEquals(document.comments[0].stale, false);
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  });
+});
+
+Deno.test("resolves selected comments atomically", async () => {
+  await withTempCommentsDirectory(async () => {
+    const filePath = await createTempMarkdown();
+    try {
+      await writeCommentsDocument(filePath, {
+        comments: [
+          {
+            body: "First",
+            createdAt: "2026-06-08T13:00:00.000Z",
+            id: "comment-1",
+            line: 1,
+            originalLine: 1,
+            resolved: false,
+            stale: false,
+            updatedAt: "2026-06-08T13:00:00.000Z",
+          },
+          {
+            body: "Second",
+            createdAt: "2026-06-08T13:00:00.000Z",
+            id: "comment-2",
+            line: 3,
+            originalLine: 3,
+            resolved: false,
+            stale: false,
+            updatedAt: "2026-06-08T13:00:00.000Z",
+          },
+        ],
+        filePath,
+      });
+
+      const resolved = await resolveComments(filePath, ["comment-2"]);
+      const inspected = await inspectComments(filePath);
+
+      assertEquals(resolved.comments.length, 1);
+      assertEquals(resolved.comments[0].id, "comment-2");
+      assertEquals(resolved.comments[0].resolved, true);
+      assertEquals(typeof resolved.comments[0].resolvedAt, "string");
+      assertEquals(inspected.comments.map((comment) => comment.id), [
+        "comment-1",
+      ]);
+
+      await assertRejects(
+        () => resolveComments(filePath, ["comment-1", "missing"]),
+        Error,
+        "Comment not found: missing",
+      );
+      assertEquals(
+        (await inspectComments(filePath)).comments.map((comment) => comment.id),
+        ["comment-1"],
+      );
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  });
 });
 
 Deno.test("removes a comment file from the configured comments directory", async () => {

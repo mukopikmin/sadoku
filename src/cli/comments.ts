@@ -1,5 +1,11 @@
-import { basename, join } from "@std/path";
-import { getCommentsDirectoryPath } from "../server/comments/storage.ts";
+import { basename, join, resolve } from "@std/path";
+import {
+  getCommentsDirectoryPath,
+  readCommentsDocument,
+  writeCommentsDocument,
+} from "../server/comments/storage.ts";
+import { readResolvedCommentsDocument } from "../server/comments/position.ts";
+import type { PreviewCommentsDocument } from "../server/comments/types.ts";
 
 type StoredComment = {
   resolved?: boolean;
@@ -128,6 +134,57 @@ export const formatCommentFilesTable = (
 
 export const shouldRemoveCommentFile = (answer: string): boolean =>
   ["y", "yes"].includes(answer.trim().toLowerCase());
+
+export const inspectComments = async (
+  filePath: string,
+): Promise<PreviewCommentsDocument> => {
+  const resolvedFilePath = resolve(filePath);
+  const document = await readResolvedCommentsDocument(resolvedFilePath);
+  return {
+    comments: document.comments.filter((comment) => !comment.resolved),
+    filePath: resolvedFilePath,
+  };
+};
+
+export const resolveComments = async (
+  filePath: string,
+  commentIds: string[],
+): Promise<PreviewCommentsDocument> => {
+  if (commentIds.length === 0) {
+    throw new Error("At least one comment ID is required.");
+  }
+
+  const resolvedFilePath = resolve(filePath);
+  const document = await readCommentsDocument(resolvedFilePath);
+  const requestedIds = new Set(commentIds);
+  const knownIds = new Set(document.comments.map((comment) => comment.id));
+  const missingIds = [...requestedIds].filter((id) => !knownIds.has(id));
+  if (missingIds.length > 0) {
+    throw new Error(`Comment not found: ${missingIds.join(", ")}`);
+  }
+
+  const now = new Date().toISOString();
+  const updatedDocument = {
+    comments: document.comments.map((comment) =>
+      requestedIds.has(comment.id)
+        ? {
+          ...comment,
+          resolved: true,
+          resolvedAt: now,
+          updatedAt: now,
+        }
+        : comment
+    ),
+    filePath: resolvedFilePath,
+  };
+  await writeCommentsDocument(resolvedFilePath, updatedDocument);
+  return {
+    comments: updatedDocument.comments.filter((comment) =>
+      requestedIds.has(comment.id)
+    ),
+    filePath: resolvedFilePath,
+  };
+};
 
 export const removeCommentFile = async (
   fileName: string,

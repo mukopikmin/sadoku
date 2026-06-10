@@ -3,8 +3,10 @@ import { CliUsageError, parseArgs, usage, version } from "./cli/args.ts";
 import { openBrowser } from "./cli/browser.ts";
 import {
   formatCommentFilesTable,
+  inspectComments,
   listCommentFiles,
   removeCommentFile,
+  resolveComments,
   shouldRemoveCommentFile,
 } from "./cli/comments.ts";
 import { logInfo } from "./log.ts";
@@ -29,6 +31,28 @@ const main = async (): Promise<void> => {
       console.error(`Warning: ${warning}`);
     }
     console.log(formatCommentFilesTable(result.entries).trimEnd());
+    return;
+  }
+
+  if (options.command === "comments-inspect") {
+    if (!options.file) {
+      throw new CliUsageError("Missing Markdown file.");
+    }
+    console.log(JSON.stringify(await inspectComments(options.file), null, 2));
+    return;
+  }
+
+  if (options.command === "comments-resolve") {
+    if (!options.file) {
+      throw new CliUsageError("Missing Markdown file.");
+    }
+    console.log(
+      JSON.stringify(
+        await resolveComments(options.file, options.commentIds ?? []),
+        null,
+        2,
+      ),
+    );
     return;
   }
 

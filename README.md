@@ -84,6 +84,18 @@ List stored comment files:
 mdview comments list
 ```
 
+Inspect unresolved comments for a Markdown file as JSON:
+
+```sh
+mdview comments inspect README.md
+```
+
+Mark one or more comments as resolved:
+
+```sh
+mdview comments resolve README.md <comment-id>...
+```
+
 The list shows each stored comment file, the target Markdown path, comment
 count, unresolved comment count, and the latest `updatedAt` value from the
 stored comments.

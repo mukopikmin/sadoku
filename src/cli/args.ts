@@ -2,7 +2,12 @@ import { parseArgs as parseCliArgs } from "@std/cli/parse-args";
 export { version } from "../version.ts";
 
 export type CliOptions = {
-  command?: "comments-list" | "comments-rm";
+  command?:
+    | "comments-inspect"
+    | "comments-list"
+    | "comments-resolve"
+    | "comments-rm";
+  commentIds?: string[];
   commentFile?: string;
   file: string | undefined;
   force: boolean;
@@ -23,6 +28,8 @@ export class CliUsageError extends Error {
 
 export const usage = `Usage:
   mdview <file.md> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
+  mdview comments inspect <file.md>
+  mdview comments resolve <file.md> <comment-id>...
   mdview comments list
   mdview comments rm <comment-file> [--force]
 
@@ -74,10 +81,9 @@ export const parseArgs = (argv: string[]): CliOptions => {
     }
   };
 
-  if (flags._.length > 1) {
+  if (flags._[0]?.toString() === "comments") {
     if (
       flags._.length === 2 &&
-      flags._[0]?.toString() === "comments" &&
       flags._[1]?.toString() === "list"
     ) {
       rejectCommentCommandPreviewOptions("comments list");
@@ -98,7 +104,6 @@ export const parseArgs = (argv: string[]): CliOptions => {
 
     if (
       flags._.length === 3 &&
-      flags._[0]?.toString() === "comments" &&
       flags._[1]?.toString() === "rm"
     ) {
       rejectCommentCommandPreviewOptions("comments rm");
@@ -118,6 +123,51 @@ export const parseArgs = (argv: string[]): CliOptions => {
       return options;
     }
 
+    if (
+      flags._.length === 3 &&
+      flags._[1]?.toString() === "inspect"
+    ) {
+      rejectCommentCommandPreviewOptions("comments inspect");
+
+      const options: CliOptions = {
+        command: "comments-inspect",
+        file: flags._[2]?.toString(),
+        force: false,
+        host: "127.0.0.1",
+        keepAlive: false,
+        open: true,
+        port: 3334,
+      };
+      if (flags.help) options.help = true;
+      if (flags.version) options.version = true;
+      return options;
+    }
+
+    if (
+      flags._.length >= 4 &&
+      flags._[1]?.toString() === "resolve"
+    ) {
+      rejectCommentCommandPreviewOptions("comments resolve");
+
+      const options: CliOptions = {
+        command: "comments-resolve",
+        commentIds: flags._.slice(3).map(String),
+        file: flags._[2]?.toString(),
+        force: false,
+        host: "127.0.0.1",
+        keepAlive: false,
+        open: true,
+        port: 3334,
+      };
+      if (flags.help) options.help = true;
+      if (flags.version) options.version = true;
+      return options;
+    }
+
+    throw new CliUsageError("Invalid comments command.");
+  }
+
+  if (flags._.length > 1) {
     throw new CliUsageError(
       "Only one Markdown file can be previewed at a time.",
     );
