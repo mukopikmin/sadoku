@@ -44,6 +44,9 @@ Use a different port:
 mdview README.md --port 4000
 ```
 
+If the requested port is already in use, `mdview` increments it until an
+available port is found.
+
 Bind to a specific host and port:
 
 ```sh
@@ -117,7 +120,7 @@ mdview comments rm README.md-1a2b3c4d.json --force
 
 | Option              | Description                                                | Default                |
 | ------------------- | ---------------------------------------------------------- | ---------------------- |
-| `-p, --port <port>` | Port to bind. Must be between `1` and `65535`.             | `3334`                 |
+| `-p, --port <port>` | Starting port. Increments when in use.                     | `3334`                 |
 | `--host <host>`     | Hostname or IP address to bind.                            | `127.0.0.1`            |
 | `--no-open`         | Do not open the preview URL in your browser automatically. | Opens browser          |
 | `--keep-alive`      | Keep the server running after the browser tab is closed.   | Stops after tab closes |
