@@ -61,6 +61,7 @@ export const resolveCommentPosition = (
   if (matchingLines.length === 1) {
     return {
       ...comment,
+      displayLine: matchingLines[0],
       line: matchingLines[0],
       endLine: matchingLines[0] + rangeLength - 1,
       originalLine: comment.line,
@@ -73,6 +74,7 @@ export const resolveCommentPosition = (
 
   return {
     ...comment,
+    displayLine: comment.line,
     endLine,
     originalLine: comment.line,
     originalEndLine: endLine,

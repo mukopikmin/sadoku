@@ -48,10 +48,12 @@ describe("CommentList", () => {
           }),
         ]}
         onDeleteComment={async () => {}}
+        onDeleteReply={async () => {}}
         onReplyComment={async () => {}}
         onReopenComment={async () => {}}
         onResolveComment={async () => {}}
         onUpdateComment={async () => {}}
+        onUpdateReply={async () => {}}
       />,
     );
 
@@ -121,10 +123,12 @@ describe("CommentList", () => {
       <CommentList
         comments={[createComment({ body: "Original body." })]}
         onDeleteComment={onDeleteComment}
+        onDeleteReply={async () => {}}
         onReplyComment={onReplyComment}
         onReopenComment={onReopenComment}
         onResolveComment={onResolveComment}
         onUpdateComment={onUpdateComment}
+        onUpdateReply={async () => {}}
       />,
     );
 
@@ -147,7 +151,9 @@ describe("CommentList", () => {
   });
 
   it("shows and creates replies", async () => {
+    const onDeleteReply = vi.fn(async () => {});
     const onReplyComment = vi.fn(async () => {});
+    const onUpdateReply = vi.fn(async () => {});
     render(
       <CommentList
         comments={[createComment({
@@ -159,10 +165,12 @@ describe("CommentList", () => {
           }],
         })]}
         onDeleteComment={async () => {}}
+        onDeleteReply={onDeleteReply}
         onReplyComment={onReplyComment}
         onReopenComment={async () => {}}
         onResolveComment={async () => {}}
         onUpdateComment={async () => {}}
+        onUpdateReply={onUpdateReply}
       />,
     );
 
@@ -176,6 +184,30 @@ describe("CommentList", () => {
     await waitFor(() =>
       expect(onReplyComment).toHaveBeenCalledWith("comment-1", "New reply.")
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit reply" }));
+    fireEvent.change(
+      screen.getByRole("textbox", {
+        name: "Edit reply body",
+      }),
+      {
+        target: { value: "Updated reply." },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save reply" }));
+
+    await waitFor(() =>
+      expect(onUpdateReply).toHaveBeenCalledWith(
+        "comment-1",
+        "reply-1",
+        "Updated reply.",
+      )
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete reply" }));
+    await waitFor(() =>
+      expect(onDeleteReply).toHaveBeenCalledWith("comment-1", "reply-1")
+    );
   });
 
   it("resolves and reopens comments", async () => {
@@ -188,10 +220,12 @@ describe("CommentList", () => {
           createComment({ id: "resolved", resolved: true }),
         ]}
         onDeleteComment={async () => {}}
+        onDeleteReply={async () => {}}
         onReplyComment={async () => {}}
         onReopenComment={onReopenComment}
         onResolveComment={onResolveComment}
         onUpdateComment={async () => {}}
+        onUpdateReply={async () => {}}
       />,
     );
 
