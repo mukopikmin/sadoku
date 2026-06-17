@@ -4,7 +4,7 @@ import type {
   PreviewCommentsDocument,
 } from "./types.ts";
 import { basename, join } from "@std/path";
-import { getConfiguredCommentsDirectory } from "./config.ts";
+import { readConfig } from "../../config.ts";
 
 const commentsDirectoryName = "mdview";
 
@@ -37,8 +37,8 @@ export const getCommentsDirectoryPath = (): string => {
   const configuredDirectory = getEnv("MDVIEW_COMMENTS_DIR");
   if (configuredDirectory) return configuredDirectory;
 
-  const configDirectory = getConfiguredCommentsDirectory();
-  if (configDirectory) return configDirectory;
+  const config = readConfig();
+  if (config?.commentsDirectory) return config.commentsDirectory;
 
   if (Deno.build.os === "darwin") {
     const home = getEnv("HOME");

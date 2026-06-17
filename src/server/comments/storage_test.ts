@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { dirname, join } from "@std/path";
 
-import { getConfigFilePath } from "./config.ts";
+import { getConfigFilePath } from "../../config.ts";
 import type { PreviewCommentsDocument } from "./types.ts";
 import {
   getCommentsDirectoryPath,

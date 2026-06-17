@@ -3,6 +3,10 @@ import { join } from "@std/path";
 const appDirectoryName = "mdview";
 const configFileName = "config.json";
 
+export type MdviewConfig = {
+  commentsDirectory?: string;
+};
+
 const getEnv = (name: string): string | undefined => {
   try {
     return Deno.env.get(name);
@@ -46,7 +50,23 @@ export const getConfigFilePath = (): string | undefined => {
   return undefined;
 };
 
-export const getConfiguredCommentsDirectory = (): string | undefined => {
+const parseConfig = (value: unknown): MdviewConfig | undefined => {
+  if (typeof value !== "object" || value === null) return undefined;
+
+  const config: MdviewConfig = {};
+  if (!("commentsDirectory" in value)) return config;
+
+  const commentsDirectory = (value as { commentsDirectory: unknown })
+    .commentsDirectory;
+  if (typeof commentsDirectory !== "string") {
+    throw new Error("commentsDirectory in mdview config must be a string.");
+  }
+
+  if (commentsDirectory) config.commentsDirectory = commentsDirectory;
+  return config;
+};
+
+export const readConfig = (): MdviewConfig | undefined => {
   const configFilePath = getConfigFilePath();
   if (!configFilePath) return undefined;
 
@@ -61,14 +81,5 @@ export const getConfiguredCommentsDirectory = (): string | undefined => {
     throw error;
   }
 
-  if (typeof parsed !== "object" || parsed === null) return undefined;
-  if (!("commentsDirectory" in parsed)) return undefined;
-
-  const commentsDirectory = (parsed as { commentsDirectory: unknown })
-    .commentsDirectory;
-  if (typeof commentsDirectory !== "string") {
-    throw new Error("commentsDirectory in mdview config must be a string.");
-  }
-
-  return commentsDirectory || undefined;
+  return parseConfig(parsed);
 };

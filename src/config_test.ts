@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 
-import { getConfigFilePath, getConfiguredCommentsDirectory } from "./config.ts";
+import { getConfigFilePath, readConfig } from "./config.ts";
 
 type ConfigEnvironmentPaths = {
   configFilePath: string;
@@ -76,17 +76,25 @@ Deno.test("reads comments directory from config", async () => {
       JSON.stringify({ commentsDirectory }),
     );
 
-    assertEquals(getConfiguredCommentsDirectory(), commentsDirectory);
+    assertEquals(readConfig(), { commentsDirectory });
+  });
+});
+
+Deno.test("reads config without comments directory", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, JSON.stringify({}));
+
+    assertEquals(readConfig(), {});
   });
 });
 
 Deno.test("ignores missing or malformed config", async () => {
   await withConfigEnvironment(async ({ configFilePath }) => {
-    assertEquals(getConfiguredCommentsDirectory(), undefined);
+    assertEquals(readConfig(), undefined);
 
     await writeConfig(configFilePath, "{");
 
-    assertEquals(getConfiguredCommentsDirectory(), undefined);
+    assertEquals(readConfig(), undefined);
   });
 });
 
@@ -98,7 +106,7 @@ Deno.test("rejects invalid comments directory config type", async () => {
     );
 
     assertThrows(
-      () => getConfiguredCommentsDirectory(),
+      () => readConfig(),
       Error,
       "commentsDirectory in mdview config must be a string.",
     );
