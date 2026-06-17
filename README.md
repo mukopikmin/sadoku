@@ -81,7 +81,21 @@ as repository changes. The default comments directory is:
 - Linux: `$XDG_DATA_HOME/mdview/comments`, or `~/.local/share/mdview/comments`
 - Windows: `%APPDATA%\mdview\comments`
 
-Set `MDVIEW_COMMENTS_DIR` to choose a different comments directory.
+Set `commentsDirectory` in the mdview config file to choose a different comments
+directory:
+
+- macOS: `~/Library/Application Support/mdview/config.json`
+- Linux: `$XDG_CONFIG_HOME/mdview/config.json`, or
+  `~/.config/mdview/config.json`
+- Windows: `%APPDATA%\mdview\config.json`
+
+```json
+{
+  "commentsDirectory": "/path/to/mdview/comments"
+}
+```
+
+`MDVIEW_COMMENTS_DIR` overrides the config file when both are set.
 
 List stored comment files:
 

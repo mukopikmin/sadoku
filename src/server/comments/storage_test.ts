@@ -1,7 +1,9 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { dirname, join } from "@std/path";
 
 import type { PreviewCommentsDocument } from "./types.ts";
 import {
+  getCommentsDirectoryPath,
   getCommentsFilePath,
   getLegacyCommentsFilePath,
   readCommentsDocument,
@@ -12,6 +14,124 @@ import {
   removeTempMarkdown,
   withTempCommentsDirectory,
 } from "../test_helpers.ts";
+
+type ConfigEnvironmentPaths = {
+  configFilePath: string;
+  defaultCommentsDirectory: string;
+  root: string;
+};
+
+const trackedEnvironmentNames = [
+  "APPDATA",
+  "HOME",
+  "MDVIEW_COMMENTS_DIR",
+  "XDG_CONFIG_HOME",
+  "XDG_DATA_HOME",
+] as const;
+
+const withConfigEnvironment = async (
+  run: (paths: ConfigEnvironmentPaths) => Promise<void>,
+): Promise<void> => {
+  const previous = new Map(
+    trackedEnvironmentNames.map((name) => [name, Deno.env.get(name)]),
+  );
+  const root = await Deno.makeTempDir({ prefix: "mdview-config-" });
+  const appData = join(root, "appdata");
+  const configHome = join(root, "config");
+  const dataHome = join(root, "data");
+  const home = join(root, "home");
+
+  Deno.env.set("APPDATA", appData);
+  Deno.env.set("HOME", home);
+  Deno.env.delete("MDVIEW_COMMENTS_DIR");
+  Deno.env.set("XDG_CONFIG_HOME", configHome);
+  Deno.env.set("XDG_DATA_HOME", dataHome);
+
+  const configFilePath = Deno.build.os === "darwin"
+    ? join(home, "Library", "Application Support", "mdview", "config.json")
+    : Deno.build.os === "windows"
+    ? join(appData, "mdview", "config.json")
+    : join(configHome, "mdview", "config.json");
+  const defaultCommentsDirectory = Deno.build.os === "darwin"
+    ? join(home, "Library", "Application Support", "mdview", "comments")
+    : Deno.build.os === "windows"
+    ? join(appData, "mdview", "comments")
+    : join(dataHome, "mdview", "comments");
+
+  try {
+    await run({ configFilePath, defaultCommentsDirectory, root });
+  } finally {
+    for (const [name, value] of previous) {
+      if (value === undefined) {
+        Deno.env.delete(name);
+      } else {
+        Deno.env.set(name, value);
+      }
+    }
+    await Deno.remove(root, { recursive: true }).catch(() => {});
+  }
+};
+
+const writeConfig = async (
+  configFilePath: string,
+  text: string,
+): Promise<void> => {
+  await Deno.mkdir(dirname(configFilePath), { recursive: true });
+  await Deno.writeTextFile(configFilePath, text);
+};
+
+Deno.test("uses comments directory from config", async () => {
+  await withConfigEnvironment(async ({ configFilePath, root }) => {
+    const commentsDirectory = join(root, "configured-comments");
+    await writeConfig(
+      configFilePath,
+      JSON.stringify({ commentsDirectory }),
+    );
+
+    assertEquals(getCommentsDirectoryPath(), commentsDirectory);
+  });
+});
+
+Deno.test("uses MDVIEW_COMMENTS_DIR before config", async () => {
+  await withConfigEnvironment(async ({ configFilePath, root }) => {
+    const commentsDirectory = join(root, "configured-comments");
+    const environmentDirectory = join(root, "environment-comments");
+    await writeConfig(
+      configFilePath,
+      JSON.stringify({ commentsDirectory }),
+    );
+    Deno.env.set("MDVIEW_COMMENTS_DIR", environmentDirectory);
+
+    assertEquals(getCommentsDirectoryPath(), environmentDirectory);
+  });
+});
+
+Deno.test("falls back when config is missing or malformed", async () => {
+  await withConfigEnvironment(
+    async ({ configFilePath, defaultCommentsDirectory }) => {
+      assertEquals(getCommentsDirectoryPath(), defaultCommentsDirectory);
+
+      await writeConfig(configFilePath, "{");
+
+      assertEquals(getCommentsDirectoryPath(), defaultCommentsDirectory);
+    },
+  );
+});
+
+Deno.test("rejects invalid comments directory config type", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(
+      configFilePath,
+      JSON.stringify({ commentsDirectory: 42 }),
+    );
+
+    assertThrows(
+      () => getCommentsDirectoryPath(),
+      Error,
+      "commentsDirectory in mdview config must be a string.",
+    );
+  });
+});
 
 Deno.test("returns an empty comments document when storage does not exist", async () => {
   await withTempCommentsDirectory(async () => {
