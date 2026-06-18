@@ -74,6 +74,7 @@ them when making changes.
 - Keep workflow permissions minimal.
 - Write commit messages, pull request descriptions, and GitHub issue comments in
   English unless the user explicitly requests another language.
+- Do not add unnecessary prefixes such as `[codex]` to pull request titles.
 - When a pull request resolves an issue, include `Closes #<issue_number>` or an
   equivalent closing keyword in the pull request description.
 
