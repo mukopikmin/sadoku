@@ -76,9 +76,9 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
-    if (state.status !== "loaded") return;
+    if (state.status !== "loaded" || view !== "preview") return;
     initializeMermaid();
-  }, [state]);
+  }, [state, view]);
 
   const handleCreateComment = async (
     line: number,
