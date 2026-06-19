@@ -4,11 +4,33 @@ import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";
 import { createHotReloadEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
-import { textResponse } from "./responses.ts";
+import { noStoreJson, textResponse } from "./responses.ts";
 
 export type PreviewHandlerOptions = {
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
+};
+
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const previewTitle = (source: string): string => {
+  if (!isHttpUrl(source)) return basename(source);
+  const url = new URL(source);
+  const pathnameTitle = basename(decodeURIComponent(url.pathname));
+  return pathnameTitle || url.hostname;
+};
+
+const eventStreamHeaders = {
+  "content-type": "text/event-stream; charset=utf-8",
+  "cache-control": "no-store",
+  "connection": "keep-alive",
 };
 
 const handleHotReloadEventRequest = (
@@ -18,26 +40,48 @@ const handleHotReloadEventRequest = (
 ): Response =>
   new Response(
     createHotReloadEventStream(filePath, request.signal, options),
-    {
-      headers: {
-        "content-type": "text/event-stream; charset=utf-8",
-        "cache-control": "no-store",
-        "connection": "keep-alive",
-      },
-    },
+    { headers: eventStreamHeaders },
   );
+
+const handleRemoteEventRequest = (
+  request: Request,
+  options: PreviewHandlerOptions,
+): Response => {
+  let close: (() => void) | undefined;
+  return new Response(
+    new ReadableStream({
+      start() {
+        options.onEventStreamOpen?.();
+        close = () => options.onEventStreamClose?.();
+        request.signal.addEventListener("abort", close, { once: true });
+      },
+      cancel() {
+        if (close) {
+          request.signal.removeEventListener("abort", close);
+          close();
+          close = undefined;
+        }
+      },
+    }),
+    { headers: eventStreamHeaders },
+  );
+};
 
 export const createPreviewHandler = (
   filePath: string,
   options: PreviewHandlerOptions = {},
 ): Deno.ServeHandler =>
 async (request) => {
-  const resolvedFilePath = resolve(filePath);
+  const isRemoteSource = isHttpUrl(filePath);
+  const resolvedFilePath = isRemoteSource ? filePath : resolve(filePath);
   try {
     const requestUrl = new URL(request.url);
     const { pathname } = requestUrl;
 
     if (pathname === "/__mdview/events") {
+      if (isRemoteSource) {
+        return handleRemoteEventRequest(request, options);
+      }
       return handleHotReloadEventRequest(resolvedFilePath, request, options);
     }
 
@@ -46,6 +90,15 @@ async (request) => {
     }
 
     if (pathname.startsWith("/__mdview/comments")) {
+      if (isRemoteSource) {
+        if (pathname === "/__mdview/comments" && request.method === "GET") {
+          return noStoreJson({ comments: [], filePath: resolvedFilePath });
+        }
+        return textResponse(
+          "Comments are only available for local files.",
+          405,
+        );
+      }
       return await handleCommentsRequest(request, resolvedFilePath, pathname);
     }
 
@@ -53,7 +106,7 @@ async (request) => {
       return await handlePreviewAssetRequest(pathname);
     }
 
-    return new Response(renderSpaShell(basename(resolvedFilePath)), {
+    return new Response(renderSpaShell(previewTitle(resolvedFilePath)), {
       headers: { "content-type": "text/html; charset=utf-8" },
     });
   } catch (error) {

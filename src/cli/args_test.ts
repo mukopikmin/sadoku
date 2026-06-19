@@ -17,6 +17,17 @@ Deno.test("uses the default host and port", () => {
   });
 });
 
+Deno.test("parses URL sources", () => {
+  assertEquals(parseArgs(["https://example.com/README.md"]), {
+    file: "https://example.com/README.md",
+    force: false,
+    host: "127.0.0.1",
+    keepAlive: false,
+    open: true,
+    port: 3334,
+  });
+});
+
 Deno.test("parses host and port options", () => {
   assertEquals(
     parseArgs(["README.md", "--host", "0.0.0.0", "--port", "4000"]),
@@ -147,6 +158,7 @@ Deno.test("parses comments rm command", () => {
 Deno.test("parses help", () => {
   assertEquals(parseArgs(["--help"]).help, true);
   assertMatch(usage, /Defaults to 3334/);
+  assertMatch(usage, /<file\.md\|url>/);
   assertMatch(usage, /comments list/);
   assertMatch(usage, /comments inspect/);
   assertMatch(usage, /comments reply/);

@@ -30,7 +30,7 @@ export class CliUsageError extends Error {
 }
 
 export const usage = `Usage:
-  mdview <file.md> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
+  mdview <file.md|url> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
   mdview comments inspect <file.md>
   mdview comments reply <file.md> <comment-id> <body>
   mdview comments resolve <file.md> <comment-id>...

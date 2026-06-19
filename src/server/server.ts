@@ -15,6 +15,15 @@ export type StartedPreviewServer = {
   server: Deno.HttpServer<Deno.NetAddr>;
 };
 
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 type PreviewShutdownSchedulerOptions = {
   delayMs?: number;
   filePath: string;
@@ -120,10 +129,13 @@ const serveOnAvailablePort = (
 export const startPreviewServer = async (
   options: PreviewServerOptions,
 ): Promise<StartedPreviewServer> => {
-  const filePath = resolve(options.file);
-  const fileStat = await Deno.stat(filePath).catch(() => undefined);
-  if (!fileStat?.isFile) {
-    throw new Error(`Markdown file not found: ${filePath}`);
+  const isRemoteSource = isHttpUrl(options.file);
+  const filePath = isRemoteSource ? options.file : resolve(options.file);
+  if (!isRemoteSource) {
+    const fileStat = await Deno.stat(filePath).catch(() => undefined);
+    if (!fileStat?.isFile) {
+      throw new Error(`Markdown file not found: ${filePath}`);
+    }
   }
 
   let server: Deno.HttpServer<Deno.NetAddr>;

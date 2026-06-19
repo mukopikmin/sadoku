@@ -1,9 +1,11 @@
 # mdview
 
-`mdview` is a small CLI for previewing one Markdown file in your browser.
+`mdview` is a small CLI for previewing one Markdown file or Markdown URL in your
+browser.
 
-Pass it a Markdown file path. It starts a local HTTP server, renders the file as
-HTML, prints the preview URL, and opens that URL in your default browser.
+Pass it a Markdown file path or an HTTP(S) URL. It starts a local HTTP server,
+renders the source as HTML, prints the preview URL, and opens that URL in your
+default browser.
 
 ## Install
 
@@ -31,13 +33,19 @@ If `--version` is omitted, the compiled binary reports the development version
 ## Usage
 
 ```sh
-mdview <file.md> [options]
+mdview <file.md|url> [options]
 ```
 
 Preview a file:
 
 ```sh
 mdview README.md
+```
+
+Preview Markdown from a URL:
+
+```sh
+mdview https://example.com/README.md
 ```
 
 Use a different port:
@@ -67,9 +75,9 @@ Keep the server running after the preview tab is closed:
 mdview README.md --keep-alive
 ```
 
-By default, the server reads the Markdown file again on each request, so
-refreshing the page shows recent edits. The browser preview also reloads
-automatically when the Markdown file changes.
+By default, the server reads the Markdown file or fetches the Markdown URL again
+on each request, so refreshing the page shows recent edits. The browser preview
+also reloads automatically when a local Markdown file changes.
 
 By default, the server stops after the browser tab is closed. Use `--keep-alive`
 when you want to leave the server running.
