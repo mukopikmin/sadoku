@@ -7,7 +7,7 @@ import { withTempCommentsDirectory } from "../../src/server/test_helpers.ts";
 Deno.test("stores preview comments in the configured comments directory", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await Deno.makeTempFile({
-      prefix: "mdview-",
+      prefix: "sadoku-",
       suffix: ".md",
     });
     await Deno.writeTextFile(filePath, "# Title\n\nBody\n");
@@ -15,7 +15,7 @@ Deno.test("stores preview comments in the configured comments directory", async 
       const handler = createPreviewHandler(filePath);
 
       const emptyResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments"),
+        new Request("http://127.0.0.1:3334/__sadoku/comments"),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const emptyDocument = await emptyResponse.json();
@@ -24,7 +24,7 @@ Deno.test("stores preview comments in the configured comments directory", async 
       assertEquals(emptyDocument.comments, []);
 
       const createResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments", {
+        new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ line: 3, body: "Clarify this." }),
@@ -46,7 +46,7 @@ Deno.test("stores preview comments in the configured comments directory", async 
 
       const updateResponse = await handler(
         new Request(
-          `http://127.0.0.1:3334/__mdview/comments/${createdComment.id}`,
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}`,
           {
             method: "PUT",
             headers: { "content-type": "application/json" },
@@ -61,7 +61,7 @@ Deno.test("stores preview comments in the configured comments directory", async 
 
       const deleteResponse = await handler(
         new Request(
-          `http://127.0.0.1:3334/__mdview/comments/${createdComment.id}`,
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}`,
           { method: "DELETE" },
         ),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -128,14 +128,14 @@ Deno.test("preserves preview comment range metadata across reloads", async () =>
 Deno.test("stores replies on preview comments", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await Deno.makeTempFile({
-      prefix: "mdview-",
+      prefix: "sadoku-",
       suffix: ".md",
     });
     await Deno.writeTextFile(filePath, "# Title\n\nBody\n");
     try {
       const handler = createPreviewHandler(filePath);
       const createResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments", {
+        new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ line: 3, body: "Question" }),
@@ -145,7 +145,7 @@ Deno.test("stores replies on preview comments", async () => {
       const createdComment = await createResponse.json();
       const replyResponse = await handler(
         new Request(
-          `http://127.0.0.1:3334/__mdview/comments/${createdComment.id}/replies`,
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/replies`,
           {
             method: "POST",
             headers: { "content-type": "application/json" },
@@ -173,7 +173,7 @@ Deno.test("stores replies on preview comments", async () => {
 Deno.test("resolves and reopens preview comments", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await Deno.makeTempFile({
-      prefix: "mdview-",
+      prefix: "sadoku-",
       suffix: ".md",
     });
     await Deno.writeTextFile(filePath, "# Title\n\nBody\n");
@@ -181,7 +181,7 @@ Deno.test("resolves and reopens preview comments", async () => {
       const handler = createPreviewHandler(filePath);
 
       const createResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments", {
+        new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ line: 3, body: "Clarify this." }),
@@ -192,7 +192,7 @@ Deno.test("resolves and reopens preview comments", async () => {
 
       const resolveResponse = await handler(
         new Request(
-          `http://127.0.0.1:3334/__mdview/comments/${createdComment.id}/resolve`,
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/resolve`,
           { method: "POST" },
         ),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -203,7 +203,7 @@ Deno.test("resolves and reopens preview comments", async () => {
       assertEquals(typeof resolvedComment.resolvedAt, "string");
 
       const resolvedDocumentResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments"),
+        new Request("http://127.0.0.1:3334/__sadoku/comments"),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const resolvedDocument = await resolvedDocumentResponse.json();
@@ -211,7 +211,7 @@ Deno.test("resolves and reopens preview comments", async () => {
 
       const reopenResponse = await handler(
         new Request(
-          `http://127.0.0.1:3334/__mdview/comments/${createdComment.id}/reopen`,
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/reopen`,
           { method: "POST" },
         ),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -235,7 +235,7 @@ Deno.test("resolves and reopens preview comments", async () => {
 Deno.test("tracks preview comments when their source line moves", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await Deno.makeTempFile({
-      prefix: "mdview-",
+      prefix: "sadoku-",
       suffix: ".md",
     });
     await Deno.writeTextFile(filePath, "# Title\n\nBody\n");
@@ -243,7 +243,7 @@ Deno.test("tracks preview comments when their source line moves", async () => {
       const handler = createPreviewHandler(filePath);
 
       const createResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments", {
+        new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ line: 3, body: "Clarify this." }),
@@ -254,7 +254,7 @@ Deno.test("tracks preview comments when their source line moves", async () => {
 
       await Deno.writeTextFile(filePath, "Intro\n# Title\n\nBody\n");
       const movedResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments"),
+        new Request("http://127.0.0.1:3334/__sadoku/comments"),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const movedDocument = await movedResponse.json();
@@ -264,7 +264,7 @@ Deno.test("tracks preview comments when their source line moves", async () => {
 
       const updateResponse = await handler(
         new Request(
-          `http://127.0.0.1:3334/__mdview/comments/${createdComment.id}`,
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}`,
           {
             method: "PUT",
             headers: { "content-type": "application/json" },
@@ -280,7 +280,7 @@ Deno.test("tracks preview comments when their source line moves", async () => {
 
       await Deno.writeTextFile(filePath, "Intro\n# Title\n\nChanged\n");
       const staleResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments"),
+        new Request("http://127.0.0.1:3334/__sadoku/comments"),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const staleDocument = await staleResponse.json();

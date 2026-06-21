@@ -72,7 +72,7 @@ testWithTempComments("validates comment creation input", async () => {
     for (const testCase of cases) {
       const response = await requestComments(
         handler,
-        "/__mdview/comments",
+        "/__sadoku/comments",
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -124,7 +124,7 @@ testWithTempComments("trims comment bodies before storing them", async () => {
   try {
     const response = await requestComments(
       handler,
-      "/__mdview/comments",
+      "/__sadoku/comments",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -149,7 +149,7 @@ testWithTempComments("adds replies to comments", async () => {
   try {
     const createResponse = await requestComments(
       handler,
-      "/__mdview/comments",
+      "/__sadoku/comments",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -160,7 +160,7 @@ testWithTempComments("adds replies to comments", async () => {
 
     const replyResponse = await requestComments(
       handler,
-      `/__mdview/comments/${createdComment.id}/replies`,
+      `/__sadoku/comments/${createdComment.id}/replies`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -177,7 +177,7 @@ testWithTempComments("adds replies to comments", async () => {
 
     const updateResponse = await requestComments(
       handler,
-      `/__mdview/comments/${createdComment.id}/replies/${replyId}`,
+      `/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
       {
         method: "PUT",
         headers: { "content-type": "application/json" },
@@ -195,7 +195,7 @@ testWithTempComments("adds replies to comments", async () => {
 
     const invalidResponse = await requestComments(
       handler,
-      `/__mdview/comments/${createdComment.id}/replies`,
+      `/__sadoku/comments/${createdComment.id}/replies`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -207,14 +207,14 @@ testWithTempComments("adds replies to comments", async () => {
 
     const deleteResponse = await requestComments(
       handler,
-      `/__mdview/comments/${createdComment.id}/replies/${replyId}`,
+      `/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
       { method: "DELETE" },
     );
     assertEquals(deleteResponse.status, 204);
 
     const storedResponse = await requestComments(
       handler,
-      "/__mdview/comments",
+      "/__sadoku/comments",
     );
     const storedDocument = await storedResponse.json();
     assertEquals(storedDocument.comments[0].replies, []);
@@ -230,23 +230,23 @@ testWithTempComments(
     const handler = createPreviewHandler(filePath);
     try {
       const cases: Array<[string, string, string]> = [
-        ["PUT", "/__mdview/comments/missing", "Comment not found."],
-        ["DELETE", "/__mdview/comments/missing", "Comment not found."],
-        ["POST", "/__mdview/comments/missing/resolve", "Comment not found."],
-        ["POST", "/__mdview/comments/missing/reopen", "Comment not found."],
-        ["POST", "/__mdview/comments/missing/replies", "Comment not found."],
+        ["PUT", "/__sadoku/comments/missing", "Comment not found."],
+        ["DELETE", "/__sadoku/comments/missing", "Comment not found."],
+        ["POST", "/__sadoku/comments/missing/resolve", "Comment not found."],
+        ["POST", "/__sadoku/comments/missing/reopen", "Comment not found."],
+        ["POST", "/__sadoku/comments/missing/replies", "Comment not found."],
         [
           "PUT",
-          "/__mdview/comments/missing/replies/reply-1",
+          "/__sadoku/comments/missing/replies/reply-1",
           "Comment not found.",
         ],
         [
           "DELETE",
-          "/__mdview/comments/missing/replies/reply-1",
+          "/__sadoku/comments/missing/replies/reply-1",
           "Comment not found.",
         ],
-        ["POST", "/__mdview/comments/missing/unknown", "Not found."],
-        ["GET", "/__mdview/comments/", "Comment not found."],
+        ["POST", "/__sadoku/comments/missing/unknown", "Not found."],
+        ["GET", "/__sadoku/comments/", "Comment not found."],
       ];
 
       for (const [method, pathname, expected] of cases) {
@@ -275,7 +275,7 @@ testWithTempComments(
     try {
       const response = await requestComments(
         handler,
-        "/__mdview/comments/comment-1",
+        "/__sadoku/comments/comment-1",
         { method: "PATCH" },
       );
 
@@ -312,7 +312,7 @@ testWithTempComments("accepts URL-encoded comment identifiers", async () => {
   try {
     const response = await requestComments(
       createPreviewHandler(filePath),
-      "/__mdview/comments/comment%20with%20spaces",
+      "/__sadoku/comments/comment%20with%20spaces",
       {
         method: "PUT",
         headers: { "content-type": "application/json" },
