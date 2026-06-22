@@ -88,7 +88,7 @@ Deno.test("preserves preview comment range metadata across reloads", async () =>
     try {
       const handler = createPreviewHandler(filePath);
       const createResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments", {
+        new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ line: 2, endLine: 4, body: "Range note." }),
@@ -104,7 +104,7 @@ Deno.test("preserves preview comment range metadata across reloads", async () =>
       assertEquals(createdComment.sourceText, "two\nthree\nfour");
 
       const reloadResponse = await handler(
-        new Request("http://127.0.0.1:3334/__mdview/comments"),
+        new Request("http://127.0.0.1:3334/__sadoku/comments"),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const reloadedDocument = await reloadResponse.json();

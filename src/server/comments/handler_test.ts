@@ -98,7 +98,7 @@ testWithTempComments("creates comments for a source line range", async () => {
   try {
     const response = await requestComments(
       handler,
-      "/__mdview/comments",
+      "/__sadoku/comments",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
