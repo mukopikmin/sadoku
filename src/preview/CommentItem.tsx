@@ -343,6 +343,7 @@ export const CommentItem = ({
         <div className="comment-reply-form">
           <textarea
             aria-label="Reply body"
+            autoFocus
             className="comment-input"
             onChange={(event) => setReplyDraft(event.target.value)}
             placeholder="Write a reply..."

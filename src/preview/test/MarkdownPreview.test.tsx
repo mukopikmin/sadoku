@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
@@ -226,6 +232,18 @@ Body
     ).not.toBeNull();
     expect(container.querySelector('[data-source-line="3"] p')?.textContent)
       .toBe("Body");
+  });
+
+  it("focuses the comment textarea when opening the comment form", () => {
+    renderMarkdown("# Title\n");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 1" }),
+    );
+
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
   });
 
   it("does not add duplicate source line controls for blockquotes", () => {

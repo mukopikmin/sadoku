@@ -135,6 +135,9 @@ describe("CommentList", () => {
 
     expect(screen.getByText("Existing reply.")).not.toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Reply" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("textbox", { name: "Reply body" }),
+    );
     fireEvent.change(screen.getByRole("textbox", { name: "Reply body" }), {
       target: { value: "New reply." },
     });

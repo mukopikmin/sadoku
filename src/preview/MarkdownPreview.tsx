@@ -143,6 +143,7 @@ const CommentableBlock = ({
           {isAdding && (
             <div className="comment-form">
               <textarea
+                autoFocus
                 className="comment-input"
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder="Write a GitHub PR comment..."
