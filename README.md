@@ -71,8 +71,8 @@ sadoku README.md --keep-alive
 ```
 
 By default, the server reads the Markdown file again on each request, so
-refreshing the page shows recent edits. The browser preview also reloads
-automatically when the Markdown file changes.
+refreshing the page shows recent edits. When the Markdown file changes, the
+browser preview shows a reload button so you can refresh it when you are ready.
 
 By default, the server stops after the browser tab is closed. Use `--keep-alive`
 when you want to leave the server running.
