@@ -92,10 +92,14 @@ describe("CommentList", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(document.activeElement).toBe(screen.getByRole("textbox"));
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Updated body." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    fireEvent.keyDown(screen.getByRole("textbox"), {
+      ctrlKey: true,
+      key: "Enter",
+    });
     await waitFor(() =>
       expect(onUpdateComment).toHaveBeenCalledWith(
         "comment-1",
@@ -141,13 +145,21 @@ describe("CommentList", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Reply body" }), {
       target: { value: "New reply." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add reply" }));
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Reply body" }), {
+      key: "Enter",
+      metaKey: true,
+    });
 
     await waitFor(() =>
       expect(onReplyComment).toHaveBeenCalledWith("comment-1", "New reply.")
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Edit reply" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("textbox", {
+        name: "Edit reply body",
+      }),
+    );
     fireEvent.change(
       screen.getByRole("textbox", {
         name: "Edit reply body",
@@ -156,7 +168,12 @@ describe("CommentList", () => {
         target: { value: "Updated reply." },
       },
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save reply" }));
+    fireEvent.keyDown(
+      screen.getByRole("textbox", {
+        name: "Edit reply body",
+      }),
+      { ctrlKey: true, key: "Enter" },
+    );
 
     await waitFor(() =>
       expect(onUpdateReply).toHaveBeenCalledWith(

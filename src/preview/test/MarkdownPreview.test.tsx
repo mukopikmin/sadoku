@@ -15,6 +15,7 @@ const renderMarkdown = (
   markdown: string,
   comments: PreviewComment[] = [],
   callbacks: Partial<{
+    onCreateComment: (line: number, body: string) => Promise<void>;
     onResolveComment: (id: string) => Promise<void>;
   }> = {},
 ) => {
@@ -22,7 +23,7 @@ const renderMarkdown = (
     <MarkdownPreview
       comments={comments}
       markdown={markdown}
-      onCreateComment={async () => {}}
+      onCreateComment={callbacks.onCreateComment ?? (async () => {})}
       onDeleteComment={async () => {}}
       onDeleteReply={async () => {}}
       onReplyComment={async () => {}}
@@ -243,6 +244,43 @@ Body
 
     expect(document.activeElement).toBe(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
+  });
+
+  it("submits a new comment with command or control enter", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    renderMarkdown("# Title\n\nBody\n", [], { onCreateComment });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 1" }),
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { target: { value: "Mac shortcut." } },
+    );
+    fireEvent.keyDown(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { key: "Enter", metaKey: true },
+    );
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.")
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 3" }),
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { target: { value: "Control shortcut." } },
+    );
+    fireEvent.keyDown(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { key: "Enter", ctrlKey: true },
+    );
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Control shortcut.")
     );
   });
 
