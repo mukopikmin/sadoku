@@ -18,8 +18,9 @@ Deno.test("uses the default host and port", () => {
 });
 
 Deno.test("parses URL sources", () => {
-  assertEquals(parseArgs(["https://example.com/README.md"]), {
-    file: "https://example.com/README.md",
+  const source = "https://example.com/README.md?token=temporary";
+  assertEquals(parseArgs([source]), {
+    file: source,
     force: false,
     host: "127.0.0.1",
     keepAlive: false,

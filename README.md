@@ -46,7 +46,7 @@ sadoku README.md
 Preview Markdown from a URL:
 
 ```sh
-sadoku https://example.com/README.md
+sadoku 'https://example.com/README.md?token=temporary'
 ```
 
 Use a different port:
@@ -85,6 +85,10 @@ when you want to leave the server running.
 
 Comments are stored separately from the Markdown file so they do not appear as
 repository changes.
+
+For URL previews, comments are keyed by the URL without its query string or
+fragment. The full URL is still used to fetch Markdown, so temporary tokens can
+be present in the URL without splitting comments across multiple comment files.
 
 List stored comment files:
 

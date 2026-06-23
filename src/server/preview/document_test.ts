@@ -21,18 +21,21 @@ Deno.test("returns the current Markdown document without caching", async () => {
 Deno.test("returns Markdown documents from URLs", async () => {
   const server = Deno.serve(
     { hostname: "127.0.0.1", port: 0, onListen: () => {} },
-    () => new Response("# Remote document\n"),
+    (request) => {
+      const url = new URL(request.url);
+      return new Response(`# Remote ${url.searchParams.get("token")}\n`);
+    },
   );
 
   try {
-    const url = `http://127.0.0.1:${server.addr.port}/docs/readme.md`;
+    const url = `http://127.0.0.1:${server.addr.port}/docs/readme.md?token=a`;
     const response = await handlePreviewDocumentRequest(url);
     const document = await response.json();
 
     assertEquals(response.headers.get("cache-control"), "no-store");
     assertEquals(document.title, "readme.md");
     assertEquals(document.fileUrl, url);
-    assertEquals(document.markdown, "# Remote document\n");
+    assertEquals(document.markdown, "# Remote a\n");
   } finally {
     await server.shutdown().catch(() => {});
     await server.finished.catch(() => {});

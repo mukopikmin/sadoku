@@ -1,6 +1,6 @@
-import { resolve } from "@std/path";
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createPreviewHandler } from "./handler.ts";
+import { createPreviewSource } from "./source.ts";
 
 export type PreviewServerOptions = {
   file: string;
@@ -13,15 +13,6 @@ export type StartedPreviewServer = {
   filePath: string;
   url: string;
   server: Deno.HttpServer<Deno.NetAddr>;
-};
-
-const isHttpUrl = (value: string): boolean => {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
 };
 
 type PreviewShutdownSchedulerOptions = {
@@ -129,25 +120,28 @@ const serveOnAvailablePort = (
 export const startPreviewServer = async (
   options: PreviewServerOptions,
 ): Promise<StartedPreviewServer> => {
-  const isRemoteSource = isHttpUrl(options.file);
-  const filePath = isRemoteSource ? options.file : resolve(options.file);
-  if (!isRemoteSource) {
-    const fileStat = await Deno.stat(filePath).catch(() => undefined);
+  const previewSource = createPreviewSource(options.file);
+  if (!previewSource.isRemote) {
+    const fileStat = await Deno.stat(previewSource.documentSource).catch(() =>
+      undefined
+    );
     if (!fileStat?.isFile) {
-      throw new Error(`Markdown file not found: ${filePath}`);
+      throw new Error(
+        `Markdown file not found: ${previewSource.documentSource}`,
+      );
     }
   }
 
   let server: Deno.HttpServer<Deno.NetAddr>;
   const shutdownScheduler = createPreviewShutdownScheduler({
-    filePath,
+    filePath: previewSource.documentSource,
     keepAlive: options.keepAlive,
     shutdown: () => server.shutdown(),
   });
 
   server = serveOnAvailablePort(
     options,
-    createPreviewHandler(filePath, shutdownScheduler),
+    createPreviewHandler(previewSource, shutdownScheduler),
   );
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;
@@ -162,5 +156,5 @@ export const startPreviewServer = async (
     }
   });
 
-  return { filePath, url, server };
+  return { filePath: previewSource.documentSource, url, server };
 };

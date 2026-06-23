@@ -178,7 +178,7 @@ Deno.test("starts the preview server for a URL source", async () => {
     { hostname: "127.0.0.1", port: 0, onListen: () => {} },
     () => new Response("# Remote server test\n"),
   );
-  const sourceUrl = `http://127.0.0.1:${source.addr.port}/remote.md`;
+  const sourceUrl = `http://127.0.0.1:${source.addr.port}/remote.md?token=a`;
   const preview = await startPreviewServer({
     file: sourceUrl,
     host: "127.0.0.1",
