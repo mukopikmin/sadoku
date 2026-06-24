@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
@@ -231,6 +237,55 @@ Body
     ).not.toBeNull();
     expect(container.querySelector('[data-source-line="3"] p')?.textContent)
       .toBe("Body");
+  });
+
+  it("focuses the comment textarea when opening the comment form", () => {
+    renderMarkdown("# Title\n");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 1" }),
+    );
+
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
+  });
+
+  it("submits a new comment with command or control enter", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    renderMarkdown("# Title\n\nBody\n", [], { onCreateComment });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 1" }),
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { target: { value: "Mac shortcut." } },
+    );
+    fireEvent.keyDown(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { key: "Enter", metaKey: true },
+    );
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1)
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 3" }),
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { target: { value: "Control shortcut." } },
+    );
+    fireEvent.keyDown(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { key: "Enter", ctrlKey: true },
+    );
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Control shortcut.", 3)
+    );
   });
 
   it("does not add duplicate source line controls for blockquotes", () => {
