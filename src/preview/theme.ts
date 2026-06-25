@@ -357,13 +357,25 @@ export const previewThemeCss = `
       }
 
       .commentable-block {
-        position: relative;
-        margin-left: -42px;
-        padding-left: 42px;
+        --comment-line-gutter-width: 42px;
       }
 
       .commentable-content {
+        display: grid;
+        grid-template-columns: var(--comment-line-gutter-width) minmax(0, 1fr);
+        column-gap: 8px;
         isolation: isolate;
+        position: relative;
+      }
+
+      .comment-line-gutter {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 0.1rem;
+      }
+
+      .comment-markdown-body {
+        min-width: 0;
         position: relative;
       }
 
@@ -392,9 +404,6 @@ export const previewThemeCss = `
       }
 
       .comment-line-button {
-        position: absolute;
-        top: 0.1rem;
-        left: -42px;
         box-sizing: border-box;
         display: inline-flex;
         align-items: center;
@@ -415,9 +424,9 @@ export const previewThemeCss = `
         text-align: right;
       }
 
-      .commentable-block:hover > .commentable-content > .comment-line-button,
+      .commentable-block:hover .comment-line-button,
       .comment-line-button:focus-visible,
-      .commentable-block:has(.comment-thread) > .commentable-content > .comment-line-button {
+      .commentable-block:has(.comment-thread) .comment-line-button {
         opacity: 1;
       }
 
@@ -431,7 +440,7 @@ export const previewThemeCss = `
         content: attr(data-line-number);
       }
 
-      .commentable-block-selected > .commentable-content > .comment-line-button {
+      .commentable-block-selected .comment-line-button {
         border-color: var(--color-accent);
         color: var(--color-accent);
         opacity: 1;
@@ -453,12 +462,8 @@ export const previewThemeCss = `
         padding: 3px 8px;
       }
 
-      .commentable-list-item > .commentable-content > .comment-line-button {
-        left: calc(-42px - 2em);
-      }
-
       .comment-thread {
-        margin: -6px 0 12px;
+        margin: -6px 0 12px var(--comment-line-gutter-width);
         border-left: 3px solid var(--color-accent);
         padding: 6px 0 1px 10px;
       }
@@ -752,13 +757,16 @@ export const previewThemeCss = `
           flex-direction: column;
         }
 
-        .commentable-block {
-          margin-left: 0;
-          padding-left: 0;
+        .commentable-content {
+          grid-template-columns: 1fr;
+        }
+
+        .comment-line-gutter {
+          justify-content: flex-start;
+          padding-top: 0;
         }
 
         .comment-line-button {
-          position: static;
           margin: 0 0 6px;
           opacity: 1;
         }

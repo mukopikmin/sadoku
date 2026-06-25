@@ -152,27 +152,31 @@ const CommentableBlock = ({
       data-source-line={line}
     >
       <div className="commentable-content">
-        <button
-          aria-label={`Select line ${line} for comment`}
-          className="comment-line-button"
-          data-line-number={line}
-          onClick={() => onSelectCommentLine(line)}
-          title={`Select line ${line} for comment`}
-          type="button"
-        >
-        </button>
-        {isRangeActionLine && !isAdding && (
+        <div className="comment-line-gutter">
           <button
-            className="comment-selection-button"
-            onClick={onOpenCommentForm}
+            aria-label={`Select line ${line} for comment`}
+            className="comment-line-button"
+            data-line-number={line}
+            onClick={() => onSelectCommentLine(line)}
+            title={`Select line ${line} for comment`}
             type="button"
           >
-            Add comment
           </button>
-        )}
-        <SourceLineContext.Provider value={sourceLines}>
-          {children}
-        </SourceLineContext.Provider>
+        </div>
+        <div className="comment-markdown-body">
+          {isRangeActionLine && !isAdding && (
+            <button
+              className="comment-selection-button"
+              onClick={onOpenCommentForm}
+              type="button"
+            >
+              Add comment
+            </button>
+          )}
+          <SourceLineContext.Provider value={sourceLines}>
+            {children}
+          </SourceLineContext.Provider>
+        </div>
       </div>
       {(isAdding || comments.length > 0 || error) && (
         <div className="comment-thread">
