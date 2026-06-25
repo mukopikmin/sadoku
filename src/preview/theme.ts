@@ -395,8 +395,10 @@ export const previewThemeCss = `
         position: absolute;
         top: 0.1rem;
         left: -42px;
-        display: inline-grid;
-        place-items: center;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
         width: 34px;
         height: 24px;
         border: 1px solid var(--color-border);
@@ -406,8 +408,11 @@ export const previewThemeCss = `
         cursor: pointer;
         font: inherit;
         font-size: 0.75rem;
+        font-variant-numeric: tabular-nums;
         line-height: 1;
         opacity: 0.65;
+        padding: 0 7px 0 0;
+        text-align: right;
       }
 
       .commentable-block:hover > .commentable-content > .comment-line-button,
