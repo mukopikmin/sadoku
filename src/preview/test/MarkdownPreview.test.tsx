@@ -297,6 +297,26 @@ Body
     );
   });
 
+  it("renders a range comment once at its start line", () => {
+    renderMarkdown("# Title\n\nBody\n", [{
+      body: "Clarify this range.",
+      createdAt: "2026-06-05T00:00:00.000Z",
+      endLine: 3,
+      id: "comment-1",
+      line: 1,
+      originalEndLine: 3,
+      originalLine: 1,
+      resolved: false,
+      sourceHash: "example",
+      sourceText: "# Title\n\nBody",
+      stale: false,
+      updatedAt: "2026-06-05T00:00:00.000Z",
+    }]);
+
+    expect(screen.getAllByText("Lines 1-3")).toHaveLength(1);
+    expect(screen.getAllByText("Clarify this range.")).toHaveLength(1);
+  });
+
   it("shows and clears a single-line comment selection", () => {
     renderMarkdown("# Title\n\nBody\n");
 

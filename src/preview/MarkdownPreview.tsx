@@ -423,13 +423,10 @@ export const MarkdownPreview = ({
   const commentsByLine = useMemo(() => {
     const grouped = new Map<number, PreviewComment[]>();
     for (const comment of comments) {
-      const endLine = comment.endLine ?? comment.line;
-      for (let line = comment.line; line <= endLine; line += 1) {
-        grouped.set(line, [
-          ...(grouped.get(line) ?? []),
-          comment,
-        ]);
-      }
+      grouped.set(comment.line, [
+        ...(grouped.get(comment.line) ?? []),
+        comment,
+      ]);
     }
     return grouped;
   }, [comments]);
