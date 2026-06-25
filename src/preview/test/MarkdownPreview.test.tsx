@@ -333,4 +333,34 @@ Body
       )
     );
   });
+
+  it("creates comments for a shift-clicked line number range", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    renderMarkdown("# Title\n\nBody\n", [], { onCreateComment });
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 1",
+    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+      { shiftKey: true },
+    );
+
+    expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review this line range." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        1,
+        "Review this line range.",
+        3,
+      )
+    );
+  });
 });

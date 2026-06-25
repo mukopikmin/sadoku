@@ -390,10 +390,10 @@ export const previewThemeCss = `
       .comment-line-button {
         position: absolute;
         top: 0.1rem;
-        left: -34px;
+        left: -42px;
         display: inline-grid;
         place-items: center;
-        width: 24px;
+        width: 34px;
         height: 24px;
         border: 1px solid var(--color-border);
         border-radius: 6px;
@@ -401,9 +401,9 @@ export const previewThemeCss = `
         color: var(--color-text-muted);
         cursor: pointer;
         font: inherit;
-        font-size: 1rem;
+        font-size: 0.75rem;
         line-height: 1;
-        opacity: 0;
+        opacity: 0.65;
       }
 
       .commentable-block:hover > .commentable-content > .comment-line-button,
@@ -419,11 +419,11 @@ export const previewThemeCss = `
       }
 
       .comment-line-button::before {
-        content: "+";
+        content: attr(data-line-number);
       }
 
       .commentable-list-item > .commentable-content > .comment-line-button {
-        left: calc(-34px - 2em);
+        left: calc(-42px - 2em);
       }
 
       .comment-thread {
