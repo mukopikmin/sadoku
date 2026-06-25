@@ -180,7 +180,7 @@ const value = 1;
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
     ).not.toBeNull();
     expect(
-      screen.getByRole("button", { name: "Select line 1 for comment" }),
+      screen.getByRole("button", { name: "Add comment on line 1" }),
     ).not.toBeNull();
   });
 
@@ -233,7 +233,7 @@ Body
     expect(container.querySelector('[data-source-line="1"] h1')?.textContent)
       .toBe("Title");
     expect(
-      screen.getByRole("button", { name: "Select line 1 for comment" }),
+      screen.getByRole("button", { name: "Add comment on line 1" }),
     ).not.toBeNull();
     expect(container.querySelector('[data-source-line="3"] p')?.textContent)
       .toBe("Body");
@@ -250,7 +250,7 @@ Body
       1,
     );
     expect(
-      screen.getAllByRole("button", { name: "Select line 1 for comment" }),
+      screen.getAllByRole("button", { name: "Add comment on line 1" }),
     ).toHaveLength(1);
   });
 
@@ -265,13 +265,13 @@ Body
       1,
     );
     expect(
-      screen.getAllByRole("button", { name: "Select line 1 for comment" }),
+      screen.getAllByRole("button", { name: "Add comment on line 1" }),
     ).toHaveLength(1);
     expect(container.querySelectorAll('[data-source-line="3"]')).toHaveLength(
       1,
     );
     expect(
-      screen.getAllByRole("button", { name: "Select line 3 for comment" }),
+      screen.getAllByRole("button", { name: "Add comment on line 3" }),
     ).toHaveLength(1);
   });
 
@@ -297,45 +297,54 @@ Body
     );
   });
 
-  it("shows and clears a single-line comment selection", () => {
+  it("toggles a single-line comment form", () => {
     renderMarkdown("# Title\n\nBody\n");
 
     fireEvent.click(screen.getByRole("button", {
-      name: "Select line 3 for comment",
+      name: "Add comment on line 3",
     }));
 
-    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(screen.getByText(/Commenting on line 3/)).not.toBeNull();
 
     fireEvent.click(screen.getByRole("button", {
-      name: "Select line 3 for comment",
+      name: "Add comment on line 3",
     }));
 
-    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 
-  it("creates comments for a clicked line number range", async () => {
+  it("creates comments for a selected source line range", async () => {
     const onCreateComment = vi.fn(async () => {});
-    renderMarkdown("# Title\n\nBody\n", [], { onCreateComment });
+    const { container } = renderMarkdown("# Title\n\nBody\n", [], {
+      onCreateComment,
+    });
+    const title = container.querySelector('[data-source-line="1"] h1');
+    const body = container.querySelector('[data-source-line="3"] p');
+    if (!title?.firstChild || !body?.firstChild) {
+      throw new Error("Expected selectable Markdown nodes.");
+    }
+    const range = document.createRange();
+    range.setStart(title.firstChild, 0);
+    range.setEnd(body.firstChild, body.textContent?.length ?? 0);
+    const selection = globalThis.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
 
     fireEvent.click(screen.getByRole("button", {
-      name: "Select line 1 for comment",
+      name: "Add comment on line 3",
     }));
-    fireEvent.click(screen.getByRole("button", {
-      name: "Select line 3 for comment",
-    }));
+    selection?.removeAllRanges();
 
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
     expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
-    expect(screen.getAllByRole("textbox")).toHaveLength(1);
     fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: "Review this line range." },
+      target: { value: "Review this range." },
     });
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
 
     await waitFor(() =>
       expect(onCreateComment).toHaveBeenCalledWith(
         1,
-        "Review this line range.",
+        "Review this range.",
         3,
       )
     );
