@@ -131,13 +131,30 @@ const isPreviewCommentReply = (
     typeof reply.updatedAt === "string";
 };
 
-const normalizePreviewComment = (comment: PreviewComment): PreviewComment => ({
-  ...comment,
-  replies: Array.isArray(comment.replies)
-    ? comment.replies.filter(isPreviewCommentReply)
-    : [],
-  resolved: comment.resolved === true,
-});
+const normalizePreviewComment = (comment: PreviewComment): PreviewComment => {
+  const originalLine = Number.isInteger(comment.originalLine)
+    ? comment.originalLine
+    : comment.line;
+  const endLine = comment.endLine ?? comment.line;
+  const originalEndLine = comment.originalEndLine ?? originalLine;
+  const normalizedEndLine = Number.isInteger(endLine) && endLine >= comment.line
+    ? endLine
+    : comment.line;
+  const normalizedOriginalEndLine = Number.isInteger(originalEndLine) &&
+      originalEndLine >= originalLine
+    ? originalEndLine
+    : originalLine;
+  return {
+    ...comment,
+    endLine: normalizedEndLine,
+    originalEndLine: normalizedOriginalEndLine,
+    originalLine,
+    replies: Array.isArray(comment.replies)
+      ? comment.replies.filter(isPreviewCommentReply)
+      : [],
+    resolved: comment.resolved === true,
+  };
+};
 
 export const readCommentsDocument = async (
   filePath: string,
