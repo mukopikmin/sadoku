@@ -239,6 +239,58 @@ Body
       .toBe("Body");
   });
 
+  it("focuses the comment textarea when opening the comment form", () => {
+    renderMarkdown("# Title\n");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 1" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
+  });
+
+  it("submits a new comment with command or control enter", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    renderMarkdown("# Title\n\nBody\n", [], { onCreateComment });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 1" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { target: { value: "Mac shortcut." } },
+    );
+    fireEvent.keyDown(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { key: "Enter", metaKey: true },
+    );
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1)
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 3" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { target: { value: "Control shortcut." } },
+    );
+    fireEvent.keyDown(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { key: "Enter", ctrlKey: true },
+    );
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Control shortcut.", 3)
+    );
+  });
+
   it("does not add duplicate source line controls for blockquotes", () => {
     const { container } = renderMarkdown(`> Quoted text
 `);

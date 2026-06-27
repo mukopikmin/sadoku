@@ -135,16 +135,19 @@ const normalizePreviewComment = (comment: PreviewComment): PreviewComment => {
   const originalLine = Number.isInteger(comment.originalLine)
     ? comment.originalLine
     : comment.line;
+  const endLine = comment.endLine ?? comment.line;
+  const originalEndLine = comment.originalEndLine ?? originalLine;
+  const normalizedEndLine = Number.isInteger(endLine) && endLine >= comment.line
+    ? endLine
+    : comment.line;
+  const normalizedOriginalEndLine = Number.isInteger(originalEndLine) &&
+      originalEndLine >= originalLine
+    ? originalEndLine
+    : originalLine;
   return {
     ...comment,
-    endLine:
-      Number.isInteger(comment.endLine) && comment.endLine >= comment.line
-        ? comment.endLine
-        : comment.line,
-    originalEndLine: Number.isInteger(comment.originalEndLine) &&
-        comment.originalEndLine >= originalLine
-      ? comment.originalEndLine
-      : originalLine,
+    endLine: normalizedEndLine,
+    originalEndLine: normalizedOriginalEndLine,
     originalLine,
     replies: Array.isArray(comment.replies)
       ? comment.replies.filter(isPreviewCommentReply)
