@@ -143,6 +143,18 @@ const CommentableBlock = ({
     }
   };
 
+  const handleContentClick = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest("button, input, label, select, textarea")) return;
+
+    const link = target.closest("a");
+    if (link && !link.classList.contains("heading-anchor")) return;
+    if (link) event.preventDefault();
+
+    onSelectCommentLine(line);
+  };
+
   return (
     <div
       className={[
@@ -152,17 +164,11 @@ const CommentableBlock = ({
       ].filter(Boolean).join(" ")}
       data-source-line={line}
     >
-      <div className="commentable-content">
-        <div className="comment-line-gutter">
-          <button
-            aria-label={`Add comment on line ${line}`}
-            className="comment-line-button"
-            onClick={() => onSelectCommentLine(line)}
-            title={`Select line ${line} for comment`}
-            type="button"
-          >
-          </button>
-        </div>
+      <div
+        className="commentable-content"
+        onClick={handleContentClick}
+        title={`Select line ${line} for comment`}
+      >
         <div className="comment-markdown-body">
           {isRangeActionLine && !isAdding && (
             <button
@@ -429,8 +435,9 @@ export const MarkdownPreview = ({
   const commentsByLine = useMemo(() => {
     const grouped = new Map<number, PreviewComment[]>();
     for (const comment of comments) {
-      grouped.set(comment.line, [
-        ...(grouped.get(comment.line) ?? []),
+      const displayLine = comment.endLine ?? comment.line;
+      grouped.set(displayLine, [
+        ...(grouped.get(displayLine) ?? []),
         comment,
       ]);
     }

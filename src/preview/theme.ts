@@ -382,14 +382,9 @@ export const previewThemeCss = `
       }
 
       .commentable-content {
+        cursor: pointer;
         isolation: isolate;
         position: relative;
-      }
-
-      .comment-line-gutter {
-        position: absolute;
-        top: 0.1rem;
-        left: -34px;
       }
 
       .comment-markdown-body {
@@ -420,45 +415,6 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--color-accent) 14%, transparent);
       }
 
-      .comment-line-button {
-        box-sizing: border-box;
-        display: inline-grid;
-        place-items: center;
-        width: 24px;
-        height: 24px;
-        border: 1px solid var(--color-border);
-        border-radius: 6px;
-        background: var(--color-canvas);
-        color: var(--color-text-muted);
-        cursor: pointer;
-        font: inherit;
-        font-size: 1rem;
-        line-height: 1;
-        opacity: 0.65;
-      }
-
-      .commentable-block:hover .comment-line-button,
-      .comment-line-button:focus-visible,
-      .commentable-block:has(.comment-thread) .comment-line-button {
-        opacity: 1;
-      }
-
-      .comment-line-button:hover,
-      .comment-line-button:focus-visible {
-        border-color: var(--color-accent);
-        color: var(--color-accent);
-      }
-
-      .comment-line-button::before {
-        content: "+";
-      }
-
-      .commentable-block-selected .comment-line-button {
-        border-color: var(--color-accent);
-        color: var(--color-accent);
-        opacity: 1;
-      }
-
       .comment-selection-button {
         position: absolute;
         z-index: 1;
@@ -473,10 +429,6 @@ export const previewThemeCss = `
         font-size: 0.75rem;
         font-weight: 600;
         padding: 3px 8px;
-      }
-
-      .commentable-list-item > .commentable-content > .comment-line-gutter {
-        left: calc(-34px - 2em);
       }
 
       .comment-thread {
@@ -772,15 +724,6 @@ export const previewThemeCss = `
         header {
           align-items: stretch;
           flex-direction: column;
-        }
-
-        .comment-line-gutter {
-          position: static;
-        }
-
-        .comment-line-button {
-          margin: 0 0 6px;
-          opacity: 1;
         }
 
         .comment-item-header {
