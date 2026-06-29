@@ -99,7 +99,7 @@ export const App = () => {
   };
 
   const handleUpdateComment = async (
-    id: string,
+    id: number,
     body: string,
   ): Promise<void> => {
     const comment = await updateComment(id, body);
@@ -115,7 +115,7 @@ export const App = () => {
   };
 
   const handleReplyComment = async (
-    id: string,
+    id: number,
     body: string,
   ): Promise<void> => {
     const comment = await createReply(id, body);
@@ -130,7 +130,7 @@ export const App = () => {
     });
   };
 
-  const handleDeleteComment = async (id: string): Promise<void> => {
+  const handleDeleteComment = async (id: number): Promise<void> => {
     await deleteComment(id);
     setState((current) => {
       if (current.status !== "loaded") return current;
@@ -142,8 +142,8 @@ export const App = () => {
   };
 
   const handleUpdateReply = async (
-    commentId: string,
-    replyId: string,
+    commentId: number,
+    replyId: number,
     body: string,
   ): Promise<void> => {
     const comment = await updateReply(commentId, replyId, body);
@@ -159,8 +159,8 @@ export const App = () => {
   };
 
   const handleDeleteReply = async (
-    commentId: string,
-    replyId: string,
+    commentId: number,
+    replyId: number,
   ): Promise<void> => {
     await deleteReply(commentId, replyId);
     setState((current) => {
@@ -181,7 +181,7 @@ export const App = () => {
     });
   };
 
-  const handleResolveComment = async (id: string): Promise<void> => {
+  const handleResolveComment = async (id: number): Promise<void> => {
     const comment = await resolveComment(id);
     setState((current) => {
       if (current.status !== "loaded") return current;
@@ -194,7 +194,7 @@ export const App = () => {
     });
   };
 
-  const handleReopenComment = async (id: string): Promise<void> => {
+  const handleReopenComment = async (id: number): Promise<void> => {
     const comment = await reopenComment(id);
     setState((current) => {
       if (current.status !== "loaded") return current;
