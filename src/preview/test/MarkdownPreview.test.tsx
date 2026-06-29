@@ -20,7 +20,7 @@ const renderMarkdown = (
       body: string,
       endLine?: number,
     ) => Promise<void>;
-    onResolveComment: (id: string) => Promise<void>;
+    onResolveComment: (id: number) => Promise<void>;
   }> = {},
 ) => {
   const result = render(
@@ -328,7 +328,7 @@ Body
     renderMarkdown("# Title\n\nBody\n\nTail\n", [{
       body: "Range comment.",
       createdAt: "2026-06-05T00:00:00.000Z",
-      id: "comment-1",
+      id: 1,
       line: 1,
       endLine: 3,
       originalLine: 1,
@@ -349,7 +349,7 @@ Body
     renderMarkdown("# Title\n\nBody\n", [{
       body: "Clarify this.",
       createdAt: "2026-06-05T00:00:00.000Z",
-      id: "comment-1",
+      id: 1,
       line: 3,
       endLine: 3,
       originalLine: 3,
@@ -363,8 +363,6 @@ Body
 
     screen.getByRole("button", { name: "Resolve" }).click();
 
-    await waitFor(() =>
-      expect(onResolveComment).toHaveBeenCalledWith("comment-1")
-    );
+    await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
   });
 });

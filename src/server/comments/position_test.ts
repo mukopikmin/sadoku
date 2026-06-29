@@ -13,7 +13,7 @@ const createComment = (
 ): PreviewComment => ({
   body: "Review this.",
   createdAt: "2026-06-07T00:00:00.000Z",
-  id: "comment-1",
+  id: 1,
   line: 3,
   endLine: 3,
   originalLine: 3,

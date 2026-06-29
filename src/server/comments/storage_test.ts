@@ -90,7 +90,7 @@ Deno.test("writes formatted comments JSON with a trailing newline", async () => 
       comments: [{
         body: "Review this.",
         createdAt: "2026-06-07T00:00:00.000Z",
-        id: "comment-1",
+        id: 1,
         line: 3,
         endLine: 3,
         originalLine: 3,
@@ -126,7 +126,7 @@ Deno.test("filters invalid stored comments and normalizes legacy resolution", as
             {
               body: "Legacy comment",
               createdAt: "2026-06-07T00:00:00.000Z",
-              id: "comment-1",
+              id: 1,
               line: 3,
               updatedAt: "2026-06-07T00:00:00.000Z",
             },
@@ -141,7 +141,7 @@ Deno.test("filters invalid stored comments and normalizes legacy resolution", as
 
       assertEquals(document.filePath, filePath);
       assertEquals(document.comments.length, 1);
-      assertEquals(document.comments[0].id, "comment-1");
+      assertEquals(document.comments[0].id, 1);
       assertEquals(document.comments[0].replies, []);
       assertEquals(document.comments[0].resolved, false);
     } finally {
@@ -195,7 +195,7 @@ Deno.test("reads legacy comments stored next to the Markdown file", async () => 
           comments: [{
             body: "Legacy comment",
             createdAt: "2026-06-07T00:00:00.000Z",
-            id: "comment-1",
+            id: 1,
             line: 3,
             updatedAt: "2026-06-07T00:00:00.000Z",
           }],
@@ -206,7 +206,7 @@ Deno.test("reads legacy comments stored next to the Markdown file", async () => 
       const document = await readCommentsDocument(filePath);
 
       assertEquals(document.comments.length, 1);
-      assertEquals(document.comments[0].id, "comment-1");
+      assertEquals(document.comments[0].id, 1);
     } finally {
       await removeTempMarkdown(filePath);
       await Deno.remove(getLegacyCommentsFilePath(filePath)).catch(() => {});
@@ -235,7 +235,7 @@ Deno.test("reads comments from legacy mdview comments directory", async () => {
         comments: [{
           body: "Legacy directory comment",
           createdAt: "2026-06-07T00:00:00.000Z",
-          id: "comment-1",
+          id: 1,
           line: 3,
           updatedAt: "2026-06-07T00:00:00.000Z",
         }],

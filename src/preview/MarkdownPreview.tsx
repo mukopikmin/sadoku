@@ -26,14 +26,14 @@ export type MarkdownPreviewProps = {
     body: string,
     endLine?: number,
   ) => Promise<void>;
-  onDeleteComment: (id: string) => Promise<void>;
-  onDeleteReply: (commentId: string, replyId: string) => Promise<void>;
-  onReplyComment: (id: string, body: string) => Promise<void>;
-  onResolveComment: (id: string) => Promise<void>;
-  onUpdateComment: (id: string, body: string) => Promise<void>;
+  onDeleteComment: (id: number) => Promise<void>;
+  onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
+  onReplyComment: (id: number, body: string) => Promise<void>;
+  onResolveComment: (id: number) => Promise<void>;
+  onUpdateComment: (id: number, body: string) => Promise<void>;
   onUpdateReply: (
-    commentId: string,
-    replyId: string,
+    commentId: number,
+    replyId: number,
     body: string,
   ) => Promise<void>;
 };
@@ -66,14 +66,14 @@ type CommentableBlockProps = {
     body: string,
     endLine?: number,
   ) => Promise<void>;
-  onDeleteComment: (id: string) => Promise<void>;
-  onDeleteReply: (commentId: string, replyId: string) => Promise<void>;
-  onReplyComment: (id: string, body: string) => Promise<void>;
-  onResolveComment: (id: string) => Promise<void>;
-  onUpdateComment: (id: string, body: string) => Promise<void>;
+  onDeleteComment: (id: number) => Promise<void>;
+  onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
+  onReplyComment: (id: number, body: string) => Promise<void>;
+  onResolveComment: (id: number) => Promise<void>;
+  onUpdateComment: (id: number, body: string) => Promise<void>;
   onUpdateReply: (
-    commentId: string,
-    replyId: string,
+    commentId: number,
+    replyId: number,
     body: string,
   ) => Promise<void>;
 };
@@ -279,7 +279,6 @@ const createCommentableComponent = (
       <CommentableBlock
         comments={commentsByLine.get(line) ?? []}
         line={line}
-        endLine={endLine}
         endLine={endLine}
         onCreateComment={props.onCreateComment}
         onDeleteComment={props.onDeleteComment}
