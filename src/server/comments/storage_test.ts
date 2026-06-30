@@ -76,6 +76,7 @@ Deno.test("returns an empty comments document when storage does not exist", asyn
       assertEquals(await readCommentsDocument(filePath), {
         comments: [],
         filePath,
+        schemaVersion: 1,
       });
     } finally {
       await removeTempMarkdown(filePath);
@@ -99,6 +100,7 @@ Deno.test("writes formatted comments JSON with a trailing newline", async () => 
         updatedAt: "2026-06-07T00:00:00.000Z",
       }],
       filePath,
+      schemaVersion: 1,
     };
 
     try {
@@ -138,6 +140,7 @@ Deno.test("filters invalid stored comments and normalizes legacy resolution", as
       const document = await readCommentsDocument(filePath);
 
       assertEquals(document.filePath, filePath);
+      assertEquals(document.schemaVersion, 1);
       assertEquals(document.comments.length, 1);
       assertEquals(document.comments[0].id, "comment-1");
       assertEquals(document.comments[0].replies, []);
@@ -160,6 +163,7 @@ Deno.test("treats a stored document without a comments array as empty", async ()
       assertEquals(await readCommentsDocument(filePath), {
         comments: [],
         filePath,
+        schemaVersion: 1,
       });
     } finally {
       await removeTempMarkdown(filePath);
@@ -203,6 +207,7 @@ Deno.test("reads legacy comments stored next to the Markdown file", async () => 
 
       const document = await readCommentsDocument(filePath);
 
+      assertEquals(document.schemaVersion, 1);
       assertEquals(document.comments.length, 1);
       assertEquals(document.comments[0].id, "comment-1");
     } finally {
@@ -243,6 +248,7 @@ Deno.test("reads comments from legacy mdview comments directory", async () => {
 
     const document = await readCommentsDocument(filePath);
 
+    assertEquals(document.schemaVersion, 1);
     assertEquals(document.comments.length, 1);
     assertEquals(document.comments[0].body, "Legacy directory comment");
   } finally {

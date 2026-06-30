@@ -8,6 +8,7 @@ import { readConfig } from "../../config.ts";
 
 const commentsDirectoryName = "sadoku";
 const legacyCommentsDirectoryName = "mdview";
+const currentCommentsSchemaVersion = 1;
 
 const hashFilePath = (filePath: string): string => {
   let hash = 0x811c9dc5;
@@ -103,12 +104,18 @@ const getLegacyDirectoryCommentsFilePath = (markdownFilePath: string): string =>
     getCommentsStorageFileName(markdownFilePath),
   );
 
+const createCommentsDocument = (
+  filePath: string,
+  comments: PreviewComment[],
+): PreviewCommentsDocument => ({
+  comments,
+  filePath,
+  schemaVersion: currentCommentsSchemaVersion,
+});
+
 const createEmptyCommentsDocument = (
   filePath: string,
-): PreviewCommentsDocument => ({
-  comments: [],
-  filePath,
-});
+): PreviewCommentsDocument => createCommentsDocument(filePath, []);
 
 const isPreviewComment = (value: unknown): value is PreviewComment => {
   if (typeof value !== "object" || value === null) return false;
@@ -163,21 +170,29 @@ export const readCommentsDocument = async (
     return createEmptyCommentsDocument(filePath);
   }
 
-  return {
-    comments: parsed.comments.filter(isPreviewComment).map(
-      normalizePreviewComment,
-    ),
+  return createCommentsDocument(
     filePath,
-  };
+    parsed.comments.filter(isPreviewComment).map(normalizePreviewComment),
+  );
 };
+
+type WritableCommentsDocument =
+  & Pick<PreviewCommentsDocument, "comments" | "filePath">
+  & Partial<Pick<PreviewCommentsDocument, "schemaVersion">>;
 
 export const writeCommentsDocument = async (
   filePath: string,
-  document: PreviewCommentsDocument,
+  document: WritableCommentsDocument,
 ): Promise<void> => {
   await Deno.mkdir(getCommentsDirectoryPath(), { recursive: true });
   await Deno.writeTextFile(
     getCommentsFilePath(filePath),
-    `${JSON.stringify(document, null, 2)}\n`,
+    `${
+      JSON.stringify(
+        createCommentsDocument(filePath, document.comments),
+        null,
+        2,
+      )
+    }\n`,
   );
 };

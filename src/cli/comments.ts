@@ -147,6 +147,7 @@ export const inspectComments = async (
   return {
     comments: document.comments.filter((comment) => !comment.resolved),
     filePath: source.commentSource,
+    schemaVersion: document.schemaVersion,
   };
 };
 
@@ -168,7 +169,7 @@ export const resolveComments = async (
   }
 
   const now = new Date().toISOString();
-  const updatedDocument = {
+  const updatedDocument: PreviewCommentsDocument = {
     comments: document.comments.map((comment) =>
       requestedIds.has(comment.id)
         ? {
@@ -180,6 +181,7 @@ export const resolveComments = async (
         : comment
     ),
     filePath: source.commentSource,
+    schemaVersion: document.schemaVersion,
   };
   await writeCommentsDocument(source.commentSource, updatedDocument);
   return {
@@ -187,6 +189,7 @@ export const resolveComments = async (
       requestedIds.has(comment.id)
     ),
     filePath: source.commentSource,
+    schemaVersion: updatedDocument.schemaVersion,
   };
 };
 
@@ -226,6 +229,7 @@ export const replyToComment = async (
   await writeCommentsDocument(source.commentSource, {
     comments,
     filePath: source.commentSource,
+    schemaVersion: document.schemaVersion,
   });
   return resolveCommentPosition(
     updatedComment,

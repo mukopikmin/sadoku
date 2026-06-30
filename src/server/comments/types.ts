@@ -24,4 +24,5 @@ export type PreviewComment = {
 export type PreviewCommentsDocument = {
   comments: PreviewComment[];
   filePath: string;
+  schemaVersion: number;
 };

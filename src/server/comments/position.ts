@@ -92,5 +92,6 @@ export const readResolvedCommentsDocument = async (
       resolveCommentPosition(comment, markdown)
     ),
     filePath,
+    schemaVersion: document.schemaVersion,
   };
 };

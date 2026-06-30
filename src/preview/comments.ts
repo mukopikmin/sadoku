@@ -23,6 +23,7 @@ export type PreviewComment = {
 export type PreviewCommentsDocument = {
   comments: PreviewComment[];
   filePath: string;
+  schemaVersion: number;
 };
 
 export const loadComments = async (): Promise<PreviewCommentsDocument> => {
