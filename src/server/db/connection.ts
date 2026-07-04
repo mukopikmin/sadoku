@@ -1,7 +1,7 @@
 import { dirname, join } from "@std/path";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { getCommentsDirectoryPath } from "../comments/storage.ts";
-import { type DbMigration, runMigrations } from "./migrations.ts";
+import { type Migration, runMigrations } from "./migrations.ts";
 
 export interface AppDatabaseStatementResult<Row = Record<string, unknown>> {
   rows?: Row[];
@@ -28,7 +28,7 @@ export interface OpenAppDatabaseOptions {
    * migration behavior; production callers should rely on the default migrated
    * connection.
    */
-  migrate?: boolean | readonly DbMigration[];
+  migrate?: boolean | readonly Migration[];
 }
 
 const databaseFileName = "sadoku.sqlite3";
