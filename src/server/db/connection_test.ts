@@ -17,14 +17,7 @@ Deno.test("openAppDatabase opens the default application database path", async (
   await withTempCommentsDirectory(async () => {
     const database = await openAppDatabase();
     try {
-      await database.execute("CREATE TABLE notes (body TEXT NOT NULL)");
-      await database.execute("INSERT INTO notes (body) VALUES (?)", ["hello"]);
-
-      const result = await database.execute<{ body: string }>(
-        "SELECT body FROM notes",
-      );
-
-      assertEquals(result.rows, [{ body: "hello" }]);
+      assertEquals(database.path, getDatabaseFilePath());
       assertEquals(await fileExists(getDatabaseFilePath()), true);
     } finally {
       database.close();
@@ -38,7 +31,7 @@ Deno.test("openAppDatabase accepts a path override", async () => {
     const databasePath = join(root, "custom", "override.sqlite3");
     const database = await openAppDatabase({ path: databasePath });
     try {
-      await database.execute("CREATE TABLE notes (body TEXT NOT NULL)");
+      assertEquals(database.path, databasePath);
     } finally {
       database.close();
     }

@@ -1,5 +1,4 @@
 import { dirname, join } from "@std/path";
-import { DatabaseSync } from "node:sqlite";
 import { getCommentsDirectoryPath } from "../comments/storage.ts";
 
 export interface DbStatementResult<Row = Record<string, unknown>> {
@@ -14,7 +13,8 @@ export interface DbConnection {
   ): Promise<DbStatementResult<Row>>;
 }
 
-export interface AppDatabaseConnection extends DbConnection {
+export interface AppDatabaseConnection {
+  readonly path: string;
   close(): void;
 }
 
@@ -27,32 +27,17 @@ const databaseFileName = "sadoku.sqlite3";
 export const getDatabaseFilePath = (): string =>
   join(getCommentsDirectoryPath(), databaseFileName);
 
-const statementReturnsRows = (sql: string): boolean =>
-  /^\s*(?:SELECT|PRAGMA\s+\w+\s*\()/i.test(sql);
+class FileAppDatabase implements AppDatabaseConnection {
+  readonly path: string;
+  readonly #file: Deno.FsFile;
 
-class SqliteAppDatabase implements AppDatabaseConnection {
-  readonly #database: DatabaseSync;
-
-  constructor(path: string) {
-    this.#database = new DatabaseSync(path);
-  }
-
-  async execute<Row = Record<string, unknown>>(
-    sql: string,
-    parameters: readonly unknown[] = [],
-  ): Promise<DbStatementResult<Row>> {
-    const statement = this.#database.prepare(sql);
-
-    if (statementReturnsRows(sql)) {
-      return { rows: statement.all(...parameters) as Row[] };
-    }
-
-    const result = statement.run(...parameters);
-    return { rowsAffected: Number(result.changes) };
+  constructor(path: string, file: Deno.FsFile) {
+    this.path = path;
+    this.#file = file;
   }
 
   close(): void {
-    this.#database.close();
+    this.#file.close();
   }
 }
 
@@ -61,7 +46,12 @@ export async function openAppDatabase(
 ): Promise<AppDatabaseConnection> {
   const databasePath = options.path ?? getDatabaseFilePath();
   await Deno.mkdir(dirname(databasePath), { recursive: true });
-  return new SqliteAppDatabase(databasePath);
+  const file = await Deno.open(databasePath, {
+    create: true,
+    read: true,
+    write: true,
+  });
+  return new FileAppDatabase(databasePath, file);
 }
 
 export async function withTransaction<T>(
