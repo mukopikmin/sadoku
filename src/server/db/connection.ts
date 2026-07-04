@@ -3,19 +3,19 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { getCommentsDirectoryPath } from "../comments/storage.ts";
 import { type DbMigration, runMigrations } from "./migrations.ts";
 
-export interface DbStatementResult<Row = Record<string, unknown>> {
+export interface AppDatabaseStatementResult<Row = Record<string, unknown>> {
   rows?: Row[];
   rowsAffected?: number;
 }
 
-export interface DbConnection {
+export interface AppDatabase {
   execute<Row = Record<string, unknown>>(
     sql: string,
     parameters?: readonly unknown[],
-  ): Promise<DbStatementResult<Row>>;
+  ): Promise<AppDatabaseStatementResult<Row>>;
 }
 
-export interface AppDatabaseConnection extends DbConnection {
+export interface AppDatabaseConnection extends AppDatabase {
   readonly path: string;
   close(): void;
 }
@@ -50,7 +50,7 @@ const createSqliteAppDatabase = (
   async execute<Row = Record<string, unknown>>(
     sql: string,
     parameters: readonly unknown[] = [],
-  ): Promise<DbStatementResult<Row>> {
+  ): Promise<AppDatabaseStatementResult<Row>> {
     const statement = database.prepare(sql);
     const sqliteParameters = parameters as readonly SQLInputValue[];
 
@@ -93,16 +93,16 @@ export async function openAppDatabase(
 }
 
 export async function withTransaction<T>(
-  connection: DbConnection,
+  database: AppDatabase,
   operation: () => Promise<T>,
 ): Promise<T> {
-  await connection.execute("BEGIN");
+  await database.execute("BEGIN");
   try {
     const result = await operation();
-    await connection.execute("COMMIT");
+    await database.execute("COMMIT");
     return result;
   } catch (error) {
-    await connection.execute("ROLLBACK");
+    await database.execute("ROLLBACK");
     throw error;
   }
 }
