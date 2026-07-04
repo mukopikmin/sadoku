@@ -29,6 +29,12 @@ them when making changes.
   data through the existing HTTP endpoints instead of importing server modules
   into client code.
 
+## 2.1 TypeScript Style
+
+- Prefer plain objects, functions, and factory helpers over `class`
+  declarations. Do not introduce classes unless there is a strong
+  interoperability reason.
+
 ## 3. Deno and Runtime Behavior
 
 - Use Deno and Web Platform APIs in server code unless an existing dependency
