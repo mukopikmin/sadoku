@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 import { withTempCommentsDirectory } from "../test_helpers.ts";
 import { getCommentsDirectoryPath } from "../comments/storage.ts";
@@ -33,10 +33,12 @@ Deno.test("openAppDatabase opens the default application database path", async (
   });
 });
 
-Deno.test("openAppDatabase accepts a path override", async () => {
+Deno.test("openAppDatabase creates a temp database at a path override", async () => {
   const root = await Deno.makeTempDir();
   try {
     const databasePath = join(root, "custom", "override.sqlite3");
+    assertEquals(await directoryExists(dirname(databasePath)), false);
+
     const database = await openAppDatabase({ path: databasePath });
     try {
       assertEquals(database.path, databasePath);
@@ -52,7 +54,7 @@ Deno.test("openAppDatabase accepts a path override", async () => {
   }
 });
 
-Deno.test("openAppDatabase enables foreign keys and runs migrations", async () => {
+Deno.test("openAppDatabase enables foreign keys and returns a migrated database", async () => {
   const root = await Deno.makeTempDir();
   try {
     const databasePath = join(root, "app.sqlite3");
@@ -116,6 +118,9 @@ Deno.test("openAppDatabase closes the database when migrations fail", async () =
   const root = await Deno.makeTempDir();
   try {
     const databasePath = join(root, "failed.sqlite3");
+    let migrationConnection:
+      | Awaited<ReturnType<typeof openAppDatabase>>
+      | undefined;
 
     await assertRejects(
       () =>
@@ -125,13 +130,23 @@ Deno.test("openAppDatabase closes the database when migrations fail", async () =
             version: "0001",
             name: "fails",
             checksumSource: "throw migration failed",
-            up: () => Promise.reject(new Error("migration failed")),
+            up: (connection) => {
+              migrationConnection = connection as Awaited<
+                ReturnType<typeof openAppDatabase>
+              >;
+              return Promise.reject(new Error("migration failed"));
+            },
           }],
         }),
       Error,
       "migration failed",
     );
 
+    assertThrows(
+      () => migrationConnection?.close(),
+      Error,
+      "database is not open",
+    );
     await Deno.remove(databasePath);
     assertEquals(await fileExists(databasePath), false);
   } finally {
