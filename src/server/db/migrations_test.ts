@@ -54,12 +54,16 @@ const createFakeDatabase = (): FakeDatabase => {
         sql.includes("SET state = 'applied'") &&
         typeof parameters?.[1] === "string"
       ) {
-        const insertStatement = statements.findLast((statement) =>
-          statement.sql.startsWith("INSERT OR REPLACE") &&
-          statement.parameters?.[0] === parameters[1]
-        );
-        if (typeof insertStatement?.parameters?.[2] === "string") {
-          appliedChecksums.set(parameters[1], insertStatement.parameters[2]);
+        for (let index = statements.length - 1; index >= 0; index -= 1) {
+          const statement = statements[index];
+          if (
+            statement?.sql.startsWith("INSERT OR REPLACE") &&
+            statement.parameters?.[0] === parameters[1] &&
+            typeof statement.parameters[2] === "string"
+          ) {
+            appliedChecksums.set(parameters[1], statement.parameters[2]);
+            break;
+          }
         }
       }
 

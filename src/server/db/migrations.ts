@@ -7,6 +7,8 @@ export interface Migration {
   up: (database: AppDatabase) => Promise<void>;
 }
 
+export type DbMigration = Migration;
+
 export interface RunMigrationsOptions {
   tableName?: string;
 }
