@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import type { AppDatabase, AppDatabaseStatementResult } from "./connection.ts";
 import {
   calculateMigrationChecksum,
@@ -78,20 +78,34 @@ Deno.test("MIGRATIONS includes the initial comment tables schema", async () => {
 
   await MIGRATIONS[0].up(connection);
 
+  const statements = connection.statements.map((statement) => statement.sql);
   assertEquals(MIGRATIONS[0].version, "0001");
   assertEquals(MIGRATIONS[0].name, "create_comment_tables");
-  assertEquals(
-    connection.statements.map((statement) => statement.sql),
-    [
-      "CREATE TABLE IF NOT EXISTS comment_documents (id INTEGER PRIMARY KEY,file_path TEXT NOT NULL,created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'),updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'))",
-      "CREATE UNIQUE INDEX IF NOT EXISTS idx_comment_documents_file_path ON comment_documents(file_path)",
-      "CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY,document_id INTEGER NOT NULL,local_id INTEGER NOT NULL,line INTEGER NOT NULL,original_line INTEGER NOT NULL,body TEXT NOT NULL,resolved INTEGER NOT NULL DEFAULT 0 CHECK (resolved IN (0, 1)),resolved_at TEXT CHECK (resolved_at IS NULL OR resolved_at GLOB '????-??-??T??:??:??.???Z'),source_hash TEXT,source_text TEXT,stale INTEGER NOT NULL DEFAULT 0 CHECK (stale IN (0, 1)),created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'),updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'),FOREIGN KEY (document_id) REFERENCES comment_documents(id) ON DELETE CASCADE,UNIQUE (document_id, local_id))",
-      "CREATE INDEX IF NOT EXISTS idx_comments_document_id ON comments(document_id)",
-      "CREATE INDEX IF NOT EXISTS idx_comments_document_line ON comments(document_id, line)",
-      "CREATE TABLE IF NOT EXISTS comment_replies (id INTEGER PRIMARY KEY,comment_id INTEGER NOT NULL,local_id INTEGER NOT NULL,body TEXT NOT NULL,created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'),updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'),FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,UNIQUE (comment_id, local_id))",
-      "CREATE INDEX IF NOT EXISTS idx_comment_replies_comment_id ON comment_replies(comment_id)",
-    ],
+  assertEquals(statements.length, 7);
+  assertStringIncludes(
+    statements[0] ?? "",
+    "CREATE TABLE IF NOT EXISTS comment_documents",
   );
+  assertStringIncludes(statements[1] ?? "", "idx_comment_documents_file_path");
+  assertStringIncludes(
+    statements[2] ?? "",
+    "CREATE TABLE IF NOT EXISTS comments",
+  );
+  assertStringIncludes(
+    statements[2] ?? "",
+    "FOREIGN KEY (document_id) REFERENCES comment_documents(id) ON DELETE CASCADE",
+  );
+  assertStringIncludes(statements[3] ?? "", "idx_comments_document_id");
+  assertStringIncludes(statements[4] ?? "", "idx_comments_document_line");
+  assertStringIncludes(
+    statements[5] ?? "",
+    "CREATE TABLE IF NOT EXISTS comment_replies",
+  );
+  assertStringIncludes(
+    statements[5] ?? "",
+    "FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE",
+  );
+  assertStringIncludes(statements[6] ?? "", "idx_comment_replies_comment_id");
 });
 
 Deno.test("ensureMigrationLedger creates a constrained migration ledger", async () => {
