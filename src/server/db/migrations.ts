@@ -1,8 +1,8 @@
-import { type DbConnection, withTransaction } from "./connection.ts";
+import { type AppDatabase, withTransaction } from "./connection.ts";
 
 export interface DbMigration {
   id: string;
-  up: (connection: DbConnection) => Promise<void>;
+  up: (database: AppDatabase) => Promise<void>;
 }
 
 export interface RunMigrationsOptions {
@@ -30,10 +30,10 @@ function assertUniqueMigrationIds(migrations: readonly DbMigration[]): void {
 }
 
 async function ensureMigrationsTable(
-  connection: DbConnection,
+  database: AppDatabase,
   tableName: string,
 ): Promise<void> {
-  await connection.execute(
+  await database.execute(
     `CREATE TABLE IF NOT EXISTS ${tableName} (` +
       "id TEXT PRIMARY KEY," +
       "applied_at TEXT NOT NULL" +
@@ -42,17 +42,17 @@ async function ensureMigrationsTable(
 }
 
 async function readAppliedMigrationIds(
-  connection: DbConnection,
+  database: AppDatabase,
   tableName: string,
 ): Promise<Set<string>> {
-  const result = await connection.execute<{ id: string }>(
+  const result = await database.execute<{ id: string }>(
     `SELECT id FROM ${tableName} ORDER BY id`,
   );
   return new Set((result.rows ?? []).map((row) => row.id));
 }
 
 export async function runMigrations(
-  connection: DbConnection,
+  database: AppDatabase,
   migrations: readonly DbMigration[] = appMigrations,
   options: RunMigrationsOptions = {},
 ): Promise<string[]> {
@@ -60,16 +60,16 @@ export async function runMigrations(
   assertValidIdentifier(tableName);
   assertUniqueMigrationIds(migrations);
 
-  await ensureMigrationsTable(connection, tableName);
-  const appliedIds = await readAppliedMigrationIds(connection, tableName);
+  await ensureMigrationsTable(database, tableName);
+  const appliedIds = await readAppliedMigrationIds(database, tableName);
   const appliedNow: string[] = [];
 
   for (const migration of migrations) {
     if (appliedIds.has(migration.id)) continue;
 
-    await withTransaction(connection, async () => {
-      await migration.up(connection);
-      await connection.execute(
+    await withTransaction(database, async () => {
+      await migration.up(database);
+      await database.execute(
         `INSERT INTO ${tableName} (id, applied_at) VALUES (?, ?)`,
         [migration.id, new Date().toISOString()],
       );

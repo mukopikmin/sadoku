@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import type { DbConnection, DbStatementResult } from "./connection.ts";
+import type { AppDatabase, AppDatabaseStatementResult } from "./connection.ts";
 import { type DbMigration, runMigrations } from "./migrations.ts";
 
 interface ExecutedStatement {
@@ -7,32 +7,43 @@ interface ExecutedStatement {
   parameters?: readonly unknown[];
 }
 
-class FakeConnection implements DbConnection {
-  readonly statements: ExecutedStatement[] = [];
-  readonly appliedIds = new Set<string>();
+type FakeDatabase = AppDatabase & {
+  readonly statements: ExecutedStatement[];
+  readonly appliedIds: Set<string>;
+};
 
-  async execute<Row = Record<string, unknown>>(
-    sql: string,
-    parameters?: readonly unknown[],
-  ): Promise<DbStatementResult<Row>> {
-    this.statements.push({ sql, parameters });
+const createFakeDatabase = (): FakeDatabase => {
+  const statements: ExecutedStatement[] = [];
+  const appliedIds = new Set<string>();
 
-    if (sql.startsWith("SELECT id FROM")) {
-      return {
-        rows: [...this.appliedIds].sort().map((id) => ({ id } as Row)),
-      };
-    }
+  return {
+    statements,
+    appliedIds,
+    async execute<Row = Record<string, unknown>>(
+      sql: string,
+      parameters?: readonly unknown[],
+    ): Promise<AppDatabaseStatementResult<Row>> {
+      statements.push({ sql, parameters });
 
-    if (sql.startsWith("INSERT INTO") && typeof parameters?.[0] === "string") {
-      this.appliedIds.add(parameters[0]);
-    }
+      if (sql.startsWith("SELECT id FROM")) {
+        return {
+          rows: [...appliedIds].sort().map((id) => ({ id } as Row)),
+        };
+      }
 
-    return {};
-  }
-}
+      if (
+        sql.startsWith("INSERT INTO") && typeof parameters?.[0] === "string"
+      ) {
+        appliedIds.add(parameters[0]);
+      }
+
+      return {};
+    },
+  };
+};
 
 Deno.test("runMigrations applies pending migrations in order", async () => {
-  const connection = new FakeConnection();
+  const connection = createFakeDatabase();
   const appliedByMigration: string[] = [];
   const migrations: DbMigration[] = [
     {
@@ -72,7 +83,7 @@ Deno.test("runMigrations applies pending migrations in order", async () => {
 });
 
 Deno.test("runMigrations skips already applied migrations", async () => {
-  const connection = new FakeConnection();
+  const connection = createFakeDatabase();
   connection.appliedIds.add("001_create_documents");
   const appliedByMigration: string[] = [];
 
@@ -96,7 +107,7 @@ Deno.test("runMigrations skips already applied migrations", async () => {
 });
 
 Deno.test("runMigrations rolls back failed migrations", async () => {
-  const connection = new FakeConnection();
+  const connection = createFakeDatabase();
 
   await assertRejects(
     () =>
@@ -118,7 +129,7 @@ Deno.test("runMigrations rolls back failed migrations", async () => {
 Deno.test("runMigrations rejects duplicate migration ids", async () => {
   await assertRejects(
     () =>
-      runMigrations(new FakeConnection(), [
+      runMigrations(createFakeDatabase(), [
         { id: "001_duplicate", up: () => Promise.resolve() },
         { id: "001_duplicate", up: () => Promise.resolve() },
       ]),
@@ -130,7 +141,7 @@ Deno.test("runMigrations rejects duplicate migration ids", async () => {
 Deno.test("runMigrations rejects unsafe migration table names", async () => {
   await assertRejects(
     () =>
-      runMigrations(new FakeConnection(), [], {
+      runMigrations(createFakeDatabase(), [], {
         tableName: "schema_migrations; DROP TABLE comments",
       }),
     Error,
