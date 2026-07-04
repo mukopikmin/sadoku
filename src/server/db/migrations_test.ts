@@ -162,7 +162,12 @@ Deno.test("runMigrations skips already applied migrations with matching checksum
   const appliedByMigration: string[] = [];
 
   const applied = await runMigrations(connection, [
-    { ...firstMigration, up: async () => appliedByMigration.push("0001") },
+    {
+      ...firstMigration,
+      up: async () => {
+        appliedByMigration.push("0001");
+      },
+    },
     createMigration("0002", "create_comments", async () => {
       appliedByMigration.push("0002");
     }),
