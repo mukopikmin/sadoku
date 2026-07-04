@@ -100,14 +100,24 @@ async function ensureMigrationsTable(
   );
 }
 
-async function readAppliedMigrationChecksums(
+interface MigrationLedgerRow {
+  version: string;
+  name: string;
+  checksum: string;
+  state: "running" | "applied" | "failed";
+  started_at: string;
+  finished_at: string | null;
+  error_message: string | null;
+}
+
+async function readMigrationLedgerRows(
   database: AppDatabase,
   tableName: string,
-): Promise<Map<string, string>> {
-  const result = await database.execute<{ version: string; checksum: string }>(
-    `SELECT version, checksum FROM ${tableName} WHERE state = 'applied' ORDER BY version`,
+): Promise<MigrationLedgerRow[]> {
+  const result = await database.execute<MigrationLedgerRow>(
+    `SELECT version, name, checksum, state, started_at, finished_at, error_message FROM ${tableName} ORDER BY version`,
   );
-  return new Map((result.rows ?? []).map((row) => [row.version, row.checksum]));
+  return result.rows ?? [];
 }
 
 export async function runMigrations(
@@ -121,23 +131,61 @@ export async function runMigrations(
   assertUniqueMigrationVersions(migrations);
 
   await ensureMigrationsTable(database, tableName);
-  const appliedChecksums = await readAppliedMigrationChecksums(
-    database,
-    tableName,
-  );
-  const appliedNow: string[] = [];
 
+  const migrationsByVersion = new Map(
+    migrations.map((migration) => [migration.version, migration]),
+  );
+  const checksumsByVersion = new Map<string, string>();
   for (const migration of migrations) {
-    const checksum = await calculateMigrationChecksum(migration);
-    const appliedChecksum = appliedChecksums.get(migration.version);
-    if (appliedChecksum !== undefined) {
-      if (appliedChecksum !== checksum) {
-        throw new Error(
-          `Applied database migration ${migration.version} checksum mismatch. ` +
-            "Do not edit existing migrations; add a new migration instead.",
-        );
-      }
-      continue;
+    checksumsByVersion.set(
+      migration.version,
+      await calculateMigrationChecksum(migration),
+    );
+  }
+
+  const ledgerRows = await readMigrationLedgerRows(database, tableName);
+  const appliedChecksums = new Map<string, string>();
+  for (const row of ledgerRows) {
+    const migration = migrationsByVersion.get(row.version);
+    if (row.state === "failed") {
+      throw new Error(
+        `Database migration ${row.version} is marked failed. ` +
+          "Resolve the failed migration before running migrations again.",
+      );
+    }
+    if (row.state === "running") {
+      throw new Error(
+        `Database migration ${row.version} is marked running. ` +
+          "Resolve the interrupted migration before running migrations again.",
+      );
+    }
+    if (migration === undefined) {
+      throw new Error(
+        `Database migration ${row.version} exists in the ledger but not in code.`,
+      );
+    }
+
+    const checksum = checksumsByVersion.get(row.version);
+    if (row.checksum !== checksum) {
+      throw new Error(
+        `Applied database migration ${row.version} checksum mismatch. ` +
+          "Do not edit existing migrations; add a new migration instead.",
+      );
+    }
+    appliedChecksums.set(row.version, row.checksum);
+  }
+
+  const appliedNow: string[] = [];
+  const pendingMigrations = [...migrations]
+    .filter((migration) => !appliedChecksums.has(migration.version))
+    .sort((a, b) => a.version.localeCompare(b.version));
+
+  for (const migration of pendingMigrations) {
+    const checksum = checksumsByVersion.get(migration.version);
+    if (checksum === undefined) {
+      throw new Error(
+        `Missing checksum for database migration ${migration.version}`,
+      );
     }
 
     const startedAt = new Date().toISOString();
