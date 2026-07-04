@@ -57,9 +57,10 @@ export async function calculateMigrationChecksum(
 ): Promise<string> {
   const bytes = new TextEncoder().encode(migration.checksumSource);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(digest)]
+  const hex = [...new Uint8Array(digest)]
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+  return `sha256:${hex}`;
 }
 
 export async function ensureMigrationLedger(
@@ -168,7 +169,8 @@ export async function runMigrations(
     const checksum = checksumsByVersion.get(row.version);
     if (row.checksum !== checksum) {
       throw new Error(
-        `Applied database migration ${row.version} checksum mismatch. ` +
+        `Applied database migration checksum mismatch: version=${row.version}, ` +
+          `name=${migration.name}, expected=${row.checksum}, actual=${checksum}. ` +
           "Do not edit existing migrations; add a new migration instead.",
       );
     }
