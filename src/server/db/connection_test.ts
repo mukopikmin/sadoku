@@ -74,12 +74,12 @@ Deno.test("openAppDatabase enables foreign keys and runs migrations", async () =
       const foreignKeys = await database.execute<{ foreign_keys: number }>(
         "PRAGMA foreign_keys",
       );
-      const migrations = await database.execute<{ id: string }>(
-        "SELECT id FROM schema_migrations",
+      const migrations = await database.execute<{ version: string }>(
+        "SELECT version FROM schema_migrations",
       );
 
       assertEquals(foreignKeys.rows, [{ foreign_keys: 1 }]);
-      assertEquals(migrations.rows, [{ id: "001_create_parent_child" }]);
+      assertEquals(migrations.rows, [{ version: "001_create_parent_child" }]);
     } finally {
       database.close();
     }
