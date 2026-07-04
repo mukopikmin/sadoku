@@ -1,3 +1,4 @@
+import { createCommentTablesMigration } from "./migrations/0001_create_comment_tables.ts";
 import { type AppDatabase, withTransaction } from "./connection.ts";
 
 export interface Migration {
@@ -17,7 +18,9 @@ const defaultMigrationsTableName = "schema_migrations";
 
 // Append-only application migrations. Once a migration is added, do not edit it;
 // add a new zero-padded version instead (for example, 0001, 0002, ...).
-export const MIGRATIONS: readonly Migration[] = [];
+export const MIGRATIONS: readonly Migration[] = [
+  createCommentTablesMigration,
+];
 
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const migrationVersionPattern = /^\d{4}$/;

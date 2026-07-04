@@ -1,9 +1,10 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import type { AppDatabase, AppDatabaseStatementResult } from "./connection.ts";
 import {
   calculateMigrationChecksum,
   ensureMigrationLedger,
   type Migration,
+  MIGRATIONS,
   runMigrations,
 } from "./migrations.ts";
 
@@ -94,6 +95,41 @@ const createFakeDatabase = (): FakeDatabase => {
     },
   };
 };
+
+Deno.test("MIGRATIONS includes the initial comment tables schema", async () => {
+  const connection = createFakeDatabase();
+
+  await MIGRATIONS[0].up(connection);
+
+  const statements = connection.statements.map((statement) => statement.sql);
+  assertEquals(MIGRATIONS[0].version, "0001");
+  assertEquals(MIGRATIONS[0].name, "create_comment_tables");
+  assertEquals(statements.length, 7);
+  assertStringIncludes(
+    statements[0] ?? "",
+    "CREATE TABLE IF NOT EXISTS comment_documents",
+  );
+  assertStringIncludes(statements[1] ?? "", "idx_comment_documents_file_path");
+  assertStringIncludes(
+    statements[2] ?? "",
+    "CREATE TABLE IF NOT EXISTS comments",
+  );
+  assertStringIncludes(
+    statements[2] ?? "",
+    "FOREIGN KEY (document_id) REFERENCES comment_documents(id) ON DELETE CASCADE",
+  );
+  assertStringIncludes(statements[3] ?? "", "idx_comments_document_id");
+  assertStringIncludes(statements[4] ?? "", "idx_comments_document_line");
+  assertStringIncludes(
+    statements[5] ?? "",
+    "CREATE TABLE IF NOT EXISTS comment_replies",
+  );
+  assertStringIncludes(
+    statements[5] ?? "",
+    "FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE",
+  );
+  assertStringIncludes(statements[6] ?? "", "idx_comment_replies_comment_id");
+});
 
 Deno.test("ensureMigrationLedger creates a constrained migration ledger", async () => {
   const connection = createFakeDatabase();
