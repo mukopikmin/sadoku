@@ -1,4 +1,5 @@
 import { dirname, join } from "@std/path";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { getCommentsDirectoryPath } from "../comments/storage.ts";
 
 export interface DbStatementResult<Row = Record<string, unknown>> {
@@ -13,7 +14,7 @@ export interface DbConnection {
   ): Promise<DbStatementResult<Row>>;
 }
 
-export interface AppDatabaseConnection {
+export interface AppDatabaseConnection extends DbConnection {
   readonly path: string;
   close(): void;
 }
@@ -27,17 +28,40 @@ const databaseFileName = "sadoku.sqlite3";
 export const getDatabaseFilePath = (): string =>
   join(getCommentsDirectoryPath(), databaseFileName);
 
-class FileAppDatabase implements AppDatabaseConnection {
-  readonly path: string;
-  readonly #file: Deno.FsFile;
+const statementReturnsRows = (sql: string): boolean =>
+  /^\s*(?:SELECT|WITH|PRAGMA\s+\w+\s*\()/i.test(sql);
 
-  constructor(path: string, file: Deno.FsFile) {
+const normalizeRow = <Row>(row: unknown): Row =>
+  Object.fromEntries(Object.entries(row as Record<string, unknown>)) as Row;
+
+class SqliteAppDatabase implements AppDatabaseConnection {
+  readonly path: string;
+  readonly #database: DatabaseSync;
+
+  constructor(path: string) {
     this.path = path;
-    this.#file = file;
+    this.#database = new DatabaseSync(path);
+  }
+
+  async execute<Row = Record<string, unknown>>(
+    sql: string,
+    parameters: readonly unknown[] = [],
+  ): Promise<DbStatementResult<Row>> {
+    const statement = this.#database.prepare(sql);
+    const sqliteParameters = parameters as readonly SQLInputValue[];
+
+    if (statementReturnsRows(sql)) {
+      return {
+        rows: statement.all(...sqliteParameters).map(normalizeRow<Row>),
+      };
+    }
+
+    const result = statement.run(...sqliteParameters);
+    return { rowsAffected: Number(result.changes) };
   }
 
   close(): void {
-    this.#file.close();
+    this.#database.close();
   }
 }
 
@@ -46,12 +70,7 @@ export async function openAppDatabase(
 ): Promise<AppDatabaseConnection> {
   const databasePath = options.path ?? getDatabaseFilePath();
   await Deno.mkdir(dirname(databasePath), { recursive: true });
-  const file = await Deno.open(databasePath, {
-    create: true,
-    read: true,
-    write: true,
-  });
-  return new FileAppDatabase(databasePath, file);
+  return new SqliteAppDatabase(databasePath);
 }
 
 export async function withTransaction<T>(
