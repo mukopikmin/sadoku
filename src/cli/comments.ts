@@ -1,7 +1,8 @@
-import {
-  type CommentsStore,
-  type CommentsStoreFile,
-  fileCommentsStore,
+import { readConfig } from "../config.ts";
+import { createConfiguredCommentsStore } from "../server/comments/factory.ts";
+import type {
+  CommentsStore,
+  CommentsStoreFile,
 } from "../server/comments/storage.ts";
 import {
   readResolvedCommentsDocument,
@@ -25,12 +26,15 @@ export type CommentsCliOptions = {
   commentsStore?: CommentsStore;
 };
 
-const getCommentsStore = (options: CommentsCliOptions): CommentsStore =>
-  options.commentsStore ?? fileCommentsStore;
+const getCommentsStore = async (
+  options: CommentsCliOptions,
+): Promise<CommentsStore> =>
+  options.commentsStore ?? await createConfiguredCommentsStore(readConfig());
 
 export const listCommentFiles = async (
   options: CommentsCliOptions = {},
-): Promise<ListCommentFilesResult> => await getCommentsStore(options).list();
+): Promise<ListCommentFilesResult> =>
+  await (await getCommentsStore(options)).list();
 
 const pad = (value: string, width: number): string => value.padEnd(width, " ");
 
@@ -67,7 +71,7 @@ export const inspectComments = async (
   const document = await readResolvedCommentsDocument(
     source.commentSource,
     source.documentSource,
-    getCommentsStore(options),
+    await getCommentsStore(options),
   );
   return {
     comments: document.comments.filter((comment) => !comment.resolved),
@@ -85,7 +89,7 @@ export const resolveComments = async (
   }
 
   const source = createPreviewSource(filePath);
-  const commentsStore = getCommentsStore(options);
+  const commentsStore = await getCommentsStore(options);
   const document = await commentsStore.read(source.commentSource);
   const requestedIdEntries = commentIds.map((id) => ({
     input: id,
@@ -135,7 +139,7 @@ export const replyToComment = async (
   }
 
   const source = createPreviewSource(filePath);
-  const commentsStore = getCommentsStore(options);
+  const commentsStore = await getCommentsStore(options);
   const document = await commentsStore.read(source.commentSource);
   const parsedCommentId = Number(commentId);
   const index = document.comments.findIndex((comment) =>
@@ -189,7 +193,7 @@ export const removeComments = async (
     }
   }
 
-  await getCommentsStore(options).delete(source.commentSource).catch(
+  await (await getCommentsStore(options)).delete(source.commentSource).catch(
     (error) => {
       if (error instanceof Deno.errors.NotFound) {
         const sourceType = source.isRemote

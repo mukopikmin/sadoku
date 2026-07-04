@@ -247,10 +247,10 @@ const listCommentsFilesFromSqlite = async (
   )).rows ?? [];
 
   const entries: CommentsStoreFile[] = rows.map((row) => ({
-    commentCount: row.comment_count,
+    commentCount: Number(row.comment_count ?? 0),
     fileName: basename(row.file_path),
     markdownPath: row.file_path,
-    openCount: row.open_count,
+    openCount: Number(row.open_count ?? 0),
     updatedAt: row.updated_at ?? undefined,
   }));
 

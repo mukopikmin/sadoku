@@ -1,4 +1,6 @@
+import { readConfig } from "../config.ts";
 import { formatLogMessage, logError, logInfo } from "../log.ts";
+import { createConfiguredCommentsStore } from "./comments/factory.ts";
 import { createPreviewHandler } from "./handler.ts";
 import { createPreviewSource } from "./source.ts";
 
@@ -141,7 +143,10 @@ export const startPreviewServer = async (
 
   server = serveOnAvailablePort(
     options,
-    createPreviewHandler(previewSource, shutdownScheduler),
+    createPreviewHandler(previewSource, {
+      ...shutdownScheduler,
+      commentsStore: await createConfiguredCommentsStore(readConfig()),
+    }),
   );
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;
