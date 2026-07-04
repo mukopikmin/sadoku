@@ -10,6 +10,7 @@ export interface RunMigrationsOptions {
 }
 
 const defaultMigrationsTableName = "schema_migrations";
+const appMigrations: readonly DbMigration[] = [];
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 function assertValidIdentifier(identifier: string): void {
@@ -52,7 +53,7 @@ async function readAppliedMigrationIds(
 
 export async function runMigrations(
   connection: DbConnection,
-  migrations: readonly DbMigration[],
+  migrations: readonly DbMigration[] = appMigrations,
   options: RunMigrationsOptions = {},
 ): Promise<string[]> {
   const tableName = options.tableName ?? defaultMigrationsTableName;

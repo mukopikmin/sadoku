@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { dirname, join } from "@std/path";
 import { withTempCommentsDirectory } from "../test_helpers.ts";
 import { getCommentsDirectoryPath } from "../comments/storage.ts";
@@ -47,6 +47,89 @@ Deno.test("openAppDatabase accepts a path override", async () => {
 
     assertEquals(await fileExists(databasePath), true);
     assertEquals(await directoryExists(dirname(databasePath)), true);
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("openAppDatabase enables foreign keys and runs migrations", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const databasePath = join(root, "app.sqlite3");
+    const database = await openAppDatabase({
+      path: databasePath,
+      migrate: [{
+        id: "001_create_parent_child",
+        up: async (connection) => {
+          await connection.execute(
+            "CREATE TABLE parent (id INTEGER PRIMARY KEY)",
+          );
+          await connection.execute(
+            "CREATE TABLE child (parent_id INTEGER NOT NULL REFERENCES parent(id))",
+          );
+        },
+      }],
+    });
+    try {
+      const foreignKeys = await database.execute<{ foreign_keys: number }>(
+        "PRAGMA foreign_keys",
+      );
+      const migrations = await database.execute<{ id: string }>(
+        "SELECT id FROM schema_migrations",
+      );
+
+      assertEquals(foreignKeys.rows, [{ foreign_keys: 1 }]);
+      assertEquals(migrations.rows, [{ id: "001_create_parent_child" }]);
+    } finally {
+      database.close();
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("openAppDatabase can skip migrations for isolated tests", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const databasePath = join(root, "unmigrated.sqlite3");
+    const database = await openAppDatabase({
+      path: databasePath,
+      migrate: false,
+    });
+    try {
+      const tables = await database.execute<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
+      );
+
+      assertEquals(tables.rows, []);
+    } finally {
+      database.close();
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("openAppDatabase closes the database when migrations fail", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const databasePath = join(root, "failed.sqlite3");
+
+    await assertRejects(
+      () =>
+        openAppDatabase({
+          path: databasePath,
+          migrate: [{
+            id: "001_fails",
+            up: () => Promise.reject(new Error("migration failed")),
+          }],
+        }),
+      Error,
+      "migration failed",
+    );
+
+    await Deno.remove(databasePath);
+    assertEquals(await fileExists(databasePath), false);
   } finally {
     await Deno.remove(root, { recursive: true });
   }
