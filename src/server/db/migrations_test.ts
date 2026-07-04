@@ -12,9 +12,20 @@ interface ExecutedStatement {
   parameters?: readonly unknown[];
 }
 
+interface FakeLedgerRow {
+  version: string;
+  name: string;
+  checksum: string;
+  state: "running" | "applied" | "failed";
+  started_at: string;
+  finished_at: string | null;
+  error_message: string | null;
+}
+
 type FakeDatabase = AppDatabase & {
   readonly statements: ExecutedStatement[];
   readonly appliedChecksums: Map<string, string>;
+  readonly ledgerRows: FakeLedgerRow[];
 };
 
 const createMigration = (
@@ -31,21 +42,33 @@ const createMigration = (
 const createFakeDatabase = (): FakeDatabase => {
   const statements: ExecutedStatement[] = [];
   const appliedChecksums = new Map<string, string>();
+  const ledgerRows: FakeLedgerRow[] = [];
 
   return {
     statements,
     appliedChecksums,
+    ledgerRows,
     async execute<Row = Record<string, unknown>>(
       sql: string,
       parameters?: readonly unknown[],
     ): Promise<AppDatabaseStatementResult<Row>> {
       statements.push({ sql, parameters });
 
-      if (sql.startsWith("SELECT version, checksum FROM")) {
+      if (sql.startsWith("SELECT version, name, checksum, state")) {
         return {
-          rows: [...appliedChecksums.entries()].sort().map((
-            [version, checksum],
-          ) => ({ version, checksum } as Row)),
+          rows: [
+            ...[...appliedChecksums.entries()].map(([version, checksum]) => ({
+              version,
+              name: `migration_${version}`,
+              checksum,
+              state: "applied" as const,
+              started_at: "2026-01-01T00:00:00.000Z",
+              finished_at: "2026-01-01T00:00:00.000Z",
+              error_message: null,
+            })),
+            ...ledgerRows,
+          ].sort((left, right) => left.version.localeCompare(right.version))
+            .map((row) => row as Row),
         };
       }
 
@@ -139,7 +162,7 @@ Deno.test("runMigrations applies pending migrations in order", async () => {
     connection.statements.map((statement) => statement.sql),
     [
       "CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,state TEXT NOT NULL CHECK (state IN ('running', 'applied', 'failed')),started_at TEXT NOT NULL CHECK (started_at GLOB '????-??-??T??:??:??.???Z'),finished_at TEXT CHECK (finished_at IS NULL OR finished_at GLOB '????-??-??T??:??:??.???Z'),error_message TEXT)",
-      "SELECT version, checksum FROM schema_migrations WHERE state = 'applied' ORDER BY version",
+      "SELECT version, name, checksum, state, started_at, finished_at, error_message FROM schema_migrations ORDER BY version",
       "INSERT OR REPLACE INTO schema_migrations (version, name, checksum, state, started_at, finished_at, error_message) VALUES (?, ?, ?, 'running', ?, NULL, NULL)",
       "BEGIN",
       "COMMIT",
@@ -187,6 +210,86 @@ Deno.test("runMigrations rejects edited applied migrations", async () => {
     Error,
     "Do not edit existing migrations",
   );
+});
+
+Deno.test("runMigrations rejects failed ledger rows", async () => {
+  const connection = createFakeDatabase();
+  connection.ledgerRows.push({
+    version: "0001",
+    name: "create_documents",
+    checksum: await calculateMigrationChecksum(
+      createMigration("0001", "create_documents"),
+    ),
+    state: "failed",
+    started_at: "2026-01-01T00:00:00.000Z",
+    finished_at: "2026-01-01T00:00:01.000Z",
+    error_message: "migration failed",
+  });
+
+  await assertRejects(
+    () =>
+      runMigrations(connection, [createMigration("0001", "create_documents")]),
+    Error,
+    "marked failed",
+  );
+});
+
+Deno.test("runMigrations rejects running ledger rows", async () => {
+  const connection = createFakeDatabase();
+  connection.ledgerRows.push({
+    version: "0001",
+    name: "create_documents",
+    checksum: await calculateMigrationChecksum(
+      createMigration("0001", "create_documents"),
+    ),
+    state: "running",
+    started_at: "2026-01-01T00:00:00.000Z",
+    finished_at: null,
+    error_message: null,
+  });
+
+  await assertRejects(
+    () =>
+      runMigrations(connection, [createMigration("0001", "create_documents")]),
+    Error,
+    "marked running",
+  );
+});
+
+Deno.test("runMigrations rejects ledger rows missing from code", async () => {
+  const connection = createFakeDatabase();
+  connection.ledgerRows.push({
+    version: "0001",
+    name: "create_documents",
+    checksum: "orphaned-checksum",
+    state: "applied",
+    started_at: "2026-01-01T00:00:00.000Z",
+    finished_at: "2026-01-01T00:00:01.000Z",
+    error_message: null,
+  });
+
+  await assertRejects(
+    () => runMigrations(connection, []),
+    Error,
+    "exists in the ledger but not in code",
+  );
+});
+
+Deno.test("runMigrations applies pending migrations sorted by version", async () => {
+  const connection = createFakeDatabase();
+  const appliedByMigration: string[] = [];
+
+  const applied = await runMigrations(connection, [
+    createMigration("0002", "create_comments", async () => {
+      appliedByMigration.push("0002");
+    }),
+    createMigration("0001", "create_documents", async () => {
+      appliedByMigration.push("0001");
+    }),
+  ]);
+
+  assertEquals(applied, ["0001", "0002"]);
+  assertEquals(appliedByMigration, ["0001", "0002"]);
 });
 
 Deno.test("runMigrations rolls back failed migrations", async () => {
