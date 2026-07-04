@@ -1,5 +1,8 @@
 import { readConfig } from "../config.ts";
-import { createConfiguredCommentsStore } from "../server/comments/factory.ts";
+import {
+  type ConfiguredCommentsStore,
+  createConfiguredCommentsStore,
+} from "../server/comments/factory.ts";
 import type {
   CommentsStore,
   CommentsStoreFile,
@@ -26,15 +29,25 @@ export type CommentsCliOptions = {
   commentsStore?: CommentsStore;
 };
 
-const getCommentsStore = async (
+const withCommentsStore = async <T>(
   options: CommentsCliOptions,
-): Promise<CommentsStore> =>
-  options.commentsStore ?? await createConfiguredCommentsStore(readConfig());
+  operation: (commentsStore: CommentsStore) => Promise<T>,
+): Promise<T> => {
+  const commentsStore = options.commentsStore ??
+    await createConfiguredCommentsStore(readConfig());
+  try {
+    return await operation(commentsStore);
+  } finally {
+    if (options.commentsStore === undefined) {
+      (commentsStore as ConfiguredCommentsStore).close?.();
+    }
+  }
+};
 
 export const listCommentFiles = async (
   options: CommentsCliOptions = {},
 ): Promise<ListCommentFilesResult> =>
-  await (await getCommentsStore(options)).list();
+  await withCommentsStore(options, (commentsStore) => commentsStore.list());
 
 const pad = (value: string, width: number): string => value.padEnd(width, " ");
 
@@ -68,15 +81,17 @@ export const inspectComments = async (
   options: CommentsCliOptions = {},
 ): Promise<PreviewCommentsDocument> => {
   const source = createPreviewSource(filePath);
-  const document = await readResolvedCommentsDocument(
-    source.commentSource,
-    source.documentSource,
-    await getCommentsStore(options),
-  );
-  return {
-    comments: document.comments.filter((comment) => !comment.resolved),
-    filePath: source.commentSource,
-  };
+  return await withCommentsStore(options, async (commentsStore) => {
+    const document = await readResolvedCommentsDocument(
+      source.commentSource,
+      source.documentSource,
+      commentsStore,
+    );
+    return {
+      comments: document.comments.filter((comment) => !comment.resolved),
+      filePath: source.commentSource,
+    };
+  });
 };
 
 export const resolveComments = async (
@@ -89,42 +104,47 @@ export const resolveComments = async (
   }
 
   const source = createPreviewSource(filePath);
-  const commentsStore = await getCommentsStore(options);
-  const document = await commentsStore.read(source.commentSource);
-  const requestedIdEntries = commentIds.map((id) => ({
-    input: id,
-    value: Number(id),
-  }));
-  const requestedIds = new Set(requestedIdEntries.map((entry) => entry.value));
-  const knownIds = new Set(document.comments.map((comment) => comment.id));
-  const missingIds = requestedIdEntries
-    .filter((entry) => Number.isNaN(entry.value) || !knownIds.has(entry.value))
-    .map((entry) => entry.input);
-  if (missingIds.length > 0) {
-    throw new Error(`Comment not found: ${missingIds.join(", ")}`);
-  }
+  return await withCommentsStore(options, async (commentsStore) => {
+    const document = await commentsStore.read(source.commentSource);
+    const requestedIdEntries = commentIds.map((id) => ({
+      input: id,
+      value: Number(id),
+    }));
+    const requestedIds = new Set(
+      requestedIdEntries.map((entry) => entry.value),
+    );
+    const knownIds = new Set(document.comments.map((comment) => comment.id));
+    const missingIds = requestedIdEntries
+      .filter((entry) =>
+        Number.isNaN(entry.value) || !knownIds.has(entry.value)
+      )
+      .map((entry) => entry.input);
+    if (missingIds.length > 0) {
+      throw new Error(`Comment not found: ${missingIds.join(", ")}`);
+    }
 
-  const now = new Date().toISOString();
-  const updatedDocument = {
-    comments: document.comments.map((comment) =>
-      requestedIds.has(comment.id)
-        ? {
-          ...comment,
-          resolved: true,
-          resolvedAt: now,
-          updatedAt: now,
-        }
-        : comment
-    ),
-    filePath: source.commentSource,
-  };
-  await commentsStore.write(source.commentSource, updatedDocument);
-  return {
-    comments: updatedDocument.comments.filter((comment) =>
-      requestedIds.has(comment.id)
-    ),
-    filePath: source.commentSource,
-  };
+    const now = new Date().toISOString();
+    const updatedDocument = {
+      comments: document.comments.map((comment) =>
+        requestedIds.has(comment.id)
+          ? {
+            ...comment,
+            resolved: true,
+            resolvedAt: now,
+            updatedAt: now,
+          }
+          : comment
+      ),
+      filePath: source.commentSource,
+    };
+    await commentsStore.write(source.commentSource, updatedDocument);
+    return {
+      comments: updatedDocument.comments.filter((comment) =>
+        requestedIds.has(comment.id)
+      ),
+      filePath: source.commentSource,
+    };
+  });
 };
 
 export const replyToComment = async (
@@ -139,41 +159,42 @@ export const replyToComment = async (
   }
 
   const source = createPreviewSource(filePath);
-  const commentsStore = await getCommentsStore(options);
-  const document = await commentsStore.read(source.commentSource);
-  const parsedCommentId = Number(commentId);
-  const index = document.comments.findIndex((comment) =>
-    comment.id === parsedCommentId
-  );
-  if (index < 0) {
-    throw new Error(`Comment not found: ${commentId}`);
-  }
+  return await withCommentsStore(options, async (commentsStore) => {
+    const document = await commentsStore.read(source.commentSource);
+    const parsedCommentId = Number(commentId);
+    const index = document.comments.findIndex((comment) =>
+      comment.id === parsedCommentId
+    );
+    if (index < 0) {
+      throw new Error(`Comment not found: ${commentId}`);
+    }
 
-  const now = new Date().toISOString();
-  const reply: PreviewCommentReply = {
-    body: replyBody,
-    createdAt: now,
-    id: Math.max(
-      0,
-      ...(document.comments[index].replies ?? []).map((reply) => reply.id),
-    ) + 1,
-    updatedAt: now,
-  };
-  const updatedComment = {
-    ...document.comments[index],
-    replies: [...(document.comments[index].replies ?? []), reply],
-    updatedAt: now,
-  };
-  const comments = [...document.comments];
-  comments[index] = updatedComment;
-  await commentsStore.write(source.commentSource, {
-    comments,
-    filePath: source.commentSource,
+    const now = new Date().toISOString();
+    const reply: PreviewCommentReply = {
+      body: replyBody,
+      createdAt: now,
+      id: Math.max(
+        0,
+        ...(document.comments[index].replies ?? []).map((reply) => reply.id),
+      ) + 1,
+      updatedAt: now,
+    };
+    const updatedComment = {
+      ...document.comments[index],
+      replies: [...(document.comments[index].replies ?? []), reply],
+      updatedAt: now,
+    };
+    const comments = [...document.comments];
+    comments[index] = updatedComment;
+    await commentsStore.write(source.commentSource, {
+      comments,
+      filePath: source.commentSource,
+    });
+    return resolveCommentPosition(
+      updatedComment,
+      await readMarkdownSource(source.documentSource),
+    );
   });
-  return resolveCommentPosition(
-    updatedComment,
-    await readMarkdownSource(source.documentSource),
-  );
 };
 
 export const removeComments = async (
@@ -193,18 +214,20 @@ export const removeComments = async (
     }
   }
 
-  await (await getCommentsStore(options)).delete(source.commentSource).catch(
-    (error) => {
-      if (error instanceof Deno.errors.NotFound) {
-        const sourceType = source.isRemote
-          ? "Markdown source"
-          : "Markdown file";
-        throw new Error(
-          `Comments not found for ${sourceType}: ${source.commentSource}`,
-        );
-      }
-      throw error;
-    },
+  await withCommentsStore(
+    options,
+    async (commentsStore) =>
+      await commentsStore.delete(source.commentSource).catch((error) => {
+        if (error instanceof Deno.errors.NotFound) {
+          const sourceType = source.isRemote
+            ? "Markdown source"
+            : "Markdown file";
+          throw new Error(
+            `Comments not found for ${sourceType}: ${source.commentSource}`,
+          );
+        }
+        throw error;
+      }),
   );
   return source.commentSource;
 };

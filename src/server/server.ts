@@ -141,17 +141,18 @@ export const startPreviewServer = async (
     shutdown: () => server.shutdown(),
   });
 
+  const commentsStore = await createConfiguredCommentsStore(readConfig());
   server = serveOnAvailablePort(
     options,
     createPreviewHandler(previewSource, {
       ...shutdownScheduler,
-      commentsStore: await createConfiguredCommentsStore(readConfig()),
+      commentsStore,
     }),
   );
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;
 
-  server.finished.catch((error) => {
+  server.finished.finally(() => commentsStore.close?.()).catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {
       logError(
         `Server stopped unexpectedly: ${

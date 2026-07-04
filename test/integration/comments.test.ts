@@ -308,68 +308,73 @@ Deno.test("stores preview comments in SQLite when configured", async () => {
     await Deno.writeTextFile(filePath, "# Title\n\nBody\n");
     try {
       const commentsStore = await createConfiguredCommentsStore(readConfig());
-      const handler = createPreviewHandler(filePath, { commentsStore });
+      const persistedStore = await createConfiguredCommentsStore(readConfig());
+      try {
+        const handler = createPreviewHandler(filePath, { commentsStore });
 
-      const createResponse = await handler(
-        new Request("http://127.0.0.1:3334/__sadoku/comments", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 3, body: "Persist me." }),
-        }),
-        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
-      );
-      const createdComment = await createResponse.json();
-      assertEquals(createResponse.status, 200);
-
-      const replyResponse = await handler(
-        new Request(
-          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/replies`,
-          {
+        const createResponse = await handler(
+          new Request("http://127.0.0.1:3334/__sadoku/comments", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ body: "SQLite reply." }),
-          },
-        ),
-        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
-      );
-      assertEquals(replyResponse.status, 200);
+            body: JSON.stringify({ line: 3, body: "Persist me." }),
+          }),
+          {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+        );
+        const createdComment = await createResponse.json();
+        assertEquals(createResponse.status, 200);
 
-      const resolveResponse = await handler(
-        new Request(
-          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/resolve`,
-          { method: "POST" },
-        ),
-        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
-      );
-      assertEquals(resolveResponse.status, 200);
+        const replyResponse = await handler(
+          new Request(
+            `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/replies`,
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ body: "SQLite reply." }),
+            },
+          ),
+          {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+        );
+        assertEquals(replyResponse.status, 200);
 
-      const persistedStore = await createConfiguredCommentsStore(readConfig());
-      const persistedDocument = await persistedStore.read(filePath);
-      assertEquals(persistedDocument.comments[0].body, "Persist me.");
-      assertEquals(
-        persistedDocument.comments[0].replies[0].body,
-        "SQLite reply.",
-      );
-      assertEquals(persistedDocument.comments[0].resolved, true);
+        const resolveResponse = await handler(
+          new Request(
+            `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/resolve`,
+            { method: "POST" },
+          ),
+          {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+        );
+        assertEquals(resolveResponse.status, 200);
 
-      const deleteResponse = await handler(
-        new Request(
-          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}`,
-          { method: "DELETE" },
-        ),
-        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
-      );
-      assertEquals(deleteResponse.status, 204);
-      assertEquals((await persistedStore.read(filePath)).comments, []);
+        const persistedDocument = await persistedStore.read(filePath);
+        assertEquals(persistedDocument.comments[0].body, "Persist me.");
+        assertEquals(
+          persistedDocument.comments[0].replies[0].body,
+          "SQLite reply.",
+        );
+        assertEquals(persistedDocument.comments[0].resolved, true);
 
-      await assertRejects(
-        () => Deno.stat(getCommentsFilePath(filePath)),
-        Deno.errors.NotFound,
-      );
-      const databaseStat = await Deno.stat(
-        join(commentsDirectory, "sadoku.sqlite3"),
-      );
-      assertEquals(databaseStat.isFile, true);
+        const deleteResponse = await handler(
+          new Request(
+            `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}`,
+            { method: "DELETE" },
+          ),
+          {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+        );
+        assertEquals(deleteResponse.status, 204);
+        assertEquals((await persistedStore.read(filePath)).comments, []);
+
+        await assertRejects(
+          () => Deno.stat(getCommentsFilePath(filePath)),
+          Deno.errors.NotFound,
+        );
+        const databaseStat = await Deno.stat(
+          join(commentsDirectory, "sadoku.sqlite3"),
+        );
+        assertEquals(databaseStat.isFile, true);
+      } finally {
+        commentsStore.close?.();
+        persistedStore.close?.();
+      }
     } finally {
       await Deno.remove(filePath).catch(() => {});
       await Deno.remove(getCommentsFilePath(filePath)).catch(() => {});
