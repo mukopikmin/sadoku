@@ -348,7 +348,7 @@ Deno.test("stores preview comments in SQLite when configured", async () => {
         const persistedDocument = await persistedStore.read(filePath);
         assertEquals(persistedDocument.comments[0].body, "Persist me.");
         assertEquals(
-          persistedDocument.comments[0].replies[0].body,
+          persistedDocument.comments[0].replies?.[0]?.body,
           "SQLite reply.",
         );
         assertEquals(persistedDocument.comments[0].resolved, true);
