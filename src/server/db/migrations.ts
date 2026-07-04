@@ -1,7 +1,9 @@
 import { type AppDatabase, withTransaction } from "./connection.ts";
 
-export interface DbMigration {
-  id: string;
+export interface Migration {
+  version: string;
+  name: string;
+  checksumSource: string;
   up: (database: AppDatabase) => Promise<void>;
 }
 
@@ -10,8 +12,13 @@ export interface RunMigrationsOptions {
 }
 
 const defaultMigrationsTableName = "schema_migrations";
-const appMigrations: readonly DbMigration[] = [];
+
+// Append-only application migrations. Once a migration is added, do not edit it;
+// add a new zero-padded version instead (for example, 0001, 0002, ...).
+export const MIGRATIONS: readonly Migration[] = [];
+
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const migrationVersionPattern = /^\d{4}$/;
 const iso8601SqlGlob = "????-??-??T??:??:??.???Z";
 
 function assertValidIdentifier(identifier: string): void {
@@ -20,14 +27,37 @@ function assertValidIdentifier(identifier: string): void {
   }
 }
 
-function assertUniqueMigrationIds(migrations: readonly DbMigration[]): void {
+function assertValidMigrationVersions(migrations: readonly Migration[]): void {
+  for (const migration of migrations) {
+    if (!migrationVersionPattern.test(migration.version)) {
+      throw new Error(
+        `Invalid database migration version: ${migration.version}. ` +
+          "Use four zero-padded digits such as 0001.",
+      );
+    }
+  }
+}
+
+function assertUniqueMigrationVersions(migrations: readonly Migration[]): void {
   const seen = new Set<string>();
   for (const migration of migrations) {
-    if (seen.has(migration.id)) {
-      throw new Error(`Duplicate database migration id: ${migration.id}`);
+    if (seen.has(migration.version)) {
+      throw new Error(
+        `Duplicate database migration version: ${migration.version}`,
+      );
     }
-    seen.add(migration.id);
+    seen.add(migration.version);
   }
+}
+
+export async function calculateMigrationChecksum(
+  migration: Pick<Migration, "checksumSource">,
+): Promise<string> {
+  const bytes = new TextEncoder().encode(migration.checksumSource);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function ensureMigrationLedger(
@@ -36,6 +66,8 @@ export async function ensureMigrationLedger(
   await database.execute(
     "CREATE TABLE IF NOT EXISTS schema_migrations (" +
       "version TEXT PRIMARY KEY," +
+      "name TEXT NOT NULL," +
+      "checksum TEXT NOT NULL," +
       "state TEXT NOT NULL CHECK (state IN ('running', 'applied', 'failed'))," +
       `started_at TEXT NOT NULL CHECK (started_at GLOB '${iso8601SqlGlob}'),` +
       `finished_at TEXT CHECK (finished_at IS NULL OR finished_at GLOB '${iso8601SqlGlob}'),` +
@@ -56,6 +88,8 @@ async function ensureMigrationsTable(
   await database.execute(
     `CREATE TABLE IF NOT EXISTS ${tableName} (` +
       "version TEXT PRIMARY KEY," +
+      "name TEXT NOT NULL," +
+      "checksum TEXT NOT NULL," +
       "state TEXT NOT NULL CHECK (state IN ('running', 'applied', 'failed'))," +
       `started_at TEXT NOT NULL CHECK (started_at GLOB '${iso8601SqlGlob}'),` +
       `finished_at TEXT CHECK (finished_at IS NULL OR finished_at GLOB '${iso8601SqlGlob}'),` +
@@ -64,38 +98,52 @@ async function ensureMigrationsTable(
   );
 }
 
-async function readAppliedMigrationIds(
+async function readAppliedMigrationChecksums(
   database: AppDatabase,
   tableName: string,
-): Promise<Set<string>> {
-  const result = await database.execute<{ version: string }>(
-    `SELECT version FROM ${tableName} WHERE state = 'applied' ORDER BY version`,
+): Promise<Map<string, string>> {
+  const result = await database.execute<{ version: string; checksum: string }>(
+    `SELECT version, checksum FROM ${tableName} WHERE state = 'applied' ORDER BY version`,
   );
-  return new Set((result.rows ?? []).map((row) => row.version));
+  return new Map((result.rows ?? []).map((row) => [row.version, row.checksum]));
 }
 
 export async function runMigrations(
   database: AppDatabase,
-  migrations: readonly DbMigration[] = appMigrations,
+  migrations: readonly Migration[] = MIGRATIONS,
   options: RunMigrationsOptions = {},
 ): Promise<string[]> {
   const tableName = options.tableName ?? defaultMigrationsTableName;
   assertValidIdentifier(tableName);
-  assertUniqueMigrationIds(migrations);
+  assertValidMigrationVersions(migrations);
+  assertUniqueMigrationVersions(migrations);
 
   await ensureMigrationsTable(database, tableName);
-  const appliedIds = await readAppliedMigrationIds(database, tableName);
+  const appliedChecksums = await readAppliedMigrationChecksums(
+    database,
+    tableName,
+  );
   const appliedNow: string[] = [];
 
   for (const migration of migrations) {
-    if (appliedIds.has(migration.id)) continue;
+    const checksum = await calculateMigrationChecksum(migration);
+    const appliedChecksum = appliedChecksums.get(migration.version);
+    if (appliedChecksum !== undefined) {
+      if (appliedChecksum !== checksum) {
+        throw new Error(
+          `Applied database migration ${migration.version} checksum mismatch. ` +
+            "Do not edit existing migrations; add a new migration instead.",
+        );
+      }
+      continue;
+    }
 
     const startedAt = new Date().toISOString();
     await database.execute(
       `INSERT OR REPLACE INTO ${tableName} ` +
-        "(version, state, started_at, finished_at, error_message) " +
-        "VALUES (?, 'running', ?, NULL, NULL)",
-      [migration.id, startedAt],
+        "(version, name, checksum, state, started_at, finished_at, error_message) " +
+        "VALUES (?, ?, ?, 'running', ?, NULL, NULL)",
+      [migration.version, migration.name, checksum, startedAt],
     );
 
     try {
@@ -110,7 +158,7 @@ export async function runMigrations(
         [
           new Date().toISOString(),
           error instanceof Error ? error.message : String(error),
-          migration.id,
+          migration.version,
         ],
       );
       throw error;
@@ -119,11 +167,11 @@ export async function runMigrations(
     await database.execute(
       `UPDATE ${tableName} SET state = 'applied', finished_at = ? ` +
         "WHERE version = ?",
-      [new Date().toISOString(), migration.id],
+      [new Date().toISOString(), migration.version],
     );
 
-    appliedIds.add(migration.id);
-    appliedNow.push(migration.id);
+    appliedChecksums.set(migration.version, checksum);
+    appliedNow.push(migration.version);
   }
 
   return appliedNow;

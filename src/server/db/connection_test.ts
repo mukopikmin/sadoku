@@ -59,7 +59,9 @@ Deno.test("openAppDatabase enables foreign keys and runs migrations", async () =
     const database = await openAppDatabase({
       path: databasePath,
       migrate: [{
-        id: "001_create_parent_child",
+        version: "0001",
+        name: "create_parent_child",
+        checksumSource: "CREATE parent and child tables",
         up: async (connection) => {
           await connection.execute(
             "CREATE TABLE parent (id INTEGER PRIMARY KEY)",
@@ -79,7 +81,7 @@ Deno.test("openAppDatabase enables foreign keys and runs migrations", async () =
       );
 
       assertEquals(foreignKeys.rows, [{ foreign_keys: 1 }]);
-      assertEquals(migrations.rows, [{ version: "001_create_parent_child" }]);
+      assertEquals(migrations.rows, [{ version: "0001" }]);
     } finally {
       database.close();
     }
@@ -120,7 +122,9 @@ Deno.test("openAppDatabase closes the database when migrations fail", async () =
         openAppDatabase({
           path: databasePath,
           migrate: [{
-            id: "001_fails",
+            version: "0001",
+            name: "fails",
+            checksumSource: "throw migration failed",
             up: () => Promise.reject(new Error("migration failed")),
           }],
         }),
