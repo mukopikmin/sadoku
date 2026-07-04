@@ -111,7 +111,7 @@ Deno.test("calculateMigrationChecksum hashes checksumSource with SHA-256", async
     await calculateMigrationChecksum({
       checksumSource: "0001:create documents",
     }),
-    "dba21d6575e8a75a462ccfa74c08042bd108878c4c22d4f9299bf038e6e17a6d",
+    "sha256:dba21d6575e8a75a462ccfa74c08042bd108878c4c22d4f9299bf038e6e17a6d",
   );
 });
 
@@ -202,13 +202,23 @@ Deno.test("runMigrations skips already applied migrations with matching checksum
 
 Deno.test("runMigrations rejects edited applied migrations", async () => {
   const connection = createFakeDatabase();
-  connection.appliedChecksums.set("0001", "previous-checksum");
+  const previousChecksum = "sha256:previous";
+  const migration = createMigration("0001", "create_documents");
+  const currentChecksum = await calculateMigrationChecksum(migration);
+  connection.appliedChecksums.set("0001", previousChecksum);
 
-  await assertRejects(
-    () =>
-      runMigrations(connection, [createMigration("0001", "create_documents")]),
+  const error = await assertRejects(
+    () => runMigrations(connection, [migration]),
     Error,
-    "Do not edit existing migrations",
+    "checksum mismatch",
+  );
+
+  assertEquals(
+    error.message,
+    "Applied database migration checksum mismatch: " +
+      `version=0001, name=create_documents, expected=${previousChecksum}, ` +
+      `actual=${currentChecksum}. ` +
+      "Do not edit existing migrations; add a new migration instead.",
   );
 });
 
