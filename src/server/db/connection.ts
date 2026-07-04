@@ -34,20 +34,16 @@ const statementReturnsRows = (sql: string): boolean =>
 const normalizeRow = <Row>(row: unknown): Row =>
   Object.fromEntries(Object.entries(row as Record<string, unknown>)) as Row;
 
-class SqliteAppDatabase implements AppDatabaseConnection {
-  readonly path: string;
-  readonly #database: DatabaseSync;
-
-  constructor(path: string) {
-    this.path = path;
-    this.#database = new DatabaseSync(path);
-  }
-
+const createSqliteAppDatabase = (
+  path: string,
+  database: DatabaseSync,
+): AppDatabaseConnection => ({
+  path,
   async execute<Row = Record<string, unknown>>(
     sql: string,
     parameters: readonly unknown[] = [],
   ): Promise<DbStatementResult<Row>> {
-    const statement = this.#database.prepare(sql);
+    const statement = database.prepare(sql);
     const sqliteParameters = parameters as readonly SQLInputValue[];
 
     if (statementReturnsRows(sql)) {
@@ -58,19 +54,18 @@ class SqliteAppDatabase implements AppDatabaseConnection {
 
     const result = statement.run(...sqliteParameters);
     return { rowsAffected: Number(result.changes) };
-  }
-
+  },
   close(): void {
-    this.#database.close();
-  }
-}
+    database.close();
+  },
+});
 
 export async function openAppDatabase(
   options: OpenAppDatabaseOptions = {},
 ): Promise<AppDatabaseConnection> {
   const databasePath = options.path ?? getDatabaseFilePath();
   await Deno.mkdir(dirname(databasePath), { recursive: true });
-  return new SqliteAppDatabase(databasePath);
+  return createSqliteAppDatabase(databasePath, new DatabaseSync(databasePath));
 }
 
 export async function withTransaction<T>(
