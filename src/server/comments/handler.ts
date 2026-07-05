@@ -45,25 +45,23 @@ const parsePositiveInteger = (value: unknown, name: string): number => {
 
 const parseCommentRange = (
   value: unknown,
-): { endLine: number; line: number } => {
+): { endLine: number; startLine: number } => {
   if (typeof value !== "object" || value === null) {
-    throw textResponse("Comment line is required.", 400);
+    throw textResponse("Comment range is required.", 400);
   }
-  const { endLine: rawEndLine, line: rawLine } = value as {
+  const { endLine: rawEndLine, startLine: rawStartLine } = value as {
     endLine?: unknown;
-    line?: unknown;
+    startLine?: unknown;
   };
-  const line = parsePositiveInteger(rawLine, "Comment line");
-  const endLine = rawEndLine === undefined
-    ? line
-    : parsePositiveInteger(rawEndLine, "Comment endLine");
-  if (line > endLine) {
+  const startLine = parsePositiveInteger(rawStartLine, "Comment startLine");
+  const endLine = parsePositiveInteger(rawEndLine, "Comment endLine");
+  if (endLine < startLine) {
     throw textResponse(
-      "Comment line must be less than or equal to endLine.",
+      "Comment endLine must be greater than or equal to startLine.",
       400,
     );
   }
-  return { endLine, line };
+  return { endLine, startLine };
 };
 
 const createCommentResponse = (comment: PreviewComment): Response =>
@@ -101,10 +99,10 @@ const createComment = async (
   commentsStore: CommentsStore,
 ): Promise<Response> => {
   const body = await parseJsonBody(request);
-  const { endLine, line } = parseCommentRange(body);
+  const { endLine, startLine } = parseCommentRange(body);
   const commentBody = parseCommentBody(body);
   const markdown = await readMarkdownSource(source.documentSource);
-  const sourceText = getLineRangeText(markdown, line, endLine);
+  const sourceText = getLineRangeText(markdown, startLine, endLine);
   if (sourceText === undefined) {
     throw textResponse("Comment range does not exist.", 400);
   }
@@ -113,16 +111,16 @@ const createComment = async (
   const comment: PreviewComment = {
     body: commentBody,
     createdAt: now,
-    id: getNextId(document.comments.map((comment) => comment.id)),
-    line,
     endLine,
-    originalLine: line,
+    id: getNextId(document.comments.map((comment) => comment.id)),
     originalEndLine: endLine,
+    originalStartLine: startLine,
     replies: [],
     resolved: false,
     sourceHash: hashSourceText(sourceText),
     sourceText,
     stale: false,
+    startLine,
     updatedAt: now,
   };
   const updatedDocument = {

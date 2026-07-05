@@ -17,9 +17,9 @@ const createComment = (
   body: "Clarify this.",
   createdAt: "2026-06-05T00:00:00.000Z",
   id: 1,
-  line: 3,
+  startLine: 3,
   endLine: 3,
-  originalLine: 3,
+  originalStartLine: 3,
   originalEndLine: 3,
   resolved: false,
   sourceHash: "example",
@@ -86,9 +86,9 @@ describe("CommentList", () => {
           createComment({
             body: "Moved range.",
             id: "moved-range",
-            line: 7,
+            startLine: 7,
             endLine: 8,
-            originalLine: 2,
+            originalStartLine: 2,
             originalEndLine: 3,
           }),
           createComment({
@@ -96,7 +96,7 @@ describe("CommentList", () => {
             id: "stale-range",
             stale: true,
             endLine: 9,
-            originalLine: 4,
+            originalStartLine: 4,
             originalEndLine: 6,
           }),
         ]}

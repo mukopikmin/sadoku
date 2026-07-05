@@ -80,33 +80,33 @@ testWithTempComments("validates comment creation input", async () => {
     expected: string;
   }> = [
     { body: "{", expected: "Invalid JSON body." },
-    { body: JSON.stringify(null), expected: "Comment line is required." },
+    { body: JSON.stringify(null), expected: "Comment range is required." },
     {
       body: JSON.stringify({ body: "text" }),
-      expected: "Comment line must be a positive integer.",
+      expected: "Comment startLine must be a positive integer.",
     },
     {
-      body: JSON.stringify({ line: 0, body: "text" }),
-      expected: "Comment line must be a positive integer.",
+      body: JSON.stringify({ startLine: 0, endLine: 0, body: "text" }),
+      expected: "Comment startLine must be a positive integer.",
     },
     {
-      body: JSON.stringify({ line: 1.5, body: "text" }),
-      expected: "Comment line must be a positive integer.",
+      body: JSON.stringify({ startLine: 1.5, body: "text" }),
+      expected: "Comment startLine must be a positive integer.",
     },
     {
-      body: JSON.stringify({ line: 2, endLine: 1, body: "text" }),
-      expected: "Comment line must be less than or equal to endLine.",
+      body: JSON.stringify({ startLine: 2, endLine: 1, body: "text" }),
+      expected: "Comment endLine must be greater than or equal to startLine.",
     },
     {
-      body: JSON.stringify({ line: 1, endLine: "2", body: "text" }),
+      body: JSON.stringify({ startLine: 1, endLine: "2", body: "text" }),
       expected: "Comment endLine must be a positive integer.",
     },
     {
-      body: JSON.stringify({ line: 1, body: " " }),
+      body: JSON.stringify({ startLine: 1, endLine: 1, body: " " }),
       expected: "Comment body is required.",
     },
     {
-      body: JSON.stringify({ line: 99, body: "text" }),
+      body: JSON.stringify({ startLine: 99, endLine: 99, body: "text" }),
       expected: "Comment range does not exist.",
     },
   ];
@@ -145,15 +145,19 @@ testWithTempComments("creates comments for a source line range", async () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ line: 2, endLine: 4, body: "Review range." }),
+        body: JSON.stringify({
+          startLine: 2,
+          endLine: 4,
+          body: "Review range.",
+        }),
       },
     );
     const comment = await response.json();
 
     assertEquals(response.status, 200);
-    assertEquals(comment.line, 2);
+    assertEquals(comment.startLine, 2);
     assertEquals(comment.endLine, 4);
-    assertEquals(comment.originalLine, 2);
+    assertEquals(comment.originalStartLine, 2);
     assertEquals(comment.originalEndLine, 4);
     assertEquals(comment.sourceText, "two\nthree\nfour");
   } finally {
@@ -173,7 +177,11 @@ testWithTempComments("uses an injected comments store", async () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ line: 3, body: "Stored elsewhere." }),
+        body: JSON.stringify({
+          startLine: 3,
+          endLine: 3,
+          body: "Stored elsewhere.",
+        }),
       },
     );
     const createdComment = await createResponse.json();
@@ -233,7 +241,11 @@ testWithTempComments("trims comment bodies before storing them", async () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ line: 3, body: "  Review this.  " }),
+        body: JSON.stringify({
+          startLine: 3,
+          endLine: 3,
+          body: "  Review this.  ",
+        }),
       },
     );
     const comment = await response.json();
@@ -258,7 +270,7 @@ testWithTempComments("adds replies to comments", async () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ line: 3, body: "Question" }),
+        body: JSON.stringify({ startLine: 3, endLine: 3, body: "Question" }),
       },
     );
     const createdComment = await createResponse.json();
@@ -403,8 +415,10 @@ testWithTempComments("accepts numeric comment identifiers", async () => {
         body: "Original",
         createdAt: "2026-06-07T00:00:00.000Z",
         id: 1,
-        line: 3,
-        originalLine: 3,
+        endLine: 3,
+        originalEndLine: 3,
+        originalStartLine: 3,
+        startLine: 3,
         resolved: false,
         sourceText: "Body",
         stale: false,
@@ -453,7 +467,11 @@ testWithTempComments(
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 1, body: "Review remote source." }),
+          body: JSON.stringify({
+            startLine: 1,
+            endLine: 1,
+            body: "Review remote source.",
+          }),
         },
       );
       const comment = await createResponse.json();

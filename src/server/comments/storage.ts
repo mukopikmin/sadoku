@@ -149,8 +149,25 @@ const createEmptyCommentsDocument = (
 const isPreviewComment = (value: unknown): value is PreviewComment => {
   if (typeof value !== "object" || value === null) return false;
   const comment = value as Partial<PreviewComment>;
+  const {
+    endLine,
+    originalEndLine,
+    originalStartLine,
+    startLine,
+  } = comment;
   return typeof comment.id === "number" &&
-    Number.isInteger(comment.line) &&
+    typeof startLine === "number" &&
+    Number.isInteger(startLine) &&
+    typeof endLine === "number" &&
+    Number.isInteger(endLine) &&
+    typeof originalStartLine === "number" &&
+    Number.isInteger(originalStartLine) &&
+    typeof originalEndLine === "number" &&
+    Number.isInteger(originalEndLine) &&
+    startLine >= 1 &&
+    endLine >= startLine &&
+    originalStartLine >= 1 &&
+    originalEndLine >= originalStartLine &&
     typeof comment.body === "string" &&
     typeof comment.createdAt === "string" &&
     typeof comment.updatedAt === "string";
@@ -166,9 +183,6 @@ const isPreviewCommentReply = (
     typeof reply.createdAt === "string" &&
     typeof reply.updatedAt === "string";
 };
-
-const isPositiveInteger = (value: unknown): value is number =>
-  typeof value === "number" && Number.isInteger(value) && value >= 1;
 
 const isStoredComment = (value: unknown): value is StoredComment =>
   isRecord(value) && typeof value.updatedAt === "string";
@@ -193,28 +207,8 @@ const latestUpdatedAt = (
   comments.map((comment) => comment.updatedAt).sort().at(-1);
 
 const normalizePreviewComment = (comment: PreviewComment): PreviewComment => {
-  const line = isPositiveInteger(comment.line) ? comment.line : 1;
-  const rawEndLine = (comment as Partial<PreviewComment>).endLine;
-  const endLine = isPositiveInteger(rawEndLine) && rawEndLine >= line
-    ? rawEndLine
-    : line;
-  const rawOriginalLine = (comment as Partial<PreviewComment>).originalLine;
-  const originalLine = isPositiveInteger(rawOriginalLine)
-    ? rawOriginalLine
-    : line;
-  const rawOriginalEndLine =
-    (comment as Partial<PreviewComment>).originalEndLine;
-  const originalEndLine = isPositiveInteger(rawOriginalEndLine) &&
-      rawOriginalEndLine >= originalLine
-    ? rawOriginalEndLine
-    : (isPositiveInteger(rawOriginalLine) ? originalLine : endLine);
-
   return {
     ...comment,
-    line,
-    endLine,
-    originalLine,
-    originalEndLine,
     replies: Array.isArray(comment.replies)
       ? comment.replies.filter(isPreviewCommentReply)
       : [],

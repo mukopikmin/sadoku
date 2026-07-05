@@ -35,50 +35,52 @@ export const resolveCommentPosition = (
   comment: PreviewComment,
   markdown: string,
 ): PreviewComment => {
-  const endLine = comment.endLine ?? comment.line;
-  const rangeLength = Math.max(1, endLine - comment.line + 1);
   const sourceText = comment.sourceText ??
-    getLineRangeText(markdown, comment.line, endLine) ??
-    getLineText(markdown, comment.line) ??
+    getLineRangeText(markdown, comment.startLine, comment.endLine) ??
     "";
   const sourceHash = comment.sourceHash ?? hashSourceText(sourceText);
 
   const lines = getMarkdownLines(markdown);
-  const startLine = Math.max(1, comment.line - lineSearchRadius);
-  const lastCandidateLine = Math.max(1, lines.length - rangeLength + 1);
-  const endSearchLine = Math.min(
-    lastCandidateLine,
-    comment.line + lineSearchRadius,
+  const startSearchLine = Math.max(1, comment.startLine - lineSearchRadius);
+  const searchEndLine = Math.min(
+    lines.length,
+    comment.startLine + lineSearchRadius,
   );
-  const matchingLines: number[] = [];
+  const rangeLength = comment.endLine - comment.startLine + 1;
+  const matchingLines: Array<{ endLine: number; startLine: number }> = [];
 
-  for (let line = startLine; line <= endSearchLine; line += 1) {
-    const rangeText = lines.slice(line - 1, line - 1 + rangeLength).join("\n");
-    if (rangeText === sourceText && hashSourceText(rangeText) === sourceHash) {
-      matchingLines.push(line);
+  for (let line = startSearchLine; line <= searchEndLine; line += 1) {
+    const candidateEndLine = line + rangeLength - 1;
+    const lineText = getLineRangeText(markdown, line, candidateEndLine);
+    if (
+      lineText !== undefined &&
+      lineText === sourceText &&
+      hashSourceText(lineText) === sourceHash
+    ) {
+      matchingLines.push({ endLine: candidateEndLine, startLine: line });
     }
   }
 
   if (matchingLines.length === 1) {
+    const match = matchingLines[0];
     return {
       ...comment,
-      displayLine: matchingLines[0],
-      line: matchingLines[0],
-      endLine: matchingLines[0] + rangeLength - 1,
-      originalLine: comment.line,
-      originalEndLine: endLine,
+      displayLine: match.startLine,
+      endLine: match.endLine,
+      originalEndLine: comment.endLine,
+      originalStartLine: comment.startLine,
       sourceHash,
       sourceText,
       stale: false,
+      startLine: match.startLine,
     };
   }
 
   return {
     ...comment,
-    displayLine: comment.line,
-    endLine,
-    originalLine: comment.line,
-    originalEndLine: endLine,
+    displayLine: comment.startLine,
+    originalEndLine: comment.endLine,
+    originalStartLine: comment.startLine,
     sourceHash,
     sourceText,
     stale: true,

@@ -9,17 +9,17 @@ export type PreviewComment = {
   body: string;
   createdAt: string;
   displayLine?: number;
-  id: number;
-  line: number;
   endLine: number;
-  originalLine: number;
+  id: number;
   originalEndLine: number;
+  originalStartLine: number;
   replies?: PreviewCommentReply[];
   resolved: boolean;
   resolvedAt?: string;
   sourceHash?: string;
   sourceText?: string;
   stale: boolean;
+  startLine: number;
   updatedAt: string;
 };
 

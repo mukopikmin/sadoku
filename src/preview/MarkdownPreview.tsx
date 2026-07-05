@@ -22,9 +22,9 @@ export type MarkdownPreviewProps = {
   comments: PreviewComment[];
   markdown: string;
   onCreateComment: (
-    line: number,
+    startLine: number,
     body: string,
-    endLine?: number,
+    endLine: number,
   ) => Promise<void>;
   onDeleteComment: (id: number) => Promise<void>;
   onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
@@ -62,9 +62,9 @@ type CommentableBlockProps = {
   line: number;
   endLine?: number;
   onCreateComment: (
-    line: number,
+    startLine: number,
     body: string,
-    endLine?: number,
+    endLine: number,
   ) => Promise<void>;
   onDeleteComment: (id: number) => Promise<void>;
   onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
@@ -87,7 +87,7 @@ const getSourceEndLine = (props: { node?: SourceNode }): number | undefined => {
 };
 
 const getSelectedCommentRange = ():
-  | { endLine: number; line: number }
+  | { endLine: number; startLine: number }
   | undefined => {
   const selection = globalThis.getSelection?.();
   if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
@@ -106,7 +106,7 @@ const getSelectedCommentRange = ():
   collectLine(range.startContainer);
   collectLine(range.endContainer);
   if (lines.length === 0) return undefined;
-  return { endLine: Math.max(...lines), line: Math.min(...lines) };
+  return { endLine: Math.max(...lines), startLine: Math.min(...lines) };
 };
 
 const CommentableBlock = ({
@@ -139,15 +139,16 @@ const CommentableBlock = ({
     setError(undefined);
     try {
       const selectedRange = getSelectedCommentRange();
-      const targetLine = selectedRange && line >= selectedRange.line &&
+      const targetStartLine =
+        selectedRange && line >= selectedRange.startLine &&
           line <= selectedRange.endLine
-        ? selectedRange.line
-        : line;
-      const targetEndLine = selectedRange && line >= selectedRange.line &&
+          ? selectedRange.startLine
+          : line;
+      const targetEndLine = selectedRange && line >= selectedRange.startLine &&
           line <= selectedRange.endLine
         ? selectedRange.endLine
         : line;
-      await onCreateComment(targetLine, body, targetEndLine);
+      await onCreateComment(targetStartLine, body, targetEndLine);
       setDraft("");
       setIsAdding(false);
     } catch (error) {
@@ -181,9 +182,9 @@ const CommentableBlock = ({
             <CommentItem
               comment={comment}
               key={comment.id}
-              lineLabel={comment.line === (comment.endLine ?? comment.line)
-                ? `Line ${comment.line}`
-                : `Lines ${comment.line}-${comment.endLine}`}
+              lineLabel={comment.startLine === comment.endLine
+                ? `Line ${comment.startLine}`
+                : `Lines ${comment.startLine}-${comment.endLine}`}
               onDeleteComment={onDeleteComment}
               onDeleteReply={onDeleteReply}
               onReplyComment={onReplyComment}
@@ -407,8 +408,7 @@ export const MarkdownPreview = ({
   const commentsByLine = useMemo(() => {
     const grouped = new Map<number, PreviewComment[]>();
     for (const comment of comments) {
-      const endLine = comment.endLine ?? comment.line;
-      for (let line = comment.line; line <= endLine; line += 1) {
+      for (let line = comment.startLine; line <= comment.endLine; line += 1) {
         grouped.set(line, [
           ...(grouped.get(line) ?? []),
           comment,

@@ -27,16 +27,20 @@ Deno.test("stores preview comments in the configured comments directory", async 
         new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 3, body: "Clarify this." }),
+          body: JSON.stringify({
+            startLine: 3,
+            endLine: 3,
+            body: "Clarify this.",
+          }),
         }),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const createdComment = await createResponse.json();
       assertEquals(createResponse.status, 200);
-      assertEquals(createdComment.line, 3);
+      assertEquals(createdComment.startLine, 3);
       assertEquals(createdComment.endLine, 3);
       assertEquals(createdComment.body, "Clarify this.");
-      assertEquals(createdComment.originalLine, 3);
+      assertEquals(createdComment.originalStartLine, 3);
       assertEquals(createdComment.originalEndLine, 3);
       assertEquals(createdComment.replies, []);
       assertEquals(createdComment.resolved, false);
@@ -91,15 +95,19 @@ Deno.test("preserves preview comment range metadata across reloads", async () =>
         new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 2, endLine: 4, body: "Range note." }),
+          body: JSON.stringify({
+            startLine: 2,
+            endLine: 4,
+            body: "Range note.",
+          }),
         }),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const createdComment = await createResponse.json();
       assertEquals(createResponse.status, 200);
-      assertEquals(createdComment.line, 2);
+      assertEquals(createdComment.startLine, 2);
       assertEquals(createdComment.endLine, 4);
-      assertEquals(createdComment.originalLine, 2);
+      assertEquals(createdComment.originalStartLine, 2);
       assertEquals(createdComment.originalEndLine, 4);
       assertEquals(createdComment.sourceText, "two\nthree\nfour");
 
@@ -138,7 +146,7 @@ Deno.test("stores replies on preview comments", async () => {
         new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 3, body: "Question" }),
+          body: JSON.stringify({ startLine: 3, endLine: 3, body: "Question" }),
         }),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
@@ -184,7 +192,11 @@ Deno.test("resolves and reopens preview comments", async () => {
         new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 3, body: "Clarify this." }),
+          body: JSON.stringify({
+            startLine: 3,
+            endLine: 3,
+            body: "Clarify this.",
+          }),
         }),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
@@ -246,7 +258,11 @@ Deno.test("tracks preview comments when their source line moves", async () => {
         new Request("http://127.0.0.1:3334/__sadoku/comments", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 3, body: "Clarify this." }),
+          body: JSON.stringify({
+            startLine: 3,
+            endLine: 3,
+            body: "Clarify this.",
+          }),
         }),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
@@ -258,8 +274,8 @@ Deno.test("tracks preview comments when their source line moves", async () => {
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const movedDocument = await movedResponse.json();
-      assertEquals(movedDocument.comments[0].line, 4);
-      assertEquals(movedDocument.comments[0].originalLine, 3);
+      assertEquals(movedDocument.comments[0].startLine, 4);
+      assertEquals(movedDocument.comments[0].originalStartLine, 3);
       assertEquals(movedDocument.comments[0].stale, false);
 
       const updateResponse = await handler(
@@ -274,8 +290,8 @@ Deno.test("tracks preview comments when their source line moves", async () => {
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const updatedComment = await updateResponse.json();
-      assertEquals(updatedComment.line, 4);
-      assertEquals(updatedComment.originalLine, 3);
+      assertEquals(updatedComment.startLine, 4);
+      assertEquals(updatedComment.originalStartLine, 3);
       assertEquals(updatedComment.stale, false);
 
       await Deno.writeTextFile(filePath, "Intro\n# Title\n\nChanged\n");
@@ -284,8 +300,8 @@ Deno.test("tracks preview comments when their source line moves", async () => {
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const staleDocument = await staleResponse.json();
-      assertEquals(staleDocument.comments[0].line, 3);
-      assertEquals(staleDocument.comments[0].originalLine, 3);
+      assertEquals(staleDocument.comments[0].startLine, 3);
+      assertEquals(staleDocument.comments[0].originalStartLine, 3);
       assertEquals(staleDocument.comments[0].stale, true);
     } finally {
       await Deno.remove(filePath).catch(() => {});

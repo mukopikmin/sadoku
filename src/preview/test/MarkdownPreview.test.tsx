@@ -16,9 +16,9 @@ const renderMarkdown = (
   comments: PreviewComment[] = [],
   callbacks: Partial<{
     onCreateComment: (
-      line: number,
+      startLine: number,
       body: string,
-      endLine?: number,
+      endLine: number,
     ) => Promise<void>;
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
@@ -329,9 +329,9 @@ Body
       body: "Range comment.",
       createdAt: "2026-06-05T00:00:00.000Z",
       id: 1,
-      line: 1,
+      startLine: 1,
       endLine: 3,
-      originalLine: 1,
+      originalStartLine: 1,
       originalEndLine: 3,
       resolved: false,
       sourceHash: "example",
@@ -350,9 +350,9 @@ Body
       body: "Clarify this.",
       createdAt: "2026-06-05T00:00:00.000Z",
       id: 1,
-      line: 3,
+      startLine: 3,
       endLine: 3,
-      originalLine: 3,
+      originalStartLine: 3,
       originalEndLine: 3,
       resolved: false,
       sourceHash: "example",

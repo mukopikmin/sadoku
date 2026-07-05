@@ -21,18 +21,17 @@ const formatRange = (line: number, endLine = line): string =>
 
 const formatOriginalRange = (comment: PreviewComment): string =>
   formatRange(
-    comment.originalLine,
-    comment.originalEndLine ?? comment.originalLine,
+    comment.originalStartLine,
+    comment.originalEndLine,
   );
 
 const formatLineLabel = (comment: PreviewComment): string => {
-  const endLine = comment.endLine ?? comment.line;
-  const current = formatRange(comment.line, endLine);
+  const current = formatRange(comment.startLine, comment.endLine);
   const original = formatOriginalRange(comment);
   if (comment.stale) return `Originally ${original.toLowerCase()}`;
   if (
-    comment.originalLine !== comment.line ||
-    (comment.originalEndLine ?? comment.originalLine) !== endLine
+    comment.originalStartLine !== comment.startLine ||
+    comment.originalEndLine !== comment.endLine
   ) {
     return `${current} (originally ${original.toLowerCase()})`;
   }

@@ -91,9 +91,9 @@ Deno.test("writes formatted comments JSON with a trailing newline", async () => 
         body: "Review this.",
         createdAt: "2026-06-07T00:00:00.000Z",
         id: 1,
-        line: 3,
+        startLine: 3,
         endLine: 3,
-        originalLine: 3,
+        originalStartLine: 3,
         originalEndLine: 3,
         resolved: false,
         sourceText: "Body",
@@ -115,7 +115,7 @@ Deno.test("writes formatted comments JSON with a trailing newline", async () => 
   });
 });
 
-Deno.test("filters invalid stored comments and normalizes legacy resolution", async () => {
+Deno.test("filters stored comments with invalid range metadata", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await createTempMarkdown();
     try {
@@ -124,10 +124,10 @@ Deno.test("filters invalid stored comments and normalizes legacy resolution", as
         JSON.stringify({
           comments: [
             {
-              body: "Legacy comment",
+              body: "Invalid range comment",
               createdAt: "2026-06-07T00:00:00.000Z",
               id: 1,
-              line: 3,
+              startLine: 3,
               updatedAt: "2026-06-07T00:00:00.000Z",
             },
             { id: "missing-required-fields" },
@@ -140,10 +140,7 @@ Deno.test("filters invalid stored comments and normalizes legacy resolution", as
       const document = await readCommentsDocument(filePath);
 
       assertEquals(document.filePath, filePath);
-      assertEquals(document.comments.length, 1);
-      assertEquals(document.comments[0].id, 1);
-      assertEquals(document.comments[0].replies, []);
-      assertEquals(document.comments[0].resolved, false);
+      assertEquals(document.comments, []);
     } finally {
       await removeTempMarkdown(filePath);
     }
@@ -193,10 +190,15 @@ Deno.test("reads legacy comments stored next to the Markdown file", async () => 
         getLegacyCommentsFilePath(filePath),
         JSON.stringify({
           comments: [{
-            body: "Legacy comment",
+            body: "Sidecar comment",
             createdAt: "2026-06-07T00:00:00.000Z",
+            endLine: 3,
             id: 1,
-            line: 3,
+            originalEndLine: 3,
+            originalStartLine: 3,
+            resolved: false,
+            stale: false,
+            startLine: 3,
             updatedAt: "2026-06-07T00:00:00.000Z",
           }],
           filePath,
@@ -225,7 +227,9 @@ Deno.test("reads comments from legacy mdview comments directory", async () => {
 
   const filePath = await createTempMarkdown();
   try {
-    const legacyDirectory = `${home}/.local/share/mdview/comments`;
+    const legacyDirectory = Deno.build.os === "darwin"
+      ? `${home}/Library/Application Support/mdview/comments`
+      : `${home}/.local/share/mdview/comments`;
     await Deno.mkdir(legacyDirectory, { recursive: true });
     const legacyFileName = getCommentsFilePath(filePath).split("/").at(-1);
     if (!legacyFileName) throw new Error("Missing comments file name.");
@@ -235,8 +239,13 @@ Deno.test("reads comments from legacy mdview comments directory", async () => {
         comments: [{
           body: "Legacy directory comment",
           createdAt: "2026-06-07T00:00:00.000Z",
+          endLine: 3,
           id: 1,
-          line: 3,
+          originalEndLine: 3,
+          originalStartLine: 3,
+          resolved: false,
+          stale: false,
+          startLine: 3,
           updatedAt: "2026-06-07T00:00:00.000Z",
         }],
         filePath,
