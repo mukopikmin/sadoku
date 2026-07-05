@@ -1,4 +1,6 @@
+import { Badge, Box, Button, Flex, Tabs, Theme } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
+import type React from "react";
 import {
   createComment,
   createReply,
@@ -41,6 +43,12 @@ const loadPreviewDocument = async (): Promise<PreviewDocument> => {
   }
   return await response.json() as PreviewDocument;
 };
+
+const PreviewTheme = ({ children }: { children: React.ReactNode }) => (
+  <Theme accentColor="blue" grayColor="slate" radius="medium">
+    {children}
+  </Theme>
+);
 
 export const App = () => {
   const [state, setState] = useState<LoadState>({ status: "loading" });
@@ -193,6 +201,10 @@ export const App = () => {
     });
   };
 
+  const handleReloadPreview = () => {
+    globalThis.location.reload();
+  };
+
   const handleReopenComment = async (id: number): Promise<void> => {
     const comment = await reopenComment(id);
     setState((current) => {
@@ -208,23 +220,23 @@ export const App = () => {
 
   if (state.status === "loading") {
     return (
-      <>
+      <PreviewTheme>
         <style>{previewThemeCss}</style>
         <main>
           <header>Loading preview...</header>
         </main>
-      </>
+      </PreviewTheme>
     );
   }
 
   if (state.status === "error") {
     return (
-      <>
+      <PreviewTheme>
         <style>{previewThemeCss}</style>
         <main>
           <header>{state.message}</header>
         </main>
-      </>
+      </PreviewTheme>
     );
   }
 
@@ -236,45 +248,51 @@ export const App = () => {
       .length;
 
   return (
-    <>
+    <PreviewTheme>
       <style>{previewThemeCss}</style>
       <main>
-        <header>
-          <div>
-            Previewing{" "}
-            <a href={state.document.fileUrl}>{state.document.title}</a>.
-            {reloadAvailable && (
-              <span className="reload-notice" role="status">
-                Source changes are available.
-                <button
-                  onClick={() => globalThis.location.reload()}
-                  type="button"
-                >
-                  Reload preview
-                </button>
-              </span>
-            )}
-          </div>
-          <nav className="preview-nav" aria-label="Preview views">
-            <button
-              aria-current={view === "preview" ? "page" : undefined}
-              onClick={() => setView("preview")}
-              type="button"
-            >
-              Preview
-            </button>
-            <button
-              aria-current={view === "comments" ? "page" : undefined}
-              onClick={() => setView("comments")}
-              type="button"
-            >
-              Comments {state.comments.length}
-              {staleCommentCount > 0 && <span>Stale {staleCommentCount}</span>}
-            </button>
-          </nav>
-        </header>
-        {view === "preview"
-          ? (
+        <Tabs.Root
+          value={view}
+          onValueChange={(value) => setView(value as View)}
+        >
+          <header>
+            <Box>
+              Previewing{" "}
+              <a href={state.document.fileUrl}>{state.document.title}</a>.
+              {reloadAvailable && (
+                <Flex asChild align="center" gap="2" wrap="wrap">
+                  <span className="reload-notice" role="status">
+                    Source changes are available.
+                    <Button
+                      color="amber"
+                      onClick={handleReloadPreview}
+                      size="1"
+                      variant="soft"
+                    >
+                      Reload preview
+                    </Button>
+                  </span>
+                </Flex>
+              )}
+            </Box>
+            <Tabs.List aria-label="Preview views">
+              <Tabs.Trigger onClick={() => setView("preview")} value="preview">
+                Preview
+              </Tabs.Trigger>
+              <Tabs.Trigger
+                onClick={() => setView("comments")}
+                value="comments"
+              >
+                Comments {state.comments.length}
+                {staleCommentCount > 0 && (
+                  <Badge color="amber" ml="2" variant="soft">
+                    Stale {staleCommentCount}
+                  </Badge>
+                )}
+              </Tabs.Trigger>
+            </Tabs.List>
+          </header>
+          <Tabs.Content value="preview">
             <MarkdownPreview
               comments={activeComments}
               markdown={state.document.markdown}
@@ -286,8 +304,8 @@ export const App = () => {
               onUpdateComment={handleUpdateComment}
               onUpdateReply={handleUpdateReply}
             />
-          )
-          : (
+          </Tabs.Content>
+          <Tabs.Content value="comments">
             <CommentList
               comments={state.comments}
               onDeleteComment={handleDeleteComment}
@@ -298,8 +316,9 @@ export const App = () => {
               onUpdateComment={handleUpdateComment}
               onUpdateReply={handleUpdateReply}
             />
-          )}
+          </Tabs.Content>
+        </Tabs.Root>
       </main>
-    </>
+    </PreviewTheme>
   );
 };

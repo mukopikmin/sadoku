@@ -152,6 +152,12 @@ describe("CommentList", () => {
       expect(onReplyComment).toHaveBeenCalledWith(1, "New reply.")
     );
 
+    await waitFor(() =>
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: "Edit reply" })
+          .disabled,
+      ).toBe(false)
+    );
     fireEvent.click(screen.getByRole("button", { name: "Edit reply" }));
     expect(document.activeElement).toBe(
       screen.getByRole("textbox", {

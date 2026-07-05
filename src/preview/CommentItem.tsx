@@ -1,3 +1,4 @@
+import { Badge, Box, Button, Card, Text, TextArea } from "@radix-ui/themes";
 import { useState } from "react";
 import { submitCommentOnShortcut } from "./commentShortcuts";
 import type { PreviewComment, PreviewCommentReply } from "./comments";
@@ -76,34 +77,41 @@ const ReplyItem = ({
   };
 
   return (
-    <div className="comment-reply">
+    <Box className="comment-reply">
       <div className="comment-reply-header">
-        <div className="comment-reply-label">Reply</div>
+        <Text className="comment-reply-label" size="1" weight="bold">
+          Reply
+        </Text>
         {!isEditing && (
           <div className="comment-actions">
-            <button
+            <Button
               aria-label="Edit reply"
               disabled={disabled}
               onClick={() => setIsEditing(true)}
+              size="1"
               type="button"
+              variant="soft"
             >
               Edit
-            </button>
-            <button
+            </Button>
+            <Button
               aria-label="Delete reply"
+              color="red"
               disabled={disabled}
               onClick={handleDelete}
+              size="1"
               type="button"
+              variant="soft"
             >
               Delete
-            </button>
+            </Button>
           </div>
         )}
       </div>
       {isEditing
         ? (
           <>
-            <textarea
+            <TextArea
               aria-label="Edit reply body"
               autoFocus
               className="comment-input"
@@ -115,30 +123,34 @@ const ReplyItem = ({
               value={draft}
             />
             <div className="comment-actions">
-              <button
+              <Button
                 aria-label="Save reply"
                 disabled={disabled || draft.trim() === ""}
                 onClick={handleUpdate}
+                size="1"
                 type="button"
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 aria-label="Cancel reply edit"
+                color="gray"
                 disabled={disabled}
                 onClick={() => {
                   setDraft(reply.body);
                   setIsEditing(false);
                 }}
+                size="1"
                 type="button"
+                variant="soft"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </>
         )
-        : <div className="comment-body">{reply.body}</div>}
-    </div>
+        : <Card className="comment-body" size="1">{reply.body}</Card>}
+    </Box>
   );
 };
 
@@ -235,157 +247,192 @@ export const CommentItem = ({
   };
 
   return (
-    <article className={["comment-item", className].filter(Boolean).join(" ")}>
-      <div className="comment-item-header">
-        <div className="comment-thread-heading">
-          <span>{lineLabel}</span>
-          {showState && comment.resolved && (
-            <span className="comment-state">Resolved</span>
-          )}
-          {showState && !comment.resolved && comment.stale && (
-            <span className="comment-state">Stale</span>
+    <Card
+      asChild
+      className={["comment-item", className].filter(Boolean).join(" ")}
+      size="2"
+    >
+      <article>
+        <div className="comment-item-header">
+          <div className="comment-thread-heading">
+            <span>{lineLabel}</span>
+            {showState && comment.resolved && (
+              <Badge className="comment-state" color="green" variant="soft">
+                Resolved
+              </Badge>
+            )}
+            {showState && !comment.resolved && comment.stale && (
+              <Badge className="comment-state" color="amber" variant="soft">
+                Stale
+              </Badge>
+            )}
+          </div>
+          {!isEditing && (
+            <div className="comment-actions">
+              {comment.resolved
+                ? (
+                  onReopenComment && (
+                    <Button
+                      disabled={isSaving}
+                      onClick={handleReopen}
+                      size="1"
+                      type="button"
+                      variant="soft"
+                    >
+                      Reopen
+                    </Button>
+                  )
+                )
+                : (
+                  onResolveComment && (
+                    <Button
+                      disabled={isSaving}
+                      onClick={handleResolve}
+                      size="1"
+                      type="button"
+                      variant="soft"
+                    >
+                      Resolve
+                    </Button>
+                  )
+                )}
+              <Button
+                disabled={isSaving}
+                onClick={() => setIsReplying((value) => !value)}
+                size="1"
+                type="button"
+                variant="soft"
+              >
+                Reply
+              </Button>
+              <Button
+                disabled={isSaving}
+                onClick={() => setIsEditing(true)}
+                size="1"
+                type="button"
+                variant="soft"
+              >
+                Edit
+              </Button>
+              <Button
+                color="red"
+                disabled={isSaving}
+                onClick={handleDelete}
+                size="1"
+                type="button"
+                variant="soft"
+              >
+                Delete
+              </Button>
+            </div>
           )}
         </div>
-        {!isEditing && (
-          <div className="comment-actions">
-            {comment.resolved
-              ? (
-                onReopenComment && (
-                  <button
-                    disabled={isSaving}
-                    onClick={handleReopen}
-                    type="button"
-                  >
-                    Reopen
-                  </button>
-                )
-              )
-              : (
-                onResolveComment && (
-                  <button
-                    disabled={isSaving}
-                    onClick={handleResolve}
-                    type="button"
-                  >
-                    Resolve
-                  </button>
-                )
-              )}
-            <button
-              disabled={isSaving}
-              onClick={() =>
-                setIsReplying((value) => !value)}
-              type="button"
-            >
-              Reply
-            </button>
-            <button
-              disabled={isSaving}
-              onClick={() =>
-                setIsEditing(true)}
-              type="button"
-            >
-              Edit
-            </button>
-            <button disabled={isSaving} onClick={handleDelete} type="button">
-              Delete
-            </button>
+        {showSource && comment.sourceText && (
+          <div className="comment-source-block">
+            <div className="comment-source-label">
+              {getSourceLabel(comment)}
+            </div>
+            <pre className="comment-source">{comment.sourceText}</pre>
           </div>
         )}
-      </div>
-      {showSource && comment.sourceText && (
-        <div className="comment-source-block">
-          <div className="comment-source-label">{getSourceLabel(comment)}</div>
-          <pre className="comment-source">{comment.sourceText}</pre>
-        </div>
-      )}
-      {isEditing
-        ? (
-          <>
-            <textarea
+        {isEditing
+          ? (
+            <>
+              <TextArea
+                autoFocus
+                className="comment-input"
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) =>
+                  submitCommentOnShortcut(event, () => {
+                    void handleUpdate();
+                  })}
+                value={draft}
+              />
+              <div className="comment-actions">
+                <Button
+                  disabled={isSaving || draft.trim() === ""}
+                  onClick={handleUpdate}
+                  size="1"
+                  type="button"
+                >
+                  Save
+                </Button>
+                <Button
+                  color="gray"
+                  disabled={isSaving}
+                  onClick={() => {
+                    setDraft(comment.body);
+                    setIsEditing(false);
+                  }}
+                  size="1"
+                  type="button"
+                  variant="soft"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </>
+          )
+          : <Card className="comment-body" size="1">{comment.body}</Card>}
+        {(comment.replies ?? []).length > 0 && (
+          <div className="comment-replies">
+            {(comment.replies ?? []).map((reply) => (
+              <ReplyItem
+                commentId={comment.id}
+                disabled={isSaving}
+                key={reply.id}
+                onDelete={onDeleteReply}
+                onError={handleError}
+                onUpdate={onUpdateReply}
+                reply={reply}
+                setSaving={setIsSaving}
+              />
+            ))}
+          </div>
+        )}
+        {isReplying && (
+          <div className="comment-reply-form">
+            <TextArea
+              aria-label="Reply body"
               autoFocus
               className="comment-input"
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => setReplyDraft(event.target.value)}
               onKeyDown={(event) =>
                 submitCommentOnShortcut(event, () => {
-                  void handleUpdate();
+                  void handleReply();
                 })}
-              value={draft}
+              placeholder="Write a reply..."
+              value={replyDraft}
             />
             <div className="comment-actions">
-              <button
-                disabled={isSaving || draft.trim() === ""}
-                onClick={handleUpdate}
+              <Button
+                disabled={isSaving || replyDraft.trim() === ""}
+                onClick={handleReply}
+                size="1"
                 type="button"
               >
-                Save
-              </button>
-              <button
+                Add reply
+              </Button>
+              <Button
+                color="gray"
                 disabled={isSaving}
                 onClick={() => {
-                  setDraft(comment.body);
-                  setIsEditing(false);
+                  setReplyDraft("");
+                  setIsReplying(false);
                 }}
+                size="1"
                 type="button"
+                variant="soft"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
-          </>
-        )
-        : <div className="comment-body">{comment.body}</div>}
-      {(comment.replies ?? []).length > 0 && (
-        <div className="comment-replies">
-          {(comment.replies ?? []).map((reply) => (
-            <ReplyItem
-              commentId={comment.id}
-              disabled={isSaving}
-              key={reply.id}
-              onDelete={onDeleteReply}
-              onError={handleError}
-              onUpdate={onUpdateReply}
-              reply={reply}
-              setSaving={setIsSaving}
-            />
-          ))}
-        </div>
-      )}
-      {isReplying && (
-        <div className="comment-reply-form">
-          <textarea
-            aria-label="Reply body"
-            autoFocus
-            className="comment-input"
-            onChange={(event) => setReplyDraft(event.target.value)}
-            onKeyDown={(event) =>
-              submitCommentOnShortcut(event, () => {
-                void handleReply();
-              })}
-            placeholder="Write a reply..."
-            value={replyDraft}
-          />
-          <div className="comment-actions">
-            <button
-              disabled={isSaving || replyDraft.trim() === ""}
-              onClick={handleReply}
-              type="button"
-            >
-              Add reply
-            </button>
-            <button
-              disabled={isSaving}
-              onClick={() => {
-                setReplyDraft("");
-                setIsReplying(false);
-              }}
-              type="button"
-            >
-              Cancel
-            </button>
           </div>
-        </div>
-      )}
-      {error && <div className="comment-error">{error}</div>}
-    </article>
+        )}
+        {error && (
+          <Text className="comment-error" color="red" size="2">{error}</Text>
+        )}
+      </article>
+    </Card>
   );
 };

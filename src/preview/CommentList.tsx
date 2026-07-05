@@ -1,3 +1,4 @@
+import { Heading, Text } from "@radix-ui/themes";
 import { CommentItem } from "./CommentItem";
 import type { PreviewComment } from "./comments";
 
@@ -54,9 +55,11 @@ const CommentSection = ({
   title,
 }: CommentSectionProps) => (
   <section className="comment-list-section">
-    <h2>{title}</h2>
+    <Heading as="h2" mb="3" size="5">
+      {title}
+    </Heading>
     {comments.length === 0
-      ? <p className="comment-list-empty">{emptyText}</p>
+      ? <Text className="comment-list-empty" color="gray">{emptyText}</Text>
       : (
         <div className="comment-list-items">
           {comments.map((comment) => (
