@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Flex, Tabs, Theme } from "@radix-ui/themes";
+import { Badge, Box, Button, Flex, Link, Tabs, Theme } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 import type React from "react";
 import {
@@ -258,7 +258,7 @@ export const App = () => {
           <header>
             <Box>
               Previewing{" "}
-              <a href={state.document.fileUrl}>{state.document.title}</a>.
+              <Link href={state.document.fileUrl}>{state.document.title}</Link>.
               {reloadAvailable && (
                 <Flex asChild align="center" gap="2" wrap="wrap">
                   <span className="reload-notice" role="status">
