@@ -17,8 +17,10 @@ const createComment = (
   body: "Clarify this.",
   createdAt: "2026-06-05T00:00:00.000Z",
   id: 1,
-  line: 3,
-  originalLine: 3,
+  startLine: 3,
+  endLine: 3,
+  originalStartLine: 3,
+  originalEndLine: 3,
   resolved: false,
   sourceHash: "example",
   sourceText: "Body",
@@ -70,6 +72,45 @@ describe("CommentList", () => {
     expect(screen.getAllByText("Body")).toHaveLength(2);
     expect(screen.getByText("Original line")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
+  });
+
+  it("formats source ranges in list headings", () => {
+    render(
+      <CommentList
+        comments={[
+          createComment({
+            body: "Range comment.",
+            endLine: 5,
+            originalEndLine: 5,
+          }),
+          createComment({
+            body: "Moved range.",
+            id: "moved-range",
+            startLine: 7,
+            endLine: 8,
+            originalStartLine: 2,
+            originalEndLine: 3,
+          }),
+          createComment({
+            body: "Stale range.",
+            id: "stale-range",
+            stale: true,
+            endLine: 9,
+            originalStartLine: 4,
+            originalEndLine: 6,
+          }),
+        ]}
+        onDeleteComment={async () => {}}
+        onReplyComment={async () => {}}
+        onReopenComment={async () => {}}
+        onResolveComment={async () => {}}
+        onUpdateComment={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Lines 3-5")).not.toBeNull();
+    expect(screen.getByText("Lines 7-8 (originally lines 2-3)")).not.toBeNull();
+    expect(screen.getByText("Originally lines 4-6")).not.toBeNull();
   });
 
   it("updates and deletes comments", async () => {

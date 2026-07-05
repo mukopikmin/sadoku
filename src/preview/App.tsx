@@ -84,10 +84,11 @@ export const App = () => {
   }, [state, view]);
 
   const handleCreateComment = async (
-    line: number,
+    startLine: number,
     body: string,
+    endLine: number,
   ): Promise<void> => {
-    const comment = await createComment(line, body);
+    const comment = await createComment(startLine, body, endLine);
     setState((current) => {
       if (current.status !== "loaded") return current;
       return {
