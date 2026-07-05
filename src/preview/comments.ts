@@ -8,17 +8,17 @@ export type PreviewCommentReply = {
 export type PreviewComment = {
   body: string;
   createdAt: string;
-  endLine?: number;
+  endLine: number;
   id: string;
-  line: number;
-  originalEndLine?: number;
-  originalLine: number;
+  originalEndLine: number;
+  originalStartLine: number;
   replies?: PreviewCommentReply[];
   resolved: boolean;
   resolvedAt?: string;
   sourceHash?: string;
   sourceText?: string;
   stale: boolean;
+  startLine: number;
   updatedAt: string;
 };
 
@@ -36,14 +36,14 @@ export const loadComments = async (): Promise<PreviewCommentsDocument> => {
 };
 
 export const createComment = async (
-  line: number,
+  startLine: number,
   body: string,
-  endLine?: number,
+  endLine: number,
 ): Promise<PreviewComment> => {
   const response = await fetch("/__sadoku/comments", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ line, body, ...(endLine ? { endLine } : {}) }),
+    body: JSON.stringify({ startLine, endLine, body }),
   });
   if (!response.ok) {
     throw new Error(`Failed to create comment: ${response.status}`);

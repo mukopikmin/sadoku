@@ -17,16 +17,17 @@ export type CommentListProps = {
 };
 
 const formatLineLabel = (comment: PreviewComment): string => {
-  const endLine = comment.endLine ?? comment.line;
-  const originalEndLine = comment.originalEndLine ?? comment.originalLine;
-  const currentLabel = comment.line === endLine
-    ? `Line ${comment.line}`
-    : `Lines ${comment.line}-${endLine}`;
-  const originalLabel = comment.originalLine === originalEndLine
-    ? `line ${comment.originalLine}`
-    : `lines ${comment.originalLine}-${originalEndLine}`;
+  const currentLabel = comment.startLine === comment.endLine
+    ? `Line ${comment.startLine}`
+    : `Lines ${comment.startLine}-${comment.endLine}`;
+  const originalLabel = comment.originalStartLine === comment.originalEndLine
+    ? `line ${comment.originalStartLine}`
+    : `lines ${comment.originalStartLine}-${comment.originalEndLine}`;
   if (comment.stale) return `Originally ${originalLabel}`;
-  if (comment.originalLine !== comment.line) {
+  if (
+    comment.originalStartLine !== comment.startLine ||
+    comment.originalEndLine !== comment.endLine
+  ) {
     return `${currentLabel} (originally ${originalLabel})`;
   }
   return currentLabel;

@@ -113,8 +113,25 @@ const createEmptyCommentsDocument = (
 const isPreviewComment = (value: unknown): value is PreviewComment => {
   if (typeof value !== "object" || value === null) return false;
   const comment = value as Partial<PreviewComment>;
+  const {
+    endLine,
+    originalEndLine,
+    originalStartLine,
+    startLine,
+  } = comment;
   return typeof comment.id === "string" &&
-    Number.isInteger(comment.line) &&
+    typeof startLine === "number" &&
+    Number.isInteger(startLine) &&
+    typeof endLine === "number" &&
+    Number.isInteger(endLine) &&
+    typeof originalStartLine === "number" &&
+    Number.isInteger(originalStartLine) &&
+    typeof originalEndLine === "number" &&
+    Number.isInteger(originalEndLine) &&
+    startLine >= 1 &&
+    endLine >= startLine &&
+    originalStartLine >= 1 &&
+    originalEndLine >= originalStartLine &&
     typeof comment.body === "string" &&
     typeof comment.createdAt === "string" &&
     typeof comment.updatedAt === "string";
@@ -132,23 +149,8 @@ const isPreviewCommentReply = (
 };
 
 const normalizePreviewComment = (comment: PreviewComment): PreviewComment => {
-  const originalLine = Number.isInteger(comment.originalLine)
-    ? comment.originalLine
-    : comment.line;
-  const endLine = comment.endLine ?? comment.line;
-  const originalEndLine = comment.originalEndLine ?? originalLine;
-  const normalizedEndLine = Number.isInteger(endLine) && endLine >= comment.line
-    ? endLine
-    : comment.line;
-  const normalizedOriginalEndLine = Number.isInteger(originalEndLine) &&
-      originalEndLine >= originalLine
-    ? originalEndLine
-    : originalLine;
   return {
     ...comment,
-    endLine: normalizedEndLine,
-    originalEndLine: normalizedOriginalEndLine,
-    originalLine,
     replies: Array.isArray(comment.replies)
       ? comment.replies.filter(isPreviewCommentReply)
       : [],

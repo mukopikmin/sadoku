@@ -17,8 +17,10 @@ const createComment = (
   body: "Clarify this.",
   createdAt: "2026-06-05T00:00:00.000Z",
   id: "comment-1",
-  line: 3,
-  originalLine: 3,
+  endLine: 3,
+  originalEndLine: 3,
+  originalStartLine: 3,
+  startLine: 3,
   resolved: false,
   sourceHash: "example",
   sourceText: "Body",
@@ -79,16 +81,16 @@ describe("CommentList", () => {
           createComment({
             endLine: 5,
             id: "range",
-            line: 3,
+            startLine: 3,
             originalEndLine: 5,
-            originalLine: 3,
+            originalStartLine: 3,
           }),
           createComment({
             endLine: 8,
             id: "moved-range",
-            line: 7,
+            startLine: 7,
             originalEndLine: 4,
-            originalLine: 3,
+            originalStartLine: 3,
           }),
         ]}
         onDeleteComment={async () => {}}

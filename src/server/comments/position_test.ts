@@ -13,13 +13,15 @@ const createComment = (
 ): PreviewComment => ({
   body: "Review this.",
   createdAt: "2026-06-07T00:00:00.000Z",
+  endLine: 3,
   id: "comment-1",
-  line: 3,
-  originalLine: 3,
+  originalEndLine: 3,
+  originalStartLine: 3,
   resolved: false,
   sourceHash: hashSourceText("Body"),
   sourceText: "Body",
   stale: false,
+  startLine: 3,
   updatedAt: "2026-06-07T00:00:00.000Z",
   ...overrides,
 });
@@ -52,8 +54,8 @@ Deno.test("keeps a comment at an unchanged source line", () => {
   );
 
   assertEquals(resolved.displayLine, 3);
-  assertEquals(resolved.line, 3);
-  assertEquals(resolved.originalLine, 3);
+  assertEquals(resolved.startLine, 3);
+  assertEquals(resolved.originalStartLine, 3);
   assertEquals(resolved.stale, false);
 });
 
@@ -61,13 +63,18 @@ Deno.test("tracks a uniquely matching source line within forty lines", () => {
   const before = Array.from({ length: 40 }, (_, index) => `before ${index}`);
   const markdown = [...before, "Body", "after"].join("\n");
   const resolved = resolveCommentPosition(
-    createComment({ line: 1, originalLine: 1 }),
+    createComment({
+      endLine: 1,
+      originalEndLine: 1,
+      originalStartLine: 1,
+      startLine: 1,
+    }),
     markdown,
   );
 
   assertEquals(resolved.displayLine, 41);
-  assertEquals(resolved.line, 41);
-  assertEquals(resolved.originalLine, 1);
+  assertEquals(resolved.startLine, 41);
+  assertEquals(resolved.originalStartLine, 1);
   assertEquals(resolved.stale, false);
 });
 
@@ -77,9 +84,9 @@ Deno.test("tracks a uniquely matching source range within forty lines", () => {
   const resolved = resolveCommentPosition(
     createComment({
       endLine: 2,
-      line: 1,
+      startLine: 1,
       originalEndLine: 2,
-      originalLine: 1,
+      originalStartLine: 1,
       sourceHash: hashSourceText("First\nSecond"),
       sourceText: "First\nSecond",
     }),
@@ -87,9 +94,9 @@ Deno.test("tracks a uniquely matching source range within forty lines", () => {
   );
 
   assertEquals(resolved.displayLine, 6);
-  assertEquals(resolved.line, 6);
+  assertEquals(resolved.startLine, 6);
   assertEquals(resolved.endLine, 7);
-  assertEquals(resolved.originalLine, 1);
+  assertEquals(resolved.originalStartLine, 1);
   assertEquals(resolved.originalEndLine, 2);
   assertEquals(resolved.stale, false);
 });
@@ -98,13 +105,18 @@ Deno.test("does not track a matching source line outside the search radius", () 
   const before = Array.from({ length: 41 }, (_, index) => `before ${index}`);
   const markdown = [...before, "Body"].join("\n");
   const resolved = resolveCommentPosition(
-    createComment({ line: 1, originalLine: 1 }),
+    createComment({
+      endLine: 1,
+      originalEndLine: 1,
+      originalStartLine: 1,
+      startLine: 1,
+    }),
     markdown,
   );
 
   assertEquals(resolved.displayLine, 1);
-  assertEquals(resolved.line, 1);
-  assertEquals(resolved.originalLine, 1);
+  assertEquals(resolved.startLine, 1);
+  assertEquals(resolved.originalStartLine, 1);
   assertEquals(resolved.stale, true);
 });
 
@@ -115,12 +127,12 @@ Deno.test("marks a comment stale when its source is ambiguous", () => {
   );
 
   assertEquals(resolved.displayLine, 3);
-  assertEquals(resolved.line, 3);
-  assertEquals(resolved.originalLine, 3);
+  assertEquals(resolved.startLine, 3);
+  assertEquals(resolved.originalStartLine, 3);
   assertEquals(resolved.stale, true);
 });
 
-Deno.test("fills source metadata for legacy comments", () => {
+Deno.test("fills missing source metadata", () => {
   const resolved = resolveCommentPosition(
     createComment({ sourceHash: undefined, sourceText: undefined }),
     "# Title\n\nBody\n",

@@ -22,9 +22,9 @@ export type MarkdownPreviewProps = {
   comments: PreviewComment[];
   markdown: string;
   onCreateComment: (
-    line: number,
+    startLine: number,
     body: string,
-    endLine?: number,
+    endLine: number,
   ) => Promise<void>;
   onDeleteComment: (id: string) => Promise<void>;
   onDeleteReply: (commentId: string, replyId: string) => Promise<void>;
@@ -62,9 +62,9 @@ type CommentableBlockProps = {
   isSelected: boolean;
   line: number;
   onCreateComment: (
-    line: number,
+    startLine: number,
     body: string,
-    endLine?: number,
+    endLine: number,
   ) => Promise<void>;
   onCloseCommentForm: () => void;
   onDeleteComment: (id: string) => Promise<void>;
@@ -85,15 +85,15 @@ const getSourceLine = (props: { node?: SourceNode }): number | undefined => {
   return props.node?.position?.start?.line;
 };
 
-type CommentRange = { endLine: number; line: number };
+type CommentRange = { endLine: number; startLine: number };
 
 const isLineInRange = (line: number, range: CommentRange): boolean =>
-  line >= range.line && line <= range.endLine;
+  line >= range.startLine && line <= range.endLine;
 
 const formatRangeLabel = (range: CommentRange): string =>
-  range.line === range.endLine
-    ? `line ${range.line}`
-    : `lines ${range.line}-${range.endLine}`;
+  range.startLine === range.endLine
+    ? `line ${range.startLine}`
+    : `lines ${range.startLine}-${range.endLine}`;
 
 const CommentableBlock = ({
   activeRange,
@@ -119,7 +119,7 @@ const CommentableBlock = ({
   const [isSaving, setIsSaving] = useState(false);
   const pendingRange = activeRange ?? {
     endLine: line,
-    line,
+    startLine: line,
   };
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
@@ -133,7 +133,11 @@ const CommentableBlock = ({
     setIsSaving(true);
     setError(undefined);
     try {
-      await onCreateComment(pendingRange.line, body, pendingRange.endLine);
+      await onCreateComment(
+        pendingRange.startLine,
+        body,
+        pendingRange.endLine,
+      );
       setDraft("");
       onCloseCommentForm();
     } catch (error) {
@@ -190,9 +194,9 @@ const CommentableBlock = ({
             <CommentItem
               comment={comment}
               key={comment.id}
-              lineLabel={comment.line === (comment.endLine ?? comment.line)
-                ? `Line ${comment.line}`
-                : `Lines ${comment.line}-${comment.endLine}`}
+              lineLabel={comment.startLine === comment.endLine
+                ? `Line ${comment.startLine}`
+                : `Lines ${comment.startLine}-${comment.endLine}`}
               onDeleteComment={onDeleteComment}
               onDeleteReply={onDeleteReply}
               onReplyComment={onReplyComment}
@@ -435,9 +439,8 @@ export const MarkdownPreview = ({
   const commentsByLine = useMemo(() => {
     const grouped = new Map<number, PreviewComment[]>();
     for (const comment of comments) {
-      const displayLine = comment.endLine ?? comment.line;
-      grouped.set(displayLine, [
-        ...(grouped.get(displayLine) ?? []),
+      grouped.set(comment.endLine, [
+        ...(grouped.get(comment.endLine) ?? []),
         comment,
       ]);
     }
@@ -458,10 +461,10 @@ export const MarkdownPreview = ({
         return undefined;
       }
       const range = lineSelectionAnchor === undefined
-        ? { endLine: line, line }
+        ? { endLine: line, startLine: line }
         : {
           endLine: Math.max(lineSelectionAnchor, line),
-          line: Math.min(lineSelectionAnchor, line),
+          startLine: Math.min(lineSelectionAnchor, line),
         };
       setLineSelectionAnchor(lineSelectionAnchor ?? line);
       return range;

@@ -36,31 +36,32 @@ const parseCommentBody = (value: unknown): string => {
   return body.trim();
 };
 
-const parseCommentLine = (value: unknown): number => {
-  if (typeof value !== "object" || value === null) {
-    throw textResponse("Comment line is required.", 400);
+const parsePositiveInteger = (value: unknown, name: string): number => {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+    throw textResponse(`${name} must be a positive integer.`, 400);
   }
-  const line = (value as { line?: unknown }).line;
-  if (typeof line !== "number" || !Number.isInteger(line) || line < 1) {
-    throw textResponse("Comment line must be a positive integer.", 400);
-  }
-  return line;
+  return value;
 };
 
-const parseCommentEndLine = (value: unknown, line: number): number => {
-  if (typeof value !== "object" || value === null) return line;
-  const endLine = (value as { endLine?: unknown }).endLine;
-  if (endLine === undefined) return line;
-  if (
-    typeof endLine !== "number" || !Number.isInteger(endLine) ||
-    endLine < line
-  ) {
+const parseCommentRange = (
+  value: unknown,
+): { endLine: number; startLine: number } => {
+  if (typeof value !== "object" || value === null) {
+    throw textResponse("Comment range is required.", 400);
+  }
+  const { endLine: rawEndLine, startLine: rawStartLine } = value as {
+    endLine?: unknown;
+    startLine?: unknown;
+  };
+  const startLine = parsePositiveInteger(rawStartLine, "Comment startLine");
+  const endLine = parsePositiveInteger(rawEndLine, "Comment endLine");
+  if (endLine < startLine) {
     throw textResponse(
-      "Comment endLine must be an integer greater than or equal to line.",
+      "Comment endLine must be greater than or equal to startLine.",
       400,
     );
   }
-  return endLine;
+  return { endLine, startLine };
 };
 
 const createCommentResponse = (comment: PreviewComment): Response =>
@@ -93,11 +94,10 @@ const createComment = async (
   source: PreviewSource,
 ): Promise<Response> => {
   const body = await parseJsonBody(request);
-  const line = parseCommentLine(body);
-  const endLine = parseCommentEndLine(body, line);
+  const { endLine, startLine } = parseCommentRange(body);
   const commentBody = parseCommentBody(body);
   const markdown = await readMarkdownSource(source.documentSource);
-  const sourceText = getLineRangeText(markdown, line, endLine);
+  const sourceText = getLineRangeText(markdown, startLine, endLine);
   if (sourceText === undefined) {
     throw textResponse("Comment range does not exist.", 400);
   }
@@ -107,14 +107,14 @@ const createComment = async (
     createdAt: now,
     endLine,
     id: crypto.randomUUID(),
-    line,
     originalEndLine: endLine,
-    originalLine: line,
+    originalStartLine: startLine,
     replies: [],
     resolved: false,
     sourceHash: hashSourceText(sourceText),
     sourceText,
     stale: false,
+    startLine,
     updatedAt: now,
   };
   const document = await readCommentsDocument(source.commentSource);
