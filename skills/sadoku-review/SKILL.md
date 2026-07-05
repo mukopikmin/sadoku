@@ -44,15 +44,33 @@ questions, and the final report.
    feedback requests otherwise.
 7. Review the resulting diff and run relevant documentation checks available in
    the project.
-8. Resolve only comments that were successfully addressed or already satisfied:
+8. Reply to each addressed comment before resolving it:
+
+   ```sh
+   sadoku comments reply <markdown-path> <comment-id> "<body>"
+   ```
+
+   Each reply must include at least:
+   - A brief summary of what changed.
+   - A focused excerpt of the Markdown diff relevant to that comment.
+   - When one edit addresses multiple comments, an explanation of which change
+     satisfies each comment.
+
+   Inspect the diff with a command such as `git diff -- <markdown-path>`.
+   Include only the necessary range in the reply; do not paste large unrelated
+   portions of the diff. For comments classified as **Already satisfied**, reply
+   with the reason the document already satisfies the request before resolving,
+   instead of including a diff excerpt.
+9. Resolve only comments that were successfully addressed or already satisfied:
 
    ```sh
    sadoku comments resolve <markdown-path> <comment-id>...
    ```
 
-9. Run `sadoku comments inspect <markdown-path>` again. Report the changed
-   document, replies posted, resolved comment IDs, and comments left open with
-   their reasons.
+10. Run `sadoku comments inspect <markdown-path>` again. In the console or final
+    user-facing report, include a concise summary of the review outcome: the
+    changed document, replies posted, resolved comment IDs, and comments left
+    open with their reasons.
 
 ## Interpretation Rules
 
@@ -75,5 +93,7 @@ questions, and the final report.
   on `PATH`. Do not fall back to direct comment-storage access.
 - If `inspect` reports no comments, make no document changes unless the user
   requested additional edits independently.
+- If replying to a comment fails, do not resolve that comment; leave it open and
+  report the command error.
 - If resolving any requested ID fails, leave the comments open and report the
   command error.
