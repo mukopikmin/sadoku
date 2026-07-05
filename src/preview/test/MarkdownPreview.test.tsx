@@ -16,11 +16,11 @@ const renderMarkdown = (
   comments: PreviewComment[] = [],
   callbacks: Partial<{
     onCreateComment: (
-      line: number,
+      startLine: number,
       body: string,
-      endLine?: number,
+      endLine: number,
     ) => Promise<void>;
-    onResolveComment: (id: string) => Promise<void>;
+    onResolveComment: (id: number) => Promise<void>;
   }> = {},
 ) => {
   const result = render(
@@ -321,9 +321,11 @@ Body
     renderMarkdown("# Title\n\nBody\n", [{
       body: "Clarify this.",
       createdAt: "2026-06-05T00:00:00.000Z",
-      id: "comment-1",
-      line: 3,
-      originalLine: 3,
+      id: 1,
+      endLine: 3,
+      originalEndLine: 3,
+      originalStartLine: 3,
+      startLine: 3,
       resolved: false,
       sourceHash: "example",
       sourceText: "Body",
@@ -333,9 +335,7 @@ Body
 
     screen.getByRole("button", { name: "Resolve" }).click();
 
-    await waitFor(() =>
-      expect(onResolveComment).toHaveBeenCalledWith("comment-1")
-    );
+    await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
   });
 
   it("renders a range comment once at its end line", () => {
@@ -343,10 +343,10 @@ Body
       body: "Clarify this range.",
       createdAt: "2026-06-05T00:00:00.000Z",
       endLine: 3,
-      id: "comment-1",
-      line: 1,
+      id: 1,
+      startLine: 1,
       originalEndLine: 3,
-      originalLine: 1,
+      originalStartLine: 1,
       resolved: false,
       sourceHash: "example",
       sourceText: "# Title\n\nBody",

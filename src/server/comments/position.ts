@@ -13,13 +13,13 @@ export const getLineText = (
 
 export const getLineRangeText = (
   markdown: string,
-  line: number,
-  endLine = line,
+  startLine: number,
+  endLine: number,
 ): string | undefined => {
-  if (line < 1 || endLine < line) return undefined;
+  if (startLine < 1 || endLine < startLine) return undefined;
   const lines = getMarkdownLines(markdown);
   if (endLine > lines.length) return undefined;
-  return lines.slice(line - 1, endLine).join("\n");
+  return lines.slice(startLine - 1, endLine).join("\n");
 };
 
 export const hashSourceText = (value: string): string => {
@@ -35,37 +35,21 @@ export const resolveCommentPosition = (
   comment: PreviewComment,
   markdown: string,
 ): PreviewComment => {
-  const endLine = comment.endLine ?? comment.line;
   const sourceText = comment.sourceText ??
-    getLineRangeText(markdown, comment.line, endLine) ??
+    getLineRangeText(markdown, comment.startLine, comment.endLine) ??
     "";
   const sourceHash = comment.sourceHash ?? hashSourceText(sourceText);
-  const currentRangeText = getLineRangeText(markdown, comment.line, endLine);
-
-  if (
-    currentRangeText !== undefined &&
-    currentRangeText === sourceText &&
-    hashSourceText(currentRangeText) === sourceHash
-  ) {
-    return {
-      ...comment,
-      displayLine: comment.line,
-      endLine,
-      originalEndLine: endLine,
-      originalLine: comment.line,
-      sourceHash,
-      sourceText,
-      stale: false,
-    };
-  }
 
   const lines = getMarkdownLines(markdown);
-  const startLine = Math.max(1, comment.line - lineSearchRadius);
-  const searchEndLine = Math.min(lines.length, comment.line + lineSearchRadius);
-  const rangeLength = endLine - comment.line + 1;
-  const matchingLines: Array<{ endLine: number; line: number }> = [];
+  const startSearchLine = Math.max(1, comment.startLine - lineSearchRadius);
+  const searchEndLine = Math.min(
+    lines.length,
+    comment.startLine + lineSearchRadius,
+  );
+  const rangeLength = comment.endLine - comment.startLine + 1;
+  const matchingLines: Array<{ endLine: number; startLine: number }> = [];
 
-  for (let line = startLine; line <= searchEndLine; line += 1) {
+  for (let line = startSearchLine; line <= searchEndLine; line += 1) {
     const candidateEndLine = line + rangeLength - 1;
     const lineText = getLineRangeText(markdown, line, candidateEndLine);
     if (
@@ -73,7 +57,7 @@ export const resolveCommentPosition = (
       lineText === sourceText &&
       hashSourceText(lineText) === sourceHash
     ) {
-      matchingLines.push({ endLine: candidateEndLine, line });
+      matchingLines.push({ endLine: candidateEndLine, startLine: line });
     }
   }
 
@@ -81,23 +65,22 @@ export const resolveCommentPosition = (
     const match = matchingLines[0];
     return {
       ...comment,
-      displayLine: match.line,
+      displayLine: match.startLine,
       endLine: match.endLine,
-      line: match.line,
-      originalEndLine: endLine,
-      originalLine: comment.line,
+      originalEndLine: comment.endLine,
+      originalStartLine: comment.startLine,
       sourceHash,
       sourceText,
       stale: false,
+      startLine: match.startLine,
     };
   }
 
   return {
     ...comment,
-    displayLine: comment.line,
-    endLine,
-    originalEndLine: endLine,
-    originalLine: comment.line,
+    displayLine: comment.startLine,
+    originalEndLine: comment.endLine,
+    originalStartLine: comment.startLine,
     sourceHash,
     sourceText,
     stale: true,

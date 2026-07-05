@@ -80,34 +80,33 @@ testWithTempComments("validates comment creation input", async () => {
     expected: string;
   }> = [
     { body: "{", expected: "Invalid JSON body." },
-    { body: JSON.stringify(null), expected: "Comment line is required." },
+    { body: JSON.stringify(null), expected: "Comment range is required." },
     {
       body: JSON.stringify({ body: "text" }),
-      expected: "Comment line must be a positive integer.",
+      expected: "Comment startLine must be a positive integer.",
     },
     {
-      body: JSON.stringify({ line: 0, body: "text" }),
-      expected: "Comment line must be a positive integer.",
+      body: JSON.stringify({ startLine: 0, endLine: 0, body: "text" }),
+      expected: "Comment startLine must be a positive integer.",
     },
     {
-      body: JSON.stringify({ line: 1.5, body: "text" }),
-      expected: "Comment line must be a positive integer.",
+      body: JSON.stringify({ startLine: 1.5, body: "text" }),
+      expected: "Comment startLine must be a positive integer.",
     },
     {
-      body: JSON.stringify({ line: 1, body: " " }),
+      body: JSON.stringify({ startLine: 2, endLine: 1, body: "text" }),
+      expected: "Comment endLine must be greater than or equal to startLine.",
+    },
+    {
+      body: JSON.stringify({ startLine: 1, endLine: "2", body: "text" }),
+      expected: "Comment endLine must be a positive integer.",
+    },
+    {
+      body: JSON.stringify({ startLine: 1, endLine: 1, body: " " }),
       expected: "Comment body is required.",
     },
     {
-      body: JSON.stringify({ line: 99, body: "text" }),
-      expected: "Comment range does not exist.",
-    },
-    {
-      body: JSON.stringify({ line: 3, endLine: 2, body: "text" }),
-      expected:
-        "Comment endLine must be an integer greater than or equal to line.",
-    },
-    {
-      body: JSON.stringify({ line: 3, endLine: 99, body: "text" }),
+      body: JSON.stringify({ startLine: 99, endLine: 99, body: "text" }),
       expected: "Comment range does not exist.",
     },
   ];
@@ -136,8 +135,8 @@ testWithTempComments("validates comment creation input", async () => {
   }
 });
 
-testWithTempComments("stores line ranges for created comments", async () => {
-  const filePath = await createTempMarkdown();
+testWithTempComments("creates comments for a source line range", async () => {
+  const filePath = await createTempMarkdown("one\ntwo\nthree\nfour\nfive");
   const handler = createPreviewHandler(filePath);
   try {
     const response = await requestComments(
@@ -147,20 +146,20 @@ testWithTempComments("stores line ranges for created comments", async () => {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          body: "Review this range.",
+          startLine: 2,
           endLine: 4,
-          line: 3,
+          body: "Review range.",
         }),
       },
     );
     const comment = await response.json();
 
     assertEquals(response.status, 200);
-    assertEquals(comment.line, 3);
+    assertEquals(comment.startLine, 2);
     assertEquals(comment.endLine, 4);
-    assertEquals(comment.originalLine, 3);
+    assertEquals(comment.originalStartLine, 2);
     assertEquals(comment.originalEndLine, 4);
-    assertEquals(comment.sourceText, "Body\n");
+    assertEquals(comment.sourceText, "two\nthree\nfour");
   } finally {
     await removeTempMarkdown(filePath);
   }
@@ -178,7 +177,11 @@ testWithTempComments("uses an injected comments store", async () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ line: 3, body: "Stored elsewhere." }),
+        body: JSON.stringify({
+          startLine: 3,
+          endLine: 3,
+          body: "Stored elsewhere.",
+        }),
       },
     );
     const createdComment = await createResponse.json();
@@ -238,7 +241,11 @@ testWithTempComments("trims comment bodies before storing them", async () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ line: 3, body: "  Review this.  " }),
+        body: JSON.stringify({
+          startLine: 3,
+          endLine: 3,
+          body: "  Review this.  ",
+        }),
       },
     );
     const comment = await response.json();
@@ -246,7 +253,7 @@ testWithTempComments("trims comment bodies before storing them", async () => {
     assertEquals(response.status, 200);
     assertEquals(response.headers.get("cache-control"), "no-store");
     assertEquals(comment.body, "Review this.");
-    assertMatch(comment.id, /^[0-9a-f-]{36}$/);
+    assertEquals(comment.id, 1);
     assertEquals(comment.createdAt, comment.updatedAt);
   } finally {
     await removeTempMarkdown(filePath);
@@ -263,7 +270,7 @@ testWithTempComments("adds replies to comments", async () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ line: 3, body: "Question" }),
+        body: JSON.stringify({ startLine: 3, endLine: 3, body: "Question" }),
       },
     );
     const createdComment = await createResponse.json();
@@ -282,7 +289,7 @@ testWithTempComments("adds replies to comments", async () => {
     assertEquals(replyResponse.status, 200);
     assertEquals(updatedComment.replies.length, 1);
     assertEquals(updatedComment.replies[0].body, "More context.");
-    assertMatch(updatedComment.replies[0].id, /^[0-9a-f-]{36}$/);
+    assertEquals(updatedComment.replies[0].id, 1);
     const replyId = updatedComment.replies[0].id;
 
     const updateResponse = await requestComments(
@@ -347,15 +354,15 @@ testWithTempComments(
         ["POST", "/__sadoku/comments/missing/replies", "Comment not found."],
         [
           "PUT",
-          "/__sadoku/comments/missing/replies/reply-1",
+          "/__sadoku/comments/missing/replies/1",
           "Comment not found.",
         ],
         [
           "DELETE",
-          "/__sadoku/comments/missing/replies/reply-1",
+          "/__sadoku/comments/missing/replies/1",
           "Comment not found.",
         ],
-        ["POST", "/__sadoku/comments/missing/unknown", "Not found."],
+        ["POST", "/__sadoku/comments/1/unknown", "Not found."],
         ["GET", "/__sadoku/comments/", "Comment not found."],
       ];
 
@@ -385,7 +392,7 @@ testWithTempComments(
     try {
       const response = await requestComments(
         handler,
-        "/__sadoku/comments/comment-1",
+        "/__sadoku/comments/1",
         { method: "PATCH" },
       );
 
@@ -397,7 +404,7 @@ testWithTempComments(
   },
 );
 
-testWithTempComments("accepts URL-encoded comment identifiers", async () => {
+testWithTempComments("accepts numeric comment identifiers", async () => {
   const filePath = await createTempMarkdown();
   const commentsPath = getCommentsFilePath(filePath);
   await Deno.mkdir(dirname(commentsPath), { recursive: true });
@@ -407,9 +414,11 @@ testWithTempComments("accepts URL-encoded comment identifiers", async () => {
       comments: [{
         body: "Original",
         createdAt: "2026-06-07T00:00:00.000Z",
-        id: "comment with spaces",
-        line: 3,
-        originalLine: 3,
+        id: 1,
+        endLine: 3,
+        originalEndLine: 3,
+        originalStartLine: 3,
+        startLine: 3,
         resolved: false,
         sourceText: "Body",
         stale: false,
@@ -422,7 +431,7 @@ testWithTempComments("accepts URL-encoded comment identifiers", async () => {
   try {
     const response = await requestComments(
       createPreviewHandler(filePath),
-      "/__sadoku/comments/comment%20with%20spaces",
+      "/__sadoku/comments/1",
       {
         method: "PUT",
         headers: { "content-type": "application/json" },
@@ -458,7 +467,11 @@ testWithTempComments(
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ line: 1, body: "Review remote source." }),
+          body: JSON.stringify({
+            startLine: 1,
+            endLine: 1,
+            body: "Review remote source.",
+          }),
         },
       );
       const comment = await createResponse.json();

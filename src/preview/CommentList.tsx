@@ -16,20 +16,26 @@ export type CommentListProps = {
   ) => Promise<void>;
 };
 
+const formatRange = (line: number, endLine = line): string =>
+  line === endLine ? `Line ${line}` : `Lines ${line}-${endLine}`;
+
+const formatOriginalRange = (comment: PreviewComment): string =>
+  formatRange(
+    comment.originalStartLine,
+    comment.originalEndLine,
+  );
+
 const formatLineLabel = (comment: PreviewComment): string => {
-  const endLine = comment.endLine ?? comment.line;
-  const originalEndLine = comment.originalEndLine ?? comment.originalLine;
-  const currentLabel = comment.line === endLine
-    ? `Line ${comment.line}`
-    : `Lines ${comment.line}-${endLine}`;
-  const originalLabel = comment.originalLine === originalEndLine
-    ? `line ${comment.originalLine}`
-    : `lines ${comment.originalLine}-${originalEndLine}`;
-  if (comment.stale) return `Originally ${originalLabel}`;
-  if (comment.originalLine !== comment.line) {
-    return `${currentLabel} (originally ${originalLabel})`;
+  const current = formatRange(comment.startLine, comment.endLine);
+  const original = formatOriginalRange(comment);
+  if (comment.stale) return `Originally ${original.toLowerCase()}`;
+  if (
+    comment.originalStartLine !== comment.startLine ||
+    comment.originalEndLine !== comment.endLine
+  ) {
+    return `${current} (originally ${original.toLowerCase()})`;
   }
-  return currentLabel;
+  return current;
 };
 
 type CommentSectionProps =

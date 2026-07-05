@@ -111,9 +111,11 @@ Deno.test("lists comment files from the configured comments directory", async ()
           {
             body: "First",
             createdAt: "2026-06-08T13:00:00.000Z",
-            id: "comment-1",
-            line: 1,
-            originalLine: 1,
+            id: 1,
+            startLine: 1,
+            endLine: 1,
+            originalStartLine: 1,
+            originalEndLine: 1,
             resolved: false,
             stale: false,
             updatedAt: "2026-06-08T13:00:00.000Z",
@@ -121,9 +123,11 @@ Deno.test("lists comment files from the configured comments directory", async ()
           {
             body: "Second",
             createdAt: "2026-06-08T13:30:00.000Z",
-            id: "comment-2",
-            line: 3,
-            originalLine: 3,
+            id: 2,
+            startLine: 3,
+            endLine: 3,
+            originalStartLine: 3,
+            originalEndLine: 3,
             resolved: true,
             stale: false,
             updatedAt: "2026-06-08T14:00:00.000Z",
@@ -180,9 +184,11 @@ Deno.test("inspects unresolved comments with updated positions", async () => {
           {
             body: "Revise this.",
             createdAt: "2026-06-08T13:00:00.000Z",
-            id: "comment-1",
-            line: 3,
-            originalLine: 3,
+            id: 1,
+            startLine: 3,
+            endLine: 3,
+            originalStartLine: 3,
+            originalEndLine: 3,
             resolved: false,
             sourceHash: "428a1095",
             sourceText: "Body",
@@ -192,9 +198,11 @@ Deno.test("inspects unresolved comments with updated positions", async () => {
           {
             body: "Done.",
             createdAt: "2026-06-08T13:00:00.000Z",
-            id: "comment-2",
-            line: 1,
-            originalLine: 1,
+            id: 2,
+            startLine: 1,
+            endLine: 1,
+            originalStartLine: 1,
+            originalEndLine: 1,
             resolved: true,
             stale: false,
             updatedAt: "2026-06-08T13:00:00.000Z",
@@ -207,8 +215,8 @@ Deno.test("inspects unresolved comments with updated positions", async () => {
 
       assertEquals(document.filePath, filePath);
       assertEquals(document.comments.length, 1);
-      assertEquals(document.comments[0].id, "comment-1");
-      assertEquals(document.comments[0].line, 4);
+      assertEquals(document.comments[0].id, 1);
+      assertEquals(document.comments[0].startLine, 4);
       assertEquals(document.comments[0].stale, false);
     } finally {
       await removeTempMarkdown(filePath);
@@ -225,9 +233,11 @@ Deno.test("resolves selected comments atomically", async () => {
           {
             body: "First",
             createdAt: "2026-06-08T13:00:00.000Z",
-            id: "comment-1",
-            line: 1,
-            originalLine: 1,
+            id: 1,
+            startLine: 1,
+            endLine: 1,
+            originalStartLine: 1,
+            originalEndLine: 1,
             resolved: false,
             stale: false,
             updatedAt: "2026-06-08T13:00:00.000Z",
@@ -235,9 +245,11 @@ Deno.test("resolves selected comments atomically", async () => {
           {
             body: "Second",
             createdAt: "2026-06-08T13:00:00.000Z",
-            id: "comment-2",
-            line: 3,
-            originalLine: 3,
+            id: 2,
+            startLine: 3,
+            endLine: 3,
+            originalStartLine: 3,
+            originalEndLine: 3,
             resolved: false,
             stale: false,
             updatedAt: "2026-06-08T13:00:00.000Z",
@@ -246,25 +258,25 @@ Deno.test("resolves selected comments atomically", async () => {
         filePath,
       });
 
-      const resolved = await resolveComments(filePath, ["comment-2"]);
+      const resolved = await resolveComments(filePath, ["2"]);
       const inspected = await inspectComments(filePath);
 
       assertEquals(resolved.comments.length, 1);
-      assertEquals(resolved.comments[0].id, "comment-2");
+      assertEquals(resolved.comments[0].id, 2);
       assertEquals(resolved.comments[0].resolved, true);
       assertEquals(typeof resolved.comments[0].resolvedAt, "string");
       assertEquals(inspected.comments.map((comment) => comment.id), [
-        "comment-1",
+        1,
       ]);
 
       await assertRejects(
-        () => resolveComments(filePath, ["comment-1", "missing"]),
+        () => resolveComments(filePath, ["1", "missing"]),
         Error,
         "Comment not found: missing",
       );
       assertEquals(
         (await inspectComments(filePath)).comments.map((comment) => comment.id),
-        ["comment-1"],
+        [1],
       );
     } finally {
       await removeTempMarkdown(filePath);
@@ -280,9 +292,11 @@ Deno.test("adds replies to comments", async () => {
         comments: [{
           body: "Question",
           createdAt: "2026-06-08T13:00:00.000Z",
-          id: "comment-1",
-          line: 3,
-          originalLine: 3,
+          id: 1,
+          startLine: 3,
+          endLine: 3,
+          originalStartLine: 3,
+          originalEndLine: 3,
           resolved: false,
           stale: false,
           updatedAt: "2026-06-08T13:00:00.000Z",
@@ -292,7 +306,7 @@ Deno.test("adds replies to comments", async () => {
 
       const updated = await replyToComment(
         filePath,
-        "comment-1",
+        "1",
         "  More context.  ",
       );
 
@@ -312,7 +326,7 @@ Deno.test("adds replies to comments", async () => {
         "Comment not found: missing",
       );
       await assertRejects(
-        () => replyToComment(filePath, "comment-1", " "),
+        () => replyToComment(filePath, "1", " "),
         Error,
         "Reply body is required.",
       );
@@ -332,9 +346,11 @@ Deno.test("uses an injected comments store for CLI operations", async () => {
         comments: [{
           body: "Question",
           createdAt: "2026-06-08T13:00:00.000Z",
-          id: "1",
-          line: 3,
-          originalLine: 3,
+          id: 1,
+          endLine: 3,
+          startLine: 3,
+          originalEndLine: 3,
+          originalStartLine: 3,
           resolved: false,
           sourceText: "Body",
           stale: false,
@@ -344,7 +360,7 @@ Deno.test("uses an injected comments store for CLI operations", async () => {
       });
 
       const inspected = await inspectComments(filePath, options);
-      assertEquals(inspected.comments.map((comment) => comment.id), ["1"]);
+      assertEquals(inspected.comments.map((comment) => comment.id), [1]);
 
       const replied = await replyToComment(
         filePath,
@@ -398,9 +414,11 @@ Deno.test("operates on URL comments by URL without query string or fragment", as
           {
             body: "URL comment",
             createdAt: "2026-06-08T13:00:00.000Z",
-            id: "comment-1",
-            line: 1,
-            originalLine: 1,
+            id: 1,
+            endLine: 1,
+            originalEndLine: 1,
+            originalStartLine: 1,
+            startLine: 1,
             resolved: false,
             sourceText: "# Remote a",
             stale: false,
@@ -409,9 +427,11 @@ Deno.test("operates on URL comments by URL without query string or fragment", as
           {
             body: "Resolve me",
             createdAt: "2026-06-08T13:00:00.000Z",
-            id: "comment-2",
-            line: 2,
-            originalLine: 2,
+            id: 2,
+            endLine: 2,
+            originalEndLine: 2,
+            originalStartLine: 2,
+            startLine: 2,
             resolved: false,
             sourceText: "Body",
             stale: false,
@@ -428,13 +448,13 @@ Deno.test("operates on URL comments by URL without query string or fragment", as
 
       const replied = await replyToComment(
         `${baseUrl}?token=a`,
-        "comment-1",
+        "1",
         "  URL reply.  ",
       );
       assertEquals(replied.replies?.[0].body, "URL reply.");
 
       const resolved = await resolveComments(`${baseUrl}?token=b`, [
-        "comment-2",
+        "2",
       ]);
       assertEquals(resolved.filePath, baseUrl);
       assertEquals(resolved.comments[0].resolved, true);

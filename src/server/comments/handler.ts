@@ -36,31 +36,32 @@ const parseCommentBody = (value: unknown): string => {
   return body.trim();
 };
 
-const parseCommentLine = (value: unknown): number => {
-  if (typeof value !== "object" || value === null) {
-    throw textResponse("Comment line is required.", 400);
+const parsePositiveInteger = (value: unknown, name: string): number => {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+    throw textResponse(`${name} must be a positive integer.`, 400);
   }
-  const line = (value as { line?: unknown }).line;
-  if (typeof line !== "number" || !Number.isInteger(line) || line < 1) {
-    throw textResponse("Comment line must be a positive integer.", 400);
-  }
-  return line;
+  return value;
 };
 
-const parseCommentEndLine = (value: unknown, line: number): number => {
-  if (typeof value !== "object" || value === null) return line;
-  const endLine = (value as { endLine?: unknown }).endLine;
-  if (endLine === undefined) return line;
-  if (
-    typeof endLine !== "number" || !Number.isInteger(endLine) ||
-    endLine < line
-  ) {
+const parseCommentRange = (
+  value: unknown,
+): { endLine: number; startLine: number } => {
+  if (typeof value !== "object" || value === null) {
+    throw textResponse("Comment range is required.", 400);
+  }
+  const { endLine: rawEndLine, startLine: rawStartLine } = value as {
+    endLine?: unknown;
+    startLine?: unknown;
+  };
+  const startLine = parsePositiveInteger(rawStartLine, "Comment startLine");
+  const endLine = parsePositiveInteger(rawEndLine, "Comment endLine");
+  if (endLine < startLine) {
     throw textResponse(
-      "Comment endLine must be an integer greater than or equal to line.",
+      "Comment endLine must be greater than or equal to startLine.",
       400,
     );
   }
-  return endLine;
+  return { endLine, startLine };
 };
 
 const createCommentResponse = (comment: PreviewComment): Response =>
@@ -75,18 +76,22 @@ const createReplyNotFoundResponse = (): Response =>
 const parseCommentRoute = (
   pathname: string,
   commentsPath: string,
-): { action?: string; commentId: string } | undefined => {
+): { action?: string; commentId: number | undefined } | undefined => {
   if (!pathname.startsWith(`${commentsPath}/`)) return undefined;
 
   const id = decodeURIComponent(pathname.slice(`${commentsPath}/`.length));
-  if (id === "") return { commentId: "" };
+  if (id === "") return { commentId: undefined };
 
   const actionSeparator = id.indexOf("/");
   return {
     action: actionSeparator === -1 ? undefined : id.slice(actionSeparator + 1),
-    commentId: actionSeparator === -1 ? id : id.slice(0, actionSeparator),
+    commentId: Number(
+      actionSeparator === -1 ? id : id.slice(0, actionSeparator),
+    ),
   };
 };
+
+const getNextId = (ids: number[]): number => Math.max(0, ...ids) + 1;
 
 const createComment = async (
   request: Request,
@@ -94,11 +99,10 @@ const createComment = async (
   commentsStore: CommentsStore,
 ): Promise<Response> => {
   const body = await parseJsonBody(request);
-  const line = parseCommentLine(body);
-  const endLine = parseCommentEndLine(body, line);
+  const { endLine, startLine } = parseCommentRange(body);
   const commentBody = parseCommentBody(body);
   const markdown = await readMarkdownSource(source.documentSource);
-  const sourceText = getLineRangeText(markdown, line, endLine);
+  const sourceText = getLineRangeText(markdown, startLine, endLine);
   if (sourceText === undefined) {
     throw textResponse("Comment range does not exist.", 400);
   }
@@ -108,15 +112,15 @@ const createComment = async (
     body: commentBody,
     createdAt: now,
     endLine,
-    id: crypto.randomUUID(),
-    line,
+    id: getNextId(document.comments.map((comment) => comment.id)),
     originalEndLine: endLine,
-    originalLine: line,
+    originalStartLine: startLine,
     replies: [],
     resolved: false,
     sourceHash: hashSourceText(sourceText),
     sourceText,
     stale: false,
+    startLine,
     updatedAt: now,
   };
   const updatedDocument = {
@@ -131,7 +135,7 @@ const createReply = async (
   request: Request,
   source: PreviewSource,
   commentsStore: CommentsStore,
-  commentId: string,
+  commentId: number,
 ): Promise<Response> => {
   const document = await commentsStore.read(source.commentSource);
   const index = document.comments.findIndex((comment) =>
@@ -145,7 +149,9 @@ const createReply = async (
   const reply: PreviewCommentReply = {
     body: replyBody,
     createdAt: now,
-    id: crypto.randomUUID(),
+    id: getNextId(
+      (document.comments[index].replies ?? []).map((reply) => reply.id),
+    ),
     updatedAt: now,
   };
   const updatedComment = {
@@ -171,8 +177,8 @@ const updateReply = async (
   request: Request,
   source: PreviewSource,
   commentsStore: CommentsStore,
-  commentId: string,
-  replyId: string,
+  commentId: number,
+  replyId: number,
 ): Promise<Response> => {
   const body = await parseJsonBody(request);
   const replyBody = parseCommentBody(body);
@@ -216,8 +222,8 @@ const updateReply = async (
 const deleteReply = async (
   source: PreviewSource,
   commentsStore: CommentsStore,
-  commentId: string,
-  replyId: string,
+  commentId: number,
+  replyId: number,
 ): Promise<Response> => {
   const document = await commentsStore.read(source.commentSource);
   const commentIndex = document.comments.findIndex((comment) =>
@@ -251,7 +257,7 @@ const deleteReply = async (
 const setCommentResolution = async (
   source: PreviewSource,
   commentsStore: CommentsStore,
-  commentId: string,
+  commentId: number,
   resolved: boolean,
 ): Promise<Response> => {
   const document = await commentsStore.read(source.commentSource);
@@ -284,7 +290,7 @@ const updateComment = async (
   request: Request,
   source: PreviewSource,
   commentsStore: CommentsStore,
-  commentId: string,
+  commentId: number,
 ): Promise<Response> => {
   const body = await parseJsonBody(request);
   const commentBody = parseCommentBody(body);
@@ -315,7 +321,7 @@ const updateComment = async (
 const deleteComment = async (
   source: PreviewSource,
   commentsStore: CommentsStore,
-  commentId: string,
+  commentId: number,
 ): Promise<Response> => {
   const document = await commentsStore.read(source.commentSource);
   const comments = document.comments.filter((comment) =>
@@ -357,7 +363,9 @@ export const handleCommentsRequest = async (
 
   const route = parseCommentRoute(pathname, commentsPath);
   if (!route) return notFoundResponse();
-  if (route.commentId === "") return createCommentNotFoundResponse();
+  if (route.commentId === undefined || Number.isNaN(route.commentId)) {
+    return createCommentNotFoundResponse();
+  }
 
   if (
     request.method === "POST" &&
@@ -376,8 +384,8 @@ export const handleCommentsRequest = async (
   }
 
   if (route.action?.startsWith("replies/")) {
-    const replyId = route.action.slice("replies/".length);
-    if (replyId === "") return createReplyNotFoundResponse();
+    const replyId = Number(route.action.slice("replies/".length));
+    if (Number.isNaN(replyId)) return createReplyNotFoundResponse();
     if (request.method === "PUT") {
       return await updateReply(
         request,

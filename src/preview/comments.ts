@@ -1,24 +1,24 @@
 export type PreviewCommentReply = {
   body: string;
   createdAt: string;
-  id: string;
+  id: number;
   updatedAt: string;
 };
 
 export type PreviewComment = {
   body: string;
   createdAt: string;
-  endLine?: number;
-  id: string;
-  line: number;
-  originalEndLine?: number;
-  originalLine: number;
+  endLine: number;
+  id: number;
+  originalEndLine: number;
+  originalStartLine: number;
   replies?: PreviewCommentReply[];
   resolved: boolean;
   resolvedAt?: string;
   sourceHash?: string;
   sourceText?: string;
   stale: boolean;
+  startLine: number;
   updatedAt: string;
 };
 
@@ -36,14 +36,14 @@ export const loadComments = async (): Promise<PreviewCommentsDocument> => {
 };
 
 export const createComment = async (
-  line: number,
+  startLine: number,
   body: string,
-  endLine?: number,
+  endLine: number,
 ): Promise<PreviewComment> => {
   const response = await fetch("/__sadoku/comments", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ line, body, ...(endLine ? { endLine } : {}) }),
+    body: JSON.stringify({ startLine, endLine, body }),
   });
   if (!response.ok) {
     throw new Error(`Failed to create comment: ${response.status}`);
@@ -52,7 +52,7 @@ export const createComment = async (
 };
 
 export const createReply = async (
-  commentId: string,
+  commentId: number,
   body: string,
 ): Promise<PreviewComment> => {
   const response = await fetch(
@@ -70,8 +70,8 @@ export const createReply = async (
 };
 
 export const updateReply = async (
-  commentId: string,
-  replyId: string,
+  commentId: number,
+  replyId: number,
   body: string,
 ): Promise<PreviewComment> => {
   const response = await fetch(
@@ -91,8 +91,8 @@ export const updateReply = async (
 };
 
 export const deleteReply = async (
-  commentId: string,
-  replyId: string,
+  commentId: number,
+  replyId: number,
 ): Promise<void> => {
   const response = await fetch(
     `/__sadoku/comments/${encodeURIComponent(commentId)}/replies/${
@@ -106,7 +106,7 @@ export const deleteReply = async (
 };
 
 export const updateComment = async (
-  id: string,
+  id: number,
   body: string,
 ): Promise<PreviewComment> => {
   const response = await fetch(`/__sadoku/comments/${encodeURIComponent(id)}`, {
@@ -120,7 +120,7 @@ export const updateComment = async (
   return await response.json() as PreviewComment;
 };
 
-export const resolveComment = async (id: string): Promise<PreviewComment> => {
+export const resolveComment = async (id: number): Promise<PreviewComment> => {
   const response = await fetch(
     `/__sadoku/comments/${encodeURIComponent(id)}/resolve`,
     {
@@ -133,7 +133,7 @@ export const resolveComment = async (id: string): Promise<PreviewComment> => {
   return await response.json() as PreviewComment;
 };
 
-export const reopenComment = async (id: string): Promise<PreviewComment> => {
+export const reopenComment = async (id: number): Promise<PreviewComment> => {
   const response = await fetch(
     `/__sadoku/comments/${encodeURIComponent(id)}/reopen`,
     {
@@ -146,7 +146,7 @@ export const reopenComment = async (id: string): Promise<PreviewComment> => {
   return await response.json() as PreviewComment;
 };
 
-export const deleteComment = async (id: string): Promise<void> => {
+export const deleteComment = async (id: number): Promise<void> => {
   const response = await fetch(`/__sadoku/comments/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
