@@ -59,8 +59,8 @@ describe("App", () => {
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(screen.getByRole("tab", { name: /Comments 0/ }));
-    fireEvent.click(screen.getByRole("tab", { name: /Preview/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Comments 0" }));
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
   });
@@ -164,7 +164,7 @@ describe("App", () => {
     );
     expect(screen.queryByText("Stale comment.")).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: /Comments 2/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Comments 2/ }));
 
     expect(screen.getByText("Active comment.")).not.toBeNull();
     expect(screen.getByText("Stale comment.")).not.toBeNull();

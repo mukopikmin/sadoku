@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Flex, Link, Tabs, Theme } from "@radix-ui/themes";
+import { Badge, Box, Button, Flex, Link, Theme } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 import type React from "react";
 import {
@@ -251,48 +251,59 @@ export const App = () => {
     <PreviewTheme>
       <style>{previewThemeCss}</style>
       <main>
-        <Tabs.Root
-          value={view}
-          onValueChange={(value) => setView(value as View)}
-        >
-          <header>
-            <Box>
-              Previewing{" "}
-              <Link href={state.document.fileUrl}>{state.document.title}</Link>.
-              {reloadAvailable && (
-                <Flex asChild align="center" gap="2" wrap="wrap">
-                  <span className="reload-notice" role="status">
-                    Source changes are available.
-                    <Button
-                      color="amber"
-                      onClick={handleReloadPreview}
-                      size="1"
-                      variant="soft"
-                    >
-                      Reload preview
-                    </Button>
-                  </span>
-                </Flex>
+        <header>
+          <Box>
+            Previewing{" "}
+            <Link href={state.document.fileUrl}>{state.document.title}</Link>.
+            {reloadAvailable && (
+              <Flex asChild align="center" gap="2" wrap="wrap">
+                <span className="reload-notice" role="status">
+                  Source changes are available.
+                  <Button
+                    color="amber"
+                    onClick={handleReloadPreview}
+                    size="1"
+                    variant="soft"
+                  >
+                    Reload preview
+                  </Button>
+                </span>
+              </Flex>
+            )}
+          </Box>
+          <Flex
+            aria-label="Preview views"
+            gap="2"
+            role="navigation"
+            wrap="wrap"
+          >
+            <Button
+              aria-current={view === "preview" ? "page" : undefined}
+              onClick={() => setView("preview")}
+              size="2"
+              type="button"
+              variant={view === "preview" ? "solid" : "soft"}
+            >
+              Preview
+            </Button>
+            <Button
+              aria-current={view === "comments" ? "page" : undefined}
+              onClick={() => setView("comments")}
+              size="2"
+              type="button"
+              variant={view === "comments" ? "solid" : "soft"}
+            >
+              Comments {state.comments.length}
+              {staleCommentCount > 0 && (
+                <Badge color="amber" ml="2" variant="soft">
+                  Stale {staleCommentCount}
+                </Badge>
               )}
-            </Box>
-            <Tabs.List aria-label="Preview views">
-              <Tabs.Trigger onClick={() => setView("preview")} value="preview">
-                Preview
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                onClick={() => setView("comments")}
-                value="comments"
-              >
-                Comments {state.comments.length}
-                {staleCommentCount > 0 && (
-                  <Badge color="amber" ml="2" variant="soft">
-                    Stale {staleCommentCount}
-                  </Badge>
-                )}
-              </Tabs.Trigger>
-            </Tabs.List>
-          </header>
-          <Tabs.Content value="preview">
+            </Button>
+          </Flex>
+        </header>
+        {view === "preview"
+          ? (
             <MarkdownPreview
               comments={activeComments}
               markdown={state.document.markdown}
@@ -304,8 +315,8 @@ export const App = () => {
               onUpdateComment={handleUpdateComment}
               onUpdateReply={handleUpdateReply}
             />
-          </Tabs.Content>
-          <Tabs.Content value="comments">
+          )
+          : (
             <CommentList
               comments={state.comments}
               onDeleteComment={handleDeleteComment}
@@ -316,8 +327,7 @@ export const App = () => {
               onUpdateComment={handleUpdateComment}
               onUpdateReply={handleUpdateReply}
             />
-          </Tabs.Content>
-        </Tabs.Root>
+          )}
       </main>
     </PreviewTheme>
   );
