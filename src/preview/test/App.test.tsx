@@ -8,6 +8,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { initializeMermaid } from "../mermaid";
+import { previewThemeCss } from "../theme";
 
 vi.mock("../mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
@@ -107,6 +108,42 @@ describe("App", () => {
     fireEvent.click(reloadButton);
 
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("marks the preview header with sticky header styles", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/document") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/example.md",
+            markdown: "# Title\n\nBody\n",
+            title: "example.md",
+          }));
+        }
+        if (url === "/__sadoku/comments") {
+          return Promise.resolve(Response.json({
+            comments: [],
+            filePath: "/tmp/example.md",
+          }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+
+    const { container } = render(<App />);
+
+    await screen.findByRole("link", { name: "example.md" });
+
+    const header = container.querySelector("header");
+    expect(header?.classList.contains("sticky-preview-header")).toBe(true);
+    expect(previewThemeCss).toContain("header.sticky-preview-header");
+    expect(previewThemeCss).toContain("position: sticky;");
+    expect(previewThemeCss).toContain("top: 0;");
+    expect(previewThemeCss).toContain("z-index: 10;");
+    expect(previewThemeCss).toContain("background: var(--color-canvas);");
   });
 
   it("shows stale comments only in the comments view", async () => {

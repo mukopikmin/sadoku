@@ -41,7 +41,10 @@ export const previewThemeCss = `
         padding: 32px 32px 64px;
       }
 
-      header {
+      header.sticky-preview-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -49,11 +52,12 @@ export const previewThemeCss = `
         margin-bottom: 32px;
         border-bottom: 1px solid var(--color-border-muted);
         padding-bottom: 16px;
+        background: var(--color-canvas);
         color: var(--color-text-muted);
         font-size: 0.85rem;
       }
 
-      header a {
+      header.sticky-preview-header a {
         color: var(--color-text);
         font-weight: 600;
       }
