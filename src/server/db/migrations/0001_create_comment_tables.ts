@@ -22,8 +22,10 @@ const createCommentTablesSql = [
       id INTEGER PRIMARY KEY,
       document_id INTEGER NOT NULL,
       local_id INTEGER NOT NULL,
-      line INTEGER NOT NULL,
-      original_line INTEGER NOT NULL,
+      start_line INTEGER NOT NULL,
+      end_line INTEGER NOT NULL,
+      original_start_line INTEGER NOT NULL,
+      original_end_line INTEGER NOT NULL,
       body TEXT NOT NULL,
       resolved INTEGER NOT NULL DEFAULT 0 CHECK (resolved IN (0, 1)),
       resolved_at TEXT CHECK (resolved_at IS NULL OR resolved_at GLOB '????-??-??T??:??:??.???Z'),
@@ -43,8 +45,8 @@ const createCommentTablesSql = [
       ON comments(document_id)
   `,
   sql`
-    CREATE INDEX IF NOT EXISTS idx_comments_document_line
-      ON comments(document_id, line)
+    CREATE INDEX IF NOT EXISTS idx_comments_document_start_line
+      ON comments(document_id, start_line)
   `,
   sql`
     CREATE TABLE IF NOT EXISTS comment_replies (
