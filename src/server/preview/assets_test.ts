@@ -34,3 +34,16 @@ Deno.test("serves fingerprintable assets with immutable caching", async () => {
   );
   assertEquals((await response.arrayBuffer()).byteLength > 0, true);
 });
+
+Deno.test("serves CSS assets with a stylesheet content type", async () => {
+  const response = await handlePreviewAssetRequest(
+    "/assets/sadoku-preview-client.css",
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(
+    response.headers.get("content-type"),
+    "text/css; charset=utf-8",
+  );
+  assertEquals((await response.arrayBuffer()).byteLength > 0, true);
+});

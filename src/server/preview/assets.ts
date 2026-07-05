@@ -29,6 +29,11 @@ export const readPreviewAsset = async (
   return await readAsset(pathname, "/assets/", previewAssetRoot);
 };
 
+const assetContentType = (pathname: string): string => {
+  if (pathname.endsWith(".css")) return "text/css; charset=utf-8";
+  return "text/javascript; charset=utf-8";
+};
+
 export const handlePreviewAssetRequest = async (
   pathname: string,
 ): Promise<Response> => {
@@ -41,7 +46,7 @@ export const handlePreviewAssetRequest = async (
   ) as ArrayBuffer;
   return new Response(body, {
     headers: {
-      "content-type": "text/javascript; charset=utf-8",
+      "content-type": assetContentType(pathname),
       "cache-control": pathname === "/assets/client.js"
         ? "no-store"
         : "public, max-age=31536000, immutable",

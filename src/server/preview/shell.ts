@@ -13,6 +13,7 @@ export const renderSpaShell = (title: string): string =>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(title)}</title>
+    <link rel="stylesheet" href="/assets/sadoku-preview-client.css">
   </head>
   <body>
     <div id="sadoku-client-root"></div>
