@@ -45,7 +45,7 @@ const loadPreviewDocument = async (): Promise<PreviewDocument> => {
 };
 
 const PreviewTheme = ({ children }: { children: React.ReactNode }) => (
-  <Theme accentColor="blue" grayColor="slate" radius="medium">
+  <Theme accentColor="blue" appearance="dark" grayColor="slate" radius="medium">
     {children}
   </Theme>
 );
@@ -88,7 +88,7 @@ export const App = () => {
 
   useEffect(() => {
     if (state.status !== "loaded" || view !== "preview") return;
-    initializeMermaid();
+    initializeMermaid({ prefersDark: () => true });
   }, [state, view]);
 
   const handleCreateComment = async (

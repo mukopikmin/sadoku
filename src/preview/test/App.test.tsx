@@ -58,11 +58,44 @@ describe("App", () => {
     render(<App />);
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(initializeMermaid).mock.calls[0]?.[0]?.prefersDark?.())
+      .toBe(true);
 
     fireEvent.click(screen.getByRole("button", { name: "Comments 0" }));
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+  });
+
+  it("uses the dark Radix theme", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/document") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/example.md",
+            markdown: "# Title\n\nBody\n",
+            title: "example.md",
+          }));
+        }
+        if (url === "/__sadoku/comments") {
+          return Promise.resolve(Response.json({
+            comments: [],
+            filePath: "/tmp/example.md",
+          }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+
+    const { container } = render(<App />);
+
+    await screen.findByRole("link", { name: "example.md" });
+
+    expect(container.querySelector(".radix-themes")?.classList.contains("dark"))
+      .toBe(true);
   });
 
   it("shows a reload button when source changes are available", async () => {
