@@ -43,9 +43,6 @@ const trimFinalNewline = (value: string): string => value.replace(/\n$/, "");
 const SourceLineContext = createContext<ReadonlySet<number>>(new Set());
 
 type SourcePosition = {
-  end?: {
-    line?: number;
-  };
   start?: {
     line?: number;
   };
@@ -56,18 +53,25 @@ type SourceNode = {
 };
 
 type CommentableBlockProps = {
+  activeRange?: CommentRange;
   children: React.ReactNode;
   className?: string;
   comments: PreviewComment[];
+  hasCommentHighlight: boolean;
+  isAdding: boolean;
+  isRangeActionLine: boolean;
+  isSelected: boolean;
   line: number;
-  endLine?: number;
   onCreateComment: (
     startLine: number,
     body: string,
     endLine: number,
   ) => Promise<void>;
+  onCloseCommentForm: () => void;
   onDeleteComment: (id: number) => Promise<void>;
   onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
+  onOpenCommentForm: () => void;
+  onSelectCommentLine: (line: number) => void;
   onReplyComment: (id: number, body: string) => Promise<void>;
   onResolveComment: (id: number) => Promise<void>;
   onUpdateComment: (id: number, body: string) => Promise<void>;
@@ -82,50 +86,43 @@ const getSourceLine = (props: { node?: SourceNode }): number | undefined => {
   return props.node?.position?.start?.line;
 };
 
-const getSourceEndLine = (props: { node?: SourceNode }): number | undefined => {
-  return props.node?.position?.end?.line;
-};
+type CommentRange = { endLine: number; startLine: number };
 
-const getSelectedCommentRange = ():
-  | { endLine: number; startLine: number }
-  | undefined => {
-  const selection = globalThis.getSelection?.();
-  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
-    return undefined;
-  }
-  const range = selection.getRangeAt(0);
-  const lines: number[] = [];
-  const collectLine = (node: Node | null) => {
-    const element = node instanceof Element ? node : node?.parentElement;
-    const block = element?.closest<HTMLElement>("[data-source-line]");
-    const value = block?.dataset.sourceLine;
-    if (value === undefined) return;
-    const line = Number(value);
-    if (Number.isInteger(line) && line >= 1) lines.push(line);
-  };
-  collectLine(range.startContainer);
-  collectLine(range.endContainer);
-  if (lines.length === 0) return undefined;
-  return { endLine: Math.max(...lines), startLine: Math.min(...lines) };
-};
+const isLineInRange = (line: number, range: CommentRange): boolean =>
+  line >= range.startLine && line <= range.endLine;
+
+const formatRangeLabel = (range: CommentRange): string =>
+  range.startLine === range.endLine
+    ? `line ${range.startLine}`
+    : `lines ${range.startLine}-${range.endLine}`;
 
 const CommentableBlock = ({
+  activeRange,
   children,
   className,
   comments,
+  hasCommentHighlight,
+  isAdding,
+  isRangeActionLine,
+  isSelected,
   line,
-  endLine = line,
   onCreateComment,
+  onCloseCommentForm,
   onDeleteComment,
   onDeleteReply,
+  onOpenCommentForm,
+  onSelectCommentLine,
   onReplyComment,
   onResolveComment,
   onUpdateComment,
   onUpdateReply,
 }: CommentableBlockProps) => {
   const [draft, setDraft] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const pendingRange = activeRange ?? {
+    endLine: line,
+    startLine: line,
+  };
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
   const sourceLines = useMemo(() => {
@@ -138,19 +135,9 @@ const CommentableBlock = ({
     setIsSaving(true);
     setError(undefined);
     try {
-      const selectedRange = getSelectedCommentRange();
-      const targetStartLine =
-        selectedRange && line >= selectedRange.startLine &&
-          line <= selectedRange.endLine
-          ? selectedRange.startLine
-          : line;
-      const targetEndLine = selectedRange && line >= selectedRange.startLine &&
-          line <= selectedRange.endLine
-        ? selectedRange.endLine
-        : line;
-      await onCreateComment(targetStartLine, body, targetEndLine);
+      await onCreateComment(pendingRange.startLine, body, pendingRange.endLine);
       setDraft("");
-      setIsAdding(false);
+      onCloseCommentForm();
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -158,23 +145,49 @@ const CommentableBlock = ({
     }
   };
 
+  const handleContentClick = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest("button, input, label, select, textarea")) return;
+
+    const link = target.closest("a");
+    if (link && !link.classList.contains("heading-anchor")) return;
+    if (link) event.preventDefault();
+
+    onSelectCommentLine(line);
+    event.stopPropagation();
+  };
+
   return (
     <div
-      className={["commentable-block", className].filter(Boolean).join(" ")}
+      className={[
+        "commentable-block",
+        isSelected || hasCommentHighlight
+          ? "commentable-block-selected"
+          : undefined,
+        className,
+      ].filter(Boolean).join(" ")}
       data-source-line={line}
     >
-      <div className="commentable-content">
-        <button
-          aria-label={`Add comment on line ${line}`}
-          className="comment-line-button"
-          onClick={() => setIsAdding((value) => !value)}
-          title={`Comment on line ${line}`}
-          type="button"
-        >
-        </button>
-        <SourceLineContext.Provider value={sourceLines}>
-          {children}
-        </SourceLineContext.Provider>
+      <div
+        className="commentable-content"
+        onClick={handleContentClick}
+        title={`Select line ${line} for comment`}
+      >
+        <div className="comment-markdown-body">
+          {isRangeActionLine && !isAdding && (
+            <button
+              className="comment-selection-button"
+              onClick={onOpenCommentForm}
+              type="button"
+            >
+              Add comment
+            </button>
+          )}
+          <SourceLineContext.Provider value={sourceLines}>
+            {children}
+          </SourceLineContext.Provider>
+        </div>
       </div>
       {(isAdding || comments.length > 0 || error) && (
         <div className="comment-thread">
@@ -195,6 +208,9 @@ const CommentableBlock = ({
           ))}
           {isAdding && (
             <div className="comment-form">
+              <div className="comment-range-hint">
+                Commenting on {formatRangeLabel(pendingRange)}.
+              </div>
               <textarea
                 autoFocus
                 className="comment-input"
@@ -216,7 +232,9 @@ const CommentableBlock = ({
                 </button>
                 <button
                   disabled={isSaving}
-                  onClick={() => setIsAdding(false)}
+                  onClick={() => {
+                    onCloseCommentForm();
+                  }}
                   type="button"
                 >
                   Cancel
@@ -234,6 +252,26 @@ const CommentableBlock = ({
 type ComponentProps = {
   children?: React.ReactNode;
   node?: SourceNode;
+};
+
+const isListElement = (
+  child: React.ReactNode,
+): child is React.ReactElement =>
+  isValidElement(child) && (child.type === "ol" || child.type === "ul");
+
+const splitListItemChildren = (
+  children: React.ReactNode,
+): { itemChildren: React.ReactNode[]; nestedLists: React.ReactNode[] } => {
+  const itemChildren: React.ReactNode[] = [];
+  const nestedLists: React.ReactNode[] = [];
+  for (const child of Children.toArray(children)) {
+    if (isListElement(child)) {
+      nestedLists.push(child);
+    } else {
+      itemChildren.push(child);
+    }
+  }
+  return { itemChildren, nestedLists };
 };
 
 type CodeElementProps = {
@@ -254,10 +292,8 @@ const getMermaidCodeText = (
   return trimFinalNewline(String(child.props.children));
 };
 
-const createCommentableComponent = (
-  tagName: keyof React.JSX.IntrinsicElements,
-  commentsByLine: Map<number, PreviewComment[]>,
-  props: Pick<
+type CommentControlProps =
+  & Pick<
     MarkdownPreviewProps,
     | "onCreateComment"
     | "onDeleteComment"
@@ -266,24 +302,46 @@ const createCommentableComponent = (
     | "onResolveComment"
     | "onUpdateComment"
     | "onUpdateReply"
-  >,
+  >
+  & {
+    activeCommentLine?: number;
+    activeRange?: CommentRange;
+    onCloseCommentForm: () => void;
+    onOpenCommentForm: () => void;
+    onSelectCommentLine: (line: number) => void;
+    selectedRange?: CommentRange;
+  };
+
+const createCommentableComponent = (
+  tagName: keyof React.JSX.IntrinsicElements,
+  commentsByLine: Map<number, PreviewComment[]>,
+  commentHighlightsByLine: Set<number>,
+  props: CommentControlProps,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
-    const endLine = getSourceEndLine({ node }) ?? line;
     const element = createElement(tagName, elementProps, children);
     if (line === undefined) return element;
     if (ancestorSourceLines.has(line)) return element;
 
     return (
       <CommentableBlock
+        activeRange={props.activeRange}
         comments={commentsByLine.get(line) ?? []}
+        hasCommentHighlight={commentHighlightsByLine.has(line)}
+        isAdding={props.activeCommentLine === line}
+        isRangeActionLine={props.selectedRange?.endLine === line}
+        isSelected={props.selectedRange
+          ? isLineInRange(line, props.selectedRange)
+          : false}
         line={line}
-        endLine={endLine}
+        onCloseCommentForm={props.onCloseCommentForm}
         onCreateComment={props.onCreateComment}
         onDeleteComment={props.onDeleteComment}
         onDeleteReply={props.onDeleteReply}
+        onOpenCommentForm={props.onOpenCommentForm}
+        onSelectCommentLine={props.onSelectCommentLine}
         onReplyComment={props.onReplyComment}
         onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
@@ -297,21 +355,13 @@ const createCommentableComponent = (
 
 const createCommentableListItem = (
   commentsByLine: Map<number, PreviewComment[]>,
-  props: Pick<
-    MarkdownPreviewProps,
-    | "onCreateComment"
-    | "onDeleteComment"
-    | "onDeleteReply"
-    | "onReplyComment"
-    | "onResolveComment"
-    | "onUpdateComment"
-    | "onUpdateReply"
-  >,
+  commentHighlightsByLine: Set<number>,
+  props: CommentControlProps,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
-    const endLine = getSourceEndLine({ node }) ?? line;
+    const { itemChildren, nestedLists } = splitListItemChildren(children);
     if (line === undefined) return <li {...elementProps}>{children}</li>;
     if (ancestorSourceLines.has(line)) {
       return <li {...elementProps}>{children}</li>;
@@ -320,20 +370,30 @@ const createCommentableListItem = (
     return (
       <li {...elementProps}>
         <CommentableBlock
+          activeRange={props.activeRange}
           className="commentable-list-item"
           comments={commentsByLine.get(line) ?? []}
+          hasCommentHighlight={commentHighlightsByLine.has(line)}
+          isAdding={props.activeCommentLine === line}
+          isRangeActionLine={props.selectedRange?.endLine === line}
+          isSelected={props.selectedRange
+            ? isLineInRange(line, props.selectedRange)
+            : false}
           line={line}
-          endLine={endLine}
+          onCloseCommentForm={props.onCloseCommentForm}
           onCreateComment={props.onCreateComment}
           onDeleteComment={props.onDeleteComment}
           onDeleteReply={props.onDeleteReply}
+          onOpenCommentForm={props.onOpenCommentForm}
+          onSelectCommentLine={props.onSelectCommentLine}
           onReplyComment={props.onReplyComment}
           onResolveComment={props.onResolveComment}
           onUpdateComment={props.onUpdateComment}
           onUpdateReply={props.onUpdateReply}
         >
-          {children}
+          {itemChildren}
         </CommentableBlock>
+        {nestedLists}
       </li>
     );
   };
@@ -341,21 +401,12 @@ const createCommentableListItem = (
 
 const createCommentablePre = (
   commentsByLine: Map<number, PreviewComment[]>,
-  props: Pick<
-    MarkdownPreviewProps,
-    | "onCreateComment"
-    | "onDeleteComment"
-    | "onDeleteReply"
-    | "onReplyComment"
-    | "onResolveComment"
-    | "onUpdateComment"
-    | "onUpdateReply"
-  >,
+  commentHighlightsByLine: Set<number>,
+  props: CommentControlProps,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
-    const endLine = getSourceEndLine({ node }) ?? line;
     const mermaidCode = getMermaidCodeText(children);
     const element = mermaidCode === undefined
       ? <pre {...elementProps}>{children}</pre>
@@ -377,12 +428,21 @@ const createCommentablePre = (
 
     return (
       <CommentableBlock
+        activeRange={props.activeRange}
         comments={commentsByLine.get(line) ?? []}
+        hasCommentHighlight={commentHighlightsByLine.has(line)}
+        isAdding={props.activeCommentLine === line}
+        isRangeActionLine={props.selectedRange?.endLine === line}
+        isSelected={props.selectedRange
+          ? isLineInRange(line, props.selectedRange)
+          : false}
         line={line}
-        endLine={endLine}
+        onCloseCommentForm={props.onCloseCommentForm}
         onCreateComment={props.onCreateComment}
         onDeleteComment={props.onDeleteComment}
         onDeleteReply={props.onDeleteReply}
+        onOpenCommentForm={props.onOpenCommentForm}
+        onSelectCommentLine={props.onSelectCommentLine}
         onReplyComment={props.onReplyComment}
         onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
@@ -408,39 +468,133 @@ export const MarkdownPreview = ({
   const commentsByLine = useMemo(() => {
     const grouped = new Map<number, PreviewComment[]>();
     for (const comment of comments) {
-      for (let line = comment.startLine; line <= comment.endLine; line += 1) {
-        grouped.set(line, [
-          ...(grouped.get(line) ?? []),
-          comment,
-        ]);
-      }
+      grouped.set(comment.endLine, [
+        ...(grouped.get(comment.endLine) ?? []),
+        comment,
+      ]);
     }
     return grouped;
   }, [comments]);
+  const commentHighlightsByLine = useMemo(() => {
+    const highlighted = new Set<number>();
+    for (const comment of comments) {
+      for (let line = comment.startLine; line <= comment.endLine; line += 1) {
+        highlighted.add(line);
+      }
+    }
+    return highlighted;
+  }, [comments]);
+
+  const [activeCommentLine, setActiveCommentLine] = useState<number>();
+  const [activeRange, setActiveRange] = useState<CommentRange>();
+  const [lineSelectionAnchor, setLineSelectionAnchor] = useState<number>();
+  const [selectedRange, setSelectedRange] = useState<CommentRange>();
+
+  const handleSelectCommentLine = (line: number) => {
+    setActiveCommentLine(undefined);
+    setActiveRange(undefined);
+    setSelectedRange((current) => {
+      if (current && isLineInRange(line, current)) {
+        setLineSelectionAnchor(undefined);
+        return undefined;
+      }
+      const range = lineSelectionAnchor === undefined
+        ? { endLine: line, startLine: line }
+        : {
+          endLine: Math.max(lineSelectionAnchor, line),
+          startLine: Math.min(lineSelectionAnchor, line),
+        };
+      setLineSelectionAnchor(lineSelectionAnchor ?? line);
+      return range;
+    });
+  };
+
+  const handleOpenCommentForm = () => {
+    if (!selectedRange) return;
+    setActiveCommentLine(selectedRange.endLine);
+    setActiveRange(selectedRange);
+  };
+
+  const handleCloseCommentForm = () => {
+    setActiveCommentLine(undefined);
+    setActiveRange(undefined);
+    setSelectedRange(undefined);
+    setLineSelectionAnchor(undefined);
+  };
 
   const components = useMemo<Components>(() => {
     const commentCallbacks = {
+      activeCommentLine,
+      activeRange,
+      onCloseCommentForm: handleCloseCommentForm,
       onCreateComment,
       onDeleteComment,
       onDeleteReply,
+      onOpenCommentForm: handleOpenCommentForm,
+      onSelectCommentLine: handleSelectCommentLine,
       onReplyComment,
       onResolveComment,
       onUpdateComment,
       onUpdateReply,
+      selectedRange,
     };
     return {
-      h1: createCommentableComponent("h1", commentsByLine, commentCallbacks),
-      h2: createCommentableComponent("h2", commentsByLine, commentCallbacks),
-      h3: createCommentableComponent("h3", commentsByLine, commentCallbacks),
-      h4: createCommentableComponent("h4", commentsByLine, commentCallbacks),
-      h5: createCommentableComponent("h5", commentsByLine, commentCallbacks),
-      h6: createCommentableComponent("h6", commentsByLine, commentCallbacks),
-      li: createCommentableListItem(commentsByLine, commentCallbacks),
-      p: createCommentableComponent("p", commentsByLine, commentCallbacks),
-      pre: createCommentablePre(commentsByLine, commentCallbacks),
+      h1: createCommentableComponent(
+        "h1",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h2: createCommentableComponent(
+        "h2",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h3: createCommentableComponent(
+        "h3",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h4: createCommentableComponent(
+        "h4",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h5: createCommentableComponent(
+        "h5",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h6: createCommentableComponent(
+        "h6",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      li: createCommentableListItem(
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      p: createCommentableComponent(
+        "p",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      pre: createCommentablePre(
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
       table: createCommentableComponent(
         "table",
         commentsByLine,
+        commentHighlightsByLine,
         commentCallbacks,
       ),
       code({ children, className, ...props }) {
@@ -452,7 +606,11 @@ export const MarkdownPreview = ({
       },
     };
   }, [
+    activeCommentLine,
+    activeRange,
     commentsByLine,
+    commentHighlightsByLine,
+    lineSelectionAnchor,
     onCreateComment,
     onDeleteComment,
     onDeleteReply,
@@ -460,6 +618,7 @@ export const MarkdownPreview = ({
     onResolveComment,
     onUpdateComment,
     onUpdateReply,
+    selectedRange,
   ]);
 
   return (

@@ -140,6 +140,9 @@ console.log("<ok>");
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
       true,
     );
+    expect(
+      container.querySelector('[data-source-line="1"] .commentable-content ul'),
+    ).toBeNull();
   });
 
   it("renders task list checkboxes", () => {
@@ -178,9 +181,6 @@ const value = 1;
 
     expect(
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
-    ).not.toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
     ).not.toBeNull();
   });
 
@@ -232,19 +232,17 @@ Body
 
     expect(container.querySelector('[data-source-line="1"] h1')?.textContent)
       .toBe("Title");
-    expect(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    ).not.toBeNull();
     expect(container.querySelector('[data-source-line="3"] p')?.textContent)
       .toBe("Body");
   });
 
   it("focuses the comment textarea when opening the comment form", () => {
-    renderMarkdown("# Title\n");
+    const { container } = renderMarkdown("# Title\n");
+    const line = container.querySelector('[data-source-line="1"] h1');
+    expect(line).not.toBeNull();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    );
+    fireEvent.click(line!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
 
     expect(document.activeElement).toBe(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
@@ -253,11 +251,18 @@ Body
 
   it("submits a new comment with command or control enter", async () => {
     const onCreateComment = vi.fn(async () => {});
-    renderMarkdown("# Title\n\nBody\n", [], { onCreateComment });
+    const { container } = renderMarkdown("# Title\n\nBody\n", [], {
+      onCreateComment,
+    });
+    const getTitleLine = () =>
+      container.querySelector('[data-source-line="1"] h1');
+    const getBodyLine = () =>
+      container.querySelector('[data-source-line="3"] p');
+    expect(getTitleLine()).not.toBeNull();
+    expect(getBodyLine()).not.toBeNull();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    );
+    fireEvent.click(getTitleLine()!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Mac shortcut." } },
@@ -271,9 +276,8 @@ Body
       expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1)
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 3" }),
-    );
+    fireEvent.click(getBodyLine()!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Control shortcut." } },
@@ -298,9 +302,6 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 1" }),
-    ).toHaveLength(1);
   });
 
   it("does not add duplicate source line controls for loose list paragraphs", () => {
@@ -313,35 +314,9 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 1" }),
-    ).toHaveLength(1);
     expect(container.querySelectorAll('[data-source-line="3"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 3" }),
-    ).toHaveLength(1);
-  });
-
-  it("shows range comments on every covered preview line", () => {
-    renderMarkdown("# Title\n\nBody\n\nTail\n", [{
-      body: "Range comment.",
-      createdAt: "2026-06-05T00:00:00.000Z",
-      id: 1,
-      startLine: 1,
-      endLine: 3,
-      originalStartLine: 1,
-      originalEndLine: 3,
-      resolved: false,
-      sourceHash: "example",
-      sourceText: "# Title\n\nBody",
-      stale: false,
-      updatedAt: "2026-06-05T00:00:00.000Z",
-    }]);
-
-    expect(screen.getAllByText("Lines 1-3")).toHaveLength(2);
-    expect(screen.getAllByText("Range comment.")).toHaveLength(2);
   });
 
   it("resolves inline comments from the preview", async () => {
@@ -350,10 +325,10 @@ Body
       body: "Clarify this.",
       createdAt: "2026-06-05T00:00:00.000Z",
       id: 1,
-      startLine: 3,
       endLine: 3,
-      originalStartLine: 3,
       originalEndLine: 3,
+      originalStartLine: 3,
+      startLine: 3,
       resolved: false,
       sourceHash: "example",
       sourceText: "Body",
@@ -364,5 +339,118 @@ Body
     screen.getByRole("button", { name: "Resolve" }).click();
 
     await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
+  });
+
+  it("renders a range comment once at its end line", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n", [{
+      body: "Clarify this range.",
+      createdAt: "2026-06-05T00:00:00.000Z",
+      endLine: 3,
+      id: 1,
+      startLine: 1,
+      originalEndLine: 3,
+      originalStartLine: 1,
+      resolved: false,
+      sourceHash: "example",
+      sourceText: "# Title\n\nBody",
+      stale: false,
+      updatedAt: "2026-06-05T00:00:00.000Z",
+    }]);
+
+    expect(screen.getAllByText("Lines 1-3")).toHaveLength(1);
+    expect(screen.getAllByText("Clarify this range.")).toHaveLength(1);
+    expect(
+      container.querySelector('[data-source-line="1"] .comment-thread'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"] .comment-thread'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="1"]')?.classList.contains(
+        "commentable-block-selected",
+      ),
+    ).toBe(true);
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-selected",
+      ),
+    ).toBe(true);
+  });
+
+  it("shows and clears a single-line comment selection", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n");
+
+    const getLine = () => container.querySelector('[data-source-line="3"] p');
+    expect(getLine()).not.toBeNull();
+
+    fireEvent.click(getLine()!);
+
+    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+
+    fireEvent.click(getLine()!);
+
+    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+  });
+
+  it("creates comments for a selected line range", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown("# Title\n\nBody\n", [], {
+      onCreateComment,
+    });
+    const getTitleLine = () =>
+      container.querySelector('[data-source-line="1"] h1');
+    const getBodyLine = () =>
+      container.querySelector('[data-source-line="3"] p');
+    expect(getTitleLine()).not.toBeNull();
+    expect(getBodyLine()).not.toBeNull();
+
+    fireEvent.click(getTitleLine()!);
+    fireEvent.click(getBodyLine()!);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review this line range." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        1,
+        "Review this line range.",
+        3,
+      )
+    );
+  });
+
+  it("creates comments on the clicked nested list item line", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      `- parent
+  - child
+    1. ordered child
+`,
+      [],
+      { onCreateComment },
+    );
+    const orderedChild = container.querySelector(
+      '[data-source-line="3"] .commentable-content',
+    );
+    expect(orderedChild).not.toBeNull();
+
+    fireEvent.click(orderedChild!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review nested item." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        3,
+        "Review nested item.",
+        3,
+      )
+    );
   });
 });
