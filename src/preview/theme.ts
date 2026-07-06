@@ -327,31 +327,19 @@ export const previewThemeCss = `
         max-width: 100%;
         border-spacing: 0;
         border-collapse: collapse;
-        background: var(--color-canvas);
-        color: var(--color-text);
       }
 
       th, td {
         border: 1px solid var(--color-border);
         padding: 6px 13px;
-        color: var(--color-text);
       }
 
       th {
-        background: var(--color-canvas-subtle);
         font-weight: 600;
-      }
-
-      td {
-        background: var(--color-canvas);
       }
 
       tr {
         border-top: 1px solid var(--color-border-muted);
-      }
-
-      tbody tr:nth-child(2n) td {
-        background: var(--color-canvas-subtle);
       }
 
       hr {

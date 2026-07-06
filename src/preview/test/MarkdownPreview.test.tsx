@@ -115,10 +115,8 @@ console.log("<ok>");
     expect(container.querySelector('th[style*="text-align: right"]'))
       .not.toBeNull();
     expect(container.querySelector("td strong")?.textContent).toBe("beta");
-    expect(previewThemeCss).toContain("table {");
-    expect(previewThemeCss).toContain("background: var(--color-canvas);");
-    expect(previewThemeCss).toContain("color: var(--color-text);");
-    expect(previewThemeCss).toContain("tbody tr:nth-child(2n) td");
+    expect(previewThemeCss).not.toContain("tbody tr:nth-child");
+    expect(previewThemeCss).not.toMatch(/th \{[^}]*background:/);
   });
 
   it("renders nested lists inside parent list items", () => {
