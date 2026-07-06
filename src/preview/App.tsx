@@ -212,7 +212,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <main>
-          <header>Loading preview...</header>
+          <header className="sticky-preview-header">Loading preview...</header>
         </main>
       </>
     );
@@ -223,7 +223,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <main>
-          <header>{state.message}</header>
+          <header className="sticky-preview-header">{state.message}</header>
         </main>
       </>
     );
@@ -240,7 +240,7 @@ export const App = () => {
     <>
       <style>{previewThemeCss}</style>
       <main>
-        <header>
+        <header className="sticky-preview-header">
           <div>
             Previewing{" "}
             <a href={state.document.fileUrl}>{state.document.title}</a>.
