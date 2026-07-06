@@ -179,6 +179,15 @@ describe("App", () => {
     expect(previewThemeCss).toContain("background: var(--color-background);");
   });
 
+  it("keeps selected comment range highlights visible behind content", () => {
+    expect(previewThemeCss).toContain(
+      ".commentable-block-selected > .commentable-content::before",
+    );
+    expect(previewThemeCss).toContain(".comment-markdown-body");
+    expect(previewThemeCss).toContain("z-index: 1;");
+    expect(previewThemeCss).toContain("z-index: 0;");
+  });
+
   it("shows stale comments only in the comments view", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(

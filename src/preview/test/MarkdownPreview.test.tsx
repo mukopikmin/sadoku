@@ -423,6 +423,26 @@ Body
     );
   });
 
+  it("keeps a range selection active when selecting another line in the range", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n\nTail\n");
+    const getTitleLine = () =>
+      container.querySelector('[data-source-line="1"] h1');
+    const getBodyLine = () =>
+      container.querySelector('[data-source-line="3"] p');
+    const getTailLine = () =>
+      container.querySelector('[data-source-line="5"] p');
+    expect(getTitleLine()).not.toBeNull();
+    expect(getBodyLine()).not.toBeNull();
+    expect(getTailLine()).not.toBeNull();
+
+    fireEvent.click(getTitleLine()!);
+    fireEvent.click(getTailLine()!);
+    fireEvent.click(getBodyLine()!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
+  });
+
   it("creates comments on the clicked nested list item line", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown(

@@ -514,24 +514,26 @@ export const MarkdownPreview = ({
 
   const [activeCommentLine, setActiveCommentLine] = useState<number>();
   const [activeRange, setActiveRange] = useState<CommentRange>();
-  const [lineSelectionAnchor, setLineSelectionAnchor] = useState<number>();
   const [selectedRange, setSelectedRange] = useState<CommentRange>();
 
   const handleSelectCommentLine = (line: number) => {
     setActiveCommentLine(undefined);
     setActiveRange(undefined);
     setSelectedRange((current) => {
-      if (current && isLineInRange(line, current)) {
-        setLineSelectionAnchor(undefined);
+      if (
+        current &&
+        current.startLine === current.endLine &&
+        current.startLine === line
+      ) {
         return undefined;
       }
-      const range = lineSelectionAnchor === undefined
+      const anchorLine = current?.startLine;
+      const range = anchorLine === undefined
         ? { endLine: line, startLine: line }
         : {
-          endLine: Math.max(lineSelectionAnchor, line),
-          startLine: Math.min(lineSelectionAnchor, line),
+          endLine: Math.max(anchorLine, line),
+          startLine: Math.min(anchorLine, line),
         };
-      setLineSelectionAnchor(lineSelectionAnchor ?? line);
       return range;
     });
   };
@@ -546,7 +548,6 @@ export const MarkdownPreview = ({
     setActiveCommentLine(undefined);
     setActiveRange(undefined);
     setSelectedRange(undefined);
-    setLineSelectionAnchor(undefined);
   };
 
   const components = useMemo<Components>(() => {
@@ -719,7 +720,6 @@ export const MarkdownPreview = ({
     activeRange,
     commentsByLine,
     commentHighlightsByLine,
-    lineSelectionAnchor,
     onCreateComment,
     onDeleteComment,
     onDeleteReply,

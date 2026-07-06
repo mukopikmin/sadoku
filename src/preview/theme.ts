@@ -174,13 +174,15 @@ export const previewThemeCss = `
       }
 
       .comment-markdown-body {
-        display: contents;
+        position: relative;
+        z-index: 1;
+        display: block;
       }
 
       .commentable-content::before {
         content: "";
         position: absolute;
-        z-index: -1;
+        z-index: 0;
         inset: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
         border-radius: var(--radius-3);
         background: transparent;
