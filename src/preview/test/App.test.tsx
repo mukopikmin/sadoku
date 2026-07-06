@@ -186,6 +186,8 @@ describe("App", () => {
     expect(previewThemeCss).toContain(".comment-markdown-body");
     expect(previewThemeCss).toContain("z-index: 1;");
     expect(previewThemeCss).toContain("z-index: 0;");
+    expect(previewThemeCss).toContain("background: var(--accent-a5);");
+    expect(previewThemeCss).not.toContain("--color-accent");
   });
 
   it("shows stale comments only in the comments view", async () => {

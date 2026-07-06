@@ -190,17 +190,14 @@ export const previewThemeCss = `
         transition: background-color 120ms ease;
       }
 
-      .commentable-block:has(.comment-thread) > .commentable-content::before {
-        background: var(--accent-a3);
-      }
-
-      .commentable-block-selected > .commentable-content::before {
-        background: color-mix(in srgb, var(--color-accent) 16%, transparent);
-      }
-
       .commentable-block:hover > .commentable-content::before,
       .commentable-block:focus-within > .commentable-content::before {
         background: var(--accent-a4);
+      }
+
+      .commentable-block:has(.comment-thread) > .commentable-content::before,
+      .commentable-block-selected > .commentable-content::before {
+        background: var(--accent-a5);
       }
 
       .comment-selection-button {
