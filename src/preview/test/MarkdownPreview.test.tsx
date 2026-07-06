@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
+import { previewThemeCss } from "../theme";
 
 afterEach(() => cleanup());
 
@@ -114,6 +115,10 @@ console.log("<ok>");
     expect(container.querySelector('th[style*="text-align: right"]'))
       .not.toBeNull();
     expect(container.querySelector("td strong")?.textContent).toBe("beta");
+    expect(previewThemeCss).toContain("table {");
+    expect(previewThemeCss).toContain("background: var(--color-canvas);");
+    expect(previewThemeCss).toContain("color: var(--color-text);");
+    expect(previewThemeCss).toContain("tbody tr:nth-child(2n) td");
   });
 
   it("renders nested lists inside parent list items", () => {
