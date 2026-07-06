@@ -57,6 +57,7 @@ type CommentableBlockProps = {
   children: React.ReactNode;
   className?: string;
   comments: PreviewComment[];
+  hasCommentHighlight: boolean;
   isAdding: boolean;
   isRangeActionLine: boolean;
   isSelected: boolean;
@@ -100,6 +101,7 @@ const CommentableBlock = ({
   children,
   className,
   comments,
+  hasCommentHighlight,
   isAdding,
   isRangeActionLine,
   isSelected,
@@ -160,7 +162,9 @@ const CommentableBlock = ({
     <div
       className={[
         "commentable-block",
-        isSelected ? "commentable-block-selected" : undefined,
+        isSelected || hasCommentHighlight
+          ? "commentable-block-selected"
+          : undefined,
         className,
       ].filter(Boolean).join(" ")}
       data-source-line={line}
@@ -311,6 +315,7 @@ type CommentControlProps =
 const createCommentableComponent = (
   tagName: keyof React.JSX.IntrinsicElements,
   commentsByLine: Map<number, PreviewComment[]>,
+  commentHighlightsByLine: Set<number>,
   props: CommentControlProps,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
@@ -324,6 +329,7 @@ const createCommentableComponent = (
       <CommentableBlock
         activeRange={props.activeRange}
         comments={commentsByLine.get(line) ?? []}
+        hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
         isRangeActionLine={props.selectedRange?.endLine === line}
         isSelected={props.selectedRange
@@ -349,6 +355,7 @@ const createCommentableComponent = (
 
 const createCommentableListItem = (
   commentsByLine: Map<number, PreviewComment[]>,
+  commentHighlightsByLine: Set<number>,
   props: CommentControlProps,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
@@ -366,6 +373,7 @@ const createCommentableListItem = (
           activeRange={props.activeRange}
           className="commentable-list-item"
           comments={commentsByLine.get(line) ?? []}
+          hasCommentHighlight={commentHighlightsByLine.has(line)}
           isAdding={props.activeCommentLine === line}
           isRangeActionLine={props.selectedRange?.endLine === line}
           isSelected={props.selectedRange
@@ -393,6 +401,7 @@ const createCommentableListItem = (
 
 const createCommentablePre = (
   commentsByLine: Map<number, PreviewComment[]>,
+  commentHighlightsByLine: Set<number>,
   props: CommentControlProps,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
@@ -421,6 +430,7 @@ const createCommentablePre = (
       <CommentableBlock
         activeRange={props.activeRange}
         comments={commentsByLine.get(line) ?? []}
+        hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
         isRangeActionLine={props.selectedRange?.endLine === line}
         isSelected={props.selectedRange
@@ -464,6 +474,15 @@ export const MarkdownPreview = ({
       ]);
     }
     return grouped;
+  }, [comments]);
+  const commentHighlightsByLine = useMemo(() => {
+    const highlighted = new Set<number>();
+    for (const comment of comments) {
+      for (let line = comment.startLine; line <= comment.endLine; line += 1) {
+        highlighted.add(line);
+      }
+    }
+    return highlighted;
   }, [comments]);
 
   const [activeCommentLine, setActiveCommentLine] = useState<number>();
@@ -520,18 +539,62 @@ export const MarkdownPreview = ({
       selectedRange,
     };
     return {
-      h1: createCommentableComponent("h1", commentsByLine, commentCallbacks),
-      h2: createCommentableComponent("h2", commentsByLine, commentCallbacks),
-      h3: createCommentableComponent("h3", commentsByLine, commentCallbacks),
-      h4: createCommentableComponent("h4", commentsByLine, commentCallbacks),
-      h5: createCommentableComponent("h5", commentsByLine, commentCallbacks),
-      h6: createCommentableComponent("h6", commentsByLine, commentCallbacks),
-      li: createCommentableListItem(commentsByLine, commentCallbacks),
-      p: createCommentableComponent("p", commentsByLine, commentCallbacks),
-      pre: createCommentablePre(commentsByLine, commentCallbacks),
+      h1: createCommentableComponent(
+        "h1",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h2: createCommentableComponent(
+        "h2",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h3: createCommentableComponent(
+        "h3",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h4: createCommentableComponent(
+        "h4",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h5: createCommentableComponent(
+        "h5",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      h6: createCommentableComponent(
+        "h6",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      li: createCommentableListItem(
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      p: createCommentableComponent(
+        "p",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
+      pre: createCommentablePre(
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
       table: createCommentableComponent(
         "table",
         commentsByLine,
+        commentHighlightsByLine,
         commentCallbacks,
       ),
       code({ children, className, ...props }) {
@@ -546,6 +609,7 @@ export const MarkdownPreview = ({
     activeCommentLine,
     activeRange,
     commentsByLine,
+    commentHighlightsByLine,
     lineSelectionAnchor,
     onCreateComment,
     onDeleteComment,

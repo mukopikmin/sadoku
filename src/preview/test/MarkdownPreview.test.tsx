@@ -365,6 +365,16 @@ Body
     expect(
       container.querySelector('[data-source-line="3"] .comment-thread'),
     ).not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="1"]')?.classList.contains(
+        "commentable-block-selected",
+      ),
+    ).toBe(true);
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-selected",
+      ),
+    ).toBe(true);
   });
 
   it("shows and clears a single-line comment selection", () => {
