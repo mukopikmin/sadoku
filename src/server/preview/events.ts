@@ -4,6 +4,11 @@ import { formatLogMessage } from "../../log.ts";
 type EventStreamOptions = {
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
+  watchFs?: (path: string) => FsWatcherLike;
+};
+
+type FsWatcherLike = AsyncIterable<Deno.FsEvent> & {
+  close: () => void;
 };
 
 const reloadEvent = new TextEncoder().encode("event: reload\ndata: {}\n\n");
@@ -26,7 +31,7 @@ export const createHotReloadEventStream = (
   signal: AbortSignal,
   options: EventStreamOptions = {},
 ): ReadableStream<Uint8Array> => {
-  let watcher: Deno.FsWatcher | undefined;
+  let watcher: FsWatcherLike | undefined;
   let close: (() => void) | undefined;
   let closed = false;
 
@@ -46,7 +51,7 @@ export const createHotReloadEventStream = (
   return new ReadableStream({
     start(controller) {
       options.onEventStreamOpen?.();
-      watcher = Deno.watchFs(dirname(filePath));
+      watcher = (options.watchFs ?? Deno.watchFs)(dirname(filePath));
 
       close = () => closeOnce(controller);
       signal.addEventListener("abort", close, { once: true });

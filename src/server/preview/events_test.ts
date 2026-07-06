@@ -29,11 +29,43 @@ const readUntilDone = async (
   throw new Error("Event stream did not close.");
 };
 
+class TestFsWatcher implements AsyncIterable<Deno.FsEvent> {
+  #closed = false;
+  #events: Deno.FsEvent[] = [];
+  #waiting: (() => void) | undefined;
+
+  close(): void {
+    this.#closed = true;
+    this.#waiting?.();
+    this.#waiting = undefined;
+  }
+
+  push(event: Deno.FsEvent): void {
+    this.#events.push(event);
+    this.#waiting?.();
+    this.#waiting = undefined;
+  }
+
+  async *[Symbol.asyncIterator](): AsyncIterator<Deno.FsEvent> {
+    while (!this.#closed) {
+      const event = this.#events.shift();
+      if (event) {
+        yield event;
+        continue;
+      }
+      await new Promise<void>((resolveWaiting) => {
+        this.#waiting = resolveWaiting;
+      });
+    }
+  }
+}
+
 Deno.test("emits a reload event when the Markdown file changes", async () => {
   const directory = await Deno.makeTempDir({ prefix: "sadoku-events-" });
   const filePath = resolve(directory, "document.md");
   await Deno.writeTextFile(filePath, "first");
   const controller = new AbortController();
+  const watcher = new TestFsWatcher();
   let opened = 0;
   let closed = 0;
   const stream = createHotReloadEventStream(
@@ -42,13 +74,15 @@ Deno.test("emits a reload event when the Markdown file changes", async () => {
     {
       onEventStreamOpen: () => opened += 1,
       onEventStreamClose: () => closed += 1,
+      watchFs: () => watcher,
     },
   );
   const reader = stream.getReader();
 
   try {
-    await Deno.writeTextFile(filePath, "second");
-    const result = await readWithTimeout(reader, 2_000);
+    const readResult = readWithTimeout(reader, 2_000);
+    watcher.push({ kind: "modify", paths: [filePath] });
+    const result = await readResult;
 
     assertEquals(opened, 1);
     assertEquals(result === "timeout", false);

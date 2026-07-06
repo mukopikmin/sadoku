@@ -149,8 +149,25 @@ const createEmptyCommentsDocument = (
 const isPreviewComment = (value: unknown): value is PreviewComment => {
   if (typeof value !== "object" || value === null) return false;
   const comment = value as Partial<PreviewComment>;
+  const {
+    endLine,
+    originalEndLine,
+    originalStartLine,
+    startLine,
+  } = comment;
   return typeof comment.id === "number" &&
-    Number.isInteger(comment.line) &&
+    typeof startLine === "number" &&
+    Number.isInteger(startLine) &&
+    typeof endLine === "number" &&
+    Number.isInteger(endLine) &&
+    typeof originalStartLine === "number" &&
+    Number.isInteger(originalStartLine) &&
+    typeof originalEndLine === "number" &&
+    Number.isInteger(originalEndLine) &&
+    startLine >= 1 &&
+    endLine >= startLine &&
+    originalStartLine >= 1 &&
+    originalEndLine >= originalStartLine &&
     typeof comment.body === "string" &&
     typeof comment.createdAt === "string" &&
     typeof comment.updatedAt === "string";
@@ -189,13 +206,15 @@ const latestUpdatedAt = (
 ): string | undefined =>
   comments.map((comment) => comment.updatedAt).sort().at(-1);
 
-const normalizePreviewComment = (comment: PreviewComment): PreviewComment => ({
-  ...comment,
-  replies: Array.isArray(comment.replies)
-    ? comment.replies.filter(isPreviewCommentReply)
-    : [],
-  resolved: comment.resolved === true,
-});
+const normalizePreviewComment = (comment: PreviewComment): PreviewComment => {
+  return {
+    ...comment,
+    replies: Array.isArray(comment.replies)
+      ? comment.replies.filter(isPreviewCommentReply)
+      : [],
+    resolved: comment.resolved === true,
+  };
+};
 
 export const readCommentsDocument = async (
   filePath: string,

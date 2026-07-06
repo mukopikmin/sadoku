@@ -187,7 +187,10 @@ Deno.test("MIGRATIONS includes the initial comment tables schema", async () => {
     "FOREIGN KEY (document_id) REFERENCES comment_documents(id) ON DELETE CASCADE",
   );
   assertStringIncludes(statements[3] ?? "", "idx_comments_document_id");
-  assertStringIncludes(statements[4] ?? "", "idx_comments_document_line");
+  assertStringIncludes(
+    statements[4] ?? "",
+    "idx_comments_document_start_line",
+  );
   assertStringIncludes(
     statements[5] ?? "",
     "CREATE TABLE IF NOT EXISTS comment_replies",

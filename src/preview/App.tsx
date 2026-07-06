@@ -92,10 +92,11 @@ export const App = () => {
   }, [state, view]);
 
   const handleCreateComment = async (
-    line: number,
+    startLine: number,
     body: string,
+    endLine: number,
   ): Promise<void> => {
-    const comment = await createComment(line, body);
+    const comment = await createComment(startLine, body, endLine);
     setState((current) => {
       if (current.status !== "loaded") return current;
       return {
@@ -223,7 +224,7 @@ export const App = () => {
       <PreviewTheme>
         <style>{previewThemeCss}</style>
         <main>
-          <header>Loading preview...</header>
+          <header className="sticky-preview-header">Loading preview...</header>
         </main>
       </PreviewTheme>
     );
@@ -234,7 +235,7 @@ export const App = () => {
       <PreviewTheme>
         <style>{previewThemeCss}</style>
         <main>
-          <header>{state.message}</header>
+          <header className="sticky-preview-header">{state.message}</header>
         </main>
       </PreviewTheme>
     );
@@ -251,7 +252,7 @@ export const App = () => {
     <PreviewTheme>
       <style>{previewThemeCss}</style>
       <main>
-        <header>
+        <header className="sticky-preview-header">
           <Box>
             Previewing{" "}
             <Link href={state.document.fileUrl}>{state.document.title}</Link>.
