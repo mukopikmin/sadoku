@@ -52,6 +52,8 @@ console.log("<ok>");
       .toBe("Title");
     expect(container.querySelector("strong")?.textContent).toBe("world");
     expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    expect(getComputedStyle(container.querySelector("ul")!).listStyleType)
+      .not.toBe("none");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
   });

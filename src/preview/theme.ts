@@ -3,6 +3,7 @@ import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 export const sadokuChakraSystem = createSystem(
   defaultConfig,
   defineConfig({
+    preflight: false,
     globalCss: {
       body: {
         bg: "canvas",
