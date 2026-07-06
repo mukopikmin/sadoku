@@ -1,9 +1,17 @@
-import { useState } from "react";
+import {
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Stack,
+  Text,
+  Textarea,
+} from "@chakra-ui/react";
+import { type ComponentProps, useState } from "react";
 import { submitCommentOnShortcut } from "./commentShortcuts";
 import type { PreviewComment, PreviewCommentReply } from "./comments";
 
 export type CommentItemProps = {
-  className?: string;
   comment: PreviewComment;
   lineLabel: string;
   onDeleteComment: (id: number) => Promise<void>;
@@ -19,10 +27,15 @@ export type CommentItemProps = {
   ) => Promise<void>;
   showSource?: boolean;
   showState?: boolean;
+  variant?: "panel";
 };
 
 const getSourceLabel = (comment: PreviewComment): string =>
   comment.stale ? "Original line" : "Target line";
+
+const ActionButton = (props: ComponentProps<typeof Button>) => (
+  <Button size="xs" variant="outline" {...props} />
+);
 
 type ReplyItemProps = {
   commentId: number;
@@ -76,37 +89,37 @@ const ReplyItem = ({
   };
 
   return (
-    <div className="comment-reply">
-      <div className="comment-reply-header">
-        <div className="comment-reply-label">Reply</div>
+    <Box borderTopWidth="1px" borderColor="border.muted" pt="2">
+      <Flex align="center" justify="space-between" gap="2" mb="1">
+        <Text color="fg.muted" fontSize="xs" fontWeight="semibold">Reply</Text>
         {!isEditing && (
-          <div className="comment-actions">
-            <button
+          <Flex wrap="wrap" gap="2">
+            <ActionButton
               aria-label="Edit reply"
               disabled={disabled}
               onClick={() => setIsEditing(true)}
               type="button"
             >
               Edit
-            </button>
-            <button
+            </ActionButton>
+            <ActionButton
               aria-label="Delete reply"
               disabled={disabled}
               onClick={handleDelete}
               type="button"
             >
               Delete
-            </button>
-          </div>
+            </ActionButton>
+          </Flex>
         )}
-      </div>
+      </Flex>
       {isEditing
         ? (
-          <>
-            <textarea
+          <Stack gap="2">
+            <Textarea
               aria-label="Edit reply body"
               autoFocus
-              className="comment-input"
+              minH="90px"
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) =>
                 submitCommentOnShortcut(event, () => {
@@ -114,16 +127,16 @@ const ReplyItem = ({
                 })}
               value={draft}
             />
-            <div className="comment-actions">
-              <button
+            <Flex wrap="wrap" gap="2">
+              <ActionButton
                 aria-label="Save reply"
                 disabled={disabled || draft.trim() === ""}
                 onClick={handleUpdate}
                 type="button"
               >
                 Save
-              </button>
-              <button
+              </ActionButton>
+              <ActionButton
                 aria-label="Cancel reply edit"
                 disabled={disabled}
                 onClick={() => {
@@ -133,17 +146,16 @@ const ReplyItem = ({
                 type="button"
               >
                 Cancel
-              </button>
-            </div>
-          </>
+              </ActionButton>
+            </Flex>
+          </Stack>
         )
-        : <div className="comment-body">{reply.body}</div>}
-    </div>
+        : <Text whiteSpace="pre-wrap">{reply.body}</Text>}
+    </Box>
   );
 };
 
 export const CommentItem = ({
-  className,
   comment,
   lineLabel,
   onDeleteComment,
@@ -155,6 +167,7 @@ export const CommentItem = ({
   onUpdateReply,
   showSource = false,
   showState = false,
+  variant,
 }: CommentItemProps) => {
   const [draft, setDraft] = useState(comment.body);
   const [replyDraft, setReplyDraft] = useState("");
@@ -235,76 +248,91 @@ export const CommentItem = ({
   };
 
   return (
-    <article className={["comment-item", className].filter(Boolean).join(" ")}>
-      <div className="comment-item-header">
-        <div className="comment-thread-heading">
-          <span>{lineLabel}</span>
+    <Box
+      as="article"
+      borderColor="border.muted"
+      borderRadius={variant === "panel" ? "md" : undefined}
+      borderWidth={variant === "panel" ? "1px" : undefined}
+      mb="1.5"
+      p={variant === "panel" ? "3" : undefined}
+    >
+      <Flex align="center" justify="space-between" gap="2" mb="1">
+        <Flex
+          align="center"
+          gap="2"
+          color="fg.muted"
+          fontSize="xs"
+          fontWeight="semibold"
+        >
+          <Text as="span">{lineLabel}</Text>
           {showState && comment.resolved && (
-            <span className="comment-state">Resolved</span>
+            <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
           )}
           {showState && !comment.resolved && comment.stale && (
-            <span className="comment-state">Stale</span>
+            <Badge colorPalette="yellow" variant="outline">Stale</Badge>
           )}
-        </div>
+        </Flex>
         {!isEditing && (
-          <div className="comment-actions">
+          <Flex wrap="wrap" gap="2">
             {comment.resolved
-              ? (
-                onReopenComment && (
-                  <button
-                    disabled={isSaving}
-                    onClick={handleReopen}
-                    type="button"
-                  >
-                    Reopen
-                  </button>
-                )
+              ? onReopenComment && (
+                <ActionButton
+                  disabled={isSaving}
+                  onClick={handleReopen}
+                  type="button"
+                >
+                  Reopen
+                </ActionButton>
               )
-              : (
-                onResolveComment && (
-                  <button
-                    disabled={isSaving}
-                    onClick={handleResolve}
-                    type="button"
-                  >
-                    Resolve
-                  </button>
-                )
+              : onResolveComment && (
+                <ActionButton
+                  disabled={isSaving}
+                  onClick={handleResolve}
+                  type="button"
+                >
+                  Resolve
+                </ActionButton>
               )}
-            <button
+            <ActionButton
               disabled={isSaving}
-              onClick={() =>
-                setIsReplying((value) => !value)}
+              onClick={() => setIsReplying((value) => !value)}
               type="button"
             >
               Reply
-            </button>
-            <button
+            </ActionButton>
+            <ActionButton
               disabled={isSaving}
-              onClick={() =>
-                setIsEditing(true)}
+              onClick={() => setIsEditing(true)}
               type="button"
             >
               Edit
-            </button>
-            <button disabled={isSaving} onClick={handleDelete} type="button">
+            </ActionButton>
+            <ActionButton
+              disabled={isSaving}
+              onClick={handleDelete}
+              type="button"
+            >
               Delete
-            </button>
-          </div>
+            </ActionButton>
+          </Flex>
         )}
-      </div>
+      </Flex>
       {showSource && comment.sourceText && (
-        <div className="comment-source-block">
-          <div className="comment-source-label">{getSourceLabel(comment)}</div>
-          <pre className="comment-source">{comment.sourceText}</pre>
-        </div>
+        <Box mb="2">
+          <Text mb="1" color="fg.muted" fontSize="xs" fontWeight="semibold">
+            {getSourceLabel(comment)}
+          </Text>
+          <Box as="pre" maxH="160px" mb="2" fontSize="xs" whiteSpace="pre-wrap">
+            {comment.sourceText}
+          </Box>
+        </Box>
       )}
       {isEditing
         ? (
-          <>
-            <textarea
+          <Stack gap="2">
+            <Textarea
               autoFocus
-              className="comment-input"
+              minH="90px"
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) =>
                 submitCommentOnShortcut(event, () => {
@@ -312,15 +340,15 @@ export const CommentItem = ({
                 })}
               value={draft}
             />
-            <div className="comment-actions">
-              <button
+            <Flex wrap="wrap" gap="2">
+              <ActionButton
                 disabled={isSaving || draft.trim() === ""}
                 onClick={handleUpdate}
                 type="button"
               >
                 Save
-              </button>
-              <button
+              </ActionButton>
+              <ActionButton
                 disabled={isSaving}
                 onClick={() => {
                   setDraft(comment.body);
@@ -329,13 +357,13 @@ export const CommentItem = ({
                 type="button"
               >
                 Cancel
-              </button>
-            </div>
-          </>
+              </ActionButton>
+            </Flex>
+          </Stack>
         )
-        : <div className="comment-body">{comment.body}</div>}
+        : <Text whiteSpace="pre-wrap">{comment.body}</Text>}
       {(comment.replies ?? []).length > 0 && (
-        <div className="comment-replies">
+        <Stack gap="2" mt="2">
           {(comment.replies ?? []).map((reply) => (
             <ReplyItem
               commentId={comment.id}
@@ -348,14 +376,14 @@ export const CommentItem = ({
               setSaving={setIsSaving}
             />
           ))}
-        </div>
+        </Stack>
       )}
       {isReplying && (
-        <div className="comment-reply-form">
-          <textarea
+        <Stack gap="2" mt="2">
+          <Textarea
             aria-label="Reply body"
             autoFocus
-            className="comment-input"
+            minH="90px"
             onChange={(event) => setReplyDraft(event.target.value)}
             onKeyDown={(event) =>
               submitCommentOnShortcut(event, () => {
@@ -364,15 +392,15 @@ export const CommentItem = ({
             placeholder="Write a reply..."
             value={replyDraft}
           />
-          <div className="comment-actions">
-            <button
+          <Flex wrap="wrap" gap="2">
+            <ActionButton
               disabled={isSaving || replyDraft.trim() === ""}
               onClick={handleReply}
               type="button"
             >
               Add reply
-            </button>
-            <button
+            </ActionButton>
+            <ActionButton
               disabled={isSaving}
               onClick={() => {
                 setReplyDraft("");
@@ -381,11 +409,11 @@ export const CommentItem = ({
               type="button"
             >
               Cancel
-            </button>
-          </div>
-        </div>
+            </ActionButton>
+          </Flex>
+        </Stack>
       )}
-      {error && <div className="comment-error">{error}</div>}
-    </article>
+      {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+    </Box>
   );
 };

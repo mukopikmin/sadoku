@@ -1,3 +1,4 @@
+import { Box, Button, Flex, Text, Textarea } from "@chakra-ui/react";
 import {
   Children,
   createContext,
@@ -176,13 +177,15 @@ const CommentableBlock = ({
       >
         <div className="comment-markdown-body">
           {isRangeActionLine && !isAdding && (
-            <button
+            <Button
               className="comment-selection-button"
+              colorPalette="blue"
+              size="xs"
               onClick={onOpenCommentForm}
               type="button"
             >
               Add comment
-            </button>
+            </Button>
           )}
           <SourceLineContext.Provider value={sourceLines}>
             {children}
@@ -207,13 +210,13 @@ const CommentableBlock = ({
             />
           ))}
           {isAdding && (
-            <div className="comment-form">
-              <div className="comment-range-hint">
+            <Box mb="1.5">
+              <Text color="fg.muted" fontSize="xs" fontWeight="semibold" mb="1">
                 Commenting on {formatRangeLabel(pendingRange)}.
-              </div>
-              <textarea
+              </Text>
+              <Textarea
                 autoFocus
-                className="comment-input"
+                minH="90px"
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) =>
                   submitCommentOnShortcut(event, () => {
@@ -222,15 +225,19 @@ const CommentableBlock = ({
                 placeholder="Write a GitHub PR comment..."
                 value={draft}
               />
-              <div className="comment-actions">
-                <button
+              <Flex wrap="wrap" gap="2">
+                <Button
+                  size="xs"
+                  variant="outline"
                   disabled={isSaving || draft.trim() === ""}
                   onClick={handleCreate}
                   type="button"
                 >
                   Add comment
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
                   disabled={isSaving}
                   onClick={() => {
                     onCloseCommentForm();
@@ -238,11 +245,15 @@ const CommentableBlock = ({
                   type="button"
                 >
                   Cancel
-                </button>
-              </div>
-            </div>
+                </Button>
+              </Flex>
+            </Box>
           )}
-          {error && <div className="comment-error">{error}</div>}
+          {error && (
+            <Text color="red.500" fontSize="sm">
+              {error}
+            </Text>
+          )}
         </div>
       )}
     </div>
@@ -413,14 +424,16 @@ const createCommentablePre = (
       : (
         <div className="mermaid-container">
           <pre className="mermaid">{mermaidCode}</pre>
-          <button
+          <Button
             aria-label="Zoom Mermaid diagram"
             className="mermaid-zoom-button"
+            size="xs"
             title="Zoom Mermaid diagram"
             type="button"
+            variant="outline"
           >
             Zoom
-          </button>
+          </Button>
         </div>
       );
     if (line === undefined) return element;

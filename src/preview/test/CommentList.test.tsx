@@ -1,10 +1,4 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommentList } from "../CommentList";
 import type { PreviewComment } from "../comments";
@@ -148,7 +142,8 @@ describe("CommentList", () => {
       )
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    const deleteButton = await screen.findByRole("button", { name: "Delete" });
+    fireEvent.click(deleteButton);
     await waitFor(() => expect(onDeleteComment).toHaveBeenCalledWith(1));
   });
 
@@ -193,6 +188,13 @@ describe("CommentList", () => {
       expect(onReplyComment).toHaveBeenCalledWith(1, "New reply.")
     );
 
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Edit reply" }).hasAttribute(
+          "disabled",
+        ),
+      ).toBe(false)
+    );
     fireEvent.click(screen.getByRole("button", { name: "Edit reply" }));
     expect(document.activeElement).toBe(
       screen.getByRole("textbox", {
