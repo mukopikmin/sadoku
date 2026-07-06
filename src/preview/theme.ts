@@ -437,6 +437,10 @@ export const previewThemeCss = `
         padding: 6px 0 1px 10px;
       }
 
+      .commentable-list-item > .comment-thread {
+        margin: 6px 0 12px;
+      }
+
       .comment-item-header {
         display: flex;
         align-items: center;

@@ -140,6 +140,9 @@ console.log("<ok>");
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
       true,
     );
+    expect(
+      container.querySelector('[data-source-line="1"] .commentable-content ul'),
+    ).toBeNull();
   });
 
   it("renders task list checkboxes", () => {
@@ -405,6 +408,37 @@ Body
       expect(onCreateComment).toHaveBeenCalledWith(
         1,
         "Review this line range.",
+        3,
+      )
+    );
+  });
+
+  it("creates comments on the clicked nested list item line", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      `- parent
+  - child
+    1. ordered child
+`,
+      [],
+      { onCreateComment },
+    );
+    const orderedChild = container.querySelector(
+      '[data-source-line="3"] .commentable-content',
+    );
+    expect(orderedChild).not.toBeNull();
+
+    fireEvent.click(orderedChild!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review nested item." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        3,
+        "Review nested item.",
         3,
       )
     );

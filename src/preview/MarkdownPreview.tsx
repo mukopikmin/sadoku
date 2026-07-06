@@ -153,6 +153,7 @@ const CommentableBlock = ({
     if (link) event.preventDefault();
 
     onSelectCommentLine(line);
+    event.stopPropagation();
   };
 
   return (
@@ -249,6 +250,26 @@ type ComponentProps = {
   node?: SourceNode;
 };
 
+const isListElement = (
+  child: React.ReactNode,
+): child is React.ReactElement =>
+  isValidElement(child) && (child.type === "ol" || child.type === "ul");
+
+const splitListItemChildren = (
+  children: React.ReactNode,
+): { itemChildren: React.ReactNode[]; nestedLists: React.ReactNode[] } => {
+  const itemChildren: React.ReactNode[] = [];
+  const nestedLists: React.ReactNode[] = [];
+  for (const child of Children.toArray(children)) {
+    if (isListElement(child)) {
+      nestedLists.push(child);
+    } else {
+      itemChildren.push(child);
+    }
+  }
+  return { itemChildren, nestedLists };
+};
+
 type CodeElementProps = {
   children?: React.ReactNode;
   className?: string;
@@ -333,6 +354,7 @@ const createCommentableListItem = (
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
+    const { itemChildren, nestedLists } = splitListItemChildren(children);
     if (line === undefined) return <li {...elementProps}>{children}</li>;
     if (ancestorSourceLines.has(line)) {
       return <li {...elementProps}>{children}</li>;
@@ -361,8 +383,9 @@ const createCommentableListItem = (
           onUpdateComment={props.onUpdateComment}
           onUpdateReply={props.onUpdateReply}
         >
-          {children}
+          {itemChildren}
         </CommentableBlock>
+        {nestedLists}
       </li>
     );
   };
