@@ -579,7 +579,7 @@ export const MarkdownPreview = ({
             borderColor="border.default"
             borderLeftWidth="4px"
             color="fg.muted"
-            ps="4"
+            pl="4"
             {...elementProps}
           >
             {children}
@@ -633,7 +633,7 @@ export const MarkdownPreview = ({
             as="ol"
             className={mergeClassNames("comment-markdown-body", className)}
             listStyleType="decimal"
-            ps="2em"
+            pl="2em"
             {...props}
           >
             {children}
@@ -646,7 +646,7 @@ export const MarkdownPreview = ({
             as="ul"
             className={mergeClassNames("comment-markdown-body", className)}
             listStyleType="disc"
-            ps="2em"
+            pl="2em"
             {...props}
           >
             {children}
