@@ -84,101 +84,101 @@ export const previewThemeCss = `
       }
 
 
-      h1 {
+      .comment-markdown-body h1 {
         font-size: 2rem;
       }
 
-      h1, h2 {
+      .comment-markdown-body :where(h1, h2) {
         padding-bottom: 0.3em;
         border-bottom: 1px solid var(--color-border-muted);
       }
 
-      h1, h2, h3, h4, h5, h6 {
+      .comment-markdown-body :where(h1, h2, h3, h4, h5, h6) {
         line-height: 1.25;
         margin: 24px 0 16px;
         font-weight: 600;
       }
 
-      h2 {
+      .comment-markdown-body h2 {
         font-size: 1.5rem;
       }
 
-      h3 {
+      .comment-markdown-body h3 {
         font-size: 1.25rem;
       }
 
-      h4 {
+      .comment-markdown-body h4 {
         font-size: 1rem;
       }
 
-      h5 {
+      .comment-markdown-body h5 {
         font-size: 0.875rem;
       }
 
-      h6 {
+      .comment-markdown-body h6 {
         color: var(--color-text-muted);
         font-size: 0.85rem;
       }
 
-      h1:first-child, h2:first-child, h3:first-child {
+      .comment-markdown-body :where(h1:first-child, h2:first-child, h3:first-child) {
         margin-top: 0;
       }
 
-      p, blockquote, ul, ol, dl, table, pre {
+      .comment-markdown-body :where(p, blockquote, ul, ol, dl, table, pre) {
         margin-top: 0;
         margin-bottom: 16px;
       }
 
-      a {
+      .comment-markdown-body a {
         color: var(--color-link);
         text-decoration: none;
       }
 
-      a:hover {
+      .comment-markdown-body a:hover {
         text-decoration: underline;
       }
 
-      .heading-anchor {
+      .comment-markdown-body .heading-anchor {
         color: inherit;
         text-decoration: none;
       }
 
-      img {
+      .comment-markdown-body img {
         max-width: 100%;
         height: auto;
       }
 
-      ul, ol {
+      .comment-markdown-body :where(ul, ol) {
         padding-left: 2em;
       }
 
-      ul {
+      .comment-markdown-body ul {
         list-style-type: disc;
       }
 
-      ol {
+      .comment-markdown-body ol {
         list-style-type: decimal;
       }
 
-      li + li {
+      .comment-markdown-body li + li {
         margin-top: 0.25em;
       }
 
-      li > ul, li > ol {
+      .comment-markdown-body li > :where(ul, ol) {
         margin-top: 0.25em;
         margin-bottom: 0;
       }
 
-      .task-list-item {
+      .comment-markdown-body .task-list-item {
         list-style-type: none;
       }
 
-      .task-list-item-checkbox {
+      .comment-markdown-body .task-list-item-checkbox {
         margin: 0 0.5em 0.2em 0;
         vertical-align: middle;
       }
 
-      code {
+      .comment-markdown-body code {
         border-radius: 6px;
         padding: 0.2em 0.4em;
         background: var(--color-code-bg);
@@ -186,7 +186,7 @@ export const previewThemeCss = `
         font-size: 0.85em;
       }
 
-      pre {
+      .comment-markdown-body pre {
         overflow: auto;
         border: 1px solid var(--color-border-muted);
         border-radius: 6px;
@@ -195,7 +195,7 @@ export const previewThemeCss = `
         line-height: 1.45;
       }
 
-      pre code {
+      .comment-markdown-body pre code {
         padding: 0;
         background: transparent;
         font-size: 0.85rem;
@@ -322,13 +322,13 @@ export const previewThemeCss = `
         }
       }
 
-      blockquote {
+      .comment-markdown-body blockquote {
         padding: 0 1em;
         border-left: 0.25em solid var(--color-border);
         color: var(--color-text-muted);
       }
 
-      table {
+      .comment-markdown-body table {
         display: block;
         overflow: auto;
         width: max-content;
@@ -337,20 +337,20 @@ export const previewThemeCss = `
         border-collapse: collapse;
       }
 
-      th, td {
+      .comment-markdown-body :where(th, td) {
         border: 1px solid var(--color-border);
         padding: 6px 13px;
       }
 
-      th {
+      .comment-markdown-body th {
         font-weight: 600;
       }
 
-      tr {
+      .comment-markdown-body tr {
         border-top: 1px solid var(--color-border-muted);
       }
 
-      hr {
+      .comment-markdown-body hr {
         height: 0.25em;
         margin: 24px 0;
         border: 0;

@@ -56,6 +56,7 @@ console.log("<ok>");
       .not.toBe("none");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
+    expect(previewThemeCss).toContain(".comment-markdown-body pre");
   });
 
   it("renders stable heading anchor links", () => {
