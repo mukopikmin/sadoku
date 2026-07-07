@@ -158,6 +158,7 @@ console.log("<ok>");
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
     expect(container.querySelector(".task-list-item")).not.toBeNull();
+    expect(previewThemeCss).not.toContain("0 0.5em 0.2em -");
   });
 
   it("highlights Kotlin code fences", () => {

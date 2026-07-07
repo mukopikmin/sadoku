@@ -174,7 +174,7 @@ export const previewThemeCss = `
       }
 
       .task-list-item-checkbox {
-        margin: 0 0.5em 0.2em -1.5em;
+        margin: 0 0.5em 0.2em 0;
         vertical-align: middle;
       }
 
