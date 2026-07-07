@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Text, Textarea } from "@chakra-ui/react";
+import { Box, Button, Flex, List, Text, Textarea } from "@chakra-ui/react";
 import {
   Children,
   createContext,
@@ -389,13 +389,15 @@ const createCommentableListItem = (
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
     const { itemChildren, nestedLists } = splitListItemChildren(children);
-    if (line === undefined) return <li {...elementProps}>{children}</li>;
+    if (line === undefined) {
+      return <List.Item {...elementProps}>{children}</List.Item>;
+    }
     if (ancestorSourceLines.has(line)) {
-      return <li {...elementProps}>{children}</li>;
+      return <List.Item {...elementProps}>{children}</List.Item>;
     }
 
     return (
-      <li {...elementProps}>
+      <List.Item {...elementProps}>
         <CommentableBlock
           activeRange={props.activeRange}
           className="commentable-list-item"
@@ -421,7 +423,7 @@ const createCommentableListItem = (
           {itemChildren}
         </CommentableBlock>
         {nestedLists}
-      </li>
+      </List.Item>
     );
   };
 };
@@ -629,36 +631,26 @@ export const MarkdownPreview = ({
       ),
       ol({ children, className, node: _node, ...props }) {
         return (
-          <Box
+          <List.Root
             as="ol"
             className={mergeClassNames("comment-markdown-body", className)}
+            ps="2em"
             {...props}
-            style={{
-              ...props.style,
-              listStyleType: "decimal",
-              marginLeft: 0,
-              paddingLeft: "2em",
-            }}
           >
             {children}
-          </Box>
+          </List.Root>
         );
       },
       ul({ children, className, node: _node, ...props }) {
         return (
-          <Box
+          <List.Root
             as="ul"
             className={mergeClassNames("comment-markdown-body", className)}
+            ps="2em"
             {...props}
-            style={{
-              ...props.style,
-              listStyleType: "disc",
-              marginLeft: 0,
-              paddingLeft: "2em",
-            }}
           >
             {children}
-          </Box>
+          </List.Root>
         );
       },
       p: createCommentableComponent(
