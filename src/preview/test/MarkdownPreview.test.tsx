@@ -153,7 +153,7 @@ console.log("<ok>");
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
       true,
     );
-    expect(getComputedStyle(listCommentTarget!).display).toBe("inline");
+    expect(getComputedStyle(listCommentTarget!).display).toBe("contents");
     const listCommentContent = listCommentTarget!.querySelector(
       ".commentable-content",
     );

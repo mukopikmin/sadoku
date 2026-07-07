@@ -345,7 +345,10 @@ export const previewThemeCss = `
         position: relative;
       }
 
-      .commentable-list-item,
+      .commentable-list-item {
+        display: contents;
+      }
+
       .commentable-list-item > .commentable-content {
         display: inline;
       }
