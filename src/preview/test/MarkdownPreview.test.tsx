@@ -56,7 +56,9 @@ console.log("<ok>");
     expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
       true,
     );
-    expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
+    expect(unorderedList?.style.listStyleType).toBe("disc");
+    expect(unorderedList?.style.marginLeft).toBe("0px");
+    expect(unorderedList?.style.paddingLeft).toBe("2em");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
     expect(previewThemeCss).toContain(".comment-markdown-body pre");

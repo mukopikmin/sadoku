@@ -632,9 +632,13 @@ export const MarkdownPreview = ({
           <Box
             as="ol"
             className={mergeClassNames("comment-markdown-body", className)}
-            listStyleType="decimal"
-            pl="2em"
             {...props}
+            style={{
+              ...props.style,
+              listStyleType: "decimal",
+              marginLeft: 0,
+              paddingLeft: "2em",
+            }}
           >
             {children}
           </Box>
@@ -645,9 +649,13 @@ export const MarkdownPreview = ({
           <Box
             as="ul"
             className={mergeClassNames("comment-markdown-body", className)}
-            listStyleType="disc"
-            pl="2em"
             {...props}
+            style={{
+              ...props.style,
+              listStyleType: "disc",
+              marginLeft: 0,
+              paddingLeft: "2em",
+            }}
           >
             {children}
           </Box>
