@@ -96,6 +96,105 @@ const formatRangeLabel = (range: CommentRange): string =>
     ? `line ${range.startLine}`
     : `lines ${range.startLine}-${range.endLine}`;
 
+type CommentThreadProps = {
+  comments: PreviewComment[];
+  error?: string;
+  isAdding: boolean;
+  isSaving: boolean;
+  onCreate: () => void;
+  onCloseCommentForm: () => void;
+  onDeleteComment: (id: number) => Promise<void>;
+  onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
+  onReplyComment: (id: number, body: string) => Promise<void>;
+  onResolveComment: (id: number) => Promise<void>;
+  onUpdateComment: (id: number, body: string) => Promise<void>;
+  onUpdateReply: (
+    commentId: number,
+    replyId: number,
+    body: string,
+  ) => Promise<void>;
+  pendingRange: CommentRange;
+  setDraft: (draft: string) => void;
+  draft: string;
+};
+
+const CommentThread = ({
+  comments,
+  draft,
+  error,
+  isAdding,
+  isSaving,
+  onCreate,
+  onCloseCommentForm,
+  onDeleteComment,
+  onDeleteReply,
+  onReplyComment,
+  onResolveComment,
+  onUpdateComment,
+  onUpdateReply,
+  pendingRange,
+  setDraft,
+}: CommentThreadProps) => {
+  if (!isAdding && comments.length === 0 && !error) return null;
+
+  return (
+    <div className="comment-thread">
+      {comments.map((comment) => (
+        <CommentItem
+          comment={comment}
+          key={comment.id}
+          lineLabel={comment.startLine === comment.endLine
+            ? `Line ${comment.startLine}`
+            : `Lines ${comment.startLine}-${comment.endLine}`}
+          onDeleteComment={onDeleteComment}
+          onDeleteReply={onDeleteReply}
+          onReplyComment={onReplyComment}
+          onResolveComment={onResolveComment}
+          onUpdateComment={onUpdateComment}
+          onUpdateReply={onUpdateReply}
+        />
+      ))}
+      {isAdding && (
+        <div className="comment-form">
+          <div className="comment-range-hint">
+            Commenting on {formatRangeLabel(pendingRange)}.
+          </div>
+          <textarea
+            autoFocus
+            className="comment-input"
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) =>
+              submitCommentOnShortcut(event, () => {
+                onCreate();
+              })}
+            placeholder="Write a GitHub PR comment..."
+            value={draft}
+          />
+          <div className="comment-actions">
+            <button
+              disabled={isSaving || draft.trim() === ""}
+              onClick={onCreate}
+              type="button"
+            >
+              Add comment
+            </button>
+            <button
+              disabled={isSaving}
+              onClick={() => {
+                onCloseCommentForm();
+              }}
+              type="button"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {error && <div className="comment-error">{error}</div>}
+    </div>
+  );
+};
+
 const CommentableBlock = ({
   activeRange,
   children,
@@ -189,62 +288,25 @@ const CommentableBlock = ({
           </SourceLineContext.Provider>
         </div>
       </div>
-      {(isAdding || comments.length > 0 || error) && (
-        <div className="comment-thread">
-          {comments.map((comment) => (
-            <CommentItem
-              comment={comment}
-              key={comment.id}
-              lineLabel={comment.startLine === comment.endLine
-                ? `Line ${comment.startLine}`
-                : `Lines ${comment.startLine}-${comment.endLine}`}
-              onDeleteComment={onDeleteComment}
-              onDeleteReply={onDeleteReply}
-              onReplyComment={onReplyComment}
-              onResolveComment={onResolveComment}
-              onUpdateComment={onUpdateComment}
-              onUpdateReply={onUpdateReply}
-            />
-          ))}
-          {isAdding && (
-            <div className="comment-form">
-              <div className="comment-range-hint">
-                Commenting on {formatRangeLabel(pendingRange)}.
-              </div>
-              <textarea
-                autoFocus
-                className="comment-input"
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={(event) =>
-                  submitCommentOnShortcut(event, () => {
-                    void handleCreate();
-                  })}
-                placeholder="Write a GitHub PR comment..."
-                value={draft}
-              />
-              <div className="comment-actions">
-                <button
-                  disabled={isSaving || draft.trim() === ""}
-                  onClick={handleCreate}
-                  type="button"
-                >
-                  Add comment
-                </button>
-                <button
-                  disabled={isSaving}
-                  onClick={() => {
-                    onCloseCommentForm();
-                  }}
-                  type="button"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-          {error && <div className="comment-error">{error}</div>}
-        </div>
-      )}
+      <CommentThread
+        comments={comments}
+        draft={draft}
+        error={error}
+        isAdding={isAdding}
+        isSaving={isSaving}
+        onCloseCommentForm={onCloseCommentForm}
+        onCreate={() => {
+          void handleCreate();
+        }}
+        onDeleteComment={onDeleteComment}
+        onDeleteReply={onDeleteReply}
+        onReplyComment={onReplyComment}
+        onResolveComment={onResolveComment}
+        onUpdateComment={onUpdateComment}
+        onUpdateReply={onUpdateReply}
+        pendingRange={pendingRange}
+        setDraft={setDraft}
+      />
     </div>
   );
 };
@@ -362,37 +424,109 @@ const createCommentableListItem = (
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
     const { itemChildren, nestedLists } = splitListItemChildren(children);
+    const [draft, setDraft] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string>();
+
     if (line === undefined) return <li {...elementProps}>{children}</li>;
     if (ancestorSourceLines.has(line)) {
       return <li {...elementProps}>{children}</li>;
     }
 
+    const pendingRange = props.activeRange ?? {
+      endLine: line,
+      startLine: line,
+    };
+    const sourceLines = new Set([...ancestorSourceLines, line]);
+    const comments = commentsByLine.get(line) ?? [];
+    const hasCommentHighlight = commentHighlightsByLine.has(line);
+    const isAdding = props.activeCommentLine === line;
+    const isSelected = props.selectedRange
+      ? isLineInRange(line, props.selectedRange)
+      : false;
+
+    const handleCreate = async () => {
+      const body = draft.trim();
+      if (!body || isSaving) return;
+      setIsSaving(true);
+      setError(undefined);
+      try {
+        await props.onCreateComment(
+          pendingRange.startLine,
+          body,
+          pendingRange.endLine,
+        );
+        setDraft("");
+        props.onCloseCommentForm();
+      } catch (error) {
+        setError(error instanceof Error ? error.message : String(error));
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    const handleContentClick = (event: React.MouseEvent<HTMLElement>) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest("button, input, label, select, textarea")) return;
+
+      const link = target.closest("a");
+      if (link && !link.classList.contains("heading-anchor")) return;
+      if (link) event.preventDefault();
+
+      props.onSelectCommentLine(line);
+      event.stopPropagation();
+    };
+
     return (
       <li {...elementProps}>
-        <CommentableBlock
-          activeRange={props.activeRange}
-          className="commentable-list-item"
-          comments={commentsByLine.get(line) ?? []}
-          hasCommentHighlight={commentHighlightsByLine.has(line)}
-          isAdding={props.activeCommentLine === line}
-          isRangeActionLine={props.selectedRange?.endLine === line}
-          isSelected={props.selectedRange
-            ? isLineInRange(line, props.selectedRange)
-            : false}
-          line={line}
+        <span
+          className={[
+            "commentable-list-item",
+            isSelected || hasCommentHighlight
+              ? "commentable-list-item-selected"
+              : undefined,
+          ].filter(Boolean).join(" ")}
+          data-source-line={line}
+        >
+          <span
+            className="commentable-list-item-content"
+            onClick={handleContentClick}
+            title={`Select line ${line} for comment`}
+          >
+            {props.selectedRange?.endLine === line && !isAdding && (
+              <button
+                className="comment-selection-button"
+                onClick={props.onOpenCommentForm}
+                type="button"
+              >
+                Add comment
+              </button>
+            )}
+            <SourceLineContext.Provider value={sourceLines}>
+              {itemChildren}
+            </SourceLineContext.Provider>
+          </span>
+        </span>
+        <CommentThread
+          comments={comments}
+          draft={draft}
+          error={error}
+          isAdding={isAdding}
+          isSaving={isSaving}
           onCloseCommentForm={props.onCloseCommentForm}
-          onCreateComment={props.onCreateComment}
+          onCreate={() => {
+            void handleCreate();
+          }}
           onDeleteComment={props.onDeleteComment}
           onDeleteReply={props.onDeleteReply}
-          onOpenCommentForm={props.onOpenCommentForm}
-          onSelectCommentLine={props.onSelectCommentLine}
           onReplyComment={props.onReplyComment}
           onResolveComment={props.onResolveComment}
           onUpdateComment={props.onUpdateComment}
           onUpdateReply={props.onUpdateReply}
-        >
-          {itemChildren}
-        </CommentableBlock>
+          pendingRange={pendingRange}
+          setDraft={setDraft}
+        />
         {nestedLists}
       </li>
     );

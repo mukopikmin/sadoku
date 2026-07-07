@@ -419,6 +419,41 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--color-accent) 14%, transparent);
       }
 
+      .commentable-list-item {
+        display: contents;
+      }
+
+      .commentable-list-item-content {
+        cursor: pointer;
+        display: inline;
+        isolation: isolate;
+        position: relative;
+      }
+
+      .commentable-list-item-content::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: -4px -8px;
+        border-radius: 6px;
+        background: transparent;
+        pointer-events: none;
+        transition: background-color 120ms ease;
+      }
+
+      .commentable-list-item:has(+ .comment-thread) > .commentable-list-item-content::before {
+        background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+      }
+
+      .commentable-list-item-selected > .commentable-list-item-content::before {
+        background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+      }
+
+      .commentable-list-item-content:hover::before,
+      .commentable-list-item-content:focus-within::before {
+        background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+      }
+
       .comment-selection-button {
         position: absolute;
         z-index: 1;
@@ -441,7 +476,7 @@ export const previewThemeCss = `
         padding: 6px 0 1px 10px;
       }
 
-      .commentable-list-item > .comment-thread {
+      li > .comment-thread {
         margin: 6px 0 12px;
       }
 

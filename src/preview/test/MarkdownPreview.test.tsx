@@ -8,8 +8,37 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
+import { previewThemeCss } from "../theme";
 
 afterEach(() => cleanup());
+
+const renderMarkdownWithTheme = (markdown: string) => {
+  const style = document.createElement("style");
+  style.textContent = previewThemeCss;
+  document.head.append(style);
+  const result = renderMarkdown(markdown);
+  return { ...result, style };
+};
+
+const expectListItemBodyInline = (
+  listItem: HTMLLIElement | null,
+  text: string,
+) => {
+  expect(listItem).not.toBeNull();
+  const wrapper = listItem?.querySelector<HTMLElement>(
+    ":scope > .commentable-list-item",
+  );
+  const content = listItem?.querySelector<HTMLElement>(
+    ":scope > .commentable-list-item > .commentable-list-item-content",
+  );
+
+  expect(wrapper).not.toBeNull();
+  expect(content).not.toBeNull();
+  expect(wrapper?.classList.contains("commentable-block")).toBe(false);
+  expect(wrapper?.textContent).toContain(text);
+  expect(getComputedStyle(wrapper!).display).toBe("contents");
+  expect(getComputedStyle(content!).display).toBe("inline");
+};
 
 const renderMarkdown = (
   markdown: string,
@@ -138,8 +167,11 @@ console.log("<ok>");
     );
     expect(listCommentTarget).not.toBeNull();
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
-      true,
+      false,
     );
+    expect(
+      listCommentTarget?.querySelector(".commentable-list-item-content"),
+    ).not.toBeNull();
     expect(
       container.querySelector('[data-source-line="1"] .commentable-content ul'),
     ).toBeNull();
@@ -159,6 +191,63 @@ console.log("<ok>");
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
     expect(container.querySelector(".task-list-item")).not.toBeNull();
+  });
+
+  it("keeps regular list item body inline after the marker", () => {
+    const { container, style } = renderMarkdownWithTheme(`- first item
+- second item
+`);
+
+    expectListItemBodyInline(
+      container.querySelector<HTMLLIElement>("ul > li:first-child"),
+      "first item",
+    );
+    expect(previewThemeCss).toContain(`.commentable-list-item {
+        display: contents;`);
+
+    style.remove();
+  });
+
+  it("keeps nested list item body inline and nested lists after the body", () => {
+    const { container, style } = renderMarkdownWithTheme(`- parent
+  - child
+- sibling
+`);
+
+    const parent = container.querySelector<HTMLLIElement>(
+      "ul > li:first-child",
+    );
+    expectListItemBodyInline(parent, "parent");
+    const parentNodes = Array.from(parent?.children ?? []);
+    const bodyIndex = parentNodes.findIndex((element) =>
+      element.classList.contains("commentable-list-item")
+    );
+    const nestedIndex = parentNodes.findIndex((element) =>
+      element.tagName.toLowerCase() === "ul"
+    );
+    expect(bodyIndex).toBeGreaterThanOrEqual(0);
+    expect(nestedIndex).toBeGreaterThan(bodyIndex);
+    expectListItemBodyInline(
+      container.querySelector<HTMLLIElement>("ul ul > li:first-child"),
+      "child",
+    );
+
+    style.remove();
+  });
+
+  it("keeps task list checkbox and body inline after the marker", () => {
+    const { container, style } = renderMarkdownWithTheme(`- [ ] todo
+- [x] done
+`);
+
+    const taskItem = container.querySelector<HTMLLIElement>(
+      "li.task-list-item:first-child",
+    );
+    expectListItemBodyInline(taskItem, "todo");
+    const content = taskItem?.querySelector(".commentable-list-item-content");
+    expect(content?.querySelector('input[type="checkbox"]')).not.toBeNull();
+
+    style.remove();
   });
 
   it("highlights Kotlin code fences", () => {
@@ -434,7 +523,7 @@ Body
       { onCreateComment },
     );
     const orderedChild = container.querySelector(
-      '[data-source-line="3"] .commentable-content',
+      '[data-source-line="3"] .commentable-list-item-content',
     );
     expect(orderedChild).not.toBeNull();
 
