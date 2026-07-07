@@ -423,6 +423,7 @@ export const previewThemeCss = `
         border-radius: 6px;
         padding: 16px;
         background: var(--color-canvas-subtle);
+        color: var(--color-text);
       }
 
       .mermaid-zoom-button {
