@@ -148,21 +148,6 @@ export const previewThemeCss = `
         height: auto;
       }
 
-      .comment-markdown-body:where(ul, ol),
-      .comment-markdown-body :where(ul, ol) {
-        padding-left: 2em;
-      }
-
-      .comment-markdown-body:is(ul),
-      .comment-markdown-body ul {
-        list-style-type: disc;
-      }
-
-      .comment-markdown-body:is(ol),
-      .comment-markdown-body ol {
-        list-style-type: decimal;
-      }
-
       .comment-markdown-body li + li {
         margin-top: 0.25em;
       }
@@ -323,12 +308,6 @@ export const previewThemeCss = `
           color: #aff5b4;
           background: #033a16;
         }
-      }
-
-      .comment-markdown-body blockquote {
-        padding: 0 1em;
-        border-left: 0.25em solid var(--color-border);
-        color: var(--color-text-muted);
       }
 
       .comment-markdown-body table {

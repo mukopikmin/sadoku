@@ -338,11 +338,17 @@ const createCommentableComponent = (
   commentsByLine: Map<number, PreviewComment[]>,
   commentHighlightsByLine: Set<number>,
   props: CommentControlProps,
+  renderElement?: (
+    elementProps: Omit<ComponentProps, "children" | "node">,
+    children: React.ReactNode,
+  ) => React.ReactNode,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
-    const element = createElement(tagName, elementProps, children);
+    const element = renderElement
+      ? renderElement(elementProps, children)
+      : createElement(tagName, elementProps, children);
     if (line === undefined) return element;
     if (ancestorSourceLines.has(line)) return element;
 
@@ -562,6 +568,24 @@ export const MarkdownPreview = ({
       selectedRange,
     };
     return {
+      blockquote: createCommentableComponent(
+        "blockquote",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+        (elementProps, children) => (
+          <Box
+            as="blockquote"
+            borderColor="border.default"
+            borderLeftWidth="4px"
+            color="fg.muted"
+            ps="4"
+            {...elementProps}
+          >
+            {children}
+          </Box>
+        ),
+      ),
       h1: createCommentableComponent(
         "h1",
         commentsByLine,
@@ -605,22 +629,28 @@ export const MarkdownPreview = ({
       ),
       ol({ children, className, node: _node, ...props }) {
         return (
-          <ol
+          <Box
+            as="ol"
             className={mergeClassNames("comment-markdown-body", className)}
+            listStyleType="decimal"
+            ps="2em"
             {...props}
           >
             {children}
-          </ol>
+          </Box>
         );
       },
       ul({ children, className, node: _node, ...props }) {
         return (
-          <ul
+          <Box
+            as="ul"
             className={mergeClassNames("comment-markdown-body", className)}
+            listStyleType="disc"
+            ps="2em"
             {...props}
           >
             {children}
-          </ul>
+          </Box>
         );
       },
       p: createCommentableComponent(
