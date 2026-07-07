@@ -6,6 +6,14 @@ import { previewThemeCss } from "../theme";
 
 afterEach(() => cleanup());
 
+const ensurePreviewThemeStyle = () => {
+  if (document.querySelector("style[data-testid='preview-theme-css']")) return;
+  const style = document.createElement("style");
+  style.dataset.testid = "preview-theme-css";
+  style.textContent = previewThemeCss;
+  document.head.append(style);
+};
+
 const renderMarkdown = (
   markdown: string,
   comments: PreviewComment[] = [],
@@ -18,6 +26,7 @@ const renderMarkdown = (
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
 ) => {
+  ensurePreviewThemeStyle();
   const result = render(
     <MarkdownPreview
       comments={comments}
@@ -144,6 +153,11 @@ console.log("<ok>");
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
       true,
     );
+    expect(getComputedStyle(listCommentTarget!).display).toBe("inline");
+    const listCommentContent = listCommentTarget!.querySelector(
+      ".commentable-content",
+    );
+    expect(getComputedStyle(listCommentContent!).display).toBe("inline");
     expect(
       container.querySelector('[data-source-line="1"] .commentable-content ul'),
     ).toBeNull();

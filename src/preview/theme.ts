@@ -345,6 +345,11 @@ export const previewThemeCss = `
         position: relative;
       }
 
+      .commentable-list-item,
+      .commentable-list-item > .commentable-content {
+        display: inline;
+      }
+
       .comment-markdown-body {
         display: contents;
       }
