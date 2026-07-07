@@ -634,8 +634,8 @@ export const MarkdownPreview = ({
           <List.Root
             as="ol"
             className={mergeClassNames("comment-markdown-body", className)}
-            listStylePosition="inside"
-            ps="2em"
+            listStylePosition="outside"
+            ps="2.5em"
             {...props}
           >
             {children}
@@ -647,8 +647,8 @@ export const MarkdownPreview = ({
           <List.Root
             as="ul"
             className={mergeClassNames("comment-markdown-body", className)}
-            listStylePosition="inside"
-            ps="2em"
+            listStylePosition="outside"
+            ps="2.5em"
             {...props}
           >
             {children}

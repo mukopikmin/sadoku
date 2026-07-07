@@ -57,7 +57,7 @@ console.log("<ok>");
       true,
     );
     expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
-    expect(getComputedStyle(unorderedList!).listStylePosition).toBe("inside");
+    expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
     expect(previewThemeCss).toContain(".comment-markdown-body pre");
