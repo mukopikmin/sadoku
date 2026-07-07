@@ -3,7 +3,6 @@ import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 export const sadokuChakraSystem = createSystem(
   defaultConfig,
   defineConfig({
-    preflight: false,
     globalCss: {
       body: {
         bg: "canvas",
@@ -151,6 +150,14 @@ export const previewThemeCss = `
 
       ul, ol {
         padding-left: 2em;
+      }
+
+      ul {
+        list-style-type: disc;
+      }
+
+      ol {
+        list-style-type: decimal;
       }
 
       li + li {
