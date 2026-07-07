@@ -148,14 +148,17 @@ export const previewThemeCss = `
         height: auto;
       }
 
+      .comment-markdown-body:where(ul, ol),
       .comment-markdown-body :where(ul, ol) {
         padding-left: 2em;
       }
 
+      .comment-markdown-body:is(ul),
       .comment-markdown-body ul {
         list-style-type: disc;
       }
 
+      .comment-markdown-body:is(ol),
       .comment-markdown-body ol {
         list-style-type: decimal;
       }

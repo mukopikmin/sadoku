@@ -262,13 +262,23 @@ const CommentableBlock = ({
 
 type ComponentProps = {
   children?: React.ReactNode;
+  className?: string;
   node?: SourceNode;
+};
+
+const mergeClassNames = (
+  ...classNames: Array<string | undefined>
+): string | undefined => {
+  const merged = classNames.filter(Boolean).join(" ");
+  return merged === "" ? undefined : merged;
 };
 
 const isListElement = (
   child: React.ReactNode,
 ): child is React.ReactElement =>
-  isValidElement(child) && (child.type === "ol" || child.type === "ul");
+  isValidElement(child) &&
+  (child.type === "ol" || child.type === "ul" ||
+    child.props.node?.tagName === "ol" || child.props.node?.tagName === "ul");
 
 const splitListItemChildren = (
   children: React.ReactNode,
@@ -593,6 +603,26 @@ export const MarkdownPreview = ({
         commentHighlightsByLine,
         commentCallbacks,
       ),
+      ol({ children, className, node: _node, ...props }) {
+        return (
+          <ol
+            className={mergeClassNames("comment-markdown-body", className)}
+            {...props}
+          >
+            {children}
+          </ol>
+        );
+      },
+      ul({ children, className, node: _node, ...props }) {
+        return (
+          <ul
+            className={mergeClassNames("comment-markdown-body", className)}
+            {...props}
+          >
+            {children}
+          </ul>
+        );
+      },
       p: createCommentableComponent(
         "p",
         commentsByLine,

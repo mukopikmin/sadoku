@@ -51,9 +51,12 @@ console.log("<ok>");
     expect(container.querySelector("h1#title .heading-anchor")?.textContent)
       .toBe("Title");
     expect(container.querySelector("strong")?.textContent).toBe("world");
+    const unorderedList = container.querySelector("ul");
     expect(container.querySelectorAll("ul > li")).toHaveLength(2);
-    expect(getComputedStyle(container.querySelector("ul")!).listStyleType)
-      .not.toBe("none");
+    expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
+      true,
+    );
+    expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
     expect(previewThemeCss).toContain(".comment-markdown-body pre");
