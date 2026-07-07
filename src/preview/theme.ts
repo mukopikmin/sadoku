@@ -429,6 +429,8 @@ export const previewThemeCss = `
         position: absolute;
         top: 8px;
         right: 8px;
+        background: var(--color-canvas);
+        color: var(--color-text);
       }
 
       .mermaid-zoom-close:hover,

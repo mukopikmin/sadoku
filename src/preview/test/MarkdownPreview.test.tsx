@@ -197,6 +197,9 @@ graph TD
     expect(
       screen.getByRole("button", { name: "Zoom Mermaid diagram" }),
     ).not.toBeNull();
+    expect(previewThemeCss).toContain(".mermaid-zoom-button");
+    expect(previewThemeCss).toContain("background: var(--color-canvas);");
+    expect(previewThemeCss).toContain("color: var(--color-text);");
   });
 
   it("does not render Mermaid zoom buttons for regular code fences", () => {
