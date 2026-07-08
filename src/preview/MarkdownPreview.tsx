@@ -166,6 +166,10 @@ const CommentableBlock = ({
         isSelected || hasCommentHighlight
           ? "commentable-block-selected"
           : undefined,
+        isSelected ? "commentable-block-range-selected" : undefined,
+        hasCommentHighlight
+          ? "commentable-block-comment-highlight"
+          : undefined,
         className,
       ].filter(Boolean).join(" ")}
       data-source-line={line}
@@ -624,6 +628,12 @@ export const MarkdownPreview = ({
         commentHighlightsByLine,
         commentCallbacks,
       ),
+      hr: createCommentableComponent(
+        "hr",
+        commentsByLine,
+        commentHighlightsByLine,
+        commentCallbacks,
+      ),
       li: createCommentableListItem(
         commentsByLine,
         commentHighlightsByLine,
@@ -633,7 +643,7 @@ export const MarkdownPreview = ({
         return (
           <List.Root
             as="ol"
-            className={className}
+            className={mergeClassNames("comment-markdown-list", className)}
             listStylePosition="outside"
             ps="2.5em"
             {...props}
@@ -646,7 +656,7 @@ export const MarkdownPreview = ({
         return (
           <List.Root
             as="ul"
-            className={className}
+            className={mergeClassNames("comment-markdown-list", className)}
             listStylePosition="outside"
             ps="2.5em"
             {...props}

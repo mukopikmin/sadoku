@@ -65,7 +65,12 @@ console.log("<ok>");
     expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
       false,
     );
+    expect(unorderedList?.classList.contains("comment-markdown-list")).toBe(
+      true,
+    );
     expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
+    expect(getComputedStyle(unorderedList!).marginTop).toBe("8px");
+    expect(getComputedStyle(unorderedList!).marginBottom).toBe("16px");
     expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
     expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
@@ -136,6 +141,23 @@ console.log("<ok>");
     expect(previewThemeCss).not.toMatch(/th \{[^}]*background:/);
   });
 
+  it("renders horizontal rules with vertical spacing around the line", () => {
+    const { container } = renderMarkdown(`Before
+
+---
+
+After
+`);
+
+    const horizontalRule = container.querySelector("hr");
+
+    expect(horizontalRule).not.toBeNull();
+    expect(getComputedStyle(horizontalRule!).height).toBe("calc(17px)");
+    expect(previewThemeCss).toContain(
+      "linear-gradient(var(--color-border-muted), var(--color-border-muted)) center / 100% 1px no-repeat",
+    );
+  });
+
   it("renders nested lists inside parent list items", () => {
     const { container } = renderMarkdown(`- parent
   - child
@@ -161,6 +183,10 @@ console.log("<ok>");
     expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
       "0px",
     );
+    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0.25em");
+    expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0.25em");
+    expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",
     );
@@ -419,10 +445,23 @@ Body
       ),
     ).toBe(true);
     expect(
+      container.querySelector('[data-source-line="1"]')?.classList.contains(
+        "commentable-block-comment-highlight",
+      ),
+    ).toBe(true);
+    expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-selected",
       ),
     ).toBe(true);
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-comment-highlight",
+      ),
+    ).toBe(true);
+    expect(previewThemeCss).toContain(".commentable-block-comment-highlight");
+    expect(previewThemeCss).toContain("#d29922");
+    expect(previewThemeCss).toContain(".commentable-block-range-selected");
   });
 
   it("shows and clears a single-line comment selection", () => {
@@ -434,10 +473,20 @@ Body
     fireEvent.click(getLine()!);
 
     expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(true);
 
     fireEvent.click(getLine()!);
 
     expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(false);
   });
 
   it("creates comments for a selected line range", async () => {

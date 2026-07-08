@@ -129,6 +129,11 @@ export const previewThemeCss = `
         margin-bottom: 16px;
       }
 
+      .comment-markdown-list {
+        margin-top: 8px;
+        margin-bottom: 16px;
+      }
+
       .comment-markdown-body a {
         color: var(--color-link);
         text-decoration: none;
@@ -153,6 +158,11 @@ export const previewThemeCss = `
       }
 
       .comment-markdown-body li > :where(ul, ol) {
+        margin-top: 0.25em;
+        margin-bottom: 0;
+      }
+
+      li > .comment-markdown-list {
         margin-top: 0.25em;
         margin-bottom: 0;
       }
@@ -333,10 +343,10 @@ export const previewThemeCss = `
       }
 
       .comment-markdown-body hr {
-        height: 0.25em;
+        height: calc(1px + 16px);
         margin: 24px 0;
         border: 0;
-        background: var(--color-border);
+        background: linear-gradient(var(--color-border-muted), var(--color-border-muted)) center / 100% 1px no-repeat;
       }
 
       .commentable-content {
@@ -374,13 +384,17 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--color-accent) 8%, transparent);
       }
 
-      .commentable-block-selected > .commentable-content::before {
-        background: color-mix(in srgb, var(--color-accent) 16%, transparent);
-      }
-
       .commentable-block:hover > .commentable-content::before,
       .commentable-block:focus-within > .commentable-content::before {
         background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+      }
+
+      .commentable-block-comment-highlight > .commentable-content::before {
+        background: color-mix(in srgb, #d29922 18%, transparent);
+      }
+
+      .commentable-block-range-selected > .commentable-content::before {
+        background: color-mix(in srgb, var(--color-accent) 18%, transparent);
       }
 
       .comment-selection-button {
