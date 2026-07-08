@@ -492,6 +492,7 @@ const createCommentablePre = (
           borderRadius="6px"
           p="4"
           bg="canvas.subtle"
+          color="code.fg"
           lineHeight="1.45"
           mt="0"
           mb="4"
@@ -816,7 +817,7 @@ export const MarkdownPreview = ({
             px={isCodeBlock ? "0" : "0.4em"}
             py={isCodeBlock ? "0" : "0.2em"}
             bg={isCodeBlock ? "transparent" : "code.bg"}
-            color="fg"
+            color={isCodeBlock ? "code.fg" : "fg"}
             fontFamily="mono"
             fontSize={isCodeBlock ? "0.85rem" : "0.85em"}
             {...props}

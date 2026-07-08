@@ -21,6 +21,7 @@ export const sadokuChakraSystem = createSystem(
           "border.default": { value: "#d0d7de" },
           "border.muted": { value: "#d8dee4" },
           "code.bg": { value: "#818b981f" },
+          "code.fg": { value: "#032f62" },
           "fg.default": { value: "#1f2328" },
           "fg.muted": { value: "#59636e" },
           "link.default": { value: "#0969da" },
@@ -45,6 +46,7 @@ export const sadokuChakraSystem = createSystem(
           "border.default": { value: { _dark: "#30363d", base: "#d0d7de" } },
           "border.muted": { value: { _dark: "#21262d", base: "#d8dee4" } },
           "code.bg": { value: { _dark: "#6e768166", base: "#818b981f" } },
+          "code.fg": { value: { _dark: "#79c0ff", base: "#032f62" } },
           fg: { value: { _dark: "#e6edf3", base: "#1f2328" } },
           "fg.muted": { value: { _dark: "#8b949e", base: "#59636e" } },
           link: { value: { _dark: "#58a6ff", base: "#0969da" } },
@@ -95,18 +97,18 @@ export const previewThemeCss = `
       }
 
       .hljs {
-        color: var(--color-text);
+        color: var(--chakra-colors-code\\.fg);
       }
 
       .hljs-comment,
       .hljs-quote {
-        color: var(--color-text-muted);
+        color: #4b5563;
       }
 
       .hljs-keyword,
       .hljs-selector-tag,
       .hljs-subst {
-        color: #cf222e;
+        color: #8b0000;
       }
 
       .hljs-literal,
@@ -114,7 +116,7 @@ export const previewThemeCss = `
       .hljs-tag .hljs-attr,
       .hljs-template-variable,
       .hljs-variable {
-        color: #953800;
+        color: #7a3e00;
       }
 
       .hljs-doctag,
@@ -122,14 +124,14 @@ export const previewThemeCss = `
       .hljs-title,
       .hljs-section,
       .hljs-selector-id {
-        color: #0a3069;
+        color: #005a00;
       }
 
       .hljs-type,
       .hljs-class .hljs-title,
       .hljs-built_in,
       .hljs-builtin-name {
-        color: #8250df;
+        color: #003c8f;
       }
 
       .hljs-attr,
@@ -138,14 +140,14 @@ export const previewThemeCss = `
       .hljs-selector-class,
       .hljs-selector-attr,
       .hljs-selector-pseudo {
-        color: #116329;
+        color: #005a00;
       }
 
       .hljs-symbol,
       .hljs-bullet,
       .hljs-link,
       .hljs-meta {
-        color: #0969da;
+        color: #4c1d95;
       }
 
       .hljs-deletion {

@@ -79,6 +79,8 @@ console.log("<ok>");
     expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
+    expect(getComputedStyle(container.querySelector(".hljs-string")!).color)
+      .toBe("rgb(0, 90, 0)");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
@@ -248,6 +250,8 @@ fun main() {
 
     expect(container.querySelector("code.hljs.language-kotlin")).not.toBeNull();
     expect(container.querySelector(".hljs-keyword")?.textContent).toBe("fun");
+    expect(getComputedStyle(container.querySelector(".hljs-keyword")!).color)
+      .toBe("rgb(139, 0, 0)");
   });
 
   it("adds source line controls to code fences", () => {
@@ -259,6 +263,14 @@ const value = 1;
     expect(
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
     ).not.toBeNull();
+    expect(getComputedStyle(container.querySelector(".language-ts span")!).color)
+      .not.toBe("var(--chakra-colors-code\\.fg)");
+    expect(getComputedStyle(container.querySelector("pre")!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(previewThemeCss).toContain(
+      ".hljs {\n        color: var(--chakra-colors-code\\.fg);",
+    );
   });
 
   it("renders indented code blocks with readable text color", () => {
@@ -270,7 +282,12 @@ const value = 1;
 
     expect(code?.classList.contains("hljs")).toBe(false);
     expect(code?.textContent).toContain('const indented = "<escaped>";');
-    expect(getComputedStyle(code!).color).toBe("var(--chakra-colors-fg)");
+    expect(getComputedStyle(code!.parentElement!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(getComputedStyle(code!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
     expect(getComputedStyle(code!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 
