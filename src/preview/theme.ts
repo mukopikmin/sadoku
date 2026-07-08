@@ -20,6 +20,7 @@ export const sadokuChakraSystem = createSystem(
           "canvas.subtle": { value: "#f6f8fa" },
           "border.default": { value: "#d0d7de" },
           "border.muted": { value: "#d8dee4" },
+          "code.bg": { value: "#818b981f" },
           "fg.default": { value: "#1f2328" },
           "fg.muted": { value: "#59636e" },
           "link.default": { value: "#0969da" },
@@ -43,6 +44,7 @@ export const sadokuChakraSystem = createSystem(
           "canvas.subtle": { value: { _dark: "#161b22", base: "#f6f8fa" } },
           "border.default": { value: { _dark: "#30363d", base: "#d0d7de" } },
           "border.muted": { value: { _dark: "#21262d", base: "#d8dee4" } },
+          "code.bg": { value: { _dark: "#6e768166", base: "#818b981f" } },
           fg: { value: { _dark: "#e6edf3", base: "#1f2328" } },
           "fg.muted": { value: { _dark: "#8b949e", base: "#59636e" } },
           link: { value: { _dark: "#58a6ff", base: "#0969da" } },
@@ -83,90 +85,6 @@ export const previewThemeCss = `
         }
       }
 
-
-      .comment-markdown-body h1 {
-        font-size: 2rem;
-      }
-
-      .comment-markdown-body :where(h1, h2) {
-        padding-bottom: 0.3em;
-        border-bottom: 1px solid var(--color-border-muted);
-      }
-
-      .comment-markdown-body :where(h1, h2, h3, h4, h5, h6) {
-        line-height: 1.25;
-        margin: 24px 0 16px;
-        font-weight: 600;
-      }
-
-      .comment-markdown-body h2 {
-        font-size: 1.5rem;
-      }
-
-      .comment-markdown-body h3 {
-        font-size: 1.25rem;
-      }
-
-      .comment-markdown-body h4 {
-        font-size: 1rem;
-      }
-
-      .comment-markdown-body h5 {
-        font-size: 0.875rem;
-      }
-
-      .comment-markdown-body h6 {
-        color: var(--color-text-muted);
-        font-size: 0.85rem;
-      }
-
-      .comment-markdown-body :where(h1:first-child, h2:first-child, h3:first-child) {
-        margin-top: 0;
-      }
-
-      .comment-markdown-body :where(p, blockquote, ul, ol, dl, table, pre) {
-        margin-top: 0;
-        margin-bottom: 16px;
-      }
-
-      .comment-markdown-list {
-        margin-top: 8px;
-        margin-bottom: 16px;
-      }
-
-      .comment-markdown-body a {
-        color: var(--color-link);
-        text-decoration: none;
-      }
-
-      .comment-markdown-body a:hover {
-        text-decoration: underline;
-      }
-
-      .comment-markdown-body .heading-anchor {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .comment-markdown-body img {
-        max-width: 100%;
-        height: auto;
-      }
-
-      .comment-markdown-body li + li {
-        margin-top: 0.25em;
-      }
-
-      .comment-markdown-body li > :where(ul, ol) {
-        margin-top: 0.25em;
-        margin-bottom: 0;
-      }
-
-      li > .comment-markdown-list {
-        margin-top: 0.25em;
-        margin-bottom: 0;
-      }
-
       .comment-markdown-body .task-list-item {
         list-style-type: none;
       }
@@ -174,29 +92,6 @@ export const previewThemeCss = `
       .comment-markdown-body .task-list-item-checkbox {
         margin: 0 0.5em 0.2em 0;
         vertical-align: middle;
-      }
-
-      .comment-markdown-body code {
-        border-radius: 6px;
-        padding: 0.2em 0.4em;
-        background: var(--color-code-bg);
-        font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, Monaco, "UDEV Gothic", "BIZ UDGothic", "Noto Sans Mono CJK JP", monospace;
-        font-size: 0.85em;
-      }
-
-      .comment-markdown-body pre {
-        overflow: auto;
-        border: 1px solid var(--color-border-muted);
-        border-radius: 6px;
-        padding: 16px;
-        background: var(--color-canvas-subtle);
-        line-height: 1.45;
-      }
-
-      .comment-markdown-body pre code {
-        padding: 0;
-        background: transparent;
-        font-size: 0.85rem;
       }
 
       .hljs {
@@ -340,13 +235,6 @@ export const previewThemeCss = `
 
       .comment-markdown-body tr {
         border-top: 1px solid var(--color-border-muted);
-      }
-
-      .comment-markdown-body hr {
-        height: calc(1px + 16px);
-        margin: 24px 0;
-        border: 0;
-        background: linear-gradient(var(--color-border-muted), var(--color-border-muted)) center / 100% 1px no-repeat;
       }
 
       .commentable-content {

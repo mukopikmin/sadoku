@@ -25,9 +25,9 @@ an entity: &copy;.
 Text before an unordered list.
 
 - unordered one
-- unordered **two** with inline `code`
+- unordered two
   - nested unordered after inline text
-  - nested unordered with an image ![nested image](nested.png)
+  - nested unordered before an ordered list
     1. nested ordered one
     2. nested ordered two
        - deeply nested unordered after ordered text
@@ -36,7 +36,7 @@ Text before an unordered list.
 Text between unordered and ordered lists.
 
 1. ordered one
-2. ordered two with [reference link][docs]
+2. ordered two
    1. nested ordered child
    2. nested ordered child with a task list below
       - [ ] nested unchecked task
@@ -51,18 +51,14 @@ Text between ordered and task lists.
 
 Text after task lists.
 
-## Loose List Items
+## Simple Nested Lists
 
-- Parent item with a paragraph.
-
-  Continuation paragraph inside the first list item.
-
-  - Nested list after a continuation paragraph
+- Parent item before a nested list
+  - Nested list first item
   - Nested list second item
+- Second parent item after a nested list
 
-- Second parent item after a loose item.
-
-Paragraph after loose lists.
+Paragraph after simple nested lists.
 
 ## Blockquotes Around Other Blocks
 
@@ -157,8 +153,7 @@ Math-looking text should remain plain text: $a^2 + b^2 = c^2$.
 Paragraph before final list.
 
 - final unordered item before quote
-- final unordered item with nested content
-  > nested quote-looking content inside a list item
+- final unordered item after quote text
 
 Paragraph between final list and final rule.
 

@@ -69,13 +69,17 @@ console.log("<ok>");
       true,
     );
     expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
-    expect(getComputedStyle(unorderedList!).marginTop).toBe("8px");
-    expect(getComputedStyle(unorderedList!).marginBottom).toBe("16px");
+    expect(getComputedStyle(unorderedList!).marginTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
+    expect(getComputedStyle(unorderedList!).marginBottom).toBe(
+      "var(--chakra-spacing-4)",
+    );
     expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
     expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
-    expect(previewThemeCss).toContain(".comment-markdown-body pre");
+    expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
   it("renders stable heading anchor links", () => {
@@ -152,9 +156,15 @@ After
     const horizontalRule = container.querySelector("hr");
 
     expect(horizontalRule).not.toBeNull();
-    expect(getComputedStyle(horizontalRule!).height).toBe("calc(17px)");
-    expect(previewThemeCss).toContain(
-      "linear-gradient(var(--color-border-muted), var(--color-border-muted)) center / 100% 1px no-repeat",
+    expect(horizontalRule?.getAttribute("role")).toBe("separator");
+    expect(horizontalRule?.getAttribute("aria-orientation")).toBe(
+      "horizontal",
+    );
+    expect(getComputedStyle(horizontalRule!.parentElement!).marginTop).toBe(
+      "var(--chakra-spacing-6)",
+    );
+    expect(getComputedStyle(horizontalRule!.parentElement!).marginBottom).toBe(
+      "var(--chakra-spacing-6)",
     );
   });
 
@@ -249,6 +259,19 @@ const value = 1;
     expect(
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
     ).not.toBeNull();
+  });
+
+  it("renders indented code blocks with readable text color", () => {
+    const { container } = renderMarkdown(`    const indented = "<escaped>";
+    console.log(indented);
+`);
+
+    const code = container.querySelector("pre code");
+
+    expect(code?.classList.contains("hljs")).toBe(false);
+    expect(code?.textContent).toContain('const indented = "<escaped>";');
+    expect(getComputedStyle(code!).color).toBe("var(--chakra-colors-fg)");
+    expect(getComputedStyle(code!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 
   it("renders mermaid code fences for browser-side diagrams", () => {

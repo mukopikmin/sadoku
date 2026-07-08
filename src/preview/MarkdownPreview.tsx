@@ -1,4 +1,12 @@
-import { Box, Button, Flex, List, Text, Textarea } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  List,
+  Separator,
+  Text,
+  Textarea,
+} from "@chakra-ui/react";
 import {
   Children,
   createContext,
@@ -42,6 +50,8 @@ export type MarkdownPreviewProps = {
 const trimFinalNewline = (value: string): string => value.replace(/\n$/, "");
 
 const SourceLineContext = createContext<ReadonlySet<number>>(new Set());
+const ListDepthContext = createContext(0);
+const CodeBlockContext = createContext(false);
 
 type SourcePosition = {
   start?: {
@@ -277,6 +287,37 @@ const mergeClassNames = (
   return merged === "" ? undefined : merged;
 };
 
+const headingSizes = {
+  h1: "2rem",
+  h2: "1.5rem",
+  h3: "1.25rem",
+  h4: "1rem",
+  h5: "0.875rem",
+  h6: "0.85rem",
+} as const;
+
+const renderHeading = (
+  tagName: keyof typeof headingSizes,
+  elementProps: Omit<ComponentProps, "children" | "node">,
+  children: React.ReactNode,
+) => (
+  <Box
+    as={tagName}
+    borderBottomWidth={tagName === "h1" || tagName === "h2" ? "1px" : "0"}
+    borderColor="border.muted"
+    color={tagName === "h6" ? "fg.muted" : undefined}
+    fontSize={headingSizes[tagName]}
+    fontWeight="semibold"
+    lineHeight="1.25"
+    mt="6"
+    mb="4"
+    pb={tagName === "h1" || tagName === "h2" ? "0.3em" : "0"}
+    {...elementProps}
+  >
+    {children}
+  </Box>
+);
+
 const isListElement = (
   child: React.ReactNode,
 ): child is React.ReactElement =>
@@ -442,7 +483,25 @@ const createCommentablePre = (
     const line = getSourceLine({ node });
     const mermaidCode = getMermaidCodeText(children);
     const element = mermaidCode === undefined
-      ? <pre {...elementProps}>{children}</pre>
+      ? (
+        <Box
+          as="pre"
+          overflow="auto"
+          borderWidth="1px"
+          borderColor="border.muted"
+          borderRadius="6px"
+          p="4"
+          bg="canvas.subtle"
+          lineHeight="1.45"
+          mt="0"
+          mb="4"
+          {...elementProps}
+        >
+          <CodeBlockContext.Provider value={true}>
+            {children}
+          </CodeBlockContext.Provider>
+        </Box>
+      )
       : (
         <div className="mermaid-container">
           <pre className="mermaid">{mermaidCode}</pre>
@@ -574,6 +633,25 @@ export const MarkdownPreview = ({
       selectedRange,
     };
     return {
+      a({ children, className, node: _node, ...props }) {
+        const isHeadingAnchor = className?.split(/\s+/).includes(
+          "heading-anchor",
+        ) ?? false;
+        return (
+          <Box
+            as="a"
+            className={className}
+            color={isHeadingAnchor ? "inherit" : "link"}
+            textDecoration="none"
+            _hover={isHeadingAnchor ? undefined : {
+              textDecoration: "underline",
+            }}
+            {...props}
+          >
+            {children}
+          </Box>
+        );
+      },
       blockquote: createCommentableComponent(
         "blockquote",
         commentsByLine,
@@ -585,6 +663,8 @@ export const MarkdownPreview = ({
             borderColor="border.default"
             borderLeftWidth="4px"
             color="fg.muted"
+            mt="0"
+            mb="4"
             pl="4"
             {...elementProps}
           >
@@ -597,72 +677,111 @@ export const MarkdownPreview = ({
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps, children) => renderHeading("h1", elementProps, children),
       ),
       h2: createCommentableComponent(
         "h2",
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps, children) => renderHeading("h2", elementProps, children),
       ),
       h3: createCommentableComponent(
         "h3",
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps, children) => renderHeading("h3", elementProps, children),
       ),
       h4: createCommentableComponent(
         "h4",
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps, children) => renderHeading("h4", elementProps, children),
       ),
       h5: createCommentableComponent(
         "h5",
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps, children) => renderHeading("h5", elementProps, children),
       ),
       h6: createCommentableComponent(
         "h6",
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps, children) => renderHeading("h6", elementProps, children),
       ),
       hr: createCommentableComponent(
         "hr",
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps) => (
+          <Box mt="6" mb="6">
+            <Separator
+              as="hr"
+              borderColor="border.muted"
+              m="0"
+              {...elementProps}
+            />
+          </Box>
+        ),
       ),
       li: createCommentableListItem(
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
       ),
-      ol({ children, className, node: _node, ...props }) {
+      img({ className, node: _node, ...props }) {
         return (
-          <List.Root
-            as="ol"
-            className={mergeClassNames("comment-markdown-list", className)}
-            listStylePosition="outside"
-            ps="2.5em"
+          <Box
+            as="img"
+            className={className}
+            maxW="100%"
+            h="auto"
             {...props}
-          >
-            {children}
-          </List.Root>
+          />
+        );
+      },
+      ol({ children, className, node: _node, ...props }) {
+        const listDepth = useContext(ListDepthContext);
+        const isNested = listDepth > 0;
+        return (
+          <ListDepthContext.Provider value={listDepth + 1}>
+            <List.Root
+              as="ol"
+              className={mergeClassNames("comment-markdown-list", className)}
+              listStylePosition="outside"
+              mt={isNested ? "0.25em" : "2"}
+              mb={isNested ? "0" : "4"}
+              ps="2.5em"
+              {...props}
+            >
+              {children}
+            </List.Root>
+          </ListDepthContext.Provider>
         );
       },
       ul({ children, className, node: _node, ...props }) {
+        const listDepth = useContext(ListDepthContext);
+        const isNested = listDepth > 0;
         return (
-          <List.Root
-            as="ul"
-            className={mergeClassNames("comment-markdown-list", className)}
-            listStylePosition="outside"
-            ps="2.5em"
-            {...props}
-          >
-            {children}
-          </List.Root>
+          <ListDepthContext.Provider value={listDepth + 1}>
+            <List.Root
+              as="ul"
+              className={mergeClassNames("comment-markdown-list", className)}
+              listStylePosition="outside"
+              mt={isNested ? "0.25em" : "2"}
+              mb={isNested ? "0" : "4"}
+              ps="2.5em"
+              {...props}
+            >
+              {children}
+            </List.Root>
+          </ListDepthContext.Provider>
         );
       },
       p: createCommentableComponent(
@@ -670,6 +789,11 @@ export const MarkdownPreview = ({
         commentsByLine,
         commentHighlightsByLine,
         commentCallbacks,
+        (elementProps, children) => (
+          <Text as="p" mt="0" mb="4" {...elementProps}>
+            {children}
+          </Text>
+        ),
       ),
       pre: createCommentablePre(
         commentsByLine,
@@ -683,10 +807,22 @@ export const MarkdownPreview = ({
         commentCallbacks,
       ),
       code({ children, className, ...props }) {
+        const isCodeBlock = useContext(CodeBlockContext);
         return (
-          <code className={className} {...props}>
+          <Box
+            as="code"
+            className={className}
+            borderRadius={isCodeBlock ? "0" : "6px"}
+            px={isCodeBlock ? "0" : "0.4em"}
+            py={isCodeBlock ? "0" : "0.2em"}
+            bg={isCodeBlock ? "transparent" : "code.bg"}
+            color="fg"
+            fontFamily="mono"
+            fontSize={isCodeBlock ? "0.85rem" : "0.85em"}
+            {...props}
+          >
             {children}
-          </code>
+          </Box>
         );
       },
     };
