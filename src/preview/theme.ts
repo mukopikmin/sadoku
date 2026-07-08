@@ -340,9 +340,11 @@ export const previewThemeCss = `
       }
 
       .commentable-content {
+        box-sizing: border-box;
         cursor: pointer;
         isolation: isolate;
         position: relative;
+        width: 100%;
       }
 
       .commentable-list-item {
@@ -350,7 +352,7 @@ export const previewThemeCss = `
       }
 
       .commentable-list-item > .commentable-content {
-        display: inline;
+        display: block;
       }
 
       .comment-markdown-body {

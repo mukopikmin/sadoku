@@ -178,7 +178,8 @@ console.log("<ok>");
     const listCommentContent = listCommentTarget!.querySelector(
       ".commentable-content",
     );
-    expect(getComputedStyle(listCommentContent!).display).toBe("inline");
+    expect(getComputedStyle(listCommentContent!).display).toBe("block");
+    expect(getComputedStyle(listCommentContent!).width).toBe("100%");
     expect(
       container.querySelector('[data-source-line="1"] .commentable-content ul'),
     ).toBeNull();
