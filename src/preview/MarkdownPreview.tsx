@@ -177,9 +177,7 @@ const CommentableBlock = ({
           ? "commentable-block-selected"
           : undefined,
         isSelected ? "commentable-block-range-selected" : undefined,
-        hasCommentHighlight
-          ? "commentable-block-comment-highlight"
-          : undefined,
+        hasCommentHighlight ? "commentable-block-comment-highlight" : undefined,
         className,
       ].filter(Boolean).join(" ")}
       data-source-line={line}

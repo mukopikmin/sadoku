@@ -263,7 +263,9 @@ const value = 1;
     expect(
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
     ).not.toBeNull();
-    expect(getComputedStyle(container.querySelector(".language-ts span")!).color)
+    expect(
+      getComputedStyle(container.querySelector(".language-ts span")!).color,
+    )
       .not.toBe("var(--chakra-colors-code\\.fg)");
     expect(getComputedStyle(container.querySelector("pre")!).color).toBe(
       "var(--chakra-colors-code\\.fg)",

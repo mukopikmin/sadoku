@@ -47,7 +47,7 @@ Text between ordered and task lists.
 
 - [ ] unchecked task
 - [x] checked task
-- [X] uppercase checked task
+- [x] uppercase checked task
 
 Text after task lists.
 
@@ -139,8 +139,7 @@ Raw HTML should be escaped:
 
 Definition-list-looking text should remain plain paragraphs:
 
-Term
-: Definition text
+Term : Definition text
 
 Footnote-looking text should remain plain text.[^note]
 
