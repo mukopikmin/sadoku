@@ -63,8 +63,9 @@ console.log("<ok>");
     const unorderedList = container.querySelector("ul");
     expect(container.querySelectorAll("ul > li")).toHaveLength(2);
     expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
-      true,
+      false,
     );
+    expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
     expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
     expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
@@ -146,6 +147,26 @@ console.log("<ok>");
       "ordered child",
     );
     expect(container.querySelectorAll("ul > li")).toHaveLength(3);
+    const nestedUnorderedList = container.querySelector("ul ul");
+    const nestedOrderedList = container.querySelector("ul ul ol");
+    expect(nestedUnorderedList).not.toBeNull();
+    expect(nestedOrderedList).not.toBeNull();
+    expect(getComputedStyle(nestedUnorderedList!).display).not.toBe(
+      "contents",
+    );
+    expect(getComputedStyle(nestedOrderedList!).display).not.toBe("contents");
+    expect(getComputedStyle(nestedUnorderedList!).paddingInlineStart).not.toBe(
+      "0px",
+    );
+    expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
+      "0px",
+    );
+    expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
+      "outside",
+    );
+    expect(getComputedStyle(nestedOrderedList!).listStylePosition).toBe(
+      "outside",
+    );
     const listCommentTarget = container.querySelector(
       "li > .commentable-list-item",
     );
