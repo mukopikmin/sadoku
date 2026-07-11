@@ -228,6 +228,43 @@ describe("CommentList", () => {
     await waitFor(() => expect(onDeleteReply).toHaveBeenCalledWith(1, 1));
   });
 
+  it("renders comments and replies as safe GFM Markdown", () => {
+    const { container } = render(
+      <CommentList
+        comments={[createComment({
+          body:
+            "**Important**\n\n- first\n- second\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n<script>alert(1)</script>",
+          replies: [{
+            body:
+              "See [documentation](https://example.com).\n\n```ts\nconst answer = 42;\n```",
+            createdAt: "2026-06-05T01:00:00.000Z",
+            id: 1,
+            updatedAt: "2026-06-05T01:00:00.000Z",
+          }],
+        })]}
+        onDeleteComment={async () => {}}
+        onDeleteReply={async () => {}}
+        onReplyComment={async () => {}}
+        onReopenComment={async () => {}}
+        onResolveComment={async () => {}}
+        onUpdateComment={async () => {}}
+        onUpdateReply={async () => {}}
+      />,
+    );
+
+    expect(container.querySelector("strong")?.textContent).toBe("Important");
+    expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    expect(container.querySelector("table td")?.textContent).toBe("1");
+    expect(
+      screen.getByRole("link", { name: "documentation" }).getAttribute("href"),
+    )
+      .toBe("https://example.com");
+    expect(container.querySelector("code.hljs.language-ts")?.textContent)
+      .toContain("const answer = 42;");
+    expect(container.querySelector("script")).toBeNull();
+    expect(container.textContent).toContain("<script>alert(1)</script>");
+  });
+
   it("resolves and reopens comments", async () => {
     const onReopenComment = vi.fn(async () => {});
     const onResolveComment = vi.fn(async () => {});
