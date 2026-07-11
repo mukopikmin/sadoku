@@ -103,8 +103,11 @@ export const initializeMermaid = async (
 ): Promise<void> => {
   const nodes = Array.from(
     document.querySelectorAll<HTMLElement>(".mermaid"),
-  );
-  if (nodes.length === 0) return;
+  ).filter((node) => node.dataset.processed !== "true");
+  if (nodes.length === 0) {
+    initializeMermaidZoom(document);
+    return;
+  }
 
   const { default: mermaid } = await importMermaid();
   mermaid.initialize({

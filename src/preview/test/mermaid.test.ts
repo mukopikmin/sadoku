@@ -55,6 +55,28 @@ describe("initializeMermaid", () => {
         .mermaidZoomInitialized,
     ).toBe("true");
   });
+
+  it("skips diagrams that mermaid has already processed", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><div class="mermaid-container"><pre class="mermaid" data-processed="true"><svg></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
+      "text/html",
+    );
+    let loaded = false;
+
+    await initializeMermaid({
+      document,
+      importMermaid: async () => {
+        loaded = true;
+        throw new Error("unexpected import");
+      },
+    });
+
+    expect(loaded).toBe(false);
+    expect(
+      document.querySelector<HTMLElement>(".mermaid-container")?.dataset
+        .mermaidZoomInitialized,
+    ).toBe("true");
+  });
 });
 
 describe("initializeMermaidZoom", () => {

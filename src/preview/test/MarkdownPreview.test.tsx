@@ -2,9 +2,17 @@ import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
+import { initializeMermaid } from "../mermaid";
 import { previewThemeCss } from "../theme";
 
-afterEach(() => cleanup());
+vi.mock("../mermaid", () => ({
+  initializeMermaid: vi.fn(async () => {}),
+}));
+
+afterEach(() => {
+  cleanup();
+  vi.mocked(initializeMermaid).mockClear();
+});
 
 const ensurePreviewThemeStyle = () => {
   if (document.querySelector("style[data-testid='preview-theme-css']")) return;
@@ -313,6 +321,20 @@ graph TD
     expect(previewThemeCss).toContain("color: var(--color-text);");
     expect(previewThemeCss).toContain(".mermaid-zoom-button");
     expect(previewThemeCss).toContain("background: var(--color-canvas);");
+  });
+
+  it("reruns mermaid rendering after preview interactions recreate diagram nodes", async () => {
+    renderMarkdown(`\`\`\`mermaid
+graph TD
+  A --> B
+\`\`\`
+`);
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByTitle("Select line 1 for comment"));
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
   });
 
   it("does not render Mermaid zoom buttons for regular code fences", () => {
