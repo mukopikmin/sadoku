@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Box, Button, Container, Flex, Link, Text } from "@chakra-ui/react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
   createComment,
   createReply,
@@ -33,6 +34,29 @@ type LoadState =
   | { message: string; status: "error" };
 
 type View = "comments" | "preview";
+
+const PreviewShell = ({ children }: { children: ReactNode }) => (
+  <Container as="main" maxW="980px" px="32px" py="32px" pb="64px">
+    <Flex
+      as="header"
+      position="sticky"
+      top="0"
+      zIndex="10"
+      align="center"
+      justify="space-between"
+      gap="4"
+      mb="8"
+      borderBottomWidth="1px"
+      borderColor="border.muted"
+      pb="4"
+      bg="canvas"
+      color="fg.muted"
+      fontSize="sm"
+    >
+      {children}
+    </Flex>
+  </Container>
+);
 
 const loadPreviewDocument = async (): Promise<PreviewDocument> => {
   const response = await fetch("/__sadoku/document");
@@ -211,9 +235,7 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <main>
-          <header className="sticky-preview-header">Loading preview...</header>
-        </main>
+        <PreviewShell>Loading preview...</PreviewShell>
       </>
     );
   }
@@ -222,9 +244,7 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <main>
-          <header className="sticky-preview-header">{state.message}</header>
-        </main>
+        <PreviewShell>{state.message}</PreviewShell>
       </>
     );
   }
@@ -239,41 +259,84 @@ export const App = () => {
   return (
     <>
       <style>{previewThemeCss}</style>
-      <main>
-        <header className="sticky-preview-header">
-          <div>
+      <Container as="main" maxW="980px" px="32px" py="32px" pb="64px">
+        <Flex
+          as="header"
+          position="sticky"
+          top="0"
+          zIndex="10"
+          align="center"
+          justify="space-between"
+          gap="4"
+          mb="8"
+          borderBottomWidth="1px"
+          borderColor="border.muted"
+          pb="4"
+          bg="canvas"
+          color="fg.muted"
+          fontSize="sm"
+        >
+          <Text as="div">
             Previewing{" "}
-            <a href={state.document.fileUrl}>{state.document.title}</a>.
+            <Link
+              href={state.document.fileUrl}
+              color="fg"
+              fontWeight="semibold"
+            >
+              {state.document.title}
+            </Link>.
             {reloadAvailable && (
-              <span className="reload-notice" role="status">
+              <Flex
+                as="span"
+                role="status"
+                display="inline-flex"
+                wrap="wrap"
+                align="center"
+                gap="2"
+                ml="2"
+                color="warning.fg"
+              >
                 Source changes are available.
-                <button
+                <Button
+                  size="xs"
+                  variant="outline"
+                  colorPalette="yellow"
                   onClick={() => globalThis.location.reload()}
                   type="button"
                 >
                   Reload preview
-                </button>
-              </span>
+                </Button>
+              </Flex>
             )}
-          </div>
-          <nav className="preview-nav" aria-label="Preview views">
-            <button
+          </Text>
+          <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
+            <Button
               aria-current={view === "preview" ? "page" : undefined}
+              colorPalette={view === "preview" ? "blue" : "gray"}
               onClick={() => setView("preview")}
+              size="sm"
               type="button"
+              variant="outline"
             >
               Preview
-            </button>
-            <button
+            </Button>
+            <Button
               aria-current={view === "comments" ? "page" : undefined}
+              colorPalette={view === "comments" ? "blue" : "gray"}
               onClick={() => setView("comments")}
+              size="sm"
               type="button"
+              variant="outline"
             >
               Comments {state.comments.length}
-              {staleCommentCount > 0 && <span>Stale {staleCommentCount}</span>}
-            </button>
-          </nav>
-        </header>
+              {staleCommentCount > 0 && (
+                <Box as="span" ml="1" color="warning.fg">
+                  Stale {staleCommentCount}
+                </Box>
+              )}
+            </Button>
+          </Flex>
+        </Flex>
         {view === "preview"
           ? (
             <MarkdownPreview
@@ -300,7 +363,7 @@ export const App = () => {
               onUpdateReply={handleUpdateReply}
             />
           )}
-      </main>
+      </Container>
     </>
   );
 };

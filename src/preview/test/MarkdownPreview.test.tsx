@@ -1,15 +1,18 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
+import { previewThemeCss } from "../theme";
 
 afterEach(() => cleanup());
+
+const ensurePreviewThemeStyle = () => {
+  if (document.querySelector("style[data-testid='preview-theme-css']")) return;
+  const style = document.createElement("style");
+  style.dataset.testid = "preview-theme-css";
+  style.textContent = previewThemeCss;
+  document.head.append(style);
+};
 
 const renderMarkdown = (
   markdown: string,
@@ -23,6 +26,7 @@ const renderMarkdown = (
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
 ) => {
+  ensurePreviewThemeStyle();
   const result = render(
     <MarkdownPreview
       comments={comments}
@@ -56,9 +60,28 @@ console.log("<ok>");
     expect(container.querySelector("h1#title .heading-anchor")?.textContent)
       .toBe("Title");
     expect(container.querySelector("strong")?.textContent).toBe("world");
+    const unorderedList = container.querySelector("ul");
     expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
+      false,
+    );
+    expect(unorderedList?.classList.contains("comment-markdown-list")).toBe(
+      true,
+    );
+    expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
+    expect(getComputedStyle(unorderedList!).marginTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
+    expect(getComputedStyle(unorderedList!).marginBottom).toBe(
+      "var(--chakra-spacing-4)",
+    );
+    expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
+    expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
+    expect(getComputedStyle(container.querySelector(".hljs-string")!).color)
+      .toBe("rgb(0, 90, 0)");
+    expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
   it("renders stable heading anchor links", () => {
@@ -120,6 +143,31 @@ console.log("<ok>");
     expect(container.querySelector('th[style*="text-align: right"]'))
       .not.toBeNull();
     expect(container.querySelector("td strong")?.textContent).toBe("beta");
+    expect(previewThemeCss).not.toContain("tbody tr:nth-child");
+    expect(previewThemeCss).not.toMatch(/th \{[^}]*background:/);
+  });
+
+  it("renders horizontal rules with vertical spacing around the line", () => {
+    const { container } = renderMarkdown(`Before
+
+---
+
+After
+`);
+
+    const horizontalRule = container.querySelector("hr");
+
+    expect(horizontalRule).not.toBeNull();
+    expect(horizontalRule?.getAttribute("role")).toBe("separator");
+    expect(horizontalRule?.getAttribute("aria-orientation")).toBe(
+      "horizontal",
+    );
+    expect(getComputedStyle(horizontalRule!.parentElement!).marginTop).toBe(
+      "var(--chakra-spacing-6)",
+    );
+    expect(getComputedStyle(horizontalRule!.parentElement!).marginBottom).toBe(
+      "var(--chakra-spacing-6)",
+    );
   });
 
   it("renders nested lists inside parent list items", () => {
@@ -133,6 +181,30 @@ console.log("<ok>");
       "ordered child",
     );
     expect(container.querySelectorAll("ul > li")).toHaveLength(3);
+    const nestedUnorderedList = container.querySelector("ul ul");
+    const nestedOrderedList = container.querySelector("ul ul ol");
+    expect(nestedUnorderedList).not.toBeNull();
+    expect(nestedOrderedList).not.toBeNull();
+    expect(getComputedStyle(nestedUnorderedList!).display).not.toBe(
+      "contents",
+    );
+    expect(getComputedStyle(nestedOrderedList!).display).not.toBe("contents");
+    expect(getComputedStyle(nestedUnorderedList!).paddingInlineStart).not.toBe(
+      "0px",
+    );
+    expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
+      "0px",
+    );
+    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0.25em");
+    expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0.25em");
+    expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
+      "outside",
+    );
+    expect(getComputedStyle(nestedOrderedList!).listStylePosition).toBe(
+      "outside",
+    );
     const listCommentTarget = container.querySelector(
       "li > .commentable-list-item",
     );
@@ -140,6 +212,12 @@ console.log("<ok>");
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
       true,
     );
+    expect(getComputedStyle(listCommentTarget!).display).toBe("contents");
+    const listCommentContent = listCommentTarget!.querySelector(
+      ".commentable-content",
+    );
+    expect(getComputedStyle(listCommentContent!).display).toBe("block");
+    expect(getComputedStyle(listCommentContent!).width).toBe("100%");
     expect(
       container.querySelector('[data-source-line="1"] .commentable-content ul'),
     ).toBeNull();
@@ -159,6 +237,7 @@ console.log("<ok>");
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
     expect(container.querySelector(".task-list-item")).not.toBeNull();
+    expect(previewThemeCss).not.toContain("0 0.5em 0.2em -");
   });
 
   it("highlights Kotlin code fences", () => {
@@ -171,6 +250,8 @@ fun main() {
 
     expect(container.querySelector("code.hljs.language-kotlin")).not.toBeNull();
     expect(container.querySelector(".hljs-keyword")?.textContent).toBe("fun");
+    expect(getComputedStyle(container.querySelector(".hljs-keyword")!).color)
+      .toBe("rgb(139, 0, 0)");
   });
 
   it("adds source line controls to code fences", () => {
@@ -182,6 +263,34 @@ const value = 1;
     expect(
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
     ).not.toBeNull();
+    expect(
+      getComputedStyle(container.querySelector(".language-ts span")!).color,
+    )
+      .not.toBe("var(--chakra-colors-code\\.fg)");
+    expect(getComputedStyle(container.querySelector("pre")!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(previewThemeCss).toContain(
+      ".hljs {\n        color: var(--chakra-colors-code\\.fg);",
+    );
+  });
+
+  it("renders indented code blocks with readable text color", () => {
+    const { container } = renderMarkdown(`    const indented = "<escaped>";
+    console.log(indented);
+`);
+
+    const code = container.querySelector("pre code");
+
+    expect(code?.classList.contains("hljs")).toBe(false);
+    expect(code?.textContent).toContain('const indented = "<escaped>";');
+    expect(getComputedStyle(code!.parentElement!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(getComputedStyle(code!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(getComputedStyle(code!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 
   it("renders mermaid code fences for browser-side diagrams", () => {
@@ -197,6 +306,13 @@ graph TD
     expect(
       screen.getByRole("button", { name: "Zoom Mermaid diagram" }),
     ).not.toBeNull();
+    expect(previewThemeCss).toContain(".mermaid {");
+    expect(previewThemeCss).toContain(
+      "background: var(--color-canvas-subtle);",
+    );
+    expect(previewThemeCss).toContain("color: var(--color-text);");
+    expect(previewThemeCss).toContain(".mermaid-zoom-button");
+    expect(previewThemeCss).toContain("background: var(--color-canvas);");
   });
 
   it("does not render Mermaid zoom buttons for regular code fences", () => {
@@ -371,10 +487,23 @@ Body
       ),
     ).toBe(true);
     expect(
+      container.querySelector('[data-source-line="1"]')?.classList.contains(
+        "commentable-block-comment-highlight",
+      ),
+    ).toBe(true);
+    expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-selected",
       ),
     ).toBe(true);
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-comment-highlight",
+      ),
+    ).toBe(true);
+    expect(previewThemeCss).toContain(".commentable-block-comment-highlight");
+    expect(previewThemeCss).toContain("#d29922");
+    expect(previewThemeCss).toContain(".commentable-block-range-selected");
   });
 
   it("shows and clears a single-line comment selection", () => {
@@ -386,10 +515,20 @@ Body
     fireEvent.click(getLine()!);
 
     expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(true);
 
     fireEvent.click(getLine()!);
 
     expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(false);
   });
 
   it("creates comments for a selected line range", async () => {

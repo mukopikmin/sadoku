@@ -1,14 +1,7 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { initializeMermaid } from "../mermaid";
-import { previewThemeCss } from "../theme";
 
 vi.mock("../mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
@@ -138,12 +131,11 @@ describe("App", () => {
     await screen.findByRole("link", { name: "example.md" });
 
     const header = container.querySelector("header");
-    expect(header?.classList.contains("sticky-preview-header")).toBe(true);
-    expect(previewThemeCss).toContain("header.sticky-preview-header");
-    expect(previewThemeCss).toContain("position: sticky;");
-    expect(previewThemeCss).toContain("top: 0;");
-    expect(previewThemeCss).toContain("z-index: 10;");
-    expect(previewThemeCss).toContain("background: var(--color-canvas);");
+    expect(header).not.toBeNull();
+    const styles = getComputedStyle(header!);
+    expect(styles.position).toBe("sticky");
+    expect(styles.top).toBe("0px");
+    expect(styles.zIndex).toBe("10");
   });
 
   it("shows stale comments only in the comments view", async () => {
