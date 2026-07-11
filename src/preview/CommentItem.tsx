@@ -95,6 +95,7 @@ const ReplyItem = ({
       borderColor="border.muted"
       borderLeftWidth="3px"
       borderRadius="sm"
+      className="comment-reply"
       ml="4"
       mt="2"
       pl="3"

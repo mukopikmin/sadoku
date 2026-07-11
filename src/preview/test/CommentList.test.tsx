@@ -172,7 +172,7 @@ describe("CommentList", () => {
     );
 
     const existingReply = screen.getByText("Existing reply.");
-    const replyContainer = existingReply.closest("div");
+    const replyContainer = existingReply.closest(".comment-reply");
     expect(existingReply).not.toBeNull();
     expect(getComputedStyle(replyContainer!).marginLeft).toBe(
       "var(--chakra-spacing-4)",
