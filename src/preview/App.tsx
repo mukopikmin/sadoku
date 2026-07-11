@@ -15,7 +15,6 @@ import {
 import { CommentList } from "./CommentList";
 import { connectHotReload } from "./hot_reload";
 import { MarkdownPreview } from "./MarkdownPreview";
-import { initializeMermaid } from "./mermaid";
 import { previewThemeCss } from "./theme";
 
 type PreviewDocument = {
@@ -101,11 +100,6 @@ export const App = () => {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (state.status !== "loaded" || view !== "preview") return;
-    initializeMermaid();
-  }, [state, view]);
 
   const handleCreateComment = async (
     startLine: number,
