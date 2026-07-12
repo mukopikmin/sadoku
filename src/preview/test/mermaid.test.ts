@@ -55,6 +55,31 @@ describe("initializeMermaid", () => {
         .mermaidZoomInitialized,
     ).toBe("true");
   });
+
+  it("uses an explicit mermaid theme when provided", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
+      "text/html",
+    );
+    const calls: unknown[] = [];
+
+    await initializeMermaid({
+      document,
+      importMermaid: async () => ({
+        default: {
+          initialize: (options) => calls.push(["initialize", options]),
+          run: async (options) => calls.push(["run", options]),
+        },
+      }),
+      prefersDark: () => true,
+      theme: "default",
+    });
+
+    expect(calls[0]).toEqual([
+      "initialize",
+      { startOnLoad: false, theme: "default" },
+    ]);
+  });
 });
 
 describe("initializeMermaidZoom", () => {
