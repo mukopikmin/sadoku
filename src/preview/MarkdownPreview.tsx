@@ -107,6 +107,14 @@ const formatRangeLabel = (range: CommentRange): string =>
     ? `line ${range.startLine}`
     : `lines ${range.startLine}-${range.endLine}`;
 
+const hasTextSelectionWithin = (element: Element): boolean => {
+  const selection = element.ownerDocument.getSelection();
+  if (!selection || selection.isCollapsed) return false;
+
+  return element.contains(selection.anchorNode) ||
+    element.contains(selection.focusNode);
+};
+
 const CommentableBlock = ({
   activeRange,
   children,
@@ -160,6 +168,10 @@ const CommentableBlock = ({
     const target = event.target;
     if (!(target instanceof Element)) return;
     if (target.closest("button, input, label, select, textarea")) return;
+    if (hasTextSelectionWithin(event.currentTarget)) {
+      event.stopPropagation();
+      return;
+    }
 
     const link = target.closest("a");
     if (link && !link.classList.contains("heading-anchor")) return;
@@ -376,17 +388,34 @@ type CommentControlProps =
     selectedRange?: CommentRange;
   };
 
+type CommentRenderingContextValue = CommentControlProps & {
+  commentsByLine: Map<number, PreviewComment[]>;
+  commentHighlightsByLine: Set<number>;
+};
+
+const CommentRenderingContext = createContext<
+  CommentRenderingContextValue | undefined
+>(undefined);
+
+const useCommentRenderingContext = (): CommentRenderingContextValue => {
+  const value = useContext(CommentRenderingContext);
+  if (!value) throw new Error("Missing comment rendering context.");
+  return value;
+};
+
 const createCommentableComponent = (
   tagName: keyof React.JSX.IntrinsicElements,
-  commentsByLine: Map<number, PreviewComment[]>,
-  commentHighlightsByLine: Set<number>,
-  props: CommentControlProps,
   renderElement?: (
     elementProps: Omit<ComponentProps, "children" | "node">,
     children: React.ReactNode,
   ) => React.ReactNode,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
+    const {
+      commentsByLine,
+      commentHighlightsByLine,
+      ...props
+    } = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
     const element = renderElement
@@ -423,12 +452,13 @@ const createCommentableComponent = (
   };
 };
 
-const createCommentableListItem = (
-  commentsByLine: Map<number, PreviewComment[]>,
-  commentHighlightsByLine: Set<number>,
-  props: CommentControlProps,
-) => {
+const createCommentableListItem = () => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
+    const {
+      commentsByLine,
+      commentHighlightsByLine,
+      ...props
+    } = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
     const { itemChildren, nestedLists } = splitListItemChildren(children);
@@ -471,12 +501,13 @@ const createCommentableListItem = (
   };
 };
 
-const createCommentablePre = (
-  commentsByLine: Map<number, PreviewComment[]>,
-  commentHighlightsByLine: Set<number>,
-  props: CommentControlProps,
-) => {
+const createCommentablePre = () => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
+    const {
+      commentsByLine,
+      commentHighlightsByLine,
+      ...props
+    } = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
     const mermaidCode = getMermaidCodeText(children);
@@ -616,21 +647,6 @@ export const MarkdownPreview = ({
   };
 
   const components = useMemo<Components>(() => {
-    const commentCallbacks = {
-      activeCommentLine,
-      activeRange,
-      onCloseCommentForm: handleCloseCommentForm,
-      onCreateComment,
-      onDeleteComment,
-      onDeleteReply,
-      onOpenCommentForm: handleOpenCommentForm,
-      onSelectCommentLine: handleSelectCommentLine,
-      onReplyComment,
-      onResolveComment,
-      onUpdateComment,
-      onUpdateReply,
-      selectedRange,
-    };
     return {
       a({ children, className, node: _node, ...props }) {
         const isHeadingAnchor = className?.split(/\s+/).includes(
@@ -653,9 +669,6 @@ export const MarkdownPreview = ({
       },
       blockquote: createCommentableComponent(
         "blockquote",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => (
           <Box
             as="blockquote"
@@ -673,51 +686,30 @@ export const MarkdownPreview = ({
       ),
       h1: createCommentableComponent(
         "h1",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => renderHeading("h1", elementProps, children),
       ),
       h2: createCommentableComponent(
         "h2",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => renderHeading("h2", elementProps, children),
       ),
       h3: createCommentableComponent(
         "h3",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => renderHeading("h3", elementProps, children),
       ),
       h4: createCommentableComponent(
         "h4",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => renderHeading("h4", elementProps, children),
       ),
       h5: createCommentableComponent(
         "h5",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => renderHeading("h5", elementProps, children),
       ),
       h6: createCommentableComponent(
         "h6",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => renderHeading("h6", elementProps, children),
       ),
       hr: createCommentableComponent(
         "hr",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps) => (
           <Box mt="6" mb="6">
             <Separator
@@ -729,11 +721,7 @@ export const MarkdownPreview = ({
           </Box>
         ),
       ),
-      li: createCommentableListItem(
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
-      ),
+      li: createCommentableListItem(),
       img({ className, node: _node, ...props }) {
         return (
           <Box
@@ -785,25 +773,15 @@ export const MarkdownPreview = ({
       },
       p: createCommentableComponent(
         "p",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
         (elementProps, children) => (
           <Text as="p" mt="0" mb="4" {...elementProps}>
             {children}
           </Text>
         ),
       ),
-      pre: createCommentablePre(
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
-      ),
+      pre: createCommentablePre(),
       table: createCommentableComponent(
         "table",
-        commentsByLine,
-        commentHighlightsByLine,
-        commentCallbacks,
       ),
       code({ children, className, ...props }) {
         const isCodeBlock = useContext(CodeBlockContext);
@@ -825,36 +803,42 @@ export const MarkdownPreview = ({
         );
       },
     };
-  }, [
+  }, []);
+
+  const commentRenderingContext = {
     activeCommentLine,
     activeRange,
     commentsByLine,
     commentHighlightsByLine,
-    lineSelectionAnchor,
+    onCloseCommentForm: handleCloseCommentForm,
     onCreateComment,
     onDeleteComment,
     onDeleteReply,
+    onOpenCommentForm: handleOpenCommentForm,
+    onSelectCommentLine: handleSelectCommentLine,
     onReplyComment,
     onResolveComment,
     onUpdateComment,
     onUpdateReply,
     selectedRange,
-  ]);
+  };
 
   return (
-    <ReactMarkdown
-      components={components}
-      rehypePlugins={[
-        rehypeSlug,
-        [rehypeAutolinkHeadings, {
-          behavior: "wrap",
-          properties: { className: "heading-anchor" },
-        }],
-        rehypeHighlight,
-      ]}
-      remarkPlugins={[remarkGfm]}
-    >
-      {markdown}
-    </ReactMarkdown>
+    <CommentRenderingContext.Provider value={commentRenderingContext}>
+      <ReactMarkdown
+        components={components}
+        rehypePlugins={[
+          rehypeSlug,
+          [rehypeAutolinkHeadings, {
+            behavior: "wrap",
+            properties: { className: "heading-anchor" },
+          }],
+          rehypeHighlight,
+        ]}
+        remarkPlugins={[remarkGfm]}
+      >
+        {markdown}
+      </ReactMarkdown>
+    </CommentRenderingContext.Provider>
   );
 };
