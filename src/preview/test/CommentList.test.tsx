@@ -171,7 +171,13 @@ describe("CommentList", () => {
       />,
     );
 
-    expect(screen.getByText("Existing reply.")).not.toBeNull();
+    const existingReply = screen.getByText("Existing reply.");
+    const replyContainer = existingReply.closest("div");
+    expect(existingReply).not.toBeNull();
+    expect(getComputedStyle(replyContainer!).marginLeft).toBe(
+      "var(--chakra-spacing-4)",
+    );
+    expect(getComputedStyle(replyContainer!).borderLeftWidth).toBe("3px");
     fireEvent.click(screen.getByRole("button", { name: "Reply" }));
     expect(document.activeElement).toBe(
       screen.getByRole("textbox", { name: "Reply body" }),

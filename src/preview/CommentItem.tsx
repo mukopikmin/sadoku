@@ -89,7 +89,17 @@ const ReplyItem = ({
   };
 
   return (
-    <Box borderTopWidth="1px" borderColor="border.muted" pt="2">
+    <Box
+      bg="canvas.subtle"
+      borderColor="border.muted"
+      borderLeftWidth="3px"
+      borderRadius="sm"
+      ml="4"
+      mt="2"
+      pl="3"
+      pr="2"
+      py="2"
+    >
       <Flex align="center" justify="space-between" gap="2" mb="1">
         <Text color="fg.muted" fontSize="xs" fontWeight="semibold">Reply</Text>
         {!isEditing && (
