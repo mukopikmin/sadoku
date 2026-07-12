@@ -421,6 +421,16 @@ Body
     expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
   });
 
+  it("keeps the Markdown DOM mounted when comment selection changes", () => {
+    const { container } = renderMarkdown("# Title\n\nBody text\n");
+    const body = container.querySelector('[data-source-line="3"] p');
+    expect(body).not.toBeNull();
+
+    fireEvent.click(body!);
+
+    expect(container.querySelector('[data-source-line="3"] p')).toBe(body);
+  });
+
   it("preserves text selection within a selected comment line", () => {
     const { container } = renderMarkdown("# Title\n\nBody text\n");
     const getBody = () => container.querySelector('[data-source-line="3"] p');
