@@ -227,19 +227,12 @@ export const previewThemeCss = `
       }
 
       .comment-body-markdown {
-        min-width: 0;
         overflow-wrap: anywhere;
       }
 
       .comment-body-markdown > :last-child,
       .comment-body-markdown > :last-child > :last-child {
         margin-bottom: 0;
-      }
-
-      .comment-body-markdown table {
-        display: block;
-        max-width: 100%;
-        overflow-x: auto;
       }
 
       .comment-markdown-body :where(th, td) {
