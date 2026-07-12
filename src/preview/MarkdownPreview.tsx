@@ -97,6 +97,14 @@ const formatRangeLabel = (range: CommentRange): string =>
     ? `line ${range.startLine}`
     : `lines ${range.startLine}-${range.endLine}`;
 
+const hasTextSelectionWithin = (element: Element): boolean => {
+  const selection = element.ownerDocument.getSelection();
+  if (!selection || selection.isCollapsed) return false;
+
+  return element.contains(selection.anchorNode) ||
+    element.contains(selection.focusNode);
+};
+
 const CommentableBlock = ({
   activeRange,
   children,
@@ -150,6 +158,10 @@ const CommentableBlock = ({
     const target = event.target;
     if (!(target instanceof Element)) return;
     if (target.closest("button, input, label, select, textarea")) return;
+    if (hasTextSelectionWithin(event.currentTarget)) {
+      event.stopPropagation();
+      return;
+    }
 
     const link = target.closest("a");
     if (link && !link.classList.contains("heading-anchor")) return;

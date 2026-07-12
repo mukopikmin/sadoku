@@ -4,7 +4,10 @@ import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
 import { previewThemeCss } from "../theme";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  globalThis.getSelection()?.removeAllRanges();
+  cleanup();
+});
 
 const ensurePreviewThemeStyle = () => {
   if (document.querySelector("style[data-testid='preview-theme-css']")) return;
@@ -415,6 +418,51 @@ Body
 
     fireEvent.click(getLine()!);
 
+    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+  });
+
+  it("preserves text selection within a selected comment line", () => {
+    const { container } = renderMarkdown("# Title\n\nBody text\n");
+    const getBody = () => container.querySelector('[data-source-line="3"] p');
+    expect(getBody()).not.toBeNull();
+
+    fireEvent.click(getBody()!);
+    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+
+    const body = getBody();
+    const text = body?.firstChild;
+    expect(body).not.toBeNull();
+    expect(text).not.toBeNull();
+    const range = document.createRange();
+    range.setStart(text!, 0);
+    range.setEnd(text!, 4);
+    const selection = globalThis.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    fireEvent.click(body!);
+
+    expect(selection?.toString()).toBe("Body");
+    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+  });
+
+  it("does not select a comment line when selecting its text", () => {
+    const { container } = renderMarkdown("# Title\n\nBody text\n");
+    const body = container.querySelector('[data-source-line="3"] p');
+    const text = body?.firstChild;
+    expect(body).not.toBeNull();
+    expect(text).not.toBeNull();
+
+    const range = document.createRange();
+    range.setStart(text!, 0);
+    range.setEnd(text!, 4);
+    const selection = globalThis.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    fireEvent.click(body!);
+
+    expect(selection?.toString()).toBe("Body");
     expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
   });
 
