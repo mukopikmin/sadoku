@@ -92,16 +92,45 @@ describe("initializeMermaid", () => {
 });
 
 describe("initializeMermaidZoom", () => {
-  it("uses nearly the full viewport for the zoomed diagram", () => {
+  it("allows the zoomed diagram to use nearly the full viewport", () => {
     const contentRule = findCssRule(".mermaid-zoom-content");
     const scrollerRule = findCssRule(".mermaid-zoom-scroller");
     const svgRule = findCssRule(".mermaid-zoom-scroller svg");
 
-    expect(contentRule?.style.width).toBe("calc(100vw - 32px)");
-    expect(contentRule?.style.height).toBe("calc(100vh - 32px)");
+    expect(contentRule?.style.width).toBe(
+      "var(--mermaid-zoom-width, calc(100vw - 32px))",
+    );
+    expect(contentRule?.style.height).toBe(
+      "var(--mermaid-zoom-height, calc(100vh - 32px))",
+    );
     expect(scrollerRule?.style.flex).toBe("1 1 0%");
     expect(svgRule?.style.width).toBe("100%");
     expect(svgRule?.style.getPropertyPriority("max-width")).toBe("important");
+  });
+
+  it("sizes the modal to the diagram aspect ratio", () => {
+    const document = new DOMParser().parseFromString(
+      '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 200 100"></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
+      "text/html",
+    );
+
+    initializeMermaidZoom(document);
+    document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")?.click();
+
+    const content = document.querySelector<HTMLElement>(
+      ".mermaid-zoom-content",
+    );
+    const width = parseFloat(
+      content?.style.getPropertyValue("--mermaid-zoom-width") ?? "",
+    );
+    const height = parseFloat(
+      content?.style.getPropertyValue("--mermaid-zoom-height") ?? "",
+    );
+    expect(width / height).toBeCloseTo(2);
+    expect(width).toBeLessThanOrEqual(window.innerWidth - 32);
+    expect(height).toBeLessThanOrEqual(window.innerHeight - 32);
+
+    document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")?.click();
   });
 
   it("opens a zoom dialog from the button and removes it from close controls", () => {

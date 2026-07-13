@@ -356,8 +356,8 @@ export const previewThemeCss = `
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        width: calc(100vw - 32px);
-        height: calc(100vh - 32px);
+        width: var(--mermaid-zoom-width, calc(100vw - 32px));
+        height: var(--mermaid-zoom-height, calc(100vh - 32px));
         border: 1px solid var(--color-border);
         border-radius: 8px;
         padding: 44px 16px 16px;
