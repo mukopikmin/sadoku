@@ -342,7 +342,7 @@ export const previewThemeCss = `
         inset: 0;
         display: grid;
         place-items: center;
-        padding: 24px;
+        padding: 16px;
       }
 
       .mermaid-zoom-backdrop {
@@ -353,9 +353,11 @@ export const previewThemeCss = `
 
       .mermaid-zoom-content {
         position: relative;
+        display: flex;
+        flex-direction: column;
         box-sizing: border-box;
-        max-width: min(1200px, 96vw);
-        max-height: 92vh;
+        width: calc(100vw - 32px);
+        height: calc(100vh - 32px);
         border: 1px solid var(--color-border);
         border-radius: 8px;
         padding: 44px 16px 16px;
@@ -378,15 +380,18 @@ export const previewThemeCss = `
       }
 
       .mermaid-zoom-scroller {
-        max-width: calc(96vw - 32px);
-        max-height: calc(92vh - 60px);
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
         overflow: auto;
       }
 
       .mermaid-zoom-scroller svg {
         display: block;
-        max-width: none;
-        max-height: none;
+        width: 100%;
+        height: auto;
+        max-width: none !important;
+        max-height: none !important;
       }
 
 `;

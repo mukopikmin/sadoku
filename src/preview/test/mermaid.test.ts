@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { initializeMermaid, initializeMermaidZoom } from "../mermaid";
+import { previewThemeCss } from "../theme";
+
+const findCssRule = (selector: string): CSSStyleRule | undefined => {
+  const style = document.createElement("style");
+  style.textContent = previewThemeCss;
+  document.head.append(style);
+  const rule = Array.from(style.sheet?.cssRules ?? []).find((rule) =>
+    "selectorText" in rule && rule.selectorText === selector
+  ) as CSSStyleRule | undefined;
+  style.remove();
+  return rule;
+};
 
 describe("initializeMermaid", () => {
   it("does not load mermaid when the page has no diagrams", async () => {
@@ -80,6 +92,18 @@ describe("initializeMermaid", () => {
 });
 
 describe("initializeMermaidZoom", () => {
+  it("uses nearly the full viewport for the zoomed diagram", () => {
+    const contentRule = findCssRule(".mermaid-zoom-content");
+    const scrollerRule = findCssRule(".mermaid-zoom-scroller");
+    const svgRule = findCssRule(".mermaid-zoom-scroller svg");
+
+    expect(contentRule?.style.width).toBe("calc(100vw - 32px)");
+    expect(contentRule?.style.height).toBe("calc(100vh - 32px)");
+    expect(scrollerRule?.style.flex).toBe("1 1 0%");
+    expect(svgRule?.style.width).toBe("100%");
+    expect(svgRule?.style.getPropertyPriority("max-width")).toBe("important");
+  });
+
   it("opens a zoom dialog from the button and removes it from close controls", () => {
     const document = new DOMParser().parseFromString(
       '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 10 10"><title>Diagram</title></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
