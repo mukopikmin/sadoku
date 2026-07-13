@@ -13,6 +13,7 @@ import {
   createElement,
   isValidElement,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -26,6 +27,7 @@ import remarkGfm from "remark-gfm";
 import { submitCommentOnShortcut } from "./commentShortcuts";
 import { CommentItem } from "./CommentItem";
 import type { PreviewComment } from "./comments";
+import { initializeMermaid } from "./mermaid";
 
 export type MarkdownPreviewProps = {
   comments: PreviewComment[];
@@ -613,6 +615,10 @@ export const MarkdownPreview = ({
   const [activeRange, setActiveRange] = useState<CommentRange>();
   const [lineSelectionAnchor, setLineSelectionAnchor] = useState<number>();
   const [selectedRange, setSelectedRange] = useState<CommentRange>();
+
+  useEffect(() => {
+    void initializeMermaid();
+  });
 
   const handleSelectCommentLine = (line: number) => {
     setActiveCommentLine(undefined);
