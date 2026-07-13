@@ -381,12 +381,16 @@ Deno.test("stores preview comments in SQLite when configured", async () => {
           new Request("http://127.0.0.1:3334/__sadoku/comments", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ line: 3, body: "Persist me." }),
+            body: JSON.stringify({
+              startLine: 3,
+              endLine: 3,
+              body: "Persist me.",
+            }),
           }),
           {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
         );
-        const createdComment = await createResponse.json();
         assertEquals(createResponse.status, 200);
+        const createdComment = await createResponse.json();
 
         const replyResponse = await handler(
           new Request(
