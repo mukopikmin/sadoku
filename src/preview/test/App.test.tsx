@@ -70,12 +70,12 @@ describe("App", () => {
 
     render(<App />);
 
-    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
 
     fireEvent.click(screen.getByRole("button", { name: "Comments 0" }));
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
 
-    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(4));
   });
 
   it("shows a reload button when source changes are available", async () => {
