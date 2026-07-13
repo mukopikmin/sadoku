@@ -358,15 +358,19 @@ export const previewThemeCss = `
         box-sizing: border-box;
         width: var(--mermaid-zoom-width, calc(100vw - 32px));
         height: var(--mermaid-zoom-height, calc(100vh - 32px));
-        border: 1px solid var(--color-border);
+        overflow: hidden;
+        border: 0;
         border-radius: 8px;
-        padding: 44px 16px 16px;
+        padding: 0;
         background: var(--color-canvas);
-        box-shadow: 0 16px 48px rgb(0 0 0 / 0.32);
+        box-shadow:
+          0 0 0 1px var(--color-border),
+          0 16px 48px rgb(0 0 0 / 0.32);
       }
 
       .mermaid-zoom-close {
         position: absolute;
+        z-index: 1;
         top: 8px;
         right: 8px;
         border: 1px solid var(--color-border);

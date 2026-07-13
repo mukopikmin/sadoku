@@ -103,6 +103,8 @@ describe("initializeMermaidZoom", () => {
     expect(contentRule?.style.height).toBe(
       "var(--mermaid-zoom-height, calc(100vh - 32px))",
     );
+    expect(contentRule?.style.padding).toBe("0px");
+    expect(contentRule?.style.overflow).toBe("hidden");
     expect(scrollerRule?.style.flex).toBe("1 1 0%");
     expect(svgRule?.style.width).toBe("100%");
     expect(svgRule?.style.getPropertyPriority("max-width")).toBe("important");
