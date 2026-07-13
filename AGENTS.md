@@ -89,4 +89,13 @@ them when making changes.
 - Prefer command-line tools for repository management, investigation, and
   verification.
 - Use `rg` and `rg --files` for code and file searches.
+- Do not treat a failed sandboxed `gh auth status` as proof that the token is
+  invalid. Retry it with network-enabled or escalated execution, and ask the
+  user to reauthenticate only if that retry confirms the token is invalid or
+  expired.
+- If authenticated `gh` is unavailable but GitHub MCP is available, use the MCP
+  for repository and pull request operations. Ask the user for authentication or
+  other action only when neither `gh` nor GitHub MCP is available.
+- Treat Git remote authentication for operations such as `git push` as
+  independent from GitHub CLI authentication.
 - Do not modify or revert unrelated working-tree changes.
