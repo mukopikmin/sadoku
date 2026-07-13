@@ -226,6 +226,16 @@ deno task install
 
 ## Release Archives
 
+The latest tested commit from `main` is published as the
+[`v0.0.0-nightly`](https://github.com/mukopikmin/sadoku/releases/tag/v0.0.0-nightly)
+prerelease. The tag and assets at that URL are replaced whenever the `Test`
+workflow succeeds on `main`. Nightly binaries report version `0.0.0-nightly`.
+
+Release tags always include a leading `v` (for example, `v0.0.0-nightly`), while
+version values passed to builds and reported by the CLI omit it (for example,
+`0.0.0-nightly`). Archive names retain the existing `sadoku-v<version>-<target>`
+format.
+
 Build release archives under `dist/`:
 
 ```sh

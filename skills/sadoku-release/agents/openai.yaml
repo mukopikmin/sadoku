@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Sadoku"
+  short_description: "Safely prepare and publish a Sadoku release"
+  default_prompt: "Prepare and release a Sadoku version with deterministic preflight checks, release-note approval, and GitHub Actions monitoring."

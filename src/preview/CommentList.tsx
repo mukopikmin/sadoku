@@ -1,3 +1,4 @@
+import { Box, Heading, Stack, Text } from "@chakra-ui/react";
 import { CommentItem } from "./CommentItem";
 import type { PreviewComment } from "./comments";
 
@@ -16,12 +17,26 @@ export type CommentListProps = {
   ) => Promise<void>;
 };
 
+const formatRange = (line: number, endLine = line): string =>
+  line === endLine ? `Line ${line}` : `Lines ${line}-${endLine}`;
+
+const formatOriginalRange = (comment: PreviewComment): string =>
+  formatRange(
+    comment.originalStartLine,
+    comment.originalEndLine,
+  );
+
 const formatLineLabel = (comment: PreviewComment): string => {
-  if (comment.stale) return `Originally line ${comment.originalLine}`;
-  if (comment.originalLine !== comment.line) {
-    return `Line ${comment.line} (originally ${comment.originalLine})`;
+  const current = formatRange(comment.startLine, comment.endLine);
+  const original = formatOriginalRange(comment);
+  if (comment.stale) return `Originally ${original.toLowerCase()}`;
+  if (
+    comment.originalStartLine !== comment.startLine ||
+    comment.originalEndLine !== comment.endLine
+  ) {
+    return `${current} (originally ${original.toLowerCase()})`;
   }
-  return `Line ${comment.line}`;
+  return current;
 };
 
 type CommentSectionProps =
@@ -53,15 +68,15 @@ const CommentSection = ({
   onUpdateReply,
   title,
 }: CommentSectionProps) => (
-  <section className="comment-list-section">
-    <h2>{title}</h2>
+  <Box as="section">
+    <Heading as="h2" size="xl" mt="0" mb="4">{title}</Heading>
     {comments.length === 0
-      ? <p className="comment-list-empty">{emptyText}</p>
+      ? <Text color="fg.muted">{emptyText}</Text>
       : (
-        <div className="comment-list-items">
+        <Stack gap="3">
           {comments.map((comment) => (
             <CommentItem
-              className="comment-list-item"
+              variant="panel"
               comment={comment}
               key={comment.id}
               lineLabel={formatLineLabel(comment)}
@@ -76,9 +91,9 @@ const CommentSection = ({
               showState
             />
           ))}
-        </div>
+        </Stack>
       )}
-  </section>
+  </Box>
 );
 
 export const CommentList = ({
@@ -100,7 +115,7 @@ export const CommentList = ({
   const resolvedComments = comments.filter((comment) => comment.resolved);
 
   return (
-    <div className="comment-list">
+    <Stack gap="7">
       <CommentSection
         comments={activeComments}
         emptyText="No active comments."
@@ -137,6 +152,6 @@ export const CommentList = ({
         onUpdateReply={onUpdateReply}
         title={`Resolved comments (${resolvedComments.length})`}
       />
-    </div>
+    </Stack>
   );
 };

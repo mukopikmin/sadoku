@@ -1,24 +1,35 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
+import { previewThemeCss } from "../theme";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  globalThis.getSelection()?.removeAllRanges();
+  cleanup();
+});
+
+const ensurePreviewThemeStyle = () => {
+  if (document.querySelector("style[data-testid='preview-theme-css']")) return;
+  const style = document.createElement("style");
+  style.dataset.testid = "preview-theme-css";
+  style.textContent = previewThemeCss;
+  document.head.append(style);
+};
 
 const renderMarkdown = (
   markdown: string,
   comments: PreviewComment[] = [],
   callbacks: Partial<{
-    onCreateComment: (line: number, body: string) => Promise<void>;
+    onCreateComment: (
+      startLine: number,
+      body: string,
+      endLine: number,
+    ) => Promise<void>;
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
 ) => {
+  ensurePreviewThemeStyle();
   const result = render(
     <MarkdownPreview
       comments={comments}
@@ -52,9 +63,28 @@ console.log("<ok>");
     expect(container.querySelector("h1#title .heading-anchor")?.textContent)
       .toBe("Title");
     expect(container.querySelector("strong")?.textContent).toBe("world");
+    const unorderedList = container.querySelector("ul");
     expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
+      false,
+    );
+    expect(unorderedList?.classList.contains("comment-markdown-list")).toBe(
+      true,
+    );
+    expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
+    expect(getComputedStyle(unorderedList!).marginTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
+    expect(getComputedStyle(unorderedList!).marginBottom).toBe(
+      "var(--chakra-spacing-4)",
+    );
+    expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
+    expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
+    expect(getComputedStyle(container.querySelector(".hljs-string")!).color)
+      .toBe("rgb(0, 90, 0)");
+    expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
   it("renders stable heading anchor links", () => {
@@ -116,6 +146,31 @@ console.log("<ok>");
     expect(container.querySelector('th[style*="text-align: right"]'))
       .not.toBeNull();
     expect(container.querySelector("td strong")?.textContent).toBe("beta");
+    expect(previewThemeCss).not.toContain("tbody tr:nth-child");
+    expect(previewThemeCss).not.toMatch(/th \{[^}]*background:/);
+  });
+
+  it("renders horizontal rules with vertical spacing around the line", () => {
+    const { container } = renderMarkdown(`Before
+
+---
+
+After
+`);
+
+    const horizontalRule = container.querySelector("hr");
+
+    expect(horizontalRule).not.toBeNull();
+    expect(horizontalRule?.getAttribute("role")).toBe("separator");
+    expect(horizontalRule?.getAttribute("aria-orientation")).toBe(
+      "horizontal",
+    );
+    expect(getComputedStyle(horizontalRule!.parentElement!).marginTop).toBe(
+      "var(--chakra-spacing-6)",
+    );
+    expect(getComputedStyle(horizontalRule!.parentElement!).marginBottom).toBe(
+      "var(--chakra-spacing-6)",
+    );
   });
 
   it("renders nested lists inside parent list items", () => {
@@ -129,6 +184,30 @@ console.log("<ok>");
       "ordered child",
     );
     expect(container.querySelectorAll("ul > li")).toHaveLength(3);
+    const nestedUnorderedList = container.querySelector("ul ul");
+    const nestedOrderedList = container.querySelector("ul ul ol");
+    expect(nestedUnorderedList).not.toBeNull();
+    expect(nestedOrderedList).not.toBeNull();
+    expect(getComputedStyle(nestedUnorderedList!).display).not.toBe(
+      "contents",
+    );
+    expect(getComputedStyle(nestedOrderedList!).display).not.toBe("contents");
+    expect(getComputedStyle(nestedUnorderedList!).paddingInlineStart).not.toBe(
+      "0px",
+    );
+    expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
+      "0px",
+    );
+    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0.25em");
+    expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0.25em");
+    expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
+      "outside",
+    );
+    expect(getComputedStyle(nestedOrderedList!).listStylePosition).toBe(
+      "outside",
+    );
     const listCommentTarget = container.querySelector(
       "li > .commentable-list-item",
     );
@@ -136,6 +215,15 @@ console.log("<ok>");
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
       true,
     );
+    expect(getComputedStyle(listCommentTarget!).display).toBe("contents");
+    const listCommentContent = listCommentTarget!.querySelector(
+      ".commentable-content",
+    );
+    expect(getComputedStyle(listCommentContent!).display).toBe("block");
+    expect(getComputedStyle(listCommentContent!).width).toBe("100%");
+    expect(
+      container.querySelector('[data-source-line="1"] .commentable-content ul'),
+    ).toBeNull();
   });
 
   it("renders task list checkboxes", () => {
@@ -152,6 +240,7 @@ console.log("<ok>");
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
     expect(container.querySelector(".task-list-item")).not.toBeNull();
+    expect(previewThemeCss).not.toContain("0 0.5em 0.2em -");
   });
 
   it("highlights Kotlin code fences", () => {
@@ -164,6 +253,8 @@ fun main() {
 
     expect(container.querySelector("code.hljs.language-kotlin")).not.toBeNull();
     expect(container.querySelector(".hljs-keyword")?.textContent).toBe("fun");
+    expect(getComputedStyle(container.querySelector(".hljs-keyword")!).color)
+      .toBe("rgb(139, 0, 0)");
   });
 
   it("adds source line controls to code fences", () => {
@@ -176,8 +267,33 @@ const value = 1;
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
     ).not.toBeNull();
     expect(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    ).not.toBeNull();
+      getComputedStyle(container.querySelector(".language-ts span")!).color,
+    )
+      .not.toBe("var(--chakra-colors-code\\.fg)");
+    expect(getComputedStyle(container.querySelector("pre")!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(previewThemeCss).toContain(
+      ".hljs {\n        color: var(--chakra-colors-code\\.fg);",
+    );
+  });
+
+  it("renders indented code blocks with readable text color", () => {
+    const { container } = renderMarkdown(`    const indented = "<escaped>";
+    console.log(indented);
+`);
+
+    const code = container.querySelector("pre code");
+
+    expect(code?.classList.contains("hljs")).toBe(false);
+    expect(code?.textContent).toContain('const indented = "<escaped>";');
+    expect(getComputedStyle(code!.parentElement!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(getComputedStyle(code!).color).toBe(
+      "var(--chakra-colors-code\\.fg)",
+    );
+    expect(getComputedStyle(code!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 
   it("renders mermaid code fences for browser-side diagrams", () => {
@@ -193,6 +309,13 @@ graph TD
     expect(
       screen.getByRole("button", { name: "Zoom Mermaid diagram" }),
     ).not.toBeNull();
+    expect(previewThemeCss).toContain(".mermaid {");
+    expect(previewThemeCss).toContain(
+      "background: var(--color-canvas-subtle);",
+    );
+    expect(previewThemeCss).toContain("color: var(--color-text);");
+    expect(previewThemeCss).toContain(".mermaid-zoom-button");
+    expect(previewThemeCss).toContain("background: var(--color-canvas);");
   });
 
   it("does not render Mermaid zoom buttons for regular code fences", () => {
@@ -228,19 +351,17 @@ Body
 
     expect(container.querySelector('[data-source-line="1"] h1')?.textContent)
       .toBe("Title");
-    expect(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    ).not.toBeNull();
     expect(container.querySelector('[data-source-line="3"] p')?.textContent)
       .toBe("Body");
   });
 
   it("focuses the comment textarea when opening the comment form", () => {
-    renderMarkdown("# Title\n");
+    const { container } = renderMarkdown("# Title\n");
+    const line = container.querySelector('[data-source-line="1"] h1');
+    expect(line).not.toBeNull();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    );
+    fireEvent.click(line!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
 
     expect(document.activeElement).toBe(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
@@ -249,11 +370,18 @@ Body
 
   it("submits a new comment with command or control enter", async () => {
     const onCreateComment = vi.fn(async () => {});
-    renderMarkdown("# Title\n\nBody\n", [], { onCreateComment });
+    const { container } = renderMarkdown("# Title\n\nBody\n", [], {
+      onCreateComment,
+    });
+    const getTitleLine = () =>
+      container.querySelector('[data-source-line="1"] h1');
+    const getBodyLine = () =>
+      container.querySelector('[data-source-line="3"] p');
+    expect(getTitleLine()).not.toBeNull();
+    expect(getBodyLine()).not.toBeNull();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    );
+    fireEvent.click(getTitleLine()!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Mac shortcut." } },
@@ -264,12 +392,11 @@ Body
     );
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.")
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1)
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 3" }),
-    );
+    fireEvent.click(getBodyLine()!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Control shortcut." } },
@@ -280,7 +407,7 @@ Body
     );
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(3, "Control shortcut.")
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Control shortcut.", 3)
     );
   });
 
@@ -294,9 +421,6 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 1" }),
-    ).toHaveLength(1);
   });
 
   it("does not add duplicate source line controls for loose list paragraphs", () => {
@@ -309,15 +433,9 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 1" }),
-    ).toHaveLength(1);
     expect(container.querySelectorAll('[data-source-line="3"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 3" }),
-    ).toHaveLength(1);
   });
 
   it("resolves inline comments from the preview", async () => {
@@ -326,8 +444,10 @@ Body
       body: "Clarify this.",
       createdAt: "2026-06-05T00:00:00.000Z",
       id: 1,
-      line: 3,
-      originalLine: 3,
+      endLine: 3,
+      originalEndLine: 3,
+      originalStartLine: 3,
+      startLine: 3,
       resolved: false,
       sourceHash: "example",
       sourceText: "Body",
@@ -338,5 +458,196 @@ Body
     screen.getByRole("button", { name: "Resolve" }).click();
 
     await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
+  });
+
+  it("renders a range comment once at its end line", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n", [{
+      body: "Clarify this range.",
+      createdAt: "2026-06-05T00:00:00.000Z",
+      endLine: 3,
+      id: 1,
+      startLine: 1,
+      originalEndLine: 3,
+      originalStartLine: 1,
+      resolved: false,
+      sourceHash: "example",
+      sourceText: "# Title\n\nBody",
+      stale: false,
+      updatedAt: "2026-06-05T00:00:00.000Z",
+    }]);
+
+    expect(screen.getAllByText("Lines 1-3")).toHaveLength(1);
+    expect(screen.getAllByText("Clarify this range.")).toHaveLength(1);
+    expect(
+      container.querySelector('[data-source-line="1"] .comment-thread'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"] .comment-thread'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="1"]')?.classList.contains(
+        "commentable-block-selected",
+      ),
+    ).toBe(true);
+    expect(
+      container.querySelector('[data-source-line="1"]')?.classList.contains(
+        "commentable-block-comment-highlight",
+      ),
+    ).toBe(true);
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-selected",
+      ),
+    ).toBe(true);
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-comment-highlight",
+      ),
+    ).toBe(true);
+    expect(previewThemeCss).toContain(".commentable-block-comment-highlight");
+    expect(previewThemeCss).toContain("#d29922");
+    expect(previewThemeCss).toContain(".commentable-block-range-selected");
+  });
+
+  it("shows and clears a single-line comment selection", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n");
+
+    const getLine = () => container.querySelector('[data-source-line="3"] p');
+    expect(getLine()).not.toBeNull();
+
+    fireEvent.click(getLine()!);
+
+    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(true);
+
+    fireEvent.click(getLine()!);
+
+    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps the Markdown DOM mounted when comment selection changes", () => {
+    const { container } = renderMarkdown("# Title\n\nBody text\n");
+    const body = container.querySelector('[data-source-line="3"] p');
+    expect(body).not.toBeNull();
+
+    fireEvent.click(body!);
+
+    expect(container.querySelector('[data-source-line="3"] p')).toBe(body);
+  });
+
+  it("preserves text selection within a selected comment line", () => {
+    const { container } = renderMarkdown("# Title\n\nBody text\n");
+    const getBody = () => container.querySelector('[data-source-line="3"] p');
+    expect(getBody()).not.toBeNull();
+
+    fireEvent.click(getBody()!);
+    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+
+    const body = getBody();
+    const text = body?.firstChild;
+    expect(body).not.toBeNull();
+    expect(text).not.toBeNull();
+    const range = document.createRange();
+    range.setStart(text!, 0);
+    range.setEnd(text!, 4);
+    const selection = globalThis.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    fireEvent.click(body!);
+
+    expect(selection?.toString()).toBe("Body");
+    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+  });
+
+  it("does not select a comment line when selecting its text", () => {
+    const { container } = renderMarkdown("# Title\n\nBody text\n");
+    const body = container.querySelector('[data-source-line="3"] p');
+    const text = body?.firstChild;
+    expect(body).not.toBeNull();
+    expect(text).not.toBeNull();
+
+    const range = document.createRange();
+    range.setStart(text!, 0);
+    range.setEnd(text!, 4);
+    const selection = globalThis.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    fireEvent.click(body!);
+
+    expect(selection?.toString()).toBe("Body");
+    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+  });
+
+  it("creates comments for a selected line range", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown("# Title\n\nBody\n", [], {
+      onCreateComment,
+    });
+    const getTitleLine = () =>
+      container.querySelector('[data-source-line="1"] h1');
+    const getBodyLine = () =>
+      container.querySelector('[data-source-line="3"] p');
+    expect(getTitleLine()).not.toBeNull();
+    expect(getBodyLine()).not.toBeNull();
+
+    fireEvent.click(getTitleLine()!);
+    fireEvent.click(getBodyLine()!);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review this line range." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        1,
+        "Review this line range.",
+        3,
+      )
+    );
+  });
+
+  it("creates comments on the clicked nested list item line", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      `- parent
+  - child
+    1. ordered child
+`,
+      [],
+      { onCreateComment },
+    );
+    const orderedChild = container.querySelector(
+      '[data-source-line="3"] .commentable-content',
+    );
+    expect(orderedChild).not.toBeNull();
+
+    fireEvent.click(orderedChild!);
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review nested item." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        3,
+        "Review nested item.",
+        3,
+      )
+    );
   });
 });

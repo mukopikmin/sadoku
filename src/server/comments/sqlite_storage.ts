@@ -19,15 +19,17 @@ type CommentDocumentRow = {
 type CommentRow = {
   body: string;
   created_at: string;
+  end_line: number;
   id: number;
-  line: number;
   local_id: number;
-  original_line: number;
+  original_end_line: number;
+  original_start_line: number;
   resolved: number;
   resolved_at: string | null;
   source_hash: string | null;
   source_text: string | null;
   stale: number;
+  start_line: number;
   updated_at: string;
 };
 
@@ -75,15 +77,17 @@ const commentFromRow = (
 ): PreviewComment => ({
   body: row.body,
   createdAt: row.created_at,
+  endLine: row.end_line,
   id: row.local_id,
-  line: row.line,
-  originalLine: row.original_line,
+  originalEndLine: row.original_end_line,
+  originalStartLine: row.original_start_line,
   replies,
   resolved: toBoolean(row.resolved),
   ...(row.resolved_at === null ? {} : { resolvedAt: row.resolved_at }),
   ...(row.source_hash === null ? {} : { sourceHash: row.source_hash }),
   ...(row.source_text === null ? {} : { sourceText: row.source_text }),
   stale: toBoolean(row.stale),
+  startLine: row.start_line,
   updatedAt: row.updated_at,
 });
 
@@ -124,7 +128,8 @@ const readCommentsDocumentFromSqlite = async (
   if (documentRow === undefined) return emptyDocument(filePath);
 
   const comments = (await database.execute<CommentRow>(
-    `SELECT id, local_id, line, original_line, body, resolved, resolved_at,
+    `SELECT id, local_id, start_line, end_line, original_start_line,
+      original_end_line, body, resolved, resolved_at,
       source_hash, source_text, stale, created_at, updated_at
       FROM comments
       WHERE document_id = ?
@@ -179,14 +184,17 @@ const writeCommentsDocumentToSqlite = async (
     for (const comment of document.comments) {
       await database.execute(
         `INSERT INTO comments (
-          document_id, local_id, line, original_line, body, resolved,
-          resolved_at, source_hash, source_text, stale, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          document_id, local_id, start_line, end_line, original_start_line,
+          original_end_line, body, resolved, resolved_at, source_hash,
+          source_text, stale, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           documentId,
           comment.id,
-          comment.line,
-          comment.originalLine,
+          comment.startLine,
+          comment.endLine,
+          comment.originalStartLine,
+          comment.originalEndLine,
           comment.body,
           comment.resolved ? 1 : 0,
           comment.resolvedAt ?? null,

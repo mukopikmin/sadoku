@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Box, Button, Container, Flex, Link, Text } from "@chakra-ui/react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
   createComment,
   createReply,
@@ -33,6 +34,51 @@ type LoadState =
   | { message: string; status: "error" };
 
 type View = "comments" | "preview";
+type ThemeMode = "dark" | "light";
+
+const getPreferredThemeMode = (): ThemeMode => {
+  try {
+    const stored = globalThis.localStorage?.getItem("sadoku-theme");
+    if (stored === "dark" || stored === "light") return stored;
+  } catch {
+    // Ignore storage failures and fall back to the browser preference.
+  }
+
+  return globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const persistThemeMode = (themeMode: ThemeMode): void => {
+  try {
+    globalThis.localStorage?.setItem("sadoku-theme", themeMode);
+  } catch {
+    // Theme switching should keep working even when storage is unavailable.
+  }
+};
+
+const PreviewShell = ({ children }: { children: ReactNode }) => (
+  <Container as="main" maxW="980px" px="32px" py="32px" pb="64px">
+    <Flex
+      as="header"
+      position="sticky"
+      top="0"
+      zIndex="10"
+      align="center"
+      justify="space-between"
+      gap="4"
+      mb="8"
+      borderBottomWidth="1px"
+      borderColor="border.muted"
+      pb="4"
+      bg="canvas"
+      color="fg.muted"
+      fontSize="sm"
+    >
+      {children}
+    </Flex>
+  </Container>
+);
 
 const loadPreviewDocument = async (): Promise<PreviewDocument> => {
   const response = await fetch("/__sadoku/document");
@@ -45,6 +91,7 @@ const loadPreviewDocument = async (): Promise<PreviewDocument> => {
 export const App = () => {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [view, setView] = useState<View>("preview");
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
   const [reloadAvailable, setReloadAvailable] = useState(false);
 
   useEffect(() => {
@@ -79,15 +126,27 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
+    const root = globalThis.document.documentElement;
+    root.dataset.theme = themeMode;
+    root.classList.toggle("dark", themeMode === "dark");
+    root.classList.toggle("light", themeMode === "light");
+    root.style.colorScheme = themeMode;
+    persistThemeMode(themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
     if (state.status !== "loaded" || view !== "preview") return;
-    initializeMermaid();
-  }, [state, view]);
+    initializeMermaid({
+      theme: themeMode === "dark" ? "dark" : "default",
+    });
+  }, [state, themeMode, view]);
 
   const handleCreateComment = async (
-    line: number,
+    startLine: number,
     body: string,
+    endLine: number,
   ): Promise<void> => {
-    const comment = await createComment(line, body);
+    const comment = await createComment(startLine, body, endLine);
     setState((current) => {
       if (current.status !== "loaded") return current;
       return {
@@ -210,9 +269,7 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <main>
-          <header>Loading preview...</header>
-        </main>
+        <PreviewShell>Loading preview...</PreviewShell>
       </>
     );
   }
@@ -221,9 +278,7 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <main>
-          <header>{state.message}</header>
-        </main>
+        <PreviewShell>{state.message}</PreviewShell>
       </>
     );
   }
@@ -238,44 +293,102 @@ export const App = () => {
   return (
     <>
       <style>{previewThemeCss}</style>
-      <main>
-        <header>
-          <div>
+      <Container as="main" maxW="980px" px="32px" py="32px" pb="64px">
+        <Flex
+          as="header"
+          position="sticky"
+          top="0"
+          zIndex="10"
+          align="center"
+          justify="space-between"
+          gap="4"
+          mb="8"
+          borderBottomWidth="1px"
+          borderColor="border.muted"
+          pb="4"
+          bg="canvas"
+          color="fg.muted"
+          fontSize="sm"
+        >
+          <Text as="div">
             Previewing{" "}
-            <a href={state.document.fileUrl}>{state.document.title}</a>.
+            <Link
+              href={state.document.fileUrl}
+              color="fg"
+              fontWeight="semibold"
+            >
+              {state.document.title}
+            </Link>.
             {reloadAvailable && (
-              <span className="reload-notice" role="status">
+              <Flex
+                as="span"
+                role="status"
+                display="inline-flex"
+                wrap="wrap"
+                align="center"
+                gap="2"
+                ml="2"
+                color="warning.fg"
+              >
                 Source changes are available.
-                <button
+                <Button
+                  size="xs"
+                  variant="outline"
+                  colorPalette="yellow"
                   onClick={() => globalThis.location.reload()}
                   type="button"
                 >
                   Reload preview
-                </button>
-              </span>
+                </Button>
+              </Flex>
             )}
-          </div>
-          <nav className="preview-nav" aria-label="Preview views">
-            <button
-              aria-current={view === "preview" ? "page" : undefined}
-              onClick={() => setView("preview")}
+          </Text>
+          <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
+            <Button
+              aria-label={`Switch to ${
+                themeMode === "dark" ? "light" : "dark"
+              } mode`}
+              onClick={() =>
+                setThemeMode((current) =>
+                  current === "dark" ? "light" : "dark"
+                )}
+              size="sm"
               type="button"
+              variant="outline"
+            >
+              {themeMode === "dark" ? "Light" : "Dark"} mode
+            </Button>
+            <Button
+              aria-current={view === "preview" ? "page" : undefined}
+              colorPalette={view === "preview" ? "blue" : "gray"}
+              onClick={() => setView("preview")}
+              size="sm"
+              type="button"
+              variant="outline"
             >
               Preview
-            </button>
-            <button
+            </Button>
+            <Button
               aria-current={view === "comments" ? "page" : undefined}
+              colorPalette={view === "comments" ? "blue" : "gray"}
               onClick={() => setView("comments")}
+              size="sm"
               type="button"
+              variant="outline"
             >
               Comments {state.comments.length}
-              {staleCommentCount > 0 && <span>Stale {staleCommentCount}</span>}
-            </button>
-          </nav>
-        </header>
+              {staleCommentCount > 0 && (
+                <Box as="span" ml="1" color="warning.fg">
+                  Stale {staleCommentCount}
+                </Box>
+              )}
+            </Button>
+          </Flex>
+        </Flex>
         {view === "preview"
           ? (
             <MarkdownPreview
+              key={themeMode}
               comments={activeComments}
               markdown={state.document.markdown}
               onCreateComment={handleCreateComment}
@@ -299,7 +412,7 @@ export const App = () => {
               onUpdateReply={handleUpdateReply}
             />
           )}
-      </main>
+      </Container>
     </>
   );
 };
