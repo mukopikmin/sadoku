@@ -15,6 +15,7 @@ export type MermaidOptions = {
   document?: Document;
   importMermaid?: () => Promise<MermaidModule>;
   prefersDark?: () => boolean;
+  theme?: "dark" | "default";
 };
 
 const closeMermaidZoomDialog = (dialog: HTMLElement) => {
@@ -131,6 +132,7 @@ export const initializeMermaid = async (
     importMermaid = () => import(/* @vite-ignore */ mermaidAssetPath),
     prefersDark = () =>
       globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
+    theme,
   }: MermaidOptions = {},
 ): Promise<void> => {
   const nodes = Array.from(
@@ -144,7 +146,7 @@ export const initializeMermaid = async (
   const { default: mermaid } = await importMermaid();
   mermaid.initialize({
     startOnLoad: false,
-    theme: prefersDark() ? "dark" : "default",
+    theme: theme ?? (prefersDark() ? "dark" : "default"),
   });
   await mermaid.run({ nodes });
   initializeMermaidZoom(document);

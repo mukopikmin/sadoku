@@ -15,6 +15,7 @@ import {
 import { CommentList } from "./CommentList";
 import { connectHotReload } from "./hot_reload";
 import { MarkdownPreview } from "./MarkdownPreview";
+import { initializeMermaid } from "./mermaid";
 import { previewThemeCss } from "./theme";
 
 type PreviewDocument = {
@@ -33,6 +34,28 @@ type LoadState =
   | { message: string; status: "error" };
 
 type View = "comments" | "preview";
+type ThemeMode = "dark" | "light";
+
+const getPreferredThemeMode = (): ThemeMode => {
+  try {
+    const stored = globalThis.localStorage?.getItem("sadoku-theme");
+    if (stored === "dark" || stored === "light") return stored;
+  } catch {
+    // Ignore storage failures and fall back to the browser preference.
+  }
+
+  return globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const persistThemeMode = (themeMode: ThemeMode): void => {
+  try {
+    globalThis.localStorage?.setItem("sadoku-theme", themeMode);
+  } catch {
+    // Theme switching should keep working even when storage is unavailable.
+  }
+};
 
 const PreviewShell = ({ children }: { children: ReactNode }) => (
   <Container as="main" maxW="980px" px="32px" py="32px" pb="64px">
@@ -68,6 +91,7 @@ const loadPreviewDocument = async (): Promise<PreviewDocument> => {
 export const App = () => {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [view, setView] = useState<View>("preview");
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
   const [reloadAvailable, setReloadAvailable] = useState(false);
 
   useEffect(() => {
@@ -100,6 +124,22 @@ export const App = () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const root = globalThis.document.documentElement;
+    root.dataset.theme = themeMode;
+    root.classList.toggle("dark", themeMode === "dark");
+    root.classList.toggle("light", themeMode === "light");
+    root.style.colorScheme = themeMode;
+    persistThemeMode(themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (state.status !== "loaded" || view !== "preview") return;
+    initializeMermaid({
+      theme: themeMode === "dark" ? "dark" : "default",
+    });
+  }, [state, themeMode, view]);
 
   const handleCreateComment = async (
     startLine: number,
@@ -305,6 +345,20 @@ export const App = () => {
           </Text>
           <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
             <Button
+              aria-label={`Switch to ${
+                themeMode === "dark" ? "light" : "dark"
+              } mode`}
+              onClick={() =>
+                setThemeMode((current) =>
+                  current === "dark" ? "light" : "dark"
+                )}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {themeMode === "dark" ? "Light" : "Dark"} mode
+            </Button>
+            <Button
               aria-current={view === "preview" ? "page" : undefined}
               colorPalette={view === "preview" ? "blue" : "gray"}
               onClick={() => setView("preview")}
@@ -334,6 +388,7 @@ export const App = () => {
         {view === "preview"
           ? (
             <MarkdownPreview
+              key={themeMode}
               comments={activeComments}
               markdown={state.document.markdown}
               onCreateComment={handleCreateComment}
