@@ -410,6 +410,15 @@ export const previewThemeCss = `
         border-collapse: collapse;
       }
 
+      .comment-body-markdown {
+        overflow-wrap: anywhere;
+      }
+
+      .comment-body-markdown > :last-child,
+      .comment-body-markdown > :last-child > :last-child {
+        margin-bottom: 0;
+      }
+
       .comment-markdown-body :where(th, td) {
         border: 1px solid var(--color-border);
         padding: 6px 13px;

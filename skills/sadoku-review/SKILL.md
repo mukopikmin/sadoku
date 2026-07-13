@@ -1,6 +1,6 @@
 ---
 name: sadoku-review
-description: Read unresolved Sadoku review comments through the sadoku CLI, apply requested changes to the referenced Markdown document, verify the result, and resolve only completed comments. Use when asked to review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
+description: Read unresolved Sadoku review comments through the sadoku CLI, apply requested changes to the referenced Markdown document, verify the result, and reply with focused Markdown diffs while leaving comments open for user confirmation. Use when asked to review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
 ---
 
 # Sadoku Review
@@ -44,7 +44,8 @@ questions, and the final report.
    feedback requests otherwise.
 7. Review the resulting diff and run relevant documentation checks available in
    the project.
-8. Reply to each addressed comment before resolving it:
+8. Reply to each addressed comment and leave it unresolved for the user to
+   confirm:
 
    ```sh
    sadoku comments reply <markdown-path> <comment-id> "<body>"
@@ -52,25 +53,33 @@ questions, and the final report.
 
    Each reply must include at least:
    - A brief summary of what changed.
-   - A focused excerpt of the Markdown diff relevant to that comment.
+   - A focused excerpt of the Markdown diff relevant to that comment, enclosed
+     in a fenced code block whose info string is `diff`.
    - When one edit addresses multiple comments, an explanation of which change
      satisfies each comment.
+
+   Format a changed-comment reply like this:
+
+   ````markdown
+   Changed the heading and clarified the opening sentence.
+
+   ```diff
+   -# Old heading
+   +# New heading
+   ```
+   ````
 
    Inspect the diff with a command such as `git diff -- <markdown-path>`.
    Include only the necessary range in the reply; do not paste large unrelated
    portions of the diff. For comments classified as **Already satisfied**, reply
-   with the reason the document already satisfies the request before resolving,
-   instead of including a diff excerpt.
-9. Resolve only comments that were successfully addressed or already satisfied:
-
-   ```sh
-   sadoku comments resolve <markdown-path> <comment-id>...
-   ```
-
+   with the reason the document already satisfies the request; a diff block is
+   not required when no change was made.
+9. Do not run `sadoku comments resolve`. The user must review the reply and the
+   document change, then decide whether to resolve the comment.
 10. Run `sadoku comments inspect <markdown-path>` again. In the console or final
     user-facing report, include a concise summary of the review outcome: the
-    changed document, replies posted, resolved comment IDs, and comments left
-    open with their reasons.
+    changed document, replies posted, comment IDs awaiting user confirmation,
+    and comments left open for clarification or other reasons.
 
 ## Interpretation Rules
 
@@ -83,7 +92,8 @@ questions, and the final report.
 - Do not act on vague or nonsensical feedback speculatively.
 - Do not reply merely to acknowledge a comment. Reply only when the response
   communicates useful information or asks a question needed to continue.
-- Do not resolve comments merely because they were reviewed.
+- Leave all comments unresolved, including comments that were successfully
+  addressed or already satisfied, until the user confirms them.
 - Do not use `sadoku comments rm`; it deletes every stored comment for the
   specified Markdown document.
 
@@ -93,7 +103,4 @@ questions, and the final report.
   on `PATH`. Do not fall back to direct comment-storage access.
 - If `inspect` reports no comments, make no document changes unless the user
   requested additional edits independently.
-- If replying to a comment fails, do not resolve that comment; leave it open and
-  report the command error.
-- If resolving any requested ID fails, leave the comments open and report the
-  command error.
+- If replying to a comment fails, leave it open and report the command error.
