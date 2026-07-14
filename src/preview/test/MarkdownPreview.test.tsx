@@ -526,6 +526,12 @@ Body
       name: "Add comment on line 3",
     });
     expect(getLine()).not.toBeNull();
+    expect(previewThemeCss).toContain(
+      ".commentable-block:hover .comment-line-button",
+    );
+    expect(previewThemeCss).not.toContain(
+      ":has(.comment-thread) .comment-line-button",
+    );
 
     fireEvent.click(lineButton);
 

@@ -472,8 +472,7 @@ export const previewThemeCss = `
       }
 
       .commentable-block:hover .comment-line-button,
-      .comment-line-button:focus-visible,
-      .commentable-block:has(.comment-thread) .comment-line-button {
+      .comment-line-button:focus-visible {
         opacity: 1;
       }
 

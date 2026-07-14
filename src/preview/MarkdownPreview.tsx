@@ -217,7 +217,7 @@ const CommentableBlock = ({
             color={isSelected ? "accent" : "fg.muted"}
             fontSize="md"
             minW="24px"
-            opacity={isSelected ? "1" : "0.65"}
+            opacity={{ base: "1", md: "0" }}
             onClick={() => onSelectCommentLine(line)}
             p="0"
             title={`Select line ${line} for comment`}
