@@ -471,6 +471,16 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--color-accent) 18%, transparent);
       }
 
+      .commentable-block:hover .comment-line-button,
+      .comment-line-button:focus-visible,
+      .commentable-block:has(.comment-thread) .comment-line-button {
+        opacity: 1;
+      }
+
+      .commentable-list-item > .commentable-content > .comment-line-gutter {
+        left: calc(-34px - 2em);
+      }
+
       .comment-selection-button {
         position: absolute;
         z-index: 1;

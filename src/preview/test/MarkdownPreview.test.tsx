@@ -421,6 +421,9 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
+    expect(
+      screen.getAllByRole("button", { name: "Add comment on line 1" }),
+    ).toHaveLength(1);
   });
 
   it("does not add duplicate source line controls for loose list paragraphs", () => {
@@ -433,9 +436,15 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
+    expect(
+      screen.getAllByRole("button", { name: "Add comment on line 1" }),
+    ).toHaveLength(1);
     expect(container.querySelectorAll('[data-source-line="3"]')).toHaveLength(
       1,
     );
+    expect(
+      screen.getAllByRole("button", { name: "Add comment on line 3" }),
+    ).toHaveLength(1);
   });
 
   it("resolves inline comments from the preview", async () => {
@@ -513,20 +522,25 @@ Body
     const { container } = renderMarkdown("# Title\n\nBody\n");
 
     const getLine = () => container.querySelector('[data-source-line="3"] p');
+    const lineButton = screen.getByRole("button", {
+      name: "Add comment on line 3",
+    });
     expect(getLine()).not.toBeNull();
 
-    fireEvent.click(getLine()!);
+    fireEvent.click(lineButton);
 
     expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(lineButton.getAttribute("aria-pressed")).toBe("true");
     expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-range-selected",
       ),
     ).toBe(true);
 
-    fireEvent.click(getLine()!);
+    fireEvent.click(lineButton);
 
     expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(lineButton.getAttribute("aria-pressed")).toBe("false");
     expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-range-selected",
@@ -594,15 +608,15 @@ Body
     const { container } = renderMarkdown("# Title\n\nBody\n", [], {
       onCreateComment,
     });
-    const getTitleLine = () =>
-      container.querySelector('[data-source-line="1"] h1');
-    const getBodyLine = () =>
-      container.querySelector('[data-source-line="3"] p');
-    expect(getTitleLine()).not.toBeNull();
-    expect(getBodyLine()).not.toBeNull();
+    expect(container.querySelector('[data-source-line="1"] h1')).not.toBeNull();
+    expect(container.querySelector('[data-source-line="3"] p')).not.toBeNull();
 
-    fireEvent.click(getTitleLine()!);
-    fireEvent.click(getBodyLine()!);
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 1",
+    }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    }));
 
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
     expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();

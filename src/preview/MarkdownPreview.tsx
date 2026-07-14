@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Flex,
+  IconButton,
   List,
   Separator,
   Text,
@@ -199,6 +200,56 @@ const CommentableBlock = ({
         onClick={handleContentClick}
         title={`Select line ${line} for comment`}
       >
+        <Box
+          className="comment-line-gutter"
+          left={{ md: "-34px" }}
+          mb={{ base: "1.5", md: "0" }}
+          position={{ base: "static", md: "absolute" }}
+          top={{ md: "0.1rem" }}
+        >
+          <IconButton
+            aria-label={`Add comment on line ${line}`}
+            aria-pressed={isSelected}
+            bg="canvas"
+            borderColor={isSelected ? "accent" : "border.default"}
+            boxSize="24px"
+            className="comment-line-button"
+            color={isSelected ? "accent" : "fg.muted"}
+            fontSize="md"
+            minW="24px"
+            opacity={isSelected ? "1" : "0.65"}
+            onClick={() => onSelectCommentLine(line)}
+            p="0"
+            title={`Select line ${line} for comment`}
+            type="button"
+            variant="outline"
+            _focusVisible={{
+              borderColor: "accent",
+              color: "accent",
+              opacity: "1",
+            }}
+            _hover={{
+              borderColor: "accent",
+              color: "accent",
+              opacity: "1",
+            }}
+          >
+            <svg
+              aria-hidden="true"
+              fill="none"
+              height="1em"
+              viewBox="0 0 16 16"
+              width="1em"
+            >
+              <path
+                d="M8 3.5v9M3.5 8h9"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </IconButton>
+        </Box>
         <div className="comment-markdown-body">
           {isRangeActionLine && !isAdding && (
             <Button
