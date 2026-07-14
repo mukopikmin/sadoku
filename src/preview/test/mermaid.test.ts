@@ -160,7 +160,7 @@ describe("initializeMermaidZoom", () => {
     document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")?.click();
   });
 
-  it("opens a zoom dialog from the button and removes it from close controls", () => {
+  it("opens a zoom dialog only from the button and removes it from close controls", () => {
     const document = new DOMParser().parseFromString(
       '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 10 10"><title>Diagram</title></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
       "text/html",
@@ -172,6 +172,10 @@ describe("initializeMermaidZoom", () => {
       document.querySelector<HTMLElement>(".mermaid-container")?.dataset
         .mermaidZoomInitialized,
     ).toBe("true");
+
+    document.querySelector<HTMLElement>(".mermaid")?.click();
+
+    expect(document.querySelector(".mermaid-zoom-dialog")).toBeNull();
 
     document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")?.click();
 
