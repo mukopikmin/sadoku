@@ -10,15 +10,27 @@ documents themselves stay clean.
 
 ## Install
 
-On Linux and macOS, you can build in a temporary directory and install the
-binary to `$HOME/.local/bin/sadoku`:
+On Linux x64 and macOS arm64, install the latest release binary to
+`$HOME/.local/bin/sadoku` without cloning the repository:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh | sh
+```
+
+To install the latest tested nightly build instead:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh | sh -s -- --nightly
+```
+
+Make sure `$HOME/.local/bin` is included in your `PATH`.
+
+To build and install from source, clone the repository and run:
 
 ```sh
 npm install
 deno task install --version 0.1.0
 ```
-
-Make sure `$HOME/.local/bin` is included in your `PATH`.
 
 Or compile a standalone binary in the project directory:
 
