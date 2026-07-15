@@ -92,6 +92,7 @@ type CommentableBlockProps = {
     replyId: number,
     body: string,
   ) => Promise<void>;
+  selectedRange?: CommentRange;
 };
 
 const getSourceLine = (props: { node?: SourceNode }): number | undefined => {
@@ -136,10 +137,11 @@ const CommentableBlock = ({
   onResolveComment,
   onUpdateComment,
   onUpdateReply,
+  selectedRange,
 }: CommentableBlockProps) => {
   const [draft, setDraft] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const pendingRange = activeRange ?? {
+  const pendingRange = activeRange ?? selectedRange ?? {
     endLine: line,
     startLine: line,
   };
@@ -200,68 +202,55 @@ const CommentableBlock = ({
         onClick={handleContentClick}
         title={`Select line ${line} for comment`}
       >
-        <Box
-          className="comment-line-gutter"
-          left={{ md: "-34px" }}
-          mb={{ base: "1.5", md: "0" }}
-          position={{ base: "static", md: "absolute" }}
-          top={{ md: "0.1rem" }}
-        >
-          <IconButton
-            aria-label={`Add comment on line ${line}`}
-            aria-pressed={isSelected}
-            bg="canvas"
-            borderColor={isSelected ? "accent" : "border.default"}
-            boxSize="24px"
-            className="comment-line-button"
-            color={isSelected ? "accent" : "fg.muted"}
-            fontSize="md"
-            minW="24px"
-            opacity={{ base: "1", md: "0" }}
-            onClick={() => onSelectCommentLine(line)}
-            p="0"
-            title={`Select line ${line} for comment`}
-            type="button"
-            variant="outline"
-            _focusVisible={{
-              borderColor: "accent",
-              color: "accent",
-              opacity: "1",
-            }}
-            _hover={{
-              borderColor: "accent",
-              color: "accent",
-              opacity: "1",
-            }}
+        {isRangeActionLine && !isAdding && (
+          <Box
+            className="comment-line-gutter"
+            left={{ md: "-34px" }}
+            mb={{ base: "1.5", md: "0" }}
+            position={{ base: "static", md: "absolute" }}
+            top={{ md: "0.1rem" }}
           >
-            <svg
-              aria-hidden="true"
-              fill="none"
-              height="1em"
-              viewBox="0 0 16 16"
-              width="1em"
-            >
-              <path
-                d="M8 3.5v9M3.5 8h9"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </IconButton>
-        </Box>
-        <div className="comment-markdown-body">
-          {isRangeActionLine && !isAdding && (
-            <Button
-              className="comment-selection-button"
-              colorPalette="blue"
-              size="xs"
+            <IconButton
+              aria-label={`Add comment on ${formatRangeLabel(pendingRange)}`}
+              bg="canvas"
+              borderColor="accent"
+              boxSize="24px"
+              className="comment-line-button"
+              color="accent"
+              fontSize="md"
+              minW="24px"
               onClick={onOpenCommentForm}
+              p="0"
+              title={`Add comment on ${formatRangeLabel(pendingRange)}`}
               type="button"
+              variant="outline"
+              _focusVisible={{
+                borderColor: "accent",
+                color: "accent",
+              }}
+              _hover={{
+                borderColor: "accent",
+                color: "accent",
+              }}
             >
-              Add comment
-            </Button>
-          )}
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="1em"
+                viewBox="0 0 16 16"
+                width="1em"
+              >
+                <path
+                  d="M8 3.5v9M3.5 8h9"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.5"
+                />
+              </svg>
+            </IconButton>
+          </Box>
+        )}
+        <div className="comment-markdown-body">
           <SourceLineContext.Provider value={sourceLines}>
             {children}
           </SourceLineContext.Provider>
@@ -496,6 +485,7 @@ const createCommentableComponent = (
         onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
         onUpdateReply={props.onUpdateReply}
+        selectedRange={props.selectedRange}
       >
         {element}
       </CommentableBlock>
@@ -543,6 +533,7 @@ const createCommentableListItem = () => {
           onResolveComment={props.onResolveComment}
           onUpdateComment={props.onUpdateComment}
           onUpdateReply={props.onUpdateReply}
+          selectedRange={props.selectedRange}
         >
           {itemChildren}
         </CommentableBlock>
@@ -622,6 +613,7 @@ const createCommentablePre = () => {
         onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
         onUpdateReply={props.onUpdateReply}
+        selectedRange={props.selectedRange}
       >
         {element}
       </CommentableBlock>

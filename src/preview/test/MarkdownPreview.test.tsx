@@ -361,7 +361,9 @@ Body
     expect(line).not.toBeNull();
 
     fireEvent.click(line!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 1",
+    }));
 
     expect(document.activeElement).toBe(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
@@ -381,7 +383,9 @@ Body
     expect(getBodyLine()).not.toBeNull();
 
     fireEvent.click(getTitleLine()!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 1",
+    }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Mac shortcut." } },
@@ -396,7 +400,9 @@ Body
     );
 
     fireEvent.click(getBodyLine()!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Control shortcut." } },
@@ -421,9 +427,6 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 1" }),
-    ).toHaveLength(1);
   });
 
   it("does not add duplicate source line controls for loose list paragraphs", () => {
@@ -436,15 +439,9 @@ Body
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 1" }),
-    ).toHaveLength(1);
     expect(container.querySelectorAll('[data-source-line="3"]')).toHaveLength(
       1,
     );
-    expect(
-      screen.getAllByRole("button", { name: "Add comment on line 3" }),
-    ).toHaveLength(1);
   });
 
   it("resolves inline comments from the preview", async () => {
@@ -522,31 +519,27 @@ Body
     const { container } = renderMarkdown("# Title\n\nBody\n");
 
     const getLine = () => container.querySelector('[data-source-line="3"] p');
-    const lineButton = screen.getByRole("button", {
-      name: "Add comment on line 3",
-    });
     expect(getLine()).not.toBeNull();
-    expect(previewThemeCss).toContain(
-      ".commentable-block:hover .comment-line-button",
-    );
-    expect(previewThemeCss).not.toContain(
-      ":has(.comment-thread) .comment-line-button",
-    );
+    expect(screen.queryByRole("button", {
+      name: "Add comment on line 3",
+    })).toBeNull();
 
-    fireEvent.click(lineButton);
+    fireEvent.click(getLine()!);
 
-    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
-    expect(lineButton.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    })).not.toBeNull();
     expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-range-selected",
       ),
     ).toBe(true);
 
-    fireEvent.click(lineButton);
+    fireEvent.click(getLine()!);
 
-    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
-    expect(lineButton.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByRole("button", {
+      name: "Add comment on line 3",
+    })).toBeNull();
     expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-range-selected",
@@ -570,7 +563,9 @@ Body
     expect(getBody()).not.toBeNull();
 
     fireEvent.click(getBody()!);
-    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    })).not.toBeNull();
 
     const body = getBody();
     const text = body?.firstChild;
@@ -586,7 +581,9 @@ Body
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
-    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    })).not.toBeNull();
   });
 
   it("does not select a comment line when selecting its text", () => {
@@ -606,7 +603,9 @@ Body
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
-    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(screen.queryByRole("button", {
+      name: "Add comment on line 3",
+    })).toBeNull();
   });
 
   it("creates comments for a selected line range", async () => {
@@ -617,14 +616,12 @@ Body
     expect(container.querySelector('[data-source-line="1"] h1')).not.toBeNull();
     expect(container.querySelector('[data-source-line="3"] p')).not.toBeNull();
 
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 1",
-    }));
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    }));
+    fireEvent.click(container.querySelector('[data-source-line="1"] h1')!);
+    fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
 
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    }));
     expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Review this line range." },
@@ -656,7 +653,9 @@ Body
     expect(orderedChild).not.toBeNull();
 
     fireEvent.click(orderedChild!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    }));
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Review nested item." },
     });
