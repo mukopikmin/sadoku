@@ -53,6 +53,7 @@ const trimFinalNewline = (value: string): string => value.replace(/\n$/, "");
 const SourceLineContext = createContext<ReadonlySet<number>>(new Set());
 const ListDepthContext = createContext(0);
 const CodeBlockContext = createContext(false);
+const listIndentEm = 2.5;
 
 type SourcePosition = {
   start?: {
@@ -147,6 +148,10 @@ const CommentableBlock = ({
   };
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
+  const listDepth = useContext(ListDepthContext);
+  const commentGutterLeft = listDepth === 0
+    ? "-34px"
+    : `calc(-34px - ${listDepth * listIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, line]);
   }, [ancestorSourceLines, line]);
@@ -205,7 +210,7 @@ const CommentableBlock = ({
         {isRangeActionLine && !isAdding && (
           <Box
             className="comment-line-gutter"
-            left={{ md: "-34px" }}
+            left={commentGutterLeft}
             mb={{ base: "1.5", md: "0" }}
             position={{ base: "static", md: "absolute" }}
             top={{ md: "0.1rem" }}
@@ -787,7 +792,7 @@ export const MarkdownPreview = ({
               listStylePosition="outside"
               mt={isNested ? "0.25em" : "2"}
               mb={isNested ? "0" : "4"}
-              ps="2.5em"
+              ps={`${listIndentEm}em`}
               {...props}
             >
               {children}
@@ -806,7 +811,7 @@ export const MarkdownPreview = ({
               listStylePosition="outside"
               mt={isNested ? "0.25em" : "2"}
               mb={isNested ? "0" : "4"}
-              ps="2.5em"
+              ps={`${listIndentEm}em`}
               {...props}
             >
               {children}

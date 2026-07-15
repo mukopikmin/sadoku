@@ -471,10 +471,6 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--color-accent) 18%, transparent);
       }
 
-      .commentable-list-item > .commentable-content > .comment-line-gutter {
-        left: calc(-34px - 2em);
-      }
-
       .comment-thread {
         margin: -6px 0 12px;
         border-left: 3px solid var(--color-accent);

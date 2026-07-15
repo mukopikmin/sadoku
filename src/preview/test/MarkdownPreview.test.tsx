@@ -224,6 +224,19 @@ After
     expect(
       container.querySelector('[data-source-line="1"] .commentable-content ul'),
     ).toBeNull();
+
+    const nestedItemContent = container.querySelector(
+      '[data-source-line="3"] .commentable-content',
+    );
+    expect(nestedItemContent).not.toBeNull();
+    fireEvent.click(nestedItemContent!);
+    const nestedItemGutter = container.querySelector(
+      '[data-source-line="3"] .comment-line-gutter',
+    );
+    expect(nestedItemGutter).not.toBeNull();
+    expect(getComputedStyle(nestedItemGutter!).left).toBe(
+      "calc(-34px - 7.5em)",
+    );
   });
 
   it("renders task list checkboxes", () => {
