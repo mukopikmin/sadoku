@@ -8,6 +8,7 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 import { type ComponentProps, useState } from "react";
+import { CommentMarkdown } from "./CommentMarkdown";
 import { submitCommentOnShortcut } from "./commentShortcuts";
 import type { PreviewComment, PreviewCommentReply } from "./comments";
 
@@ -94,6 +95,7 @@ const ReplyItem = ({
       borderColor="border.muted"
       borderLeftWidth="3px"
       borderRadius="sm"
+      className="comment-reply"
       ml="4"
       mt="2"
       pl="3"
@@ -160,7 +162,7 @@ const ReplyItem = ({
             </Flex>
           </Stack>
         )
-        : <Text whiteSpace="pre-wrap">{reply.body}</Text>}
+        : <CommentMarkdown>{reply.body}</CommentMarkdown>}
     </Box>
   );
 };
@@ -371,7 +373,7 @@ export const CommentItem = ({
             </Flex>
           </Stack>
         )
-        : <Text whiteSpace="pre-wrap">{comment.body}</Text>}
+        : <CommentMarkdown>{comment.body}</CommentMarkdown>}
       {(comment.replies ?? []).length > 0 && (
         <Stack gap="2" mt="2">
           {(comment.replies ?? []).map((reply) => (

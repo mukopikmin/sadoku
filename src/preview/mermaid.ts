@@ -22,6 +22,19 @@ const closeMermaidZoomDialog = (dialog: HTMLElement) => {
   dialog.remove();
 };
 
+const getSvgAspectRatio = (svg: SVGElement): number | undefined => {
+  const viewBox = svg.getAttribute("viewBox")?.trim().split(/[\s,]+/).map(
+    Number,
+  );
+  if (
+    viewBox?.length !== 4 ||
+    !viewBox.every(Number.isFinite) ||
+    viewBox[2] <= 0 ||
+    viewBox[3] <= 0
+  ) return undefined;
+  return viewBox[2] / viewBox[3];
+};
+
 const createMermaidZoomDialog = (
   document: Document,
   sourceSvg: SVGElement,
@@ -39,6 +52,22 @@ const createMermaidZoomDialog = (
   const content = document.createElement("div");
   content.className = "mermaid-zoom-content";
 
+  const view = document.defaultView ?? globalThis.window;
+  const aspectRatio = getSvgAspectRatio(sourceSvg);
+  const resize = () => {
+    if (!aspectRatio) return;
+    const maxWidth = Math.max(0, view.innerWidth - 32);
+    const maxHeight = Math.max(0, view.innerHeight - 32);
+    const width = Math.min(maxWidth, maxHeight * aspectRatio);
+    content.style.setProperty("--mermaid-zoom-width", `${width}px`);
+    content.style.setProperty(
+      "--mermaid-zoom-height",
+      `${width / aspectRatio}px`,
+    );
+  };
+  resize();
+  view.addEventListener("resize", resize);
+
   const closeButton = document.createElement("button");
   closeButton.className = "mermaid-zoom-close";
   closeButton.type = "button";
@@ -52,7 +81,10 @@ const createMermaidZoomDialog = (
   content.append(closeButton, scroller);
   dialog.append(backdrop, content);
 
-  const close = () => closeMermaidZoomDialog(dialog);
+  const close = () => {
+    view.removeEventListener("resize", resize);
+    closeMermaidZoomDialog(dialog);
+  };
   closeButton.addEventListener("click", close);
   backdrop.addEventListener("click", close);
   dialog.addEventListener("keydown", (event) => {
@@ -89,7 +121,6 @@ export const initializeMermaidZoom = (
       event.stopPropagation();
       open();
     });
-    mermaid.addEventListener("click", open);
     container.dataset.mermaidZoomInitialized = "true";
   }
 };
@@ -105,8 +136,11 @@ export const initializeMermaid = async (
 ): Promise<void> => {
   const nodes = Array.from(
     document.querySelectorAll<HTMLElement>(".mermaid"),
-  );
-  if (nodes.length === 0) return;
+  ).filter((node) => node.dataset.processed !== "true");
+  if (nodes.length === 0) {
+    initializeMermaidZoom(document);
+    return;
+  }
 
   const { default: mermaid } = await importMermaid();
   mermaid.initialize({

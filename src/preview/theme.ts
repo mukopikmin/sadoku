@@ -410,6 +410,15 @@ export const previewThemeCss = `
         border-collapse: collapse;
       }
 
+      .comment-body-markdown {
+        overflow-wrap: anywhere;
+      }
+
+      .comment-body-markdown > :last-child,
+      .comment-body-markdown > :last-child > :last-child {
+        margin-bottom: 0;
+      }
+
       .comment-markdown-body :where(th, td) {
         border: 1px solid var(--color-border);
         padding: 6px 13px;
@@ -521,7 +530,7 @@ export const previewThemeCss = `
         inset: 0;
         display: grid;
         place-items: center;
-        padding: 24px;
+        padding: 16px;
       }
 
       .mermaid-zoom-backdrop {
@@ -532,18 +541,24 @@ export const previewThemeCss = `
 
       .mermaid-zoom-content {
         position: relative;
+        display: flex;
+        flex-direction: column;
         box-sizing: border-box;
-        max-width: min(1200px, 96vw);
-        max-height: 92vh;
-        border: 1px solid var(--color-border);
+        width: var(--mermaid-zoom-width, calc(100vw - 32px));
+        height: var(--mermaid-zoom-height, calc(100vh - 32px));
+        overflow: hidden;
+        border: 0;
         border-radius: 8px;
-        padding: 44px 16px 16px;
+        padding: 0;
         background: var(--color-canvas);
-        box-shadow: 0 16px 48px rgb(0 0 0 / 0.32);
+        box-shadow:
+          0 0 0 1px var(--color-border),
+          0 16px 48px rgb(0 0 0 / 0.32);
       }
 
       .mermaid-zoom-close {
         position: absolute;
+        z-index: 1;
         top: 8px;
         right: 8px;
         border: 1px solid var(--color-border);
@@ -557,15 +572,18 @@ export const previewThemeCss = `
       }
 
       .mermaid-zoom-scroller {
-        max-width: calc(96vw - 32px);
-        max-height: calc(92vh - 60px);
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
         overflow: auto;
       }
 
       .mermaid-zoom-scroller svg {
         display: block;
-        max-width: none;
-        max-height: none;
+        width: 100%;
+        height: auto;
+        max-width: none !important;
+        max-height: none !important;
       }
 
 `;
