@@ -448,6 +448,7 @@ export const previewThemeCss = `
         position: absolute;
         z-index: -1;
         inset: -4px -8px;
+        left: calc(-8px - var(--comment-indent-offset, 0em));
         border-radius: 6px;
         background: transparent;
         pointer-events: none;

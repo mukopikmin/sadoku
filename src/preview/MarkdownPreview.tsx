@@ -149,9 +149,10 @@ const CommentableBlock = ({
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
   const listDepth = useContext(ListDepthContext);
+  const commentIndentEm = listDepth * listIndentEm;
   const commentGutterLeft = listDepth === 0
     ? "-34px"
-    : `calc(-34px - ${listDepth * listIndentEm}em)`;
+    : `calc(-34px - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, line]);
   }, [ancestorSourceLines, line]);
@@ -205,6 +206,9 @@ const CommentableBlock = ({
       <div
         className="commentable-content"
         onClick={handleContentClick}
+        style={{
+          "--comment-indent-offset": `${commentIndentEm}em`,
+        } as React.CSSProperties}
         title={`Select line ${line} for comment`}
       >
         {isRangeActionLine && !isAdding && (

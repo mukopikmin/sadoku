@@ -237,6 +237,14 @@ After
     expect(getComputedStyle(nestedItemGutter!).left).toBe(
       "calc(-34px - 7.5em)",
     );
+    expect(
+      getComputedStyle(nestedItemContent!).getPropertyValue(
+        "--comment-indent-offset",
+      ),
+    ).toBe("7.5em");
+    expect(previewThemeCss).toContain(
+      "left: calc(-8px - var(--comment-indent-offset, 0em))",
+    );
   });
 
   it("renders task list checkboxes", () => {
