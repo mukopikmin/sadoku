@@ -202,13 +202,13 @@ const CommentableBlock = ({
         className,
       ].filter(Boolean).join(" ")}
       data-source-line={line}
+      style={{
+        "--comment-indent-offset": `${commentIndentEm}em`,
+      } as React.CSSProperties}
     >
       <div
         className="commentable-content"
         onClick={handleContentClick}
-        style={{
-          "--comment-indent-offset": `${commentIndentEm}em`,
-        } as React.CSSProperties}
         title={`Select line ${line} for comment`}
       >
         {isRangeActionLine && !isAdding && (

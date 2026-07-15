@@ -474,12 +474,13 @@ export const previewThemeCss = `
 
       .comment-thread {
         margin: -6px 0 12px;
+        margin-left: calc(0em - var(--comment-indent-offset, 0em));
         border-left: 3px solid var(--color-accent);
         padding: 6px 0 1px 10px;
       }
 
       .commentable-list-item > .comment-thread {
-        margin: 6px 0 12px;
+        margin-top: 6px;
       }
 
       .mermaid-container {

@@ -237,13 +237,26 @@ After
     expect(getComputedStyle(nestedItemGutter!).left).toBe(
       "calc(-34px - 7.5em)",
     );
+    const nestedItemBlock = container.querySelector('[data-source-line="3"]');
+    expect(nestedItemBlock).not.toBeNull();
     expect(
-      getComputedStyle(nestedItemContent!).getPropertyValue(
+      getComputedStyle(nestedItemBlock!).getPropertyValue(
         "--comment-indent-offset",
       ),
     ).toBe("7.5em");
     expect(previewThemeCss).toContain(
       "left: calc(-8px - var(--comment-indent-offset, 0em))",
+    );
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    }));
+    const nestedCommentThread = container.querySelector(
+      '[data-source-line="3"] .comment-thread',
+    );
+    expect(nestedCommentThread).not.toBeNull();
+    expect(getComputedStyle(nestedCommentThread!).marginLeft).toBe(
+      "calc(0em - var(--comment-indent-offset, 0em))",
     );
   });
 
