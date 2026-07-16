@@ -490,6 +490,7 @@ const createCommentableComponent = (
     elementProps: Omit<ComponentProps, "children" | "node">,
     children: React.ReactNode,
   ) => React.ReactNode,
+  className?: string,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const {
@@ -508,6 +509,7 @@ const createCommentableComponent = (
     return (
       <CommentableBlock
         activeRange={props.activeRange}
+        className={className}
         comments={commentsByLine.get(line) ?? []}
         hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
@@ -613,6 +615,7 @@ const createCommentablePre = () => {
     return (
       <CommentableBlock
         activeRange={props.activeRange}
+        className="commentable-code-block"
         comments={commentsByLine.get(line) ?? []}
         hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
@@ -710,7 +713,18 @@ export const MarkdownPreview = ({
         block.querySelector<HTMLElement>(":scope > .commentable-content")
       ).filter((content): content is HTMLElement => content !== null);
       if (contents.length === 0) return [];
-      const rects = contents.map((content) => content.getBoundingClientRect());
+      const rects = contents.map((content) => {
+        const element = content.querySelector<HTMLElement>(
+          ":scope > .comment-markdown-body > :first-child",
+        );
+        const rect = (element ?? content).getBoundingClientRect();
+        const style = element ? getComputedStyle(element) : undefined;
+        return {
+          top: rect.top - (Number.parseFloat(style?.marginTop ?? "0") || 0),
+          bottom: rect.bottom +
+            (Number.parseFloat(style?.marginBottom ?? "0") || 0),
+        };
+      });
       return [{
         ...range,
         top: Math.min(...rects.map((rect) => rect.top)) - previewRect.top,
@@ -780,43 +794,54 @@ export const MarkdownPreview = ({
       blockquote: createCommentableComponent(
         "blockquote",
         renderMarkdownBlockquote,
+        "commentable-blockquote",
       ),
       h1: createCommentableComponent(
         "h1",
         (elementProps, children) =>
           renderMarkdownHeading("h1", elementProps, children),
+        "commentable-heading",
       ),
       h2: createCommentableComponent(
         "h2",
         (elementProps, children) =>
           renderMarkdownHeading("h2", elementProps, children),
+        "commentable-heading",
       ),
       h3: createCommentableComponent(
         "h3",
         (elementProps, children) =>
           renderMarkdownHeading("h3", elementProps, children),
+        "commentable-heading",
       ),
       h4: createCommentableComponent(
         "h4",
         (elementProps, children) =>
           renderMarkdownHeading("h4", elementProps, children),
+        "commentable-heading",
       ),
       h5: createCommentableComponent(
         "h5",
         (elementProps, children) =>
           renderMarkdownHeading("h5", elementProps, children),
+        "commentable-heading",
       ),
       h6: createCommentableComponent(
         "h6",
         (elementProps, children) =>
           renderMarkdownHeading("h6", elementProps, children),
+        "commentable-heading",
       ),
       hr: createCommentableComponent("hr", renderMarkdownHorizontalRule),
       li: createCommentableListItem(),
       img: sharedMarkdownComponents.img,
       ol: sharedMarkdownComponents.ol,
       ul: sharedMarkdownComponents.ul,
-      p: createCommentableComponent("p", renderMarkdownParagraph),
+      p: createCommentableComponent(
+        "p",
+        renderMarkdownParagraph,
+        "commentable-paragraph",
+      ),
       pre: createCommentablePre(),
       table: createCommentableComponent("table"),
       code: sharedMarkdownComponents.code,

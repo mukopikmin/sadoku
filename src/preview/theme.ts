@@ -495,6 +495,24 @@ export const previewThemeCss = `
         transition: background-color 120ms ease;
       }
 
+      :where(
+        .commentable-blockquote,
+        .commentable-code-block,
+        .commentable-paragraph
+      ) > .commentable-content::before {
+        bottom: calc(-1 * var(--chakra-spacing-4) + 1px);
+      }
+
+      .commentable-heading > .commentable-content::before {
+        top: calc(-1 * var(--chakra-spacing-6) + 1px);
+        bottom: calc(-1 * var(--chakra-spacing-4) + 1px);
+      }
+
+      .commentable-block:has(+ .commentable-heading)
+        > .commentable-content::before {
+        bottom: 1px;
+      }
+
       .commentable-block:has(.comment-thread) > .commentable-content::before {
         background: color-mix(in srgb, var(--color-accent) 8%, transparent);
       }

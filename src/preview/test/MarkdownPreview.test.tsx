@@ -112,6 +112,15 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain("inset: -4px -8px");
   });
 
+  it("extends heading highlights farther above than below", () => {
+    expect(previewThemeCss).toMatch(
+      /\.commentable-heading > \.commentable-content::before\s*\{[^}]*top: calc\(-1 \* var\(--chakra-spacing-6\) \+ 1px\);[^}]*bottom: calc\(-1 \* var\(--chakra-spacing-4\) \+ 1px\);/,
+    );
+    expect(previewThemeCss).toMatch(
+      /\.commentable-block:has\(\+ \.commentable-heading\)[^{]*\{[^}]*bottom: 1px;/,
+    );
+  });
+
   it("renders stable heading anchor links", () => {
     const { container } = renderMarkdown(`# Title!
 
@@ -134,6 +143,23 @@ console.log("<ok>");
 
     expect(container.querySelector("script")).toBeNull();
     expect(container.textContent).toBe("<script>alert(1)</script>");
+    expect(container.querySelector('[data-source-line="1"]')).not.toBeNull();
+  });
+
+  it("keeps unsupported syntax samples selectable", () => {
+    const { container } = renderMarkdown(`Raw HTML:
+
+<script>alert("nope")</script>
+
+Footnote-looking text stays plain.[^note]
+
+[^note]: Footnote definitions are not enabled.
+`);
+
+    expect(container.textContent).toContain('<script>alert("nope")</script>');
+    expect(container.querySelector('[data-source-line="3"]')).not.toBeNull();
+    expect(container.querySelector('[data-source-line="5"]')).not.toBeNull();
+    expect(container.querySelector('[data-source-line="7"]')).not.toBeNull();
   });
 
   it("renders links and images with titles", () => {
@@ -585,12 +611,14 @@ Body
     const bodyContent = bodyBlock?.querySelector<HTMLElement>(
       ":scope > .commentable-content",
     );
+    const heading = titleContent?.querySelector<HTMLElement>("h1");
+    const paragraph = bodyContent?.querySelector<HTMLElement>("p");
     expect(preview).not.toBeNull();
     expect(titleContent).not.toBeNull();
     expect(bodyContent).not.toBeNull();
     preview!.getBoundingClientRect = () => mockRect(100, 400);
-    titleContent!.getBoundingClientRect = () => mockRect(120, 150);
-    bodyContent!.getBoundingClientRect = () => mockRect(200, 240);
+    heading!.getBoundingClientRect = () => mockRect(120, 150);
+    paragraph!.getBoundingClientRect = () => mockRect(200, 240);
 
     fireEvent.click(titleContent!);
     fireEvent.click(bodyContent!);
