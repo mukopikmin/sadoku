@@ -93,6 +93,13 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
+  it("leaves a two-pixel gap between adjacent highlight backgrounds", () => {
+    expect(previewThemeCss).toMatch(
+      /\.commentable-content::before\s*\{[^}]*inset: 1px -8px;/,
+    );
+    expect(previewThemeCss).not.toContain("inset: -4px -8px");
+  });
+
   it("renders stable heading anchor links", () => {
     const { container } = renderMarkdown(`# Title!
 
