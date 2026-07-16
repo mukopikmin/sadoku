@@ -52,6 +52,18 @@ const renderMarkdown = (
   return { ...result, container: result.container };
 };
 
+const mockRect = (top: number, bottom: number): DOMRect => ({
+  bottom,
+  height: bottom - top,
+  left: 0,
+  right: 800,
+  top,
+  width: 800,
+  x: 0,
+  y: top,
+  toJSON: () => ({}),
+});
+
 describe("MarkdownPreview", () => {
   it("renders common Markdown blocks", () => {
     const { container } = renderMarkdown(`# Title
@@ -93,6 +105,28 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
+  it("leaves a two-pixel gap between adjacent highlight backgrounds", () => {
+    expect(previewThemeCss).toMatch(
+      /\.commentable-content::before\s*\{[^}]*top: calc\(-1 \* var\(--comment-highlight-spacing-before\) \+ 1px\);[^}]*bottom: calc\(-1 \* var\(--comment-highlight-spacing-after\) \+ 1px\);/,
+    );
+    expect(previewThemeCss).not.toContain("inset: -4px -8px");
+  });
+
+  it("defines highlight spacing by Markdown element type", () => {
+    expect(previewThemeCss).toMatch(
+      /\.commentable-heading\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-4\);/,
+    );
+    expect(previewThemeCss).toMatch(
+      /\.commentable-horizontal-rule\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-6\);/,
+    );
+    expect(previewThemeCss).toContain(
+      ":where(.commentable-list-item, .commentable-table)",
+    );
+    expect(previewThemeCss).toMatch(
+      /\.commentable-block:has\(\+ \.commentable-heading\)[^{]*\{[^}]*bottom: 1px;/,
+    );
+  });
+
   it("renders stable heading anchor links", () => {
     const { container } = renderMarkdown(`# Title!
 
@@ -115,6 +149,23 @@ console.log("<ok>");
 
     expect(container.querySelector("script")).toBeNull();
     expect(container.textContent).toBe("<script>alert(1)</script>");
+    expect(container.querySelector('[data-source-line="1"]')).not.toBeNull();
+  });
+
+  it("keeps unsupported syntax samples selectable", () => {
+    const { container } = renderMarkdown(`Raw HTML:
+
+<script>alert("nope")</script>
+
+Footnote-looking text stays plain.[^note]
+
+[^note]: Footnote definitions are not enabled.
+`);
+
+    expect(container.textContent).toContain('<script>alert("nope")</script>');
+    expect(container.querySelector('[data-source-line="3"]')).not.toBeNull();
+    expect(container.querySelector('[data-source-line="5"]')).not.toBeNull();
+    expect(container.querySelector('[data-source-line="7"]')).not.toBeNull();
   });
 
   it("renders links and images with titles", () => {
@@ -544,29 +595,124 @@ Body
     expect(
       container.querySelector('[data-source-line="3"] .comment-thread'),
     ).not.toBeNull();
-    expect(
-      container.querySelector('[data-source-line="1"]')?.classList.contains(
-        "commentable-block-selected",
-      ),
-    ).toBe(true);
-    expect(
-      container.querySelector('[data-source-line="1"]')?.classList.contains(
-        "commentable-block-comment-highlight",
-      ),
-    ).toBe(true);
-    expect(
-      container.querySelector('[data-source-line="3"]')?.classList.contains(
-        "commentable-block-selected",
-      ),
-    ).toBe(true);
-    expect(
-      container.querySelector('[data-source-line="3"]')?.classList.contains(
-        "commentable-block-comment-highlight",
-      ),
-    ).toBe(true);
+    expect(container.querySelector(".markdown-range-highlight-comment"))
+      .not.toBeNull();
     expect(previewThemeCss).toContain(".commentable-block-comment-highlight");
     expect(previewThemeCss).toContain("#d29922");
     expect(previewThemeCss).toContain(".commentable-block-range-selected");
+  });
+
+  it("fills the full area between selected range endpoints", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n");
+    const preview = container.querySelector<HTMLElement>(".markdown-preview");
+    const titleBlock = container.querySelector<HTMLElement>(
+      '[data-source-line="1"]',
+    );
+    const bodyBlock = container.querySelector<HTMLElement>(
+      '[data-source-line="3"]',
+    );
+    const titleContent = titleBlock?.querySelector<HTMLElement>(
+      ":scope > .commentable-content",
+    );
+    const bodyContent = bodyBlock?.querySelector<HTMLElement>(
+      ":scope > .commentable-content",
+    );
+    const heading = titleContent?.querySelector<HTMLElement>("h1");
+    const paragraph = bodyContent?.querySelector<HTMLElement>("p");
+    expect(preview).not.toBeNull();
+    expect(titleContent).not.toBeNull();
+    expect(bodyContent).not.toBeNull();
+    preview!.getBoundingClientRect = () => mockRect(100, 400);
+    heading!.getBoundingClientRect = () => mockRect(120, 150);
+    paragraph!.getBoundingClientRect = () => mockRect(200, 240);
+
+    fireEvent.click(titleContent!);
+    fireEvent.click(bodyContent!);
+
+    const highlight = container.querySelector<HTMLElement>(
+      ".markdown-range-highlight-selection",
+    );
+    expect(highlight).not.toBeNull();
+    expect(highlight?.dataset.startLine).toBe("1");
+    expect(highlight?.dataset.endLine).toBe("3");
+    expect(highlight?.style.top).toBe("21px");
+    expect(highlight?.style.height).toBe("118px");
+    expect(
+      titleBlock?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(false);
+    expect(
+      bodyBlock?.classList.contains(
+        "commentable-block-range-selected",
+      ),
+    ).toBe(false);
+    expect(previewThemeCss).toContain("left: -8px");
+    expect(previewThemeCss).toContain("right: -8px");
+    expect(previewThemeCss).toMatch(
+      /\.markdown-range-highlights\s*\{[^}]*z-index: -1;/,
+    );
+  });
+
+  it("merges saved ranges and gives the active selection priority", () => {
+    const comments: PreviewComment[] = [
+      {
+        body: "First range",
+        createdAt: "2026-06-05T00:00:00.000Z",
+        endLine: 3,
+        id: 1,
+        originalEndLine: 3,
+        originalStartLine: 1,
+        resolved: false,
+        stale: false,
+        startLine: 1,
+        updatedAt: "2026-06-05T00:00:00.000Z",
+      },
+      {
+        body: "Adjacent range",
+        createdAt: "2026-06-05T00:00:00.000Z",
+        endLine: 5,
+        id: 2,
+        originalEndLine: 5,
+        originalStartLine: 4,
+        resolved: false,
+        stale: false,
+        startLine: 4,
+        updatedAt: "2026-06-05T00:00:00.000Z",
+      },
+    ];
+    const { container } = renderMarkdown(
+      "# Title\n\nFirst\n\nSecond\n",
+      comments,
+    );
+    expect(container.querySelectorAll(
+      ".markdown-range-highlight-comment",
+    )).toHaveLength(1);
+    expect(
+      container.querySelector<HTMLElement>(
+        ".markdown-range-highlight-comment",
+      )?.dataset.endLine,
+    ).toBe("5");
+
+    fireEvent.click(
+      container.querySelector(
+        '[data-source-line="1"] .commentable-content',
+      )!,
+    );
+    fireEvent.click(
+      container.querySelector(
+        '[data-source-line="3"] .commentable-content',
+      )!,
+    );
+
+    const savedHighlight = container.querySelector<HTMLElement>(
+      ".markdown-range-highlight-comment",
+    );
+    expect(savedHighlight?.dataset.startLine).toBe("4");
+    expect(savedHighlight?.dataset.endLine).toBe("5");
+    expect(container.querySelectorAll(
+      ".markdown-range-highlight-selection",
+    )).toHaveLength(1);
   });
 
   it("shows and clears a single-line comment selection", () => {
