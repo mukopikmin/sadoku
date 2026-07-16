@@ -1,4 +1,12 @@
-import { Box, Button, Flex, List, Text, Textarea } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  IconButton,
+  List,
+  Text,
+  Textarea,
+} from "@chakra-ui/react";
 import {
   Children,
   createContext,
@@ -19,6 +27,8 @@ import { CommentItem } from "./CommentItem";
 import type { PreviewComment } from "./comments";
 import {
   type MarkdownElementProps,
+  MarkdownListDepthContext,
+  markdownListIndentEm,
   renderMarkdownBlockquote,
   renderMarkdownHeading,
   renderMarkdownHorizontalRule,
@@ -92,6 +102,7 @@ type CommentableBlockProps = {
     replyId: number,
     body: string,
   ) => Promise<void>;
+  selectedRange?: CommentRange;
 };
 
 const getSourceLine = (props: { node?: SourceNode }): number | undefined => {
@@ -136,15 +147,21 @@ const CommentableBlock = ({
   onResolveComment,
   onUpdateComment,
   onUpdateReply,
+  selectedRange,
 }: CommentableBlockProps) => {
   const [draft, setDraft] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const pendingRange = activeRange ?? {
+  const pendingRange = activeRange ?? selectedRange ?? {
     endLine: line,
     startLine: line,
   };
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
+  const listDepth = useContext(MarkdownListDepthContext);
+  const commentIndentEm = listDepth * markdownListIndentEm;
+  const commentGutterLeft = listDepth === 0
+    ? "-34px"
+    : `calc(-34px - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, line]);
   }, [ancestorSourceLines, line]);
@@ -194,24 +211,64 @@ const CommentableBlock = ({
         className,
       ].filter(Boolean).join(" ")}
       data-source-line={line}
+      style={{
+        "--comment-indent-offset": `${commentIndentEm}em`,
+      } as React.CSSProperties}
     >
       <div
         className="commentable-content"
         onClick={handleContentClick}
         title={`Select line ${line} for comment`}
       >
-        <div className="comment-markdown-body">
-          {isRangeActionLine && !isAdding && (
-            <Button
-              className="comment-selection-button"
-              colorPalette="blue"
-              size="xs"
+        {isRangeActionLine && !isAdding && (
+          <Box
+            className="comment-line-gutter"
+            left={commentGutterLeft}
+            mb={{ base: "1.5", md: "0" }}
+            position={{ base: "static", md: "absolute" }}
+            top={{ md: "0.1rem" }}
+          >
+            <IconButton
+              aria-label={`Add comment on ${formatRangeLabel(pendingRange)}`}
+              bg="canvas"
+              borderColor="accent"
+              boxSize="24px"
+              className="comment-line-button"
+              color="accent"
+              fontSize="md"
+              minW="24px"
               onClick={onOpenCommentForm}
+              p="0"
+              title={`Add comment on ${formatRangeLabel(pendingRange)}`}
               type="button"
+              variant="outline"
+              _focusVisible={{
+                borderColor: "accent",
+                color: "accent",
+              }}
+              _hover={{
+                borderColor: "accent",
+                color: "accent",
+              }}
             >
-              Add comment
-            </Button>
-          )}
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="1em"
+                viewBox="0 0 16 16"
+                width="1em"
+              >
+                <path
+                  d="M8 3.5v9M3.5 8h9"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.5"
+                />
+              </svg>
+            </IconButton>
+          </Box>
+        )}
+        <div className="comment-markdown-body">
           <SourceLineContext.Provider value={sourceLines}>
             {children}
           </SourceLineContext.Provider>
@@ -406,6 +463,7 @@ const createCommentableComponent = (
         onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
         onUpdateReply={props.onUpdateReply}
+        selectedRange={props.selectedRange}
       >
         {element}
       </CommentableBlock>
@@ -453,6 +511,7 @@ const createCommentableListItem = () => {
           onResolveComment={props.onResolveComment}
           onUpdateComment={props.onUpdateComment}
           onUpdateReply={props.onUpdateReply}
+          selectedRange={props.selectedRange}
         >
           {itemChildren}
         </CommentableBlock>
@@ -513,6 +572,7 @@ const createCommentablePre = () => {
         onResolveComment={props.onResolveComment}
         onUpdateComment={props.onUpdateComment}
         onUpdateReply={props.onUpdateReply}
+        selectedRange={props.selectedRange}
       >
         {element}
       </CommentableBlock>

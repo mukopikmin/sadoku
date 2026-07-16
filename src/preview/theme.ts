@@ -457,6 +457,7 @@ export const previewThemeCss = `
         position: absolute;
         z-index: -1;
         inset: -4px -8px;
+        left: calc(-8px - var(--comment-indent-offset, 0em));
         border-radius: 6px;
         background: transparent;
         pointer-events: none;
@@ -480,21 +481,15 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--color-accent) 18%, transparent);
       }
 
-      .comment-selection-button {
-        position: absolute;
-        z-index: 1;
-        top: 0;
-        right: 0;
-      }
-
       .comment-thread {
         margin: -6px 0 12px;
+        margin-left: calc(0em - var(--comment-indent-offset, 0em));
         border-left: 3px solid var(--color-accent);
         padding: 6px 0 1px 10px;
       }
 
       .commentable-list-item > .comment-thread {
-        margin: 6px 0 12px;
+        margin-top: 6px;
       }
 
       .mermaid-container {

@@ -13,8 +13,9 @@ export type MarkdownElementProps = {
   className?: string;
 };
 
-const ListDepthContext = createContext(0);
+export const MarkdownListDepthContext = createContext(0);
 const CodeBlockContext = createContext(false);
+export const markdownListIndentEm = 2.5;
 
 export const mergeClassNames = (
   ...classNames: Array<string | undefined>
@@ -186,22 +187,22 @@ export const sharedMarkdownComponents: Components = {
     return <List.Item {...props}>{children}</List.Item>;
   },
   ol({ children, className, node: _node, ...props }) {
-    const listDepth = useContext(ListDepthContext);
+    const listDepth = useContext(MarkdownListDepthContext);
     const isNested = listDepth > 0;
     return (
-      <ListDepthContext.Provider value={listDepth + 1}>
+      <MarkdownListDepthContext.Provider value={listDepth + 1}>
         <List.Root
           as="ol"
           className={mergeClassNames("comment-markdown-list", className)}
           listStylePosition="outside"
           mt={isNested ? "0.25em" : "2"}
           mb={isNested ? "0" : "4"}
-          ps="2.5em"
+          ps={`${markdownListIndentEm}em`}
           {...props}
         >
           {children}
         </List.Root>
-      </ListDepthContext.Provider>
+      </MarkdownListDepthContext.Provider>
     );
   },
   p({ children, node: _node, ...props }) {
@@ -211,22 +212,22 @@ export const sharedMarkdownComponents: Components = {
     return renderMarkdownPre(props, children);
   },
   ul({ children, className, node: _node, ...props }) {
-    const listDepth = useContext(ListDepthContext);
+    const listDepth = useContext(MarkdownListDepthContext);
     const isNested = listDepth > 0;
     return (
-      <ListDepthContext.Provider value={listDepth + 1}>
+      <MarkdownListDepthContext.Provider value={listDepth + 1}>
         <List.Root
           as="ul"
           className={mergeClassNames("comment-markdown-list", className)}
           listStylePosition="outside"
           mt={isNested ? "0.25em" : "2"}
           mb={isNested ? "0" : "4"}
-          ps="2.5em"
+          ps={`${markdownListIndentEm}em`}
           {...props}
         >
           {children}
         </List.Root>
-      </ListDepthContext.Provider>
+      </MarkdownListDepthContext.Provider>
     );
   },
 };
