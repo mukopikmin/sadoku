@@ -832,7 +832,11 @@ export const MarkdownPreview = ({
           renderMarkdownHeading("h6", elementProps, children),
         "commentable-heading",
       ),
-      hr: createCommentableComponent("hr", renderMarkdownHorizontalRule),
+      hr: createCommentableComponent(
+        "hr",
+        renderMarkdownHorizontalRule,
+        "commentable-horizontal-rule",
+      ),
       li: createCommentableListItem(),
       img: sharedMarkdownComponents.img,
       ol: sharedMarkdownComponents.ol,
@@ -843,7 +847,11 @@ export const MarkdownPreview = ({
         "commentable-paragraph",
       ),
       pre: createCommentablePre(),
-      table: createCommentableComponent("table"),
+      table: createCommentableComponent(
+        "table",
+        undefined,
+        "commentable-table",
+      ),
       code: sharedMarkdownComponents.code,
     };
   }, []);

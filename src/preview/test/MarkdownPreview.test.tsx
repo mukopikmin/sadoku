@@ -107,14 +107,20 @@ console.log("<ok>");
 
   it("leaves a two-pixel gap between adjacent highlight backgrounds", () => {
     expect(previewThemeCss).toMatch(
-      /\.commentable-content::before\s*\{[^}]*inset: 1px -8px;/,
+      /\.commentable-content::before\s*\{[^}]*top: calc\(-1 \* var\(--comment-highlight-spacing-before\) \+ 1px\);[^}]*bottom: calc\(-1 \* var\(--comment-highlight-spacing-after\) \+ 1px\);/,
     );
     expect(previewThemeCss).not.toContain("inset: -4px -8px");
   });
 
-  it("extends heading highlights farther above than below", () => {
+  it("defines highlight spacing by Markdown element type", () => {
     expect(previewThemeCss).toMatch(
-      /\.commentable-heading > \.commentable-content::before\s*\{[^}]*top: calc\(-1 \* var\(--chakra-spacing-6\) \+ 1px\);[^}]*bottom: calc\(-1 \* var\(--chakra-spacing-4\) \+ 1px\);/,
+      /\.commentable-heading\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-4\);/,
+    );
+    expect(previewThemeCss).toMatch(
+      /\.commentable-horizontal-rule\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-6\);/,
+    );
+    expect(previewThemeCss).toContain(
+      ":where(.commentable-list-item, .commentable-table)",
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-block:has\(\+ \.commentable-heading\)[^{]*\{[^}]*bottom: 1px;/,
