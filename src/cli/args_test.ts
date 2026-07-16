@@ -7,7 +7,8 @@ import {
 import { CliUsageError, parseArgs, usage, version } from "./args.ts";
 
 Deno.test("uses the default host and port", () => {
-  assertEquals(parseArgs(["README.md"]), {
+  assertEquals(parseArgs(["start", "README.md"]), {
+    command: "start",
     file: "README.md",
     force: false,
     host: "127.0.0.1",
@@ -19,7 +20,8 @@ Deno.test("uses the default host and port", () => {
 
 Deno.test("parses URL sources", () => {
   const source = "https://example.com/README.md?token=temporary";
-  assertEquals(parseArgs([source]), {
+  assertEquals(parseArgs(["start", source]), {
+    command: "start",
     file: source,
     force: false,
     host: "127.0.0.1",
@@ -31,8 +33,16 @@ Deno.test("parses URL sources", () => {
 
 Deno.test("parses host and port options", () => {
   assertEquals(
-    parseArgs(["README.md", "--host", "0.0.0.0", "--port", "4000"]),
+    parseArgs([
+      "start",
+      "README.md",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "4000",
+    ]),
     {
+      command: "start",
       file: "README.md",
       force: false,
       host: "0.0.0.0",
@@ -44,7 +54,8 @@ Deno.test("parses host and port options", () => {
 });
 
 Deno.test("parses no-open option", () => {
-  assertEquals(parseArgs(["README.md", "--no-open"]), {
+  assertEquals(parseArgs(["start", "README.md", "--no-open"]), {
+    command: "start",
     file: "README.md",
     force: false,
     host: "127.0.0.1",
@@ -55,7 +66,8 @@ Deno.test("parses no-open option", () => {
 });
 
 Deno.test("parses keep-alive option", () => {
-  assertEquals(parseArgs(["README.md", "--keep-alive"]), {
+  assertEquals(parseArgs(["start", "README.md", "--keep-alive"]), {
+    command: "start",
     file: "README.md",
     force: false,
     host: "127.0.0.1",
@@ -156,8 +168,9 @@ Deno.test("parses comments rm command", () => {
 
 Deno.test("parses help", () => {
   assertEquals(parseArgs(["--help"]).help, true);
+  assertEquals(parseArgs(["start", "--help"]).help, true);
   assertMatch(usage, /Defaults to 3334/);
-  assertMatch(usage, /<file\.md\|url>/);
+  assertMatch(usage, /sadoku start <file\.md\|url>/);
   assertMatch(usage, /comments list/);
   assertMatch(usage, /comments inspect/);
   assertMatch(usage, /comments reply/);
@@ -179,23 +192,31 @@ Deno.test("uses the development version by default", () => {
 
 Deno.test("throws usage errors for invalid options", () => {
   assertInstanceOf(
-    assertThrows(() => parseArgs(["README.md", "--port", "nope"])),
+    assertThrows(() => parseArgs(["start", "README.md", "--port", "nope"])),
     CliUsageError,
   );
   assertInstanceOf(
-    assertThrows(() => parseArgs(["README.md", "--unknown"])),
+    assertThrows(() => parseArgs(["start", "README.md", "--unknown"])),
     CliUsageError,
   );
   assertInstanceOf(
-    assertThrows(() => parseArgs(["README.md", "--port"])),
+    assertThrows(() => parseArgs(["start", "README.md", "--port"])),
     CliUsageError,
   );
   assertInstanceOf(
-    assertThrows(() => parseArgs(["README.md", "--host"])),
+    assertThrows(() => parseArgs(["start", "README.md", "--host"])),
     CliUsageError,
   );
   assertInstanceOf(
-    assertThrows(() => parseArgs(["a.md", "b.md"])),
+    assertThrows(() => parseArgs(["start", "a.md", "b.md"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
+    assertThrows(() => parseArgs(["README.md"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
+    assertThrows(() => parseArgs(["preview", "README.md"])),
     CliUsageError,
   );
   assertInstanceOf(
