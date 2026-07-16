@@ -78,8 +78,12 @@ console.log("<ok>");
       true,
     );
     expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
-    expect(getComputedStyle(unorderedList!).marginTop).toBe("0px");
-    expect(getComputedStyle(unorderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(unorderedList!).marginTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
+    expect(getComputedStyle(unorderedList!).marginBottom).toBe(
+      "var(--chakra-spacing-4)",
+    );
     expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
     expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
@@ -89,38 +93,11 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
-  it("uses padding to preserve spacing inside separated highlights", () => {
+  it("leaves a two-pixel gap between adjacent highlight backgrounds", () => {
     expect(previewThemeCss).toMatch(
       /\.commentable-content::before\s*\{[^}]*inset: 1px -8px;/,
     );
-    expect(previewThemeCss).toContain(
-      "padding-bottom: var(--comment-spacing-after)",
-    );
-    expect(previewThemeCss).toContain("margin-bottom: 0 !important");
-
-    const { container } = renderMarkdown(`# Heading
-
-Paragraph
-
-\`\`\`ts
-const value = 1;
-\`\`\`
-`);
-    const heading = container.querySelector(".commentable-heading h1");
-    const paragraph = container.querySelector(".commentable-paragraph p");
-    const codeBlock = container.querySelector(".commentable-code-block pre");
-
-    expect(getComputedStyle(heading!).marginTop).toBe("0px");
-    expect(getComputedStyle(heading!).marginBottom).toBe("0px");
-    expect(getComputedStyle(paragraph!).marginTop).toBe("0px");
-    expect(getComputedStyle(paragraph!).marginBottom).toBe("0px");
-    expect(getComputedStyle(codeBlock!).marginTop).toBe("0px");
-    expect(getComputedStyle(codeBlock!).marginBottom).toBe("0px");
-    expect(
-      getComputedStyle(
-        heading!.closest(".commentable-content")!,
-      ).getPropertyValue("--comment-spacing-after"),
-    ).toBe("var(--chakra-spacing-4)");
+    expect(previewThemeCss).not.toContain("inset: -4px -8px");
   });
 
   it("renders stable heading anchor links", () => {
@@ -202,25 +179,11 @@ After
       "horizontal",
     );
     expect(getComputedStyle(horizontalRule!.parentElement!).marginTop).toBe(
-      "0px",
+      "var(--chakra-spacing-6)",
     );
     expect(getComputedStyle(horizontalRule!.parentElement!).marginBottom).toBe(
-      "0px",
+      "var(--chakra-spacing-6)",
     );
-    const horizontalRuleContent = horizontalRule!.closest(
-      ".commentable-content",
-    );
-    expect(horizontalRuleContent).not.toBeNull();
-    expect(
-      getComputedStyle(horizontalRuleContent!).getPropertyValue(
-        "--comment-spacing-before",
-      ),
-    ).toBe("var(--chakra-spacing-6)");
-    expect(
-      getComputedStyle(horizontalRuleContent!).getPropertyValue(
-        "--comment-spacing-after",
-      ),
-    ).toBe("var(--chakra-spacing-6)");
   });
 
   it("renders nested lists inside parent list items", () => {
@@ -248,9 +211,9 @@ After
     expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
       "0px",
     );
-    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0px");
+    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0.25em");
     expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0px");
+    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0.25em");
     expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",

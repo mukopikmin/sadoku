@@ -427,7 +427,6 @@ const createCommentableComponent = (
     elementProps: Omit<ComponentProps, "children" | "node">,
     children: React.ReactNode,
   ) => React.ReactNode,
-  className?: string,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const {
@@ -446,7 +445,6 @@ const createCommentableComponent = (
     return (
       <CommentableBlock
         activeRange={props.activeRange}
-        className={className}
         comments={commentsByLine.get(line) ?? []}
         hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
@@ -556,7 +554,6 @@ const createCommentablePre = () => {
     return (
       <CommentableBlock
         activeRange={props.activeRange}
-        className="commentable-code-block"
         comments={commentsByLine.get(line) ?? []}
         hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
@@ -661,64 +658,45 @@ export const MarkdownPreview = ({
       blockquote: createCommentableComponent(
         "blockquote",
         renderMarkdownBlockquote,
-        "commentable-blockquote",
       ),
       h1: createCommentableComponent(
         "h1",
         (elementProps, children) =>
           renderMarkdownHeading("h1", elementProps, children),
-        "commentable-heading",
       ),
       h2: createCommentableComponent(
         "h2",
         (elementProps, children) =>
           renderMarkdownHeading("h2", elementProps, children),
-        "commentable-heading",
       ),
       h3: createCommentableComponent(
         "h3",
         (elementProps, children) =>
           renderMarkdownHeading("h3", elementProps, children),
-        "commentable-heading",
       ),
       h4: createCommentableComponent(
         "h4",
         (elementProps, children) =>
           renderMarkdownHeading("h4", elementProps, children),
-        "commentable-heading",
       ),
       h5: createCommentableComponent(
         "h5",
         (elementProps, children) =>
           renderMarkdownHeading("h5", elementProps, children),
-        "commentable-heading",
       ),
       h6: createCommentableComponent(
         "h6",
         (elementProps, children) =>
           renderMarkdownHeading("h6", elementProps, children),
-        "commentable-heading",
       ),
-      hr: createCommentableComponent(
-        "hr",
-        renderMarkdownHorizontalRule,
-        "commentable-horizontal-rule",
-      ),
+      hr: createCommentableComponent("hr", renderMarkdownHorizontalRule),
       li: createCommentableListItem(),
       img: sharedMarkdownComponents.img,
       ol: sharedMarkdownComponents.ol,
       ul: sharedMarkdownComponents.ul,
-      p: createCommentableComponent(
-        "p",
-        renderMarkdownParagraph,
-        "commentable-paragraph",
-      ),
+      p: createCommentableComponent("p", renderMarkdownParagraph),
       pre: createCommentablePre(),
-      table: createCommentableComponent(
-        "table",
-        undefined,
-        "commentable-table",
-      ),
+      table: createCommentableComponent("table"),
       code: sharedMarkdownComponents.code,
     };
   }, []);
