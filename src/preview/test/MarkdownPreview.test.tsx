@@ -2,11 +2,17 @@ import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../comments";
 import { MarkdownPreview } from "../MarkdownPreview";
+import { initializeMermaid } from "../mermaid";
 import { previewThemeCss } from "../theme";
+
+vi.mock("../mermaid", () => ({
+  initializeMermaid: vi.fn(async () => {}),
+}));
 
 afterEach(() => {
   globalThis.getSelection()?.removeAllRanges();
   cleanup();
+  vi.mocked(initializeMermaid).mockClear();
 });
 
 const ensurePreviewThemeStyle = () => {
@@ -224,6 +230,40 @@ After
     expect(
       container.querySelector('[data-source-line="1"] .commentable-content ul'),
     ).toBeNull();
+
+    const nestedItemContent = container.querySelector(
+      '[data-source-line="3"] .commentable-content',
+    );
+    expect(nestedItemContent).not.toBeNull();
+    fireEvent.click(nestedItemContent!);
+    const nestedItemGutter = container.querySelector(
+      '[data-source-line="3"] .comment-line-gutter',
+    );
+    expect(nestedItemGutter).not.toBeNull();
+    expect(getComputedStyle(nestedItemGutter!).left).toBe(
+      "calc(-34px - 7.5em)",
+    );
+    const nestedItemBlock = container.querySelector('[data-source-line="3"]');
+    expect(nestedItemBlock).not.toBeNull();
+    expect(
+      getComputedStyle(nestedItemBlock!).getPropertyValue(
+        "--comment-indent-offset",
+      ),
+    ).toBe("7.5em");
+    expect(previewThemeCss).toContain(
+      "left: calc(-8px - var(--comment-indent-offset, 0em))",
+    );
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    }));
+    const nestedCommentThread = container.querySelector(
+      '[data-source-line="3"] .comment-thread',
+    );
+    expect(nestedCommentThread).not.toBeNull();
+    expect(getComputedStyle(nestedCommentThread!).marginLeft).toBe(
+      "calc(0em - var(--comment-indent-offset, 0em))",
+    );
   });
 
   it("renders task list checkboxes", () => {
@@ -318,6 +358,20 @@ graph TD
     expect(previewThemeCss).toContain("background: var(--color-canvas);");
   });
 
+  it("reruns mermaid rendering after preview interactions recreate diagram nodes", async () => {
+    renderMarkdown(`\`\`\`mermaid
+graph TD
+  A --> B
+\`\`\`
+`);
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByTitle("Select line 1 for comment"));
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+  });
+
   it("does not render Mermaid zoom buttons for regular code fences", () => {
     renderMarkdown(`\`\`\`ts
 const value = 1;
@@ -361,7 +415,9 @@ Body
     expect(line).not.toBeNull();
 
     fireEvent.click(line!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 1",
+    }));
 
     expect(document.activeElement).toBe(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
@@ -381,7 +437,9 @@ Body
     expect(getBodyLine()).not.toBeNull();
 
     fireEvent.click(getTitleLine()!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 1",
+    }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Mac shortcut." } },
@@ -396,7 +454,9 @@ Body
     );
 
     fireEvent.click(getBodyLine()!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    }));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Control shortcut." } },
@@ -514,10 +574,15 @@ Body
 
     const getLine = () => container.querySelector('[data-source-line="3"] p');
     expect(getLine()).not.toBeNull();
+    expect(screen.queryByRole("button", {
+      name: "Add comment on line 3",
+    })).toBeNull();
 
     fireEvent.click(getLine()!);
 
-    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    })).not.toBeNull();
     expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-range-selected",
@@ -526,7 +591,9 @@ Body
 
     fireEvent.click(getLine()!);
 
-    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(screen.queryByRole("button", {
+      name: "Add comment on line 3",
+    })).toBeNull();
     expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
         "commentable-block-range-selected",
@@ -550,7 +617,9 @@ Body
     expect(getBody()).not.toBeNull();
 
     fireEvent.click(getBody()!);
-    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    })).not.toBeNull();
 
     const body = getBody();
     const text = body?.firstChild;
@@ -566,7 +635,9 @@ Body
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
-    expect(screen.getByRole("button", { name: "Add comment" })).not.toBeNull();
+    expect(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    })).not.toBeNull();
   });
 
   it("does not select a comment line when selecting its text", () => {
@@ -586,7 +657,9 @@ Body
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
-    expect(screen.queryByRole("button", { name: "Add comment" })).toBeNull();
+    expect(screen.queryByRole("button", {
+      name: "Add comment on line 3",
+    })).toBeNull();
   });
 
   it("creates comments for a selected line range", async () => {
@@ -594,17 +667,15 @@ Body
     const { container } = renderMarkdown("# Title\n\nBody\n", [], {
       onCreateComment,
     });
-    const getTitleLine = () =>
-      container.querySelector('[data-source-line="1"] h1');
-    const getBodyLine = () =>
-      container.querySelector('[data-source-line="3"] p');
-    expect(getTitleLine()).not.toBeNull();
-    expect(getBodyLine()).not.toBeNull();
+    expect(container.querySelector('[data-source-line="1"] h1')).not.toBeNull();
+    expect(container.querySelector('[data-source-line="3"] p')).not.toBeNull();
 
-    fireEvent.click(getTitleLine()!);
-    fireEvent.click(getBodyLine()!);
+    fireEvent.click(container.querySelector('[data-source-line="1"] h1')!);
+    fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
 
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    }));
     expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Review this line range." },
@@ -636,7 +707,9 @@ Body
     expect(orderedChild).not.toBeNull();
 
     fireEvent.click(orderedChild!);
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    }));
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Review nested item." },
     });
