@@ -615,6 +615,9 @@ Body
     ).toBe(false);
     expect(previewThemeCss).toContain("left: -8px");
     expect(previewThemeCss).toContain("right: -8px");
+    expect(previewThemeCss).toMatch(
+      /\.markdown-range-highlights\s*\{[^}]*z-index: -1;/,
+    );
   });
 
   it("merges saved ranges and gives the active selection priority", () => {

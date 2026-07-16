@@ -441,7 +441,7 @@ export const previewThemeCss = `
         inset: 0;
         pointer-events: none;
         position: absolute;
-        z-index: 2;
+        z-index: -1;
       }
 
       .markdown-range-highlight {
@@ -461,12 +461,6 @@ export const previewThemeCss = `
           var(--color-accent) 18%,
           var(--color-canvas)
         );
-      }
-
-      .comment-line-button,
-      .comment-thread {
-        position: relative;
-        z-index: 3;
       }
 
       .commentable-content {
