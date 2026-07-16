@@ -432,6 +432,43 @@ export const previewThemeCss = `
         border-top: 1px solid var(--color-border-muted);
       }
 
+      .markdown-preview {
+        isolation: isolate;
+        position: relative;
+      }
+
+      .markdown-range-highlights {
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: 2;
+      }
+
+      .markdown-range-highlight {
+        border-radius: 6px;
+        left: -8px;
+        position: absolute;
+        right: -8px;
+      }
+
+      .markdown-range-highlight-comment {
+        background: color-mix(in srgb, #d29922 18%, var(--color-canvas));
+      }
+
+      .markdown-range-highlight-selection {
+        background: color-mix(
+          in srgb,
+          var(--color-accent) 18%,
+          var(--color-canvas)
+        );
+      }
+
+      .comment-line-button,
+      .comment-thread {
+        position: relative;
+        z-index: 3;
+      }
+
       .commentable-content {
         box-sizing: border-box;
         cursor: pointer;
