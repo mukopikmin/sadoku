@@ -433,11 +433,58 @@ export const previewThemeCss = `
       }
 
       .commentable-content {
+        --comment-spacing-before: 0px;
+        --comment-spacing-after: 0px;
         box-sizing: border-box;
         cursor: pointer;
         isolation: isolate;
+        padding-top: 0;
+        padding-bottom: var(--comment-spacing-after);
         position: relative;
         width: 100%;
+      }
+
+      .commentable-heading > .commentable-content {
+        --comment-spacing-before: var(--chakra-spacing-6);
+        --comment-spacing-after: var(--chakra-spacing-4);
+      }
+
+      :where(
+        .commentable-blockquote,
+        .commentable-code-block,
+        .commentable-paragraph
+      ) > .commentable-content {
+        --comment-spacing-after: var(--chakra-spacing-4);
+      }
+
+      .commentable-horizontal-rule > .commentable-content {
+        --comment-spacing-before: var(--chakra-spacing-6);
+        --comment-spacing-after: var(--chakra-spacing-6);
+      }
+
+      .commentable-block:first-child > .commentable-content {
+        padding-top: var(--comment-spacing-before);
+      }
+
+      .commentable-block:has(+ .commentable-heading) > .commentable-content,
+      .commentable-block:has(+ .commentable-horizontal-rule) > .commentable-content {
+        padding-bottom: var(--chakra-spacing-6);
+      }
+
+      .commentable-block:not(.commentable-list-item)
+        > .commentable-content
+        > .comment-markdown-body
+        > :first-child {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+      }
+
+      .commentable-blockquote
+        > .commentable-content
+        > .comment-markdown-body
+        > blockquote
+        > :last-child {
+        margin-bottom: 0 !important;
       }
 
       .commentable-list-item {
@@ -446,6 +493,66 @@ export const previewThemeCss = `
 
       .commentable-list-item > .commentable-content {
         display: block;
+      }
+
+      .commentable-list-item:has(
+        > .commentable-content > .comment-markdown-body > p
+      ) > .commentable-content {
+        --comment-spacing-after: var(--chakra-spacing-4);
+      }
+
+      .commentable-list-item
+        > .commentable-content
+        > .comment-markdown-body
+        > p {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+      }
+
+      .comment-markdown-list:has(> li > .commentable-list-item) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+      }
+
+      .comment-markdown-list:has(> li > .commentable-list-item)
+        > li:last-child
+        > .commentable-list-item
+        > .commentable-content {
+        padding-bottom: var(--chakra-spacing-4);
+      }
+
+      .comment-markdown-list:first-child
+        > li:first-child
+        > .commentable-list-item
+        > .commentable-content,
+      .commentable-table + .comment-markdown-list
+        > li:first-child
+        > .commentable-list-item
+        > .commentable-content {
+        padding-top: var(--chakra-spacing-2);
+      }
+
+      .comment-markdown-list .comment-markdown-list
+        > li:first-child
+        > .commentable-list-item
+        > .commentable-content {
+        padding-top: 0.25em;
+      }
+
+      .commentable-list-item:has(
+        > .commentable-content > .comment-markdown-body > p
+      ) + .comment-markdown-list
+        > li:first-child
+        > .commentable-list-item
+        > .commentable-content {
+        padding-top: 0;
+      }
+
+      .comment-markdown-list:has(+ .commentable-heading, + .commentable-horizontal-rule)
+        > li:last-child
+        > .commentable-list-item
+        > .commentable-content {
+        padding-bottom: var(--chakra-spacing-6);
       }
 
       .comment-markdown-body {
@@ -494,7 +601,7 @@ export const previewThemeCss = `
 
       .mermaid-container {
         position: relative;
-        margin-bottom: 16px;
+        margin-bottom: 0;
       }
 
       .mermaid-container .mermaid {
