@@ -3,10 +3,10 @@
 `sadoku` is a local Markdown review tool for reading, previewing, and commenting
 on one Markdown document in your browser.
 
-Pass it a Markdown file path or an HTTP(S) URL. It starts a local HTTP server,
-renders the source as HTML, prints the preview URL, and opens that URL in your
-default browser. Review comments stay separate from local Markdown files so the
-documents themselves stay clean.
+Run its `start` command with a Markdown file path or an HTTP(S) URL. It starts a
+local HTTP server, renders the source as HTML, prints the preview URL, and opens
+that URL in your default browser. Review comments stay separate from local
+Markdown files so the documents themselves stay clean.
 
 ## Install
 
@@ -37,7 +37,7 @@ Or compile a standalone binary in the project directory:
 ```sh
 npm install
 deno task compile --version 0.1.0
-./sadoku README.md
+./sadoku start README.md
 ```
 
 If `--version` is omitted, the compiled binary reports the development version
@@ -46,25 +46,25 @@ If `--version` is omitted, the compiled binary reports the development version
 ## Usage
 
 ```sh
-sadoku <file.md|url> [options]
+sadoku start <file.md|url> [options]
 ```
 
 Preview a file:
 
 ```sh
-sadoku README.md
+sadoku start README.md
 ```
 
 Preview Markdown from a URL:
 
 ```sh
-sadoku 'https://example.com/README.md?token=temporary'
+sadoku start 'https://example.com/README.md?token=temporary'
 ```
 
 Use a different port:
 
 ```sh
-sadoku README.md --port 4000
+sadoku start README.md --port 4000
 ```
 
 If the requested port is already in use, `sadoku` increments it until an
@@ -73,19 +73,19 @@ available port is found.
 Bind to a specific host and port:
 
 ```sh
-sadoku README.md --host 127.0.0.1 --port 4000
+sadoku start README.md --host 127.0.0.1 --port 4000
 ```
 
 Print the URL without opening a browser:
 
 ```sh
-sadoku README.md --no-open
+sadoku start README.md --no-open
 ```
 
 Keep the server running after the preview tab is closed:
 
 ```sh
-sadoku README.md --keep-alive
+sadoku start README.md --keep-alive
 ```
 
 By default, the server reads the Markdown file or fetches the Markdown URL again
@@ -190,8 +190,8 @@ Set `BROWSER` to choose the opener command explicitly. If the command contains
 as the last argument.
 
 ```sh
-BROWSER=explorer.exe sadoku README.md
-BROWSER='chrome.exe --new-window %s' sadoku README.md
+BROWSER=explorer.exe sadoku start README.md
+BROWSER='chrome.exe --new-window %s' sadoku start README.md
 ```
 
 ## Development
@@ -205,14 +205,14 @@ npm install
 Run the CLI with Deno:
 
 ```sh
-deno task start README.md
+deno task start start README.md
 ```
 
 Compile a standalone binary:
 
 ```sh
 deno task compile
-./sadoku README.md
+./sadoku start README.md
 ```
 
 On Linux and macOS, build in a temporary directory and install the binary to
