@@ -144,6 +144,12 @@ console.log("<ok>");
     );
   });
 
+  it("keeps list markers outside per-line highlight backgrounds", () => {
+    expect(previewThemeCss).toMatch(
+      /\.commentable-list-item > \.commentable-content::before\s*\{[^}]*left: calc\(-1 \* var\(--chakra-spacing-2\)\);/,
+    );
+  });
+
   it("renders stable heading anchor links", () => {
     const { container } = renderMarkdown(`# Title!
 

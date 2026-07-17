@@ -418,6 +418,10 @@ export const previewThemeCss = `
         display: block;
       }
 
+      .commentable-list-item > .commentable-content::before {
+        left: calc(-1 * var(--chakra-spacing-2));
+      }
+
       .comment-markdown-body {
         display: contents;
       }
