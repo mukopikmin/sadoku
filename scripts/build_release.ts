@@ -232,6 +232,7 @@ const verifyNativeBinary = async (binaryPath: string): Promise<void> => {
 
   const child = new Deno.Command(binaryPath, {
     args: [
+      "start",
       fixture,
       "--host",
       "127.0.0.1",
