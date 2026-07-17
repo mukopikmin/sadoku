@@ -59,12 +59,12 @@ case "$(uname -s):$(uname -m)" in
     ;;
 esac
 
+release_url="$(curl -fsSL -o /dev/null -w '%{url_effective}' "$repository/releases/latest")" ||
+  fail "could not resolve the latest release"
+tag="${release_url##*/}"
+
 if [ "$channel" = "nightly" ]; then
-  tag="v0.0.0-nightly"
-else
-  release_url="$(curl -fsSL -o /dev/null -w '%{url_effective}' "$repository/releases/latest")" ||
-    fail "could not resolve the latest release"
-  tag="${release_url##*/}"
+  tag="${tag}-nightly"
 fi
 
 case "$tag" in

@@ -243,13 +243,8 @@ export const previewThemeCss = `
         --chakra-colors-warning-fg: var(--chakra-colors-yellow-400);
       }
 
-      .comment-markdown-body .task-list-item {
+      .comment-markdown-list > .task-list-item {
         list-style-type: none;
-      }
-
-      .comment-markdown-body .task-list-item-checkbox {
-        margin: 0 var(--chakra-spacing-2) 0.2em 0;
-        vertical-align: middle;
       }
 
       .hljs {
@@ -348,12 +343,71 @@ export const previewThemeCss = `
         border-top: 1px solid var(--chakra-colors-border-muted);
       }
 
+      .markdown-preview {
+        isolation: isolate;
+        position: relative;
+      }
+
+      .markdown-range-highlights {
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: -1;
+      }
+
+      .markdown-range-highlight {
+        border-radius: var(--chakra-radii-sm);
+        left: calc(-1 * var(--chakra-spacing-2));
+        position: absolute;
+        right: calc(-1 * var(--chakra-spacing-2));
+      }
+
+      .markdown-range-highlight-comment {
+        background: color-mix(in srgb, var(--chakra-colors-selection-comment) 18%, var(--chakra-colors-canvas));
+      }
+
+      .markdown-range-highlight-selection {
+        background: color-mix(
+          in srgb,
+          var(--chakra-colors-accent) 18%,
+          var(--chakra-colors-canvas)
+        );
+      }
+
       .commentable-content {
         box-sizing: border-box;
         cursor: pointer;
         isolation: isolate;
         position: relative;
         width: 100%;
+      }
+
+      .commentable-block {
+        --comment-highlight-spacing-before: 0px;
+        --comment-highlight-spacing-after: 0px;
+      }
+
+      .commentable-heading {
+        --comment-highlight-spacing-before: var(--chakra-spacing-6);
+        --comment-highlight-spacing-after: var(--chakra-spacing-4);
+      }
+
+      :where(
+        .commentable-blockquote,
+        .commentable-code-block,
+        .commentable-paragraph
+      ) {
+        --comment-highlight-spacing-after: var(--chakra-spacing-4);
+      }
+
+      .commentable-horizontal-rule {
+        --comment-highlight-spacing-before: var(--chakra-spacing-6);
+        --comment-highlight-spacing-after: var(--chakra-spacing-6);
+      }
+
+      :where(.commentable-list-item, .commentable-table) {
+        --comment-highlight-spacing-before: 0px;
+        --comment-highlight-spacing-after: 0px;
       }
 
       .commentable-list-item {
@@ -372,7 +426,9 @@ export const previewThemeCss = `
         content: "";
         position: absolute;
         z-index: -1;
-        inset: calc(-1 * var(--chakra-spacing-1)) calc(-1 * var(--chakra-spacing-2));
+        top: calc(-1 * var(--comment-highlight-spacing-before) + 1px);
+        right: calc(-1 * var(--chakra-spacing-2));
+        bottom: calc(-1 * var(--comment-highlight-spacing-after) + 1px);
         left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));
         border-radius: var(--chakra-radii-sm);
         background: var(--chakra-colors-transparent);
@@ -380,7 +436,12 @@ export const previewThemeCss = `
         transition: background-color 120ms ease;
       }
 
-      .commentable-block:not(.commentable-block-selected):has(.comment-thread) > .commentable-content::before {
+      .commentable-block:has(+ .commentable-heading)
+        > .commentable-content::before {
+        bottom: 1px;
+      }
+
+      .commentable-block:not(.commentable-block-selected):not(.commentable-block-continuous-highlight):has(.comment-thread) > .commentable-content::before {
         background: color-mix(in srgb, var(--chakra-colors-accent) 8%, var(--chakra-colors-canvas));
       }
 

@@ -86,7 +86,7 @@ const runInstaller = async (
   await Deno.mkdir(fixtures);
   await writeCommands(bin);
   await makeFixture(fixtures, "1.2.3", "linux-x64");
-  await makeFixture(fixtures, "0.0.0-nightly", "darwin-arm64");
+  await makeFixture(fixtures, "1.2.3-nightly", "darwin-arm64");
   if (options.corruptChecksum) {
     await Deno.writeTextFile(
       join(fixtures, "sadoku-v1.2.3-linux-x64.tar.gz.sha256"),
@@ -139,7 +139,7 @@ Deno.test("installs the nightly release for macOS arm64", async () => {
     assert(result.output.success, result.stderr);
     assertEquals(
       await Deno.readTextFile(join(result.home, ".local", "bin", "sadoku")),
-      "sadoku 0.0.0-nightly\n",
+      "sadoku 1.2.3-nightly\n",
     );
   } finally {
     await Deno.remove(result.root, { recursive: true });
