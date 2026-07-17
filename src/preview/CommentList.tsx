@@ -1,20 +1,11 @@
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import type { CommentThreadActions } from "./commentActions";
 import { CommentItem } from "./CommentItem";
 import type { PreviewComment } from "./comments";
 
-export type CommentListProps = {
-  comments: PreviewComment[];
-  onDeleteComment: (id: number) => Promise<void>;
-  onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
-  onReplyComment: (id: number, body: string) => Promise<void>;
+export type CommentListProps = CommentThreadActions & {
   onReopenComment: (id: number) => Promise<void>;
-  onResolveComment: (id: number) => Promise<void>;
-  onUpdateComment: (id: number, body: string) => Promise<void>;
-  onUpdateReply: (
-    commentId: number,
-    replyId: number,
-    body: string,
-  ) => Promise<void>;
+  comments: PreviewComment[];
 };
 
 const formatRange = (line: number, endLine = line): string =>
