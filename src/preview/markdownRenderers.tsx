@@ -1,4 +1,4 @@
-import { Box, List, Separator, Text } from "@chakra-ui/react";
+import { Box, Checkbox, List, Separator, Text } from "@chakra-ui/react";
 import { createContext, useContext } from "react";
 import type React from "react";
 import type { Components } from "react-markdown";
@@ -182,6 +182,29 @@ export const sharedMarkdownComponents: Components = {
   },
   img({ node: _node, ...props }) {
     return <Box as="img" maxW="100%" h="auto" {...props} />;
+  },
+  input({ checked, className, disabled, node: _node, type, ...props }) {
+    if (type !== "checkbox") {
+      return <input type={type} {...props} />;
+    }
+
+    return (
+      <Checkbox.Root
+        as="span"
+        checked={checked}
+        className={className}
+        disabled={disabled}
+        display="inline-flex"
+        mb="0.2em"
+        me="0.5em"
+        verticalAlign="middle"
+      >
+        <Checkbox.HiddenInput {...props} />
+        <Checkbox.Control>
+          <Checkbox.Indicator />
+        </Checkbox.Control>
+      </Checkbox.Root>
+    );
   },
   li({ children, node: _node, ...props }) {
     return <List.Item {...props}>{children}</List.Item>;

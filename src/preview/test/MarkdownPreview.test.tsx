@@ -279,6 +279,17 @@ After
     expect(checkboxes[0].checked).toBe(false);
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
+    expect(checkboxes[0].disabled).toBe(true);
+    expect(
+      container.querySelectorAll('[data-scope="checkbox"][data-part="root"]'),
+    )
+      .toHaveLength(3);
+    expect(
+      container.querySelectorAll(
+        '[data-scope="checkbox"][data-part="control"]',
+      ),
+    )
+      .toHaveLength(3);
     expect(container.querySelector(".task-list-item")).not.toBeNull();
     expect(previewThemeCss).not.toContain("0 0.5em 0.2em -");
   });

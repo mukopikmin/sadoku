@@ -160,11 +160,6 @@ export const previewThemeCss = `
         list-style-type: none;
       }
 
-      .comment-markdown-body .task-list-item-checkbox {
-        margin: 0 0.5em 0.2em 0;
-        vertical-align: middle;
-      }
-
       .hljs {
         color: var(--chakra-colors-code\\.fg);
       }
