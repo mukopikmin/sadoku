@@ -60,6 +60,16 @@ describe("MarkdownPreview", () => {
     expect(previewThemeCss).toContain("var(--chakra-colors-syntax-keyword)");
   });
 
+  it("keeps overlapping selection backgrounds opaque", () => {
+    const mixedBackgrounds = previewThemeCss.match(/color-mix\([^;]+\)/g) ?? [];
+
+    expect(mixedBackgrounds).toHaveLength(4);
+    for (const background of mixedBackgrounds) {
+      expect(background).toContain("var(--chakra-colors-canvas)");
+      expect(background).not.toContain("var(--chakra-colors-transparent)");
+    }
+  });
+
   it("renders common Markdown blocks", () => {
     const { container } = renderMarkdown(`# Title
 
