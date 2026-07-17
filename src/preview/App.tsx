@@ -58,7 +58,7 @@ const persistThemeMode = (themeMode: ThemeMode): void => {
 };
 
 const PreviewShell = ({ children }: { children: ReactNode }) => (
-  <Container as="main" maxW="980px" px="32px" py="32px" pb="64px">
+  <Container as="main" maxW="980px" px="8" py="8" pb="16">
     <Flex
       as="header"
       position="sticky"
@@ -293,7 +293,7 @@ export const App = () => {
   return (
     <>
       <style>{previewThemeCss}</style>
-      <Container as="main" maxW="980px" px="32px" py="32px" pb="64px">
+      <Container as="main" maxW="980px" px="8" py="8" pb="16">
         <Flex
           as="header"
           position="sticky"

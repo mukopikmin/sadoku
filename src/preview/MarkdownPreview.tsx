@@ -160,8 +160,8 @@ const CommentableBlock = ({
   const listDepth = useContext(MarkdownListDepthContext);
   const commentIndentEm = listDepth * markdownListIndentEm;
   const commentGutterLeft = listDepth === 0
-    ? "-34px"
-    : `calc(-34px - ${commentIndentEm}em)`;
+    ? "calc(-1 * var(--chakra-spacing-8))"
+    : `calc(-1 * var(--chakra-spacing-8) - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, line]);
   }, [ancestorSourceLines, line]);
@@ -232,11 +232,11 @@ const CommentableBlock = ({
               aria-label={`Add comment on ${formatRangeLabel(pendingRange)}`}
               bg="canvas"
               borderColor="accent"
-              boxSize="24px"
+              boxSize="6"
               className="comment-line-button"
               color="accent"
               fontSize="md"
-              minW="24px"
+              minW="6"
               onClick={onOpenCommentForm}
               p="0"
               title={`Add comment on ${formatRangeLabel(pendingRange)}`}

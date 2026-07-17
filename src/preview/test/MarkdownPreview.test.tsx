@@ -53,6 +53,13 @@ const renderMarkdown = (
 };
 
 describe("MarkdownPreview", () => {
+  it("uses Chakra tokens for custom preview colors and spacing", () => {
+    expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
+    expect(previewThemeCss).not.toMatch(/\brgba?\(/);
+    expect(previewThemeCss).toContain("var(--chakra-spacing-2)");
+    expect(previewThemeCss).toContain("var(--chakra-colors-syntax-keyword)");
+  });
+
   it("renders common Markdown blocks", () => {
     const { container } = renderMarkdown(`# Title
 
@@ -89,7 +96,7 @@ console.log("<ok>");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
     expect(getComputedStyle(container.querySelector(".hljs-string")!).color)
-      .toBe("rgb(0, 90, 0)");
+      .toBe("var(--chakra-colors-syntax-string)");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
@@ -241,7 +248,7 @@ After
     );
     expect(nestedItemGutter).not.toBeNull();
     expect(getComputedStyle(nestedItemGutter!).left).toBe(
-      "calc(-34px - 7.5em)",
+      "calc(-1 * var(--chakra-spacing-8) - 7.5em)",
     );
     const nestedItemBlock = container.querySelector('[data-source-line="3"]');
     expect(nestedItemBlock).not.toBeNull();
@@ -251,7 +258,7 @@ After
       ),
     ).toBe("7.5em");
     expect(previewThemeCss).toContain(
-      "left: calc(-8px - var(--comment-indent-offset, 0em))",
+      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em))",
     );
 
     fireEvent.click(screen.getByRole("button", {
@@ -294,7 +301,7 @@ fun main() {
     expect(container.querySelector("code.hljs.language-kotlin")).not.toBeNull();
     expect(container.querySelector(".hljs-keyword")?.textContent).toBe("fun");
     expect(getComputedStyle(container.querySelector(".hljs-keyword")!).color)
-      .toBe("rgb(139, 0, 0)");
+      .toBe("var(--chakra-colors-syntax-keyword)");
   });
 
   it("adds source line controls to code fences", () => {
@@ -309,12 +316,12 @@ const value = 1;
     expect(
       getComputedStyle(container.querySelector(".language-ts span")!).color,
     )
-      .not.toBe("var(--chakra-colors-code\\.fg)");
+      .not.toBe("var(--chakra-colors-code-fg)");
     expect(getComputedStyle(container.querySelector("pre")!).color).toBe(
-      "var(--chakra-colors-code\\.fg)",
+      "var(--chakra-colors-code-fg)",
     );
     expect(previewThemeCss).toContain(
-      ".hljs {\n        color: var(--chakra-colors-code\\.fg);",
+      ".hljs {\n        color: var(--chakra-colors-code-fg);",
     );
   });
 
@@ -328,10 +335,10 @@ const value = 1;
     expect(code?.classList.contains("hljs")).toBe(false);
     expect(code?.textContent).toContain('const indented = "<escaped>";');
     expect(getComputedStyle(code!.parentElement!).color).toBe(
-      "var(--chakra-colors-code\\.fg)",
+      "var(--chakra-colors-code-fg)",
     );
     expect(getComputedStyle(code!).color).toBe(
-      "var(--chakra-colors-code\\.fg)",
+      "var(--chakra-colors-code-fg)",
     );
     expect(getComputedStyle(code!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
@@ -351,11 +358,13 @@ graph TD
     ).not.toBeNull();
     expect(previewThemeCss).toContain(".mermaid {");
     expect(previewThemeCss).toContain(
-      "background: var(--color-canvas-subtle);",
+      "background: var(--chakra-colors-canvas-subtle);",
     );
-    expect(previewThemeCss).toContain("color: var(--color-text);");
+    expect(previewThemeCss).toContain("color: var(--chakra-colors-fg);");
     expect(previewThemeCss).toContain(".mermaid-zoom-button");
-    expect(previewThemeCss).toContain("background: var(--color-canvas);");
+    expect(previewThemeCss).toContain(
+      "background: var(--chakra-colors-canvas);",
+    );
   });
 
   it("reruns mermaid rendering after preview interactions recreate diagram nodes", async () => {
@@ -565,7 +574,9 @@ Body
       ),
     ).toBe(true);
     expect(previewThemeCss).toContain(".commentable-block-comment-highlight");
-    expect(previewThemeCss).toContain("#d29922");
+    expect(previewThemeCss).toContain(
+      "var(--chakra-colors-selection-comment)",
+    );
     expect(previewThemeCss).toContain(".commentable-block-range-selected");
   });
 
