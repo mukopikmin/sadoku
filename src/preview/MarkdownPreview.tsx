@@ -12,9 +12,12 @@ import {
   createContext,
   createElement,
   isValidElement,
+  useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type React from "react";
@@ -111,8 +114,68 @@ const getSourceLine = (props: { node?: SourceNode }): number | undefined => {
 
 type CommentRange = { endLine: number; startLine: number };
 
+type RangeHighlight = CommentRange & {
+  kind: "comment" | "selection";
+};
+
+type RangeHighlightLayout = RangeHighlight & {
+  bottom: number;
+  top: number;
+};
+
+const mergeRanges = (ranges: CommentRange[]): CommentRange[] => {
+  const sorted = [...ranges].sort((a, b) =>
+    a.startLine - b.startLine || a.endLine - b.endLine
+  );
+  const merged: CommentRange[] = [];
+  for (const range of sorted) {
+    const previous = merged.at(-1);
+    if (!previous || range.startLine > previous.endLine + 1) {
+      merged.push({ ...range });
+      continue;
+    }
+    previous.endLine = Math.max(previous.endLine, range.endLine);
+  }
+  return merged;
+};
+
+const subtractRange = (
+  ranges: CommentRange[],
+  excluded?: CommentRange,
+): CommentRange[] => {
+  if (!excluded) return ranges;
+  return ranges.flatMap((range) => {
+    if (
+      excluded.endLine < range.startLine ||
+      excluded.startLine > range.endLine
+    ) return [range];
+
+    const remaining: CommentRange[] = [];
+    if (excluded.startLine > range.startLine) {
+      remaining.push({
+        startLine: range.startLine,
+        endLine: excluded.startLine - 1,
+      });
+    }
+    if (excluded.endLine < range.endLine) {
+      remaining.push({
+        startLine: excluded.endLine + 1,
+        endLine: range.endLine,
+      });
+    }
+    return remaining;
+  });
+};
+
 const isLineInRange = (line: number, range: CommentRange): boolean =>
   line >= range.startLine && line <= range.endLine;
+
+const isSelectedSingleLine = (
+  line: number,
+  range?: CommentRange,
+): boolean =>
+  range !== undefined && range.startLine === range.endLine &&
+  isLineInRange(line, range);
 
 const formatRangeLabel = (range: CommentRange): string =>
   range.startLine === range.endLine
@@ -427,6 +490,7 @@ const createCommentableComponent = (
     elementProps: Omit<ComponentProps, "children" | "node">,
     children: React.ReactNode,
   ) => React.ReactNode,
+  className?: string,
 ) => {
   return ({ children, node, ...elementProps }: ComponentProps) => {
     const {
@@ -445,13 +509,12 @@ const createCommentableComponent = (
     return (
       <CommentableBlock
         activeRange={props.activeRange}
+        className={className}
         comments={commentsByLine.get(line) ?? []}
         hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
         isRangeActionLine={props.selectedRange?.endLine === line}
-        isSelected={props.selectedRange
-          ? isLineInRange(line, props.selectedRange)
-          : false}
+        isSelected={isSelectedSingleLine(line, props.selectedRange)}
         line={line}
         onCloseCommentForm={props.onCloseCommentForm}
         onCreateComment={props.onCreateComment}
@@ -497,9 +560,7 @@ const createCommentableListItem = () => {
           hasCommentHighlight={commentHighlightsByLine.has(line)}
           isAdding={props.activeCommentLine === line}
           isRangeActionLine={props.selectedRange?.endLine === line}
-          isSelected={props.selectedRange
-            ? isLineInRange(line, props.selectedRange)
-            : false}
+          isSelected={isSelectedSingleLine(line, props.selectedRange)}
           line={line}
           onCloseCommentForm={props.onCloseCommentForm}
           onCreateComment={props.onCreateComment}
@@ -554,13 +615,12 @@ const createCommentablePre = () => {
     return (
       <CommentableBlock
         activeRange={props.activeRange}
+        className="commentable-code-block"
         comments={commentsByLine.get(line) ?? []}
         hasCommentHighlight={commentHighlightsByLine.has(line)}
         isAdding={props.activeCommentLine === line}
         isRangeActionLine={props.selectedRange?.endLine === line}
-        isSelected={props.selectedRange
-          ? isLineInRange(line, props.selectedRange)
-          : false}
+        isSelected={isSelectedSingleLine(line, props.selectedRange)}
         line={line}
         onCloseCommentForm={props.onCloseCommentForm}
         onCreateComment={props.onCreateComment}
@@ -591,6 +651,7 @@ export const MarkdownPreview = ({
   onUpdateComment,
   onUpdateReply,
 }: MarkdownPreviewProps) => {
+  const previewRef = useRef<HTMLDivElement>(null);
   const commentsByLine = useMemo(() => {
     const grouped = new Map<number, PreviewComment[]>();
     for (const comment of comments) {
@@ -601,11 +662,17 @@ export const MarkdownPreview = ({
     }
     return grouped;
   }, [comments]);
+  const continuousCommentRanges = useMemo(() =>
+    mergeRanges(
+      comments.filter((comment) => comment.startLine < comment.endLine).map(
+        ({ startLine, endLine }) => ({ startLine, endLine }),
+      ),
+    ), [comments]);
   const commentHighlightsByLine = useMemo(() => {
     const highlighted = new Set<number>();
     for (const comment of comments) {
-      for (let line = comment.startLine; line <= comment.endLine; line += 1) {
-        highlighted.add(line);
+      if (comment.startLine === comment.endLine) {
+        highlighted.add(comment.startLine);
       }
     }
     return highlighted;
@@ -615,6 +682,75 @@ export const MarkdownPreview = ({
   const [activeRange, setActiveRange] = useState<CommentRange>();
   const [lineSelectionAnchor, setLineSelectionAnchor] = useState<number>();
   const [selectedRange, setSelectedRange] = useState<CommentRange>();
+  const continuousSelectedRange = selectedRange &&
+      selectedRange.startLine < selectedRange.endLine
+    ? selectedRange
+    : undefined;
+  const rangeHighlights = useMemo<RangeHighlight[]>(() => [
+    ...subtractRange(continuousCommentRanges, continuousSelectedRange).map(
+      (range) => ({ ...range, kind: "comment" as const }),
+    ),
+    ...(continuousSelectedRange
+      ? [{ ...continuousSelectedRange, kind: "selection" as const }]
+      : []),
+  ], [continuousCommentRanges, continuousSelectedRange]);
+  const [rangeHighlightLayouts, setRangeHighlightLayouts] = useState<
+    RangeHighlightLayout[]
+  >([]);
+
+  const updateRangeHighlightLayouts = useCallback(() => {
+    const preview = previewRef.current;
+    if (!preview) return;
+    const previewRect = preview.getBoundingClientRect();
+    const blocks = [...preview.querySelectorAll<HTMLElement>(
+      ":scope > .commentable-block, :scope > .comment-markdown-list .commentable-block",
+    )];
+    const layouts = rangeHighlights.flatMap((range) => {
+      const contents = blocks.filter((block) => {
+        const line = Number(block.dataset.sourceLine);
+        return line >= range.startLine && line <= range.endLine;
+      }).map((block) =>
+        block.querySelector<HTMLElement>(":scope > .commentable-content")
+      ).filter((content): content is HTMLElement => content !== null);
+      if (contents.length === 0) return [];
+      const rects = contents.map((content) => {
+        const element = content.querySelector<HTMLElement>(
+          ":scope > .comment-markdown-body > :first-child",
+        );
+        const rect = (element ?? content).getBoundingClientRect();
+        const style = element ? getComputedStyle(element) : undefined;
+        return {
+          top: rect.top - (Number.parseFloat(style?.marginTop ?? "0") || 0),
+          bottom: rect.bottom +
+            (Number.parseFloat(style?.marginBottom ?? "0") || 0),
+        };
+      });
+      return [{
+        ...range,
+        top: Math.min(...rects.map((rect) => rect.top)) - previewRect.top,
+        bottom: Math.max(...rects.map((rect) => rect.bottom)) - previewRect.top,
+      }];
+    });
+    setRangeHighlightLayouts((current) =>
+      JSON.stringify(current) === JSON.stringify(layouts) ? current : layouts
+    );
+  }, [rangeHighlights]);
+
+  useLayoutEffect(() => {
+    updateRangeHighlightLayouts();
+    const preview = previewRef.current;
+    if (!preview) return;
+    const handleResize = () => updateRangeHighlightLayouts();
+    globalThis.addEventListener("resize", handleResize);
+    const observer = typeof ResizeObserver === "undefined"
+      ? undefined
+      : new ResizeObserver(handleResize);
+    observer?.observe(preview);
+    return () => {
+      observer?.disconnect();
+      globalThis.removeEventListener("resize", handleResize);
+    };
+  }, [updateRangeHighlightLayouts, activeCommentLine, markdown]);
 
   useEffect(() => {
     void initializeMermaid();
@@ -658,46 +794,65 @@ export const MarkdownPreview = ({
       blockquote: createCommentableComponent(
         "blockquote",
         renderMarkdownBlockquote,
+        "commentable-blockquote",
       ),
       h1: createCommentableComponent(
         "h1",
         (elementProps, children) =>
           renderMarkdownHeading("h1", elementProps, children),
+        "commentable-heading",
       ),
       h2: createCommentableComponent(
         "h2",
         (elementProps, children) =>
           renderMarkdownHeading("h2", elementProps, children),
+        "commentable-heading",
       ),
       h3: createCommentableComponent(
         "h3",
         (elementProps, children) =>
           renderMarkdownHeading("h3", elementProps, children),
+        "commentable-heading",
       ),
       h4: createCommentableComponent(
         "h4",
         (elementProps, children) =>
           renderMarkdownHeading("h4", elementProps, children),
+        "commentable-heading",
       ),
       h5: createCommentableComponent(
         "h5",
         (elementProps, children) =>
           renderMarkdownHeading("h5", elementProps, children),
+        "commentable-heading",
       ),
       h6: createCommentableComponent(
         "h6",
         (elementProps, children) =>
           renderMarkdownHeading("h6", elementProps, children),
+        "commentable-heading",
       ),
-      hr: createCommentableComponent("hr", renderMarkdownHorizontalRule),
+      hr: createCommentableComponent(
+        "hr",
+        renderMarkdownHorizontalRule,
+        "commentable-horizontal-rule",
+      ),
       input: sharedMarkdownComponents.input,
       li: createCommentableListItem(),
       img: sharedMarkdownComponents.img,
       ol: sharedMarkdownComponents.ol,
       ul: sharedMarkdownComponents.ul,
-      p: createCommentableComponent("p", renderMarkdownParagraph),
+      p: createCommentableComponent(
+        "p",
+        renderMarkdownParagraph,
+        "commentable-paragraph",
+      ),
       pre: createCommentablePre(),
-      table: createCommentableComponent("table"),
+      table: createCommentableComponent(
+        "table",
+        undefined,
+        "commentable-table",
+      ),
       code: sharedMarkdownComponents.code,
     };
   }, []);
@@ -722,20 +877,36 @@ export const MarkdownPreview = ({
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
-      <ReactMarkdown
-        components={components}
-        rehypePlugins={[
-          rehypeSlug,
-          [rehypeAutolinkHeadings, {
-            behavior: "wrap",
-            properties: { className: "heading-anchor" },
-          }],
-          ...sharedMarkdownRehypePlugins,
-        ]}
-        remarkPlugins={sharedMarkdownRemarkPlugins}
-      >
-        {markdown}
-      </ReactMarkdown>
+      <div className="markdown-preview" ref={previewRef}>
+        <div aria-hidden="true" className="markdown-range-highlights">
+          {rangeHighlightLayouts.map((layout) => (
+            <div
+              className={`markdown-range-highlight markdown-range-highlight-${layout.kind}`}
+              data-end-line={layout.endLine}
+              data-start-line={layout.startLine}
+              key={`${layout.kind}-${layout.startLine}-${layout.endLine}`}
+              style={{
+                height: `${Math.max(0, layout.bottom - layout.top - 2)}px`,
+                top: `${layout.top + 1}px`,
+              }}
+            />
+          ))}
+        </div>
+        <ReactMarkdown
+          components={components}
+          rehypePlugins={[
+            rehypeSlug,
+            [rehypeAutolinkHeadings, {
+              behavior: "wrap",
+              properties: { className: "heading-anchor" },
+            }],
+            ...sharedMarkdownRehypePlugins,
+          ]}
+          remarkPlugins={sharedMarkdownRemarkPlugins}
+        >
+          {markdown}
+        </ReactMarkdown>
+      </div>
     </CommentRenderingContext.Provider>
   );
 };
