@@ -587,6 +587,12 @@ Body
     expect(previewThemeCss).toContain(
       "var(--chakra-colors-selection-comment)",
     );
+    expect(previewThemeCss).toContain(
+      ".commentable-block:not(.commentable-block-selected):has(.comment-thread)",
+    );
+    expect(previewThemeCss).toContain(
+      ".commentable-block:not(.commentable-block-selected):focus-within",
+    );
     expect(previewThemeCss).toContain(".commentable-block-range-selected");
   });
 

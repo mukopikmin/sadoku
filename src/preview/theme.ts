@@ -380,12 +380,12 @@ export const previewThemeCss = `
         transition: background-color 120ms ease;
       }
 
-      .commentable-block:has(.comment-thread) > .commentable-content::before {
+      .commentable-block:not(.commentable-block-selected):has(.comment-thread) > .commentable-content::before {
         background: color-mix(in srgb, var(--chakra-colors-accent) 8%, var(--chakra-colors-canvas));
       }
 
-      .commentable-block:hover > .commentable-content::before,
-      .commentable-block:focus-within > .commentable-content::before {
+      .commentable-block:not(.commentable-block-selected):hover > .commentable-content::before,
+      .commentable-block:not(.commentable-block-selected):focus-within > .commentable-content::before {
         background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-canvas));
       }
 
