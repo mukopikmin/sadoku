@@ -121,7 +121,6 @@ export const initializeMermaidZoom = (
       event.stopPropagation();
       open();
     });
-    mermaid.addEventListener("click", open);
     container.dataset.mermaidZoomInitialized = "true";
   }
 };

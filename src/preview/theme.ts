@@ -410,6 +410,15 @@ export const previewThemeCss = `
         border-collapse: collapse;
       }
 
+      .comment-body-markdown {
+        overflow-wrap: anywhere;
+      }
+
+      .comment-body-markdown > :last-child,
+      .comment-body-markdown > :last-child > :last-child {
+        margin-bottom: 0;
+      }
+
       .comment-markdown-body :where(th, td) {
         border: 1px solid var(--color-border);
         padding: 6px 13px;
@@ -423,12 +432,71 @@ export const previewThemeCss = `
         border-top: 1px solid var(--color-border-muted);
       }
 
+      .markdown-preview {
+        isolation: isolate;
+        position: relative;
+      }
+
+      .markdown-range-highlights {
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: -1;
+      }
+
+      .markdown-range-highlight {
+        border-radius: 6px;
+        left: -8px;
+        position: absolute;
+        right: -8px;
+      }
+
+      .markdown-range-highlight-comment {
+        background: color-mix(in srgb, #d29922 18%, var(--color-canvas));
+      }
+
+      .markdown-range-highlight-selection {
+        background: color-mix(
+          in srgb,
+          var(--color-accent) 18%,
+          var(--color-canvas)
+        );
+      }
+
       .commentable-content {
         box-sizing: border-box;
         cursor: pointer;
         isolation: isolate;
         position: relative;
         width: 100%;
+      }
+
+      .commentable-block {
+        --comment-highlight-spacing-before: 0px;
+        --comment-highlight-spacing-after: 0px;
+      }
+
+      .commentable-heading {
+        --comment-highlight-spacing-before: var(--chakra-spacing-6);
+        --comment-highlight-spacing-after: var(--chakra-spacing-4);
+      }
+
+      :where(
+        .commentable-blockquote,
+        .commentable-code-block,
+        .commentable-paragraph
+      ) {
+        --comment-highlight-spacing-after: var(--chakra-spacing-4);
+      }
+
+      .commentable-horizontal-rule {
+        --comment-highlight-spacing-before: var(--chakra-spacing-6);
+        --comment-highlight-spacing-after: var(--chakra-spacing-6);
+      }
+
+      :where(.commentable-list-item, .commentable-table) {
+        --comment-highlight-spacing-before: 0px;
+        --comment-highlight-spacing-after: 0px;
       }
 
       .commentable-list-item {
@@ -447,11 +515,19 @@ export const previewThemeCss = `
         content: "";
         position: absolute;
         z-index: -1;
-        inset: -4px -8px;
+        top: calc(-1 * var(--comment-highlight-spacing-before) + 1px);
+        right: -8px;
+        bottom: calc(-1 * var(--comment-highlight-spacing-after) + 1px);
+        left: calc(-8px - var(--comment-indent-offset, 0em));
         border-radius: 6px;
         background: transparent;
         pointer-events: none;
         transition: background-color 120ms ease;
+      }
+
+      .commentable-block:has(+ .commentable-heading)
+        > .commentable-content::before {
+        bottom: 1px;
       }
 
       .commentable-block:has(.comment-thread) > .commentable-content::before {
@@ -471,21 +547,15 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--color-accent) 18%, transparent);
       }
 
-      .comment-selection-button {
-        position: absolute;
-        z-index: 1;
-        top: 0;
-        right: 0;
-      }
-
       .comment-thread {
         margin: -6px 0 12px;
+        margin-left: calc(0em - var(--comment-indent-offset, 0em));
         border-left: 3px solid var(--color-accent);
         padding: 6px 0 1px 10px;
       }
 
       .commentable-list-item > .comment-thread {
-        margin: 6px 0 12px;
+        margin-top: 6px;
       }
 
       .mermaid-container {

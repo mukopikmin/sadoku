@@ -3,29 +3,41 @@
 `sadoku` is a local Markdown review tool for reading, previewing, and commenting
 on one Markdown document in your browser.
 
-Pass it a Markdown file path or an HTTP(S) URL. It starts a local HTTP server,
-renders the source as HTML, prints the preview URL, and opens that URL in your
-default browser. Review comments stay separate from local Markdown files so the
-documents themselves stay clean.
+Run its `start` command with a Markdown file path or an HTTP(S) URL. It starts a
+local HTTP server, renders the source as HTML, prints the preview URL, and opens
+that URL in your default browser. Review comments stay separate from local
+Markdown files so the documents themselves stay clean.
 
 ## Install
 
-On Linux and macOS, you can build in a temporary directory and install the
-binary to `$HOME/.local/bin/sadoku`:
+On Linux x64 and macOS arm64, install the latest release binary to
+`$HOME/.local/bin/sadoku` without cloning the repository:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh | sh
+```
+
+To install the latest tested nightly build instead:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh | sh -s -- --nightly
+```
+
+Make sure `$HOME/.local/bin` is included in your `PATH`.
+
+To build and install from source, clone the repository and run:
 
 ```sh
 npm install
 deno task install --version 0.1.0
 ```
 
-Make sure `$HOME/.local/bin` is included in your `PATH`.
-
 Or compile a standalone binary in the project directory:
 
 ```sh
 npm install
 deno task compile --version 0.1.0
-./sadoku README.md
+./sadoku start README.md
 ```
 
 If `--version` is omitted, the compiled binary reports the development version
@@ -34,25 +46,25 @@ If `--version` is omitted, the compiled binary reports the development version
 ## Usage
 
 ```sh
-sadoku <file.md|url> [options]
+sadoku start <file.md|url> [options]
 ```
 
 Preview a file:
 
 ```sh
-sadoku README.md
+sadoku start README.md
 ```
 
 Preview Markdown from a URL:
 
 ```sh
-sadoku 'https://example.com/README.md?token=temporary'
+sadoku start 'https://example.com/README.md?token=temporary'
 ```
 
 Use a different port:
 
 ```sh
-sadoku README.md --port 4000
+sadoku start README.md --port 4000
 ```
 
 If the requested port is already in use, `sadoku` increments it until an
@@ -61,19 +73,19 @@ available port is found.
 Bind to a specific host and port:
 
 ```sh
-sadoku README.md --host 127.0.0.1 --port 4000
+sadoku start README.md --host 127.0.0.1 --port 4000
 ```
 
 Print the URL without opening a browser:
 
 ```sh
-sadoku README.md --no-open
+sadoku start README.md --no-open
 ```
 
 Keep the server running after the preview tab is closed:
 
 ```sh
-sadoku README.md --keep-alive
+sadoku start README.md --keep-alive
 ```
 
 By default, the server reads the Markdown file or fetches the Markdown URL again
@@ -192,8 +204,8 @@ Set `BROWSER` to choose the opener command explicitly. If the command contains
 as the last argument.
 
 ```sh
-BROWSER=explorer.exe sadoku README.md
-BROWSER='chrome.exe --new-window %s' sadoku README.md
+BROWSER=explorer.exe sadoku start README.md
+BROWSER='chrome.exe --new-window %s' sadoku start README.md
 ```
 
 ## Development
@@ -207,14 +219,14 @@ npm install
 Run the CLI with Deno:
 
 ```sh
-deno task start README.md
+deno task start start README.md
 ```
 
 Compile a standalone binary:
 
 ```sh
 deno task compile
-./sadoku README.md
+./sadoku start README.md
 ```
 
 On Linux and macOS, build in a temporary directory and install the binary to
@@ -226,14 +238,16 @@ deno task install
 
 ## Release Archives
 
-The latest tested commit from `main` is published as the
-[`v0.0.0-nightly`](https://github.com/mukopikmin/sadoku/releases/tag/v0.0.0-nightly)
-prerelease. The tag and assets at that URL are replaced whenever the `Test`
-workflow succeeds on `main`. Nightly binaries report version `0.0.0-nightly`.
+The latest tested commit from `main` is published as a prerelease whose version
+is based on the latest stable release. For example, when `v0.1.0` is the latest
+stable release, the nightly release and binary version are `v0.1.0-nightly` and
+`0.1.0-nightly`, respectively. The tag and assets are replaced whenever the
+`Test` workflow succeeds on `main`. When a new stable version is released, its
+nightly replaces the previous nightly release so that only one remains.
 
-Release tags always include a leading `v` (for example, `v0.0.0-nightly`), while
+Release tags always include a leading `v` (for example, `v0.1.0-nightly`), while
 version values passed to builds and reported by the CLI omit it (for example,
-`0.0.0-nightly`). Archive names retain the existing `sadoku-v<version>-<target>`
+`0.1.0-nightly`). Archive names retain the existing `sadoku-v<version>-<target>`
 format.
 
 Build release archives under `dist/`:
@@ -297,6 +311,10 @@ For native targets, the release build starts the compiled binary on
 
 Mermaid rendering is served from local preview assets generated by
 `npm run build:client`.
+
+Comments and replies render standard Markdown and the GFM features listed above
+after they are saved. Raw HTML remains escaped, and Mermaid diagrams are
+rendered only in the document preview, not inside comment threads.
 
 Third-party license notices for release archives are generated from lockfiles
 and installed package license files. `THIRD_PARTY_NOTICES.md` is generated at

@@ -112,6 +112,13 @@ type PreviewState = "loading" | "ready";
 const state: PreviewState = "ready";
 ```
 
+Paragraph before a diff code block.
+
+```diff
+-const status = "loading";
++const status = "ready";
+```
+
 Paragraph before Mermaid.
 
 ```mermaid
