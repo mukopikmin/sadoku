@@ -78,7 +78,8 @@ const getCommentableBlockProps = (
     isAdding: props.activeCommentLine === line,
     isRangeActionLine: props.selectedRange?.endLine === line,
     isSelected: props.selectedRange
-      ? isLineInRange(line, props.selectedRange)
+      ? props.selectedRange.startLine === props.selectedRange.endLine &&
+        isLineInRange(line, props.selectedRange)
       : false,
     line,
   };

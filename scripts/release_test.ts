@@ -32,7 +32,7 @@ Deno.test("rejects invalid release versions", () => {
 Deno.test("selects the newest non-draft stable release", () => {
   assertEquals(
     selectPreviousStableTag([
-      { tagName: "v0.0.0-nightly", isDraft: false, isPrerelease: true },
+      { tagName: "v0.2.0-nightly", isDraft: false, isPrerelease: true },
       { tagName: "v0.2.0", isDraft: false, isPrerelease: false },
       { tagName: "v0.3.0", isDraft: true, isPrerelease: false },
       { tagName: "v0.1.0", isDraft: false, isPrerelease: false },
@@ -44,7 +44,7 @@ Deno.test("selects the newest non-draft stable release", () => {
 Deno.test("falls back to the release notes baseline", () => {
   assertEquals(
     selectPreviousStableTag([
-      { tagName: "v0.0.0-nightly", isDraft: false, isPrerelease: true },
+      { tagName: "v0.1.0-nightly", isDraft: false, isPrerelease: true },
     ]),
     BASELINE_TAG,
   );

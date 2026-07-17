@@ -3,6 +3,7 @@ export { version } from "../version.ts";
 
 export type CliOptions = {
   command?:
+    | "start"
     | "comments-inspect"
     | "comments-list"
     | "comments-reply"
@@ -29,7 +30,7 @@ export class CliUsageError extends Error {
 }
 
 export const usage = `Usage:
-  sadoku <file.md|url> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
+  sadoku start <file.md|url> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
   sadoku comments inspect <file.md|url>
   sadoku comments reply <file.md|url> <comment-id> <body>
   sadoku comments resolve <file.md|url> <comment-id>...
@@ -191,7 +192,11 @@ export const parseArgs = (argv: string[]): CliOptions => {
     throw new CliUsageError("Invalid comments command.");
   }
 
-  if (flags._.length > 1) {
+  if (flags._.length > 0 && flags._[0]?.toString() !== "start") {
+    throw new CliUsageError(`Invalid command: ${flags._[0]}`);
+  }
+
+  if (flags._.length > 2) {
     throw new CliUsageError(
       "Only one Markdown file can be previewed at a time.",
     );
@@ -206,7 +211,8 @@ export const parseArgs = (argv: string[]): CliOptions => {
   }
 
   const options: CliOptions = {
-    file: flags._[0]?.toString(),
+    command: flags._[0]?.toString() === "start" ? "start" : undefined,
+    file: flags._[1]?.toString(),
     force: false,
     host: flags.host?.toString() ?? "127.0.0.1",
     keepAlive: Boolean(flags["keep-alive"]),
