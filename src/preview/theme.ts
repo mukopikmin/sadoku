@@ -156,7 +156,7 @@ export const previewThemeCss = `
         --chakra-colors-link-default: #58a6ff;
       }
 
-      .comment-markdown-body .task-list-item {
+      .comment-markdown-list > .task-list-item {
         list-style-type: none;
       }
 

@@ -290,7 +290,11 @@ After
       ),
     )
       .toHaveLength(3);
-    expect(container.querySelector(".task-list-item")).not.toBeNull();
+    const taskListItems = container.querySelectorAll(".task-list-item");
+    expect(taskListItems).toHaveLength(3);
+    for (const taskListItem of taskListItems) {
+      expect(getComputedStyle(taskListItem).listStyleType).toBe("none");
+    }
     expect(previewThemeCss).not.toContain("0 0.5em 0.2em -");
   });
 
