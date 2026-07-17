@@ -215,6 +215,7 @@ export const createCommentableMarkdownComponents = (): Components => ({
       renderMarkdownHeading("h6", elementProps, children),
   ),
   hr: createCommentableComponent("hr", renderMarkdownHorizontalRule),
+  input: sharedMarkdownComponents.input,
   li: createCommentableListItem(),
   img: sharedMarkdownComponents.img,
   ol: sharedMarkdownComponents.ol,

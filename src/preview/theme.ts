@@ -156,13 +156,8 @@ export const previewThemeCss = `
         --chakra-colors-link-default: #58a6ff;
       }
 
-      .comment-markdown-body .task-list-item {
+      .comment-markdown-list > .task-list-item {
         list-style-type: none;
-      }
-
-      .comment-markdown-body .task-list-item-checkbox {
-        margin: 0 0.5em 0.2em 0;
-        vertical-align: middle;
       }
 
       .hljs {
