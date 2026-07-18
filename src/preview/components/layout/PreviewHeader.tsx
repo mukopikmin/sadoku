@@ -8,7 +8,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import type { ReactNode } from "react";
-import type { ThemeMode } from "./useThemeMode";
+import type { ThemeMode } from "../../hooks/useThemeMode";
 
 export type PreviewView = "comments" | "preview";
 

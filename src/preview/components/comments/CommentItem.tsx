@@ -1,9 +1,9 @@
 import { Badge, Box, Flex, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import type { CommentThreadActions } from "./commentActions";
+import type { CommentThreadActions } from "../../api/commentActions";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
-import type { PreviewComment } from "./comments";
+import type { PreviewComment } from "../../api/comments";
 import { ReplyItem } from "./ReplyItem";
 
 export type CommentItemProps =

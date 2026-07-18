@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CommentList } from "../CommentList";
-import type { PreviewComment } from "../comments";
+import { CommentList } from "../pages/comments/CommentList";
+import type { PreviewComment } from "../api/comments";
 
 afterEach(() => cleanup());
 

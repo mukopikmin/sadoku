@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initializeMermaid, initializeMermaidZoom } from "../mermaid";
+import { initializeMermaid, initializeMermaidZoom } from "../markdown/mermaid";
 import { previewThemeCss } from "../theme";
 
 const findCssRule = (selector: string): CSSStyleRule | undefined => {

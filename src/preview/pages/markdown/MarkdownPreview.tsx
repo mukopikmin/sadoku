@@ -10,9 +10,9 @@ import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
-import type { CommentThreadActions } from "./commentActions";
+import type { CommentThreadActions } from "../../api/commentActions";
 import { createCommentableMarkdownComponents } from "./commentableMarkdownComponents";
-import type { PreviewComment } from "./comments";
+import type { PreviewComment } from "../../api/comments";
 import {
   type CommentRange,
   CommentRenderingContext,
@@ -21,8 +21,8 @@ import {
 import {
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
-} from "./markdownRenderers";
-import { initializeMermaid } from "./mermaid";
+} from "../../markdown/markdownRenderers";
+import { initializeMermaid } from "../../markdown/mermaid";
 
 export type MarkdownPreviewProps = CommentThreadActions & {
   comments: PreviewComment[];

@@ -4,7 +4,7 @@ import {
   sharedMarkdownComponents,
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
-} from "./markdownRenderers";
+} from "../../markdown/markdownRenderers";
 
 export type CommentMarkdownProps = {
   children: string;

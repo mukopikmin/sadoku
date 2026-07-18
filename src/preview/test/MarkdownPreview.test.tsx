@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PreviewComment } from "../comments";
-import { MarkdownPreview } from "../MarkdownPreview";
-import { initializeMermaid } from "../mermaid";
+import type { PreviewComment } from "../api/comments";
+import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
+import { initializeMermaid } from "../markdown/mermaid";
 import { previewThemeCss } from "../theme";
 
-vi.mock("../mermaid", () => ({
+vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
 }));
 

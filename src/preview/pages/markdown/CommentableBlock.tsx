@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { useContext, useMemo, useState } from "react";
 import type React from "react";
-import { submitCommentOnShortcut } from "./commentShortcuts";
+import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import {
   type CommentControlProps,
   type CommentRange,
@@ -16,12 +16,12 @@ import {
   hasTextSelectionWithin,
   SourceLineContext,
 } from "./commentRendering";
-import { CommentItem } from "./CommentItem";
-import type { PreviewComment } from "./comments";
+import { CommentItem } from "../../components/comments/CommentItem";
+import type { PreviewComment } from "../../api/comments";
 import {
   MarkdownListDepthContext,
   markdownListIndentEm,
-} from "./markdownRenderers";
+} from "../../markdown/markdownRenderers";
 
 type CommentableBlockProps = CommentControlProps & {
   children: React.ReactNode;

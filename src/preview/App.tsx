@@ -1,13 +1,17 @@
 import { Container } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { CommentList } from "./CommentList";
+import { CommentList } from "./pages/comments/CommentList";
 import { connectHotReload } from "./hot_reload";
-import { MarkdownPreview } from "./MarkdownPreview";
-import { initializeMermaid } from "./mermaid";
-import { PreviewHeader, PreviewShell, type PreviewView } from "./PreviewHeader";
+import { MarkdownPreview } from "./pages/markdown/MarkdownPreview";
+import { initializeMermaid } from "./markdown/mermaid";
+import {
+  PreviewHeader,
+  PreviewShell,
+  type PreviewView,
+} from "./components/layout/PreviewHeader";
 import { previewThemeCss } from "./theme";
-import { usePreviewData } from "./usePreviewData";
-import { useThemeMode } from "./useThemeMode";
+import { usePreviewData } from "./hooks/usePreviewData";
+import { useThemeMode } from "./hooks/useThemeMode";
 
 export const App = () => {
   const {

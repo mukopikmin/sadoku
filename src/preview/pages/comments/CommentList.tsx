@@ -1,7 +1,7 @@
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import type { CommentThreadActions } from "./commentActions";
-import { CommentItem } from "./CommentItem";
-import type { PreviewComment } from "./comments";
+import type { CommentThreadActions } from "../../api/commentActions";
+import { CommentItem } from "../../components/comments/CommentItem";
+import type { PreviewComment } from "../../api/comments";
 
 export type CommentListProps = CommentThreadActions & {
   onReopenComment: (id: number) => Promise<void>;

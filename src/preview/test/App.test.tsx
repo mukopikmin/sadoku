@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
-import { initializeMermaid } from "../mermaid";
+import { initializeMermaid } from "../markdown/mermaid";
 
-vi.mock("../mermaid", () => ({
+vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
 }));
 
