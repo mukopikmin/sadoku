@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { connectHotReload } from "../hot_reload";
+import { connectHotReload } from "../api/hotReload";
 
 export const useHotReload = () => {
   const [reloadAvailable, setReloadAvailable] = useState(false);
