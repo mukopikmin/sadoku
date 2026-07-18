@@ -144,13 +144,15 @@ console.log("<ok>");
     );
   });
 
-  it("keeps list markers above full-width highlight backgrounds", () => {
+  it("keeps native list markers above full-width highlight backgrounds", () => {
     expect(previewThemeCss).toMatch(
-      /\.comment-markdown-list > li:not\(\.task-list-item\)::marker\s*\{[^}]*color: var\(--chakra-colors-transparent\);/,
+      /\.commentable-list-item > \.commentable-content\s*\{[^}]*isolation: auto;/,
     );
     expect(previewThemeCss).toMatch(
-      /\.comment-markdown-list > li:not\(\.task-list-item\)::before\s*\{[^}]*color: var\(--chakra-colors-fg\);[^}]*z-index: 1;/,
+      /\.comment-markdown-list > li\s*\{[^}]*isolation: isolate;[^}]*position: relative;/,
     );
+    expect(previewThemeCss).not.toContain("::marker");
+    expect(previewThemeCss).not.toContain('content: "•"');
     expect(previewThemeCss).toContain(
       "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));",
     );

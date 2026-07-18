@@ -416,35 +416,12 @@ export const previewThemeCss = `
 
       .commentable-list-item > .commentable-content {
         display: block;
+        isolation: auto;
       }
 
-      .comment-markdown-list > li:not(.task-list-item) {
+      .comment-markdown-list > li {
+        isolation: isolate;
         position: relative;
-      }
-
-      .comment-markdown-list > li:not(.task-list-item)::marker {
-        color: var(--chakra-colors-transparent);
-      }
-
-      .comment-markdown-list > li:not(.task-list-item)::before {
-        color: var(--chakra-colors-fg);
-        pointer-events: none;
-        position: absolute;
-        text-align: end;
-        z-index: 1;
-      }
-
-      ul.comment-markdown-list > li:not(.task-list-item)::before {
-        content: "•";
-        inset-inline-start: -1.5em;
-        text-align: center;
-        width: 1em;
-      }
-
-      ol.comment-markdown-list > li:not(.task-list-item)::before {
-        content: counter(list-item) ".";
-        inset-inline-start: -2.25em;
-        width: 2em;
       }
 
       .comment-markdown-body {
