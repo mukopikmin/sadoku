@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { CommentThreadActions } from "../../api/commentActions";
+import type { CommentActions } from "../../api/commentActions";
 import type { PreviewComment } from "../../api/comments";
 import type { MarkdownElementProps } from "../../markdown/markdownRenderers";
 
@@ -19,15 +19,11 @@ export type CommentableComponentProps = MarkdownElementProps & {
   node?: SourceNode;
 };
 
-export type CommentControlProps = CommentThreadActions & {
+export type CommentControlProps = {
+  actions: CommentActions;
   activeCommentLine?: number;
   activeRange?: CommentRange;
   onCloseCommentForm: () => void;
-  onCreateComment: (
-    startLine: number,
-    body: string,
-    endLine: number,
-  ) => Promise<void>;
   onOpenCommentForm: () => void;
   onSelectCommentLine: (line: number) => void;
   selectedRange?: CommentRange;

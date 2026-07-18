@@ -36,6 +36,7 @@ type CommentableBlockProps = CommentControlProps & {
 };
 
 export const CommentableBlock = ({
+  actions,
   activeRange,
   children,
   className,
@@ -46,16 +47,9 @@ export const CommentableBlock = ({
   isRangeActionLine,
   isSelected,
   line,
-  onCreateComment,
   onCloseCommentForm,
-  onDeleteComment,
-  onDeleteReply,
   onOpenCommentForm,
   onSelectCommentLine,
-  onReplyComment,
-  onResolveComment,
-  onUpdateComment,
-  onUpdateReply,
   selectedRange,
 }: CommentableBlockProps) => {
   const [draft, setDraft] = useState("");
@@ -81,7 +75,11 @@ export const CommentableBlock = ({
     setIsSaving(true);
     setError(undefined);
     try {
-      await onCreateComment(pendingRange.startLine, body, pendingRange.endLine);
+      await actions.onCreateComment(
+        pendingRange.startLine,
+        body,
+        pendingRange.endLine,
+      );
       setDraft("");
       onCloseCommentForm();
     } catch (error) {
@@ -184,17 +182,12 @@ export const CommentableBlock = ({
         <div className="comment-thread">
           {comments.map((comment) => (
             <CommentItem
+              actions={actions}
               comment={comment}
               key={comment.id}
               lineLabel={comment.startLine === comment.endLine
                 ? `Line ${comment.startLine}`
                 : `Lines ${comment.startLine}-${comment.endLine}`}
-              onDeleteComment={onDeleteComment}
-              onDeleteReply={onDeleteReply}
-              onReplyComment={onReplyComment}
-              onResolveComment={onResolveComment}
-              onUpdateComment={onUpdateComment}
-              onUpdateReply={onUpdateReply}
             />
           ))}
           {isAdding && (
