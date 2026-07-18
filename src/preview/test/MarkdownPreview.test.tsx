@@ -1,4 +1,11 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  createCommentActions,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PreviewComment } from "../api/comments";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
@@ -38,15 +45,12 @@ const renderMarkdown = (
   ensurePreviewThemeStyle();
   const result = render(
     <MarkdownPreview
+      actions={createCommentActions({
+        onCreateComment: callbacks.onCreateComment ?? (async () => {}),
+        onResolveComment: callbacks.onResolveComment ?? (async () => {}),
+      })}
       comments={comments}
       markdown={markdown}
-      onCreateComment={callbacks.onCreateComment ?? (async () => {})}
-      onDeleteComment={async () => {}}
-      onDeleteReply={async () => {}}
-      onReplyComment={async () => {}}
-      onResolveComment={callbacks.onResolveComment ?? (async () => {})}
-      onUpdateComment={async () => {}}
-      onUpdateReply={async () => {}}
     />,
   );
   return { ...result, container: result.container };
@@ -550,6 +554,11 @@ Body
 
     await waitFor(() =>
       expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1)
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByPlaceholderText("Write a GitHub PR comment..."),
+      ).toBeNull()
     );
 
     fireEvent.click(getBodyLine()!);

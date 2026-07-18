@@ -10,3 +10,12 @@ export type CommentThreadActions = {
     body: string,
   ) => Promise<void>;
 };
+
+export type CommentActions = CommentThreadActions & {
+  onCreateComment: (
+    startLine: number,
+    body: string,
+    endLine: number,
+  ) => Promise<void>;
+  onReopenComment: (id: number) => Promise<void>;
+};

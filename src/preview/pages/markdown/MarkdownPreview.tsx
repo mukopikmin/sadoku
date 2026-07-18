@@ -10,7 +10,7 @@ import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
-import type { CommentThreadActions } from "../../api/commentActions";
+import type { CommentActions } from "../../api/commentActions";
 import { createCommentableMarkdownComponents } from "./commentableMarkdownComponents";
 import type { PreviewComment } from "../../api/comments";
 import {
@@ -23,15 +23,15 @@ import {
   sharedMarkdownRemarkPlugins,
 } from "../../markdown/markdownRenderers";
 import { initializeMermaid } from "../../markdown/mermaid";
+import {
+  useCommentActions,
+  useCommentsQuery,
+} from "../../hooks/usePreviewData";
 
-export type MarkdownPreviewProps = CommentThreadActions & {
+export type MarkdownPreviewProps = {
+  actions: CommentActions;
   comments: PreviewComment[];
   markdown: string;
-  onCreateComment: (
-    startLine: number,
-    body: string,
-    endLine: number,
-  ) => Promise<void>;
 };
 
 type RangeHighlight = CommentRange & {
@@ -95,15 +95,9 @@ const isSelectedSingleLine = (
   isLineInRange(line, range);
 
 export const MarkdownPreview = ({
+  actions,
   comments,
   markdown,
-  onCreateComment,
-  onDeleteComment,
-  onDeleteReply,
-  onReplyComment,
-  onResolveComment,
-  onUpdateComment,
-  onUpdateReply,
 }: MarkdownPreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const commentsByLine = useMemo(() => {
@@ -247,20 +241,14 @@ export const MarkdownPreview = ({
     [],
   );
   const commentRenderingContext = {
+    actions,
     activeCommentLine,
     activeRange,
     commentsByLine,
     commentHighlightsByLine,
     onCloseCommentForm: handleCloseCommentForm,
-    onCreateComment,
-    onDeleteComment,
-    onDeleteReply,
     onOpenCommentForm: handleOpenCommentForm,
     onSelectCommentLine: handleSelectCommentLine,
-    onReplyComment,
-    onResolveComment,
-    onUpdateComment,
-    onUpdateReply,
     selectedRange,
   };
 
@@ -297,5 +285,21 @@ export const MarkdownPreview = ({
         </ReactMarkdown>
       </div>
     </CommentRenderingContext.Provider>
+  );
+};
+
+export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
+  const commentsQuery = useCommentsQuery();
+  const actions = useCommentActions();
+  if (!commentsQuery.data) return null;
+  const activeComments = commentsQuery.data.comments.filter((comment) =>
+    !comment.resolved && !comment.stale
+  );
+  return (
+    <MarkdownPreview
+      actions={actions}
+      comments={activeComments}
+      markdown={markdown}
+    />
   );
 };

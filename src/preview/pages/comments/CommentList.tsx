@@ -1,10 +1,14 @@
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import type { CommentThreadActions } from "../../api/commentActions";
+import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import type { PreviewComment } from "../../api/comments";
+import {
+  useCommentActions,
+  useCommentsQuery,
+} from "../../hooks/usePreviewData";
 
-export type CommentListProps = CommentThreadActions & {
-  onReopenComment: (id: number) => Promise<void>;
+export type CommentListProps = {
+  actions: CommentActions;
   comments: PreviewComment[];
 };
 
@@ -30,33 +34,17 @@ const formatLineLabel = (comment: PreviewComment): string => {
   return current;
 };
 
-type CommentSectionProps =
-  & {
-    comments: PreviewComment[];
-    emptyText: string;
-    title: string;
-  }
-  & Pick<
-    CommentListProps,
-    | "onDeleteComment"
-    | "onDeleteReply"
-    | "onReplyComment"
-    | "onReopenComment"
-    | "onResolveComment"
-    | "onUpdateComment"
-    | "onUpdateReply"
-  >;
+type CommentSectionProps = {
+  actions: CommentActions;
+  comments: PreviewComment[];
+  emptyText: string;
+  title: string;
+};
 
 const CommentSection = ({
+  actions,
   comments,
   emptyText,
-  onDeleteComment,
-  onDeleteReply,
-  onReplyComment,
-  onReopenComment,
-  onResolveComment,
-  onUpdateComment,
-  onUpdateReply,
   title,
 }: CommentSectionProps) => (
   <Box as="section">
@@ -67,17 +55,11 @@ const CommentSection = ({
         <Stack gap="3">
           {comments.map((comment) => (
             <CommentItem
+              actions={actions}
               variant="panel"
               comment={comment}
               key={comment.id}
               lineLabel={formatLineLabel(comment)}
-              onDeleteComment={onDeleteComment}
-              onDeleteReply={onDeleteReply}
-              onReplyComment={onReplyComment}
-              onReopenComment={onReopenComment}
-              onResolveComment={onResolveComment}
-              onUpdateComment={onUpdateComment}
-              onUpdateReply={onUpdateReply}
               showSource
               showState
             />
@@ -88,14 +70,8 @@ const CommentSection = ({
 );
 
 export const CommentList = ({
+  actions,
   comments,
-  onDeleteComment,
-  onDeleteReply,
-  onReplyComment,
-  onReopenComment,
-  onResolveComment,
-  onUpdateComment,
-  onUpdateReply,
 }: CommentListProps) => {
   const activeComments = comments.filter((comment) =>
     !comment.resolved && !comment.stale
@@ -108,41 +84,32 @@ export const CommentList = ({
   return (
     <Stack gap="7">
       <CommentSection
+        actions={actions}
         comments={activeComments}
         emptyText="No active comments."
-        onDeleteComment={onDeleteComment}
-        onDeleteReply={onDeleteReply}
-        onReplyComment={onReplyComment}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={onUpdateComment}
-        onUpdateReply={onUpdateReply}
         title={`Active comments (${activeComments.length})`}
       />
       <CommentSection
+        actions={actions}
         comments={staleComments}
         emptyText="No stale comments."
-        onDeleteComment={onDeleteComment}
-        onDeleteReply={onDeleteReply}
-        onReplyComment={onReplyComment}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={onUpdateComment}
-        onUpdateReply={onUpdateReply}
         title={`Stale comments (${staleComments.length})`}
       />
       <CommentSection
+        actions={actions}
         comments={resolvedComments}
         emptyText="No resolved comments."
-        onDeleteComment={onDeleteComment}
-        onDeleteReply={onDeleteReply}
-        onReplyComment={onReplyComment}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={onUpdateComment}
-        onUpdateReply={onUpdateReply}
         title={`Resolved comments (${resolvedComments.length})`}
       />
     </Stack>
+  );
+};
+
+export const CommentListPage = () => {
+  const commentsQuery = useCommentsQuery();
+  const actions = useCommentActions();
+  if (!commentsQuery.data) return null;
+  return (
+    <CommentList actions={actions} comments={commentsQuery.data.comments} />
   );
 };
