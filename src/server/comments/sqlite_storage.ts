@@ -103,7 +103,7 @@ const readDocumentRow = async (
   filePath: string,
 ): Promise<CommentDocumentRow | undefined> => {
   const result = await database.execute<CommentDocumentRow>(
-    "SELECT id, file_path FROM comment_documents WHERE file_path = ?",
+    "SELECT id, file_path FROM comment_document WHERE file_path = ?",
     [filePath],
   );
   return result.rows?.[0];
@@ -131,15 +131,15 @@ const readCommentsDocumentFromSqlite = async (
     `SELECT id, local_id, start_line, end_line, original_start_line,
       original_end_line, body, resolved, resolved_at,
       source_hash, source_text, stale, created_at, updated_at
-      FROM comments
+      FROM comment
       WHERE document_id = ?
       ORDER BY local_id`,
     [documentRow.id],
   )).rows ?? [];
   const replies = (await database.execute<CommentReplyRow>(
     `SELECT comment_id, local_id, body, created_at, updated_at
-      FROM comment_replies
-      WHERE comment_id IN (SELECT id FROM comments WHERE document_id = ?)
+      FROM comment_reply
+      WHERE comment_id IN (SELECT id FROM comment WHERE document_id = ?)
       ORDER BY comment_id, local_id`,
     [documentRow.id],
   )).rows ?? [];
@@ -170,20 +170,20 @@ const writeCommentsDocumentToSqlite = async (
   await withTransaction(database, async () => {
     const updatedAt = latestTimestamp(document);
     await database.execute(
-      `INSERT INTO comment_documents (file_path, created_at, updated_at)
+      `INSERT INTO comment_document (file_path, created_at, updated_at)
         VALUES (?, ?, ?)
         ON CONFLICT(file_path) DO UPDATE SET updated_at = excluded.updated_at`,
       [filePath, updatedAt, updatedAt],
     );
     const documentId = await readDocumentId(database, filePath);
 
-    await database.execute("DELETE FROM comments WHERE document_id = ?", [
+    await database.execute("DELETE FROM comment WHERE document_id = ?", [
       documentId,
     ]);
 
     for (const comment of document.comments) {
       await database.execute(
-        `INSERT INTO comments (
+        `INSERT INTO comment (
           document_id, local_id, start_line, end_line, original_start_line,
           original_end_line, body, resolved, resolved_at, source_hash,
           source_text, stale, created_at, updated_at
@@ -206,7 +206,7 @@ const writeCommentsDocumentToSqlite = async (
         ],
       );
       const commentRow = (await database.execute<{ id: number }>(
-        "SELECT id FROM comments WHERE document_id = ? AND local_id = ?",
+        "SELECT id FROM comment WHERE document_id = ? AND local_id = ?",
         [documentId, comment.id],
       )).rows?.[0];
       if (commentRow === undefined) {
@@ -215,7 +215,7 @@ const writeCommentsDocumentToSqlite = async (
 
       for (const reply of comment.replies ?? []) {
         await database.execute(
-          `INSERT INTO comment_replies (
+          `INSERT INTO comment_reply (
             comment_id, local_id, body, created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?)`,
           [
@@ -235,7 +235,7 @@ const deleteCommentsDocumentFromSqlite = async (
   database: AppDatabase,
   filePath: string,
 ): Promise<void> => {
-  await database.execute("DELETE FROM comment_documents WHERE file_path = ?", [
+  await database.execute("DELETE FROM comment_document WHERE file_path = ?", [
     filePath,
   ]);
 };
@@ -244,21 +244,21 @@ const listCommentsFilesFromSqlite = async (
   database: AppDatabase,
 ): Promise<CommentsStoreFileList> => {
   const rows = (await database.execute<CommentsFileRow>(
-    `SELECT comment_documents.file_path,
-      COUNT(comments.id) AS comment_count,
-      SUM(CASE WHEN comments.resolved = 0 THEN 1 ELSE 0 END) AS open_count,
-      MAX(comments.updated_at) AS updated_at
-      FROM comment_documents
-      LEFT JOIN comments ON comments.document_id = comment_documents.id
-      GROUP BY comment_documents.id, comment_documents.file_path
-      ORDER BY comment_documents.file_path`,
+    `SELECT comment_document.file_path,
+      COUNT(comment.id) AS comment_count,
+      SUM(CASE WHEN comment.resolved = 0 THEN 1 ELSE 0 END) AS open_count,
+      MAX(comment.updated_at) AS updated_at
+      FROM comment_document
+      LEFT JOIN comment ON comment.document_id = comment_document.id
+      GROUP BY comment_document.id, comment_document.file_path
+      ORDER BY comment_document.file_path`,
   )).rows ?? [];
 
   const entries: CommentsStoreFile[] = rows.map((row) => ({
-    commentCount: row.comment_count,
+    commentCount: Number(row.comment_count ?? 0),
     fileName: basename(row.file_path),
     markdownPath: row.file_path,
-    openCount: row.open_count,
+    openCount: Number(row.open_count ?? 0),
     updatedAt: row.updated_at ?? undefined,
   }));
 

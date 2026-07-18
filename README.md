@@ -114,6 +114,20 @@ directory:
 commentsDirectory = "/path/to/sadoku/comments"
 ```
 
+Comment storage uses JSON files in `commentsDirectory` by default. An
+experimental SQLite-backed comments store is available for testing; enable it in
+the same config file:
+
+```toml
+commentsDirectory = "/path/to/sadoku/comments"
+
+[experimental]
+commentsStore = "sqlite"
+```
+
+When enabled, Sadoku stores comments in `sadoku.sqlite3` inside the comments
+directory instead of creating per-document JSON comment files.
+
 For URL previews, comments are keyed by the URL without its query string or
 fragment. The full URL is still used to fetch Markdown, so temporary tokens can
 be present in the URL without splitting comments across multiple comment files.

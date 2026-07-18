@@ -6,7 +6,7 @@ const sql = (strings: TemplateStringsArray): string =>
 
 const createCommentTablesSql = [
   sql`
-    CREATE TABLE IF NOT EXISTS comment_documents (
+    CREATE TABLE IF NOT EXISTS comment_document (
       id INTEGER PRIMARY KEY,
       file_path TEXT NOT NULL,
       created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'),
@@ -14,11 +14,11 @@ const createCommentTablesSql = [
     )
   `,
   sql`
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_comment_documents_file_path
-      ON comment_documents(file_path)
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_comment_document_file_path
+      ON comment_document(file_path)
   `,
   sql`
-    CREATE TABLE IF NOT EXISTS comments (
+    CREATE TABLE IF NOT EXISTS comment (
       id INTEGER PRIMARY KEY,
       document_id INTEGER NOT NULL,
       local_id INTEGER NOT NULL,
@@ -35,21 +35,21 @@ const createCommentTablesSql = [
       created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'),
       updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'),
       FOREIGN KEY (document_id)
-        REFERENCES comment_documents(id)
+        REFERENCES comment_document(id)
         ON DELETE CASCADE,
       UNIQUE (document_id, local_id)
     )
   `,
   sql`
-    CREATE INDEX IF NOT EXISTS idx_comments_document_id
-      ON comments(document_id)
+    CREATE INDEX IF NOT EXISTS idx_comment_document_id
+      ON comment(document_id)
   `,
   sql`
-    CREATE INDEX IF NOT EXISTS idx_comments_document_start_line
-      ON comments(document_id, start_line)
+    CREATE INDEX IF NOT EXISTS idx_comment_document_start_line
+      ON comment(document_id, start_line)
   `,
   sql`
-    CREATE TABLE IF NOT EXISTS comment_replies (
+    CREATE TABLE IF NOT EXISTS comment_reply (
       id INTEGER PRIMARY KEY,
       comment_id INTEGER NOT NULL,
       local_id INTEGER NOT NULL,
@@ -57,14 +57,14 @@ const createCommentTablesSql = [
       created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'),
       updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'),
       FOREIGN KEY (comment_id)
-        REFERENCES comments(id)
+        REFERENCES comment(id)
         ON DELETE CASCADE,
       UNIQUE (comment_id, local_id)
     )
   `,
   sql`
-    CREATE INDEX IF NOT EXISTS idx_comment_replies_comment_id
-      ON comment_replies(comment_id)
+    CREATE INDEX IF NOT EXISTS idx_comment_reply_comment_id
+      ON comment_reply(comment_id)
   `,
 ];
 
