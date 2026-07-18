@@ -418,8 +418,33 @@ export const previewThemeCss = `
         display: block;
       }
 
-      .commentable-list-item > .commentable-content::before {
-        left: calc(-1 * var(--chakra-spacing-2));
+      .comment-markdown-list > li:not(.task-list-item) {
+        position: relative;
+      }
+
+      .comment-markdown-list > li:not(.task-list-item)::marker {
+        color: var(--chakra-colors-transparent);
+      }
+
+      .comment-markdown-list > li:not(.task-list-item)::before {
+        color: var(--chakra-colors-fg);
+        pointer-events: none;
+        position: absolute;
+        text-align: end;
+        z-index: 1;
+      }
+
+      ul.comment-markdown-list > li:not(.task-list-item)::before {
+        content: "•";
+        inset-inline-start: -1.5em;
+        text-align: center;
+        width: 1em;
+      }
+
+      ol.comment-markdown-list > li:not(.task-list-item)::before {
+        content: counter(list-item) ".";
+        inset-inline-start: -2.25em;
+        width: 2em;
       }
 
       .comment-markdown-body {

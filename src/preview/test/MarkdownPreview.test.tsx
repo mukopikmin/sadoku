@@ -144,9 +144,15 @@ console.log("<ok>");
     );
   });
 
-  it("keeps list markers outside per-line highlight backgrounds", () => {
+  it("keeps list markers above full-width highlight backgrounds", () => {
     expect(previewThemeCss).toMatch(
-      /\.commentable-list-item > \.commentable-content::before\s*\{[^}]*left: calc\(-1 \* var\(--chakra-spacing-2\)\);/,
+      /\.comment-markdown-list > li:not\(\.task-list-item\)::marker\s*\{[^}]*color: var\(--chakra-colors-transparent\);/,
+    );
+    expect(previewThemeCss).toMatch(
+      /\.comment-markdown-list > li:not\(\.task-list-item\)::before\s*\{[^}]*color: var\(--chakra-colors-fg\);[^}]*z-index: 1;/,
+    );
+    expect(previewThemeCss).toContain(
+      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));",
     );
   });
 
