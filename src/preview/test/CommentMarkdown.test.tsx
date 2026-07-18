@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "./testUtils";
 import { afterEach, describe, expect, it } from "vitest";
-import { CommentMarkdown } from "../CommentMarkdown";
-import { MarkdownPreview } from "../MarkdownPreview";
+import { CommentMarkdown } from "../components/comments/CommentMarkdown";
+import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 
 afterEach(() => cleanup());
 

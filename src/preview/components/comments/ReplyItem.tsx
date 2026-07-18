@@ -1,6 +1,6 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import type { PreviewCommentReply } from "./comments";
+import type { PreviewCommentReply } from "../../api/comments";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 

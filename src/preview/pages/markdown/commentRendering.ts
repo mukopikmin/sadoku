@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
-import type { CommentThreadActions } from "./commentActions";
-import type { PreviewComment } from "./comments";
-import type { MarkdownElementProps } from "./markdownRenderers";
+import type { CommentThreadActions } from "../../api/commentActions";
+import type { PreviewComment } from "../../api/comments";
+import type { MarkdownElementProps } from "../../markdown/markdownRenderers";
 
 export type CommentRange = { endLine: number; startLine: number };
 

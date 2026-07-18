@@ -19,7 +19,7 @@ import {
   renderMarkdownParagraph,
   renderMarkdownPre,
   sharedMarkdownComponents,
-} from "./markdownRenderers";
+} from "../../markdown/markdownRenderers";
 
 type ListElementProps = {
   node?: { tagName?: string };
