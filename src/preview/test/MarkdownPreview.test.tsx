@@ -350,6 +350,7 @@ After
 
   it("renders task list checkboxes", () => {
     const { container } = renderMarkdown(`- [ ] todo
+  - [x] nested done
 - [x] done
 - [X] also done
 `);
@@ -357,27 +358,30 @@ After
     const checkboxes = container.querySelectorAll<HTMLInputElement>(
       'input[type="checkbox"]',
     );
-    expect(checkboxes).toHaveLength(3);
+    expect(checkboxes).toHaveLength(4);
     expect(checkboxes[0].checked).toBe(false);
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
+    expect(checkboxes[3].checked).toBe(true);
     expect(checkboxes[0].disabled).toBe(true);
-    expect(
-      container.querySelectorAll('[data-scope="checkbox"][data-part="root"]'),
-    )
-      .toHaveLength(3);
+    const checkboxRoots = container.querySelectorAll<HTMLElement>(
+      '[data-scope="checkbox"][data-part="root"]',
+    );
+    expect(checkboxRoots).toHaveLength(4);
+    for (const checkboxRoot of checkboxRoots) {
+      expect(getComputedStyle(checkboxRoot).marginInlineStart).toBe("-1.5em");
+    }
     expect(
       container.querySelectorAll(
         '[data-scope="checkbox"][data-part="control"]',
       ),
     )
-      .toHaveLength(3);
+      .toHaveLength(4);
     const taskListItems = container.querySelectorAll(".task-list-item");
-    expect(taskListItems).toHaveLength(3);
+    expect(taskListItems).toHaveLength(4);
     for (const taskListItem of taskListItems) {
       expect(getComputedStyle(taskListItem).listStyleType).toBe("none");
     }
-    expect(previewThemeCss).not.toContain("0 0.5em 0.2em -");
   });
 
   it("highlights Kotlin code fences", () => {

@@ -259,6 +259,7 @@ export const sharedMarkdownComponents: Components = {
         display="inline-flex"
         mb="0.2em"
         me="0.5em"
+        ms="-1.5em"
         verticalAlign="middle"
       >
         <Checkbox.HiddenInput {...props} />
