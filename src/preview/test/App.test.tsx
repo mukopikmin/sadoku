@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
-import { initializeMermaid } from "../mermaid";
+import { initializeMermaid } from "../markdown/mermaid";
 
-vi.mock("../mermaid", () => ({
+vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
 }));
 
@@ -122,7 +122,7 @@ describe("App", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it("marks the preview header with sticky header styles", async () => {
+  it("keeps the preview header fixed at its initial position", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -155,6 +155,19 @@ describe("App", () => {
     expect(styles.position).toBe("sticky");
     expect(styles.top).toBe("0px");
     expect(styles.zIndex).toBe("10");
+    expect(styles.paddingTop).toBe("var(--chakra-spacing-8)");
+
+    const main = container.querySelector("main");
+    expect(main).not.toBeNull();
+    expect(getComputedStyle(main!).paddingTop).toBe("0px");
+
+    const previewButton = screen.getByRole("button", { name: "Preview" });
+    const commentsButton = screen.getByRole("button", { name: "Comments 0" });
+    expect(previewButton.parentElement).toBe(commentsButton.parentElement);
+    expect(previewButton.getAttribute("data-group-item")).toBe("");
+    expect(previewButton.getAttribute("data-first")).toBe("");
+    expect(commentsButton.getAttribute("data-group-item")).toBe("");
+    expect(commentsButton.getAttribute("data-last")).toBe("");
   });
 
   it("switches between light and dark preview themes", async () => {
@@ -192,13 +205,22 @@ describe("App", () => {
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
     );
 
-    fireEvent.click(screen.getByRole("button", {
+    const themeButton = screen.getByRole("button", {
       name: "Switch to dark mode",
-    }));
+    });
+    expect(themeButton.textContent).toBe("");
+    expect(themeButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+
+    fireEvent.click(themeButton);
 
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(localStorage.getItem("sadoku-theme")).toBe("dark");
+    expect(
+      screen.getByRole("button", {
+        name: "Switch to light mode",
+      }).querySelector('svg[aria-hidden="true"]'),
+    ).not.toBeNull();
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initializeMermaid, initializeMermaidZoom } from "../mermaid";
+import { initializeMermaid, initializeMermaidZoom } from "../markdown/mermaid";
 import { previewThemeCss } from "../theme";
 
 const findCssRule = (selector: string): CSSStyleRule | undefined => {
@@ -123,10 +123,10 @@ describe("initializeMermaidZoom", () => {
     const svgRule = findCssRule(".mermaid-zoom-scroller svg");
 
     expect(contentRule?.style.width).toBe(
-      "var(--mermaid-zoom-width, calc(100vw - 32px))",
+      "var(--mermaid-zoom-width, calc(100vw - var(--chakra-spacing-8)))",
     );
     expect(contentRule?.style.height).toBe(
-      "var(--mermaid-zoom-height, calc(100vh - 32px))",
+      "var(--mermaid-zoom-height, calc(100vh - var(--chakra-spacing-8)))",
     );
     expect(contentRule?.style.padding).toBe("0px");
     expect(contentRule?.style.overflow).toBe("hidden");

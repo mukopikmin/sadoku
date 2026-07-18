@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "./testUtils";
 import { afterEach, describe, expect, it } from "vitest";
-import { CommentMarkdown } from "../CommentMarkdown";
-import { MarkdownPreview } from "../MarkdownPreview";
+import { CommentMarkdown } from "../components/comments/CommentMarkdown";
+import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 
 afterEach(() => cleanup());
 
@@ -9,6 +9,7 @@ const callbacks = {
   onCreateComment: async () => {},
   onDeleteComment: async () => {},
   onDeleteReply: async () => {},
+  onReopenComment: async () => {},
   onReplyComment: async () => {},
   onResolveComment: async () => {},
   onUpdateComment: async () => {},
@@ -36,7 +37,11 @@ Paragraph with [a link](https://example.com) and \`code\`.
     render(
       <>
         <div data-testid="document-markdown">
-          <MarkdownPreview comments={[]} markdown={markdown} {...callbacks} />
+          <MarkdownPreview
+            actions={callbacks}
+            comments={[]}
+            markdown={markdown}
+          />
         </div>
         <div data-testid="comment-markdown">
           <CommentMarkdown>{markdown}</CommentMarkdown>
