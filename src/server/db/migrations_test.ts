@@ -69,7 +69,7 @@ const getLedgerRows = async (
   database: AppDatabase,
 ): Promise<FakeLedgerRow[]> => {
   const result = await database.execute<FakeLedgerRow>(
-    "SELECT version, name, checksum, state, started_at, finished_at, error_message FROM schema_migrations ORDER BY version",
+    "SELECT version, name, checksum, state, started_at, finished_at, error_message FROM schema_migration ORDER BY version",
   );
   return result.rows ?? [];
 };
@@ -82,7 +82,7 @@ const insertLedgerRow = async (
 ): Promise<void> => {
   await ensureMigrationLedger(database);
   await database.execute(
-    "INSERT INTO schema_migrations " +
+    "INSERT INTO schema_migration " +
       "(version, name, checksum, state, started_at, finished_at, error_message) " +
       "VALUES (?, ?, ?, ?, ?, ?, ?)",
     [
@@ -175,31 +175,31 @@ Deno.test("MIGRATIONS includes the initial comment tables schema", async () => {
   assertEquals(statements.length, 7);
   assertStringIncludes(
     statements[0] ?? "",
-    "CREATE TABLE IF NOT EXISTS comment_documents",
+    "CREATE TABLE IF NOT EXISTS comment_document",
   );
-  assertStringIncludes(statements[1] ?? "", "idx_comment_documents_file_path");
+  assertStringIncludes(statements[1] ?? "", "idx_comment_document_file_path");
   assertStringIncludes(
     statements[2] ?? "",
-    "CREATE TABLE IF NOT EXISTS comments",
+    "CREATE TABLE IF NOT EXISTS comment",
   );
   assertStringIncludes(
     statements[2] ?? "",
-    "FOREIGN KEY (document_id) REFERENCES comment_documents(id) ON DELETE CASCADE",
+    "FOREIGN KEY (document_id) REFERENCES comment_document(id) ON DELETE CASCADE",
   );
-  assertStringIncludes(statements[3] ?? "", "idx_comments_document_id");
+  assertStringIncludes(statements[3] ?? "", "idx_comment_document_id");
   assertStringIncludes(
     statements[4] ?? "",
-    "idx_comments_document_start_line",
+    "idx_comment_document_start_line",
   );
   assertStringIncludes(
     statements[5] ?? "",
-    "CREATE TABLE IF NOT EXISTS comment_replies",
+    "CREATE TABLE IF NOT EXISTS comment_reply",
   );
   assertStringIncludes(
     statements[5] ?? "",
-    "FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE",
+    "FOREIGN KEY (comment_id) REFERENCES comment(id) ON DELETE CASCADE",
   );
-  assertStringIncludes(statements[6] ?? "", "idx_comment_replies_comment_id");
+  assertStringIncludes(statements[6] ?? "", "idx_comment_reply_comment_id");
 });
 
 Deno.test("ensureMigrationLedger creates a constrained migration ledger", async () => {
@@ -209,7 +209,7 @@ Deno.test("ensureMigrationLedger creates a constrained migration ledger", async 
 
   assertEquals(
     connection.statements[0]?.sql,
-    "CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,state TEXT NOT NULL CHECK (state IN ('running', 'applied', 'failed')),started_at TEXT NOT NULL CHECK (started_at GLOB '????-??-??T??:??:??.???Z'),finished_at TEXT CHECK (finished_at IS NULL OR finished_at GLOB '????-??-??T??:??:??.???Z'),error_message TEXT)",
+    "CREATE TABLE IF NOT EXISTS schema_migration (version TEXT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,state TEXT NOT NULL CHECK (state IN ('running', 'applied', 'failed')),started_at TEXT NOT NULL CHECK (started_at GLOB '????-??-??T??:??:??.???Z'),finished_at TEXT CHECK (finished_at IS NULL OR finished_at GLOB '????-??-??T??:??:??.???Z'),error_message TEXT)",
   );
 });
 
@@ -232,10 +232,12 @@ Deno.test("runMigrations applies the initial migration to an empty SQLite databa
     const rowsAfterSecondRun = await getLedgerRows(database);
 
     assertEquals(appliedFirst, ["0001"]);
-    assert(tablesAfterFirstRun.includes("schema_migrations"));
-    assert(tablesAfterFirstRun.includes("comment_documents"));
-    assert(tablesAfterFirstRun.includes("comments"));
-    assert(tablesAfterFirstRun.includes("comment_replies"));
+    assertEquals(tablesAfterFirstRun, [
+      "comment",
+      "comment_document",
+      "comment_reply",
+      "schema_migration",
+    ]);
     assertEquals(rowsAfterFirstRun.length, 1);
     assertEquals(rowsAfterFirstRun[0]?.version, "0001");
     assertEquals(rowsAfterFirstRun[0]?.name, "create_comment_tables");
@@ -356,10 +358,10 @@ Deno.test("runMigrations stores ledger timestamps as ISO 8601 strings", async ()
   ]);
 
   const runningStatement = connection.statements.find((statement) =>
-    statement.sql.startsWith("INSERT OR REPLACE INTO schema_migrations")
+    statement.sql.startsWith("INSERT OR REPLACE INTO schema_migration")
   );
   const appliedStatement = connection.statements.find((statement) =>
-    statement.sql.startsWith("UPDATE schema_migrations SET state = 'applied'")
+    statement.sql.startsWith("UPDATE schema_migration SET state = 'applied'")
   );
   const iso8601Pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
@@ -394,16 +396,16 @@ Deno.test("runMigrations applies pending migrations in order", async () => {
   assertEquals(
     connection.statements.map((statement) => statement.sql),
     [
-      "CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,state TEXT NOT NULL CHECK (state IN ('running', 'applied', 'failed')),started_at TEXT NOT NULL CHECK (started_at GLOB '????-??-??T??:??:??.???Z'),finished_at TEXT CHECK (finished_at IS NULL OR finished_at GLOB '????-??-??T??:??:??.???Z'),error_message TEXT)",
-      "SELECT version, name, checksum, state, started_at, finished_at, error_message FROM schema_migrations ORDER BY version",
-      "INSERT OR REPLACE INTO schema_migrations (version, name, checksum, state, started_at, finished_at, error_message) VALUES (?, ?, ?, 'running', ?, NULL, NULL)",
+      "CREATE TABLE IF NOT EXISTS schema_migration (version TEXT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,state TEXT NOT NULL CHECK (state IN ('running', 'applied', 'failed')),started_at TEXT NOT NULL CHECK (started_at GLOB '????-??-??T??:??:??.???Z'),finished_at TEXT CHECK (finished_at IS NULL OR finished_at GLOB '????-??-??T??:??:??.???Z'),error_message TEXT)",
+      "SELECT version, name, checksum, state, started_at, finished_at, error_message FROM schema_migration ORDER BY version",
+      "INSERT OR REPLACE INTO schema_migration (version, name, checksum, state, started_at, finished_at, error_message) VALUES (?, ?, ?, 'running', ?, NULL, NULL)",
       "BEGIN",
       "COMMIT",
-      "UPDATE schema_migrations SET state = 'applied', finished_at = ? WHERE version = ?",
-      "INSERT OR REPLACE INTO schema_migrations (version, name, checksum, state, started_at, finished_at, error_message) VALUES (?, ?, ?, 'running', ?, NULL, NULL)",
+      "UPDATE schema_migration SET state = 'applied', finished_at = ? WHERE version = ?",
+      "INSERT OR REPLACE INTO schema_migration (version, name, checksum, state, started_at, finished_at, error_message) VALUES (?, ?, ?, 'running', ?, NULL, NULL)",
       "BEGIN",
       "COMMIT",
-      "UPDATE schema_migrations SET state = 'applied', finished_at = ? WHERE version = ?",
+      "UPDATE schema_migration SET state = 'applied', finished_at = ? WHERE version = ?",
     ],
   );
 });
@@ -553,7 +555,7 @@ Deno.test("runMigrations rolls back failed migrations", async () => {
     [
       "BEGIN",
       "ROLLBACK",
-      "UPDATE schema_migrations SET state = 'failed', finished_at = ?, error_message = ? WHERE version = ?",
+      "UPDATE schema_migration SET state = 'failed', finished_at = ?, error_message = ? WHERE version = ?",
     ],
   );
   assertEquals([...connection.appliedChecksums], []);
@@ -583,7 +585,7 @@ Deno.test("runMigrations rejects unsafe migration table names", async () => {
   await assertRejects(
     () =>
       runMigrations(createFakeDatabase(), [], {
-        tableName: "schema_migrations; DROP TABLE comments",
+        tableName: "schema_migration; DROP TABLE comment",
       }),
     Error,
     "Invalid database identifier",
