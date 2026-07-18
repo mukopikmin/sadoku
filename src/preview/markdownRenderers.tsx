@@ -166,7 +166,7 @@ export const renderMarkdownPre = (
     overflow="auto"
     borderWidth="1px"
     borderColor="border.muted"
-    borderRadius="6px"
+    borderRadius="sm"
     p="4"
     bg="canvas.subtle"
     color="code.fg"
@@ -208,7 +208,7 @@ export const sharedMarkdownComponents: Components = {
       <Box
         as="code"
         className={className}
-        borderRadius={isCodeBlock ? "0" : "6px"}
+        borderRadius={isCodeBlock ? "0" : "sm"}
         px={isCodeBlock ? "0" : "0.4em"}
         py={isCodeBlock ? "0" : "0.2em"}
         bg={isCodeBlock ? "transparent" : "code.bg"}

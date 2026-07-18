@@ -42,7 +42,7 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <Container as="main" maxW="980px" px="32px" pt="0" pb="64px">
+        <Container as="main" maxW="980px" px="8" pt="0" pb="16">
           <PreviewShell>
             {state.status === "loading" ? "Loading preview..." : state.message}
           </PreviewShell>
@@ -61,7 +61,7 @@ export const App = () => {
   return (
     <>
       <style>{previewThemeCss}</style>
-      <Container as="main" maxW="980px" px="32px" pt="0" pb="64px">
+      <Container as="main" maxW="980px" px="8" pt="0" pb="16">
         <PreviewHeader
           commentCount={state.comments.length}
           fileUrl={state.document.fileUrl}

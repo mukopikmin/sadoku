@@ -155,7 +155,7 @@ describe("App", () => {
     expect(styles.position).toBe("sticky");
     expect(styles.top).toBe("0px");
     expect(styles.zIndex).toBe("10");
-    expect(styles.paddingTop).toBe("32px");
+    expect(styles.paddingTop).toBe("var(--chakra-spacing-8)");
 
     const main = container.querySelector("main");
     expect(main).not.toBeNull();
