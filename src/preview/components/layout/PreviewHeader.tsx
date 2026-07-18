@@ -24,7 +24,7 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
     mb="8"
     borderBottomWidth="1px"
     borderColor="border.muted"
-    pt="32px"
+    pt="8"
     pb="4"
     bg="canvas"
     color="fg.muted"

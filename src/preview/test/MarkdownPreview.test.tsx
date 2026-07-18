@@ -65,6 +65,23 @@ const mockRect = (top: number, bottom: number): DOMRect => ({
 });
 
 describe("MarkdownPreview", () => {
+  it("uses Chakra tokens for custom preview colors and spacing", () => {
+    expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
+    expect(previewThemeCss).not.toMatch(/\brgba?\(/);
+    expect(previewThemeCss).toContain("var(--chakra-spacing-2)");
+    expect(previewThemeCss).toContain("var(--chakra-colors-syntax-keyword)");
+  });
+
+  it("keeps overlapping selection backgrounds opaque", () => {
+    const mixedBackgrounds = previewThemeCss.match(/color-mix\([^;]+\)/g) ?? [];
+
+    expect(mixedBackgrounds).toHaveLength(6);
+    for (const background of mixedBackgrounds) {
+      expect(background).toContain("var(--chakra-colors-canvas)");
+      expect(background).not.toContain("var(--chakra-colors-transparent)");
+    }
+  });
+
   it("renders common Markdown blocks", () => {
     const { container } = renderMarkdown(`# Title
 
@@ -101,7 +118,7 @@ console.log("<ok>");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
     expect(getComputedStyle(container.querySelector(".hljs-string")!).color)
-      .toBe("rgb(0, 90, 0)");
+      .toBe("var(--chakra-colors-syntax-string)");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
@@ -124,6 +141,20 @@ console.log("<ok>");
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-block:has\(\+ \.commentable-heading\)[^{]*\{[^}]*bottom: 1px;/,
+    );
+  });
+
+  it("keeps native list markers above full-width highlight backgrounds", () => {
+    expect(previewThemeCss).toMatch(
+      /\.commentable-list-item > \.commentable-content\s*\{[^}]*isolation: auto;/,
+    );
+    expect(previewThemeCss).toMatch(
+      /\.comment-markdown-list > li\s*\{[^}]*isolation: isolate;[^}]*position: relative;/,
+    );
+    expect(previewThemeCss).not.toContain("::marker");
+    expect(previewThemeCss).not.toContain('content: "•"');
+    expect(previewThemeCss).toContain(
+      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));",
     );
   });
 
@@ -292,7 +323,7 @@ After
     );
     expect(nestedItemGutter).not.toBeNull();
     expect(getComputedStyle(nestedItemGutter!).left).toBe(
-      "calc(-34px - 7.5em)",
+      "calc(-1 * var(--chakra-spacing-8) - 7.5em)",
     );
     const nestedItemBlock = container.querySelector('[data-source-line="3"]');
     expect(nestedItemBlock).not.toBeNull();
@@ -302,7 +333,7 @@ After
       ),
     ).toBe("7.5em");
     expect(previewThemeCss).toContain(
-      "left: calc(-8px - var(--comment-indent-offset, 0em))",
+      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em))",
     );
 
     fireEvent.click(screen.getByRole("button", {
@@ -360,7 +391,7 @@ fun main() {
     expect(container.querySelector("code.hljs.language-kotlin")).not.toBeNull();
     expect(container.querySelector(".hljs-keyword")?.textContent).toBe("fun");
     expect(getComputedStyle(container.querySelector(".hljs-keyword")!).color)
-      .toBe("rgb(139, 0, 0)");
+      .toBe("var(--chakra-colors-syntax-keyword)");
   });
 
   it("adds source line controls to code fences", () => {
@@ -375,12 +406,12 @@ const value = 1;
     expect(
       getComputedStyle(container.querySelector(".language-ts span")!).color,
     )
-      .not.toBe("var(--chakra-colors-code\\.fg)");
+      .not.toBe("var(--chakra-colors-code-fg)");
     expect(getComputedStyle(container.querySelector("pre")!).color).toBe(
-      "var(--chakra-colors-code\\.fg)",
+      "var(--chakra-colors-code-fg)",
     );
     expect(previewThemeCss).toContain(
-      ".hljs {\n        color: var(--chakra-colors-code\\.fg);",
+      ".hljs {\n        color: var(--chakra-colors-code-fg);",
     );
   });
 
@@ -394,10 +425,10 @@ const value = 1;
     expect(code?.classList.contains("hljs")).toBe(false);
     expect(code?.textContent).toContain('const indented = "<escaped>";');
     expect(getComputedStyle(code!.parentElement!).color).toBe(
-      "var(--chakra-colors-code\\.fg)",
+      "var(--chakra-colors-code-fg)",
     );
     expect(getComputedStyle(code!).color).toBe(
-      "var(--chakra-colors-code\\.fg)",
+      "var(--chakra-colors-code-fg)",
     );
     expect(getComputedStyle(code!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
@@ -417,11 +448,13 @@ graph TD
     ).not.toBeNull();
     expect(previewThemeCss).toContain(".mermaid {");
     expect(previewThemeCss).toContain(
-      "background: var(--color-canvas-subtle);",
+      "background: var(--chakra-colors-canvas-subtle);",
     );
-    expect(previewThemeCss).toContain("color: var(--color-text);");
+    expect(previewThemeCss).toContain("color: var(--chakra-colors-fg);");
     expect(previewThemeCss).toContain(".mermaid-zoom-button");
-    expect(previewThemeCss).toContain("background: var(--color-canvas);");
+    expect(previewThemeCss).toContain(
+      "background: var(--chakra-colors-canvas);",
+    );
   });
 
   it("reruns mermaid rendering after preview interactions recreate diagram nodes", async () => {
@@ -612,8 +645,21 @@ Body
     ).not.toBeNull();
     expect(container.querySelector(".markdown-range-highlight-comment"))
       .not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"]')?.classList.contains(
+        "commentable-block-continuous-highlight",
+      ),
+    ).toBe(true);
     expect(previewThemeCss).toContain(".commentable-block-comment-highlight");
-    expect(previewThemeCss).toContain("#d29922");
+    expect(previewThemeCss).toContain(
+      "var(--chakra-colors-selection-comment)",
+    );
+    expect(previewThemeCss).toContain(
+      ".commentable-block:not(.commentable-block-selected):not(.commentable-block-continuous-highlight):has(.comment-thread)",
+    );
+    expect(previewThemeCss).toContain(
+      ".commentable-block:not(.commentable-block-selected):focus-within",
+    );
     expect(previewThemeCss).toContain(".commentable-block-range-selected");
   });
 
@@ -662,8 +708,12 @@ Body
         "commentable-block-range-selected",
       ),
     ).toBe(false);
-    expect(previewThemeCss).toContain("left: -8px");
-    expect(previewThemeCss).toContain("right: -8px");
+    expect(previewThemeCss).toContain(
+      "left: calc(-1 * var(--chakra-spacing-2));",
+    );
+    expect(previewThemeCss).toContain(
+      "right: calc(-1 * var(--chakra-spacing-2));",
+    );
     expect(previewThemeCss).toMatch(
       /\.markdown-range-highlights\s*\{[^}]*z-index: -1;/,
     );

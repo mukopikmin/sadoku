@@ -70,11 +70,17 @@ const getCommentableBlockProps = (
     commentHighlightsByLine,
     ...props
   } = context;
+  const comments = commentsByLine.get(line) ?? [];
+  const hasContinuousSelection = props.selectedRange !== undefined &&
+    props.selectedRange.startLine < props.selectedRange.endLine &&
+    isLineInRange(line, props.selectedRange);
 
   return {
     ...props,
-    comments: commentsByLine.get(line) ?? [],
+    comments,
     hasCommentHighlight: commentHighlightsByLine.has(line),
+    hasContinuousHighlight: hasContinuousSelection ||
+      comments.some((comment) => comment.startLine < comment.endLine),
     isAdding: props.activeCommentLine === line,
     isRangeActionLine: props.selectedRange?.endLine === line,
     isSelected: props.selectedRange
