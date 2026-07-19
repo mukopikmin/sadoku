@@ -1,7 +1,12 @@
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
-import type { PreviewComment } from "../../api/comments";
+import type {
+  ActiveComment,
+  Comment,
+  ResolvedComment,
+  StaleComment,
+} from "../../models/comment";
 import {
   useCommentActions,
   useCommentsQuery,
@@ -9,22 +14,22 @@ import {
 
 export type CommentListProps = {
   actions: CommentActions;
-  comments: PreviewComment[];
+  comments: Comment[];
 };
 
 const formatRange = (line: number, endLine = line): string =>
   line === endLine ? `Line ${line}` : `Lines ${line}-${endLine}`;
 
-const formatOriginalRange = (comment: PreviewComment): string =>
+const formatOriginalRange = (comment: Comment): string =>
   formatRange(
     comment.originalStartLine,
     comment.originalEndLine,
   );
 
-const formatLineLabel = (comment: PreviewComment): string => {
+const formatLineLabel = (comment: Comment): string => {
   const current = formatRange(comment.startLine, comment.endLine);
   const original = formatOriginalRange(comment);
-  if (comment.stale) return `Originally ${original.toLowerCase()}`;
+  if (comment.state === "stale") return `Originally ${original.toLowerCase()}`;
   if (
     comment.originalStartLine !== comment.startLine ||
     comment.originalEndLine !== comment.endLine
@@ -34,19 +39,19 @@ const formatLineLabel = (comment: PreviewComment): string => {
   return current;
 };
 
-type CommentSectionProps = {
+type CommentSectionProps<T extends Comment> = {
   actions: CommentActions;
-  comments: PreviewComment[];
+  comments: T[];
   emptyText: string;
   title: string;
 };
 
-const CommentSection = ({
+const CommentSection = <T extends Comment>({
   actions,
   comments,
   emptyText,
   title,
-}: CommentSectionProps) => (
+}: CommentSectionProps<T>) => (
   <Box as="section">
     <Heading as="h2" size="xl" mt="0" mb="4">{title}</Heading>
     {comments.length === 0
@@ -73,13 +78,15 @@ export const CommentList = ({
   actions,
   comments,
 }: CommentListProps) => {
-  const activeComments = comments.filter((comment) =>
-    !comment.resolved && !comment.stale
+  const activeComments = comments.filter(
+    (comment): comment is ActiveComment => comment.state === "active",
   );
-  const staleComments = comments.filter((comment) =>
-    !comment.resolved && comment.stale
+  const staleComments = comments.filter(
+    (comment): comment is StaleComment => comment.state === "stale",
   );
-  const resolvedComments = comments.filter((comment) => comment.resolved);
+  const resolvedComments = comments.filter(
+    (comment): comment is ResolvedComment => comment.state === "resolved",
+  );
 
   return (
     <Stack gap="7">

@@ -3,21 +3,21 @@ import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
-import type { PreviewComment } from "../../api/comments";
+import type { Comment } from "../../models/comment";
 import { ReplyItem } from "./ReplyItem";
 import { toaster } from "../ui/toaster";
 
 export type CommentItemProps = {
   actions: CommentActions;
-  comment: PreviewComment;
+  comment: Comment;
   lineLabel: string;
   showSource?: boolean;
   showState?: boolean;
   variant?: "panel";
 };
 
-const getSourceLabel = (comment: PreviewComment): string =>
-  comment.stale ? "Original line" : "Target line";
+const getSourceLabel = (comment: Comment): string =>
+  comment.state === "stale" ? "Original line" : "Target line";
 
 export const CommentItem = ({
   actions,
@@ -157,16 +157,16 @@ export const CommentItem = ({
           fontWeight="semibold"
         >
           <Text as="span">{lineLabel}</Text>
-          {showState && comment.resolved && (
+          {showState && comment.state === "resolved" && (
             <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
           )}
-          {showState && !comment.resolved && comment.stale && (
+          {showState && comment.state === "stale" && (
             <Badge colorPalette="yellow" variant="outline">Stale</Badge>
           )}
         </Flex>
         {!isEditing && (
           <Flex wrap="wrap" gap="2">
-            {comment.resolved
+            {comment.state === "resolved"
               ? (
                 <CommentActionButton
                   disabled={isSaving}

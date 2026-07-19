@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PreviewComment } from "../api/comments";
+import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { initializeMermaid } from "../markdown/mermaid";
 import { previewThemeCss } from "../theme";
@@ -32,7 +32,7 @@ const ensurePreviewThemeStyle = () => {
 
 const renderMarkdown = (
   markdown: string,
-  comments: PreviewComment[] = [],
+  comments: ActiveComment[] = [],
   callbacks: Partial<{
     onCreateComment: (
       startLine: number,
@@ -620,10 +620,9 @@ Body
       originalEndLine: 3,
       originalStartLine: 3,
       startLine: 3,
-      resolved: false,
       sourceHash: "example",
       sourceText: "Body",
-      stale: false,
+      state: "active",
       updatedAt: "2026-06-05T00:00:00.000Z",
     }], { onResolveComment });
 
@@ -641,10 +640,9 @@ Body
       startLine: 1,
       originalEndLine: 3,
       originalStartLine: 1,
-      resolved: false,
       sourceHash: "example",
       sourceText: "# Title\n\nBody",
-      stale: false,
+      state: "active",
       updatedAt: "2026-06-05T00:00:00.000Z",
     }]);
 
@@ -733,7 +731,7 @@ Body
   });
 
   it("merges saved ranges and gives the active selection priority", () => {
-    const comments: PreviewComment[] = [
+    const comments: ActiveComment[] = [
       {
         body: "First range",
         createdAt: "2026-06-05T00:00:00.000Z",
@@ -741,8 +739,7 @@ Body
         id: 1,
         originalEndLine: 3,
         originalStartLine: 1,
-        resolved: false,
-        stale: false,
+        state: "active",
         startLine: 1,
         updatedAt: "2026-06-05T00:00:00.000Z",
       },
@@ -753,8 +750,7 @@ Body
         id: 2,
         originalEndLine: 5,
         originalStartLine: 4,
-        resolved: false,
-        stale: false,
+        state: "active",
         startLine: 4,
         updatedAt: "2026-06-05T00:00:00.000Z",
       },

@@ -1,18 +1,24 @@
-export type PreviewCommentReply = {
+import {
+  type Comment,
+  type CommentReply,
+  type CommentsDocument,
+} from "../models/comment";
+
+export type CommentReplyResponse = {
   body: string;
   createdAt: string;
   id: number;
   updatedAt: string;
 };
 
-export type PreviewComment = {
+export type CommentResponse = {
   body: string;
   createdAt: string;
   endLine: number;
   id: number;
   originalEndLine: number;
   originalStartLine: number;
-  replies?: PreviewCommentReply[];
+  replies?: CommentReplyResponse[];
   resolved: boolean;
   resolvedAt?: string;
   sourceHash?: string;
@@ -22,24 +28,60 @@ export type PreviewComment = {
   updatedAt: string;
 };
 
-export type PreviewCommentsDocument = {
-  comments: PreviewComment[];
+export type CommentsDocumentResponse = {
+  comments: CommentResponse[];
   filePath: string;
 };
 
-export const loadComments = async (): Promise<PreviewCommentsDocument> => {
+const toCommentReply = (response: CommentReplyResponse): CommentReply => ({
+  ...response,
+});
+
+export const toComment = (response: CommentResponse): Comment => {
+  const common = {
+    body: response.body,
+    createdAt: response.createdAt,
+    endLine: response.endLine,
+    id: response.id,
+    originalEndLine: response.originalEndLine,
+    originalStartLine: response.originalStartLine,
+    replies: (response.replies ?? []).map(toCommentReply),
+    sourceHash: response.sourceHash,
+    sourceText: response.sourceText,
+    startLine: response.startLine,
+    updatedAt: response.updatedAt,
+  };
+
+  if (response.resolved) {
+    return {
+      ...common,
+      resolvedAt: response.resolvedAt,
+      state: "resolved",
+    };
+  }
+  return { ...common, state: response.stale ? "stale" : "active" };
+};
+
+export const toCommentsDocument = (
+  response: CommentsDocumentResponse,
+): CommentsDocument => ({
+  comments: response.comments.map(toComment),
+  filePath: response.filePath,
+});
+
+export const loadComments = async (): Promise<CommentsDocument> => {
   const response = await fetch("/__sadoku/comments");
   if (!response.ok) {
     throw new Error(`Failed to load comments: ${response.status}`);
   }
-  return await response.json() as PreviewCommentsDocument;
+  return toCommentsDocument(await response.json() as CommentsDocumentResponse);
 };
 
 export const createComment = async (
   startLine: number,
   body: string,
   endLine: number,
-): Promise<PreviewComment> => {
+): Promise<Comment> => {
   const response = await fetch("/__sadoku/comments", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -48,13 +90,13 @@ export const createComment = async (
   if (!response.ok) {
     throw new Error(`Failed to create comment: ${response.status}`);
   }
-  return await response.json() as PreviewComment;
+  return toComment(await response.json() as CommentResponse);
 };
 
 export const createReply = async (
   commentId: number,
   body: string,
-): Promise<PreviewComment> => {
+): Promise<Comment> => {
   const response = await fetch(
     `/__sadoku/comments/${encodeURIComponent(commentId)}/replies`,
     {
@@ -66,14 +108,14 @@ export const createReply = async (
   if (!response.ok) {
     throw new Error(`Failed to create reply: ${response.status}`);
   }
-  return await response.json() as PreviewComment;
+  return toComment(await response.json() as CommentResponse);
 };
 
 export const updateReply = async (
   commentId: number,
   replyId: number,
   body: string,
-): Promise<PreviewComment> => {
+): Promise<Comment> => {
   const response = await fetch(
     `/__sadoku/comments/${encodeURIComponent(commentId)}/replies/${
       encodeURIComponent(replyId)
@@ -87,7 +129,7 @@ export const updateReply = async (
   if (!response.ok) {
     throw new Error(`Failed to update reply: ${response.status}`);
   }
-  return await response.json() as PreviewComment;
+  return toComment(await response.json() as CommentResponse);
 };
 
 export const deleteReply = async (
@@ -108,7 +150,7 @@ export const deleteReply = async (
 export const updateComment = async (
   id: number,
   body: string,
-): Promise<PreviewComment> => {
+): Promise<Comment> => {
   const response = await fetch(`/__sadoku/comments/${encodeURIComponent(id)}`, {
     method: "PUT",
     headers: { "content-type": "application/json" },
@@ -117,10 +159,10 @@ export const updateComment = async (
   if (!response.ok) {
     throw new Error(`Failed to update comment: ${response.status}`);
   }
-  return await response.json() as PreviewComment;
+  return toComment(await response.json() as CommentResponse);
 };
 
-export const resolveComment = async (id: number): Promise<PreviewComment> => {
+export const resolveComment = async (id: number): Promise<Comment> => {
   const response = await fetch(
     `/__sadoku/comments/${encodeURIComponent(id)}/resolve`,
     {
@@ -130,10 +172,10 @@ export const resolveComment = async (id: number): Promise<PreviewComment> => {
   if (!response.ok) {
     throw new Error(`Failed to resolve comment: ${response.status}`);
   }
-  return await response.json() as PreviewComment;
+  return toComment(await response.json() as CommentResponse);
 };
 
-export const reopenComment = async (id: number): Promise<PreviewComment> => {
+export const reopenComment = async (id: number): Promise<Comment> => {
   const response = await fetch(
     `/__sadoku/comments/${encodeURIComponent(id)}/reopen`,
     {
@@ -143,7 +185,7 @@ export const reopenComment = async (id: number): Promise<PreviewComment> => {
   if (!response.ok) {
     throw new Error(`Failed to reopen comment: ${response.status}`);
   }
-  return await response.json() as PreviewComment;
+  return toComment(await response.json() as CommentResponse);
 };
 
 export const deleteComment = async (id: number): Promise<void> => {
