@@ -1,13 +1,20 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  createCommentActions,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommentList } from "../pages/comments/CommentList";
-import type { PreviewComment } from "../api/comments";
+import type { Comment } from "../models/comment";
 
 afterEach(() => cleanup());
 
 const createComment = (
-  overrides: Partial<PreviewComment>,
-): PreviewComment => ({
+  overrides: Partial<Comment>,
+): Comment => ({
   body: "Clarify this.",
   createdAt: "2026-06-05T00:00:00.000Z",
   id: 1,
@@ -15,10 +22,9 @@ const createComment = (
   endLine: 3,
   originalStartLine: 3,
   originalEndLine: 3,
-  resolved: false,
   sourceHash: "example",
   sourceText: "Body",
-  stale: false,
+  state: "active",
   updatedAt: "2026-06-05T00:00:00.000Z",
   ...overrides,
 });
@@ -27,27 +33,21 @@ describe("CommentList", () => {
   it("groups active, stale, and resolved comments", () => {
     render(
       <CommentList
+        actions={createCommentActions()}
         comments={[
           createComment({ body: "Active comment.", id: 1 }),
           createComment({
             body: "Stale comment.",
             id: 2,
             sourceText: "Old body",
-            stale: true,
+            state: "stale",
           }),
           createComment({
             body: "Resolved comment.",
             id: 3,
-            resolved: true,
+            state: "resolved",
           }),
         ]}
-        onDeleteComment={async () => {}}
-        onDeleteReply={async () => {}}
-        onReplyComment={async () => {}}
-        onReopenComment={async () => {}}
-        onResolveComment={async () => {}}
-        onUpdateComment={async () => {}}
-        onUpdateReply={async () => {}}
       />,
     );
 
@@ -71,6 +71,7 @@ describe("CommentList", () => {
   it("formats source ranges in list headings", () => {
     render(
       <CommentList
+        actions={createCommentActions()}
         comments={[
           createComment({
             body: "Range comment.",
@@ -88,17 +89,12 @@ describe("CommentList", () => {
           createComment({
             body: "Stale range.",
             id: "stale-range",
-            stale: true,
+            state: "stale",
             endLine: 9,
             originalStartLine: 4,
             originalEndLine: 6,
           }),
         ]}
-        onDeleteComment={async () => {}}
-        onReplyComment={async () => {}}
-        onReopenComment={async () => {}}
-        onResolveComment={async () => {}}
-        onUpdateComment={async () => {}}
       />,
     );
 
@@ -115,14 +111,14 @@ describe("CommentList", () => {
     const onUpdateComment = vi.fn(async () => {});
     render(
       <CommentList
+        actions={createCommentActions({
+          onDeleteComment,
+          onReopenComment,
+          onReplyComment,
+          onResolveComment,
+          onUpdateComment,
+        })}
         comments={[createComment({ body: "Original body." })]}
-        onDeleteComment={onDeleteComment}
-        onDeleteReply={async () => {}}
-        onReplyComment={onReplyComment}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={onUpdateComment}
-        onUpdateReply={async () => {}}
       />,
     );
 
@@ -153,6 +149,11 @@ describe("CommentList", () => {
     const onUpdateReply = vi.fn(async () => {});
     render(
       <CommentList
+        actions={createCommentActions({
+          onDeleteReply,
+          onReplyComment,
+          onUpdateReply,
+        })}
         comments={[createComment({
           replies: [{
             body: "Existing reply.",
@@ -161,13 +162,6 @@ describe("CommentList", () => {
             updatedAt: "2026-06-05T01:00:00.000Z",
           }],
         })]}
-        onDeleteComment={async () => {}}
-        onDeleteReply={onDeleteReply}
-        onReplyComment={onReplyComment}
-        onReopenComment={async () => {}}
-        onResolveComment={async () => {}}
-        onUpdateComment={async () => {}}
-        onUpdateReply={onUpdateReply}
       />,
     );
 
@@ -237,6 +231,7 @@ describe("CommentList", () => {
   it("renders comments and replies as safe GFM Markdown", () => {
     const { container } = render(
       <CommentList
+        actions={createCommentActions()}
         comments={[createComment({
           body:
             "**Important**\n\n- first\n- second\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n<script>alert(1)</script>",
@@ -248,13 +243,6 @@ describe("CommentList", () => {
             updatedAt: "2026-06-05T01:00:00.000Z",
           }],
         })]}
-        onDeleteComment={async () => {}}
-        onDeleteReply={async () => {}}
-        onReplyComment={async () => {}}
-        onReopenComment={async () => {}}
-        onResolveComment={async () => {}}
-        onUpdateComment={async () => {}}
-        onUpdateReply={async () => {}}
       />,
     );
 
@@ -276,17 +264,14 @@ describe("CommentList", () => {
     const onResolveComment = vi.fn(async () => {});
     render(
       <CommentList
+        actions={createCommentActions({
+          onReopenComment,
+          onResolveComment,
+        })}
         comments={[
           createComment({ id: 1 }),
-          createComment({ id: 3, resolved: true }),
+          createComment({ id: 3, state: "resolved" }),
         ]}
-        onDeleteComment={async () => {}}
-        onDeleteReply={async () => {}}
-        onReplyComment={async () => {}}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={async () => {}}
-        onUpdateReply={async () => {}}
       />,
     );
 

@@ -1,26 +1,35 @@
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import type { CommentThreadActions } from "../../api/commentActions";
+import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
-import type { PreviewComment } from "../../api/comments";
+import type {
+  ActiveComment,
+  Comment,
+  ResolvedComment,
+  StaleComment,
+} from "../../models/comment";
+import {
+  useCommentActions,
+  useCommentsQuery,
+} from "../../hooks/usePreviewData";
 
-export type CommentListProps = CommentThreadActions & {
-  onReopenComment: (id: number) => Promise<void>;
-  comments: PreviewComment[];
+export type CommentListProps = {
+  actions: CommentActions;
+  comments: Comment[];
 };
 
 const formatRange = (line: number, endLine = line): string =>
   line === endLine ? `Line ${line}` : `Lines ${line}-${endLine}`;
 
-const formatOriginalRange = (comment: PreviewComment): string =>
+const formatOriginalRange = (comment: Comment): string =>
   formatRange(
     comment.originalStartLine,
     comment.originalEndLine,
   );
 
-const formatLineLabel = (comment: PreviewComment): string => {
+const formatLineLabel = (comment: Comment): string => {
   const current = formatRange(comment.startLine, comment.endLine);
   const original = formatOriginalRange(comment);
-  if (comment.stale) return `Originally ${original.toLowerCase()}`;
+  if (comment.state === "stale") return `Originally ${original.toLowerCase()}`;
   if (
     comment.originalStartLine !== comment.startLine ||
     comment.originalEndLine !== comment.endLine
@@ -30,35 +39,19 @@ const formatLineLabel = (comment: PreviewComment): string => {
   return current;
 };
 
-type CommentSectionProps =
-  & {
-    comments: PreviewComment[];
-    emptyText: string;
-    title: string;
-  }
-  & Pick<
-    CommentListProps,
-    | "onDeleteComment"
-    | "onDeleteReply"
-    | "onReplyComment"
-    | "onReopenComment"
-    | "onResolveComment"
-    | "onUpdateComment"
-    | "onUpdateReply"
-  >;
+type CommentSectionProps<T extends Comment> = {
+  actions: CommentActions;
+  comments: T[];
+  emptyText: string;
+  title: string;
+};
 
-const CommentSection = ({
+const CommentSection = <T extends Comment>({
+  actions,
   comments,
   emptyText,
-  onDeleteComment,
-  onDeleteReply,
-  onReplyComment,
-  onReopenComment,
-  onResolveComment,
-  onUpdateComment,
-  onUpdateReply,
   title,
-}: CommentSectionProps) => (
+}: CommentSectionProps<T>) => (
   <Box as="section">
     <Heading as="h2" size="xl" mt="0" mb="4">{title}</Heading>
     {comments.length === 0
@@ -67,17 +60,11 @@ const CommentSection = ({
         <Stack gap="3">
           {comments.map((comment) => (
             <CommentItem
+              actions={actions}
               variant="panel"
               comment={comment}
               key={comment.id}
               lineLabel={formatLineLabel(comment)}
-              onDeleteComment={onDeleteComment}
-              onDeleteReply={onDeleteReply}
-              onReplyComment={onReplyComment}
-              onReopenComment={onReopenComment}
-              onResolveComment={onResolveComment}
-              onUpdateComment={onUpdateComment}
-              onUpdateReply={onUpdateReply}
               showSource
               showState
             />
@@ -88,61 +75,48 @@ const CommentSection = ({
 );
 
 export const CommentList = ({
+  actions,
   comments,
-  onDeleteComment,
-  onDeleteReply,
-  onReplyComment,
-  onReopenComment,
-  onResolveComment,
-  onUpdateComment,
-  onUpdateReply,
 }: CommentListProps) => {
-  const activeComments = comments.filter((comment) =>
-    !comment.resolved && !comment.stale
+  const activeComments = comments.filter(
+    (comment): comment is ActiveComment => comment.state === "active",
   );
-  const staleComments = comments.filter((comment) =>
-    !comment.resolved && comment.stale
+  const staleComments = comments.filter(
+    (comment): comment is StaleComment => comment.state === "stale",
   );
-  const resolvedComments = comments.filter((comment) => comment.resolved);
+  const resolvedComments = comments.filter(
+    (comment): comment is ResolvedComment => comment.state === "resolved",
+  );
 
   return (
     <Stack gap="7">
       <CommentSection
+        actions={actions}
         comments={activeComments}
         emptyText="No active comments."
-        onDeleteComment={onDeleteComment}
-        onDeleteReply={onDeleteReply}
-        onReplyComment={onReplyComment}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={onUpdateComment}
-        onUpdateReply={onUpdateReply}
         title={`Active comments (${activeComments.length})`}
       />
       <CommentSection
+        actions={actions}
         comments={staleComments}
         emptyText="No stale comments."
-        onDeleteComment={onDeleteComment}
-        onDeleteReply={onDeleteReply}
-        onReplyComment={onReplyComment}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={onUpdateComment}
-        onUpdateReply={onUpdateReply}
         title={`Stale comments (${staleComments.length})`}
       />
       <CommentSection
+        actions={actions}
         comments={resolvedComments}
         emptyText="No resolved comments."
-        onDeleteComment={onDeleteComment}
-        onDeleteReply={onDeleteReply}
-        onReplyComment={onReplyComment}
-        onReopenComment={onReopenComment}
-        onResolveComment={onResolveComment}
-        onUpdateComment={onUpdateComment}
-        onUpdateReply={onUpdateReply}
         title={`Resolved comments (${resolvedComments.length})`}
       />
     </Stack>
+  );
+};
+
+export const CommentListPage = () => {
+  const commentsQuery = useCommentsQuery();
+  const actions = useCommentActions();
+  if (!commentsQuery.data) return null;
+  return (
+    <CommentList actions={actions} comments={commentsQuery.data.comments} />
   );
 };

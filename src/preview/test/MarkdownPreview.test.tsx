@@ -1,6 +1,13 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  createCommentActions,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PreviewComment } from "../api/comments";
+import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { initializeMermaid } from "../markdown/mermaid";
 import { previewThemeCss } from "../theme";
@@ -25,7 +32,7 @@ const ensurePreviewThemeStyle = () => {
 
 const renderMarkdown = (
   markdown: string,
-  comments: PreviewComment[] = [],
+  comments: ActiveComment[] = [],
   callbacks: Partial<{
     onCreateComment: (
       startLine: number,
@@ -38,15 +45,12 @@ const renderMarkdown = (
   ensurePreviewThemeStyle();
   const result = render(
     <MarkdownPreview
+      actions={createCommentActions({
+        onCreateComment: callbacks.onCreateComment ?? (async () => {}),
+        onResolveComment: callbacks.onResolveComment ?? (async () => {}),
+      })}
       comments={comments}
       markdown={markdown}
-      onCreateComment={callbacks.onCreateComment ?? (async () => {})}
-      onDeleteComment={async () => {}}
-      onDeleteReply={async () => {}}
-      onReplyComment={async () => {}}
-      onResolveComment={callbacks.onResolveComment ?? (async () => {})}
-      onUpdateComment={async () => {}}
-      onUpdateReply={async () => {}}
     />,
   );
   return { ...result, container: result.container };
@@ -350,6 +354,7 @@ After
 
   it("renders task list checkboxes", () => {
     const { container } = renderMarkdown(`- [ ] todo
+  - [x] nested done
 - [x] done
 - [X] also done
 `);
@@ -357,27 +362,30 @@ After
     const checkboxes = container.querySelectorAll<HTMLInputElement>(
       'input[type="checkbox"]',
     );
-    expect(checkboxes).toHaveLength(3);
+    expect(checkboxes).toHaveLength(4);
     expect(checkboxes[0].checked).toBe(false);
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
+    expect(checkboxes[3].checked).toBe(true);
     expect(checkboxes[0].disabled).toBe(true);
-    expect(
-      container.querySelectorAll('[data-scope="checkbox"][data-part="root"]'),
-    )
-      .toHaveLength(3);
+    const checkboxRoots = container.querySelectorAll<HTMLElement>(
+      '[data-scope="checkbox"][data-part="root"]',
+    );
+    expect(checkboxRoots).toHaveLength(4);
+    for (const checkboxRoot of checkboxRoots) {
+      expect(getComputedStyle(checkboxRoot).marginInlineStart).toBe("-1.5em");
+    }
     expect(
       container.querySelectorAll(
         '[data-scope="checkbox"][data-part="control"]',
       ),
     )
-      .toHaveLength(3);
+      .toHaveLength(4);
     const taskListItems = container.querySelectorAll(".task-list-item");
-    expect(taskListItems).toHaveLength(3);
+    expect(taskListItems).toHaveLength(4);
     for (const taskListItem of taskListItems) {
       expect(getComputedStyle(taskListItem).listStyleType).toBe("none");
     }
-    expect(previewThemeCss).not.toContain("0 0.5em 0.2em -");
   });
 
   it("highlights Kotlin code fences", () => {
@@ -551,6 +559,11 @@ Body
     await waitFor(() =>
       expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1)
     );
+    await waitFor(() =>
+      expect(
+        screen.queryByPlaceholderText("Write a GitHub PR comment..."),
+      ).toBeNull()
+    );
 
     fireEvent.click(getBodyLine()!);
     fireEvent.click(screen.getByRole("button", {
@@ -607,10 +620,9 @@ Body
       originalEndLine: 3,
       originalStartLine: 3,
       startLine: 3,
-      resolved: false,
       sourceHash: "example",
       sourceText: "Body",
-      stale: false,
+      state: "active",
       updatedAt: "2026-06-05T00:00:00.000Z",
     }], { onResolveComment });
 
@@ -628,10 +640,9 @@ Body
       startLine: 1,
       originalEndLine: 3,
       originalStartLine: 1,
-      resolved: false,
       sourceHash: "example",
       sourceText: "# Title\n\nBody",
-      stale: false,
+      state: "active",
       updatedAt: "2026-06-05T00:00:00.000Z",
     }]);
 
@@ -720,7 +731,7 @@ Body
   });
 
   it("merges saved ranges and gives the active selection priority", () => {
-    const comments: PreviewComment[] = [
+    const comments: ActiveComment[] = [
       {
         body: "First range",
         createdAt: "2026-06-05T00:00:00.000Z",
@@ -728,8 +739,7 @@ Body
         id: 1,
         originalEndLine: 3,
         originalStartLine: 1,
-        resolved: false,
-        stale: false,
+        state: "active",
         startLine: 1,
         updatedAt: "2026-06-05T00:00:00.000Z",
       },
@@ -740,8 +750,7 @@ Body
         id: 2,
         originalEndLine: 5,
         originalStartLine: 4,
-        resolved: false,
-        stale: false,
+        state: "active",
         startLine: 4,
         updatedAt: "2026-06-05T00:00:00.000Z",
       },

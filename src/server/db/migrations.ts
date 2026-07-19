@@ -14,7 +14,7 @@ export interface RunMigrationsOptions {
   tableName?: string;
 }
 
-const defaultMigrationsTableName = "schema_migrations";
+const defaultMigrationsTableName = "schema_migration";
 
 // Append-only application migrations. Once a migration is added, do not edit it;
 // add a new zero-padded version instead (for example, 0001, 0002, ...).
@@ -70,7 +70,7 @@ export async function ensureMigrationLedger(
   database: AppDatabase,
 ): Promise<void> {
   await database.execute(
-    "CREATE TABLE IF NOT EXISTS schema_migrations (" +
+    "CREATE TABLE IF NOT EXISTS schema_migration (" +
       "version TEXT PRIMARY KEY," +
       "name TEXT NOT NULL," +
       "checksum TEXT NOT NULL," +

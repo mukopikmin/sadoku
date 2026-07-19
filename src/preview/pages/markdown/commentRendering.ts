@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
-import type { CommentThreadActions } from "../../api/commentActions";
-import type { PreviewComment } from "../../api/comments";
+import type { CommentActions } from "../../api/commentActions";
+import type { ActiveComment } from "../../models/comment";
 import type { MarkdownElementProps } from "../../markdown/markdownRenderers";
 
 export type CommentRange = { endLine: number; startLine: number };
@@ -19,22 +19,18 @@ export type CommentableComponentProps = MarkdownElementProps & {
   node?: SourceNode;
 };
 
-export type CommentControlProps = CommentThreadActions & {
+export type CommentControlProps = {
+  actions: CommentActions;
   activeCommentLine?: number;
   activeRange?: CommentRange;
   onCloseCommentForm: () => void;
-  onCreateComment: (
-    startLine: number,
-    body: string,
-    endLine: number,
-  ) => Promise<void>;
   onOpenCommentForm: () => void;
   onSelectCommentLine: (line: number) => void;
   selectedRange?: CommentRange;
 };
 
 export type CommentRenderingContextValue = CommentControlProps & {
-  commentsByLine: Map<number, PreviewComment[]>;
+  commentsByLine: Map<number, ActiveComment[]>;
   commentHighlightsByLine: Set<number>;
 };
 

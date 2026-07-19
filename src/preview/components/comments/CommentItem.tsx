@@ -1,40 +1,40 @@
 import { Badge, Box, Flex, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import type { CommentThreadActions } from "../../api/commentActions";
+import type { CommentActions } from "../../api/commentActions";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
-import type { PreviewComment } from "../../api/comments";
+import type { Comment } from "../../models/comment";
 import { ReplyItem } from "./ReplyItem";
 
-export type CommentItemProps =
-  & Omit<CommentThreadActions, "onResolveComment">
-  & {
-    comment: PreviewComment;
-    lineLabel: string;
-    onReopenComment?: (id: number) => Promise<void>;
-    onResolveComment?: (id: number) => Promise<void>;
-    showSource?: boolean;
-    showState?: boolean;
-    variant?: "panel";
-  };
+export type CommentItemProps = {
+  actions: CommentActions;
+  comment: Comment;
+  lineLabel: string;
+  showSource?: boolean;
+  showState?: boolean;
+  variant?: "panel";
+};
 
-const getSourceLabel = (comment: PreviewComment): string =>
-  comment.stale ? "Original line" : "Target line";
+const getSourceLabel = (comment: Comment): string =>
+  comment.state === "stale" ? "Original line" : "Target line";
 
 export const CommentItem = ({
+  actions,
   comment,
   lineLabel,
-  onDeleteComment,
-  onDeleteReply,
-  onReplyComment,
-  onReopenComment,
-  onResolveComment,
-  onUpdateComment,
-  onUpdateReply,
   showSource = false,
   showState = false,
   variant,
 }: CommentItemProps) => {
+  const {
+    onDeleteComment,
+    onDeleteReply,
+    onReopenComment,
+    onReplyComment,
+    onResolveComment,
+    onUpdateComment,
+    onUpdateReply,
+  } = actions;
   const [draft, setDraft] = useState(comment.body);
   const [replyDraft, setReplyDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
@@ -95,12 +95,10 @@ export const CommentItem = ({
   };
 
   const handleResolve = async () => {
-    if (!onResolveComment) return;
     await runCommentAction(() => onResolveComment(comment.id));
   };
 
   const handleReopen = async () => {
-    if (!onReopenComment) return;
     await runCommentAction(() => onReopenComment(comment.id));
   };
 
@@ -122,17 +120,17 @@ export const CommentItem = ({
           fontWeight="semibold"
         >
           <Text as="span">{lineLabel}</Text>
-          {showState && comment.resolved && (
+          {showState && comment.state === "resolved" && (
             <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
           )}
-          {showState && !comment.resolved && comment.stale && (
+          {showState && comment.state === "stale" && (
             <Badge colorPalette="yellow" variant="outline">Stale</Badge>
           )}
         </Flex>
         {!isEditing && (
           <Flex wrap="wrap" gap="2">
-            {comment.resolved
-              ? onReopenComment && (
+            {comment.state === "resolved"
+              ? (
                 <CommentActionButton
                   disabled={isSaving}
                   onClick={handleReopen}
@@ -141,7 +139,7 @@ export const CommentItem = ({
                   Reopen
                 </CommentActionButton>
               )
-              : onResolveComment && (
+              : (
                 <CommentActionButton
                   disabled={isSaving}
                   onClick={handleResolve}
