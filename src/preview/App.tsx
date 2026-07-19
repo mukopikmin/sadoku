@@ -1,7 +1,6 @@
 import { Container } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { CommentListPage } from "./pages/comments/CommentList";
-import { connectHotReload } from "./hot_reload";
 import { MarkdownPreviewPage } from "./pages/markdown/MarkdownPreview";
 import { initializeMermaid } from "./markdown/mermaid";
 import {
@@ -15,6 +14,7 @@ import {
   usePreviewDocumentQuery,
 } from "./hooks/usePreviewData";
 import { useThemeMode } from "./hooks/useThemeMode";
+import { useHotReload } from "./hooks/useHotReload";
 import { isUnresolvedComment } from "./models/comment";
 
 export const App = () => {
@@ -22,13 +22,7 @@ export const App = () => {
   const commentsQuery = useCommentsQuery();
   const [view, setView] = useState<PreviewView>("preview");
   const { themeMode, toggleThemeMode } = useThemeMode();
-  const [reloadAvailable, setReloadAvailable] = useState(false);
-
-  useEffect(() => {
-    return connectHotReload({
-      onReloadAvailable: () => setReloadAvailable(true),
-    });
-  }, []);
+  const { reloadAvailable } = useHotReload();
 
   useEffect(() => {
     if (!documentQuery.data || !commentsQuery.data || view !== "preview") {
