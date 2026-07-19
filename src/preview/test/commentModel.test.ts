@@ -4,6 +4,7 @@ import {
   toComment,
   toCommentsDocument,
 } from "../api/comments";
+import { isUnresolvedComment } from "../models/comment";
 
 const createResponse = (
   overrides: Partial<CommentResponse> = {},
@@ -38,6 +39,17 @@ describe("comment model", () => {
         id: 1,
         state: "resolved",
       });
+  });
+
+  it.each(
+    [
+      [{}, true],
+      [{ stale: true }, true],
+      [{ resolved: true }, false],
+    ] as const,
+  )("identifies API state %j as unresolved: %s", (overrides, expected) => {
+    expect(isUnresolvedComment(toComment(createResponse(overrides))))
+      .toBe(expected);
   });
 
   it("maps documents and replies without exposing response state flags", () => {

@@ -15,6 +15,7 @@ import {
   usePreviewDocumentQuery,
 } from "./hooks/usePreviewData";
 import { useThemeMode } from "./hooks/useThemeMode";
+import { isUnresolvedComment } from "./models/comment";
 
 export const App = () => {
   const documentQuery = usePreviewDocumentQuery();
@@ -65,8 +66,7 @@ export const App = () => {
   const staleCommentCount =
     comments.filter((comment) => comment.state === "stale")
       .length;
-  const unresolvedCommentCount = comments.filter((comment) => !comment.resolved)
-    .length;
+  const unresolvedCommentCount = comments.filter(isUnresolvedComment).length;
 
   return (
     <>
