@@ -1,6 +1,6 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import type { PreviewCommentReply } from "../../api/comments";
+import type { CommentReply } from "../../models/comment";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 
@@ -14,7 +14,7 @@ type ReplyItemProps = {
     replyId: number,
     body: string,
   ) => Promise<void>;
-  reply: PreviewCommentReply;
+  reply: CommentReply;
   setSaving: (saving: boolean) => void;
 };
 

@@ -12,7 +12,7 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import type { CommentActions } from "../../api/commentActions";
 import { createCommentableMarkdownComponents } from "./commentableMarkdownComponents";
-import type { PreviewComment } from "../../api/comments";
+import type { ActiveComment } from "../../models/comment";
 import {
   type CommentRange,
   CommentRenderingContext,
@@ -30,7 +30,7 @@ import {
 
 export type MarkdownPreviewProps = {
   actions: CommentActions;
-  comments: PreviewComment[];
+  comments: ActiveComment[];
   markdown: string;
 };
 
@@ -101,7 +101,7 @@ export const MarkdownPreview = ({
 }: MarkdownPreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const commentsByLine = useMemo(() => {
-    const grouped = new Map<number, PreviewComment[]>();
+    const grouped = new Map<number, ActiveComment[]>();
     for (const comment of comments) {
       grouped.set(comment.endLine, [
         ...(grouped.get(comment.endLine) ?? []),
@@ -292,8 +292,8 @@ export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
   const commentsQuery = useCommentsQuery();
   const actions = useCommentActions();
   if (!commentsQuery.data) return null;
-  const activeComments = commentsQuery.data.comments.filter((comment) =>
-    !comment.resolved && !comment.stale
+  const activeComments = commentsQuery.data.comments.filter(
+    (comment): comment is ActiveComment => comment.state === "active",
   );
   return (
     <MarkdownPreview

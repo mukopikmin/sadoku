@@ -63,7 +63,7 @@ export const App = () => {
   const { comments } = commentsQuery.data;
   const document = documentQuery.data;
   const staleCommentCount =
-    comments.filter((comment) => !comment.resolved && comment.stale)
+    comments.filter((comment) => comment.state === "stale")
       .length;
   const unresolvedCommentCount = comments.filter((comment) => !comment.resolved)
     .length;
