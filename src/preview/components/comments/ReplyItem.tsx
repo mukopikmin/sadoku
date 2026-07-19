@@ -1,6 +1,7 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { PreviewCommentReply } from "../../api/comments";
+import { ConfirmDialog } from "../ConfirmDialog";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 
@@ -29,6 +30,7 @@ export const ReplyItem = ({
 }: ReplyItemProps) => {
   const [draft, setDraft] = useState(reply.body);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleUpdate = async () => {
     const body = draft.trim();
@@ -44,10 +46,11 @@ export const ReplyItem = ({
     }
   };
 
-  const handleDelete = async () => {
+  const handleConfirmDelete = async () => {
     setSaving(true);
     try {
       await onDelete(commentId, reply.id);
+      setIsDeleteDialogOpen(false);
     } catch (error) {
       onError(error);
     } finally {
@@ -83,7 +86,7 @@ export const ReplyItem = ({
             <CommentActionButton
               aria-label="Delete reply"
               disabled={disabled}
-              onClick={handleDelete}
+              onClick={() => setIsDeleteDialogOpen(true)}
               type="button"
             >
               Delete
@@ -91,6 +94,17 @@ export const ReplyItem = ({
           </Flex>
         )}
       </Flex>
+      <ConfirmDialog
+        confirmColorPalette="red"
+        confirmLabel="Delete"
+        isPending={disabled}
+        onConfirm={handleConfirmDelete}
+        onOpenChange={setIsDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+        title="Delete reply?"
+      >
+        This action cannot be undone.
+      </ConfirmDialog>
       {isEditing
         ? (
           <CommentForm

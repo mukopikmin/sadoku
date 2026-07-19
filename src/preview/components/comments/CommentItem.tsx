@@ -1,6 +1,7 @@
 import { Badge, Box, Flex, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
+import { ConfirmDialog } from "../ConfirmDialog";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 import type { PreviewComment } from "../../api/comments";
@@ -39,6 +40,7 @@ export const CommentItem = ({
   const [replyDraft, setReplyDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -71,13 +73,15 @@ export const CommentItem = ({
     );
   };
 
-  const handleDelete = async () => {
+  const handleConfirmDelete = async () => {
     setIsSaving(true);
     setError(undefined);
     try {
       await onDeleteComment(comment.id);
+      setIsDeleteDialogOpen(false);
     } catch (error) {
       handleError(error);
+    } finally {
       setIsSaving(false);
     }
   };
@@ -164,7 +168,7 @@ export const CommentItem = ({
             </CommentActionButton>
             <CommentActionButton
               disabled={isSaving}
-              onClick={handleDelete}
+              onClick={() => setIsDeleteDialogOpen(true)}
               type="button"
             >
               Delete
@@ -172,6 +176,17 @@ export const CommentItem = ({
           </Flex>
         )}
       </Flex>
+      <ConfirmDialog
+        confirmColorPalette="red"
+        confirmLabel="Delete"
+        isPending={isSaving}
+        onConfirm={handleConfirmDelete}
+        onOpenChange={setIsDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+        title="Delete comment?"
+      >
+        This action cannot be undone.
+      </ConfirmDialog>
       {showSource && comment.sourceText && (
         <Box mb="2">
           <Text mb="1" color="fg.muted" fontSize="xs" fontWeight="semibold">

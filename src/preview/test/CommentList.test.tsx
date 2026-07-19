@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommentList } from "../pages/comments/CommentList";
@@ -141,6 +142,22 @@ describe("CommentList", () => {
 
     const deleteButton = await screen.findByRole("button", { name: "Delete" });
     fireEvent.click(deleteButton);
+    expect(onDeleteComment).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Delete comment?",
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(onDeleteComment).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+
+    fireEvent.click(deleteButton);
+    fireEvent.click(
+      within(
+        await screen.findByRole("alertdialog", {
+          name: "Delete comment?",
+        }),
+      ).getByRole("button", { name: "Delete" }),
+    );
     await waitFor(() => expect(onDeleteComment).toHaveBeenCalledWith(1));
   });
 
@@ -226,6 +243,22 @@ describe("CommentList", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Delete reply" }));
+    expect(onDeleteReply).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Delete reply?",
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(onDeleteReply).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete reply" }));
+    fireEvent.click(
+      within(
+        await screen.findByRole("alertdialog", {
+          name: "Delete reply?",
+        }),
+      ).getByRole("button", { name: "Delete" }),
+    );
     await waitFor(() => expect(onDeleteReply).toHaveBeenCalledWith(1, 1));
   });
 
