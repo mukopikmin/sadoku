@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/"
+    directories:
+      - "/"
+      - "/src/preview"
     schedule:
       interval: "weekly"
     cooldown:
@@ -10,7 +12,31 @@ updates:
       - "dependencies"
       - "npm"
     groups:
+      npm-security-updates:
+        applies-to: "security-updates"
+        patterns:
+          - "*"
       npm-dependencies:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "deno"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+    groups:
+      deno-security-updates:
+        applies-to: "security-updates"
+        patterns:
+          - "*"
+      deno-dependencies:
+        applies-to: "version-updates"
         patterns:
           - "*"
     open-pull-requests-limit: 5
@@ -25,7 +51,12 @@ updates:
       - "dependencies"
       - "github-actions"
     groups:
+      github-actions-security-updates:
+        applies-to: "security-updates"
+        patterns:
+          - "*"
       github-actions-dependencies:
+        applies-to: "version-updates"
         patterns:
           - "*"
     open-pull-requests-limit: 5

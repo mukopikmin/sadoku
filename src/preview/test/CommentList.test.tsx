@@ -9,13 +9,13 @@ import {
 } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommentList } from "../pages/comments/CommentList";
-import type { PreviewComment } from "../api/comments";
+import type { Comment } from "../models/comment";
 
 afterEach(() => cleanup());
 
 const createComment = (
-  overrides: Partial<PreviewComment>,
-): PreviewComment => ({
+  overrides: Partial<Comment>,
+): Comment => ({
   body: "Clarify this.",
   createdAt: "2026-06-05T00:00:00.000Z",
   id: 1,
@@ -23,10 +23,9 @@ const createComment = (
   endLine: 3,
   originalStartLine: 3,
   originalEndLine: 3,
-  resolved: false,
   sourceHash: "example",
   sourceText: "Body",
-  stale: false,
+  state: "active",
   updatedAt: "2026-06-05T00:00:00.000Z",
   ...overrides,
 });
@@ -42,12 +41,12 @@ describe("CommentList", () => {
             body: "Stale comment.",
             id: 2,
             sourceText: "Old body",
-            stale: true,
+            state: "stale",
           }),
           createComment({
             body: "Resolved comment.",
             id: 3,
-            resolved: true,
+            state: "resolved",
           }),
         ]}
       />,
@@ -91,7 +90,7 @@ describe("CommentList", () => {
           createComment({
             body: "Stale range.",
             id: "stale-range",
-            stale: true,
+            state: "stale",
             endLine: 9,
             originalStartLine: 4,
             originalEndLine: 6,
@@ -304,7 +303,7 @@ describe("CommentList", () => {
         })}
         comments={[
           createComment({ id: 1 }),
-          createComment({ id: 3, resolved: true }),
+          createComment({ id: 3, state: "resolved" }),
         ]}
       />,
     );

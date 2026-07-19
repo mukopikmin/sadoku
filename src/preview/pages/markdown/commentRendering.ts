@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import type { CommentActions } from "../../api/commentActions";
-import type { PreviewComment } from "../../api/comments";
+import type { ActiveComment } from "../../models/comment";
 import type { MarkdownElementProps } from "../../markdown/markdownRenderers";
 
 export type CommentRange = { endLine: number; startLine: number };
@@ -30,7 +30,7 @@ export type CommentControlProps = {
 };
 
 export type CommentRenderingContextValue = CommentControlProps & {
-  commentsByLine: Map<number, PreviewComment[]>;
+  commentsByLine: Map<number, ActiveComment[]>;
   commentHighlightsByLine: Set<number>;
 };
 
