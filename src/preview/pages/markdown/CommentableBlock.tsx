@@ -17,7 +17,7 @@ import {
   SourceLineContext,
 } from "./commentRendering";
 import { CommentItem } from "../../components/comments/CommentItem";
-import type { PreviewComment } from "../../api/comments";
+import type { ActiveComment } from "../../models/comment";
 import {
   MarkdownListDepthContext,
   markdownListIndentEm,
@@ -26,7 +26,7 @@ import {
 type CommentableBlockProps = CommentControlProps & {
   children: React.ReactNode;
   className?: string;
-  comments: PreviewComment[];
+  comments: ActiveComment[];
   hasCommentHighlight: boolean;
   hasContinuousHighlight: boolean;
   isAdding: boolean;
