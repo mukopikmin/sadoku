@@ -1,6 +1,6 @@
 ---
 name: sadoku-release
-description: Prepare and publish Sadoku stable releases with deterministic preflight checks, generated release-note review, an explicit approval gate, tag creation, GitHub Actions monitoring, and final artifact verification. Use when asked to prepare, cut, publish, or verify a Sadoku versioned release.
+description: Propose a semantic version, then prepare and publish Sadoku stable releases with deterministic preflight checks, generated release-note review, explicit approval gates, tag creation, GitHub Actions monitoring, and final artifact verification. Use when asked to prepare, cut, publish, or verify a Sadoku stable release, whether or not a version is specified.
 ---
 
 # Sadoku Release
@@ -24,11 +24,32 @@ the user's language.
 
 ### 1. Inspect
 
-1. Read repository instructions and confirm the requested version is an
-   unprefixed semantic version such as `0.1.0`. Derive the tag as `v<version>`.
-2. Inspect `git status`, worktrees, local and remote branches, tags, releases,
-   open pull requests, and the release workflows without modifying them.
-3. Report any open pull requests that the requested release will omit.
+1. Read repository instructions. Inspect `git status`, worktrees, local and
+   remote branches, tags, releases, open pull requests, and the release
+   workflows without modifying them.
+2. Identify the latest non-draft, non-prerelease stable release. Ignore
+   `v0.0.0-nightly`. For the first stable release, use `release-notes-baseline`
+   as the comparison point.
+3. Review commits and merged pull requests from that comparison point through
+   `origin/main`, then propose one unprefixed semantic version:
+   - increment major for breaking changes when the current major is at least 1;
+   - increment minor for backward-compatible features, and for breaking changes
+     while the project is on `0.x`;
+   - increment patch when the range contains only fixes, documentation, or
+     maintenance changes. Choose the next version for that increment that has no
+     existing tag or release. If the range does not justify a release, stop and
+     explain why.
+4. Present the current stable version, proposed version, increment category,
+   rationale, and the principal pull requests or changes in the user's language.
+   Ask the user to approve the proposal or provide another version. This is a
+   mandatory gate: do not synchronize `main`, run preflight, build artifacts, or
+   create a tag until the version is confirmed.
+5. If the user supplied a version, still compare it with the changes. Warn about
+   a suspected semantic-version mismatch and require explicit confirmation
+   before proceeding.
+6. Confirm the chosen version is an unprefixed semantic version such as `0.1.0`,
+   and derive the tag as `v<version>`.
+7. Report any open pull requests that the release will omit.
 
 ### 2. Synchronize `main`
 
