@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Container,
   Flex,
   Group,
   IconButton,
@@ -18,19 +19,26 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
     position="sticky"
     top="0"
     zIndex="10"
-    align="center"
-    justify="space-between"
-    gap="4"
+    w="full"
     mb="8"
     borderBottomWidth="1px"
     borderColor="border.muted"
-    pt="8"
-    pb="4"
     bg="canvas"
     color="fg.muted"
     fontSize="sm"
   >
-    {children}
+    <Container
+      display="flex"
+      maxW="980px"
+      alignItems="center"
+      justifyContent="space-between"
+      gap="4"
+      px="8"
+      pt="8"
+      pb="4"
+    >
+      {children}
+    </Container>
   </Flex>
 );
 

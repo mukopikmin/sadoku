@@ -155,10 +155,25 @@ describe("App", () => {
     expect(styles.position).toBe("sticky");
     expect(styles.top).toBe("0px");
     expect(styles.zIndex).toBe("10");
-    expect(styles.paddingTop).toBe("var(--chakra-spacing-8)");
+    expect(styles.width).toBe("var(--chakra-sizes-full)");
+
+    const headerContainer = header!.firstElementChild;
+    expect(headerContainer).not.toBeNull();
+    const headerContainerStyles = getComputedStyle(headerContainer!);
+    expect(headerContainerStyles.maxWidth).toBe("980px");
+    expect(headerContainerStyles.paddingInline).toBe(
+      "var(--chakra-spacing-8)",
+    );
+    expect(headerContainerStyles.paddingTop).toBe("var(--chakra-spacing-8)");
 
     const main = container.querySelector("main");
     expect(main).not.toBeNull();
+    expect(header!.contains(main)).toBe(false);
+    expect(header!.nextElementSibling).toBe(main);
+    expect(getComputedStyle(main!).maxWidth).toBe("980px");
+    expect(getComputedStyle(main!).paddingInline).toBe(
+      "var(--chakra-spacing-8)",
+    );
     expect(getComputedStyle(main!).paddingTop).toBe("0px");
 
     const previewButton = screen.getByRole("button", { name: "Preview" });
