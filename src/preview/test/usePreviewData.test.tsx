@@ -1,7 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PreviewComment } from "../api/comments";
+import type { Comment } from "../models/comment";
 import {
   commentsQueryKey,
   useCommentActions,
@@ -16,16 +16,15 @@ afterEach(() => {
 });
 
 const createComment = (
-  overrides: Partial<PreviewComment> = {},
-): PreviewComment => ({
+  overrides: Partial<Comment> = {},
+): Comment => ({
   body: "Original comment.",
   createdAt: "2026-06-05T00:00:00.000Z",
   endLine: 3,
   id: 1,
   originalEndLine: 3,
   originalStartLine: 3,
-  resolved: false,
-  stale: false,
+  state: "active",
   startLine: 3,
   updatedAt: "2026-06-05T00:00:00.000Z",
   ...overrides,
@@ -86,21 +85,21 @@ describe("preview data queries", () => {
 
     await act(() => result.current.onCreateComment(3, "New comment.", 3));
     expect(
-      queryClient.getQueryData<{ comments: PreviewComment[] }>(
+      queryClient.getQueryData<{ comments: Comment[] }>(
         commentsQueryKey,
       )?.comments.map((comment) => comment.id),
     ).toEqual([1, 2]);
 
     await act(() => result.current.onUpdateComment(1, "Updated comment."));
     expect(
-      queryClient.getQueryData<{ comments: PreviewComment[] }>(
+      queryClient.getQueryData<{ comments: Comment[] }>(
         commentsQueryKey,
       )?.comments[0].body,
     ).toBe("Updated comment.");
 
     await act(() => result.current.onDeleteComment(1));
     expect(
-      queryClient.getQueryData<{ comments: PreviewComment[] }>(
+      queryClient.getQueryData<{ comments: Comment[] }>(
         commentsQueryKey,
       )?.comments.map((comment) => comment.id),
     ).toEqual([2]);
@@ -126,7 +125,7 @@ describe("preview data queries", () => {
       act(() => result.current.onUpdateComment(1, "Rejected update.")),
     ).rejects.toThrow("Failed to update comment: 500");
     expect(
-      queryClient.getQueryData<{ comments: PreviewComment[] }>(
+      queryClient.getQueryData<{ comments: Comment[] }>(
         commentsQueryKey,
       )?.comments,
     ).toEqual([comment]);

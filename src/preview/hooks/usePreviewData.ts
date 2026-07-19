@@ -6,13 +6,12 @@ import {
   deleteComment,
   deleteReply,
   loadComments,
-  type PreviewComment,
-  type PreviewCommentsDocument,
   reopenComment,
   resolveComment,
   updateComment,
   updateReply,
 } from "../api/comments";
+import type { Comment, CommentsDocument } from "../models/comment";
 import { loadPreviewDocument } from "../api/document";
 
 export const previewDocumentQueryKey = ["preview-document"] as const;
@@ -34,9 +33,9 @@ export const useCommentActions = (): CommentActions => {
   const queryClient = useQueryClient();
 
   const updateComments = (
-    updater: (current: PreviewComment[]) => PreviewComment[],
+    updater: (current: Comment[]) => Comment[],
   ) => {
-    queryClient.setQueryData<PreviewCommentsDocument>(
+    queryClient.setQueryData<CommentsDocument>(
       commentsQueryKey,
       (current) =>
         current && {
@@ -45,7 +44,7 @@ export const useCommentActions = (): CommentActions => {
         },
     );
   };
-  const replaceComment = (updated: PreviewComment) => {
+  const replaceComment = (updated: Comment) => {
     updateComments((comments) =>
       comments.map((comment) => comment.id === updated.id ? updated : comment)
     );
