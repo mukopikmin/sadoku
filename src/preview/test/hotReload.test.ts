@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { connectHotReload } from "../hot_reload";
+import { connectHotReload } from "../api/hotReload";
 
 class FakeEventSource extends EventTarget {
   static instances: FakeEventSource[] = [];
