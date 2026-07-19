@@ -9,8 +9,12 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommentList } from "../pages/comments/CommentList";
 import type { PreviewComment } from "../api/comments";
+import { toaster } from "../components/ui/toaster";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  toaster.remove();
+});
 
 const createComment = (
   overrides: Partial<PreviewComment>,
@@ -279,7 +283,49 @@ describe("CommentList", () => {
     fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
     await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
 
+    expect(await screen.findByText("Comment resolved")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(1));
+
     fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
     await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(3));
+  });
+
+  it("shows an error toast when resolving a comment fails", async () => {
+    const onResolveComment = vi.fn(async () => {
+      throw new Error("Server unavailable.");
+    });
+    render(
+      <CommentList
+        actions={createCommentActions({ onResolveComment })}
+        comments={[createComment({ id: 7 })]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+
+    expect(await screen.findByText("Could not resolve comment")).not.toBeNull();
+    expect(screen.getAllByText("Server unavailable.").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByText("Comment resolved")).toBeNull();
+  });
+
+  it("shows an error toast when undoing a resolution fails", async () => {
+    const onReopenComment = vi.fn(async () => {
+      throw new Error("Reopen rejected.");
+    });
+    render(
+      <CommentList
+        actions={createCommentActions({ onReopenComment })}
+        comments={[createComment({ id: 9 })]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
+
+    expect(await screen.findByText("Could not reopen comment")).not.toBeNull();
+    expect(screen.getAllByText("Reopen rejected.").length).toBeGreaterThan(0);
   });
 });
