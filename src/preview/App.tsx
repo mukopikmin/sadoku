@@ -65,13 +65,14 @@ export const App = () => {
   const staleCommentCount =
     comments.filter((comment) => !comment.resolved && comment.stale)
       .length;
+  const unresolvedCommentCount = comments.filter((comment) => !comment.resolved)
+    .length;
 
   return (
     <>
       <style>{previewThemeCss}</style>
       <Container as="main" maxW="980px" px="8" pt="0" pb="16">
         <PreviewHeader
-          commentCount={comments.length}
           fileUrl={document.fileUrl}
           onChangeView={setView}
           onToggleThemeMode={toggleThemeMode}
@@ -79,6 +80,7 @@ export const App = () => {
           staleCommentCount={staleCommentCount}
           themeMode={themeMode}
           title={document.title}
+          unresolvedCommentCount={unresolvedCommentCount}
           view={view}
         />
         {view === "preview"

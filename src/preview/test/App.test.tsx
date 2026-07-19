@@ -72,7 +72,9 @@ describe("App", () => {
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByRole("button", { name: "Comments 0" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Comments, 0 unresolved" }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(4));
@@ -162,7 +164,9 @@ describe("App", () => {
     expect(getComputedStyle(main!).paddingTop).toBe("0px");
 
     const previewButton = screen.getByRole("button", { name: "Preview" });
-    const commentsButton = screen.getByRole("button", { name: "Comments 0" });
+    const commentsButton = screen.getByRole("button", {
+      name: "Comments, 0 unresolved",
+    });
     expect(previewButton.parentElement).toBe(commentsButton.parentElement);
     expect(previewButton.getAttribute("data-group-item")).toBe("");
     expect(previewButton.getAttribute("data-first")).toBe("");
@@ -270,6 +274,21 @@ describe("App", () => {
                 stale: true,
                 updatedAt: "2026-06-05T00:00:00.000Z",
               },
+              {
+                body: "Resolved comment.",
+                createdAt: "2026-06-05T00:00:00.000Z",
+                id: 3,
+                endLine: 3,
+                originalEndLine: 3,
+                originalStartLine: 3,
+                startLine: 3,
+                resolved: true,
+                resolvedAt: "2026-06-05T00:01:00.000Z",
+                sourceHash: 1,
+                sourceText: "Body",
+                stale: false,
+                updatedAt: "2026-06-05T00:01:00.000Z",
+              },
             ],
             filePath: "/tmp/example.md",
           }));
@@ -285,10 +304,16 @@ describe("App", () => {
     );
     expect(screen.queryByText("Stale comment.")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: /Comments 2/ }));
+    const commentsButton = screen.getByRole("button", {
+      name: "Comments, 2 unresolved",
+    });
+    expect(commentsButton.querySelector('[aria-hidden="true"]')?.textContent)
+      .toBe("2");
+    fireEvent.click(commentsButton);
 
     expect(screen.getByText("Active comment.")).not.toBeNull();
     expect(screen.getByText("Stale comment.")).not.toBeNull();
+    expect(screen.getByText("Resolved comment.")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
   });
 });

@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Flex,
+  Float,
   Group,
   IconButton,
   Link,
@@ -35,7 +36,6 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 );
 
 type PreviewHeaderProps = {
-  commentCount: number;
   fileUrl: string;
   onChangeView: (view: PreviewView) => void;
   onToggleThemeMode: () => void;
@@ -43,11 +43,11 @@ type PreviewHeaderProps = {
   staleCommentCount: number;
   themeMode: ThemeMode;
   title: string;
+  unresolvedCommentCount: number;
   view: PreviewView;
 };
 
 export const PreviewHeader = ({
-  commentCount,
   fileUrl,
   onChangeView,
   onToggleThemeMode,
@@ -55,6 +55,7 @@ export const PreviewHeader = ({
   staleCommentCount,
   themeMode,
   title,
+  unresolvedCommentCount,
   view,
 }: PreviewHeaderProps) => (
   <PreviewShell>
@@ -148,19 +149,35 @@ export const PreviewHeader = ({
           Preview
         </Button>
         <Button
+          aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
           aria-current={view === "comments" ? "page" : undefined}
           colorPalette={view === "comments" ? "blue" : "gray"}
           onClick={() => onChangeView("comments")}
           size="sm"
           type="button"
           variant="outline"
+          position="relative"
         >
-          Comments {commentCount}
+          Comments
           {staleCommentCount > 0 && (
             <Box as="span" ml="1" color="warning.fg">
               Stale {staleCommentCount}
             </Box>
           )}
+          <Float
+            aria-hidden="true"
+            as="span"
+            bg="blue.solid"
+            borderRadius="full"
+            color="blue.contrast"
+            fontSize="2xs"
+            fontWeight="bold"
+            minW="5"
+            offset="1"
+            px="1"
+          >
+            {unresolvedCommentCount}
+          </Float>
         </Button>
       </Group>
     </Flex>
