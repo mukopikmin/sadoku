@@ -44,13 +44,11 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <Container as="main" maxW="980px" px="8" pt="0" pb="16">
-          <PreviewShell>
-            {error
-              ? error instanceof Error ? error.message : String(error)
-              : "Loading preview..."}
-          </PreviewShell>
-        </Container>
+        <PreviewShell>
+          {error
+            ? error instanceof Error ? error.message : String(error)
+            : "Loading preview..."}
+        </PreviewShell>
       </>
     );
   }
@@ -65,18 +63,18 @@ export const App = () => {
   return (
     <>
       <style>{previewThemeCss}</style>
+      <PreviewHeader
+        fileUrl={document.fileUrl}
+        onChangeView={setView}
+        onToggleThemeMode={toggleThemeMode}
+        reloadAvailable={reloadAvailable}
+        staleCommentCount={staleCommentCount}
+        themeMode={themeMode}
+        title={document.title}
+        unresolvedCommentCount={unresolvedCommentCount}
+        view={view}
+      />
       <Container as="main" maxW="980px" px="8" pt="0" pb="16">
-        <PreviewHeader
-          fileUrl={document.fileUrl}
-          onChangeView={setView}
-          onToggleThemeMode={toggleThemeMode}
-          reloadAvailable={reloadAvailable}
-          staleCommentCount={staleCommentCount}
-          themeMode={themeMode}
-          title={document.title}
-          unresolvedCommentCount={unresolvedCommentCount}
-          view={view}
-        />
         {view === "preview"
           ? (
             <MarkdownPreviewPage
