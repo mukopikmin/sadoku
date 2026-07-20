@@ -1,22 +1,17 @@
-import type { SadokuConfig } from "../../config.ts";
 import { openAppDatabase } from "../db/connection.ts";
 import { createSqliteCommentsStore } from "./sqlite_storage.ts";
-import { type CommentsStore, fileCommentsStore } from "./storage.ts";
+import type { CommentsStore } from "./storage.ts";
 
 export type ConfiguredCommentsStore = CommentsStore & {
-  close?: () => void;
+  close: () => void;
 };
 
-export const createConfiguredCommentsStore = async (
-  config: SadokuConfig | undefined,
-): Promise<ConfiguredCommentsStore> => {
-  if (config?.experimental?.commentsStore === "sqlite") {
-    const database = await openAppDatabase();
-    return {
-      ...createSqliteCommentsStore(database),
-      close: () => database.close(),
-    };
-  }
-
-  return fileCommentsStore;
+export const createConfiguredCommentsStore = async (): Promise<
+  ConfiguredCommentsStore
+> => {
+  const database = await openAppDatabase();
+  return {
+    ...createSqliteCommentsStore(database),
+    close: () => database.close(),
+  };
 };

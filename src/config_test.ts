@@ -93,37 +93,11 @@ Deno.test("reads comments directory from config", async () => {
   });
 });
 
-Deno.test("reads config without comments directory or experimental store", async () => {
+Deno.test("reads config without comments directory", async () => {
   await withConfigEnvironment(async ({ configFilePath }) => {
     await writeConfig(configFilePath, "");
 
     assertEquals(readConfig(), {});
-  });
-});
-
-Deno.test("reads experimental SQLite comments store from config", async () => {
-  await withConfigEnvironment(async ({ configFilePath }) => {
-    await writeConfig(
-      configFilePath,
-      '[experimental]\ncommentsStore = "sqlite"\n',
-    );
-
-    assertEquals(readConfig(), { experimental: { commentsStore: "sqlite" } });
-  });
-});
-
-Deno.test("rejects invalid experimental comments store", async () => {
-  await withConfigEnvironment(async ({ configFilePath }) => {
-    await writeConfig(
-      configFilePath,
-      '[experimental]\ncommentsStore = "json"\n',
-    );
-
-    assertThrows(
-      () => readConfig(),
-      Error,
-      'experimental.commentsStore in Sadoku config must be "sqlite" when set.',
-    );
   });
 });
 
