@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { basename, join, relative, resolve } from "@std/path";
 
 import {
@@ -17,14 +17,26 @@ import {
   type CommentsStoreFile,
   getCommentsDirectoryPath,
   getCommentsFilePath,
-  writeCommentsDocument,
 } from "../server/comments/storage.ts";
+import { createConfiguredCommentsStore } from "../server/comments/factory.ts";
 import type { PreviewCommentsDocument } from "../server/comments/types.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,
   withTempCommentsDirectory,
 } from "../server/test_helpers.ts";
+
+const writeCommentsDocument = async (
+  filePath: string,
+  document: PreviewCommentsDocument,
+): Promise<void> => {
+  const store = await createConfiguredCommentsStore();
+  try {
+    await store.write(filePath, document);
+  } finally {
+    store.close();
+  }
+};
 
 const createMemoryCommentsStore = (): {
   documents: Map<string, PreviewCommentsDocument>;
@@ -139,7 +151,7 @@ Deno.test("lists comment files from the configured comments directory", async ()
       assertEquals(await listCommentFiles(), {
         entries: [{
           commentCount: 2,
-          fileName: basename(getCommentsFilePath(filePath)),
+          fileName: basename(filePath),
           markdownPath: filePath,
           openCount: 1,
           updatedAt: "2026-06-08T14:00:00.000Z",
@@ -152,7 +164,7 @@ Deno.test("lists comment files from the configured comments directory", async ()
   });
 });
 
-Deno.test("skips malformed comment files with a warning", async () => {
+Deno.test("ignores legacy JSON comment files", async () => {
   await withTempCommentsDirectory(async () => {
     await Deno.writeTextFile(
       join(getCommentsDirectoryPath(), "broken.json"),
@@ -162,8 +174,7 @@ Deno.test("skips malformed comment files with a warning", async () => {
     const result = await listCommentFiles();
 
     assertEquals(result.entries, []);
-    assertEquals(result.warnings.length, 1);
-    assertStringIncludes(result.warnings[0], "Skipping broken.json:");
+    assertEquals(result.warnings, []);
   });
 });
 
@@ -492,7 +503,7 @@ Deno.test("removes comments for the specified Markdown file", async () => {
       assertEquals(await listCommentFiles(), {
         entries: [{
           commentCount: 0,
-          fileName: basename(getCommentsFilePath(otherFilePath)),
+          fileName: basename(otherFilePath),
           markdownPath: otherFilePath,
           openCount: 0,
           updatedAt: undefined,
