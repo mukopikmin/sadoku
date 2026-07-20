@@ -35,7 +35,7 @@ const createComment = (
 });
 
 describe("CommentList", () => {
-  it("groups active, stale, and resolved comments", () => {
+  it("switches between active, stale, and resolved comment tabs", () => {
     render(
       <CommentList
         actions={createCommentActions()}
@@ -56,21 +56,46 @@ describe("CommentList", () => {
       />,
     );
 
+    expect(
+      screen.getByRole("tab", { name: "Active (1)" }).getAttribute(
+        "aria-selected",
+      ),
+    ).toBe("true");
     expect(screen.getByRole("heading", { name: "Active comments (1)" }))
       .not.toBeNull();
+    expect(
+      within(screen.getByRole("tabpanel", { name: "Active (1)" })).getByText(
+        "Active comment.",
+      ),
+    ).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
     expect(screen.getByRole("heading", { name: "Stale comments (1)" }))
       .not.toBeNull();
+    const stalePanel = screen.getByRole("tabpanel", { name: "Stale (1)" });
+    expect(within(stalePanel).getByText("Stale comment.")).not.toBeNull();
+    expect(within(stalePanel).getByText("Stale")).not.toBeNull();
+    expect(within(stalePanel).getByText("Original line")).not.toBeNull();
+    expect(within(stalePanel).getByText("Old body")).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
     expect(screen.getByRole("heading", { name: "Resolved comments (1)" }))
       .not.toBeNull();
-    expect(screen.getByText("Active comment.")).not.toBeNull();
-    expect(screen.getByText("Stale comment.")).not.toBeNull();
-    expect(screen.getByText("Resolved comment.")).not.toBeNull();
-    expect(screen.getByText("Stale")).not.toBeNull();
-    expect(screen.getByText("Resolved")).not.toBeNull();
-    expect(screen.getAllByText("Target line")).toHaveLength(2);
-    expect(screen.getAllByText("Body")).toHaveLength(2);
-    expect(screen.getByText("Original line")).not.toBeNull();
-    expect(screen.getByText("Old body")).not.toBeNull();
+    const resolvedPanel = screen.getByRole("tabpanel", {
+      name: "Resolved (1)",
+    });
+    expect(within(resolvedPanel).getByText("Resolved comment.")).not.toBeNull();
+    expect(within(resolvedPanel).getByText("Resolved")).not.toBeNull();
+    expect(within(resolvedPanel).getByText("Target line")).not.toBeNull();
+    expect(within(resolvedPanel).getByText("Body")).not.toBeNull();
+
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Resolved (1)" }), {
+      key: "ArrowLeft",
+    });
+    expect(screen.getByRole("tabpanel", { name: "Stale (1)" })).not.toBeNull();
+    expect(document.activeElement).toBe(
+      screen.getByRole("tab", { name: "Stale (1)" }),
+    );
   });
 
   it("formats source ranges in list headings", () => {
@@ -105,6 +130,7 @@ describe("CommentList", () => {
 
     expect(screen.getByText("Lines 3-5")).not.toBeNull();
     expect(screen.getByText("Lines 7-8 (originally lines 2-3)")).not.toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
     expect(screen.getByText("Originally lines 4-6")).not.toBeNull();
   });
 
@@ -319,6 +345,7 @@ describe("CommentList", () => {
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
     await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(1));
 
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
     fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
     await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(3));
   });

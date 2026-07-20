@@ -332,8 +332,11 @@ describe("App", () => {
     fireEvent.click(commentsButton);
 
     expect(screen.getByText("Active comment.")).not.toBeNull();
+    expect(screen.queryByText("Stale comment.")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
     expect(screen.getByText("Stale comment.")).not.toBeNull();
-    expect(screen.getByText("Resolved comment.")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
+    expect(screen.getByText("Resolved comment.")).not.toBeNull();
   });
 });
