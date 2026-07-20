@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { sadokuChakraSystem } from "./theme";
 import { createPreviewQueryClient } from "./queryClient";
+import { Toaster } from "./components/ui/toaster";
 
 const root = document.getElementById("sadoku-client-root");
 const queryClient = createPreviewQueryClient();
@@ -15,6 +16,7 @@ if (root) {
       <ChakraProvider value={sadokuChakraSystem}>
         <QueryClientProvider client={queryClient}>
           <App />
+          <Toaster />
         </QueryClientProvider>
       </ChakraProvider>
     </StrictMode>,

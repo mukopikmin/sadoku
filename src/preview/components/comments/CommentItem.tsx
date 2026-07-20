@@ -6,6 +6,7 @@ import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 import type { Comment } from "../../models/comment";
 import { ReplyItem } from "./ReplyItem";
+import { toaster } from "../ui/toaster";
 
 export type CommentItemProps = {
   actions: CommentActions;
@@ -44,13 +45,24 @@ export const CommentItem = ({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
 
-  const handleError = (error: unknown) => {
-    setError(error instanceof Error ? error.message : String(error));
+  const handleError = (
+    error: unknown,
+    title = "Comment action failed",
+  ) => {
+    const description = error instanceof Error ? error.message : String(error);
+    setError(description);
+    toaster.create({
+      closable: true,
+      description,
+      title,
+      type: "error",
+    });
   };
 
   const runCommentAction = async (
     action: () => Promise<void>,
     onSuccess?: () => void,
+    errorTitle?: string,
   ) => {
     setIsSaving(true);
     setError(undefined);
@@ -58,7 +70,7 @@ export const CommentItem = ({
       await action();
       onSuccess?.();
     } catch (error) {
-      handleError(error);
+      handleError(error, errorTitle);
     } finally {
       setIsSaving(false);
     }
@@ -70,6 +82,7 @@ export const CommentItem = ({
     await runCommentAction(
       () => onUpdateComment(comment.id, body),
       () => setIsEditing(false),
+      "Could not update comment",
     );
   };
 
@@ -80,7 +93,7 @@ export const CommentItem = ({
       await onDeleteComment(comment.id);
       setIsDeleteDialogOpen(false);
     } catch (error) {
-      handleError(error);
+      handleError(error, "Could not delete comment");
     } finally {
       setIsSaving(false);
     }
@@ -95,15 +108,39 @@ export const CommentItem = ({
         setReplyDraft("");
         setIsReplying(false);
       },
+      "Could not add reply",
     );
   };
 
   const handleResolve = async () => {
-    await runCommentAction(() => onResolveComment(comment.id));
+    await runCommentAction(
+      () => onResolveComment(comment.id),
+      () => {
+        toaster.create({
+          action: {
+            label: "Undo",
+            onClick: () => {
+              void onReopenComment(comment.id).catch((error) => {
+                handleError(error, "Could not reopen comment");
+              });
+            },
+          },
+          closable: true,
+          description: "The comment was resolved.",
+          title: "Comment resolved",
+          type: "success",
+        });
+      },
+      "Could not resolve comment",
+    );
   };
 
   const handleReopen = async () => {
-    await runCommentAction(() => onReopenComment(comment.id));
+    await runCommentAction(
+      () => onReopenComment(comment.id),
+      undefined,
+      "Could not reopen comment",
+    );
   };
 
   return (

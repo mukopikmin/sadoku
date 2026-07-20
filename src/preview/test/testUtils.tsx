@@ -5,6 +5,7 @@ import { type ReactElement, type ReactNode, useState } from "react";
 import type { CommentActions } from "../api/commentActions";
 import { createPreviewQueryClient } from "../queryClient";
 import { sadokuChakraSystem } from "../theme";
+import { Toaster } from "../components/ui/toaster";
 
 const TestProvider = ({ children }: { children: ReactNode }) => {
   const [queryClient] = useState(createPreviewQueryClient);
@@ -12,6 +13,7 @@ const TestProvider = ({ children }: { children: ReactNode }) => {
     <ChakraProvider value={sadokuChakraSystem}>
       <QueryClientProvider client={queryClient}>
         {children}
+        <Toaster />
       </QueryClientProvider>
     </ChakraProvider>
   );

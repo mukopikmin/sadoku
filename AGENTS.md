@@ -1,4 +1,4 @@
-# Agent Instructions for mdview
+# Agent Instructions for Sadoku
 
 These technical guidelines apply to the entire repository. Agents MUST follow
 them when making changes.
@@ -23,7 +23,14 @@ them when making changes.
 - Keep preview document, asset, shell, and event-stream handling in
   `src/server/preview/`.
 - Keep comment persistence and request handling in `src/server/comments/`.
+- Keep database connections and migrations in `src/server/db/`. Keep
+  comment-store implementations and their selection in `src/server/comments/`.
 - Keep browser-side React code in `src/preview/`.
+- Keep HTTP response types and response-to-model conversion at the
+  `src/preview/api/` boundary. Keep browser-side domain models in
+  `src/preview/models/`.
+- Keep Markdown rendering infrastructure in `src/preview/markdown/`, with
+  element-specific renderers in `src/preview/markdown/renderers/`.
 - Keep release, installation, and notice-generation logic in `scripts/`.
 - Preserve the boundary between the Deno server and the browser client. Pass
   data through the existing HTTP endpoints instead of importing server modules
@@ -75,6 +82,8 @@ them when making changes.
 
 ## 6. GitHub Actions and Communication
 
+- For stable releases, follow `.agents/skills/sadoku-release/SKILL.md` and use
+  the repository release tasks and approval gates defined there.
 - Pin third-party GitHub Actions to a full commit hash and include a comment
   with the corresponding release tag.
 - Keep workflow permissions minimal.
