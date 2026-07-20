@@ -1,4 +1,5 @@
-import { Box, Heading, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
+import { useId, useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import type {
@@ -78,6 +79,10 @@ export const CommentList = ({
   actions,
   comments,
 }: CommentListProps) => {
+  const [selectedState, setSelectedState] = useState<Comment["state"]>(
+    "active",
+  );
+  const tabsId = useId();
   const activeComments = comments.filter(
     (comment): comment is ActiveComment => comment.state === "active",
   );
@@ -87,28 +92,73 @@ export const CommentList = ({
   const resolvedComments = comments.filter(
     (comment): comment is ResolvedComment => comment.state === "resolved",
   );
+  const sections = {
+    active: {
+      comments: activeComments,
+      emptyText: "No active comments.",
+      label: "Active",
+    },
+    stale: {
+      comments: staleComments,
+      emptyText: "No stale comments.",
+      label: "Stale",
+    },
+    resolved: {
+      comments: resolvedComments,
+      emptyText: "No resolved comments.",
+      label: "Resolved",
+    },
+  };
+  const selectedSection = sections[selectedState];
+  const states = Object.keys(sections) as Comment["state"][];
+
+  const selectAdjacentTab = (
+    state: Comment["state"],
+    direction: -1 | 1,
+  ) => {
+    const index = states.indexOf(state);
+    const nextState =
+      states[(index + direction + states.length) % states.length];
+    setSelectedState(nextState);
+    globalThis.document.getElementById(`${tabsId}-${nextState}-tab`)?.focus();
+  };
 
   return (
-    <Stack gap="7">
-      <CommentSection
-        actions={actions}
-        comments={activeComments}
-        emptyText="No active comments."
-        title={`Active comments (${activeComments.length})`}
-      />
-      <CommentSection
-        actions={actions}
-        comments={staleComments}
-        emptyText="No stale comments."
-        title={`Stale comments (${staleComments.length})`}
-      />
-      <CommentSection
-        actions={actions}
-        comments={resolvedComments}
-        emptyText="No resolved comments."
-        title={`Resolved comments (${resolvedComments.length})`}
-      />
-    </Stack>
+    <Box>
+      <Stack direction="row" role="tablist" mb="7" gap="1">
+        {states.map((state) => (
+          <Button
+            aria-controls={`${tabsId}-panel`}
+            aria-selected={selectedState === state}
+            id={`${tabsId}-${state}-tab`}
+            key={state}
+            onClick={() => setSelectedState(state)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft") selectAdjacentTab(state, -1);
+              if (event.key === "ArrowRight") selectAdjacentTab(state, 1);
+            }}
+            role="tab"
+            size="sm"
+            tabIndex={selectedState === state ? 0 : -1}
+            variant={selectedState === state ? "solid" : "ghost"}
+          >
+            {sections[state].label} ({sections[state].comments.length})
+          </Button>
+        ))}
+      </Stack>
+      <Box
+        aria-labelledby={`${tabsId}-${selectedState}-tab`}
+        id={`${tabsId}-panel`}
+        role="tabpanel"
+      >
+        <CommentSection
+          actions={actions}
+          comments={selectedSection.comments}
+          emptyText={selectedSection.emptyText}
+          title={`${selectedSection.label} comments (${selectedSection.comments.length})`}
+        />
+      </Box>
+    </Box>
   );
 };
 
