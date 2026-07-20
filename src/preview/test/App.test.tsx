@@ -166,7 +166,9 @@ describe("App", () => {
     expect(headerContainerStyles.paddingInline).toBe(
       "var(--chakra-spacing-8)",
     );
-    expect(headerContainerStyles.paddingTop).toBe("var(--chakra-spacing-8)");
+    expect(headerContainerStyles.paddingBlock).toBe(
+      "var(--chakra-spacing-4)",
+    );
 
     const main = container.querySelector("main");
     expect(main).not.toBeNull();
