@@ -35,8 +35,7 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
       justifyContent="space-between"
       gap="4"
       px="8"
-      pt="8"
-      pb="4"
+      py="4"
     >
       {children}
     </Container>
