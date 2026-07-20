@@ -164,20 +164,22 @@ export const PreviewHeader = ({
               Stale {staleCommentCount}
             </Box>
           )}
-          <Float
-            aria-hidden="true"
-            as="span"
-            bg="blue.solid"
-            borderRadius="full"
-            color="blue.contrast"
-            fontSize="2xs"
-            fontWeight="bold"
-            minW="5"
-            offset="1"
-            px="1"
-          >
-            {unresolvedCommentCount}
-          </Float>
+          {unresolvedCommentCount > 0 && (
+            <Float
+              aria-hidden="true"
+              as="span"
+              bg="blue.solid"
+              borderRadius="full"
+              color="blue.contrast"
+              fontSize="2xs"
+              fontWeight="bold"
+              minW="5"
+              offset="1"
+              px="1"
+            >
+              {unresolvedCommentCount}
+            </Float>
+          )}
         </Button>
       </Group>
     </Flex>

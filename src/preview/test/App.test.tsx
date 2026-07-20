@@ -167,6 +167,7 @@ describe("App", () => {
     const commentsButton = screen.getByRole("button", {
       name: "Comments, 0 unresolved",
     });
+    expect(commentsButton.querySelector('span[aria-hidden="true"]')).toBeNull();
     expect(previewButton.parentElement).toBe(commentsButton.parentElement);
     expect(previewButton.getAttribute("data-group-item")).toBe("");
     expect(previewButton.getAttribute("data-first")).toBe("");
@@ -307,7 +308,9 @@ describe("App", () => {
     const commentsButton = screen.getByRole("button", {
       name: "Comments, 2 unresolved",
     });
-    expect(commentsButton.querySelector('[aria-hidden="true"]')?.textContent)
+    expect(
+      commentsButton.querySelector('span[aria-hidden="true"]')?.textContent,
+    )
       .toBe("2");
     fireEvent.click(commentsButton);
 
