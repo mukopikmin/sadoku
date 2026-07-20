@@ -34,6 +34,12 @@ export type ResolvedComment = CommentBase & {
 
 export type Comment = ActiveComment | StaleComment | ResolvedComment;
 
+export type UnresolvedComment = ActiveComment | StaleComment;
+
+export const isUnresolvedComment = (
+  comment: Comment,
+): comment is UnresolvedComment => comment.state !== "resolved";
+
 export type CommentsDocument = {
   comments: Comment[];
   filePath: string;
