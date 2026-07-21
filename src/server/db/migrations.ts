@@ -1,4 +1,5 @@
 import { createCommentTablesMigration } from "./migrations/0001_create_comment_tables.ts";
+import { addCommentAuthorsMigration } from "./migrations/0002_add_comment_authors.ts";
 import { type AppDatabase, withTransaction } from "./connection.ts";
 
 export interface Migration {
@@ -20,6 +21,7 @@ const defaultMigrationsTableName = "schema_migration";
 // add a new zero-padded version instead (for example, 0001, 0002, ...).
 export const MIGRATIONS: readonly Migration[] = [
   createCommentTablesMigration,
+  addCommentAuthorsMigration,
 ];
 
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;

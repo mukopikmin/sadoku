@@ -57,6 +57,14 @@ const sanitizeFileNamePart = (value: string): string =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
+const isCommentAuthor = (value: unknown): boolean =>
+  isRecord(value) && (value.type === "human" || value.type === "bot");
+
+const normalizeCommentAuthor = (value: unknown): PreviewComment["author"] =>
+  isCommentAuthor(value)
+    ? { type: (value as PreviewComment["author"]).type }
+    : { type: "human" };
+
 const getEnv = (name: string): string | undefined => {
   try {
     return Deno.env.get(name);
@@ -155,7 +163,8 @@ const isPreviewComment = (value: unknown): value is PreviewComment => {
     originalStartLine,
     startLine,
   } = comment;
-  return typeof comment.id === "number" &&
+  return (comment.author === undefined || isCommentAuthor(comment.author)) &&
+    typeof comment.id === "number" &&
     typeof startLine === "number" &&
     Number.isInteger(startLine) &&
     typeof endLine === "number" &&
@@ -178,7 +187,8 @@ const isPreviewCommentReply = (
 ): value is PreviewCommentReply => {
   if (typeof value !== "object" || value === null) return false;
   const reply = value as Partial<PreviewCommentReply>;
-  return typeof reply.id === "number" &&
+  return (reply.author === undefined || isCommentAuthor(reply.author)) &&
+    typeof reply.id === "number" &&
     typeof reply.body === "string" &&
     typeof reply.createdAt === "string" &&
     typeof reply.updatedAt === "string";
@@ -209,8 +219,12 @@ const latestUpdatedAt = (
 const normalizePreviewComment = (comment: PreviewComment): PreviewComment => {
   return {
     ...comment,
+    author: normalizeCommentAuthor(comment.author),
     replies: Array.isArray(comment.replies)
-      ? comment.replies.filter(isPreviewCommentReply)
+      ? comment.replies.filter(isPreviewCommentReply).map((reply) => ({
+        ...reply,
+        author: normalizeCommentAuthor(reply.author),
+      }))
       : [],
     resolved: comment.resolved === true,
   };

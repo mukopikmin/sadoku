@@ -1,4 +1,9 @@
+export type CommentAuthor = {
+  type: "human" | "bot";
+};
+
 export type CommentReply = {
+  author: CommentAuthor;
   body: string;
   createdAt: string;
   id: number;
@@ -6,6 +11,7 @@ export type CommentReply = {
 };
 
 type CommentBase = {
+  author: CommentAuthor;
   body: string;
   createdAt: string;
   endLine: number;

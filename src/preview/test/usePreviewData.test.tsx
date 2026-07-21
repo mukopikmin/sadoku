@@ -19,6 +19,7 @@ const createComment = (
   overrides: Partial<Comment> = {},
 ): Comment => ({
   body: "Original comment.",
+  author: { type: "human" },
   createdAt: "2026-06-05T00:00:00.000Z",
   endLine: 3,
   id: 1,

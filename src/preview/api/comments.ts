@@ -5,6 +5,7 @@ import {
 } from "../models/comment";
 
 export type CommentReplyResponse = {
+  author: CommentAuthorResponse;
   body: string;
   createdAt: string;
   id: number;
@@ -12,6 +13,7 @@ export type CommentReplyResponse = {
 };
 
 export type CommentResponse = {
+  author: CommentAuthorResponse;
   body: string;
   createdAt: string;
   endLine: number;
@@ -28,17 +30,26 @@ export type CommentResponse = {
   updatedAt: string;
 };
 
+type CommentAuthorResponse = {
+  type: Comment["author"]["type"];
+};
+
 export type CommentsDocumentResponse = {
   comments: CommentResponse[];
   filePath: string;
 };
 
 const toCommentReply = (response: CommentReplyResponse): CommentReply => ({
-  ...response,
+  author: { type: response.author.type },
+  body: response.body,
+  createdAt: response.createdAt,
+  id: response.id,
+  updatedAt: response.updatedAt,
 });
 
 export const toComment = (response: CommentResponse): Comment => {
   const common = {
+    author: { type: response.author.type },
     body: response.body,
     createdAt: response.createdAt,
     endLine: response.endLine,

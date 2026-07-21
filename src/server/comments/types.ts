@@ -1,4 +1,9 @@
+export type CommentAuthor = {
+  type: "human" | "bot";
+};
+
 export type PreviewCommentReply = {
+  author: CommentAuthor;
   body: string;
   createdAt: string;
   id: number;
@@ -6,6 +11,7 @@ export type PreviewCommentReply = {
 };
 
 export type PreviewComment = {
+  author: CommentAuthor;
   body: string;
   createdAt: string;
   displayLine?: number;

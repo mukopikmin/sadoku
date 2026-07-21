@@ -21,6 +21,7 @@ const createComment = (
   overrides: Partial<Comment>,
 ): Comment => ({
   body: "Clarify this.",
+  author: { type: "human" },
   createdAt: "2026-06-05T00:00:00.000Z",
   id: 1,
   startLine: 3,
@@ -204,6 +205,7 @@ describe("CommentList", () => {
         comments={[createComment({
           replies: [{
             body: "Existing reply.",
+            author: { type: "human" },
             createdAt: "2026-06-05T01:00:00.000Z",
             id: 1,
             updatedAt: "2026-06-05T01:00:00.000Z",
@@ -301,6 +303,7 @@ describe("CommentList", () => {
           replies: [{
             body:
               "See [documentation](https://example.com).\n\n```ts\nconst answer = 42;\n```",
+            author: { type: "human" },
             createdAt: "2026-06-05T01:00:00.000Z",
             id: 1,
             updatedAt: "2026-06-05T01:00:00.000Z",

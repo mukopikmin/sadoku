@@ -9,6 +9,7 @@ import { isUnresolvedComment } from "../models/comment";
 const createResponse = (
   overrides: Partial<CommentResponse> = {},
 ): CommentResponse => ({
+  author: { type: "bot" },
   body: "Check this.",
   createdAt: "2026-06-05T00:00:00.000Z",
   endLine: 3,
@@ -56,6 +57,7 @@ describe("comment model", () => {
     const document = toCommentsDocument({
       comments: [createResponse({
         replies: [{
+          author: { type: "bot" },
           body: "Agreed.",
           createdAt: "2026-06-05T01:00:00.000Z",
           id: 2,
@@ -66,7 +68,15 @@ describe("comment model", () => {
     });
 
     expect(document).toMatchObject({
-      comments: [{ replies: [{ body: "Agreed.", id: 2 }], state: "active" }],
+      comments: [{
+        author: { type: "bot" },
+        replies: [{
+          author: { type: "bot" },
+          body: "Agreed.",
+          id: 2,
+        }],
+        state: "active",
+      }],
       filePath: "/tmp/example.md",
     });
     expect(document.comments[0]).not.toHaveProperty("resolved");

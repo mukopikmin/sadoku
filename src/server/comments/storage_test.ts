@@ -88,6 +88,7 @@ Deno.test("writes formatted comments JSON with a trailing newline", async () => 
     const filePath = await createTempMarkdown();
     const document: PreviewCommentsDocument = {
       comments: [{
+        author: { type: "human" },
         body: "Review this.",
         createdAt: "2026-06-07T00:00:00.000Z",
         id: 1,
@@ -125,6 +126,7 @@ Deno.test("filters stored comments with invalid range metadata", async () => {
           comments: [
             {
               body: "Invalid range comment",
+              author: { type: "human" },
               createdAt: "2026-06-07T00:00:00.000Z",
               id: 1,
               startLine: 3,
@@ -166,6 +168,55 @@ Deno.test("treats a stored document without a comments array as empty", async ()
   });
 });
 
+Deno.test("filters comments and replies with unsupported author types", async () => {
+  await withTempCommentsDirectory(async () => {
+    const filePath = await createTempMarkdown();
+    const base = {
+      body: "Comment",
+      createdAt: "2026-06-07T00:00:00.000Z",
+      endLine: 1,
+      id: 1,
+      originalEndLine: 1,
+      originalStartLine: 1,
+      resolved: false,
+      stale: false,
+      startLine: 1,
+      updatedAt: "2026-06-07T00:00:00.000Z",
+    };
+    try {
+      await Deno.writeTextFile(
+        getCommentsFilePath(filePath),
+        JSON.stringify({
+          comments: [
+            { ...base, author: { type: "unknown" } },
+            {
+              ...base,
+              id: 2,
+              author: { type: "bot" },
+              replies: [{
+                author: { type: "unknown" },
+                body: "Invalid reply",
+                createdAt: base.createdAt,
+                id: 1,
+                updatedAt: base.updatedAt,
+              }],
+            },
+          ],
+        }),
+      );
+
+      const document = await readCommentsDocument(filePath);
+      assertEquals(document.comments.length, 1);
+      assertEquals(document.comments[0].author, {
+        type: "bot",
+      });
+      assertEquals(document.comments[0].replies, []);
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  });
+});
+
 Deno.test("rejects malformed comments JSON", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await createTempMarkdown();
@@ -196,6 +247,12 @@ Deno.test("reads legacy comments stored next to the Markdown file", async () => 
             id: 1,
             originalEndLine: 3,
             originalStartLine: 3,
+            replies: [{
+              body: "Legacy reply",
+              createdAt: "2026-06-07T00:01:00.000Z",
+              id: 1,
+              updatedAt: "2026-06-07T00:01:00.000Z",
+            }],
             resolved: false,
             stale: false,
             startLine: 3,
@@ -209,6 +266,10 @@ Deno.test("reads legacy comments stored next to the Markdown file", async () => 
 
       assertEquals(document.comments.length, 1);
       assertEquals(document.comments[0].id, 1);
+      assertEquals(document.comments[0].author, { type: "human" });
+      assertEquals(document.comments[0].replies?.[0].author, {
+        type: "human",
+      });
     } finally {
       await removeTempMarkdown(filePath);
       await Deno.remove(getLegacyCommentsFilePath(filePath)).catch(() => {});
@@ -238,6 +299,7 @@ Deno.test("reads comments from legacy mdview comments directory", async () => {
       JSON.stringify({
         comments: [{
           body: "Legacy directory comment",
+          author: { type: "human" },
           createdAt: "2026-06-07T00:00:00.000Z",
           endLine: 3,
           id: 1,

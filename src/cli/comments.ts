@@ -171,6 +171,7 @@ export const replyToComment = async (
 
     const now = new Date().toISOString();
     const reply: PreviewCommentReply = {
+      author: { type: "human" },
       body: replyBody,
       createdAt: now,
       id: Math.max(

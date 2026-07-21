@@ -266,6 +266,7 @@ describe("App", () => {
             comments: [
               {
                 body: "Active comment.",
+                author: { type: "human" },
                 createdAt: "2026-06-05T00:00:00.000Z",
                 id: 1,
                 endLine: 3,
@@ -280,6 +281,7 @@ describe("App", () => {
               },
               {
                 body: "Stale comment.",
+                author: { type: "human" },
                 createdAt: "2026-06-05T00:00:00.000Z",
                 id: 2,
                 endLine: 5,
@@ -294,6 +296,7 @@ describe("App", () => {
               },
               {
                 body: "Resolved comment.",
+                author: { type: "human" },
                 createdAt: "2026-06-05T00:00:00.000Z",
                 id: 3,
                 endLine: 3,
