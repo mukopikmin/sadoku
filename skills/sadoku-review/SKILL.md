@@ -35,7 +35,7 @@ questions, and the final report.
 5. Reply to comments that need clarification and leave them unresolved:
 
    ```sh
-   sadoku comments reply <markdown-path> <comment-id> "<question>"
+   sadoku comments reply <markdown-path> <comment-id> "<question>" --as-bot
    ```
 
    Keep the question concise and state the missing decision or information.
@@ -48,7 +48,7 @@ questions, and the final report.
    confirm:
 
    ```sh
-   sadoku comments reply <markdown-path> <comment-id> "<body>"
+   sadoku comments reply <markdown-path> <comment-id> "<body>" --as-bot
    ```
 
    Each reply must include at least:
@@ -92,6 +92,8 @@ questions, and the final report.
 - Do not act on vague or nonsensical feedback speculatively.
 - Do not reply merely to acknowledge a comment. Reply only when the response
   communicates useful information or asks a question needed to continue.
+- Add `--as-bot` to every comment reply posted by the agent so that Sadoku
+  attributes the operation to a bot.
 - Leave all comments unresolved, including comments that were successfully
   addressed or already satisfied, until the user confirms them.
 - Do not use `sadoku comments rm`; it deletes every stored comment for the
