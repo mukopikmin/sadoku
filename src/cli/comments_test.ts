@@ -2,6 +2,7 @@ import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { basename, join, relative, resolve } from "@std/path";
 
 import {
+  addComment,
   formatCommentFilesTable,
   inspectComments,
   listCommentFiles,
@@ -327,6 +328,10 @@ Deno.test("adds replies to comments", async () => {
         (await inspectComments(filePath)).comments[0].replies?.[0].body,
         "More context.",
       );
+      const botReply = await replyToComment(filePath, "1", "Bot reply", {
+        asBot: true,
+      });
+      assertEquals(botReply.replies?.[1].author, { type: "bot" });
       await assertRejects(
         () => replyToComment(filePath, "missing", "Reply"),
         Error,
@@ -336,6 +341,30 @@ Deno.test("adds replies to comments", async () => {
         () => replyToComment(filePath, "1", " "),
         Error,
         "Reply body is required.",
+      );
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  });
+});
+
+Deno.test("adds bot comments from the CLI", async () => {
+  await withTempCommentsDirectory(async () => {
+    const filePath = await createTempMarkdown("one\ntwo\nthree\n");
+    try {
+      const comment = await addComment(filePath, 2, 3, "  Automated.  ", {
+        asBot: true,
+      });
+      assertEquals(comment.author, { type: "bot" });
+      assertEquals(comment.body, "Automated.");
+      assertEquals(comment.sourceText, "two\nthree");
+      const inspected = (await inspectComments(filePath)).comments[0];
+      assertEquals(inspected.author, { type: "bot" });
+      assertEquals(inspected.body, "Automated.");
+      await assertRejects(
+        () => addComment(filePath, 9, 9, "Invalid"),
+        Error,
+        "Comment range does not exist.",
       );
     } finally {
       await removeTempMarkdown(filePath);

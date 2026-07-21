@@ -2,6 +2,7 @@
 import { CliUsageError, parseArgs, usage, version } from "./cli/args.ts";
 import { openBrowser } from "./cli/browser.ts";
 import {
+  addComment,
   formatCommentFilesTable,
   inspectComments,
   listCommentFiles,
@@ -43,6 +44,22 @@ const main = async (): Promise<void> => {
     return;
   }
 
+  if (options.command === "comments-add") {
+    if (!options.file) throw new CliUsageError("Missing Markdown file.");
+    console.log(JSON.stringify(
+      await addComment(
+        options.file,
+        options.startLine ?? 0,
+        options.endLine ?? 0,
+        options.commentBody ?? "",
+        { asBot: options.asBot },
+      ),
+      null,
+      2,
+    ));
+    return;
+  }
+
   if (options.command === "comments-resolve") {
     if (!options.file) {
       throw new CliUsageError("Missing Markdown file.");
@@ -70,6 +87,7 @@ const main = async (): Promise<void> => {
           options.file,
           options.commentId,
           options.replyBody ?? "",
+          { asBot: options.asBot },
         ),
         null,
         2,
