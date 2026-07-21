@@ -161,6 +161,9 @@ export const CommentItem = ({
           fontWeight="semibold"
         >
           <Text as="span">{lineLabel}</Text>
+          {comment.author.type === "bot" && (
+            <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+          )}
           {showState && comment.state === "resolved" && (
             <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
           )}
