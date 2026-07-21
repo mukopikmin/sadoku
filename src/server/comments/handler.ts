@@ -109,6 +109,7 @@ const createComment = async (
   const document = await commentsStore.read(source.commentSource);
   const now = new Date().toISOString();
   const comment: PreviewComment = {
+    author: { type: "human" },
     body: commentBody,
     createdAt: now,
     endLine,
@@ -147,6 +148,7 @@ const createReply = async (
   const replyBody = parseCommentBody(body);
   const now = new Date().toISOString();
   const reply: PreviewCommentReply = {
+    author: { type: "human" },
     body: replyBody,
     createdAt: now,
     id: getNextId(

@@ -110,6 +110,7 @@ Deno.test("lists comment files from the configured comments directory", async ()
         comments: [
           {
             body: "First",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:00:00.000Z",
             id: 1,
             startLine: 1,
@@ -122,6 +123,7 @@ Deno.test("lists comment files from the configured comments directory", async ()
           },
           {
             body: "Second",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:30:00.000Z",
             id: 2,
             startLine: 3,
@@ -183,6 +185,7 @@ Deno.test("inspects unresolved comments with updated positions", async () => {
         comments: [
           {
             body: "Revise this.",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:00:00.000Z",
             id: 1,
             startLine: 3,
@@ -197,6 +200,7 @@ Deno.test("inspects unresolved comments with updated positions", async () => {
           },
           {
             body: "Done.",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:00:00.000Z",
             id: 2,
             startLine: 1,
@@ -232,6 +236,7 @@ Deno.test("resolves selected comments atomically", async () => {
         comments: [
           {
             body: "First",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:00:00.000Z",
             id: 1,
             startLine: 1,
@@ -244,6 +249,7 @@ Deno.test("resolves selected comments atomically", async () => {
           },
           {
             body: "Second",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:00:00.000Z",
             id: 2,
             startLine: 3,
@@ -291,6 +297,7 @@ Deno.test("adds replies to comments", async () => {
       await writeCommentsDocument(filePath, {
         comments: [{
           body: "Question",
+          author: { type: "human" },
           createdAt: "2026-06-08T13:00:00.000Z",
           id: 1,
           startLine: 3,
@@ -345,6 +352,7 @@ Deno.test("uses an injected comments store for CLI operations", async () => {
       documents.set(filePath, {
         comments: [{
           body: "Question",
+          author: { type: "human" },
           createdAt: "2026-06-08T13:00:00.000Z",
           id: 1,
           endLine: 3,
@@ -413,6 +421,7 @@ Deno.test("operates on URL comments by URL without query string or fragment", as
         comments: [
           {
             body: "URL comment",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:00:00.000Z",
             id: 1,
             endLine: 1,
@@ -426,6 +435,7 @@ Deno.test("operates on URL comments by URL without query string or fragment", as
           },
           {
             body: "Resolve me",
+            author: { type: "human" },
             createdAt: "2026-06-08T13:00:00.000Z",
             id: 2,
             endLine: 2,

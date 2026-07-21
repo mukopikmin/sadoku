@@ -17,6 +17,7 @@ type CommentDocumentRow = {
 };
 
 type CommentRow = {
+  author_type: "human" | "bot";
   body: string;
   created_at: string;
   end_line: number;
@@ -34,6 +35,7 @@ type CommentRow = {
 };
 
 type CommentReplyRow = {
+  author_type: "human" | "bot";
   body: string;
   comment_id: number;
   created_at: string;
@@ -75,6 +77,9 @@ const commentFromRow = (
   row: CommentRow,
   replies: PreviewCommentReply[],
 ): PreviewComment => ({
+  author: {
+    type: row.author_type,
+  },
   body: row.body,
   createdAt: row.created_at,
   endLine: row.end_line,
@@ -92,6 +97,9 @@ const commentFromRow = (
 });
 
 const replyFromRow = (row: CommentReplyRow): PreviewCommentReply => ({
+  author: {
+    type: row.author_type,
+  },
   body: row.body,
   createdAt: row.created_at,
   id: row.local_id,
@@ -129,7 +137,7 @@ const readCommentsDocumentFromSqlite = async (
 
   const comments = (await database.execute<CommentRow>(
     `SELECT id, local_id, start_line, end_line, original_start_line,
-      original_end_line, body, resolved, resolved_at,
+      original_end_line, body, author_type, resolved, resolved_at,
       source_hash, source_text, stale, created_at, updated_at
       FROM comment
       WHERE document_id = ?
@@ -137,7 +145,7 @@ const readCommentsDocumentFromSqlite = async (
     [documentRow.id],
   )).rows ?? [];
   const replies = (await database.execute<CommentReplyRow>(
-    `SELECT comment_id, local_id, body, created_at, updated_at
+    `SELECT comment_id, local_id, body, author_type, created_at, updated_at
       FROM comment_reply
       WHERE comment_id IN (SELECT id FROM comment WHERE document_id = ?)
       ORDER BY comment_id, local_id`,
@@ -185,9 +193,9 @@ const writeCommentsDocumentToSqlite = async (
       await database.execute(
         `INSERT INTO comment (
           document_id, local_id, start_line, end_line, original_start_line,
-          original_end_line, body, resolved, resolved_at, source_hash,
+          original_end_line, body, author_type, resolved, resolved_at, source_hash,
           source_text, stale, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           documentId,
           comment.id,
@@ -196,6 +204,7 @@ const writeCommentsDocumentToSqlite = async (
           comment.originalStartLine,
           comment.originalEndLine,
           comment.body,
+          comment.author.type,
           comment.resolved ? 1 : 0,
           comment.resolvedAt ?? null,
           comment.sourceHash ?? null,
@@ -216,12 +225,13 @@ const writeCommentsDocumentToSqlite = async (
       for (const reply of comment.replies ?? []) {
         await database.execute(
           `INSERT INTO comment_reply (
-            comment_id, local_id, body, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?)`,
+            comment_id, local_id, body, author_type, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?)`,
           [
             commentRow.id,
             reply.id,
             reply.body,
+            reply.author.type,
             reply.createdAt,
             reply.updatedAt,
           ],

@@ -7,6 +7,7 @@ import type { PreviewCommentsDocument } from "./types.ts";
 const document = (filePath: string): PreviewCommentsDocument => ({
   comments: [
     {
+      author: { type: "bot" },
       body: "First comment",
       createdAt: "2026-07-04T00:00:00.000Z",
       id: 1,
@@ -16,6 +17,7 @@ const document = (filePath: string): PreviewCommentsDocument => ({
       startLine: 3,
       replies: [
         {
+          author: { type: "bot" },
           body: "Reply",
           createdAt: "2026-07-04T00:01:00.000Z",
           id: 1,
@@ -29,6 +31,7 @@ const document = (filePath: string): PreviewCommentsDocument => ({
       updatedAt: "2026-07-04T00:03:00.000Z",
     },
     {
+      author: { type: "human" },
       body: "Resolved comment",
       createdAt: "2026-07-04T00:04:00.000Z",
       id: 2,
@@ -58,6 +61,7 @@ Deno.test("sqlite comments store reads and writes documents by file path", async
       const secondDocument: PreviewCommentsDocument = {
         comments: [
           {
+            author: { type: "human" },
             body: "Second file comment",
             createdAt: "2026-07-04T01:00:00.000Z",
             id: 1,
@@ -102,6 +106,7 @@ Deno.test("sqlite comments store replaces, lists, and deletes documents", async 
       await store.write(filePath, {
         comments: [
           {
+            author: { type: "human" },
             body: "Replacement",
             createdAt: "2026-07-04T02:00:00.000Z",
             id: 9,

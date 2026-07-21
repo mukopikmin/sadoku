@@ -222,7 +222,7 @@ Deno.test("calculateMigrationChecksum hashes checksumSource with SHA-256", async
   );
 });
 
-Deno.test("runMigrations applies the initial migration to an empty SQLite database once", async () => {
+Deno.test("runMigrations applies all migrations to an empty SQLite database once", async () => {
   await withTempDatabase(async (database) => {
     const appliedFirst = await runMigrations(database);
     const tablesAfterFirstRun = await getTableNames(database);
@@ -231,19 +231,24 @@ Deno.test("runMigrations applies the initial migration to an empty SQLite databa
     const appliedSecond = await runMigrations(database);
     const rowsAfterSecondRun = await getLedgerRows(database);
 
-    assertEquals(appliedFirst, ["0001"]);
+    assertEquals(appliedFirst, ["0001", "0002"]);
     assertEquals(tablesAfterFirstRun, [
       "comment",
       "comment_document",
       "comment_reply",
       "schema_migration",
     ]);
-    assertEquals(rowsAfterFirstRun.length, 1);
+    assertEquals(rowsAfterFirstRun.length, 2);
     assertEquals(rowsAfterFirstRun[0]?.version, "0001");
     assertEquals(rowsAfterFirstRun[0]?.name, "create_comment_tables");
     assertEquals(rowsAfterFirstRun[0]?.state, "applied");
     assertExists(rowsAfterFirstRun[0]?.finished_at);
     assertEquals(rowsAfterFirstRun[0]?.error_message, null);
+    assertEquals(rowsAfterFirstRun[1]?.version, "0002");
+    assertEquals(rowsAfterFirstRun[1]?.name, "add_comment_authors");
+    assertEquals(rowsAfterFirstRun[1]?.state, "applied");
+    assertExists(rowsAfterFirstRun[1]?.finished_at);
+    assertEquals(rowsAfterFirstRun[1]?.error_message, null);
     assertEquals(appliedSecond, []);
     assertEquals(rowsAfterSecondRun, rowsAfterFirstRun);
   });

@@ -614,6 +614,7 @@ Body
     const onResolveComment = vi.fn(async () => {});
     renderMarkdown("# Title\n\nBody\n", [{
       body: "Clarify this.",
+      author: { type: "human" },
       createdAt: "2026-06-05T00:00:00.000Z",
       id: 1,
       endLine: 3,
@@ -634,6 +635,7 @@ Body
   it("renders a range comment once at its end line", () => {
     const { container } = renderMarkdown("# Title\n\nBody\n", [{
       body: "Clarify this range.",
+      author: { type: "human" },
       createdAt: "2026-06-05T00:00:00.000Z",
       endLine: 3,
       id: 1,
@@ -734,6 +736,7 @@ Body
     const comments: ActiveComment[] = [
       {
         body: "First range",
+        author: { type: "human" },
         createdAt: "2026-06-05T00:00:00.000Z",
         endLine: 3,
         id: 1,
@@ -745,6 +748,7 @@ Body
       },
       {
         body: "Adjacent range",
+        author: { type: "human" },
         createdAt: "2026-06-05T00:00:00.000Z",
         endLine: 5,
         id: 2,

@@ -413,6 +413,7 @@ testWithTempComments("accepts numeric comment identifiers", async () => {
     JSON.stringify({
       comments: [{
         body: "Original",
+        author: { type: "human" },
         createdAt: "2026-06-07T00:00:00.000Z",
         id: 1,
         endLine: 3,
