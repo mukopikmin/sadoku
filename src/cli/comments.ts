@@ -8,6 +8,8 @@ import type {
   CommentsStoreFile,
 } from "../server/comments/storage.ts";
 import {
+  getLineRangeText,
+  hashSourceText,
   readResolvedCommentsDocument,
   resolveCommentPosition,
 } from "../server/comments/position.ts";
@@ -26,6 +28,7 @@ export type ListCommentFilesResult = {
 export type ListedCommentFile = CommentsStoreFile;
 
 export type CommentsCliOptions = {
+  asBot?: boolean;
   commentsStore?: CommentsStore;
 };
 
@@ -91,6 +94,49 @@ export const inspectComments = async (
       comments: document.comments.filter((comment) => !comment.resolved),
       filePath: source.commentSource,
     };
+  });
+};
+
+export const addComment = async (
+  filePath: string,
+  startLine: number,
+  endLine: number,
+  body: string,
+  options: CommentsCliOptions = {},
+): Promise<PreviewComment> => {
+  const commentBody = body.trim();
+  if (commentBody === "") throw new Error("Comment body is required.");
+
+  const source = createPreviewSource(filePath);
+  return await withCommentsStore(options, async (commentsStore) => {
+    const markdown = await readMarkdownSource(source.documentSource);
+    const sourceText = getLineRangeText(markdown, startLine, endLine);
+    if (sourceText === undefined) {
+      throw new Error("Comment range does not exist.");
+    }
+    const document = await commentsStore.read(source.commentSource);
+    const now = new Date().toISOString();
+    const comment: PreviewComment = {
+      author: { type: options.asBot ? "bot" : "human" },
+      body: commentBody,
+      createdAt: now,
+      endLine,
+      id: Math.max(0, ...document.comments.map((comment) => comment.id)) + 1,
+      originalEndLine: endLine,
+      originalStartLine: startLine,
+      replies: [],
+      resolved: false,
+      sourceHash: hashSourceText(sourceText),
+      sourceText,
+      stale: false,
+      startLine,
+      updatedAt: now,
+    };
+    await commentsStore.write(source.commentSource, {
+      comments: [...document.comments, comment],
+      filePath: source.commentSource,
+    });
+    return comment;
   });
 };
 
@@ -171,7 +217,7 @@ export const replyToComment = async (
 
     const now = new Date().toISOString();
     const reply: PreviewCommentReply = {
-      author: { type: "human" },
+      author: { type: options.asBot ? "bot" : "human" },
       body: replyBody,
       createdAt: now,
       id: Math.max(

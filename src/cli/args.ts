@@ -2,8 +2,10 @@ import { parseArgs as parseCliArgs } from "@std/cli/parse-args";
 export { version } from "../version.ts";
 
 export type CliOptions = {
+  asBot: boolean;
   command?:
     | "start"
+    | "comments-add"
     | "comments-inspect"
     | "comments-list"
     | "comments-reply"
@@ -11,6 +13,8 @@ export type CliOptions = {
     | "comments-rm";
   commentId?: string;
   commentIds?: string[];
+  commentBody?: string;
+  endLine?: number;
   file: string | undefined;
   force: boolean;
   host: string;
@@ -18,6 +22,7 @@ export type CliOptions = {
   open: boolean;
   port: number;
   replyBody?: string;
+  startLine?: number;
   help?: boolean;
   version?: boolean;
 };
@@ -31,8 +36,9 @@ export class CliUsageError extends Error {
 
 export const usage = `Usage:
   sadoku start <file.md|url> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
+  sadoku comments add <file.md|url> <start-line> <end-line> <body> [--as-bot]
   sadoku comments inspect <file.md|url>
-  sadoku comments reply <file.md|url> <comment-id> <body>
+  sadoku comments reply <file.md|url> <comment-id> <body> [--as-bot]
   sadoku comments resolve <file.md|url> <comment-id>...
   sadoku comments list
   sadoku comments rm <file.md|url> [--force]
@@ -43,6 +49,7 @@ Options:
   --no-open    Do not open the preview in your browser automatically.
   --keep-alive Keep the server running after the browser tab is closed.
   --force      Remove comments without prompting.
+  --as-bot     Attribute new comments and replies to a bot.
   -v, --version
                Show version.
   -h, --help   Show this help message.
@@ -57,7 +64,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         p: "port",
         v: "version",
       },
-      boolean: ["force", "help", "keep-alive", "no-open", "version"],
+      boolean: ["as-bot", "force", "help", "keep-alive", "no-open", "version"],
       default: {
         host: "127.0.0.1",
         port: "3334",
@@ -74,10 +81,14 @@ export const parseArgs = (argv: string[]): CliOptions => {
     );
   }
 
-  const rejectCommentCommandPreviewOptions = (command: string): void => {
+  const rejectCommentCommandPreviewOptions = (
+    command: string,
+    allowAsBot = false,
+  ): void => {
     if (
       flags.host !== "127.0.0.1" || flags.port !== "3334" ||
-      flags["keep-alive"] || flags["no-open"]
+      flags["keep-alive"] || flags["no-open"] ||
+      (!allowAsBot && flags["as-bot"])
     ) {
       throw new CliUsageError(
         `${command} does not accept preview options.`,
@@ -87,12 +98,45 @@ export const parseArgs = (argv: string[]): CliOptions => {
 
   if (flags._[0]?.toString() === "comments") {
     if (
+      flags._.length >= 6 &&
+      flags._[1]?.toString() === "add"
+    ) {
+      rejectCommentCommandPreviewOptions("comments add", true);
+      const startLine = Number(flags._[3]);
+      const endLine = Number(flags._[4]);
+      if (!Number.isInteger(startLine) || startLine < 1) {
+        throw new CliUsageError(
+          "Comment start line must be a positive integer.",
+        );
+      }
+      if (!Number.isInteger(endLine) || endLine < startLine) {
+        throw new CliUsageError(
+          "Comment end line must be an integer greater than or equal to the start line.",
+        );
+      }
+      return {
+        asBot: Boolean(flags["as-bot"]),
+        command: "comments-add",
+        commentBody: flags._.slice(5).map(String).join(" "),
+        endLine,
+        file: flags._[2]?.toString(),
+        force: false,
+        host: "127.0.0.1",
+        keepAlive: false,
+        open: true,
+        port: 3334,
+        startLine,
+      };
+    }
+
+    if (
       flags._.length === 2 &&
       flags._[1]?.toString() === "list"
     ) {
       rejectCommentCommandPreviewOptions("comments list");
 
       const options: CliOptions = {
+        asBot: false,
         command: "comments-list",
         file: undefined,
         force: false,
@@ -113,6 +157,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
       rejectCommentCommandPreviewOptions("comments rm");
 
       const options: CliOptions = {
+        asBot: false,
         command: "comments-rm",
         file: flags._[2]?.toString(),
         force: Boolean(flags.force),
@@ -133,6 +178,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
       rejectCommentCommandPreviewOptions("comments inspect");
 
       const options: CliOptions = {
+        asBot: false,
         command: "comments-inspect",
         file: flags._[2]?.toString(),
         force: false,
@@ -150,9 +196,10 @@ export const parseArgs = (argv: string[]): CliOptions => {
       flags._.length >= 5 &&
       flags._[1]?.toString() === "reply"
     ) {
-      rejectCommentCommandPreviewOptions("comments reply");
+      rejectCommentCommandPreviewOptions("comments reply", true);
 
       const options: CliOptions = {
+        asBot: Boolean(flags["as-bot"]),
         command: "comments-reply",
         commentId: flags._[3]?.toString(),
         file: flags._[2]?.toString(),
@@ -175,6 +222,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
       rejectCommentCommandPreviewOptions("comments resolve");
 
       const options: CliOptions = {
+        asBot: false,
         command: "comments-resolve",
         commentIds: flags._.slice(3).map(String),
         file: flags._[2]?.toString(),
@@ -190,6 +238,12 @@ export const parseArgs = (argv: string[]): CliOptions => {
     }
 
     throw new CliUsageError("Invalid comments command.");
+  }
+
+  if (flags["as-bot"]) {
+    throw new CliUsageError(
+      "--as-bot is only accepted by comments add and comments reply.",
+    );
   }
 
   if (flags._.length > 0 && flags._[0]?.toString() !== "start") {
@@ -211,6 +265,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
   }
 
   const options: CliOptions = {
+    asBot: Boolean(flags["as-bot"]),
     command: flags._[0]?.toString() === "start" ? "start" : undefined,
     file: flags._[1]?.toString(),
     force: false,

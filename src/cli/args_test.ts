@@ -8,6 +8,7 @@ import { CliUsageError, parseArgs, usage, version } from "./args.ts";
 
 Deno.test("uses the default host and port", () => {
   assertEquals(parseArgs(["start", "README.md"]), {
+    asBot: false,
     command: "start",
     file: "README.md",
     force: false,
@@ -21,6 +22,7 @@ Deno.test("uses the default host and port", () => {
 Deno.test("parses URL sources", () => {
   const source = "https://example.com/README.md?token=temporary";
   assertEquals(parseArgs(["start", source]), {
+    asBot: false,
     command: "start",
     file: source,
     force: false,
@@ -42,6 +44,7 @@ Deno.test("parses host and port options", () => {
       "4000",
     ]),
     {
+      asBot: false,
       command: "start",
       file: "README.md",
       force: false,
@@ -55,6 +58,7 @@ Deno.test("parses host and port options", () => {
 
 Deno.test("parses no-open option", () => {
   assertEquals(parseArgs(["start", "README.md", "--no-open"]), {
+    asBot: false,
     command: "start",
     file: "README.md",
     force: false,
@@ -67,6 +71,7 @@ Deno.test("parses no-open option", () => {
 
 Deno.test("parses keep-alive option", () => {
   assertEquals(parseArgs(["start", "README.md", "--keep-alive"]), {
+    asBot: false,
     command: "start",
     file: "README.md",
     force: false,
@@ -79,6 +84,7 @@ Deno.test("parses keep-alive option", () => {
 
 Deno.test("parses comments list command", () => {
   assertEquals(parseArgs(["comments", "list"]), {
+    asBot: false,
     command: "comments-list",
     file: undefined,
     force: false,
@@ -91,6 +97,7 @@ Deno.test("parses comments list command", () => {
 
 Deno.test("parses comments inspect command", () => {
   assertEquals(parseArgs(["comments", "inspect", "README.md"]), {
+    asBot: false,
     command: "comments-inspect",
     file: "README.md",
     force: false,
@@ -105,6 +112,7 @@ Deno.test("parses comments resolve command", () => {
   assertEquals(
     parseArgs(["comments", "resolve", "README.md", "1", "2"]),
     {
+      asBot: false,
       command: "comments-resolve",
       commentIds: ["1", "2"],
       file: "README.md",
@@ -129,6 +137,7 @@ Deno.test("parses comments reply command", () => {
       "details.",
     ]),
     {
+      asBot: false,
       command: "comments-reply",
       commentId: "1",
       file: "README.md",
@@ -144,6 +153,7 @@ Deno.test("parses comments reply command", () => {
 
 Deno.test("parses comments rm command", () => {
   assertEquals(parseArgs(["comments", "rm", "README.md"]), {
+    asBot: false,
     command: "comments-rm",
     file: "README.md",
     force: false,
@@ -155,6 +165,7 @@ Deno.test("parses comments rm command", () => {
   assertEquals(
     parseArgs(["comments", "rm", "README.md", "--force"]),
     {
+      asBot: false,
       command: "comments-rm",
       file: "README.md",
       force: true,
@@ -166,6 +177,44 @@ Deno.test("parses comments rm command", () => {
   );
 });
 
+Deno.test("parses bot attribution for CLI comments and replies", () => {
+  assertEquals(
+    parseArgs([
+      "comments",
+      "add",
+      "README.md",
+      "2",
+      "4",
+      "Automated comment",
+      "--as-bot",
+    ]),
+    {
+      asBot: true,
+      command: "comments-add",
+      commentBody: "Automated comment",
+      endLine: 4,
+      file: "README.md",
+      force: false,
+      host: "127.0.0.1",
+      keepAlive: false,
+      open: true,
+      port: 3334,
+      startLine: 2,
+    },
+  );
+  assertEquals(
+    parseArgs([
+      "comments",
+      "reply",
+      "README.md",
+      "1",
+      "Automated reply",
+      "--as-bot",
+    ]).asBot,
+    true,
+  );
+});
+
 Deno.test("parses help", () => {
   assertEquals(parseArgs(["--help"]).help, true);
   assertEquals(parseArgs(["start", "--help"]).help, true);
@@ -173,6 +222,7 @@ Deno.test("parses help", () => {
   assertMatch(usage, /sadoku start <file\.md\|url>/);
   assertMatch(usage, /comments list/);
   assertMatch(usage, /comments inspect/);
+  assertMatch(usage, /comments add/);
   assertMatch(usage, /comments reply/);
   assertMatch(usage, /comments resolve/);
   assertMatch(usage, /comments rm/);
@@ -200,6 +250,10 @@ Deno.test("throws usage errors for invalid options", () => {
     CliUsageError,
   );
   assertInstanceOf(
+    assertThrows(() => parseArgs(["start", "README.md", "--as-bot"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
     assertThrows(() => parseArgs(["start", "README.md", "--port"])),
     CliUsageError,
   );
@@ -221,6 +275,12 @@ Deno.test("throws usage errors for invalid options", () => {
   );
   assertInstanceOf(
     assertThrows(() => parseArgs(["comments", "list", "--port", "4000"])),
+    CliUsageError,
+  );
+  assertInstanceOf(
+    assertThrows(() =>
+      parseArgs(["comments", "inspect", "README.md", "--as-bot"])
+    ),
     CliUsageError,
   );
   assertInstanceOf(

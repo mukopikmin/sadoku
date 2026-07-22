@@ -150,6 +150,20 @@ Reply to a comment without resolving it:
 sadoku comments reply README.md <comment-id> "Need more context."
 ```
 
+Add a comment for a Markdown line range from the CLI:
+
+```sh
+sadoku comments add README.md <start-line> <end-line> "Check this section."
+```
+
+Pass `--as-bot` to `comments add` or `comments reply` to attribute the new
+comment or reply to a bot. Preview-server interactions remain human-authored:
+
+```sh
+sadoku comments add README.md 10 12 "Automated review." --as-bot
+sadoku comments reply README.md <comment-id> "Applied the change." --as-bot
+```
+
 Mark one or more comments as resolved:
 
 ```sh
@@ -188,6 +202,7 @@ mdview comment directories, and legacy `*.mdview-comments.json` sidecar files.
 | `--host <host>`     | Hostname or IP address to bind.                            | `127.0.0.1`            |
 | `--no-open`         | Do not open the preview URL in your browser automatically. | Opens browser          |
 | `--keep-alive`      | Keep the server running after the browser tab is closed.   | Stops after tab closes |
+| `--as-bot`          | Attribute new comments and replies to a bot.               | Human                  |
 | `-v, --version`     | Print the CLI version.                                     |                        |
 | `-h, --help`        | Print command help.                                        |                        |
 
