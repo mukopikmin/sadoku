@@ -3,6 +3,7 @@ import { join } from "@std/path";
 import { openAppDatabase } from "../connection.ts";
 import { runMigrations } from "../migrations.ts";
 import { createCommentTablesMigration } from "./0001_create_comment_tables.ts";
+import { addCommentAuthorsMigration } from "./0002_add_comment_authors.ts";
 
 Deno.test("addCommentAuthorsMigration upgrades existing comments and constrains author types", async () => {
   const root = await Deno.makeTempDir();
@@ -26,7 +27,13 @@ Deno.test("addCommentAuthorsMigration upgrades existing comments and constrains 
         ["Reply", timestamp, timestamp],
       );
 
-      assertEquals(await runMigrations(database), ["0002"]);
+      assertEquals(
+        await runMigrations(database, [
+          createCommentTablesMigration,
+          addCommentAuthorsMigration,
+        ]),
+        ["0002"],
+      );
       assertEquals(
         (await database.execute(
           "SELECT author_type FROM comment",

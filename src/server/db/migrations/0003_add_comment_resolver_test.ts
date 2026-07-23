@@ -4,6 +4,7 @@ import { openAppDatabase } from "../connection.ts";
 import { runMigrations } from "../migrations.ts";
 import { createCommentTablesMigration } from "./0001_create_comment_tables.ts";
 import { addCommentAuthorsMigration } from "./0002_add_comment_authors.ts";
+import { addCommentResolverMigration } from "./0003_add_comment_resolver.ts";
 
 Deno.test("addCommentResolverMigration preserves unknown resolvers and constrains known types", async () => {
   const root = await Deno.makeTempDir();
@@ -23,7 +24,14 @@ Deno.test("addCommentResolverMigration preserves unknown resolvers and constrain
         ["Comment", timestamp, timestamp, timestamp],
       );
 
-      assertEquals(await runMigrations(database), ["0003"]);
+      assertEquals(
+        await runMigrations(database, [
+          createCommentTablesMigration,
+          addCommentAuthorsMigration,
+          addCommentResolverMigration,
+        ]),
+        ["0003"],
+      );
       assertEquals(
         (await database.execute("SELECT resolved_by_type FROM comment")).rows,
         [{ resolved_by_type: null }],
