@@ -80,20 +80,72 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(4));
   });
 
-  it("shows a reload button when source changes are available", async () => {
-    const reload = vi.fn();
+  it("reloads only the Markdown when source changes are available", async () => {
+    let documentRequests = 0;
+    let commentRequests = 0;
     vi.stubGlobal("EventSource", TestEventSource);
-    vi.stubGlobal("location", { reload });
     vi.stubGlobal(
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
         if (url === "/__sadoku/document") {
+          documentRequests += 1;
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/example.md",
-            markdown: "# Title\n\nBody\n",
+            markdown: documentRequests === 1
+              ? "# Original title\n"
+              : "# Updated title\n",
             title: "example.md",
           }));
+        }
+        if (url === "/__sadoku/comments") {
+          commentRequests += 1;
+          return Promise.resolve(Response.json({
+            comments: [],
+            filePath: "/tmp/example.md",
+          }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Original title" });
+
+    expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
+
+    TestEventSource.instances.at(-1)?.dispatchEvent(new Event("reload"));
+
+    const reloadButton = await screen.findByRole("button", {
+      name: "Reload preview",
+    });
+    expect(screen.getByText("Source changes are available.")).not.toBeNull();
+
+    fireEvent.click(reloadButton);
+
+    await screen.findByRole("heading", { name: "Updated title" });
+    expect(documentRequests).toBe(2);
+    expect(commentRequests).toBe(1);
+    expect(screen.queryByText("Source changes are available.")).toBeNull();
+  });
+
+  it("keeps the reload action available when reloading Markdown fails", async () => {
+    let documentRequests = 0;
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/document") {
+          documentRequests += 1;
+          return documentRequests === 1
+            ? Promise.resolve(Response.json({
+              fileUrl: "file:///tmp/example.md",
+              markdown: "# Original title\n",
+              title: "example.md",
+            }))
+            : Promise.resolve(new Response("Failed.", { status: 500 }));
         }
         if (url === "/__sadoku/comments") {
           return Promise.resolve(Response.json({
@@ -106,22 +158,20 @@ describe("App", () => {
     );
 
     render(<App />);
-
-    await screen.findByRole("link", { name: "example.md" });
-
-    expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
-
+    await screen.findByRole("heading", { name: "Original title" });
     TestEventSource.instances.at(-1)?.dispatchEvent(new Event("reload"));
 
-    const reloadButton = await screen.findByRole("button", {
-      name: "Reload preview",
-    });
-    expect(screen.getByText("Source changes are available.")).not.toBeNull();
-    expect(reload).not.toHaveBeenCalled();
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Reload preview",
+      }),
+    );
 
-    fireEvent.click(reloadButton);
-
-    expect(reload).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(documentRequests).toBe(2));
+    expect(screen.getByRole("heading", { name: "Original title" })).not
+      .toBeNull();
+    expect(screen.getByRole("button", { name: "Reload preview" })).not
+      .toBeNull();
   });
 
   it("keeps the preview header fixed at its initial position", async () => {
