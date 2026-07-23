@@ -170,13 +170,14 @@ export const resolveComments = async (
     }
 
     const now = new Date().toISOString();
-    const updatedDocument = {
+    const updatedDocument: PreviewCommentsDocument = {
       comments: document.comments.map((comment) =>
         requestedIds.has(comment.id)
           ? {
             ...comment,
             resolved: true,
             resolvedAt: now,
+            resolvedBy: { type: options.asBot ? "bot" : "human" },
             updatedAt: now,
           }
           : comment

@@ -267,6 +267,7 @@ Deno.test("resolves and reopens preview comments", async () => {
       assertEquals(resolveResponse.status, 200);
       assertEquals(resolvedComment.resolved, true);
       assertEquals(typeof resolvedComment.resolvedAt, "string");
+      assertEquals(resolvedComment.resolvedBy, { type: "human" });
 
       const resolvedDocumentResponse = await handler(
         new Request("http://127.0.0.1:3334/__sadoku/comments"),
@@ -274,6 +275,7 @@ Deno.test("resolves and reopens preview comments", async () => {
       );
       const resolvedDocument = await resolvedDocumentResponse.json();
       assertEquals(resolvedDocument.comments[0].resolved, true);
+      assertEquals(resolvedDocument.comments[0].resolvedBy, { type: "human" });
 
       const reopenResponse = await handler(
         new Request(
@@ -286,11 +288,13 @@ Deno.test("resolves and reopens preview comments", async () => {
       assertEquals(reopenResponse.status, 200);
       assertEquals(reopenedComment.resolved, false);
       assertEquals(reopenedComment.resolvedAt, undefined);
+      assertEquals(reopenedComment.resolvedBy, undefined);
 
       const storedText = await Deno.readTextFile(getCommentsFilePath(filePath));
       const storedDocument = JSON.parse(storedText);
       assertEquals(storedDocument.comments[0].resolved, false);
       assertEquals(storedDocument.comments[0].resolvedAt, undefined);
+      assertEquals(storedDocument.comments[0].resolvedBy, undefined);
     } finally {
       await Deno.remove(filePath).catch(() => {});
       await Deno.remove(getCommentsFilePath(filePath)).catch(() => {});

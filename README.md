@@ -167,8 +167,12 @@ sadoku comments reply README.md <comment-id> "Applied the change." --as-bot
 Mark one or more comments as resolved:
 
 ```sh
-sadoku comments resolve README.md <comment-id>...
+sadoku comments resolve README.md <comment-id>... [--as-bot]
 ```
+
+Resolved comments record whether a human or bot performed the action. Pass
+`--as-bot` to attribute a CLI resolution to a bot; preview resolutions are
+human-authored.
 
 The list shows each stored comment file, the target Markdown path, comment
 count, unresolved comment count, and the latest `updatedAt` value from the
@@ -202,7 +206,7 @@ mdview comment directories, and legacy `*.mdview-comments.json` sidecar files.
 | `--host <host>`     | Hostname or IP address to bind.                            | `127.0.0.1`            |
 | `--no-open`         | Do not open the preview URL in your browser automatically. | Opens browser          |
 | `--keep-alive`      | Keep the server running after the browser tab is closed.   | Stops after tab closes |
-| `--as-bot`          | Attribute new comments and replies to a bot.               | Human                  |
+| `--as-bot`          | Attribute comment actions to a bot.                        | Human                  |
 | `-v, --version`     | Print the CLI version.                                     |                        |
 | `-h, --help`        | Print command help.                                        |                        |
 

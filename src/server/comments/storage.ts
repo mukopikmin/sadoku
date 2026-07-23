@@ -164,6 +164,8 @@ const isPreviewComment = (value: unknown): value is PreviewComment => {
     startLine,
   } = comment;
   return (comment.author === undefined || isCommentAuthor(comment.author)) &&
+    (comment.resolvedBy === undefined ||
+      isCommentAuthor(comment.resolvedBy)) &&
     typeof comment.id === "number" &&
     typeof startLine === "number" &&
     Number.isInteger(startLine) &&
@@ -227,6 +229,9 @@ const normalizePreviewComment = (comment: PreviewComment): PreviewComment => {
       }))
       : [],
     resolved: comment.resolved === true,
+    ...(comment.resolvedBy === undefined
+      ? {}
+      : { resolvedBy: normalizeCommentAuthor(comment.resolvedBy) }),
   };
 };
 

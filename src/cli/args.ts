@@ -39,7 +39,7 @@ export const usage = `Usage:
   sadoku comments add <file.md|url> <start-line> <end-line> <body> [--as-bot]
   sadoku comments inspect <file.md|url>
   sadoku comments reply <file.md|url> <comment-id> <body> [--as-bot]
-  sadoku comments resolve <file.md|url> <comment-id>...
+  sadoku comments resolve <file.md|url> <comment-id>... [--as-bot]
   sadoku comments list
   sadoku comments rm <file.md|url> [--force]
 
@@ -49,7 +49,7 @@ Options:
   --no-open    Do not open the preview in your browser automatically.
   --keep-alive Keep the server running after the browser tab is closed.
   --force      Remove comments without prompting.
-  --as-bot     Attribute new comments and replies to a bot.
+  --as-bot     Attribute comment actions to a bot.
   -v, --version
                Show version.
   -h, --help   Show this help message.
@@ -222,7 +222,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
       rejectCommentCommandPreviewOptions("comments resolve");
 
       const options: CliOptions = {
-        asBot: false,
+        asBot: Boolean(flags["as-bot"]),
         command: "comments-resolve",
         commentIds: flags._.slice(3).map(String),
         file: flags._[2]?.toString(),
@@ -242,7 +242,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
 
   if (flags["as-bot"]) {
     throw new CliUsageError(
-      "--as-bot is only accepted by comments add and comments reply.",
+      "--as-bot is only accepted by comments add, comments reply, and comments resolve.",
     );
   }
 

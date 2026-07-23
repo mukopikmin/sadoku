@@ -1,5 +1,6 @@
 import { createCommentTablesMigration } from "./migrations/0001_create_comment_tables.ts";
 import { addCommentAuthorsMigration } from "./migrations/0002_add_comment_authors.ts";
+import { addCommentResolverMigration } from "./migrations/0003_add_comment_resolver.ts";
 import { type AppDatabase, withTransaction } from "./connection.ts";
 
 export interface Migration {
@@ -22,6 +23,7 @@ const defaultMigrationsTableName = "schema_migration";
 export const MIGRATIONS: readonly Migration[] = [
   createCommentTablesMigration,
   addCommentAuthorsMigration,
+  addCommentResolverMigration,
 ];
 
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;

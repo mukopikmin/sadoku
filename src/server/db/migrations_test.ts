@@ -231,14 +231,14 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
     const appliedSecond = await runMigrations(database);
     const rowsAfterSecondRun = await getLedgerRows(database);
 
-    assertEquals(appliedFirst, ["0001", "0002"]);
+    assertEquals(appliedFirst, ["0001", "0002", "0003"]);
     assertEquals(tablesAfterFirstRun, [
       "comment",
       "comment_document",
       "comment_reply",
       "schema_migration",
     ]);
-    assertEquals(rowsAfterFirstRun.length, 2);
+    assertEquals(rowsAfterFirstRun.length, 3);
     assertEquals(rowsAfterFirstRun[0]?.version, "0001");
     assertEquals(rowsAfterFirstRun[0]?.name, "create_comment_tables");
     assertEquals(rowsAfterFirstRun[0]?.state, "applied");
@@ -249,6 +249,11 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
     assertEquals(rowsAfterFirstRun[1]?.state, "applied");
     assertExists(rowsAfterFirstRun[1]?.finished_at);
     assertEquals(rowsAfterFirstRun[1]?.error_message, null);
+    assertEquals(rowsAfterFirstRun[2]?.version, "0003");
+    assertEquals(rowsAfterFirstRun[2]?.name, "add_comment_resolver");
+    assertEquals(rowsAfterFirstRun[2]?.state, "applied");
+    assertExists(rowsAfterFirstRun[2]?.finished_at);
+    assertEquals(rowsAfterFirstRun[2]?.error_message, null);
     assertEquals(appliedSecond, []);
     assertEquals(rowsAfterSecondRun, rowsAfterFirstRun);
   });
