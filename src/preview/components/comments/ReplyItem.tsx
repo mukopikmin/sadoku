@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Badge, Box, Flex, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
@@ -72,7 +72,18 @@ export const ReplyItem = ({
       py="2"
     >
       <Flex align="center" justify="space-between" gap="2" mb="1">
-        <Text color="fg.muted" fontSize="xs" fontWeight="semibold">Reply</Text>
+        <Flex
+          align="center"
+          gap="2"
+          color="fg.muted"
+          fontSize="xs"
+          fontWeight="semibold"
+        >
+          <Text>Reply</Text>
+          {reply.author.type === "bot" && (
+            <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+          )}
+        </Flex>
         {!isEditing && (
           <Flex wrap="wrap" gap="2">
             <CommentActionButton
