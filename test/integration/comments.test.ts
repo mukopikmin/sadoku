@@ -1,16 +1,13 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 
-import { readConfig } from "../../src/config.ts";
 import { createConfiguredCommentsStore } from "../../src/server/comments/factory.ts";
 import { getCommentsFilePath } from "../../src/server/comments/storage.ts";
 import { createPreviewHandler } from "../../src/server/mod.ts";
 import { withTempCommentsDirectory } from "../../src/server/test_helpers.ts";
 
-const withTempConfigAndCommentsDirectory = async (
-  run: (
-    paths: { commentsDirectory: string; configFilePath: string },
-  ) => Promise<void>,
+const withConfiguredCommentsDirectory = async (
+  run: (commentsDirectory: string) => Promise<void>,
 ): Promise<void> => {
   const previous = new Map(
     [
@@ -39,13 +36,9 @@ const withTempConfigAndCommentsDirectory = async (
     await Deno.mkdir(join(configHome, "sadoku"), { recursive: true });
     await Deno.writeTextFile(
       configFilePath,
-      `commentsDirectory = ${JSON.stringify(commentsDirectory)}
-
-[experimental]
-commentsStore = "sqlite"
-`,
+      `commentsDirectory = ${JSON.stringify(commentsDirectory)}\n`,
     );
-    await run({ commentsDirectory, configFilePath });
+    await run(commentsDirectory);
   } finally {
     for (const [name, value] of previous) {
       if (value === undefined) {
@@ -364,16 +357,16 @@ Deno.test("tracks preview comments when their source line moves", async () => {
   });
 });
 
-Deno.test("stores preview comments in SQLite when configured", async () => {
-  await withTempConfigAndCommentsDirectory(async ({ commentsDirectory }) => {
+Deno.test("stores preview comments in SQLite by default", async () => {
+  await withConfiguredCommentsDirectory(async (commentsDirectory) => {
     const filePath = await Deno.makeTempFile({
       prefix: "sadoku-",
       suffix: ".md",
     });
     await Deno.writeTextFile(filePath, "# Title\n\nBody\n");
     try {
-      const commentsStore = await createConfiguredCommentsStore(readConfig());
-      const persistedStore = await createConfiguredCommentsStore(readConfig());
+      const commentsStore = await createConfiguredCommentsStore();
+      const persistedStore = await createConfiguredCommentsStore();
       try {
         const handler = createPreviewHandler(filePath, { commentsStore });
 
@@ -441,8 +434,8 @@ Deno.test("stores preview comments in SQLite when configured", async () => {
         );
         assertEquals(databaseStat.isFile, true);
       } finally {
-        commentsStore.close?.();
-        persistedStore.close?.();
+        commentsStore.close();
+        persistedStore.close();
       }
     } finally {
       await Deno.remove(filePath).catch(() => {});

@@ -1,4 +1,3 @@
-import { readConfig } from "../config.ts";
 import {
   type ConfiguredCommentsStore,
   createConfiguredCommentsStore,
@@ -37,12 +36,12 @@ const withCommentsStore = async <T>(
   operation: (commentsStore: CommentsStore) => Promise<T>,
 ): Promise<T> => {
   const commentsStore = options.commentsStore ??
-    await createConfiguredCommentsStore(readConfig());
+    await createConfiguredCommentsStore();
   try {
     return await operation(commentsStore);
   } finally {
     if (options.commentsStore === undefined) {
-      (commentsStore as ConfiguredCommentsStore).close?.();
+      (commentsStore as ConfiguredCommentsStore).close();
     }
   }
 };

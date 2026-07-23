@@ -1,4 +1,3 @@
-import { readConfig } from "../config.ts";
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createConfiguredCommentsStore } from "./comments/factory.ts";
 import { createPreviewHandler } from "./handler.ts";
@@ -141,7 +140,7 @@ export const startPreviewServer = async (
     shutdown: () => server.shutdown(),
   });
 
-  const commentsStore = await createConfiguredCommentsStore(readConfig());
+  const commentsStore = await createConfiguredCommentsStore();
   server = serveOnAvailablePort(
     options,
     createPreviewHandler(previewSource, {
@@ -152,7 +151,7 @@ export const startPreviewServer = async (
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;
 
-  server.finished.finally(() => commentsStore.close?.()).catch((error) => {
+  server.finished.finally(() => commentsStore.close()).catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {
       logError(
         `Server stopped unexpectedly: ${

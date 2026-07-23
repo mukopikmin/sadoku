@@ -245,9 +245,11 @@ const deleteCommentsDocumentFromSqlite = async (
   database: AppDatabase,
   filePath: string,
 ): Promise<void> => {
-  await database.execute("DELETE FROM comment_document WHERE file_path = ?", [
-    filePath,
-  ]);
+  const result = await database.execute(
+    "DELETE FROM comment_document WHERE file_path = ?",
+    [filePath],
+  );
+  if (result.rowsAffected === 0) throw new Deno.errors.NotFound();
 };
 
 const listCommentsFilesFromSqlite = async (
