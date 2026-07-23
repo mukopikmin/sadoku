@@ -219,7 +219,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
       flags._.length >= 4 &&
       flags._[1]?.toString() === "resolve"
     ) {
-      rejectCommentCommandPreviewOptions("comments resolve");
+      rejectCommentCommandPreviewOptions("comments resolve", true);
 
       const options: CliOptions = {
         asBot: Boolean(flags["as-bot"]),
