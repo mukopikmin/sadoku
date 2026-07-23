@@ -265,13 +265,16 @@ Deno.test("resolves selected comments atomically", async () => {
         filePath,
       });
 
-      const resolved = await resolveComments(filePath, ["2"]);
+      const resolved = await resolveComments(filePath, ["2"], {
+        asBot: true,
+      });
       const inspected = await inspectComments(filePath);
 
       assertEquals(resolved.comments.length, 1);
       assertEquals(resolved.comments[0].id, 2);
       assertEquals(resolved.comments[0].resolved, true);
       assertEquals(typeof resolved.comments[0].resolvedAt, "string");
+      assertEquals(resolved.comments[0].resolvedBy, { type: "bot" });
       assertEquals(inspected.comments.map((comment) => comment.id), [
         1,
       ]);

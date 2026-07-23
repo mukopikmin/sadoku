@@ -27,6 +27,7 @@ type CommentRow = {
   original_start_line: number;
   resolved: number;
   resolved_at: string | null;
+  resolved_by_type: "human" | "bot" | null;
   source_hash: string | null;
   source_text: string | null;
   stale: number;
@@ -89,6 +90,9 @@ const commentFromRow = (
   replies,
   resolved: toBoolean(row.resolved),
   ...(row.resolved_at === null ? {} : { resolvedAt: row.resolved_at }),
+  ...(row.resolved_by_type === null
+    ? {}
+    : { resolvedBy: { type: row.resolved_by_type } }),
   ...(row.source_hash === null ? {} : { sourceHash: row.source_hash }),
   ...(row.source_text === null ? {} : { sourceText: row.source_text }),
   stale: toBoolean(row.stale),
@@ -138,6 +142,7 @@ const readCommentsDocumentFromSqlite = async (
   const comments = (await database.execute<CommentRow>(
     `SELECT id, local_id, start_line, end_line, original_start_line,
       original_end_line, body, author_type, resolved, resolved_at,
+      resolved_by_type,
       source_hash, source_text, stale, created_at, updated_at
       FROM comment
       WHERE document_id = ?
@@ -193,9 +198,10 @@ const writeCommentsDocumentToSqlite = async (
       await database.execute(
         `INSERT INTO comment (
           document_id, local_id, start_line, end_line, original_start_line,
-          original_end_line, body, author_type, resolved, resolved_at, source_hash,
+          original_end_line, body, author_type, resolved, resolved_at,
+          resolved_by_type, source_hash,
           source_text, stale, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           documentId,
           comment.id,
@@ -207,6 +213,7 @@ const writeCommentsDocumentToSqlite = async (
           comment.author.type,
           comment.resolved ? 1 : 0,
           comment.resolvedAt ?? null,
+          comment.resolvedBy?.type ?? null,
           comment.sourceHash ?? null,
           comment.sourceText ?? null,
           comment.stale ? 1 : 0,
