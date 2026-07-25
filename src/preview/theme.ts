@@ -464,6 +464,14 @@ export const previewThemeCss = `
         background: color-mix(in srgb, var(--chakra-colors-accent) 18%, var(--chakra-colors-canvas));
       }
 
+      .commentable-block-comment-highlight > .commentable-content pre {
+        background: color-mix(in srgb, var(--chakra-colors-selection-comment) 18%, var(--chakra-colors-canvas));
+      }
+
+      .commentable-block-range-selected > .commentable-content pre {
+        background: color-mix(in srgb, var(--chakra-colors-accent) 18%, var(--chakra-colors-canvas));
+      }
+
       .comment-thread {
         margin: calc(-1 * var(--chakra-spacing-2)) 0 var(--chakra-spacing-3);
         margin-left: calc(0em - var(--comment-indent-offset, 0em));
