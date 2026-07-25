@@ -44,27 +44,12 @@ jobs:
       - name: Install client dependencies
         run: npm ci --prefix src/preview
 
-      - name: Resolve nightly version
-        id: version
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          stable_tag="$(gh release view --json tagName --jq '.tagName')"
-          stable_version="${stable_tag#v}"
-          if [[ ! "${stable_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Could not resolve a stable semantic version release." >&2
-            exit 1
-          fi
-
-          echo "version=${stable_version}-nightly" >> "${GITHUB_OUTPUT}"
-          echo "tag=v${stable_version}-nightly" >> "${GITHUB_OUTPUT}"
-
       - name: Build nightly artifacts
-        run: deno task dist --version "${{ steps.version.outputs.version }}"
+        run: deno task dist --version nightly
 
       - name: Move nightly tag
         run: |
-          tag="${{ steps.version.outputs.tag }}"
+          tag="nightly"
           git tag --force "${tag}" "${{ github.event.workflow_run.head_sha }}"
           git push origin "refs/tags/${tag}" --force
 
@@ -72,17 +57,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="${{ steps.version.outputs.tag }}"
+          tag="nightly"
           if gh release view "${tag}" >/dev/null 2>&1; then
             gh release edit "${tag}" \
-              --title "${tag}" \
+              --title "Nightly" \
               --notes "Latest tested build from main (${{ github.event.workflow_run.head_sha }})." \
               --prerelease \
               --latest=false
             gh release upload "${tag}" dist/* --clobber
           else
             gh release create "${tag}" dist/* \
-              --title "${tag}" \
+              --title "Nightly" \
               --notes "Latest tested build from main (${{ github.event.workflow_run.head_sha }})." \
               --prerelease \
               --latest=false \
@@ -93,14 +78,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          current_tag="${{ steps.version.outputs.tag }}"
           gh release list \
             --exclude-drafts \
             --limit 100 \
             --json tagName,isPrerelease \
             --jq '.[] | select(.isPrerelease and (.tagName | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-nightly$"))) | .tagName' |
             while IFS= read -r tag; do
-              if [[ "${tag}" != "${current_tag}" ]]; then
-                gh release delete "${tag}" --cleanup-tag --yes
-              fi
+              gh release delete "${tag}" --cleanup-tag --yes
             done

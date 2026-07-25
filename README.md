@@ -246,17 +246,16 @@ deno task install
 
 ## Release Archives
 
-The latest tested commit from `main` is published as a prerelease whose version
-is based on the latest stable release. For example, when `v0.1.0` is the latest
-stable release, the nightly release and binary version are `v0.1.0-nightly` and
-`0.1.0-nightly`, respectively. The tag and assets are replaced whenever the
-`Test` workflow succeeds on `main`. When a new stable version is released, its
-nightly replaces the previous nightly release so that only one remains.
+The latest tested commit from `main` is published as the `nightly` prerelease.
+Its moving `nightly` tag and assets are replaced whenever the `Test` workflow
+succeeds on `main`. This channel is independent of stable releases, so
+publishing a new stable version does not change the nightly name or make the
+nightly temporarily unavailable.
 
-Release tags always include a leading `v` (for example, `v0.1.0-nightly`), while
-version values passed to builds and reported by the CLI omit it (for example,
-`0.1.0-nightly`). Archive names retain the existing `sadoku-v<version>-<target>`
-format.
+Stable release tags include a leading `v` (for example, `v0.1.0`), while the
+moving nightly tag and its reported CLI version are both `nightly`. Archive
+names retain the existing `sadoku-v<version>-<target>` format, so nightly
+archives use names such as `sadoku-vnightly-linux-x64.tar.gz`.
 
 Build release archives under `dist/`:
 
