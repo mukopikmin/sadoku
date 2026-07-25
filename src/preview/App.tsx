@@ -25,8 +25,13 @@ export const App = () => {
   const { clearReloadAvailable, reloadAvailable } = useHotReload();
 
   const reloadPreview = async () => {
-    const result = await documentQuery.refetch();
-    if (result.isSuccess) clearReloadAvailable();
+    const [documentResult, commentsResult] = await Promise.all([
+      documentQuery.refetch(),
+      commentsQuery.refetch(),
+    ]);
+    if (documentResult.isSuccess && commentsResult.isSuccess) {
+      clearReloadAvailable();
+    }
   };
 
   useEffect(() => {
@@ -74,7 +79,7 @@ export const App = () => {
         onReloadPreview={reloadPreview}
         onToggleThemeMode={toggleThemeMode}
         reloadAvailable={reloadAvailable}
-        reloading={documentQuery.isFetching}
+        reloading={documentQuery.isFetching || commentsQuery.isFetching}
         staleCommentCount={staleCommentCount}
         themeMode={themeMode}
         title={document.title}

@@ -80,7 +80,7 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(4));
   });
 
-  it("reloads only the Markdown when source changes are available", async () => {
+  it("reloads the Markdown and comments without changing views", async () => {
     let documentRequests = 0;
     let commentRequests = 0;
     vi.stubGlobal("EventSource", TestEventSource);
@@ -113,6 +113,14 @@ describe("App", () => {
 
     await screen.findByRole("heading", { name: "Original title" });
 
+    fireEvent.click(
+      screen.getByRole("button", { name: "Comments, 0 unresolved" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+
     expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
 
     TestEventSource.instances.at(-1)?.dispatchEvent(new Event("reload"));
@@ -124,9 +132,18 @@ describe("App", () => {
 
     fireEvent.click(reloadButton);
 
-    await screen.findByRole("heading", { name: "Updated title" });
+    await waitFor(() => {
+      expect(documentRequests).toBe(2);
+      expect(commentRequests).toBe(2);
+    });
     expect(documentRequests).toBe(2);
-    expect(commentRequests).toBe(1);
+    expect(commentRequests).toBe(2);
+    expect(
+      screen.getByRole("button", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    await screen.findByRole("heading", { name: "Updated title" });
     expect(screen.queryByText("Source changes are available.")).toBeNull();
   });
 
