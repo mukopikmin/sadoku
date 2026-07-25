@@ -10,6 +10,7 @@ Deno.test("configured comments store uses and closes the default SQLite database
     const filePath = "/tmp/factory-test.md";
     const document: PreviewCommentsDocument = {
       comments: [{
+        author: { type: "human" },
         body: "Persisted in SQLite",
         createdAt: "2026-07-20T00:00:00.000Z",
         endLine: 1,
