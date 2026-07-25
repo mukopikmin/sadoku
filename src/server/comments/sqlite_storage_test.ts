@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { openAppDatabase } from "../db/connection.ts";
 import { createSqliteCommentsStore } from "./sqlite_storage.ts";
@@ -140,6 +140,7 @@ Deno.test("sqlite comments store replaces, lists, and deletes documents", async 
 
       assertEquals(await store.read(filePath), { comments: [], filePath });
       assertEquals(await store.list(), { entries: [], warnings: [] });
+      await assertRejects(() => store.delete(filePath), Deno.errors.NotFound);
     } finally {
       database.close();
     }
