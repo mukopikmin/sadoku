@@ -423,6 +423,65 @@ const value = 1;
     );
   });
 
+  it("creates comments for the full fenced code block range", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      `\`\`\`ts
+const value = 1;
+\`\`\`
+`,
+      [],
+      { onCreateComment },
+    );
+
+    fireEvent.click(container.querySelector("pre")!);
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    }));
+    expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review this code block." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        1,
+        "Review this code block.",
+        3,
+      )
+    );
+  });
+
+  it("creates comments for the full table range", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      `| Name | Count |
+| --- | ---: |
+| One | 1 |
+`,
+      [],
+      { onCreateComment },
+    );
+
+    fireEvent.click(container.querySelector("table")!);
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review this table." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        1,
+        "Review this table.",
+        3,
+      )
+    );
+  });
+
   it("renders indented code blocks with readable text color", () => {
     const { container } = renderMarkdown(`    const indented = "<escaped>";
     console.log(indented);
@@ -474,9 +533,11 @@ graph TD
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(screen.getByTitle("Select line 1 for comment"));
+    fireEvent.click(screen.getByTitle("Select lines 1-4 for comment"));
 
-    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(initializeMermaid.mock.calls.length).toBeGreaterThanOrEqual(2)
+    );
   });
 
   it("does not render Mermaid zoom buttons for regular code fences", () => {

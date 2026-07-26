@@ -32,7 +32,7 @@ type CommentableBlockProps = CommentControlProps & {
   isAdding: boolean;
   isRangeActionLine: boolean;
   isSelected: boolean;
-  line: number;
+  sourceRange: CommentRange;
 };
 
 export const CommentableBlock = ({
@@ -46,17 +46,16 @@ export const CommentableBlock = ({
   isAdding,
   isRangeActionLine,
   isSelected,
-  line,
+  sourceRange,
   onCloseCommentForm,
   onOpenCommentForm,
-  onSelectCommentLine,
+  onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
   const [draft, setDraft] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const pendingRange: CommentRange = activeRange ?? selectedRange ?? {
-    endLine: line,
-    startLine: line,
+    ...sourceRange,
   };
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
@@ -66,8 +65,8 @@ export const CommentableBlock = ({
     ? "calc(-1 * var(--chakra-spacing-8))"
     : `calc(-1 * var(--chakra-spacing-8) - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
-    return new Set([...ancestorSourceLines, line]);
-  }, [ancestorSourceLines, line]);
+    return new Set([...ancestorSourceLines, sourceRange.startLine]);
+  }, [ancestorSourceLines, sourceRange.startLine]);
 
   const handleCreate = async () => {
     const body = draft.trim();
@@ -102,7 +101,7 @@ export const CommentableBlock = ({
     if (link && !link.classList.contains("heading-anchor")) return;
     if (link) event.preventDefault();
 
-    onSelectCommentLine(line);
+    onSelectCommentRange(sourceRange);
     event.stopPropagation();
   };
 
@@ -120,7 +119,8 @@ export const CommentableBlock = ({
           : undefined,
         className,
       ].filter(Boolean).join(" ")}
-      data-source-line={line}
+      data-source-end-line={sourceRange.endLine}
+      data-source-line={sourceRange.startLine}
       style={{
         "--comment-indent-offset": `${commentIndentEm}em`,
       } as React.CSSProperties}
@@ -128,7 +128,7 @@ export const CommentableBlock = ({
       <div
         className="commentable-content"
         onClick={handleContentClick}
-        title={`Select line ${line} for comment`}
+        title={`Select ${formatRangeLabel(sourceRange)} for comment`}
       >
         {isRangeActionLine && !isAdding && (
           <Box

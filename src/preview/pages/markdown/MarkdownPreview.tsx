@@ -155,8 +155,9 @@ export const MarkdownPreview = ({
     )];
     const layouts = rangeHighlights.flatMap((range) => {
       const contents = blocks.filter((block) => {
-        const line = Number(block.dataset.sourceLine);
-        return line >= range.startLine && line <= range.endLine;
+        const startLine = Number(block.dataset.sourceLine);
+        const endLine = Number(block.dataset.sourceEndLine ?? startLine);
+        return endLine >= range.startLine && startLine <= range.endLine;
       }).map((block) =>
         block.querySelector<HTMLElement>(":scope > .commentable-content")
       ).filter((content): content is HTMLElement => content !== null);
@@ -204,21 +205,22 @@ export const MarkdownPreview = ({
     void initializeMermaid();
   });
 
-  const handleSelectCommentLine = (line: number) => {
+  const handleSelectCommentRange = (clickedRange: CommentRange) => {
     setActiveCommentLine(undefined);
     setActiveRange(undefined);
     setSelectedRange((current) => {
-      if (current && isLineInRange(line, current)) {
+      if (
+        current && current.startLine === clickedRange.startLine &&
+        current.endLine === clickedRange.endLine
+      ) {
         setLineSelectionAnchor(undefined);
         return undefined;
       }
-      const range = lineSelectionAnchor === undefined
-        ? { endLine: line, startLine: line }
-        : {
-          endLine: Math.max(lineSelectionAnchor, line),
-          startLine: Math.min(lineSelectionAnchor, line),
-        };
-      setLineSelectionAnchor(lineSelectionAnchor ?? line);
+      const range = lineSelectionAnchor === undefined ? clickedRange : {
+        endLine: Math.max(lineSelectionAnchor, clickedRange.endLine),
+        startLine: Math.min(lineSelectionAnchor, clickedRange.startLine),
+      };
+      setLineSelectionAnchor(lineSelectionAnchor ?? clickedRange.startLine);
       return range;
     });
   };
@@ -248,7 +250,7 @@ export const MarkdownPreview = ({
     commentHighlightsByLine,
     onCloseCommentForm: handleCloseCommentForm,
     onOpenCommentForm: handleOpenCommentForm,
-    onSelectCommentLine: handleSelectCommentLine,
+    onSelectCommentRange: handleSelectCommentRange,
     selectedRange,
   };
 
