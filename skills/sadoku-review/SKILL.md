@@ -75,8 +75,8 @@ questions, and the final report.
    not required when no change was made.
 9. Resolve a comment only when both conditions hold:
    - The comment's instruction is clear and unambiguous.
-   - The resulting document fully satisfies the entire instruction, as
-     confirmed by the diff and relevant checks.
+   - The resulting document fully satisfies the entire instruction, as confirmed
+     by the diff and relevant checks.
 
    After posting the reply, resolve each qualifying comment explicitly:
 
