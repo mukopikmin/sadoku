@@ -231,7 +231,7 @@ npm install
 Run the CLI with Deno:
 
 ```sh
-deno task start start README.md
+deno task start README.md
 ```
 
 Compile a standalone binary:
