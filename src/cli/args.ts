@@ -22,6 +22,7 @@ export type CliOptions = {
   open: boolean;
   port: number;
   replyBody?: string;
+  requestReview?: boolean;
   startLine?: number;
   help?: boolean;
   version?: boolean;
@@ -38,7 +39,7 @@ export const usage = `Usage:
   sadoku start <file.md|url> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
   sadoku comments add <file.md|url> <start-line> <end-line> <body> [--as-bot]
   sadoku comments inspect <file.md|url>
-  sadoku comments reply <file.md|url> <comment-id> <body> [--as-bot]
+  sadoku comments reply <file.md|url> <comment-id> <body> [--as-bot] [--request-review]
   sadoku comments resolve <file.md|url> <comment-id>... [--as-bot]
   sadoku comments list
   sadoku comments rm <file.md|url> [--force]
@@ -50,6 +51,8 @@ Options:
   --keep-alive Keep the server running after the browser tab is closed.
   --force      Remove comments without prompting.
   --as-bot     Attribute comment actions to a bot.
+  --request-review
+               Mark a bot reply as requesting review (requires --as-bot).
   -v, --version
                Show version.
   -h, --help   Show this help message.
@@ -64,7 +67,15 @@ export const parseArgs = (argv: string[]): CliOptions => {
         p: "port",
         v: "version",
       },
-      boolean: ["as-bot", "force", "help", "keep-alive", "no-open", "version"],
+      boolean: [
+        "as-bot",
+        "force",
+        "help",
+        "keep-alive",
+        "no-open",
+        "request-review",
+        "version",
+      ],
       default: {
         host: "127.0.0.1",
         port: "3334",
@@ -84,11 +95,13 @@ export const parseArgs = (argv: string[]): CliOptions => {
   const rejectCommentCommandPreviewOptions = (
     command: string,
     allowAsBot = false,
+    allowRequestReview = false,
   ): void => {
     if (
       flags.host !== "127.0.0.1" || flags.port !== "3334" ||
       flags["keep-alive"] || flags["no-open"] ||
-      (!allowAsBot && flags["as-bot"])
+      (!allowAsBot && flags["as-bot"]) ||
+      (!allowRequestReview && flags["request-review"])
     ) {
       throw new CliUsageError(
         `${command} does not accept preview options.`,
@@ -196,7 +209,10 @@ export const parseArgs = (argv: string[]): CliOptions => {
       flags._.length >= 5 &&
       flags._[1]?.toString() === "reply"
     ) {
-      rejectCommentCommandPreviewOptions("comments reply", true);
+      rejectCommentCommandPreviewOptions("comments reply", true, true);
+      if (flags["request-review"] && !flags["as-bot"]) {
+        throw new CliUsageError("--request-review requires --as-bot.");
+      }
 
       const options: CliOptions = {
         asBot: Boolean(flags["as-bot"]),
@@ -209,6 +225,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         open: true,
         port: 3334,
         replyBody: flags._.slice(4).map(String).join(" "),
+        ...(flags["request-review"] ? { requestReview: true } : {}),
       };
       if (flags.help) options.help = true;
       if (flags.version) options.version = true;
@@ -243,6 +260,12 @@ export const parseArgs = (argv: string[]): CliOptions => {
   if (flags["as-bot"]) {
     throw new CliUsageError(
       "--as-bot is only accepted by comments add, comments reply, and comments resolve.",
+    );
+  }
+
+  if (flags["request-review"]) {
+    throw new CliUsageError(
+      "--request-review is only accepted by comments reply with --as-bot.",
     );
   }
 

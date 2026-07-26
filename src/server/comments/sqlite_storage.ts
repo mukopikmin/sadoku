@@ -41,6 +41,7 @@ type CommentReplyRow = {
   comment_id: number;
   created_at: string;
   local_id: number;
+  review_requested: number;
   updated_at: string;
 };
 
@@ -107,6 +108,7 @@ const replyFromRow = (row: CommentReplyRow): PreviewCommentReply => ({
   body: row.body,
   createdAt: row.created_at,
   id: row.local_id,
+  ...(toBoolean(row.review_requested) ? { reviewRequested: true } : {}),
   updatedAt: row.updated_at,
 });
 
@@ -150,7 +152,7 @@ const readCommentsDocumentFromSqlite = async (
     [documentRow.id],
   )).rows ?? [];
   const replies = (await database.execute<CommentReplyRow>(
-    `SELECT comment_id, local_id, body, author_type, created_at, updated_at
+    `SELECT comment_id, local_id, body, author_type, review_requested, created_at, updated_at
       FROM comment_reply
       WHERE comment_id IN (SELECT id FROM comment WHERE document_id = ?)
       ORDER BY comment_id, local_id`,
@@ -232,13 +234,14 @@ const writeCommentsDocumentToSqlite = async (
       for (const reply of comment.replies ?? []) {
         await database.execute(
           `INSERT INTO comment_reply (
-            comment_id, local_id, body, author_type, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?)`,
+            comment_id, local_id, body, author_type, review_requested, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
             commentRow.id,
             reply.id,
             reply.body,
             reply.author.type,
+            reply.reviewRequested === true ? 1 : 0,
             reply.createdAt,
             reply.updatedAt,
           ],

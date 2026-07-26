@@ -205,9 +205,10 @@ describe("CommentList", () => {
         comments={[createComment({
           replies: [{
             body: "Existing reply.",
-            author: { type: "human" },
+            author: { type: "bot" },
             createdAt: "2026-06-05T01:00:00.000Z",
             id: 1,
+            reviewRequested: true,
             updatedAt: "2026-06-05T01:00:00.000Z",
           }],
         })]}
@@ -217,6 +218,8 @@ describe("CommentList", () => {
     const existingReply = screen.getByText("Existing reply.");
     const replyContainer = existingReply.closest(".comment-reply");
     expect(existingReply).not.toBeNull();
+    expect(screen.getByText("Review requested")).not.toBeNull();
+    expect(screen.getAllByText("Review requested")).toHaveLength(1);
     expect(getComputedStyle(replyContainer!).marginLeft).toBe(
       "var(--chakra-spacing-4)",
     );

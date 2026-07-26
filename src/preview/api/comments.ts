@@ -9,6 +9,7 @@ export type CommentReplyResponse = {
   body: string;
   createdAt: string;
   id: number;
+  reviewRequested?: boolean;
   updatedAt: string;
 };
 
@@ -45,6 +46,7 @@ const toCommentReply = (response: CommentReplyResponse): CommentReply => ({
   body: response.body,
   createdAt: response.createdAt,
   id: response.id,
+  ...(response.reviewRequested === true ? { reviewRequested: true } : {}),
   updatedAt: response.updatedAt,
 });
 

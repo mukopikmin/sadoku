@@ -190,6 +190,8 @@ const isPreviewCommentReply = (
   if (typeof value !== "object" || value === null) return false;
   const reply = value as Partial<PreviewCommentReply>;
   return (reply.author === undefined || isCommentAuthor(reply.author)) &&
+    (reply.reviewRequested === undefined ||
+      typeof reply.reviewRequested === "boolean") &&
     typeof reply.id === "number" &&
     typeof reply.body === "string" &&
     typeof reply.createdAt === "string" &&

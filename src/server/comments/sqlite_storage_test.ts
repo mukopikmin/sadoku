@@ -21,6 +21,7 @@ const document = (filePath: string): PreviewCommentsDocument => ({
           body: "Reply",
           createdAt: "2026-07-04T00:01:00.000Z",
           id: 1,
+          reviewRequested: true,
           updatedAt: "2026-07-04T00:02:00.000Z",
         },
       ],
