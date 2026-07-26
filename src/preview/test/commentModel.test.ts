@@ -35,9 +35,14 @@ describe("comment model", () => {
   });
 
   it("gives the resolved state precedence over stale response metadata", () => {
-    expect(toComment(createResponse({ resolved: true, stale: true })))
+    expect(toComment(createResponse({
+      resolved: true,
+      resolvedBy: { type: "bot" },
+      stale: true,
+    })))
       .toMatchObject({
         id: 1,
+        resolvedBy: { type: "bot" },
         state: "resolved",
       });
   });

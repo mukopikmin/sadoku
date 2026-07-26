@@ -35,6 +35,7 @@ export type StaleComment = CommentBase & {
 
 export type ResolvedComment = CommentBase & {
   resolvedAt?: string;
+  resolvedBy?: CommentAuthor;
   state: "resolved";
 };
 

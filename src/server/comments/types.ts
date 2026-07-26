@@ -22,6 +22,7 @@ export type PreviewComment = {
   replies?: PreviewCommentReply[];
   resolved: boolean;
   resolvedAt?: string;
+  resolvedBy?: CommentAuthor;
   sourceHash?: string;
   sourceText?: string;
   stale: boolean;

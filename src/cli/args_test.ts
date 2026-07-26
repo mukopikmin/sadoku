@@ -123,6 +123,16 @@ Deno.test("parses comments resolve command", () => {
       port: 3334,
     },
   );
+  assertEquals(
+    parseArgs([
+      "comments",
+      "resolve",
+      "README.md",
+      "1",
+      "--as-bot",
+    ]).asBot,
+    true,
+  );
 });
 
 Deno.test("parses comments reply command", () => {

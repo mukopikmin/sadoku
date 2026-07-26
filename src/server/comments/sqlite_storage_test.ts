@@ -42,6 +42,7 @@ const document = (filePath: string): PreviewCommentsDocument => ({
       replies: [],
       resolved: true,
       resolvedAt: "2026-07-04T00:05:00.000Z",
+      resolvedBy: { type: "bot" },
       stale: false,
       updatedAt: "2026-07-04T00:06:00.000Z",
     },

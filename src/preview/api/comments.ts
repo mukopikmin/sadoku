@@ -23,6 +23,7 @@ export type CommentResponse = {
   replies?: CommentReplyResponse[];
   resolved: boolean;
   resolvedAt?: string;
+  resolvedBy?: CommentAuthorResponse;
   sourceHash?: string;
   sourceText?: string;
   stale: boolean;
@@ -67,6 +68,7 @@ export const toComment = (response: CommentResponse): Comment => {
     return {
       ...common,
       resolvedAt: response.resolvedAt,
+      resolvedBy: response.resolvedBy,
       state: "resolved",
     };
   }

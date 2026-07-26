@@ -272,6 +272,7 @@ const setCommentResolution = async (
     ...document.comments[index],
     resolved,
     resolvedAt: resolved ? now : undefined,
+    resolvedBy: resolved ? { type: "human" as const } : undefined,
     updatedAt: now,
   };
   const comments = [...document.comments];

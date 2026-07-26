@@ -66,7 +66,9 @@ const main = async (): Promise<void> => {
     }
     console.log(
       JSON.stringify(
-        await resolveComments(options.file, options.commentIds ?? []),
+        await resolveComments(options.file, options.commentIds ?? [], {
+          asBot: options.asBot,
+        }),
         null,
         2,
       ),
