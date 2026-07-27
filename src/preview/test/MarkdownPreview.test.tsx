@@ -133,6 +133,15 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain("inset: -4px -8px");
   });
 
+  it("colors horizontal padding without changing the content layout", () => {
+    expect(previewThemeCss).toMatch(
+      /\.commentable-content\s*\{[^}]*box-sizing: border-box;[^}]*margin-inline: calc\(-1 \* var\(--chakra-spacing-2\)\);[^}]*padding-inline: var\(--chakra-spacing-2\);/,
+    );
+    expect(previewThemeCss).toMatch(
+      /\.commentable-content::before\s*\{[^}]*right: 0;[^}]*left: calc\(-1 \* var\(--comment-indent-offset, 0em\)\);/,
+    );
+  });
+
   it("defines highlight spacing by Markdown element type", () => {
     expect(previewThemeCss).toMatch(
       /\.commentable-heading\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-4\);/,
@@ -158,7 +167,7 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain("::marker");
     expect(previewThemeCss).not.toContain('content: "•"');
     expect(previewThemeCss).toContain(
-      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));",
+      "left: calc(-1 * var(--comment-indent-offset, 0em));",
     );
   });
 
@@ -337,7 +346,7 @@ After
       ),
     ).toBe("7.5em");
     expect(previewThemeCss).toContain(
-      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em))",
+      "left: calc(-1 * var(--comment-indent-offset, 0em))",
     );
 
     fireEvent.click(screen.getByRole("button", {

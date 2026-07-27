@@ -378,6 +378,8 @@ export const previewThemeCss = `
         box-sizing: border-box;
         cursor: pointer;
         isolation: isolate;
+        margin-inline: calc(-1 * var(--chakra-spacing-2));
+        padding-inline: var(--chakra-spacing-2);
         position: relative;
         width: 100%;
       }
@@ -433,9 +435,9 @@ export const previewThemeCss = `
         position: absolute;
         z-index: -1;
         top: calc(-1 * var(--comment-highlight-spacing-before) + 1px);
-        right: calc(-1 * var(--chakra-spacing-2));
+        right: 0;
         bottom: calc(-1 * var(--comment-highlight-spacing-after) + 1px);
-        left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));
+        left: calc(-1 * var(--comment-indent-offset, 0em));
         border-radius: var(--chakra-radii-sm);
         background: var(--chakra-colors-transparent);
         pointer-events: none;
