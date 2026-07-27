@@ -79,7 +79,7 @@ describe("MarkdownPreview", () => {
   it("keeps overlapping selection backgrounds opaque", () => {
     const mixedBackgrounds = previewThemeCss.match(/color-mix\([^;]+\)/g) ?? [];
 
-    expect(mixedBackgrounds).toHaveLength(8);
+    expect(mixedBackgrounds).toHaveLength(10);
     for (const background of mixedBackgrounds) {
       expect(background).toContain("var(--chakra-colors-canvas)");
       expect(background).not.toContain("var(--chakra-colors-transparent)");
@@ -457,6 +457,24 @@ graph TD
     ).toBe(true);
     expect(previewThemeCss).toMatch(
       /\.commentable-block-range-selected > \.commentable-content pre\s*\{[^}]*background: color-mix\(in srgb, var\(--chakra-colors-accent\) 18%, var\(--chakra-colors-canvas\)\);/,
+    );
+  });
+
+  it("fills code and Mermaid block backgrounds on hover", () => {
+    const { container } = renderMarkdown(`\`\`\`ts
+const value = 1;
+\`\`\`
+
+\`\`\`mermaid
+graph TD
+  A --> B
+\`\`\`
+`);
+
+    expect(container.querySelector("pre code.language-ts")).not.toBeNull();
+    expect(container.querySelector("pre.mermaid")).not.toBeNull();
+    expect(previewThemeCss).toMatch(
+      /\.commentable-block:not\(\.commentable-block-selected\):hover > \.commentable-content pre,[^{]*\.commentable-block:not\(\.commentable-block-selected\):focus-within > \.commentable-content pre\s*\{[^}]*background: color-mix\(in srgb, var\(--chakra-colors-accent\) 14%, var\(--chakra-colors-canvas\)\);/,
     );
   });
 
