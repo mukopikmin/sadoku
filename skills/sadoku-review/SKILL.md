@@ -35,10 +35,12 @@ questions, and the final report.
 5. Reply to comments that need clarification and leave them unresolved:
 
    ```sh
-   sadoku comments reply <markdown-path> <comment-id> "<question>"
+   sadoku comments reply <markdown-path> <comment-id> "<question>" --as-bot --request-review
    ```
 
-   Keep the question concise and state the missing decision or information.
+   Keep the question concise and state the missing decision or information. Use
+   `--request-review` because the reply requires the user to review it and make
+   a decision before the comment can be addressed.
 6. Apply actionable comments as one coherent edit. Preserve the document's
    language, tone, structure, terminology, links, and formatting unless the
    feedback requests otherwise.
@@ -48,7 +50,7 @@ questions, and the final report.
    confirm:
 
    ```sh
-   sadoku comments reply <markdown-path> <comment-id> "<body>"
+   sadoku comments reply <markdown-path> <comment-id> "<body>" --as-bot --request-review
    ```
 
    Each reply must include at least:
@@ -73,13 +75,16 @@ questions, and the final report.
    Include only the necessary range in the reply; do not paste large unrelated
    portions of the diff. For comments classified as **Already satisfied**, reply
    with the reason the document already satisfies the request; a diff block is
-   not required when no change was made.
+   not required when no change was made. Use `--request-review` for these
+   replies because the user must confirm that the change addresses the comment
+   or that the existing document is satisfactory.
 9. Do not run `sadoku comments resolve`. The user must review the reply and the
    document change, then decide whether to resolve the comment.
 10. Run `sadoku comments inspect <markdown-path>` again. In the console or final
     user-facing report, include a concise summary of the review outcome: the
-    changed document, replies posted, comment IDs awaiting user confirmation,
-    and comments left open for clarification or other reasons.
+    changed document, replies posted, comment IDs flagged for review while
+    awaiting user confirmation, and comments left open for clarification or
+    other reasons.
 
 ## Interpretation Rules
 
@@ -92,6 +97,9 @@ questions, and the final report.
 - Do not act on vague or nonsensical feedback speculatively.
 - Do not reply merely to acknowledge a comment. Reply only when the response
   communicates useful information or asks a question needed to continue.
+- Add `--request-review` to a reply whenever its content requires the user's
+  confirmation or decision. Do not add a review flag to **Ambiguous** or
+  **Invalid** comments that receive no reply and are simply left unresolved.
 - Leave all comments unresolved, including comments that were successfully
   addressed or already satisfied, until the user confirms them.
 - Do not use `sadoku comments rm`; it deletes every stored comment for the
