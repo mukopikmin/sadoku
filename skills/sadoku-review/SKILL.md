@@ -1,6 +1,6 @@
 ---
 name: sadoku-review
-description: Read unresolved Sadoku review comments through the sadoku CLI, apply requested changes to the referenced Markdown document, verify the result, and reply with focused Markdown diffs while leaving comments open for user confirmation. Use when asked to review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
+description: Read unresolved Sadoku review comments through the sadoku CLI, apply requested changes to the referenced Markdown document, verify the result, reply with focused Markdown diffs, and resolve only clear comments that are fully satisfied. Use when asked to review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
 ---
 
 # Sadoku Review
@@ -44,8 +44,7 @@ questions, and the final report.
    feedback requests otherwise.
 7. Review the resulting diff and run relevant documentation checks available in
    the project.
-8. Reply to each addressed comment and leave it unresolved for the user to
-   confirm:
+8. Reply to each addressed comment:
 
    ```sh
    sadoku comments reply <markdown-path> <comment-id> "<body>" --as-bot
@@ -74,12 +73,26 @@ questions, and the final report.
    portions of the diff. For comments classified as **Already satisfied**, reply
    with the reason the document already satisfies the request; a diff block is
    not required when no change was made.
-9. Do not run `sadoku comments resolve`. The user must review the reply and the
-   document change, then decide whether to resolve the comment.
+9. Resolve a comment only when both conditions hold:
+   - The comment's instruction is clear and unambiguous.
+   - The resulting document fully satisfies the entire instruction, as confirmed
+     by the diff and relevant checks.
+
+   After posting the reply, resolve each qualifying comment explicitly:
+
+   ```sh
+   sadoku comments resolve <markdown-path> <comment-id>
+   ```
+
+   Do not resolve a comment when it needs clarification, is ambiguous or
+   invalid, was only partially addressed, depends on unverified information, or
+   cannot be confirmed by the available checks. In those cases, limit the work
+   to useful document edits and a reply that clearly states what changed, what
+   remains, or what information is needed.
 10. Run `sadoku comments inspect <markdown-path>` again. In the console or final
     user-facing report, include a concise summary of the review outcome: the
-    changed document, replies posted, comment IDs awaiting user confirmation,
-    and comments left open for clarification or other reasons.
+    changed document, replies posted, comment IDs resolved, and comments left
+    open for clarification, partial completion, or other reasons.
 
 ## Interpretation Rules
 
@@ -94,8 +107,10 @@ questions, and the final report.
   communicates useful information or asks a question needed to continue.
 - Add `--as-bot` to every comment reply posted by the agent so that Sadoku
   attributes the operation to a bot.
-- Leave all comments unresolved, including comments that were successfully
-  addressed or already satisfied, until the user confirms them.
+- Treat resolution as a statement that the complete instruction has been met,
+  not merely that a reply was posted or the document was edited.
+- Leave any comment unresolved unless its instruction is clear and its complete
+  fulfillment has been verified. When uncertain, leave it open.
 - Do not use `sadoku comments rm`; it deletes every stored comment for the
   specified Markdown document.
 
