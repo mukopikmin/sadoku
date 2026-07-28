@@ -4,13 +4,8 @@ import { parse } from "@std/toml";
 const appDirectoryName = "sadoku";
 const configFileName = "config.toml";
 
-export type ExperimentalCommentsStore = "sqlite";
-
 export type SadokuConfig = {
   commentsDirectory?: string;
-  experimental?: {
-    commentsStore?: ExperimentalCommentsStore;
-  };
 };
 
 const getEnv = (name: string): string | undefined => {
@@ -46,28 +41,6 @@ export const getConfigFilePath = (): string | undefined => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
-const parseExperimentalConfig = (
-  value: unknown,
-): SadokuConfig["experimental"] | undefined => {
-  if (value === undefined) return undefined;
-  if (!isRecord(value)) {
-    throw new Error("experimental in Sadoku config must be a table.");
-  }
-
-  const experimental: SadokuConfig["experimental"] = {};
-  if (!("commentsStore" in value)) return experimental;
-
-  const commentsStore = value.commentsStore;
-  if (commentsStore !== "sqlite") {
-    throw new Error(
-      'experimental.commentsStore in Sadoku config must be "sqlite" when set.',
-    );
-  }
-
-  experimental.commentsStore = commentsStore;
-  return experimental;
-};
-
 const parseConfig = (value: unknown): SadokuConfig | undefined => {
   if (!isRecord(value)) return undefined;
 
@@ -81,8 +54,6 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     if (commentsDirectory) config.commentsDirectory = commentsDirectory;
   }
 
-  const experimental = parseExperimentalConfig(value.experimental);
-  if (experimental !== undefined) config.experimental = experimental;
   return config;
 };
 

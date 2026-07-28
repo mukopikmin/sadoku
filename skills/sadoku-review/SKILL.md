@@ -97,6 +97,8 @@ questions, and the final report.
 - Do not act on vague or nonsensical feedback speculatively.
 - Do not reply merely to acknowledge a comment. Reply only when the response
   communicates useful information or asks a question needed to continue.
+- Add `--as-bot` to every comment reply posted by the agent so that Sadoku
+  attributes the operation to a bot.
 - Add `--request-review` to a reply whenever its content requires the user's
   confirmation or decision. Do not add a review flag to **Ambiguous** or
   **Invalid** comments that receive no reply and are simply left unresolved.
