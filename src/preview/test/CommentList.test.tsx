@@ -36,6 +36,53 @@ const createComment = (
 });
 
 describe("CommentList", () => {
+  it("labels only bot comments and replies", () => {
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        comments={[
+          createComment({
+            body: "Human comment.",
+            id: 1,
+            replies: [{
+              author: { type: "human" },
+              body: "Human reply.",
+              createdAt: "2026-06-05T01:00:00.000Z",
+              id: 1,
+              updatedAt: "2026-06-05T01:00:00.000Z",
+            }],
+          }),
+          createComment({
+            author: { type: "bot" },
+            body: "Bot comment.",
+            id: 2,
+            replies: [{
+              author: { type: "bot" },
+              body: "Bot reply.",
+              createdAt: "2026-06-05T01:00:00.000Z",
+              id: 2,
+              updatedAt: "2026-06-05T01:00:00.000Z",
+            }],
+          }),
+          createComment({
+            author: { type: "bot" },
+            body: "Unnamed bot comment.",
+            id: 3,
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByText("Bot")).toHaveLength(3);
+
+    const humanComment = screen.getByText("Human comment.").closest("article")!;
+    const humanReply = screen.getByText("Human reply.").closest(
+      ".comment-reply",
+    )!;
+    expect(within(humanComment).queryByText("Bot")).toBeNull();
+    expect(within(humanReply).queryByText("Bot")).toBeNull();
+  });
+
   it("switches between active, stale, and resolved comment tabs", () => {
     render(
       <CommentList
