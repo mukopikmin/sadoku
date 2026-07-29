@@ -14,7 +14,9 @@ const sha256 = async (path: string): Promise<string> => {
 };
 
 const makeFixture = async (root: string, version: string, target: string) => {
-  const archiveRoot = `sadoku-v${version}-${target}`;
+  const archiveRoot = version === "nightly"
+    ? `sadoku-nightly-${target}`
+    : `sadoku-v${version}-${target}`;
   const sourceDir = join(root, archiveRoot);
   await Deno.mkdir(sourceDir, { recursive: true });
   await Deno.writeTextFile(join(sourceDir, "sadoku"), `sadoku ${version}\n`);

@@ -256,10 +256,11 @@ succeeds on `main`. This channel is independent of stable releases, so
 publishing a new stable version does not change the nightly name or make the
 nightly temporarily unavailable.
 
-Stable release tags include a leading `v` (for example, `v0.1.0`), while the
-moving nightly tag and its reported CLI version are both `nightly`. Archive
-names retain the existing `sadoku-v<version>-<target>` format, so nightly
-archives use names such as `sadoku-vnightly-linux-x64.tar.gz`.
+Stable release tags and archive versions include a leading `v` (for example,
+`v0.1.0` and `sadoku-v0.1.0-linux-x64.tar.gz`). Nightly archives instead use the
+channel name directly, for example `sadoku-nightly-linux-x64.tar.gz`. Nightly
+binaries report a version containing the tested commit's UTC date and short
+commit hash, such as `nightly-20260729-a1b2c3d4`.
 
 Build release archives under `dist/`:
 
