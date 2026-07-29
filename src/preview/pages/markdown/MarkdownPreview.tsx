@@ -194,8 +194,7 @@ export const MarkdownPreview = ({
         const style = element ? getComputedStyle(element) : undefined;
         return {
           top: rect.top - (Number.parseFloat(style?.marginTop ?? "0") || 0),
-          bottom: rect.bottom +
-            (Number.parseFloat(style?.marginBottom ?? "0") || 0),
+          bottom: rect.bottom,
         };
       });
       return [{

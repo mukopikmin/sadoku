@@ -782,6 +782,7 @@ Body
     preview!.getBoundingClientRect = () => mockRect(100, 400);
     heading!.getBoundingClientRect = () => mockRect(120, 150);
     paragraph!.getBoundingClientRect = () => mockRect(200, 240);
+    paragraph!.style.marginBottom = "16px";
 
     fireEvent.click(titleContent!);
     fireEvent.click(bodyContent!);
