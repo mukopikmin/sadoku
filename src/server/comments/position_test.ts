@@ -203,3 +203,31 @@ Deno.test("rebases comments through edits and marks only deleted lines stale", a
     await Deno.remove(filePath);
   }
 });
+
+Deno.test("adds display lines when the stored snapshot is unchanged", async () => {
+  const filePath = await Deno.makeTempFile({ suffix: ".md" });
+  const markdown = "# Title\n\nBody\n";
+  const document: PreviewCommentsDocument = {
+    comments: [createComment({ displayLine: undefined })],
+    filePath,
+    sourceSnapshot: markdown,
+  };
+  const store: CommentsStore = {
+    delete: () => Promise.resolve(),
+    list: () => Promise.resolve({ entries: [], warnings: [] }),
+    read: () => Promise.resolve(document),
+    write: () => Promise.reject(new Error("Unexpected write.")),
+  };
+
+  try {
+    await Deno.writeTextFile(filePath, markdown);
+    const resolved = await readResolvedCommentsDocument(
+      filePath,
+      filePath,
+      store,
+    );
+    assertEquals(resolved.comments[0].displayLine, 3);
+  } finally {
+    await Deno.remove(filePath);
+  }
+});

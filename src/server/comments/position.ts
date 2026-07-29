@@ -194,7 +194,15 @@ export const readResolvedCommentsDocument = async (
     commentsStore.read(filePath),
     readMarkdownSource(markdownSource),
   ]);
-  if (document.sourceSnapshot === markdown) return document;
+  if (document.sourceSnapshot === markdown) {
+    return {
+      ...document,
+      comments: document.comments.map((comment) => ({
+        ...comment,
+        displayLine: comment.displayLine ?? comment.startLine,
+      })),
+    };
+  }
 
   const mapping = document.sourceSnapshot === undefined
     ? undefined
