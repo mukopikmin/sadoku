@@ -29,6 +29,7 @@ export type ListedCommentFile = CommentsStoreFile;
 export type CommentsCliOptions = {
   asBot?: boolean;
   commentsStore?: CommentsStore;
+  requestReview?: boolean;
 };
 
 const withCommentsStore = async <T>(
@@ -214,6 +215,12 @@ export const replyToComment = async (
     if (index < 0) {
       throw new Error(`Comment not found: ${commentId}`);
     }
+    if (options.requestReview && !options.asBot) {
+      throw new Error("Review requests require a bot reply.");
+    }
+    if (options.requestReview && document.comments[index].resolved) {
+      throw new Error("Cannot request review on a resolved comment.");
+    }
 
     const now = new Date().toISOString();
     const reply: PreviewCommentReply = {
@@ -224,6 +231,9 @@ export const replyToComment = async (
         0,
         ...(document.comments[index].replies ?? []).map((reply) => reply.id),
       ) + 1,
+      ...(options.asBot && options.requestReview
+        ? { reviewRequested: true }
+        : {}),
       updatedAt: now,
     };
     const updatedComment = {

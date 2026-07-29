@@ -231,6 +231,61 @@ testWithTempComments("uses an injected comments store", async () => {
   }
 });
 
+testWithTempComments(
+  "returns bot review requests through comments JSON",
+  async () => {
+    const filePath = await createTempMarkdown("one\ntwo\nthree");
+    const { documents, store } = createMemoryCommentsStore();
+    const timestamp = "2026-07-26T00:00:00.000Z";
+    documents.set(filePath, {
+      comments: [{
+        author: { type: "human" },
+        body: "Question",
+        createdAt: timestamp,
+        endLine: 2,
+        id: 1,
+        originalEndLine: 2,
+        originalStartLine: 2,
+        replies: [{
+          author: { type: "bot" },
+          body: "Please review the update.",
+          createdAt: timestamp,
+          id: 1,
+          reviewRequested: true,
+          updatedAt: timestamp,
+        }, {
+          author: { type: "human" },
+          body: "Ordinary reply.",
+          createdAt: timestamp,
+          id: 2,
+          updatedAt: timestamp,
+        }],
+        resolved: false,
+        stale: false,
+        startLine: 2,
+        updatedAt: timestamp,
+      }],
+      filePath,
+    });
+
+    try {
+      const response = await requestComments(
+        createPreviewHandler(filePath, { commentsStore: store }),
+        "/__sadoku/comments",
+      );
+      const document = await response.json();
+      assertEquals(response.status, 200);
+      assertEquals(document.comments[0].replies[0].reviewRequested, true);
+      assertEquals(
+        "reviewRequested" in document.comments[0].replies[1],
+        false,
+      );
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  },
+);
+
 testWithTempComments("trims comment bodies before storing them", async () => {
   const filePath = await createTempMarkdown();
   const handler = createPreviewHandler(filePath);

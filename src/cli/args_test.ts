@@ -250,7 +250,66 @@ Deno.test("uses the development version by default", () => {
   assertEquals(version, "0.0.0-dev");
 });
 
+Deno.test("parses review requests for bot replies without changing ordinary replies", () => {
+  assertEquals(
+    parseArgs([
+      "comments",
+      "reply",
+      "README.md",
+      "1",
+      "Please review",
+      "--as-bot",
+      "--request-review",
+    ]),
+    {
+      asBot: true,
+      command: "comments-reply",
+      commentId: "1",
+      file: "README.md",
+      force: false,
+      host: "127.0.0.1",
+      keepAlive: false,
+      open: true,
+      port: 3334,
+      replyBody: "Please review",
+      requestReview: true,
+    },
+  );
+  assertEquals(
+    parseArgs(["comments", "reply", "README.md", "1", "Reply"])
+      .requestReview,
+    undefined,
+  );
+});
+
 Deno.test("throws usage errors for invalid options", () => {
+  assertInstanceOf(
+    assertThrows(() =>
+      parseArgs([
+        "comments",
+        "reply",
+        "README.md",
+        "1",
+        "Reply",
+        "--request-review",
+      ])
+    ),
+    CliUsageError,
+  );
+  assertInstanceOf(
+    assertThrows(() =>
+      parseArgs([
+        "comments",
+        "add",
+        "README.md",
+        "1",
+        "1",
+        "Body",
+        "--request-review",
+      ])
+    ),
+    CliUsageError,
+  );
   assertInstanceOf(
     assertThrows(() => parseArgs(["start", "README.md", "--port", "nope"])),
     CliUsageError,

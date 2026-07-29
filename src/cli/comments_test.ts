@@ -346,6 +346,22 @@ Deno.test("adds replies to comments", async () => {
         asBot: true,
       });
       assertEquals(botReply.replies?.[1].author, { type: "bot" });
+      assertEquals(botReply.replies?.[1].reviewRequested, undefined);
+      const reviewReply = await replyToComment(filePath, "1", "Review this", {
+        asBot: true,
+        requestReview: true,
+      });
+      assertEquals(reviewReply.replies?.[2].reviewRequested, true);
+      assertEquals(
+        (await inspectComments(filePath)).comments[0].replies?.[2]
+          .reviewRequested,
+        true,
+      );
+      await assertRejects(
+        () => replyToComment(filePath, "1", "Invalid", { requestReview: true }),
+        Error,
+        "Review requests require a bot reply.",
+      );
       await assertRejects(
         () => replyToComment(filePath, "missing", "Reply"),
         Error,
