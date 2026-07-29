@@ -45,8 +45,10 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 type PreviewHeaderProps = {
   fileUrl: string;
   onChangeView: (view: PreviewView) => void;
+  onReloadPreview: () => void;
   onToggleThemeMode: () => void;
   reloadAvailable: boolean;
+  reloading: boolean;
   staleCommentCount: number;
   themeMode: ThemeMode;
   title: string;
@@ -57,8 +59,10 @@ type PreviewHeaderProps = {
 export const PreviewHeader = ({
   fileUrl,
   onChangeView,
+  onReloadPreview,
   onToggleThemeMode,
   reloadAvailable,
+  reloading,
   staleCommentCount,
   themeMode,
   title,
@@ -87,10 +91,11 @@ export const PreviewHeader = ({
             size="xs"
             variant="outline"
             colorPalette="yellow"
-            onClick={() => globalThis.location.reload()}
+            disabled={reloading}
+            onClick={onReloadPreview}
             type="button"
           >
-            Reload preview
+            {reloading ? "Reloading preview" : "Reload preview"}
           </Button>
         </Flex>
       )}

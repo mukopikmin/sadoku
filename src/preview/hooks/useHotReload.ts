@@ -10,5 +10,8 @@ export const useHotReload = () => {
     });
   }, []);
 
-  return { reloadAvailable };
+  return {
+    clearReloadAvailable: () => setReloadAvailable(false),
+    reloadAvailable,
+  };
 };

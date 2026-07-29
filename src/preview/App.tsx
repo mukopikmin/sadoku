@@ -22,7 +22,17 @@ export const App = () => {
   const commentsQuery = useCommentsQuery();
   const [view, setView] = useState<PreviewView>("preview");
   const { themeMode, toggleThemeMode } = useThemeMode();
-  const { reloadAvailable } = useHotReload();
+  const { clearReloadAvailable, reloadAvailable } = useHotReload();
+
+  const reloadPreview = async () => {
+    const [documentResult, commentsResult] = await Promise.all([
+      documentQuery.refetch(),
+      commentsQuery.refetch(),
+    ]);
+    if (documentResult.isSuccess && commentsResult.isSuccess) {
+      clearReloadAvailable();
+    }
+  };
 
   useEffect(() => {
     if (!documentQuery.data || !commentsQuery.data || view !== "preview") {
@@ -66,8 +76,10 @@ export const App = () => {
       <PreviewHeader
         fileUrl={document.fileUrl}
         onChangeView={setView}
+        onReloadPreview={reloadPreview}
         onToggleThemeMode={toggleThemeMode}
         reloadAvailable={reloadAvailable}
+        reloading={documentQuery.isFetching || commentsQuery.isFetching}
         staleCommentCount={staleCommentCount}
         themeMode={themeMode}
         title={document.title}
