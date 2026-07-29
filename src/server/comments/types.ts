@@ -34,4 +34,6 @@ export type PreviewComment = {
 export type PreviewCommentsDocument = {
   comments: PreviewComment[];
   filePath: string;
+  previousSourceSnapshot?: string;
+  sourceSnapshot?: string;
 };
