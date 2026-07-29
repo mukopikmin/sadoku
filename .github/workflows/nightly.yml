@@ -45,7 +45,10 @@ jobs:
         run: npm ci --prefix src/preview
 
       - name: Build nightly artifacts
-        run: deno task dist --version nightly
+        run: |
+          commit_date="$(git show -s --format=%cd --date=format:%Y%m%d "${{ github.event.workflow_run.head_sha }}")"
+          short_sha="$(git rev-parse --short=8 "${{ github.event.workflow_run.head_sha }}")"
+          deno task dist --version nightly --binary-version "nightly-${commit_date}-${short_sha}"
 
       - name: Move nightly tag
         run: |

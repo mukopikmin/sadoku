@@ -120,6 +120,23 @@ const parseVersion = (args: string[]): string => {
   return version;
 };
 
+const parseBinaryVersion = (args: string[], archiveVersion: string): string => {
+  const versionIndex = args.indexOf("--binary-version");
+  if (versionIndex === -1) return archiveVersion;
+
+  const version = args[versionIndex + 1];
+  if (!version) {
+    console.error("Missing value for --binary-version.");
+    Deno.exit(1);
+  }
+  return version;
+};
+
+const archiveRoot = (version: string, target: string): string =>
+  version === "nightly"
+    ? `sadoku-nightly-${target}`
+    : `sadoku-v${version}-${target}`;
+
 const ensureKnownTargets = (selected: Set<string> | undefined): void => {
   if (!selected) return;
   const known = new Set(targets.map((target) => target.id));
@@ -145,7 +162,7 @@ const archive = async (
   version: string,
   binaryPath: string,
 ): Promise<string> => {
-  const root = `sadoku-v${version}-${target.id}`;
+  const root = archiveRoot(version, target.id);
   const stagingDir = await Deno.makeTempDir({
     prefix: `sadoku-release-${target.id}-`,
   });
@@ -164,7 +181,7 @@ const archive = async (
       join(rootDir, "THIRD_PARTY_NOTICES.md"),
     );
 
-    const archiveName = `sadoku-v${version}-${target.id}.${target.archiveType}`;
+    const archiveName = `${root}.${target.archiveType}`;
     const archivePath = join(Deno.cwd(), "dist", archiveName);
     if (target.archiveType === "zip") {
       await run("zip", ["-qr", archivePath, root], stagingDir);
@@ -279,6 +296,7 @@ const selected = parseSelectedTargets(Deno.args);
 ensureKnownTargets(selected);
 
 const version = parseVersion(Deno.args);
+const binaryVersion = parseBinaryVersion(Deno.args, version);
 const releaseTargets = targets.filter((target) =>
   selected ? selected.has(target.id) : true
 );
@@ -301,7 +319,7 @@ for (const target of releaseTargets) {
       "--allow-run=deno",
       "scripts/compile.ts",
       "--version",
-      version,
+      binaryVersion,
       "--target",
       target.denoTarget,
       "--output",

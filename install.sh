@@ -74,7 +74,12 @@ case "$tag" in
 esac
 
 version="${tag#v}"
-archive="sadoku-v${version}-${target}.tar.gz"
+if [ "$version" = "nightly" ]; then
+  archive_root="sadoku-nightly-${target}"
+else
+  archive_root="sadoku-v${version}-${target}"
+fi
+archive="${archive_root}.tar.gz"
 download_url="$repository/releases/download/$tag"
 temporary_dir="$(mktemp -d "${TMPDIR:-/tmp}/sadoku-install.XXXXXX")"
 archive_path="$temporary_dir/$archive"
@@ -103,7 +108,7 @@ fi
 [ "$actual_checksum" = "$expected_checksum" ] || fail "SHA-256 checksum mismatch"
 
 tar -xzf "$archive_path" -C "$temporary_dir" || fail "could not extract $archive"
-binary_path="$temporary_dir/sadoku-v${version}-${target}/sadoku"
+binary_path="$temporary_dir/${archive_root}/sadoku"
 [ -f "$binary_path" ] || fail "release archive does not contain sadoku"
 
 mkdir -p "$install_dir"
