@@ -297,6 +297,13 @@ describe("App", () => {
     const themeButton = screen.getByRole("button", {
       name: "Switch to dark mode",
     });
+    const wrapCodeButton = screen.getByRole("button", {
+      name: "Wrap code blocks",
+    });
+    expect(wrapCodeButton.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(wrapCodeButton);
+    expect(wrapCodeButton.getAttribute("aria-pressed")).toBe("true");
+    expect(localStorage.getItem("sadoku-code-wrap")).toBe("true");
     expect(themeButton.textContent).toBe("");
     expect(themeButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
 

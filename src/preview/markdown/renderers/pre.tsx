@@ -9,10 +9,13 @@ import type {
 export const renderMarkdownPre = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
+  wrapCodeBlocks = false,
 ) => (
   <Box
     as="pre"
     overflow="auto"
+    whiteSpace={wrapCodeBlocks ? "pre-wrap" : "pre"}
+    overflowWrap={wrapCodeBlocks ? "anywhere" : "normal"}
     borderWidth="1px"
     borderColor="border.muted"
     borderRadius="sm"

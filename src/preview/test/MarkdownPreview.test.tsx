@@ -41,6 +41,7 @@ const renderMarkdown = (
     ) => Promise<void>;
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
+  wrapCodeBlocks = false,
 ) => {
   ensurePreviewThemeStyle();
   const result = render(
@@ -51,6 +52,7 @@ const renderMarkdown = (
       })}
       comments={comments}
       markdown={markdown}
+      wrapCodeBlocks={wrapCodeBlocks}
     />,
   );
   return { ...result, container: result.container };
@@ -69,6 +71,29 @@ const mockRect = (top: number, bottom: number): DOMRect => ({
 });
 
 describe("MarkdownPreview", () => {
+  it("wraps code blocks without changing Mermaid blocks when enabled", () => {
+    const { container } = renderMarkdown(
+      "```ts\nconst veryLongValue = 'value';\n```\n\n```mermaid\ngraph TD; A-->B;\n```",
+      [],
+      {},
+      true,
+    );
+
+    const codeBlock = container.querySelector("pre:has(code.language-ts)");
+    const mermaidBlock = container.querySelector("pre.mermaid");
+    expect(getComputedStyle(codeBlock!).whiteSpace).toBe("pre-wrap");
+    expect(getComputedStyle(codeBlock!).overflowWrap).toBe("anywhere");
+    expect(getComputedStyle(mermaidBlock!).whiteSpace).not.toBe("pre-wrap");
+  });
+
+  it("keeps code blocks on a single line by default", () => {
+    const { container } = renderMarkdown("```ts\nconst value = 1;\n```");
+    const codeBlock = container.querySelector("pre:has(code.language-ts)");
+
+    expect(getComputedStyle(codeBlock!).whiteSpace).toBe("pre");
+    expect(getComputedStyle(codeBlock!).overflow).toBe("auto");
+  });
+
   it("uses Chakra tokens for custom preview colors and spacing", () => {
     expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
     expect(previewThemeCss).not.toMatch(/\brgba?\(/);

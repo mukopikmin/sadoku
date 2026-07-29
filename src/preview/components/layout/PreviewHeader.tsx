@@ -47,6 +47,7 @@ type PreviewHeaderProps = {
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
   onToggleThemeMode: () => void;
+  onToggleCodeBlockWrapping: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
   staleCommentCount: number;
@@ -54,6 +55,7 @@ type PreviewHeaderProps = {
   title: string;
   unresolvedCommentCount: number;
   view: PreviewView;
+  wrapCodeBlocks: boolean;
 };
 
 export const PreviewHeader = ({
@@ -61,6 +63,7 @@ export const PreviewHeader = ({
   onChangeView,
   onReloadPreview,
   onToggleThemeMode,
+  onToggleCodeBlockWrapping,
   reloadAvailable,
   reloading,
   staleCommentCount,
@@ -68,6 +71,7 @@ export const PreviewHeader = ({
   title,
   unresolvedCommentCount,
   view,
+  wrapCodeBlocks,
 }: PreviewHeaderProps) => (
   <PreviewShell>
     <Text as="div">
@@ -101,6 +105,16 @@ export const PreviewHeader = ({
       )}
     </Text>
     <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
+      <Button
+        aria-label="Wrap code blocks"
+        aria-pressed={wrapCodeBlocks}
+        onClick={onToggleCodeBlockWrapping}
+        size="sm"
+        type="button"
+        variant="outline"
+      >
+        Wrap code
+      </Button>
       <IconButton
         aria-label={`Switch to ${themeMode === "dark" ? "light" : "dark"} mode`}
         onClick={onToggleThemeMode}

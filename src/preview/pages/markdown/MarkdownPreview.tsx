@@ -32,6 +32,7 @@ export type MarkdownPreviewProps = {
   actions: CommentActions;
   comments: ActiveComment[];
   markdown: string;
+  wrapCodeBlocks?: boolean;
 };
 
 type RangeHighlight = CommentRange & {
@@ -98,6 +99,7 @@ export const MarkdownPreview = ({
   actions,
   comments,
   markdown,
+  wrapCodeBlocks = false,
 }: MarkdownPreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const commentsByLine = useMemo(() => {
@@ -237,8 +239,8 @@ export const MarkdownPreview = ({
   };
 
   const components = useMemo<Components>(
-    createCommentableMarkdownComponents,
-    [],
+    () => createCommentableMarkdownComponents(wrapCodeBlocks),
+    [wrapCodeBlocks],
   );
   const commentRenderingContext = {
     actions,
@@ -288,7 +290,13 @@ export const MarkdownPreview = ({
   );
 };
 
-export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
+export const MarkdownPreviewPage = ({
+  markdown,
+  wrapCodeBlocks = false,
+}: {
+  markdown: string;
+  wrapCodeBlocks?: boolean;
+}) => {
   const commentsQuery = useCommentsQuery();
   const actions = useCommentActions();
   if (!commentsQuery.data) return null;
@@ -300,6 +308,7 @@ export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
       actions={actions}
       comments={activeComments}
       markdown={markdown}
+      wrapCodeBlocks={wrapCodeBlocks}
     />
   );
 };

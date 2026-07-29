@@ -15,6 +15,7 @@ import {
 } from "./hooks/usePreviewData";
 import { useThemeMode } from "./hooks/useThemeMode";
 import { useHotReload } from "./hooks/useHotReload";
+import { useCodeBlockWrapping } from "./hooks/useCodeBlockWrapping";
 import { isUnresolvedComment } from "./models/comment";
 
 export const App = () => {
@@ -22,6 +23,7 @@ export const App = () => {
   const commentsQuery = useCommentsQuery();
   const [view, setView] = useState<PreviewView>("preview");
   const { themeMode, toggleThemeMode } = useThemeMode();
+  const { toggleCodeBlockWrapping, wrapCodeBlocks } = useCodeBlockWrapping();
   const { clearReloadAvailable, reloadAvailable } = useHotReload();
 
   const reloadPreview = async () => {
@@ -78,6 +80,7 @@ export const App = () => {
         onChangeView={setView}
         onReloadPreview={reloadPreview}
         onToggleThemeMode={toggleThemeMode}
+        onToggleCodeBlockWrapping={toggleCodeBlockWrapping}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
         staleCommentCount={staleCommentCount}
@@ -85,6 +88,7 @@ export const App = () => {
         title={document.title}
         unresolvedCommentCount={unresolvedCommentCount}
         view={view}
+        wrapCodeBlocks={wrapCodeBlocks}
       />
       <Container as="main" maxW="980px" px="8" pt="0" pb="16">
         {view === "preview"
@@ -92,6 +96,7 @@ export const App = () => {
             <MarkdownPreviewPage
               key={themeMode}
               markdown={document.markdown}
+              wrapCodeBlocks={wrapCodeBlocks}
             />
           )
           : <CommentListPage />}

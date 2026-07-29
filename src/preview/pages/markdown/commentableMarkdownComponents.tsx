@@ -147,7 +147,7 @@ const createCommentableListItem = () => {
   };
 };
 
-const createCommentablePre = () => {
+const createCommentablePre = (wrapCodeBlocks: boolean) => {
   return ({
     children,
     node,
@@ -158,7 +158,7 @@ const createCommentablePre = () => {
     const line = getSourceLine({ node });
     const mermaidCode = getMermaidCodeText(children);
     const element = mermaidCode === undefined
-      ? renderMarkdownPre(elementProps, children)
+      ? renderMarkdownPre(elementProps, children, wrapCodeBlocks)
       : (
         <div className="mermaid-container">
           <pre className="mermaid">{mermaidCode}</pre>
@@ -184,7 +184,9 @@ const createCommentablePre = () => {
   };
 };
 
-export const createCommentableMarkdownComponents = (): Components => ({
+export const createCommentableMarkdownComponents = (
+  wrapCodeBlocks = false,
+): Components => ({
   a: sharedMarkdownComponents.a,
   blockquote: createCommentableComponent(
     "blockquote",
@@ -227,7 +229,7 @@ export const createCommentableMarkdownComponents = (): Components => ({
   ol: sharedMarkdownComponents.ol,
   ul: sharedMarkdownComponents.ul,
   p: createCommentableComponent("p", renderMarkdownParagraph),
-  pre: createCommentablePre(),
+  pre: createCommentablePre(wrapCodeBlocks),
   table: createCommentableComponent("table"),
   code: sharedMarkdownComponents.code,
 });
