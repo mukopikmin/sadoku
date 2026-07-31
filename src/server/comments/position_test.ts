@@ -1,10 +1,12 @@
 import { assertEquals } from "@std/assert";
 
-import type { PreviewComment } from "./types.ts";
+import type { PreviewComment, PreviewCommentsDocument } from "./types.ts";
+import type { CommentsStore } from "./storage.ts";
 import {
   getLineRangeText,
   getLineText,
   hashSourceText,
+  readResolvedCommentsDocument,
   resolveCommentPosition,
 } from "./position.ts";
 
@@ -158,4 +160,74 @@ Deno.test("marks a source range stale when matching ranges are ambiguous", () =>
   assertEquals(resolved.startLine, 1);
   assertEquals(resolved.endLine, 2);
   assertEquals(resolved.stale, true);
+});
+
+Deno.test("rebases comments through edits and marks only deleted lines stale", async () => {
+  const filePath = await Deno.makeTempFile({ suffix: ".md" });
+  let stored: PreviewCommentsDocument = {
+    comments: [createComment()],
+    filePath,
+    sourceSnapshot: "# Title\n\nBody\n",
+  };
+  const store: CommentsStore = {
+    delete: () => Promise.resolve(),
+    list: () => Promise.resolve({ entries: [], warnings: [] }),
+    read: () => Promise.resolve(stored),
+    write: (_filePath, document) => {
+      stored = document;
+      return Promise.resolve();
+    },
+  };
+
+  try {
+    await Deno.writeTextFile(filePath, "Intro\n# Title\n\nUpdated body\n");
+    const edited = await readResolvedCommentsDocument(
+      filePath,
+      filePath,
+      store,
+    );
+    assertEquals(edited.comments[0].startLine, 4);
+    assertEquals(edited.comments[0].originalStartLine, 3);
+    assertEquals(edited.comments[0].stale, false);
+    assertEquals(edited.previousSourceSnapshot, "# Title\n\nBody\n");
+    assertEquals(edited.sourceSnapshot, "Intro\n# Title\n\nUpdated body\n");
+
+    await Deno.writeTextFile(filePath, "Intro\n# Title\n");
+    const deleted = await readResolvedCommentsDocument(
+      filePath,
+      filePath,
+      store,
+    );
+    assertEquals(deleted.comments[0].stale, true);
+  } finally {
+    await Deno.remove(filePath);
+  }
+});
+
+Deno.test("adds display lines when the stored snapshot is unchanged", async () => {
+  const filePath = await Deno.makeTempFile({ suffix: ".md" });
+  const markdown = "# Title\n\nBody\n";
+  const document: PreviewCommentsDocument = {
+    comments: [createComment({ displayLine: undefined })],
+    filePath,
+    sourceSnapshot: markdown,
+  };
+  const store: CommentsStore = {
+    delete: () => Promise.resolve(),
+    list: () => Promise.resolve({ entries: [], warnings: [] }),
+    read: () => Promise.resolve(document),
+    write: () => Promise.reject(new Error("Unexpected write.")),
+  };
+
+  try {
+    await Deno.writeTextFile(filePath, markdown);
+    const resolved = await readResolvedCommentsDocument(
+      filePath,
+      filePath,
+      store,
+    );
+    assertEquals(resolved.comments[0].displayLine, 3);
+  } finally {
+    await Deno.remove(filePath);
+  }
 });

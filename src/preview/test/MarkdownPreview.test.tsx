@@ -756,6 +756,34 @@ Body
     expect(previewThemeCss).toContain(".commentable-block-range-selected");
   });
 
+  it("renders a range comment at the last commentable line in its range", () => {
+    const { container } = renderMarkdown(
+      "# Title\n\nFirst line\ncontinued line\n\nAfter\n",
+      [{
+        body: "Clarify the changed range.",
+        author: { type: "human" },
+        createdAt: "2026-06-05T00:00:00.000Z",
+        endLine: 4,
+        id: 1,
+        startLine: 1,
+        originalEndLine: 4,
+        originalStartLine: 1,
+        sourceHash: "example",
+        sourceText: "# Title\n\nFirst line\ncontinued line",
+        state: "active",
+        updatedAt: "2026-06-05T00:00:00.000Z",
+      }],
+    );
+
+    expect(screen.getAllByText("Clarify the changed range.")).toHaveLength(1);
+    expect(
+      container.querySelector('[data-source-line="3"] .comment-thread'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-source-line="6"] .comment-thread'),
+    ).toBeNull();
+  });
+
   it("fills the full area between selected range endpoints", () => {
     const { container } = renderMarkdown("# Title\n\nBody\n");
     const preview = container.querySelector<HTMLElement>(".markdown-preview");
