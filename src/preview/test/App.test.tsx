@@ -129,6 +129,13 @@ describe("App", () => {
       name: "Reload preview",
     });
     expect(screen.getByText("Source changes are available.")).not.toBeNull();
+    const previewNavigation = screen.getByRole("navigation", {
+      name: "Preview views",
+    });
+    expect(reloadButton.parentElement).toBe(previewNavigation);
+    expect(
+      reloadButton.previousElementSibling?.getAttribute("aria-label"),
+    ).toMatch(/^Switch to (light|dark) mode$/);
 
     fireEvent.click(reloadButton);
 
