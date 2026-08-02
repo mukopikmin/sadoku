@@ -45,8 +45,10 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 type PreviewHeaderProps = {
   fileUrl: string;
   onChangeView: (view: PreviewView) => void;
+  onReloadPreview: () => void;
   onToggleThemeMode: () => void;
   reloadAvailable: boolean;
+  reloading: boolean;
   staleCommentCount: number;
   themeMode: ThemeMode;
   title: string;
@@ -57,8 +59,10 @@ type PreviewHeaderProps = {
 export const PreviewHeader = ({
   fileUrl,
   onChangeView,
+  onReloadPreview,
   onToggleThemeMode,
   reloadAvailable,
+  reloading,
   staleCommentCount,
   themeMode,
   title,
@@ -72,27 +76,14 @@ export const PreviewHeader = ({
         {title}
       </Link>.
       {reloadAvailable && (
-        <Flex
+        <Text
           as="span"
           role="status"
-          display="inline-flex"
-          wrap="wrap"
-          align="center"
-          gap="2"
           ml="2"
           color="warning.fg"
         >
           Source changes are available.
-          <Button
-            size="xs"
-            variant="outline"
-            colorPalette="yellow"
-            onClick={() => globalThis.location.reload()}
-            type="button"
-          >
-            Reload preview
-          </Button>
-        </Flex>
+        </Text>
       )}
     </Text>
     <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
@@ -144,6 +135,33 @@ export const PreviewHeader = ({
             </svg>
           )}
       </IconButton>
+      {reloadAvailable && (
+        <IconButton
+          aria-label={reloading ? "Reloading preview" : "Reload preview"}
+          colorPalette="yellow"
+          disabled={reloading}
+          onClick={onReloadPreview}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <svg
+            aria-hidden="true"
+            fill="none"
+            height="1em"
+            viewBox="0 0 16 16"
+            width="1em"
+          >
+            <path
+              d="M13.5 5.5V2.5m0 0h-3m3 0-2.1 2.1a5 5 0 1 0 1.3 5.1"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+            />
+          </svg>
+        </IconButton>
+      )}
       <Group attached>
         <Button
           aria-current={view === "preview" ? "page" : undefined}

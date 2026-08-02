@@ -190,6 +190,8 @@ const isPreviewCommentReply = (
   if (typeof value !== "object" || value === null) return false;
   const reply = value as Partial<PreviewCommentReply>;
   return (reply.author === undefined || isCommentAuthor(reply.author)) &&
+    (reply.reviewRequested === undefined ||
+      typeof reply.reviewRequested === "boolean") &&
     typeof reply.id === "number" &&
     typeof reply.body === "string" &&
     typeof reply.createdAt === "string" &&
@@ -264,6 +266,12 @@ export const readCommentsDocument = async (
       normalizePreviewComment,
     ),
     filePath,
+    ...(typeof parsed.previousSourceSnapshot === "string"
+      ? { previousSourceSnapshot: parsed.previousSourceSnapshot }
+      : {}),
+    ...(typeof parsed.sourceSnapshot === "string"
+      ? { sourceSnapshot: parsed.sourceSnapshot }
+      : {}),
   };
 };
 
@@ -271,11 +279,23 @@ export const writeCommentsDocument = async (
   filePath: string,
   document: PreviewCommentsDocument,
 ): Promise<void> => {
-  await Deno.mkdir(getCommentsDirectoryPath(), { recursive: true });
-  await Deno.writeTextFile(
-    getCommentsFilePath(filePath),
-    `${JSON.stringify(document, null, 2)}\n`,
-  );
+  const commentsDirectory = getCommentsDirectoryPath();
+  await Deno.mkdir(commentsDirectory, { recursive: true });
+  const temporaryPath = await Deno.makeTempFile({
+    dir: commentsDirectory,
+    prefix: ".comments-",
+    suffix: ".tmp",
+  });
+  try {
+    await Deno.writeTextFile(
+      temporaryPath,
+      `${JSON.stringify(document, null, 2)}\n`,
+    );
+    await Deno.rename(temporaryPath, getCommentsFilePath(filePath));
+  } catch (error) {
+    await Deno.remove(temporaryPath).catch(() => {});
+    throw error;
+  }
 };
 
 export const listCommentsFiles = async (): Promise<CommentsStoreFileList> => {

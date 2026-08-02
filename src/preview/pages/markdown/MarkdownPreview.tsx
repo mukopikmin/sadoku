@@ -43,6 +43,29 @@ type RangeHighlightLayout = RangeHighlight & {
   top: number;
 };
 
+const commentableBlockSelector =
+  ":scope > .commentable-block, :scope > .comment-markdown-list .commentable-block";
+
+const getCommentAnchorLine = (
+  comment: ActiveComment,
+  commentableLines: readonly number[],
+): number => {
+  const linesInRange = commentableLines.filter((line) =>
+    isLineInRange(line, comment)
+  );
+  if (linesInRange.length > 0) return linesInRange.at(-1)!;
+  if (commentableLines.length === 0) return comment.endLine;
+  return commentableLines.slice(1).reduce((closest, line) => {
+    const distance = line < comment.startLine
+      ? comment.startLine - line
+      : line - comment.endLine;
+    const closestDistance = closest < comment.startLine
+      ? comment.startLine - closest
+      : closest - comment.endLine;
+    return distance < closestDistance ? line : closest;
+  }, commentableLines[0]);
+};
+
 const mergeRanges = (ranges: CommentRange[]): CommentRange[] => {
   const sorted = [...ranges].sort((a, b) =>
     a.startLine - b.startLine || a.endLine - b.endLine
@@ -100,16 +123,18 @@ export const MarkdownPreview = ({
   markdown,
 }: MarkdownPreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
+  const [commentableLines, setCommentableLines] = useState<number[]>([]);
   const commentsByLine = useMemo(() => {
     const grouped = new Map<number, ActiveComment[]>();
     for (const comment of comments) {
-      grouped.set(comment.endLine, [
-        ...(grouped.get(comment.endLine) ?? []),
+      const anchorLine = getCommentAnchorLine(comment, commentableLines);
+      grouped.set(anchorLine, [
+        ...(grouped.get(anchorLine) ?? []),
         comment,
       ]);
     }
     return grouped;
-  }, [comments]);
+  }, [commentableLines, comments]);
   const continuousCommentRanges = useMemo(() =>
     mergeRanges(
       comments.filter((comment) => comment.startLine < comment.endLine).map(
@@ -151,7 +176,7 @@ export const MarkdownPreview = ({
     if (!preview) return;
     const previewRect = preview.getBoundingClientRect();
     const blocks = [...preview.querySelectorAll<HTMLElement>(
-      ":scope > .commentable-block, :scope > .comment-markdown-list .commentable-block",
+      commentableBlockSelector,
     )];
     const layouts = rangeHighlights.flatMap((range) => {
       const contents = blocks.filter((block) => {
@@ -186,6 +211,21 @@ export const MarkdownPreview = ({
   }, [rangeHighlights]);
 
   useLayoutEffect(() => {
+    const preview = previewRef.current;
+    if (!preview) return;
+    const lines = [...preview.querySelectorAll<HTMLElement>(
+      commentableBlockSelector,
+    )].map((block) => Number(block.dataset.sourceLine)).filter(Number.isFinite)
+      .sort((left, right) => left - right);
+    setCommentableLines((current) =>
+      current.length === lines.length &&
+        current.every((line, index) => line === lines[index])
+        ? current
+        : lines
+    );
+  }, [markdown]);
+
+  useLayoutEffect(() => {
     updateRangeHighlightLayouts();
     const preview = previewRef.current;
     if (!preview) return;
@@ -203,7 +243,7 @@ export const MarkdownPreview = ({
 
   useEffect(() => {
     void initializeMermaid();
-  });
+  }, [activeCommentLine, comments, markdown, selectedRange]);
 
   const handleSelectCommentRange = (clickedRange: CommentRange) => {
     setActiveCommentLine(undefined);

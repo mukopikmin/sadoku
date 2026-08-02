@@ -89,7 +89,7 @@ const main = async (): Promise<void> => {
           options.file,
           options.commentId,
           options.replyBody ?? "",
-          { asBot: options.asBot },
+          { asBot: options.asBot, requestReview: options.requestReview },
         ),
         null,
         2,

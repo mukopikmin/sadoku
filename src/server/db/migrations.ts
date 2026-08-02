@@ -1,6 +1,8 @@
 import { createCommentTablesMigration } from "./migrations/0001_create_comment_tables.ts";
 import { addCommentAuthorsMigration } from "./migrations/0002_add_comment_authors.ts";
 import { addCommentResolverMigration } from "./migrations/0003_add_comment_resolver.ts";
+import { addReplyReviewRequestedMigration } from "./migrations/0004_add_reply_review_requested.ts";
+import { addCommentDocumentSnapshotMigration } from "./migrations/0005_add_comment_document_snapshot.ts";
 import { type AppDatabase, withTransaction } from "./connection.ts";
 
 export interface Migration {
@@ -24,6 +26,8 @@ export const MIGRATIONS: readonly Migration[] = [
   createCommentTablesMigration,
   addCommentAuthorsMigration,
   addCommentResolverMigration,
+  addReplyReviewRequestedMigration,
+  addCommentDocumentSnapshotMigration,
 ];
 
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;

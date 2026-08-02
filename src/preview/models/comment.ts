@@ -7,6 +7,7 @@ export type CommentReply = {
   body: string;
   createdAt: string;
   id: number;
+  reviewRequested?: boolean;
   updatedAt: string;
 };
 

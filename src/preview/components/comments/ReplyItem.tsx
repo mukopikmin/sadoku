@@ -83,6 +83,11 @@ export const ReplyItem = ({
           {reply.author.type === "bot" && (
             <Badge colorPalette="purple" variant="subtle">Bot</Badge>
           )}
+          {reply.author.type === "bot" && reply.reviewRequested && (
+            <Badge colorPalette="blue" variant="subtle">
+              Review requested
+            </Badge>
+          )}
         </Flex>
         {!isEditing && (
           <Flex wrap="wrap" gap="2">

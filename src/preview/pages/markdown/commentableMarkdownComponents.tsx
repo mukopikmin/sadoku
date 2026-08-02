@@ -8,7 +8,6 @@ import {
   type CommentRenderingContextValue,
   getSourceLine,
   getSourceRange,
-  isLineInRange,
   SourceLineContext,
   useCommentRenderingContext,
 } from "./commentRendering";
@@ -95,8 +94,8 @@ const getCommentableBlockProps = (
       props.selectedRange.endLine >= startLine &&
       props.selectedRange.endLine <= endLine,
     isSelected: props.selectedRange
-      ? props.selectedRange.startLine === props.selectedRange.endLine &&
-        isLineInRange(startLine, props.selectedRange)
+      ? props.selectedRange.startLine === startLine &&
+        props.selectedRange.endLine === endLine
       : false,
     sourceRange,
   };

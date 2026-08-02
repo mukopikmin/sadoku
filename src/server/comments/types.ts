@@ -7,6 +7,7 @@ export type PreviewCommentReply = {
   body: string;
   createdAt: string;
   id: number;
+  reviewRequested?: boolean;
   updatedAt: string;
 };
 
@@ -33,4 +34,6 @@ export type PreviewComment = {
 export type PreviewCommentsDocument = {
   comments: PreviewComment[];
   filePath: string;
+  previousSourceSnapshot?: string;
+  sourceSnapshot?: string;
 };
