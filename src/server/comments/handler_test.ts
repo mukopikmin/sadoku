@@ -545,7 +545,8 @@ testWithTempComments(
       assertEquals(document.filePath, baseUrl);
       assertEquals(document.comments.length, 1);
       assertEquals(document.comments[0].body, "Review remote source.");
-      assertEquals(document.comments[0].stale, true);
+      assertEquals(document.comments[0].startLine, 1);
+      assertEquals(document.comments[0].stale, false);
     } finally {
       await source.shutdown().catch(() => {});
       await source.finished.catch(() => {});

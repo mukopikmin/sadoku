@@ -346,13 +346,36 @@ Deno.test("tracks preview comments when their source line moves", async () => {
       assertEquals(updatedComment.stale, false);
 
       await Deno.writeTextFile(filePath, "Intro\n# Title\n\nChanged\n");
+      const editedResponse = await handler(
+        new Request("http://127.0.0.1:3334/__sadoku/comments"),
+        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+      );
+      const editedDocument = await editedResponse.json();
+      assertEquals(editedDocument.comments[0].startLine, 4);
+      assertEquals(editedDocument.comments[0].originalStartLine, 3);
+      assertEquals(editedDocument.comments[0].stale, false);
+
+      const editedCommentResponse = await handler(
+        new Request(
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}`,
+          {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ body: "Reviewed the changed paragraph." }),
+          },
+        ),
+        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+      );
+      const editedComment = await editedCommentResponse.json();
+      assertEquals(editedComment.startLine, 4);
+      assertEquals(editedComment.stale, false);
+
+      await Deno.writeTextFile(filePath, "Intro\n# Title\n");
       const staleResponse = await handler(
         new Request("http://127.0.0.1:3334/__sadoku/comments"),
         {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
       );
       const staleDocument = await staleResponse.json();
-      assertEquals(staleDocument.comments[0].startLine, 3);
-      assertEquals(staleDocument.comments[0].originalStartLine, 3);
       assertEquals(staleDocument.comments[0].stale, true);
     } finally {
       await Deno.remove(filePath).catch(() => {});

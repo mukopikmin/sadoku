@@ -14,6 +14,8 @@ import type {
 type CommentDocumentRow = {
   id: number;
   file_path: string;
+  previous_source_snapshot: string | null;
+  source_snapshot: string | null;
 };
 
 type CommentRow = {
@@ -117,7 +119,7 @@ const readDocumentRow = async (
   filePath: string,
 ): Promise<CommentDocumentRow | undefined> => {
   const result = await database.execute<CommentDocumentRow>(
-    "SELECT id, file_path FROM comment_document WHERE file_path = ?",
+    "SELECT id, file_path, previous_source_snapshot, source_snapshot FROM comment_document WHERE file_path = ?",
     [filePath],
   );
   return result.rows?.[0];
@@ -174,6 +176,12 @@ const readCommentsDocumentFromSqlite = async (
       )
     ),
     filePath,
+    ...(documentRow.previous_source_snapshot === null
+      ? {}
+      : { previousSourceSnapshot: documentRow.previous_source_snapshot }),
+    ...(documentRow.source_snapshot === null
+      ? {}
+      : { sourceSnapshot: documentRow.source_snapshot }),
   };
 };
 
@@ -185,10 +193,20 @@ const writeCommentsDocumentToSqlite = async (
   await withTransaction(database, async () => {
     const updatedAt = latestTimestamp(document);
     await database.execute(
-      `INSERT INTO comment_document (file_path, created_at, updated_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(file_path) DO UPDATE SET updated_at = excluded.updated_at`,
-      [filePath, updatedAt, updatedAt],
+      `INSERT INTO comment_document (
+          file_path, previous_source_snapshot, source_snapshot, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(file_path) DO UPDATE SET
+          previous_source_snapshot = excluded.previous_source_snapshot,
+          source_snapshot = excluded.source_snapshot,
+          updated_at = excluded.updated_at`,
+      [
+        filePath,
+        document.previousSourceSnapshot ?? null,
+        document.sourceSnapshot ?? null,
+        updatedAt,
+        updatedAt,
+      ],
     );
     const documentId = await readDocumentId(database, filePath);
 

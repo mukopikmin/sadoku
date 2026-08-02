@@ -49,6 +49,7 @@ const document = (filePath: string): PreviewCommentsDocument => ({
     },
   ],
   filePath,
+  sourceSnapshot: "# Snapshot\n",
 });
 
 Deno.test("sqlite comments store reads and writes documents by file path", async () => {
