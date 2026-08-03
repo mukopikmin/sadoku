@@ -9,6 +9,17 @@ export type UpdateResult = {
   updated: boolean;
 };
 
+export type UpdatePlan = {
+  channel: UpdateChannel;
+  currentVersion: string;
+  targetVersion: string;
+  target: string;
+  executable: string;
+  archive: string;
+  downloadBaseUrl: string;
+  updateAvailable: boolean;
+};
+
 type FileInfo = { isFile: boolean };
 
 export type UpdateFileSystem = {
@@ -136,6 +147,44 @@ const resolveStableVersion = async (fetcher: typeof fetch): Promise<string> => {
   return tag.slice(1);
 };
 
+const parseJson = async (
+  fetcher: typeof fetch,
+  url: string,
+): Promise<unknown> =>
+  JSON.parse(new TextDecoder().decode(await download(fetcher, url)));
+
+const resolveNightlyVersion = async (
+  fetcher: typeof fetch,
+): Promise<string> => {
+  let sha: unknown;
+  try {
+    const ref = await parseJson(
+      fetcher,
+      `${apiRepository}/git/ref/tags/nightly`,
+    );
+    sha = (ref as { object?: { sha?: unknown } }).object?.sha;
+  } catch {
+    throw new Error("GitHub returned invalid nightly tag metadata.");
+  }
+  if (typeof sha !== "string" || !/^[0-9a-f]{40}$/i.test(sha)) {
+    throw new Error("GitHub returned an invalid nightly commit hash.");
+  }
+
+  let date: unknown;
+  try {
+    const commit = await parseJson(fetcher, `${apiRepository}/commits/${sha}`);
+    date = (commit as { commit?: { committer?: { date?: unknown } } }).commit
+      ?.committer?.date;
+  } catch {
+    throw new Error("GitHub returned invalid nightly commit metadata.");
+  }
+  if (typeof date !== "string" || Number.isNaN(Date.parse(date))) {
+    throw new Error("GitHub returned an invalid nightly commit date.");
+  }
+  const day = new Date(date).toISOString().slice(0, 10).replaceAll("-", "");
+  return `nightly-${day}-${sha.slice(0, 8)}`;
+};
+
 export const verifyChecksum = async (
   archive: Uint8Array,
   checksumBytes: Uint8Array,
@@ -170,11 +219,11 @@ const parseBinaryVersion = (output: string): string => {
   return match[1];
 };
 
-export const updateSadoku = async (
+export const checkForUpdate = async (
   currentVersion: string,
   requestedChannel?: UpdateChannel,
   dependencies: UpdateDependencies = defaultDependencies(),
-): Promise<UpdateResult> => {
+): Promise<UpdatePlan> => {
   const channel = requestedChannel ?? defaultUpdateChannel(currentVersion);
   const target = releaseTarget(dependencies.platform);
   const executable = dependencies.execPath();
@@ -200,24 +249,42 @@ export const updateSadoku = async (
   }
   parseBinaryVersion(currentProbe.output);
 
-  const stableVersion = channel === "stable"
+  const targetVersion = channel === "stable"
     ? await resolveStableVersion(dependencies.fetch)
-    : "nightly";
-  if (channel === "stable" && currentVersion === stableVersion) {
-    return {
-      channel,
-      currentVersion,
-      targetVersion: stableVersion,
-      updated: false,
-    };
-  }
+    : await resolveNightlyVersion(dependencies.fetch);
+  const archiveVersion = channel === "nightly" ? "nightly" : targetVersion;
+  const archive = archiveName(channel, archiveVersion, target);
+  const tag = channel === "nightly" ? "nightly" : `v${targetVersion}`;
+  return {
+    archive,
+    channel,
+    currentVersion,
+    downloadBaseUrl: `${repository}/releases/download/${tag}`,
+    executable,
+    target,
+    targetVersion,
+    updateAvailable: currentVersion !== targetVersion,
+  };
+};
 
-  const archive = archiveName(channel, stableVersion, target);
-  const tag = channel === "nightly" ? "nightly" : `v${stableVersion}`;
-  const baseUrl = `${repository}/releases/download/${tag}`;
+export const installUpdate = async (
+  plan: UpdatePlan,
+  dependencies: UpdateDependencies = defaultDependencies(),
+): Promise<UpdateResult> => {
+  const {
+    archive,
+    channel,
+    currentVersion,
+    downloadBaseUrl,
+    executable,
+    targetVersion,
+  } = plan;
+  if (!plan.updateAvailable) {
+    return { channel, currentVersion, targetVersion, updated: false };
+  }
   const [archiveBytes, checksumBytes] = await Promise.all([
-    download(dependencies.fetch, `${baseUrl}/${archive}`),
-    download(dependencies.fetch, `${baseUrl}/${archive}.sha256`),
+    download(dependencies.fetch, `${downloadBaseUrl}/${archive}`),
+    download(dependencies.fetch, `${downloadBaseUrl}/${archive}.sha256`),
   ]);
   await verifyChecksum(archiveBytes, checksumBytes);
 
@@ -251,9 +318,11 @@ export const updateSadoku = async (
     if (!probe.success) {
       throw new Error("Downloaded Sadoku binary could not report its version.");
     }
-    const targetVersion = parseBinaryVersion(probe.output);
-    if (currentVersion === targetVersion) {
-      return { channel, currentVersion, targetVersion, updated: false };
+    const binaryVersion = parseBinaryVersion(probe.output);
+    if (binaryVersion !== targetVersion) {
+      throw new Error(
+        `Downloaded binary version ${binaryVersion} does not match expected version ${targetVersion}.`,
+      );
     }
 
     stagedPath = await dependencies.fs.makeTempFile({
@@ -285,6 +354,19 @@ export const updateSadoku = async (
       undefined
     );
   }
+};
+
+export const updateSadoku = async (
+  currentVersion: string,
+  requestedChannel?: UpdateChannel,
+  dependencies: UpdateDependencies = defaultDependencies(),
+): Promise<UpdateResult> => {
+  const plan = await checkForUpdate(
+    currentVersion,
+    requestedChannel,
+    dependencies,
+  );
+  return await installUpdate(plan, dependencies);
 };
 
 export const updateRepositoryUrl = repository;

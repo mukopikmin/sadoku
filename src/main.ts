@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-run --allow-env=BROWSER,HOME,XDG_CONFIG_HOME,XDG_DATA_HOME,APPDATA,SADOKU_COMMENTS_DIR,MDVIEW_COMMENTS_DIR
 import { CliUsageError, parseArgs, usage, version } from "./cli/args.ts";
 import { openBrowser } from "./cli/browser.ts";
-import { updateSadoku } from "./cli/update.ts";
+import { checkForUpdate, installUpdate } from "./cli/update.ts";
 import {
   addComment,
   formatCommentFilesTable,
@@ -29,14 +29,20 @@ const main = async (): Promise<void> => {
   }
 
   if (options.command === "update") {
-    const result = await updateSadoku(version, options.channel);
-    console.log(`Current version: ${result.currentVersion}`);
-    console.log(`Update channel: ${result.channel}`);
-    console.log(
-      result.updated
-        ? `Updated to: ${result.targetVersion}`
-        : `Already up to date: ${result.targetVersion}`,
-    );
+    const plan = await checkForUpdate(version, options.channel);
+    console.log(`Current version: ${plan.currentVersion}`);
+    console.log(`Update channel: ${plan.channel}`);
+    console.log(`Available version: ${plan.targetVersion}`);
+    if (!plan.updateAvailable) {
+      console.log(`Already up to date: ${plan.targetVersion}`);
+      return;
+    }
+    if (!confirm(`Update Sadoku to ${plan.targetVersion}?`)) {
+      console.log("Update cancelled.");
+      return;
+    }
+    const result = await installUpdate(plan);
+    console.log(`Updated to: ${result.targetVersion}`);
     return;
   }
 

@@ -2,6 +2,7 @@ import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { join } from "@std/path";
 import {
   archiveName,
+  checkForUpdate,
   defaultUpdateChannel,
   type UpdateDependencies,
   updateSadoku,
@@ -72,14 +73,30 @@ const withArchiveFetch = (
   checksum: string,
 ): UpdateDependencies => ({
   ...deps,
-  fetch: ((input) =>
-    Promise.resolve(
+  fetch: ((input) => {
+    const url = String(input);
+    if (url.includes("/git/ref/tags/nightly")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({
+          object: { sha: `a1b2c3d4${"0".repeat(32)}` },
+        })),
+      );
+    }
+    if (url.includes("/commits/")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({
+          commit: { committer: { date: "2026-08-03T00:00:00Z" } },
+        })),
+      );
+    }
+    return Promise.resolve(
       new Response(
-        String(input).endsWith(".sha256")
+        url.endsWith(".sha256")
           ? checksum
           : new Blob([new Uint8Array(archive).buffer]),
       ),
-    )) as typeof fetch,
+    );
+  }) as typeof fetch,
 });
 
 Deno.test("selects channels and keeps archive naming aligned with releases", () => {
@@ -155,6 +172,35 @@ Deno.test("reports no update without replacing the current binary", async () => 
   try {
     const result = await updateSadoku(data.version, "nightly", deps);
     assertEquals(result.updated, false);
+    assertEquals(await Deno.readTextFile(executable), "old");
+  } finally {
+    await Deno.remove(data.root, { recursive: true });
+  }
+});
+
+Deno.test("checks nightly metadata without downloading update assets", async () => {
+  const data = await fixture("nightly-20260803-a1b2c3d4");
+  const executable = join(data.root, "installed-sadoku");
+  await Deno.writeTextFile(executable, "old");
+  const requested: string[] = [];
+  let deps = dependencies(executable, data.bytes, data.checksum, data.version);
+  deps = withArchiveFetch(deps, data.bytes, data.checksum);
+  const fetchMetadata = deps.fetch;
+  deps.fetch = ((input, init) => {
+    requested.push(String(input));
+    return fetchMetadata(input, init);
+  }) as typeof fetch;
+  try {
+    const plan = await checkForUpdate(
+      "nightly-20260802-deadbeef",
+      "nightly",
+      deps,
+    );
+    assertEquals(plan.updateAvailable, true);
+    assertEquals(plan.targetVersion, data.version);
+    assertEquals(requested.length, 2);
+    assertEquals(requested.some((url) => url.endsWith(".tar.gz")), false);
+    assertEquals(requested.some((url) => url.endsWith(".sha256")), false);
     assertEquals(await Deno.readTextFile(executable), "old");
   } finally {
     await Deno.remove(data.root, { recursive: true });
