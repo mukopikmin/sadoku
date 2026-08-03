@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-run --allow-env=BROWSER,HOME,XDG_CONFIG_HOME,XDG_DATA_HOME,APPDATA,SADOKU_COMMENTS_DIR,MDVIEW_COMMENTS_DIR
 import { CliUsageError, parseArgs, usage, version } from "./cli/args.ts";
 import { openBrowser } from "./cli/browser.ts";
+import { updateSadoku } from "./cli/update.ts";
 import {
   addComment,
   formatCommentFilesTable,
@@ -24,6 +25,18 @@ const main = async (): Promise<void> => {
 
   if (options.version) {
     console.log(`sadoku ${version}`);
+    return;
+  }
+
+  if (options.command === "update") {
+    const result = await updateSadoku(version, options.channel);
+    console.log(`Current version: ${result.currentVersion}`);
+    console.log(`Update channel: ${result.channel}`);
+    console.log(
+      result.updated
+        ? `Updated to: ${result.targetVersion}`
+        : `Already up to date: ${result.targetVersion}`,
+    );
     return;
   }
 

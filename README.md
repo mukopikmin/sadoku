@@ -25,6 +25,20 @@ curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh |
 
 Make sure `$HOME/.local/bin` is included in your `PATH`.
 
+An installed binary can update itself in place. Stable releases use GitHub's
+latest release; nightly builds use the moving `nightly` release:
+
+```sh
+sadoku update
+sadoku update --channel stable
+sadoku update --channel nightly
+```
+
+When `--channel` is omitted, versions in the `nightly-YYYYMMDD-<commit-hash>`
+format stay on nightly. Release versions and builds whose origin cannot be
+determined, including `0.0.0-dev`, default to stable. An explicit `--channel`
+always takes precedence.
+
 To build and install from source, clone the repository and run:
 
 ```sh
@@ -47,7 +61,14 @@ If `--version` is omitted, the compiled binary reports the development version
 
 ```sh
 sadoku start <file.md|url> [options]
+sadoku update [--channel stable|nightly]
 ```
+
+Self-update supports compiled Linux x64 and macOS arm64 binaries. It verifies
+the downloaded archive's SHA-256 checksum and replaces the executable
+atomically. It is unavailable on Windows, unsupported architectures, read-only
+installations, and source runs such as `deno run src/main.ts`; use the installer
+or build tools in those cases.
 
 Preview a file:
 
@@ -261,6 +282,13 @@ Stable release tags and archive versions include a leading `v` (for example,
 channel name directly, for example `sadoku-nightly-linux-x64.tar.gz`. Nightly
 binaries report a version containing the tested commit's UTC date and short
 commit hash, such as `nightly-20260729-a1b2c3d4`.
+
+The installer and `sadoku update` both download from
+`https://github.com/mukopikmin/sadoku`. Stable Unix assets are named
+`sadoku-v<version>-<target>.tar.gz`, while moving nightly Unix assets are named
+`sadoku-nightly-<target>.tar.gz`; each has a same-name `.sha256` companion.
+Self-update supports the `linux-x64` and `darwin-arm64` targets. Release builds
+also produce `windows-x64`, but Windows self-update is not supported.
 
 Build release archives under `dist/`:
 
