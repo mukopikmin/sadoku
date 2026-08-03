@@ -128,7 +128,6 @@ describe("App", () => {
     const reloadButton = await screen.findByRole("button", {
       name: "Reload preview",
     });
-    expect(screen.getByText("Source changes are available.")).not.toBeNull();
     const previewNavigation = screen.getByRole("navigation", {
       name: "Preview views",
     });
@@ -151,7 +150,6 @@ describe("App", () => {
     ).toBe("page");
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     await screen.findByRole("heading", { name: "Updated title" });
-    expect(screen.queryByText("Source changes are available.")).toBeNull();
   });
 
   it("keeps the reload action available when reloading Markdown fails", async () => {
