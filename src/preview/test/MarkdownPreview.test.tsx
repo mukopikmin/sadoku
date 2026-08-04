@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { initializeMermaid } from "../markdown/mermaid";
-import { previewThemeCss } from "../theme";
+import { previewThemeCss, sadokuChakraSystem } from "../theme";
 
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
@@ -74,6 +74,15 @@ describe("MarkdownPreview", () => {
     expect(previewThemeCss).not.toMatch(/\brgba?\(/);
     expect(previewThemeCss).toContain("var(--chakra-spacing-2)");
     expect(previewThemeCss).toContain("var(--chakra-colors-syntax-keyword)");
+  });
+
+  it("gets semantic preview colors from the Chakra theme", () => {
+    const tokenCss = JSON.stringify(sadokuChakraSystem.getTokenCss());
+
+    expect(tokenCss).toContain("--chakra-colors-accent");
+    expect(tokenCss).toContain("--chakra-colors-syntax-keyword");
+    expect(tokenCss).toContain(".dark");
+    expect(previewThemeCss).not.toMatch(/--chakra-colors-accent\s*:/);
   });
 
   it("keeps overlapping selection backgrounds opaque", () => {
@@ -140,8 +149,8 @@ console.log("<ok>");
     expect(previewThemeCss).toMatch(
       /\.commentable-horizontal-rule\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-6\);/,
     );
-    expect(previewThemeCss).toContain(
-      ":where(.commentable-list-item, .commentable-table)",
+    expect(previewThemeCss).toMatch(
+      /\.commentable-block\s*\{[^}]*--comment-highlight-spacing-before: 0px;[^}]*--comment-highlight-spacing-after: 0px;/,
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-block:has\(\+ \.commentable-heading\)[^{]*\{[^}]*bottom: 1px;/,
@@ -506,18 +515,17 @@ graph TD
     const mermaid = container.querySelector(".mermaid-container pre.mermaid");
     expect(mermaid).not.toBeNull();
     expect(mermaid?.textContent).toBe("graph TD\n  A --> B");
-    expect(
-      screen.getByRole("button", { name: "Zoom Mermaid diagram" }),
-    ).not.toBeNull();
+    const zoomButton = screen.getByRole("button", {
+      name: "Zoom Mermaid diagram",
+    });
+    expect(zoomButton).not.toBeNull();
     expect(previewThemeCss).toContain(".mermaid {");
     expect(previewThemeCss).toContain(
       "background: var(--chakra-colors-canvas-subtle);",
     );
     expect(previewThemeCss).toContain("color: var(--chakra-colors-fg);");
-    expect(previewThemeCss).toContain(".mermaid-zoom-button");
-    expect(previewThemeCss).toContain(
-      "background: var(--chakra-colors-canvas);",
-    );
+    expect(getComputedStyle(zoomButton).position).toBe("absolute");
+    expect(previewThemeCss).not.toContain(".mermaid-zoom-button");
   });
 
   it("reruns mermaid rendering after preview interactions recreate diagram nodes", async () => {

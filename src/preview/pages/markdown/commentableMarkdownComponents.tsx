@@ -1,4 +1,4 @@
-import { Button, List } from "@chakra-ui/react";
+import { Box, Button, List } from "@chakra-ui/react";
 import { Children, createElement, isValidElement, useContext } from "react";
 import type React from "react";
 import type { Components } from "react-markdown";
@@ -160,19 +160,24 @@ const createCommentablePre = () => {
     const element = mermaidCode === undefined
       ? renderMarkdownPre(elementProps, children)
       : (
-        <div className="mermaid-container">
+        <Box className="mermaid-container" mb="4" position="relative">
           <pre className="mermaid">{mermaidCode}</pre>
           <Button
             aria-label="Zoom Mermaid diagram"
+            bg="canvas"
             className="mermaid-zoom-button"
+            color="fg"
+            position="absolute"
+            right="2"
             size="xs"
             title="Zoom Mermaid diagram"
+            top="2"
             type="button"
             variant="outline"
           >
             Zoom
           </Button>
-        </div>
+        </Box>
       );
     if (line === undefined || ancestorSourceLines.has(line)) return element;
 
