@@ -75,16 +75,6 @@ export const PreviewHeader = ({
       <Link href={fileUrl} color="fg" fontWeight="semibold">
         {title}
       </Link>.
-      {reloadAvailable && (
-        <Text
-          as="span"
-          role="status"
-          ml="2"
-          color="warning.fg"
-        >
-          Source changes are available.
-        </Text>
-      )}
     </Text>
     <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
       <IconButton

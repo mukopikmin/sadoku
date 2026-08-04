@@ -129,7 +129,6 @@ describe("App", () => {
     const reloadButton = await screen.findByRole("button", {
       name: "Reload preview",
     });
-    expect(screen.getByText("Source changes are available.")).not.toBeNull();
     const previewNavigation = screen.getByRole("navigation", {
       name: "Preview views",
     });
@@ -158,7 +157,6 @@ describe("App", () => {
       "graph LR\n  C --> D",
     );
     expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" });
-    expect(screen.queryByText("Source changes are available.")).toBeNull();
   });
 
   it("keeps the reload action available when reloading Markdown fails", async () => {
