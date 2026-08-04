@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { initializeMermaid } from "../markdown/mermaid";
-import { previewThemeCss } from "../theme";
+import { previewThemeCss, sadokuChakraSystem } from "../theme";
 
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
@@ -19,7 +19,7 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => {
   globalThis.getSelection()?.removeAllRanges();
   cleanup();
-  vi.mocked(initializeMermaid).mockClear();
+  vi.mocked(initializeMermaid).mockReset();
 });
 
 const ensurePreviewThemeStyle = () => {
@@ -51,6 +51,7 @@ const renderMarkdown = (
       })}
       comments={comments}
       markdown={markdown}
+      theme="default"
     />,
   );
   return { ...result, container: result.container };
@@ -74,6 +75,15 @@ describe("MarkdownPreview", () => {
     expect(previewThemeCss).not.toMatch(/\brgba?\(/);
     expect(previewThemeCss).toContain("var(--chakra-spacing-2)");
     expect(previewThemeCss).toContain("var(--chakra-colors-syntax-keyword)");
+  });
+
+  it("gets semantic preview colors from the Chakra theme", () => {
+    const tokenCss = JSON.stringify(sadokuChakraSystem.getTokenCss());
+
+    expect(tokenCss).toContain("--chakra-colors-accent");
+    expect(tokenCss).toContain("--chakra-colors-syntax-keyword");
+    expect(tokenCss).toContain(".dark");
+    expect(previewThemeCss).not.toMatch(/--chakra-colors-accent\s*:/);
   });
 
   it("keeps overlapping selection backgrounds opaque", () => {
@@ -140,8 +150,8 @@ console.log("<ok>");
     expect(previewThemeCss).toMatch(
       /\.commentable-horizontal-rule\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-6\);/,
     );
-    expect(previewThemeCss).toContain(
-      ":where(.commentable-list-item, .commentable-table)",
+    expect(previewThemeCss).toMatch(
+      /\.commentable-block\s*\{[^}]*--comment-highlight-spacing-before: 0px;[^}]*--comment-highlight-spacing-after: 0px;/,
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-block:has\(\+ \.commentable-heading\)[^{]*\{[^}]*bottom: 1px;/,
@@ -506,18 +516,17 @@ graph TD
     const mermaid = container.querySelector(".mermaid-container pre.mermaid");
     expect(mermaid).not.toBeNull();
     expect(mermaid?.textContent).toBe("graph TD\n  A --> B");
-    expect(
-      screen.getByRole("button", { name: "Zoom Mermaid diagram" }),
-    ).not.toBeNull();
+    const zoomButton = screen.getByRole("button", {
+      name: "Zoom Mermaid diagram",
+    });
+    expect(zoomButton).not.toBeNull();
     expect(previewThemeCss).toContain(".mermaid {");
     expect(previewThemeCss).toContain(
       "background: var(--chakra-colors-canvas-subtle);",
     );
     expect(previewThemeCss).toContain("color: var(--chakra-colors-fg);");
-    expect(previewThemeCss).toContain(".mermaid-zoom-button");
-    expect(previewThemeCss).toContain(
-      "background: var(--chakra-colors-canvas);",
-    );
+    expect(getComputedStyle(zoomButton).position).toBe("absolute");
+    expect(previewThemeCss).not.toContain(".mermaid-zoom-button");
   });
 
   it("reruns mermaid rendering after preview interactions recreate diagram nodes", async () => {
@@ -532,6 +541,43 @@ graph TD
     fireEvent.click(screen.getByTitle("Select line 1 for comment"));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+  });
+
+  it("reruns mermaid rendering after the Markdown replaces diagram nodes", async () => {
+    const initializedSources: (string | null | undefined)[] = [];
+    vi.mocked(initializeMermaid).mockImplementation(async () => {
+      initializedSources.push(document.querySelector(".mermaid")?.textContent);
+    });
+    const { container, rerender } = renderMarkdown(`\`\`\`mermaid
+graph TD
+  A --> B
+\`\`\`
+`);
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
+    expect(initializedSources).toEqual(["graph TD\n  A --> B"]);
+
+    rerender(
+      <MarkdownPreview
+        actions={createCommentActions()}
+        comments={[]}
+        markdown={`\`\`\`mermaid
+graph LR
+  C --> D
+\`\`\`
+`}
+        theme="default"
+      />,
+    );
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+    const updatedNode = container.querySelector(".mermaid");
+    expect(updatedNode?.textContent).toBe("graph LR\n  C --> D");
+    expect(initializedSources).toEqual([
+      "graph TD\n  A --> B",
+      "graph LR\n  C --> D",
+    ]);
+    expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" });
   });
 
   it("does not render Mermaid zoom buttons for regular code fences", () => {
