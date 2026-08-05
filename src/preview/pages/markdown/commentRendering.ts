@@ -6,6 +6,9 @@ import type { MarkdownElementProps } from "../../markdown/markdownRenderers";
 export type CommentRange = { endLine: number; startLine: number };
 
 type SourcePosition = {
+  end?: {
+    line?: number;
+  };
   start?: {
     line?: number;
   };
@@ -25,7 +28,7 @@ export type CommentControlProps = {
   activeRange?: CommentRange;
   onCloseCommentForm: () => void;
   onOpenCommentForm: () => void;
-  onSelectCommentLine: (line: number) => void;
+  onSelectCommentRange: (range: CommentRange) => void;
   selectedRange?: CommentRange;
 };
 
@@ -49,6 +52,17 @@ export const useCommentRenderingContext = (): CommentRenderingContextValue => {
 export const getSourceLine = (
   props: { node?: SourceNode },
 ): number | undefined => props.node?.position?.start?.line;
+
+export const getSourceRange = (
+  props: { node?: SourceNode },
+): CommentRange | undefined => {
+  const startLine = props.node?.position?.start?.line;
+  if (startLine === undefined) return undefined;
+  return {
+    startLine,
+    endLine: props.node?.position?.end?.line ?? startLine,
+  };
+};
 
 export const isLineInRange = (line: number, range: CommentRange): boolean =>
   line >= range.startLine && line <= range.endLine;

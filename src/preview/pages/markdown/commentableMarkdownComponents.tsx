@@ -7,7 +7,7 @@ import {
   type CommentableComponentProps,
   type CommentRenderingContextValue,
   getSourceLine,
-  isLineInRange,
+  getSourceRange,
   SourceLineContext,
   useCommentRenderingContext,
 } from "./commentRendering";
@@ -63,31 +63,41 @@ const getMermaidCodeText = (
 
 const getCommentableBlockProps = (
   context: CommentRenderingContextValue,
-  line: number,
+  sourceRange: { endLine: number; startLine: number },
 ) => {
   const {
     commentsByLine,
     commentHighlightsByLine,
     ...props
   } = context;
-  const comments = commentsByLine.get(line) ?? [];
+  const { endLine, startLine } = sourceRange;
+  const comments = [...commentsByLine.entries()].flatMap(([line, comments]) =>
+    line >= startLine && line <= endLine ? comments : []
+  );
   const hasContinuousSelection = props.selectedRange !== undefined &&
     props.selectedRange.startLine < props.selectedRange.endLine &&
-    isLineInRange(line, props.selectedRange);
+    props.selectedRange.endLine >= startLine &&
+    props.selectedRange.startLine <= endLine;
 
   return {
     ...props,
     comments,
-    hasCommentHighlight: commentHighlightsByLine.has(line),
+    hasCommentHighlight: [...commentHighlightsByLine].some((line) =>
+      line >= startLine && line <= endLine
+    ),
     hasContinuousHighlight: hasContinuousSelection ||
       comments.some((comment) => comment.startLine < comment.endLine),
-    isAdding: props.activeCommentLine === line,
-    isRangeActionLine: props.selectedRange?.endLine === line,
+    isAdding: props.activeCommentLine !== undefined &&
+      props.activeCommentLine >= startLine &&
+      props.activeCommentLine <= endLine,
+    isRangeActionLine: props.selectedRange !== undefined &&
+      props.selectedRange.endLine >= startLine &&
+      props.selectedRange.endLine <= endLine,
     isSelected: props.selectedRange
-      ? props.selectedRange.startLine === props.selectedRange.endLine &&
-        isLineInRange(line, props.selectedRange)
+      ? props.selectedRange.startLine === startLine &&
+        props.selectedRange.endLine === endLine
       : false,
-    line,
+    sourceRange,
   };
 };
 
@@ -105,14 +115,16 @@ const createCommentableComponent = (
   }: CommentableComponentProps) => {
     const context = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
-    const line = getSourceLine({ node });
+    const sourceRange = getSourceRange({ node });
     const element = renderElement
       ? renderElement(elementProps, children)
       : createElement(tagName, elementProps, children);
-    if (line === undefined || ancestorSourceLines.has(line)) return element;
+    if (!sourceRange || ancestorSourceLines.has(sourceRange.startLine)) {
+      return element;
+    }
 
     return (
-      <CommentableBlock {...getCommentableBlockProps(context, line)}>
+      <CommentableBlock {...getCommentableBlockProps(context, sourceRange)}>
         {element}
       </CommentableBlock>
     );
@@ -136,7 +148,10 @@ const createCommentableListItem = () => {
     return (
       <List.Item {...elementProps}>
         <CommentableBlock
-          {...getCommentableBlockProps(context, line)}
+          {...getCommentableBlockProps(context, {
+            startLine: line,
+            endLine: line,
+          })}
           className="commentable-list-item"
         >
           {itemChildren}
@@ -155,7 +170,7 @@ const createCommentablePre = () => {
   }: CommentableComponentProps) => {
     const context = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
-    const line = getSourceLine({ node });
+    const sourceRange = getSourceRange({ node });
     const mermaidCode = getMermaidCodeText(children);
     const element = mermaidCode === undefined
       ? renderMarkdownPre(elementProps, children)
@@ -179,10 +194,12 @@ const createCommentablePre = () => {
           </Button>
         </Box>
       );
-    if (line === undefined || ancestorSourceLines.has(line)) return element;
+    if (!sourceRange || ancestorSourceLines.has(sourceRange.startLine)) {
+      return element;
+    }
 
     return (
-      <CommentableBlock {...getCommentableBlockProps(context, line)}>
+      <CommentableBlock {...getCommentableBlockProps(context, sourceRange)}>
         {element}
       </CommentableBlock>
     );
