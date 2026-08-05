@@ -425,9 +425,14 @@ const value = 1;
       getComputedStyle(container.querySelector(".language-ts span")!).color,
     )
       .not.toBe("var(--chakra-colors-code-fg)");
-    expect(getComputedStyle(container.querySelector("pre")!).color).toBe(
+    const pre = container.querySelector("pre")!;
+    expect(pre.closest(".chakra-theme")).not.toBeNull();
+    expect(getComputedStyle(pre).color).toBe(
       "var(--chakra-colors-code-fg)",
     );
+    const code = pre.querySelector("code")!;
+    expect(getComputedStyle(code).display).toBe("block");
+    expect(getComputedStyle(code).whiteSpace).toBe("pre");
     expect(previewThemeCss).toContain(
       ".hljs {\n        color: var(--chakra-colors-code-fg);",
     );
