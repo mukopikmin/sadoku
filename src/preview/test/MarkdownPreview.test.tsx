@@ -430,6 +430,9 @@ const value = 1;
     expect(getComputedStyle(pre).color).toBe(
       "var(--chakra-colors-code-fg)",
     );
+    const code = pre.querySelector("code")!;
+    expect(getComputedStyle(code).display).toBe("block");
+    expect(getComputedStyle(code).whiteSpace).toBe("pre");
     expect(previewThemeCss).toContain(
       ".hljs {\n        color: var(--chakra-colors-code-fg);",
     );

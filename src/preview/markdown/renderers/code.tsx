@@ -18,6 +18,8 @@ export const MarkdownCode = ({
       py={isCodeBlock ? "0" : "0.2em"}
       bg={isCodeBlock ? "transparent" : "code.bg"}
       color={isCodeBlock ? "code.fg" : "fg"}
+      display={isCodeBlock ? "block" : undefined}
+      whiteSpace={isCodeBlock ? "pre" : undefined}
       fontFamily="mono"
       fontSize={isCodeBlock ? "0.8rem" : "0.8em"}
       {...props}
