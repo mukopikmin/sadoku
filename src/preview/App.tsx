@@ -92,6 +92,7 @@ export const App = () => {
             <MarkdownPreviewPage
               key={themeMode}
               markdown={document.markdown}
+              markdownFontScale={document.markdownFontScale}
             />
           )
           : <CommentListPage />}

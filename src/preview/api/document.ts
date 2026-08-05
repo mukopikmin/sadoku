@@ -1,6 +1,7 @@
 export type PreviewDocument = {
   fileUrl: string;
   markdown: string;
+  markdownFontScale?: number;
   title: string;
 };
 

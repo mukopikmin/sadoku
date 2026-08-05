@@ -41,6 +41,7 @@ const renderMarkdown = (
     ) => Promise<void>;
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
+  options: { markdownFontScale?: number } = {},
 ) => {
   ensurePreviewThemeStyle();
   const result = render(
@@ -51,6 +52,7 @@ const renderMarkdown = (
       })}
       comments={comments}
       markdown={markdown}
+      markdownFontScale={options.markdownFontScale}
     />,
   );
   return { ...result, container: result.container };
@@ -93,6 +95,20 @@ describe("MarkdownPreview", () => {
       expect(background).toContain("var(--chakra-colors-canvas)");
       expect(background).not.toContain("var(--chakra-colors-transparent)");
     }
+  });
+
+  it("applies the configured Markdown font scale to the preview root", () => {
+    const { container } = renderMarkdown("Scaled body", [], {}, {
+      markdownFontScale: 1.125,
+    });
+
+    const preview = container.querySelector<HTMLElement>(".markdown-preview");
+
+    expect(preview?.style.getPropertyValue("--sadoku-markdown-font-scale"))
+      .toBe("1.125");
+    expect(previewThemeCss).toContain(
+      "font-size: calc(1rem * var(--sadoku-markdown-font-scale, 1));",
+    );
   });
 
   it("renders common Markdown blocks", () => {

@@ -6,6 +6,7 @@ const configFileName = "config.toml";
 
 export type SadokuConfig = {
   commentsDirectory?: string;
+  markdownFontScale?: number;
 };
 
 const getEnv = (name: string): string | undefined => {
@@ -41,7 +42,7 @@ export const getConfigFilePath = (): string | undefined => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
-const parseConfig = (value: unknown): SadokuConfig | undefined => {
+export const parseConfig = (value: unknown): SadokuConfig | undefined => {
   if (!isRecord(value)) return undefined;
 
   const config: SadokuConfig = {};
@@ -52,6 +53,22 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     }
 
     if (commentsDirectory) config.commentsDirectory = commentsDirectory;
+  }
+
+  if ("markdownFontScale" in value) {
+    const markdownFontScale = value.markdownFontScale;
+    if (
+      typeof markdownFontScale !== "number" ||
+      !Number.isFinite(markdownFontScale) ||
+      markdownFontScale < 0.75 ||
+      markdownFontScale > 2
+    ) {
+      throw new Error(
+        "markdownFontScale in Sadoku config must be a number between 0.75 and 2.",
+      );
+    }
+
+    config.markdownFontScale = markdownFontScale;
   }
 
   return config;

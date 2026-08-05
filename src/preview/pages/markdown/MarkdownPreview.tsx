@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { CSSProperties } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -32,6 +33,7 @@ export type MarkdownPreviewProps = {
   actions: CommentActions;
   comments: ActiveComment[];
   markdown: string;
+  markdownFontScale?: number;
 };
 
 type RangeHighlight = CommentRange & {
@@ -121,6 +123,7 @@ export const MarkdownPreview = ({
   actions,
   comments,
   markdown,
+  markdownFontScale,
 }: MarkdownPreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [commentableLines, setCommentableLines] = useState<number[]>([]);
@@ -294,7 +297,13 @@ export const MarkdownPreview = ({
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
-      <div className="markdown-preview" ref={previewRef}>
+      <div
+        className="markdown-preview"
+        ref={previewRef}
+        style={{
+          "--sadoku-markdown-font-scale": markdownFontScale,
+        } as CSSProperties}
+      >
         <div aria-hidden="true" className="markdown-range-highlights">
           {rangeHighlightLayouts.map((layout) => (
             <div
@@ -328,7 +337,13 @@ export const MarkdownPreview = ({
   );
 };
 
-export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
+export const MarkdownPreviewPage = ({
+  markdown,
+  markdownFontScale,
+}: {
+  markdown: string;
+  markdownFontScale?: number;
+}) => {
   const commentsQuery = useCommentsQuery();
   const actions = useCommentActions();
   if (!commentsQuery.data) return null;
@@ -340,6 +355,7 @@ export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
       actions={actions}
       comments={activeComments}
       markdown={markdown}
+      markdownFontScale={markdownFontScale}
     />
   );
 };

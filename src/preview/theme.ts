@@ -235,6 +235,10 @@ export const previewThemeCss = `
         overflow-wrap: anywhere;
       }
 
+      .markdown-preview {
+        font-size: calc(1rem * var(--sadoku-markdown-font-scale, 1));
+      }
+
       .comment-body-markdown > :last-child,
       .comment-body-markdown > :last-child > :last-child {
         margin-bottom: 0;

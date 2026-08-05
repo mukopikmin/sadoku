@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 
-import { getConfigFilePath, readConfig } from "./config.ts";
+import { getConfigFilePath, parseConfig, readConfig } from "./config.ts";
 
 type ConfigEnvironmentPaths = {
   configFilePath: string;
@@ -93,6 +93,28 @@ Deno.test("reads comments directory from config", async () => {
   });
 });
 
+Deno.test("reads markdown font scale from config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, "markdownFontScale = 1.125\n");
+
+    assertEquals(readConfig(), { markdownFontScale: 1.125 });
+  });
+});
+
+Deno.test("reads comments directory and markdown font scale from config", async () => {
+  await withConfigEnvironment(async ({ configFilePath, root }) => {
+    const commentsDirectory = join(root, "configured-comments");
+    await writeConfig(
+      configFilePath,
+      `commentsDirectory = ${
+        JSON.stringify(commentsDirectory)
+      }\nmarkdownFontScale = 1.125\n`,
+    );
+
+    assertEquals(readConfig(), { commentsDirectory, markdownFontScale: 1.125 });
+  });
+});
+
 Deno.test("reads config without comments directory", async () => {
   await withConfigEnvironment(async ({ configFilePath }) => {
     await writeConfig(configFilePath, "");
@@ -124,4 +146,58 @@ Deno.test("rejects invalid comments directory config type", async () => {
       "commentsDirectory in Sadoku config must be a string.",
     );
   });
+});
+
+Deno.test("rejects non-number markdown font scale config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, 'markdownFontScale = "large"\n');
+
+    assertThrows(
+      () => readConfig(),
+      Error,
+      "markdownFontScale in Sadoku config must be a number between 0.75 and 2.",
+    );
+  });
+});
+
+Deno.test("rejects too-small markdown font scale config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, "markdownFontScale = 0.5\n");
+
+    assertThrows(
+      () => readConfig(),
+      Error,
+      "markdownFontScale in Sadoku config must be a number between 0.75 and 2.",
+    );
+  });
+});
+
+Deno.test("rejects too-large markdown font scale config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, "markdownFontScale = 2.5\n");
+
+    assertThrows(
+      () => readConfig(),
+      Error,
+      "markdownFontScale in Sadoku config must be a number between 0.75 and 2.",
+    );
+  });
+});
+
+Deno.test("rejects non-finite markdown font scale config", () => {
+  assertThrows(
+    () => parseConfig({ markdownFontScale: Number.NaN }),
+    Error,
+    "markdownFontScale in Sadoku config must be a number between 0.75 and 2.",
+  );
+  assertThrows(
+    () => parseConfig({ markdownFontScale: Number.POSITIVE_INFINITY }),
+    Error,
+    "markdownFontScale in Sadoku config must be a number between 0.75 and 2.",
+  );
+  assertThrows(
+    () => parseConfig({ markdownFontScale: Number.NEGATIVE_INFINITY }),
+    Error,
+    "markdownFontScale in Sadoku config must be a number between 0.75 and 2.",
+  );
 });

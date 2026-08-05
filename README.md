@@ -138,7 +138,10 @@ directory:
 
 ```toml
 commentsDirectory = "/path/to/sadoku/comments"
+markdownFontScale = 1.125
 ```
+
+`markdownFontScale` configures the Markdown body font size multiplier.
 
 Sadoku stores comments in `commentsDirectory/sadoku.sqlite3` by default.
 
