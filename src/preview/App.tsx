@@ -2,7 +2,6 @@ import { Container } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { CommentListPage } from "./pages/comments/CommentList";
 import { MarkdownPreviewPage } from "./pages/markdown/MarkdownPreview";
-import { initializeMermaid } from "./markdown/mermaid";
 import {
   PreviewHeader,
   PreviewShell,
@@ -33,15 +32,6 @@ export const App = () => {
       clearReloadAvailable();
     }
   };
-
-  useEffect(() => {
-    if (!documentQuery.data || !commentsQuery.data || view !== "preview") {
-      return;
-    }
-    initializeMermaid({
-      theme: themeMode === "dark" ? "dark" : "default",
-    });
-  }, [commentsQuery.data, documentQuery.data, themeMode, view]);
 
   useEffect(() => {
     if (documentQuery.data) {
@@ -92,6 +82,7 @@ export const App = () => {
             <MarkdownPreviewPage
               key={themeMode}
               markdown={document.markdown}
+              theme={themeMode === "dark" ? "dark" : "default"}
             />
           )
           : <CommentListPage />}

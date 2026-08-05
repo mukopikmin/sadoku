@@ -19,7 +19,7 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => {
   globalThis.getSelection()?.removeAllRanges();
   cleanup();
-  vi.mocked(initializeMermaid).mockClear();
+  vi.mocked(initializeMermaid).mockReset();
 });
 
 const ensurePreviewThemeStyle = () => {
@@ -51,6 +51,7 @@ const renderMarkdown = (
       })}
       comments={comments}
       markdown={markdown}
+      theme="default"
     />,
   );
   return { ...result, container: result.container };
@@ -540,6 +541,43 @@ graph TD
     fireEvent.click(screen.getByTitle("Select line 1 for comment"));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+  });
+
+  it("reruns mermaid rendering after the Markdown replaces diagram nodes", async () => {
+    const initializedSources: (string | null | undefined)[] = [];
+    vi.mocked(initializeMermaid).mockImplementation(async () => {
+      initializedSources.push(document.querySelector(".mermaid")?.textContent);
+    });
+    const { container, rerender } = renderMarkdown(`\`\`\`mermaid
+graph TD
+  A --> B
+\`\`\`
+`);
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
+    expect(initializedSources).toEqual(["graph TD\n  A --> B"]);
+
+    rerender(
+      <MarkdownPreview
+        actions={createCommentActions()}
+        comments={[]}
+        markdown={`\`\`\`mermaid
+graph LR
+  C --> D
+\`\`\`
+`}
+        theme="default"
+      />,
+    );
+
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+    const updatedNode = container.querySelector(".mermaid");
+    expect(updatedNode?.textContent).toBe("graph LR\n  C --> D");
+    expect(initializedSources).toEqual([
+      "graph TD\n  A --> B",
+      "graph LR\n  C --> D",
+    ]);
+    expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" });
   });
 
   it("does not render Mermaid zoom buttons for regular code fences", () => {
