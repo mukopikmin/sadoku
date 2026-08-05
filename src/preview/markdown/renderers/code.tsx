@@ -20,7 +20,7 @@ export const MarkdownCode = ({
       bg={isCodeBlock ? "transparent" : "code.bg"}
       color={isCodeBlock ? "code.fg" : "fg"}
       fontFamily="mono"
-      fontSize={isCodeBlock ? "0.765rem" : "0.765em"}
+      fontSize={isCodeBlock ? "0.8rem" : "0.8em"}
       {...props}
     >
       {children}

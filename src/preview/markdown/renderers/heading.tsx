@@ -7,11 +7,11 @@ import type {
 
 const headingSizes = {
   h1: "1.8rem",
-  h2: "1.35rem",
-  h3: "1.125rem",
-  h4: "0.9rem",
-  h5: "0.7875rem",
-  h6: "0.765rem",
+  h2: "1.4rem",
+  h3: "1.15rem",
+  h4: "0.95rem",
+  h5: "0.8rem",
+  h6: "0.8rem",
 } as const;
 
 type HeadingTagName = keyof typeof headingSizes;

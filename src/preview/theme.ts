@@ -15,18 +15,18 @@ export const sadokuChakraSystem = createSystem(
     theme: {
       tokens: {
         fontSizes: {
-          "2xs": { value: "0.5625rem" },
-          xs: { value: "0.675rem" },
-          sm: { value: "0.7875rem" },
+          "2xs": { value: "0.55rem" },
+          xs: { value: "0.7rem" },
+          sm: { value: "0.8rem" },
           md: { value: "0.9rem" },
-          lg: { value: "1.0125rem" },
-          xl: { value: "1.125rem" },
+          lg: { value: "1rem" },
+          xl: { value: "1.1rem" },
           "2xl": { value: "1.35rem" },
-          "3xl": { value: "1.6875rem" },
-          "4xl": { value: "2.025rem" },
+          "3xl": { value: "1.65rem" },
+          "4xl": { value: "2rem" },
           "5xl": { value: "2.7rem" },
-          "6xl": { value: "3.375rem" },
-          "7xl": { value: "4.05rem" },
+          "6xl": { value: "3.4rem" },
+          "7xl": { value: "4rem" },
           "8xl": { value: "5.4rem" },
           "9xl": { value: "7.2rem" },
         },
@@ -475,7 +475,7 @@ export const previewThemeCss = `
         color: var(--chakra-colors-fg);
         cursor: pointer;
         font: inherit;
-        font-size: 0.99rem;
+        font-size: 1rem;
         line-height: 1;
       }
 
