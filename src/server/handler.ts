@@ -1,4 +1,3 @@
-import type { SadokuConfig } from "../config.ts";
 import { handleCommentsRequest } from "./comments/handler.ts";
 import type { CommentsStore } from "./comments/storage.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
@@ -14,7 +13,6 @@ import {
 
 export type PreviewHandlerOptions = {
   commentsStore?: CommentsStore;
-  config?: SadokuConfig;
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
 };
@@ -89,10 +87,7 @@ async (request) => {
     }
 
     if (pathname === "/__sadoku/document") {
-      return await handlePreviewDocumentRequest(
-        previewSource.documentSource,
-        options.config,
-      );
+      return await handlePreviewDocumentRequest(previewSource.documentSource);
     }
 
     if (pathname.startsWith("/__sadoku/comments")) {

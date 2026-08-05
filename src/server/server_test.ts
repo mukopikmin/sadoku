@@ -1,5 +1,4 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { dirname, join } from "@std/path";
 
 import {
   createPreviewShutdownScheduler,
@@ -64,53 +63,6 @@ Deno.test("starts on an ephemeral port and serves the preview document", async (
   } finally {
     await stopServer(preview);
     await removeTempMarkdown(filePath);
-  }
-});
-
-Deno.test("serves configured Markdown font scale from the preview document API", async () => {
-  const previous = new Map([
-    ["APPDATA", Deno.env.get("APPDATA")],
-    ["HOME", Deno.env.get("HOME")],
-    ["XDG_CONFIG_HOME", Deno.env.get("XDG_CONFIG_HOME")],
-  ]);
-  const root = await Deno.makeTempDir({ prefix: "sadoku-server-config-" });
-  const configFilePath = Deno.build.os === "windows"
-    ? join(root, "appdata", "sadoku", "config.toml")
-    : join(root, "config", "sadoku", "config.toml");
-  const filePath = await createTempMarkdown("# Scaled server test\n");
-  let preview: StartedPreviewServer | undefined;
-
-  Deno.env.set("APPDATA", join(root, "appdata"));
-  Deno.env.set("HOME", join(root, "home"));
-  Deno.env.set("XDG_CONFIG_HOME", join(root, "config"));
-
-  try {
-    await Deno.mkdir(dirname(configFilePath), { recursive: true });
-    await Deno.writeTextFile(configFilePath, "markdownFontScale = 1.125\n");
-
-    preview = await startPreviewServer({
-      file: filePath,
-      host: "127.0.0.1",
-      keepAlive: true,
-      port: 0,
-    });
-
-    const response = await fetch(new URL("/__sadoku/document", preview.url));
-    const document = await response.json();
-
-    assertEquals(response.status, 200);
-    assertEquals(document.markdownFontScale, 1.125);
-  } finally {
-    if (preview) await stopServer(preview);
-    for (const [name, value] of previous) {
-      if (value === undefined) {
-        Deno.env.delete(name);
-      } else {
-        Deno.env.set(name, value);
-      }
-    }
-    await removeTempMarkdown(filePath);
-    await Deno.remove(root, { recursive: true }).catch(() => {});
   }
 });
 
