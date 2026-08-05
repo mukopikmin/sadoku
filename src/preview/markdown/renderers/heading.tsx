@@ -6,12 +6,12 @@ import type {
 } from "../rendererTypes";
 
 const headingSizes = {
-  h1: "2rem",
-  h2: "1.5rem",
-  h3: "1.25rem",
-  h4: "1rem",
-  h5: "0.875rem",
-  h6: "0.85rem",
+  h1: "1.8rem",
+  h2: "1.35rem",
+  h3: "1.125rem",
+  h4: "0.9rem",
+  h5: "0.7875rem",
+  h6: "0.765rem",
 } as const;
 
 type HeadingTagName = keyof typeof headingSizes;
