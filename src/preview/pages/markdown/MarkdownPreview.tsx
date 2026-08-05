@@ -32,6 +32,7 @@ export type MarkdownPreviewProps = {
   actions: CommentActions;
   comments: ActiveComment[];
   markdown: string;
+  theme: "dark" | "default";
 };
 
 type RangeHighlight = CommentRange & {
@@ -121,6 +122,7 @@ export const MarkdownPreview = ({
   actions,
   comments,
   markdown,
+  theme,
 }: MarkdownPreviewProps) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [commentableLines, setCommentableLines] = useState<number[]>([]);
@@ -242,8 +244,8 @@ export const MarkdownPreview = ({
   }, [updateRangeHighlightLayouts, activeCommentLine, markdown]);
 
   useEffect(() => {
-    void initializeMermaid();
-  }, [activeCommentLine, comments, markdown, selectedRange]);
+    void initializeMermaid({ theme });
+  }, [activeCommentLine, comments, markdown, selectedRange, theme]);
 
   const handleSelectCommentRange = (clickedRange: CommentRange) => {
     setActiveCommentLine(undefined);
@@ -330,7 +332,9 @@ export const MarkdownPreview = ({
   );
 };
 
-export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
+export const MarkdownPreviewPage = (
+  { markdown, theme }: Pick<MarkdownPreviewProps, "markdown" | "theme">,
+) => {
   const commentsQuery = useCommentsQuery();
   const actions = useCommentActions();
   if (!commentsQuery.data) return null;
@@ -342,6 +346,7 @@ export const MarkdownPreviewPage = ({ markdown }: { markdown: string }) => {
       actions={actions}
       comments={activeComments}
       markdown={markdown}
+      theme={theme}
     />
   );
 };

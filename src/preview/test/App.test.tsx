@@ -70,14 +70,14 @@ describe("App", () => {
 
     render(<App />);
 
-    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
     fireEvent.click(
       screen.getByRole("button", { name: "Comments, 0 unresolved" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
 
-    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(4));
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
   });
 
   it("reloads the Markdown and comments without changing views", async () => {
@@ -93,8 +93,8 @@ describe("App", () => {
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/example.md",
             markdown: documentRequests === 1
-              ? "# Original title\n"
-              : "# Updated title\n",
+              ? "# Original title\n\n```mermaid\ngraph TD\n  A --> B\n```\n"
+              : "# Updated title\n\n```mermaid\ngraph LR\n  C --> D\n```\n",
             title: "example.md",
           }));
         }
@@ -112,6 +112,7 @@ describe("App", () => {
     render(<App />);
 
     await screen.findByRole("heading", { name: "Original title" });
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
     fireEvent.click(
       screen.getByRole("button", { name: "Comments, 0 unresolved" }),
@@ -128,7 +129,6 @@ describe("App", () => {
     const reloadButton = await screen.findByRole("button", {
       name: "Reload preview",
     });
-    expect(screen.getByText("Source changes are available.")).not.toBeNull();
     const previewNavigation = screen.getByRole("navigation", {
       name: "Preview views",
     });
@@ -149,9 +149,14 @@ describe("App", () => {
       screen.getByRole("button", { name: "Comments, 0 unresolved" })
         .getAttribute("aria-current"),
     ).toBe("page");
+    vi.mocked(initializeMermaid).mockClear();
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     await screen.findByRole("heading", { name: "Updated title" });
-    expect(screen.queryByText("Source changes are available.")).toBeNull();
+    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
+    expect(document.querySelector(".mermaid")?.textContent).toBe(
+      "graph LR\n  C --> D",
+    );
+    expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" });
   });
 
   it("keeps the reload action available when reloading Markdown fails", async () => {

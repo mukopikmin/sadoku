@@ -8,12 +8,29 @@ export const sadokuChakraSystem = createSystem(
         bg: "canvas",
         color: "fg",
         fontFamily: "body",
+        fontSize: "md",
         lineHeight: "1.65",
         margin: 0,
       },
     },
     theme: {
       tokens: {
+        fontSizes: {
+          "2xs": { value: "0.55rem" },
+          xs: { value: "0.7rem" },
+          sm: { value: "0.8rem" },
+          md: { value: "0.9rem" },
+          lg: { value: "1rem" },
+          xl: { value: "1.1rem" },
+          "2xl": { value: "1.35rem" },
+          "3xl": { value: "1.65rem" },
+          "4xl": { value: "2rem" },
+          "5xl": { value: "2.7rem" },
+          "6xl": { value: "3.4rem" },
+          "7xl": { value: "4rem" },
+          "8xl": { value: "5.4rem" },
+          "9xl": { value: "7.2rem" },
+        },
         fonts: {
           body: {
             value:
@@ -151,96 +168,6 @@ export const sadokuChakraSystem = createSystem(
 export const previewThemeCss = `
       :root {
         color-scheme: light dark;
-        font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-        line-height: 1.65;
-      }
-
-      :root,
-      :root[data-theme="light"] {
-        --chakra-colors-accent: var(--chakra-colors-blue-600);
-        --chakra-colors-canvas: var(--chakra-colors-white);
-        --chakra-colors-canvas-subtle: var(--chakra-colors-gray-50);
-        --chakra-colors-border-default: var(--chakra-colors-gray-300);
-        --chakra-colors-border-muted: var(--chakra-colors-gray-200);
-        --chakra-colors-code-bg: var(--chakra-colors-gray-100);
-        --chakra-colors-code-fg: var(--chakra-colors-blue-900);
-        --chakra-colors-fg: var(--chakra-colors-gray-950);
-        --chakra-colors-fg-muted: var(--chakra-colors-gray-600);
-        --chakra-colors-link: var(--chakra-colors-blue-600);
-        --chakra-colors-overlay-backdrop: var(--chakra-colors-black-alpha-600);
-        --chakra-colors-overlay-shadow: var(--chakra-colors-black-alpha-300);
-        --chakra-colors-selection-comment: var(--chakra-colors-yellow-600);
-        --chakra-colors-syntax-addition-bg: var(--chakra-colors-green-100);
-        --chakra-colors-syntax-addition-fg: var(--chakra-colors-green-800);
-        --chakra-colors-syntax-attribute: var(--chakra-colors-green-800);
-        --chakra-colors-syntax-comment: var(--chakra-colors-gray-600);
-        --chakra-colors-syntax-deletion-bg: var(--chakra-colors-red-100);
-        --chakra-colors-syntax-deletion-fg: var(--chakra-colors-red-800);
-        --chakra-colors-syntax-keyword: var(--chakra-colors-red-800);
-        --chakra-colors-syntax-literal: var(--chakra-colors-orange-800);
-        --chakra-colors-syntax-meta: var(--chakra-colors-purple-800);
-        --chakra-colors-syntax-string: var(--chakra-colors-green-800);
-        --chakra-colors-syntax-type: var(--chakra-colors-blue-800);
-        --chakra-colors-warning-fg: var(--chakra-colors-yellow-700);
-      }
-
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) {
-          --chakra-colors-accent: var(--chakra-colors-blue-400);
-          --chakra-colors-canvas: var(--chakra-colors-gray-950);
-          --chakra-colors-canvas-subtle: var(--chakra-colors-gray-900);
-          --chakra-colors-border-default: var(--chakra-colors-gray-700);
-          --chakra-colors-border-muted: var(--chakra-colors-gray-800);
-          --chakra-colors-code-bg: var(--chakra-colors-gray-800);
-          --chakra-colors-code-fg: var(--chakra-colors-blue-300);
-          --chakra-colors-fg: var(--chakra-colors-gray-100);
-          --chakra-colors-fg-muted: var(--chakra-colors-gray-400);
-          --chakra-colors-link: var(--chakra-colors-blue-400);
-          --chakra-colors-selection-comment: var(--chakra-colors-yellow-400);
-          --chakra-colors-syntax-addition-bg: var(--chakra-colors-green-950);
-          --chakra-colors-syntax-addition-fg: var(--chakra-colors-green-100);
-          --chakra-colors-syntax-attribute: var(--chakra-colors-green-300);
-          --chakra-colors-syntax-comment: var(--chakra-colors-gray-400);
-          --chakra-colors-syntax-deletion-bg: var(--chakra-colors-red-950);
-          --chakra-colors-syntax-deletion-fg: var(--chakra-colors-red-100);
-          --chakra-colors-syntax-keyword: var(--chakra-colors-red-400);
-          --chakra-colors-syntax-literal: var(--chakra-colors-orange-300);
-          --chakra-colors-syntax-meta: var(--chakra-colors-blue-300);
-          --chakra-colors-syntax-string: var(--chakra-colors-blue-200);
-          --chakra-colors-syntax-type: var(--chakra-colors-purple-300);
-          --chakra-colors-warning-fg: var(--chakra-colors-yellow-400);
-        }
-      }
-
-      :root[data-theme="light"] {
-        color-scheme: light;
-      }
-
-      :root[data-theme="dark"] {
-        color-scheme: dark;
-        --chakra-colors-accent: var(--chakra-colors-blue-400);
-        --chakra-colors-canvas: var(--chakra-colors-gray-950);
-        --chakra-colors-canvas-subtle: var(--chakra-colors-gray-900);
-        --chakra-colors-border-default: var(--chakra-colors-gray-700);
-        --chakra-colors-border-muted: var(--chakra-colors-gray-800);
-        --chakra-colors-code-bg: var(--chakra-colors-gray-800);
-        --chakra-colors-code-fg: var(--chakra-colors-blue-300);
-        --chakra-colors-fg: var(--chakra-colors-gray-100);
-        --chakra-colors-fg-muted: var(--chakra-colors-gray-400);
-        --chakra-colors-link: var(--chakra-colors-blue-400);
-        --chakra-colors-selection-comment: var(--chakra-colors-yellow-400);
-        --chakra-colors-syntax-addition-bg: var(--chakra-colors-green-950);
-        --chakra-colors-syntax-addition-fg: var(--chakra-colors-green-100);
-        --chakra-colors-syntax-attribute: var(--chakra-colors-green-300);
-        --chakra-colors-syntax-comment: var(--chakra-colors-gray-400);
-        --chakra-colors-syntax-deletion-bg: var(--chakra-colors-red-950);
-        --chakra-colors-syntax-deletion-fg: var(--chakra-colors-red-100);
-        --chakra-colors-syntax-keyword: var(--chakra-colors-red-400);
-        --chakra-colors-syntax-literal: var(--chakra-colors-orange-300);
-        --chakra-colors-syntax-meta: var(--chakra-colors-blue-300);
-        --chakra-colors-syntax-string: var(--chakra-colors-blue-200);
-        --chakra-colors-syntax-type: var(--chakra-colors-purple-300);
-        --chakra-colors-warning-fg: var(--chakra-colors-yellow-400);
       }
 
       .comment-markdown-list > .task-list-item {
@@ -405,11 +332,6 @@ export const previewThemeCss = `
         --comment-highlight-spacing-after: var(--chakra-spacing-6);
       }
 
-      :where(.commentable-list-item, .commentable-table) {
-        --comment-highlight-spacing-before: 0px;
-        --comment-highlight-spacing-after: 0px;
-      }
-
       .commentable-list-item {
         display: contents;
       }
@@ -492,11 +414,6 @@ export const previewThemeCss = `
         margin-top: var(--chakra-spacing-2);
       }
 
-      .mermaid-container {
-        position: relative;
-        margin-bottom: var(--chakra-spacing-4);
-      }
-
       .mermaid-container .mermaid {
         margin-bottom: 0;
       }
@@ -507,14 +424,6 @@ export const previewThemeCss = `
         border-radius: var(--chakra-radii-sm);
         padding: var(--chakra-spacing-4);
         background: var(--chakra-colors-canvas-subtle);
-        color: var(--chakra-colors-fg);
-      }
-
-      .mermaid-zoom-button {
-        position: absolute;
-        top: var(--chakra-spacing-2);
-        right: var(--chakra-spacing-2);
-        background: var(--chakra-colors-canvas);
         color: var(--chakra-colors-fg);
       }
 
@@ -567,7 +476,7 @@ export const previewThemeCss = `
         color: var(--chakra-colors-fg);
         cursor: pointer;
         font: inherit;
-        font-size: 1.1rem;
+        font-size: 1rem;
         line-height: 1;
       }
 

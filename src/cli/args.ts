@@ -10,7 +10,9 @@ export type CliOptions = {
     | "comments-list"
     | "comments-reply"
     | "comments-resolve"
-    | "comments-rm";
+    | "comments-rm"
+    | "update";
+  channel?: "stable" | "nightly";
   commentId?: string;
   commentIds?: string[];
   commentBody?: string;
@@ -43,6 +45,7 @@ export const usage = `Usage:
   sadoku comments resolve <file.md|url> <comment-id>... [--as-bot]
   sadoku comments list
   sadoku comments rm <file.md|url> [--force]
+  sadoku update [--channel stable|nightly]
 
 Options:
   -p, --port   Starting port to bind. Defaults to 3334.
@@ -53,6 +56,7 @@ Options:
   --as-bot     Attribute comment actions to a bot.
   --request-review
                Mark a bot reply as requesting review (requires --as-bot).
+  --channel     Update channel. Defaults to nightly for nightly builds and stable otherwise.
   -v, --version
                Show version.
   -h, --help   Show this help message.
@@ -80,7 +84,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         host: "127.0.0.1",
         port: "3334",
       },
-      string: ["host", "port"],
+      string: ["channel", "host", "port"],
       unknown: (arg) => {
         if (!arg.startsWith("-")) return true;
         throw new CliUsageError(`Unknown option: ${arg}`);
@@ -108,6 +112,44 @@ export const parseArgs = (argv: string[]): CliOptions => {
       );
     }
   };
+
+  if (flags._[0]?.toString() === "update") {
+    if (flags._.length !== 1) {
+      throw new CliUsageError("update does not accept positional arguments.");
+    }
+    if (
+      flags.host !== "127.0.0.1" || flags.port !== "3334" ||
+      flags["keep-alive"] || flags["no-open"] || flags["as-bot"] ||
+      flags["request-review"] || flags.force
+    ) {
+      throw new CliUsageError(
+        "update does not accept preview or comments options.",
+      );
+    }
+    const channel = flags.channel?.toString();
+    if (
+      channel !== undefined && channel !== "stable" && channel !== "nightly"
+    ) {
+      throw new CliUsageError(
+        `Invalid update channel: ${channel}. Expected stable or nightly.`,
+      );
+    }
+    return {
+      asBot: false,
+      ...(channel ? { channel } : {}),
+      command: "update",
+      file: undefined,
+      force: false,
+      host: "127.0.0.1",
+      keepAlive: false,
+      open: true,
+      port: 3334,
+    };
+  }
+
+  if (flags.channel !== undefined) {
+    throw new CliUsageError("--channel is only accepted by update.");
+  }
 
   if (flags._[0]?.toString() === "comments") {
     if (

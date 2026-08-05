@@ -250,6 +250,37 @@ Deno.test("uses the development version by default", () => {
   assertEquals(version, "0.0.0-dev");
 });
 
+Deno.test("parses update channels and leaves the default implicit", () => {
+  assertEquals(parseArgs(["update"]), {
+    asBot: false,
+    command: "update",
+    file: undefined,
+    force: false,
+    host: "127.0.0.1",
+    keepAlive: false,
+    open: true,
+    port: 3334,
+  });
+  assertEquals(parseArgs(["update", "--channel", "stable"]).channel, "stable");
+  assertEquals(parseArgs(["update", "--channel=nightly"]).channel, "nightly");
+  assertMatch(usage, /sadoku update \[--channel stable\|nightly\]/);
+});
+
+Deno.test("rejects invalid update arguments and command-specific options", () => {
+  for (
+    const args of [
+      ["update", "extra"],
+      ["update", "--channel", "beta"],
+      ["update", "--port", "4000"],
+      ["update", "--no-open"],
+      ["update", "--force"],
+      ["start", "README.md", "--channel", "stable"],
+    ]
+  ) {
+    assertThrows(() => parseArgs(args), CliUsageError);
+  }
+});
+
 Deno.test("parses review requests for bot replies without changing ordinary replies", () => {
   assertEquals(
     parseArgs([
