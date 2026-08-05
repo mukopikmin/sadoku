@@ -111,6 +111,20 @@ describe("MarkdownPreview", () => {
     );
   });
 
+  it("scales code block text relative to the Markdown preview font size", () => {
+    const { container } = renderMarkdown(
+      "```ts\nconst scaled = true;\n```",
+      [],
+      {},
+      { markdownFontScale: 1.125 },
+    );
+
+    const code = container.querySelector<HTMLElement>("pre code");
+
+    expect(code).not.toBeNull();
+    expect(getComputedStyle(code!).fontSize).toBe("0.85em");
+  });
+
   it("renders common Markdown blocks", () => {
     const { container } = renderMarkdown(`# Title
 
