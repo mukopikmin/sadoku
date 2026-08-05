@@ -8,12 +8,29 @@ export const sadokuChakraSystem = createSystem(
         bg: "canvas",
         color: "fg",
         fontFamily: "body",
+        fontSize: "md",
         lineHeight: "1.65",
         margin: 0,
       },
     },
     theme: {
       tokens: {
+        fontSizes: {
+          "2xs": { value: "0.55rem" },
+          xs: { value: "0.7rem" },
+          sm: { value: "0.8rem" },
+          md: { value: "0.9rem" },
+          lg: { value: "1rem" },
+          xl: { value: "1.1rem" },
+          "2xl": { value: "1.35rem" },
+          "3xl": { value: "1.65rem" },
+          "4xl": { value: "2rem" },
+          "5xl": { value: "2.7rem" },
+          "6xl": { value: "3.4rem" },
+          "7xl": { value: "4rem" },
+          "8xl": { value: "5.4rem" },
+          "9xl": { value: "7.2rem" },
+        },
         fonts: {
           body: {
             value:
@@ -459,7 +476,7 @@ export const previewThemeCss = `
         color: var(--chakra-colors-fg);
         cursor: pointer;
         font: inherit;
-        font-size: 1.1rem;
+        font-size: 1rem;
         line-height: 1;
       }
 
