@@ -896,7 +896,7 @@ Body
     paragraph!.getBoundingClientRect = () => mockRect(200, 240);
 
     fireEvent.click(titleContent!);
-    fireEvent.click(bodyContent!);
+    fireEvent.click(bodyContent!, { shiftKey: true });
 
     const highlight = container.querySelector<HTMLElement>(
       ".markdown-range-highlight-selection",
@@ -976,6 +976,7 @@ Body
       container.querySelector(
         '[data-source-line="3"] .commentable-content',
       )!,
+      { shiftKey: true },
     );
 
     const savedHighlight = container.querySelector<HTMLElement>(
@@ -1090,7 +1091,9 @@ Body
     expect(container.querySelector('[data-source-line="3"] p')).not.toBeNull();
 
     fireEvent.click(container.querySelector('[data-source-line="1"] h1')!);
-    fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
+    fireEvent.click(container.querySelector('[data-source-line="3"] p')!, {
+      shiftKey: true,
+    });
 
     fireEvent.click(screen.getByRole("button", {
       name: "Add comment on lines 1-3",
@@ -1108,6 +1111,20 @@ Body
         3,
       )
     );
+  });
+
+  it("selects only the clicked line without the shift key", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n");
+
+    fireEvent.click(container.querySelector('[data-source-line="1"] h1')!);
+    fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
+
+    expect(screen.getByRole("button", {
+      name: "Add comment on line 3",
+    })).not.toBeNull();
+    expect(screen.queryByRole("button", {
+      name: "Add comment on lines 1-3",
+    })).toBeNull();
   });
 
   it("creates comments on the clicked nested list item line", async () => {
