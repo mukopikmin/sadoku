@@ -8,6 +8,7 @@ export const sadokuChakraSystem = createSystem(
         bg: "canvas",
         color: "fg",
         fontFamily: "body",
+        fontSize: "md",
         lineHeight: "1.65",
         margin: 0,
       },
