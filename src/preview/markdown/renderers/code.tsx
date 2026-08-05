@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react";
+import { Code } from "@chakra-ui/react";
 import { useContext } from "react";
 import { CodeBlockContext } from "../codeBlockContext";
 import type { MarkdownComponentProps } from "../rendererTypes";
@@ -11,8 +11,7 @@ export const MarkdownCode = ({
 }: MarkdownComponentProps<"code">) => {
   const isCodeBlock = useContext(CodeBlockContext);
   return (
-    <Box
-      as="code"
+    <Code
       className={className}
       borderRadius={isCodeBlock ? "0" : "sm"}
       px={isCodeBlock ? "0" : "0.4em"}
@@ -24,6 +23,6 @@ export const MarkdownCode = ({
       {...props}
     >
       {children}
-    </Box>
+    </Code>
   );
 };
