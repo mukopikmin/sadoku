@@ -1,6 +1,10 @@
 type MermaidApi = {
   initialize: (
-    options: { startOnLoad: boolean; theme: "dark" | "default" },
+    options: {
+      startOnLoad: boolean;
+      theme: "dark" | "default";
+      themeVariables: { fontSize: string };
+    },
   ) => void;
   run: (options: { nodes: HTMLElement[] }) => Promise<void>;
 };
@@ -146,6 +150,7 @@ export const initializeMermaid = async (
   mermaid.initialize({
     startOnLoad: false,
     theme: theme ?? (prefersDark() ? "dark" : "default"),
+    themeVariables: { fontSize: "0.9rem" },
   });
   await mermaid.run({ nodes });
   initializeMermaidZoom(document);
