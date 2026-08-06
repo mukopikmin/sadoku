@@ -56,7 +56,11 @@ describe("initializeMermaid", () => {
 
     expect(calls[0]).toEqual([
       "initialize",
-      { startOnLoad: false, theme: "dark" },
+      {
+        startOnLoad: false,
+        theme: "dark",
+        themeVariables: { fontSize: "0.9rem" },
+      },
     ]);
     expect(calls[1]).toEqual([
       "run",
@@ -111,7 +115,11 @@ describe("initializeMermaid", () => {
 
     expect(calls[0]).toEqual([
       "initialize",
-      { startOnLoad: false, theme: "default" },
+      {
+        startOnLoad: false,
+        theme: "default",
+        themeVariables: { fontSize: "0.9rem" },
+      },
     ]);
   });
 });
