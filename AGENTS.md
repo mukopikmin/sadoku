@@ -90,8 +90,9 @@ them when making changes.
 - Write commit messages, pull request descriptions, and GitHub issue comments in
   English unless the user explicitly requests another language.
 - Do not add unnecessary prefixes such as `[codex]` to pull request titles.
-- When a pull request resolves an issue, include `Closes #<issue_number>` or an
-  equivalent closing keyword in the pull request description.
+- When work was started for the purpose of resolving an issue, include
+  `Closes #<issue_number>` or an equivalent closing keyword in the pull request
+  description so that merging the pull request closes the issue.
 
 ## 7. Tool Usage
 
