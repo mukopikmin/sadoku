@@ -101,7 +101,7 @@ export const CommentableBlock = ({
     if (link && !link.classList.contains("heading-anchor")) return;
     if (link) event.preventDefault();
 
-    onSelectCommentRange(sourceRange);
+    onSelectCommentRange(sourceRange, { extend: event.shiftKey });
     event.stopPropagation();
   };
 

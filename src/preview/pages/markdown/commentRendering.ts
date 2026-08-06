@@ -5,6 +5,10 @@ import type { MarkdownElementProps } from "../../markdown/markdownRenderers";
 
 export type CommentRange = { endLine: number; startLine: number };
 
+export type CommentRangeSelectionOptions = {
+  extend: boolean;
+};
+
 type SourcePosition = {
   end?: {
     line?: number;
@@ -28,7 +32,10 @@ export type CommentControlProps = {
   activeRange?: CommentRange;
   onCloseCommentForm: () => void;
   onOpenCommentForm: () => void;
-  onSelectCommentRange: (range: CommentRange) => void;
+  onSelectCommentRange: (
+    range: CommentRange,
+    options: CommentRangeSelectionOptions,
+  ) => void;
   selectedRange?: CommentRange;
 };
 

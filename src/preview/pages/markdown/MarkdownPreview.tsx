@@ -15,6 +15,7 @@ import { createCommentableMarkdownComponents } from "./commentableMarkdownCompon
 import type { ActiveComment } from "../../models/comment";
 import {
   type CommentRange,
+  type CommentRangeSelectionOptions,
   CommentRenderingContext,
   isLineInRange,
 } from "./commentRendering";
@@ -247,7 +248,10 @@ export const MarkdownPreview = ({
     void initializeMermaid({ theme });
   }, [activeCommentLine, comments, markdown, selectedRange, theme]);
 
-  const handleSelectCommentRange = (clickedRange: CommentRange) => {
+  const handleSelectCommentRange = (
+    clickedRange: CommentRange,
+    { extend }: CommentRangeSelectionOptions,
+  ) => {
     setActiveCommentLine(undefined);
     setActiveRange(undefined);
     setSelectedRange((current) => {
@@ -258,11 +262,15 @@ export const MarkdownPreview = ({
         setLineSelectionAnchor(undefined);
         return undefined;
       }
-      const range = lineSelectionAnchor === undefined ? clickedRange : {
-        endLine: Math.max(lineSelectionAnchor, clickedRange.endLine),
-        startLine: Math.min(lineSelectionAnchor, clickedRange.startLine),
-      };
-      setLineSelectionAnchor(lineSelectionAnchor ?? clickedRange.startLine);
+      const range = !extend || lineSelectionAnchor === undefined
+        ? clickedRange
+        : {
+          endLine: Math.max(lineSelectionAnchor, clickedRange.endLine),
+          startLine: Math.min(lineSelectionAnchor, clickedRange.startLine),
+        };
+      if (!extend || lineSelectionAnchor === undefined) {
+        setLineSelectionAnchor(clickedRange.startLine);
+      }
       return range;
     });
   };
