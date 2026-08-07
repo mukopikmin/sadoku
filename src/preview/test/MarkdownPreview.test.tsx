@@ -248,6 +248,24 @@ Footnote-looking text stays plain.[^note]
     expect(container.querySelector('th[style*="text-align: right"]'))
       .not.toBeNull();
     expect(container.querySelector("td strong")?.textContent).toBe("beta");
+    expect(container.querySelector("table")?.className).toContain(
+      "chakra-table__root",
+    );
+    expect(container.querySelector("thead")?.className).toContain(
+      "chakra-table__header",
+    );
+    expect(container.querySelector("tbody")?.className).toContain(
+      "chakra-table__body",
+    );
+    expect(container.querySelector("tr")?.className).toContain(
+      "chakra-table__row",
+    );
+    expect(container.querySelector("th")?.className).toContain(
+      "chakra-table__columnHeader",
+    );
+    expect(container.querySelector("td")?.className).toContain(
+      "chakra-table__cell",
+    );
     expect(previewThemeCss).not.toContain("tbody tr:nth-child");
     expect(previewThemeCss).not.toMatch(/th \{[^}]*background:/);
   });
