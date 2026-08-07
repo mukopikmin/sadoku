@@ -7,9 +7,9 @@ import { basename, join } from "@std/path";
 import {
   getCommentsDirectoryPath,
   getLegacyCommentsDirectoryPath,
-} from "./paths.ts";
+} from "../config.ts";
 
-export { getCommentsDirectoryPath } from "./paths.ts";
+export { getCommentsDirectoryPath } from "../config.ts";
 
 export type CommentsStore = {
   delete: (filePath: string) => Promise<void>;

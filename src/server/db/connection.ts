@@ -1,6 +1,6 @@
 import { dirname, join } from "@std/path";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
-import { getCommentsDirectoryPath } from "../comments/paths.ts";
+import { getCommentsDirectoryPath } from "../config.ts";
 import { type Migration, runMigrations } from "./migrations.ts";
 
 export interface AppDatabaseStatementResult<Row = Record<string, unknown>> {

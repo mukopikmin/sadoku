@@ -1,7 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 
-import { getConfigFilePath, readConfig } from "./config.ts";
+import {
+  getCommentsDirectoryPath,
+  getConfigFilePath,
+  readConfig,
+} from "./config.ts";
 
 type ConfigEnvironmentPaths = {
   configFilePath: string;
@@ -12,7 +16,10 @@ type ConfigEnvironmentPaths = {
 const trackedEnvironmentNames = [
   "APPDATA",
   "HOME",
+  "MDVIEW_COMMENTS_DIR",
+  "SADOKU_COMMENTS_DIR",
   "XDG_CONFIG_HOME",
+  "XDG_DATA_HOME",
 ] as const;
 
 const withConfigEnvironment = async (
@@ -28,7 +35,10 @@ const withConfigEnvironment = async (
 
   Deno.env.set("APPDATA", appData);
   Deno.env.set("HOME", home);
+  Deno.env.delete("MDVIEW_COMMENTS_DIR");
+  Deno.env.delete("SADOKU_COMMENTS_DIR");
   Deno.env.set("XDG_CONFIG_HOME", configHome);
+  Deno.env.set("XDG_DATA_HOME", join(root, "data"));
 
   const defaultConfigFilePath = Deno.build.os === "windows"
     ? join(appData, "sadoku", "config.toml")
@@ -90,6 +100,27 @@ Deno.test("reads comments directory from config", async () => {
     );
 
     assertEquals(readConfig(), { commentsDirectory });
+    assertEquals(getCommentsDirectoryPath(), commentsDirectory);
+  });
+});
+
+Deno.test("prefers the comments directory environment override", async () => {
+  await withConfigEnvironment(async ({ root }) => {
+    const commentsDirectory = join(root, "environment-comments");
+    Deno.env.set("SADOKU_COMMENTS_DIR", commentsDirectory);
+
+    assertEquals(getCommentsDirectoryPath(), commentsDirectory);
+  });
+});
+
+Deno.test("uses the platform data directory for comments by default", async () => {
+  await withConfigEnvironment(async ({ root }) => {
+    assertEquals(
+      getCommentsDirectoryPath(),
+      Deno.build.os === "windows"
+        ? join(root, "appdata", "sadoku", "comments")
+        : join(root, "data", "sadoku", "comments"),
+    );
   });
 });
 

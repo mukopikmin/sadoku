@@ -2,6 +2,7 @@ import { join } from "@std/path";
 import { parse } from "@std/toml";
 
 const appDirectoryName = "sadoku";
+const legacyAppDirectoryName = "mdview";
 const configFileName = "config.toml";
 
 export type SadokuConfig = {
@@ -74,3 +75,49 @@ export const readConfig = (): SadokuConfig | undefined => {
 
   return parseConfig(parsed);
 };
+
+const getDefaultCommentsDirectoryPath = (directoryName: string): string => {
+  if (Deno.build.os === "darwin") {
+    const home = getEnv("HOME");
+    if (home) {
+      return join(
+        home,
+        "Library",
+        "Application Support",
+        directoryName,
+        "comments",
+      );
+    }
+  }
+
+  if (Deno.build.os === "windows") {
+    const appData = getEnv("APPDATA");
+    if (appData) return join(appData, directoryName, "comments");
+  }
+
+  const xdgDataHome = getEnv("XDG_DATA_HOME");
+  if (xdgDataHome) return join(xdgDataHome, directoryName, "comments");
+
+  const home = getEnv("HOME");
+  if (home) {
+    return join(home, ".local", "share", directoryName, "comments");
+  }
+
+  return join(Deno.cwd(), `.${directoryName}`, "comments");
+};
+
+export const getCommentsDirectoryPath = (): string => {
+  const configuredDirectory = getEnv("SADOKU_COMMENTS_DIR");
+  if (configuredDirectory) return configuredDirectory;
+
+  const config = readConfig();
+  if (config?.commentsDirectory) return config.commentsDirectory;
+
+  const legacyConfiguredDirectory = getEnv("MDVIEW_COMMENTS_DIR");
+  if (legacyConfiguredDirectory) return legacyConfiguredDirectory;
+
+  return getDefaultCommentsDirectoryPath(appDirectoryName);
+};
+
+export const getLegacyCommentsDirectoryPath = (): string =>
+  getDefaultCommentsDirectoryPath(legacyAppDirectoryName);
