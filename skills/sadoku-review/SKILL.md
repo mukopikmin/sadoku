@@ -1,6 +1,6 @@
 ---
 name: sadoku-review
-description: Read unresolved Sadoku review comments through the sadoku CLI, apply requested changes to the referenced Markdown document, verify the result, and reply with focused Markdown diffs while leaving comments open for user confirmation. Use when asked to review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
+description: Read unresolved Sadoku review comments through the sadoku CLI, apply requested changes to the referenced Markdown document, verify the result, and reply with a concise description of the changes while leaving comments open for user confirmation. Use when asked to review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
 ---
 
 # Sadoku Review
@@ -54,30 +54,22 @@ questions, and the final report.
    ```
 
    Each reply must include at least:
-   - A brief summary of what changed.
-   - A focused excerpt of the Markdown diff relevant to that comment, enclosed
-     in a fenced code block whose info string is `diff`.
+   - A concise sentence or bullet list explaining what changed.
+   - When useful, the affected heading, paragraph, or other location.
    - When one edit addresses multiple comments, an explanation of which change
      satisfies each comment.
 
    Format a changed-comment reply like this:
 
-   ````markdown
-   Changed the heading and clarified the opening sentence.
+   > Changed the heading from "Old heading" to "New heading" and clarified the
+   > opening sentence in that section.
 
-   ```diff
-   -# Old heading
-   +# New heading
-   ```
-   ````
-
-   Inspect the diff with a command such as `git diff -- <markdown-path>`.
-   Include only the necessary range in the reply; do not paste large unrelated
-   portions of the diff. For comments classified as **Already satisfied**, reply
-   with the reason the document already satisfies the request; a diff block is
-   not required when no change was made. Use `--request-review` for these
-   replies because the user must confirm that the change addresses the comment
-   or that the existing document is satisfactory.
+   Internally inspect the change with a command such as
+   `git diff -- <markdown-path>`. For **Already satisfied** comments, make no
+   change and reply concisely with only the reason the document already
+   satisfies the request. Use `--request-review` for these replies because the
+   user must confirm that the change addresses the comment or that the existing
+   document is satisfactory.
 9. Do not run `sadoku comments resolve`. The user must review the reply and the
    document change, then decide whether to resolve the comment.
 10. Run `sadoku comments inspect <markdown-path>` again. In the console or final
