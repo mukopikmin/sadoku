@@ -1,5 +1,5 @@
 import { join } from "@std/path";
-import { getCommentsDirectoryPath } from "./storage.ts";
+import { getCommentsDirectoryPath } from "./paths.ts";
 
 const notificationDirectoryName = "notifications";
 
