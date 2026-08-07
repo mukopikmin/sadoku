@@ -18,7 +18,7 @@ class FakeEventSource extends EventTarget {
 }
 
 describe("connectHotReload", () => {
-  it("notifies when the server sends a reload event", () => {
+  it("notifies when the server invalidates the document", () => {
     let reloads = 0;
     const disconnect = connectHotReload({
       EventSourceCtor: FakeEventSource as unknown as new (
@@ -32,10 +32,51 @@ describe("connectHotReload", () => {
     const events = FakeEventSource.instances.at(-1);
     expect(events?.url).toBe("/__sadoku/events");
 
-    events?.dispatchEvent(new Event("reload"));
+    events?.dispatchEvent(
+      new MessageEvent("invalidate", {
+        data: JSON.stringify({ resources: ["document", "comments"] }),
+      }),
+    );
     expect(reloads).toBe(1);
 
     disconnect();
     expect(events?.closed).toBe(true);
+  });
+
+  it("notifies separately when only comments are invalidated", () => {
+    let reloads = 0;
+    let commentChanges = 0;
+    connectHotReload({
+      EventSourceCtor: FakeEventSource as unknown as new (
+        url: string,
+      ) => EventSource,
+      onCommentsChanged: () => commentChanges += 1,
+      onReloadAvailable: () => reloads += 1,
+    });
+
+    FakeEventSource.instances.at(-1)?.dispatchEvent(
+      new MessageEvent("invalidate", {
+        data: JSON.stringify({ resources: ["comments"] }),
+      }),
+    );
+
+    expect(commentChanges).toBe(1);
+    expect(reloads).toBe(0);
+  });
+
+  it("ignores malformed invalidation events", () => {
+    let reloads = 0;
+    connectHotReload({
+      EventSourceCtor: FakeEventSource as unknown as new (
+        url: string,
+      ) => EventSource,
+      onReloadAvailable: () => reloads += 1,
+    });
+
+    FakeEventSource.instances.at(-1)?.dispatchEvent(
+      new MessageEvent("invalidate", { data: "not json" }),
+    );
+
+    expect(reloads).toBe(0);
   });
 });

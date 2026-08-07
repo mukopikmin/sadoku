@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { resolve } from "@std/path";
 
-import { createHotReloadEventStream } from "./events.ts";
+import { createPreviewEventStream } from "./events.ts";
 
 const readWithTimeout = async (
   reader: ReadableStreamDefaultReader<Uint8Array>,
@@ -36,7 +36,7 @@ Deno.test("emits a reload event when the Markdown file changes", async () => {
   const controller = new AbortController();
   let opened = 0;
   let closed = 0;
-  const stream = createHotReloadEventStream(
+  const stream = createPreviewEventStream(
     filePath,
     controller.signal,
     {
@@ -56,13 +56,42 @@ Deno.test("emits a reload event when the Markdown file changes", async () => {
       assertEquals(result.done, false);
       assertEquals(
         new TextDecoder().decode(result.value),
-        "event: reload\ndata: {}\n\n",
+        'event: invalidate\ndata: {"resources":["document","comments"]}\n\n',
       );
     }
 
     controller.abort();
     await readUntilDone(reader);
     assertEquals(closed, 1);
+  } finally {
+    controller.abort();
+    await reader.cancel().catch(() => {});
+    await Deno.remove(directory, { recursive: true }).catch(() => {});
+  }
+});
+
+Deno.test("emits a comments invalidation when comments change", async () => {
+  const directory = await Deno.makeTempDir({ prefix: "sadoku-events-" });
+  const notificationPath = resolve(directory, "comments.changed");
+  await Deno.writeTextFile(notificationPath, "first");
+  const controller = new AbortController();
+  const stream = createPreviewEventStream(undefined, controller.signal, {
+    commentsNotificationPath: notificationPath,
+  });
+  const reader = stream.getReader();
+
+  try {
+    await Deno.writeTextFile(notificationPath, "second");
+    const result = await readWithTimeout(reader, 2_000);
+
+    assertEquals(result === "timeout", false);
+    if (result !== "timeout") {
+      assertEquals(result.done, false);
+      assertEquals(
+        new TextDecoder().decode(result.value),
+        'event: invalidate\ndata: {"resources":["comments"]}\n\n',
+      );
+    }
   } finally {
     controller.abort();
     await reader.cancel().catch(() => {});
@@ -77,7 +106,7 @@ Deno.test("ignores changes to other files in the watched directory", async () =>
   await Deno.writeTextFile(filePath, "document");
   await Deno.writeTextFile(otherPath, "first");
   const controller = new AbortController();
-  const stream = createHotReloadEventStream(filePath, controller.signal);
+  const stream = createPreviewEventStream(filePath, controller.signal);
   const reader = stream.getReader();
 
   try {
@@ -96,7 +125,7 @@ Deno.test("reports stream closure only once after abort and cancellation", async
   await Deno.writeTextFile(filePath, "document");
   const controller = new AbortController();
   let closed = 0;
-  const stream = createHotReloadEventStream(filePath, controller.signal, {
+  const stream = createPreviewEventStream(filePath, controller.signal, {
     onEventStreamClose: () => closed += 1,
   });
   const reader = stream.getReader();
