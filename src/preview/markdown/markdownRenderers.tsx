@@ -17,6 +17,14 @@ import { MarkdownListItem } from "./renderers/listItem";
 import { MarkdownOrderedList } from "./renderers/orderedList";
 import { MarkdownParagraph } from "./renderers/paragraph";
 import { MarkdownPre } from "./renderers/pre";
+import {
+  MarkdownTable,
+  MarkdownTableBody,
+  MarkdownTableCell,
+  MarkdownTableColumnHeader,
+  MarkdownTableHeader,
+  MarkdownTableRow,
+} from "./renderers/table";
 import { MarkdownUnorderedList } from "./renderers/unorderedList";
 
 export {
@@ -31,6 +39,7 @@ export { renderMarkdownHeading } from "./renderers/heading";
 export { renderMarkdownHorizontalRule } from "./renderers/horizontalRule";
 export { renderMarkdownParagraph } from "./renderers/paragraph";
 export { renderMarkdownPre } from "./renderers/pre";
+export { renderMarkdownTable } from "./renderers/table";
 
 export const sharedMarkdownComponents: Components = {
   a: MarkdownLink,
@@ -49,5 +58,11 @@ export const sharedMarkdownComponents: Components = {
   ol: MarkdownOrderedList,
   p: MarkdownParagraph,
   pre: MarkdownPre,
+  table: MarkdownTable,
+  tbody: MarkdownTableBody,
+  td: MarkdownTableCell,
+  th: MarkdownTableColumnHeader,
+  thead: MarkdownTableHeader,
+  tr: MarkdownTableRow,
   ul: MarkdownUnorderedList,
 };
