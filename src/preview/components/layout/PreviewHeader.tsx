@@ -1,12 +1,11 @@
 import {
   Box,
-  Button,
   Container,
   Flex,
   Float,
-  Group,
   IconButton,
   Link,
+  Tabs,
   Text,
 } from "@chakra-ui/react";
 import type { ReactNode } from "react";
@@ -182,51 +181,51 @@ export const PreviewHeader = ({
           </svg>
         </IconButton>
       )}
-      <Group attached>
-        <Button
-          aria-current={view === "preview" ? "page" : undefined}
-          colorPalette={view === "preview" ? "blue" : "gray"}
-          onClick={() => onChangeView("preview")}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          Preview
-        </Button>
-        <Button
-          aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
-          aria-current={view === "comments" ? "page" : undefined}
-          colorPalette={view === "comments" ? "blue" : "gray"}
-          onClick={() => onChangeView("comments")}
-          size="sm"
-          type="button"
-          variant="outline"
-          position="relative"
-        >
-          Comments
-          {staleCommentCount > 0 && (
-            <Box as="span" ml="1" color="warning.fg">
-              Stale {staleCommentCount}
-            </Box>
-          )}
-          {unresolvedCommentCount > 0 && (
-            <Float
-              aria-hidden="true"
-              as="span"
-              bg="blue.solid"
-              borderRadius="full"
-              color="blue.contrast"
-              fontSize="2xs"
-              fontWeight="bold"
-              minW="5"
-              offset="1"
-              px="1"
-            >
-              {unresolvedCommentCount}
-            </Float>
-          )}
-        </Button>
-      </Group>
+      <Tabs.Root
+        onValueChange={({ value }) => onChangeView(value as PreviewView)}
+        size="sm"
+        value={view}
+        variant="enclosed"
+      >
+        <Tabs.List>
+          <Tabs.Trigger
+            onClick={() => onChangeView("preview")}
+            value="preview"
+          >
+            Preview
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
+            onClick={() => onChangeView("comments")}
+            position="relative"
+            value="comments"
+          >
+            Comments
+            {staleCommentCount > 0 && (
+              <Box as="span" ml="1" color="warning.fg">
+                Stale {staleCommentCount}
+              </Box>
+            )}
+            {unresolvedCommentCount > 0 && (
+              <Float
+                aria-hidden="true"
+                as="span"
+                bg="blue.solid"
+                borderRadius="full"
+                color="blue.contrast"
+                fontSize="2xs"
+                fontWeight="bold"
+                minW="5"
+                offset="1"
+                px="1"
+              >
+                {unresolvedCommentCount}
+              </Float>
+            )}
+          </Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content display="none" value={view} />
+      </Tabs.Root>
     </Flex>
   </PreviewShell>
 );

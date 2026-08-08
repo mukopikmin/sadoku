@@ -1,30 +1,40 @@
-import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { loadSettings, saveThemeSetting } from "../api/settings";
+import type { ThemeMode } from "../models/theme";
 
-export type ThemeMode = "dark" | "light";
+export type { ThemeMode } from "../models/theme";
+
+export const settingsQueryKey = ["settings"] as const;
 
 const getPreferredThemeMode = (): ThemeMode => {
-  try {
-    const stored = globalThis.localStorage?.getItem("sadoku-theme");
-    if (stored === "dark" || stored === "light") return stored;
-  } catch {
-    // Ignore storage failures and fall back to the browser preference.
-  }
-
   return globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 };
 
-const persistThemeMode = (themeMode: ThemeMode): void => {
-  try {
-    globalThis.localStorage?.setItem("sadoku-theme", themeMode);
-  } catch {
-    // Theme switching should keep working even when storage is unavailable.
-  }
-};
-
 export const useThemeMode = () => {
   const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
+  const userSelectedTheme = useRef(false);
+  const queryClient = useQueryClient();
+  const settingsQuery = useQuery({
+    queryFn: loadSettings,
+    queryKey: settingsQueryKey,
+  });
+  const saveThemeMutation = useMutation({
+    mutationFn: saveThemeSetting,
+    onSuccess: (settings) => {
+      queryClient.setQueryData(settingsQueryKey, settings);
+    },
+  });
+
+  useEffect(() => {
+    if (
+      !userSelectedTheme.current && settingsQuery.data?.theme !== undefined
+    ) {
+      setThemeMode(settingsQuery.data.theme);
+    }
+  }, [settingsQuery.data]);
 
   useEffect(() => {
     const root = globalThis.document.documentElement;
@@ -32,11 +42,15 @@ export const useThemeMode = () => {
     root.classList.toggle("dark", themeMode === "dark");
     root.classList.toggle("light", themeMode === "light");
     root.style.colorScheme = themeMode;
-    persistThemeMode(themeMode);
   }, [themeMode]);
 
   const toggleThemeMode = () => {
-    setThemeMode((current) => current === "dark" ? "light" : "dark");
+    userSelectedTheme.current = true;
+    setThemeMode((current) => {
+      const next = current === "dark" ? "light" : "dark";
+      saveThemeMutation.mutate(next);
+      return next;
+    });
   };
 
   return { themeMode, toggleThemeMode };

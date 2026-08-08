@@ -69,6 +69,20 @@ const mockRect = (top: number, bottom: number): DOMRect => ({
   toJSON: () => ({}),
 });
 
+const expectComputedStyleValue = (
+  element: Element,
+  property: string,
+  expectedValue: string,
+) => {
+  const reference = document.createElement("div");
+  reference.style.setProperty(property, expectedValue);
+  document.body.append(reference);
+  expect(getComputedStyle(element).getPropertyValue(property)).toBe(
+    getComputedStyle(reference).getPropertyValue(property),
+  );
+  reference.remove();
+};
+
 describe("MarkdownPreview", () => {
   it("uses Chakra tokens for custom preview colors and spacing", () => {
     expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
@@ -248,6 +262,24 @@ Footnote-looking text stays plain.[^note]
     expect(container.querySelector('th[style*="text-align: right"]'))
       .not.toBeNull();
     expect(container.querySelector("td strong")?.textContent).toBe("beta");
+    expect(container.querySelector("table")?.className).toContain(
+      "chakra-table__root",
+    );
+    expect(container.querySelector("thead")?.className).toContain(
+      "chakra-table__header",
+    );
+    expect(container.querySelector("tbody")?.className).toContain(
+      "chakra-table__body",
+    );
+    expect(container.querySelector("tr")?.className).toContain(
+      "chakra-table__row",
+    );
+    expect(container.querySelector("th")?.className).toContain(
+      "chakra-table__columnHeader",
+    );
+    expect(container.querySelector("td")?.className).toContain(
+      "chakra-table__cell",
+    );
     expect(previewThemeCss).not.toContain("tbody tr:nth-child");
     expect(previewThemeCss).not.toMatch(/th \{[^}]*background:/);
   });
@@ -300,9 +332,9 @@ After
     expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
       "0px",
     );
-    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0.25em");
+    expectComputedStyleValue(nestedUnorderedList!, "margin-top", "0.25em");
     expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0.25em");
+    expectComputedStyleValue(nestedOrderedList!, "margin-top", "0.25em");
     expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",
@@ -383,7 +415,11 @@ After
     );
     expect(checkboxRoots).toHaveLength(4);
     for (const checkboxRoot of checkboxRoots) {
-      expect(getComputedStyle(checkboxRoot).marginInlineStart).toBe("-1.5em");
+      expectComputedStyleValue(
+        checkboxRoot,
+        "margin-inline-start",
+        "-1.5em",
+      );
     }
     expect(
       container.querySelectorAll(
@@ -823,6 +859,15 @@ Body
     expect(
       container.querySelector('[data-source-line="3"] .comment-thread'),
     ).not.toBeNull();
+    const commentThread = container.querySelector(
+      '[data-source-line="3"] > .comment-thread',
+    );
+    expect(commentThread?.tagName).toBe("DIV");
+    expect(
+      commentThread?.parentElement?.classList.contains(
+        "commentable-block",
+      ),
+    ).toBe(true);
     expect(container.querySelector(".markdown-range-highlight-comment"))
       .not.toBeNull();
     expect(
@@ -904,8 +949,8 @@ Body
     expect(highlight).not.toBeNull();
     expect(highlight?.dataset.startLine).toBe("1");
     expect(highlight?.dataset.endLine).toBe("3");
-    expect(highlight?.style.top).toBe("21px");
-    expect(highlight?.style.height).toBe("118px");
+    expect(getComputedStyle(highlight!).top).toBe("21px");
+    expect(getComputedStyle(highlight!).height).toBe("118px");
     expect(
       titleBlock?.classList.contains(
         "commentable-block-range-selected",
@@ -993,6 +1038,25 @@ Body
     const { container } = renderMarkdown("# Title\n\nBody\n");
 
     const getLine = () => container.querySelector('[data-source-line="3"] p');
+    const block = container.querySelector<HTMLElement>(
+      '[data-source-line="3"]',
+    );
+    const content = block?.querySelector<HTMLElement>(
+      ":scope > .commentable-content",
+    );
+    const markdownBody = content?.querySelector<HTMLElement>(
+      ":scope > .comment-markdown-body",
+    );
+    expect(block?.tagName).toBe("DIV");
+    expect(block?.dataset.sourceLine).toBe("3");
+    expect(block?.dataset.sourceEndLine).toBe("3");
+    expect(block?.style.getPropertyValue("--comment-indent-offset")).toBe(
+      "0em",
+    );
+    expect(content?.tagName).toBe("DIV");
+    expect(content?.title).toBe("Select line 3 for comment");
+    expect(markdownBody?.tagName).toBe("DIV");
+    expect(markdownBody?.querySelector("p")).toBe(getLine());
     expect(getLine()).not.toBeNull();
     expect(screen.queryByRole("button", {
       name: "Add comment on line 3",

@@ -142,7 +142,12 @@ directory:
 
 ```toml
 commentsDirectory = "/path/to/sadoku/comments"
+theme = "dark"
 ```
+
+Set `theme` to `"dark"` or `"light"` to select the corresponding theme. When it
+is omitted, Sadoku follows the browser's `prefers-color-scheme` setting. Theme
+changes made in the preview update this setting.
 
 Sadoku stores comments in `commentsDirectory/sadoku.sqlite3` by default.
 

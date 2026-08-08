@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 
-import { getConfigFilePath, readConfig } from "./config.ts";
+import { getConfigFilePath, readConfig, updateThemeConfig } from "./config.ts";
 
 type ConfigEnvironmentPaths = {
   configFilePath: string;
@@ -122,6 +122,53 @@ Deno.test("rejects invalid comments directory config type", async () => {
       () => readConfig(),
       Error,
       "commentsDirectory in Sadoku config must be a string.",
+    );
+  });
+});
+
+Deno.test("reads and validates theme mode config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, 'theme = "dark"\n');
+    assertEquals(readConfig(), { theme: "dark" });
+
+    for (const invalid of ["true", '"sepia"']) {
+      await writeConfig(configFilePath, `theme = ${invalid}\n`);
+      assertThrows(
+        () => readConfig(),
+        Error,
+        'theme in Sadoku config must be either "dark" or "light".',
+      );
+    }
+  });
+});
+
+for (const theme of ["dark", "light"] as const) {
+  Deno.test(`saves theme=${theme} while retaining existing config`, async () => {
+    await withConfigEnvironment(async ({ configFilePath, root }) => {
+      const commentsDirectory = join(root, "comments");
+      await writeConfig(
+        configFilePath,
+        `commentsDirectory = ${
+          JSON.stringify(commentsDirectory)
+        }\ncustom = "kept"\n`,
+      );
+
+      await updateThemeConfig(theme);
+
+      assertEquals(readConfig(), { commentsDirectory, theme });
+      const saved = await Deno.readTextFile(configFilePath);
+      assertEquals(saved.includes('custom = "kept"'), true);
+    });
+  });
+}
+
+Deno.test("creates the config directory and file when saving a theme", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await updateThemeConfig("dark");
+    assertEquals(readConfig(), { theme: "dark" });
+    assertEquals(
+      await Deno.stat(configFilePath).then((stat) => stat.isFile),
+      true,
     );
   });
 });

@@ -1,5 +1,5 @@
-import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
-import { useId, useState } from "react";
+import { Box, Heading, Stack, Tabs, Text } from "@chakra-ui/react";
+import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import type {
@@ -82,7 +82,6 @@ export const CommentList = ({
   const [selectedState, setSelectedState] = useState<Comment["state"]>(
     "active",
   );
-  const tabsId = useId();
   const activeComments = comments.filter(
     (comment): comment is ActiveComment => comment.state === "active",
   );
@@ -115,50 +114,53 @@ export const CommentList = ({
   const selectAdjacentTab = (
     state: Comment["state"],
     direction: -1 | 1,
+    tabList: HTMLElement,
   ) => {
     const index = states.indexOf(state);
     const nextState =
       states[(index + direction + states.length) % states.length];
     setSelectedState(nextState);
-    globalThis.document.getElementById(`${tabsId}-${nextState}-tab`)?.focus();
+    tabList.querySelector<HTMLElement>(`[data-value="${nextState}"]`)
+      ?.focus();
   };
 
   return (
-    <Box>
-      <Stack direction="row" role="tablist" mb="7" gap="1">
+    <Tabs.Root
+      onValueChange={({ value }) => setSelectedState(value as Comment["state"])}
+      value={selectedState}
+      variant="enclosed"
+    >
+      <Tabs.List mb="7">
         {states.map((state) => (
-          <Button
-            aria-controls={`${tabsId}-panel`}
-            aria-selected={selectedState === state}
-            id={`${tabsId}-${state}-tab`}
+          <Tabs.Trigger
             key={state}
             onClick={() => setSelectedState(state)}
             onKeyDown={(event) => {
-              if (event.key === "ArrowLeft") selectAdjacentTab(state, -1);
-              if (event.key === "ArrowRight") selectAdjacentTab(state, 1);
+              if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+                return;
+              }
+              event.preventDefault();
+              selectAdjacentTab(
+                state,
+                event.key === "ArrowLeft" ? -1 : 1,
+                event.currentTarget.parentElement!,
+              );
             }}
-            role="tab"
-            size="sm"
-            tabIndex={selectedState === state ? 0 : -1}
-            variant={selectedState === state ? "solid" : "ghost"}
+            value={state}
           >
             {sections[state].label} ({sections[state].comments.length})
-          </Button>
+          </Tabs.Trigger>
         ))}
-      </Stack>
-      <Box
-        aria-labelledby={`${tabsId}-${selectedState}-tab`}
-        id={`${tabsId}-panel`}
-        role="tabpanel"
-      >
+      </Tabs.List>
+      <Tabs.Content value={selectedState}>
         <CommentSection
           actions={actions}
           comments={selectedSection.comments}
           emptyText={selectedSection.emptyText}
           title={`${selectedSection.label} comments (${selectedSection.comments.length})`}
         />
-      </Box>
-    </Box>
+      </Tabs.Content>
+    </Tabs.Root>
   );
 };
 

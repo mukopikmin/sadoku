@@ -1,11 +1,12 @@
-import { join } from "@std/path";
-import { parse } from "@std/toml";
+import { dirname, join } from "@std/path";
+import { parse, stringify } from "@std/toml";
 
 const appDirectoryName = "sadoku";
 const configFileName = "config.toml";
 
 export type SadokuConfig = {
   commentsDirectory?: string;
+  theme?: "dark" | "light";
 };
 
 const getEnv = (name: string): string | undefined => {
@@ -54,7 +55,51 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     if (commentsDirectory) config.commentsDirectory = commentsDirectory;
   }
 
+  if ("theme" in value) {
+    if (value.theme !== "dark" && value.theme !== "light") {
+      throw new Error(
+        'theme in Sadoku config must be either "dark" or "light".',
+      );
+    }
+    config.theme = value.theme;
+  }
+
   return config;
+};
+
+export const updateThemeConfig = async (
+  theme: "dark" | "light",
+): Promise<void> => {
+  const configFilePath = getConfigFilePath();
+  if (!configFilePath) {
+    throw new Error("Cannot locate the Sadoku config file.");
+  }
+
+  let existing: Record<string, unknown> = {};
+  try {
+    const parsed = parse(await Deno.readTextFile(configFilePath));
+    if (!isRecord(parsed)) throw new Error("Sadoku config must be a table.");
+    // Validate known settings before preserving them in the rewritten file.
+    parseConfig(parsed);
+    existing = parsed;
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
+
+  await Deno.mkdir(dirname(configFilePath), { recursive: true });
+  const temporaryPath = `${configFilePath}.${crypto.randomUUID()}.tmp`;
+  try {
+    await Deno.writeTextFile(
+      temporaryPath,
+      stringify({ ...existing, theme }),
+      { createNew: true },
+    );
+    await Deno.rename(temporaryPath, configFilePath);
+  } finally {
+    await Deno.remove(temporaryPath).catch((error) => {
+      if (!(error instanceof Deno.errors.NotFound)) throw error;
+    });
+  }
 };
 
 export const readConfig = (): SadokuConfig | undefined => {
