@@ -30,9 +30,9 @@ export const useThemeMode = () => {
 
   useEffect(() => {
     if (
-      !userSelectedTheme.current && settingsQuery.data?.themeMode !== undefined
+      !userSelectedTheme.current && settingsQuery.data?.theme !== undefined
     ) {
-      setThemeMode(settingsQuery.data.themeMode);
+      setThemeMode(settingsQuery.data.theme);
     }
   }, [settingsQuery.data]);
 

@@ -43,13 +43,13 @@ Deno.test("settings handler gets and updates theme mode without losing config", 
       {},
     );
     const response = await handleSettingsRequest(
-      request("PUT", { themeMode: "light" }),
+      request("PUT", { theme: "light" }),
     );
     assertEquals(response.status, 200);
-    assertEquals(await response.json(), { themeMode: "light" });
+    assertEquals(await response.json(), { theme: "light" });
     assertEquals(readConfig(), {
       commentsDirectory: "/tmp/comments",
-      themeMode: "light",
+      theme: "light",
     });
   });
 });
@@ -59,16 +59,16 @@ Deno.test("settings handler validates method, content type, and JSON shape", asy
     assertEquals((await handleSettingsRequest(request("POST"))).status, 405);
     assertEquals(
       (await handleSettingsRequest(
-        request("PUT", { themeMode: "dark" }, "text/plain"),
+        request("PUT", { theme: "dark" }, "text/plain"),
       )).status,
       400,
     );
     for (
       const body of [
         {},
-        { themeMode: true },
-        { themeMode: "sepia" },
-        { themeMode: "dark", extra: 1 },
+        { theme: true },
+        { theme: "sepia" },
+        { theme: "dark", extra: 1 },
       ]
     ) {
       assertEquals(

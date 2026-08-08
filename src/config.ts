@@ -6,7 +6,7 @@ const configFileName = "config.toml";
 
 export type SadokuConfig = {
   commentsDirectory?: string;
-  themeMode?: "dark" | "light";
+  theme?: "dark" | "light";
 };
 
 const getEnv = (name: string): string | undefined => {
@@ -55,20 +55,20 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     if (commentsDirectory) config.commentsDirectory = commentsDirectory;
   }
 
-  if ("themeMode" in value) {
-    if (value.themeMode !== "dark" && value.themeMode !== "light") {
+  if ("theme" in value) {
+    if (value.theme !== "dark" && value.theme !== "light") {
       throw new Error(
-        'themeMode in Sadoku config must be either "dark" or "light".',
+        'theme in Sadoku config must be either "dark" or "light".',
       );
     }
-    config.themeMode = value.themeMode;
+    config.theme = value.theme;
   }
 
   return config;
 };
 
 export const updateThemeConfig = async (
-  themeMode: "dark" | "light",
+  theme: "dark" | "light",
 ): Promise<void> => {
   const configFilePath = getConfigFilePath();
   if (!configFilePath) {
@@ -91,7 +91,7 @@ export const updateThemeConfig = async (
   try {
     await Deno.writeTextFile(
       temporaryPath,
-      stringify({ ...existing, themeMode }),
+      stringify({ ...existing, theme }),
       { createNew: true },
     );
     await Deno.rename(temporaryPath, configFilePath);

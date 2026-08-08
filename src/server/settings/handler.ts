@@ -12,8 +12,8 @@ export const handleSettingsRequest = async (
   request: Request,
 ): Promise<Response> => {
   if (request.method === "GET") {
-    const themeMode = readConfig()?.themeMode;
-    return noStoreJson(themeMode === undefined ? {} : { themeMode });
+    const theme = readConfig()?.theme;
+    return noStoreJson(theme === undefined ? {} : { theme });
   }
   if (request.method !== "PUT") return methodNotAllowedResponse();
 
@@ -32,15 +32,15 @@ export const handleSettingsRequest = async (
   if (
     typeof body !== "object" || body === null || Array.isArray(body) ||
     Object.keys(body).length !== 1 ||
-    ((body as Record<string, unknown>).themeMode !== "dark" &&
-      (body as Record<string, unknown>).themeMode !== "light")
+    ((body as Record<string, unknown>).theme !== "dark" &&
+      (body as Record<string, unknown>).theme !== "light")
   ) {
     return invalidRequest(
-      'Request body must contain only themeMode set to "dark" or "light".',
+      'Request body must contain only theme set to "dark" or "light".',
     );
   }
 
-  const { themeMode } = body as { themeMode: "dark" | "light" };
-  await updateThemeConfig(themeMode);
-  return noStoreJson({ themeMode });
+  const { theme } = body as { theme: "dark" | "light" };
+  await updateThemeConfig(theme);
+  return noStoreJson({ theme });
 };

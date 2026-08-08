@@ -263,9 +263,7 @@ describe("App", () => {
       const url = String(input);
       if (url === "/__sadoku/settings") {
         return Promise.resolve(Response.json(
-          init?.method === "PUT"
-            ? { themeMode: "dark" }
-            : { themeMode: "light" },
+          init?.method === "PUT" ? { theme: "dark" } : { theme: "light" },
         ));
       }
       if (url === "/__sadoku/document") {
@@ -318,7 +316,7 @@ describe("App", () => {
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({ themeMode: "dark" }),
+      body: JSON.stringify({ theme: "dark" }),
       headers: { "content-type": "application/json" },
       method: "PUT",
     });

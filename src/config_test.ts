@@ -128,22 +128,22 @@ Deno.test("rejects invalid comments directory config type", async () => {
 
 Deno.test("reads and validates theme mode config", async () => {
   await withConfigEnvironment(async ({ configFilePath }) => {
-    await writeConfig(configFilePath, 'themeMode = "dark"\n');
-    assertEquals(readConfig(), { themeMode: "dark" });
+    await writeConfig(configFilePath, 'theme = "dark"\n');
+    assertEquals(readConfig(), { theme: "dark" });
 
     for (const invalid of ["true", '"sepia"']) {
-      await writeConfig(configFilePath, `themeMode = ${invalid}\n`);
+      await writeConfig(configFilePath, `theme = ${invalid}\n`);
       assertThrows(
         () => readConfig(),
         Error,
-        'themeMode in Sadoku config must be either "dark" or "light".',
+        'theme in Sadoku config must be either "dark" or "light".',
       );
     }
   });
 });
 
-for (const themeMode of ["dark", "light"] as const) {
-  Deno.test(`saves themeMode=${themeMode} while retaining existing config`, async () => {
+for (const theme of ["dark", "light"] as const) {
+  Deno.test(`saves theme=${theme} while retaining existing config`, async () => {
     await withConfigEnvironment(async ({ configFilePath, root }) => {
       const commentsDirectory = join(root, "comments");
       await writeConfig(
@@ -153,9 +153,9 @@ for (const themeMode of ["dark", "light"] as const) {
         }\ncustom = "kept"\n`,
       );
 
-      await updateThemeConfig(themeMode);
+      await updateThemeConfig(theme);
 
-      assertEquals(readConfig(), { commentsDirectory, themeMode });
+      assertEquals(readConfig(), { commentsDirectory, theme });
       const saved = await Deno.readTextFile(configFilePath);
       assertEquals(saved.includes('custom = "kept"'), true);
     });
@@ -165,7 +165,7 @@ for (const themeMode of ["dark", "light"] as const) {
 Deno.test("creates the config directory and file when saving a theme", async () => {
   await withConfigEnvironment(async ({ configFilePath }) => {
     await updateThemeConfig("dark");
-    assertEquals(readConfig(), { themeMode: "dark" });
+    assertEquals(readConfig(), { theme: "dark" });
     assertEquals(
       await Deno.stat(configFilePath).then((stat) => stat.isFile),
       true,
