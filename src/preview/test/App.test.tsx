@@ -73,9 +73,9 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" }),
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
   });
@@ -115,12 +115,12 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" }),
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
     expect(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
 
     expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
 
@@ -146,11 +146,11 @@ describe("App", () => {
     expect(documentRequests).toBe(2);
     expect(commentRequests).toBe(2);
     expect(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
     vi.mocked(initializeMermaid).mockClear();
-    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     await screen.findByRole("heading", { name: "Updated title" });
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
     expect(document.querySelector(".mermaid")?.textContent).toBe(
@@ -259,16 +259,17 @@ describe("App", () => {
     );
     expect(getComputedStyle(main!).paddingTop).toBe("0px");
 
-    const previewButton = screen.getByRole("button", { name: "Preview" });
-    const commentsButton = screen.getByRole("button", {
+    const previewButton = screen.getByRole("tab", { name: "Preview" });
+    const commentsButton = screen.getByRole("tab", {
       name: "Comments, 0 unresolved",
     });
     expect(commentsButton.querySelector('span[aria-hidden="true"]')).toBeNull();
     expect(previewButton.parentElement).toBe(commentsButton.parentElement);
-    expect(previewButton.getAttribute("data-group-item")).toBe("");
-    expect(previewButton.getAttribute("data-first")).toBe("");
-    expect(commentsButton.getAttribute("data-group-item")).toBe("");
-    expect(commentsButton.getAttribute("data-last")).toBe("");
+    expect(previewButton.getAttribute("data-part")).toBe("trigger");
+    expect(commentsButton.getAttribute("data-part")).toBe("trigger");
+    expect(previewButton.closest('[data-part="root"]')).toBe(
+      commentsButton.closest('[data-part="root"]'),
+    );
   });
 
   it("switches between light and dark preview themes", async () => {
@@ -404,7 +405,7 @@ describe("App", () => {
     );
     expect(screen.queryByText("Stale comment.")).toBeNull();
 
-    const commentsButton = screen.getByRole("button", {
+    const commentsButton = screen.getByRole("tab", {
       name: "Comments, 2 unresolved",
     });
     expect(
