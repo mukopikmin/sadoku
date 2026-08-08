@@ -37,6 +37,7 @@ afterEach(() => {
   cleanup();
   document.documentElement.className = "";
   document.documentElement.removeAttribute("data-theme");
+  document.documentElement.removeAttribute("data-code-wrap");
   document.documentElement.removeAttribute("style");
   globalThis.localStorage?.clear?.();
   TestEventSource.instances = [];
@@ -326,6 +327,50 @@ describe("App", () => {
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
+  });
+
+  it("persists and switches code block wrapping", async () => {
+    const localStorage = createTestStorage({ "sadoku-code-wrap": "wrap" });
+    vi.stubGlobal("localStorage", localStorage);
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/document") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/example.md",
+            markdown: "```txt\n日本語の長いコードブロック\n```\n",
+            title: "example.md",
+          }));
+        }
+        if (url === "/__sadoku/comments") {
+          return Promise.resolve(Response.json({
+            comments: [],
+            filePath: "/tmp/example.md",
+          }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+
+    render(<App />);
+
+    const code = await screen.findByText("日本語の長いコードブロック");
+    expect(document.documentElement.dataset.codeWrap).toBe("wrap");
+    expect(localStorage.getItem("sadoku-code-wrap")).toBe("wrap");
+    expect(getComputedStyle(code).whiteSpace).toBe("pre-wrap");
+    expect(getComputedStyle(code).overflowWrap).toBe("anywhere");
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "Do not wrap code blocks",
+    }));
+
+    expect(document.documentElement.dataset.codeWrap).toBe("scroll");
+    expect(localStorage.getItem("sadoku-code-wrap")).toBe("scroll");
+    expect(getComputedStyle(code).whiteSpace).toBe("pre");
+    expect(screen.getByRole("button", { name: "Wrap code blocks" })).not
+      .toBeNull();
   });
 
   it("shows stale comments only in the comments view", async () => {
