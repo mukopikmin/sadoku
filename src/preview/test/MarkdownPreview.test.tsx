@@ -69,6 +69,20 @@ const mockRect = (top: number, bottom: number): DOMRect => ({
   toJSON: () => ({}),
 });
 
+const expectComputedStyleValue = (
+  element: Element,
+  property: string,
+  expectedValue: string,
+) => {
+  const reference = document.createElement("div");
+  reference.style.setProperty(property, expectedValue);
+  document.body.append(reference);
+  expect(getComputedStyle(element).getPropertyValue(property)).toBe(
+    getComputedStyle(reference).getPropertyValue(property),
+  );
+  reference.remove();
+};
+
 describe("MarkdownPreview", () => {
   it("uses Chakra tokens for custom preview colors and spacing", () => {
     expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
@@ -318,9 +332,9 @@ After
     expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
       "0px",
     );
-    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0.25em");
+    expectComputedStyleValue(nestedUnorderedList!, "margin-top", "0.25em");
     expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0.25em");
+    expectComputedStyleValue(nestedOrderedList!, "margin-top", "0.25em");
     expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",
@@ -401,7 +415,11 @@ After
     );
     expect(checkboxRoots).toHaveLength(4);
     for (const checkboxRoot of checkboxRoots) {
-      expect(getComputedStyle(checkboxRoot).marginInlineStart).toBe("-1.5em");
+      expectComputedStyleValue(
+        checkboxRoot,
+        "margin-inline-start",
+        "-1.5em",
+      );
     }
     expect(
       container.querySelectorAll(
