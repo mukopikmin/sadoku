@@ -10,6 +10,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import type { ReactNode } from "react";
+import type { CodeWrapMode } from "../../hooks/useCodeWrapMode";
 import type { ThemeMode } from "../../hooks/useThemeMode";
 
 export type PreviewView = "comments" | "preview";
@@ -43,10 +44,12 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 );
 
 type PreviewHeaderProps = {
+  codeWrapMode: CodeWrapMode;
   fileUrl: string;
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
   onToggleThemeMode: () => void;
+  onToggleCodeWrapMode: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
   staleCommentCount: number;
@@ -57,10 +60,12 @@ type PreviewHeaderProps = {
 };
 
 export const PreviewHeader = ({
+  codeWrapMode,
   fileUrl,
   onChangeView,
   onReloadPreview,
   onToggleThemeMode,
+  onToggleCodeWrapMode,
   reloadAvailable,
   reloading,
   staleCommentCount,
@@ -77,6 +82,31 @@ export const PreviewHeader = ({
       </Link>.
     </Text>
     <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
+      <IconButton
+        aria-label={codeWrapMode === "wrap"
+          ? "Do not wrap code blocks"
+          : "Wrap code blocks"}
+        onClick={onToggleCodeWrapMode}
+        size="sm"
+        type="button"
+        variant="outline"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="1em"
+          viewBox="0 0 16 16"
+          width="1em"
+        >
+          <path
+            d="M2 3.5h12M2 7.5h9a2.5 2.5 0 0 1 0 5H8m0 0 2-2m-2 2 2 2M2 11.5h3"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.5"
+          />
+        </svg>
+      </IconButton>
       <IconButton
         aria-label={`Switch to ${themeMode === "dark" ? "light" : "dark"} mode`}
         onClick={onToggleThemeMode}
