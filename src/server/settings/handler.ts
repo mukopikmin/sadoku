@@ -12,7 +12,7 @@ export const handleSettingsRequest = async (
   request: Request,
 ): Promise<Response> => {
   if (request.method === "GET") {
-    const theme = readConfig()?.theme;
+    const theme = readConfig()?.themeMode;
     return noStoreJson(theme === undefined ? {} : { theme });
   }
   if (request.method !== "PUT") return methodNotAllowedResponse();
