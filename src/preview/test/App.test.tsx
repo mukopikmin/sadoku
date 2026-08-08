@@ -120,7 +120,7 @@ describe("App", () => {
     expect(reloadButton.parentElement).toBe(previewNavigation);
     expect(
       reloadButton.previousElementSibling?.getAttribute("aria-label"),
-    ).toMatch(/^Switch to (light|dark) mode$/);
+    ).toBe("Open settings");
 
     fireEvent.click(reloadButton);
 
@@ -257,13 +257,15 @@ describe("App", () => {
     );
   });
 
-  it("switches between light and dark preview themes", async () => {
+  it("opens settings and selects and saves light and dark preview themes", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url === "/__sadoku/settings") {
         return Promise.resolve(Response.json(
-          init?.method === "PUT" ? { theme: "dark" } : { theme: "light" },
+          init?.method === "PUT"
+            ? JSON.parse(String(init.body))
+            : { theme: "light" },
         ));
       }
       if (url === "/__sadoku/document") {
@@ -297,21 +299,31 @@ describe("App", () => {
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
     );
 
-    const themeButton = screen.getByRole("button", {
-      name: "Switch to dark mode",
+    const settingsButton = screen.getByRole("button", {
+      name: "Open settings",
     });
-    expect(themeButton.textContent).toBe("");
-    expect(themeButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    const previewNavigation = screen.getByRole("navigation", {
+      name: "Preview views",
+    });
+    expect(settingsButton.parentElement).toBe(previewNavigation);
+    expect(settingsButton.textContent).toBe("");
+    expect(settingsButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
 
-    fireEvent.click(themeButton);
+    fireEvent.click(settingsButton);
 
+    expect(await screen.findByRole("dialog", { name: "Settings" })).not
+      .toBeNull();
+    const themeSelect = screen.getByRole("combobox", { name: "Theme" });
+    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    await waitFor(() => expect(document.activeElement).toBe(themeSelect));
+
+    fireEvent.change(themeSelect, { target: { value: "dark" } });
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(
-      screen.getByRole("button", {
-        name: "Switch to light mode",
-      }).querySelector('svg[aria-hidden="true"]'),
-    ).not.toBeNull();
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
+    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
@@ -320,9 +332,28 @@ describe("App", () => {
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
+
+    fireEvent.change(themeSelect, { target: { value: "light" } });
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.classList.contains("light")).toBe(true);
+    expect(document.documentElement.style.colorScheme).toBe("light");
+    await waitFor(() =>
+      expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
+    );
+    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+      body: JSON.stringify({ theme: "light" }),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(settingsButton));
   });
 
-  it("uses the OS theme and keeps toggling when settings requests fail", async () => {
+  it("uses the OS theme and applies a selected theme when saving fails", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
     vi.stubGlobal(
@@ -351,10 +382,13 @@ describe("App", () => {
     render(<App />);
     await screen.findByRole("link", { name: "example.md" });
     expect(document.documentElement.dataset.theme).toBe("dark");
-    fireEvent.click(
-      screen.getByRole("button", { name: "Switch to light mode" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const themeSelect = await screen.findByRole("combobox", { name: "Theme" });
+    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
+    fireEvent.change(themeSelect, { target: { value: "light" } });
     expect(document.documentElement.dataset.theme).toBe("light");
+    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
   it("shows stale comments only in the comments view", async () => {
