@@ -1,9 +1,9 @@
 import {
   Dialog,
+  Flex,
   IconButton,
   NativeSelect,
   Portal,
-  Stack,
   Text,
 } from "@chakra-ui/react";
 import type { ThemeMode } from "../models/theme";
@@ -40,11 +40,11 @@ export const SettingsDialog = ({
               <Dialog.Title>Settings</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              <Stack gap="2">
+              <Flex alignItems="center" justifyContent="space-between" gap="4">
                 <Text as="label" htmlFor="theme-mode" fontWeight="medium">
                   Theme
                 </Text>
-                <NativeSelect.Root>
+                <NativeSelect.Root width="40">
                   <NativeSelect.Field
                     autoFocus
                     id="theme-mode"
@@ -57,7 +57,7 @@ export const SettingsDialog = ({
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>
-              </Stack>
+              </Flex>
             </Dialog.Body>
             <Dialog.CloseTrigger asChild>
               <IconButton aria-label="Close settings" size="sm" variant="ghost">
