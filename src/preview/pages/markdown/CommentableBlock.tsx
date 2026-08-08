@@ -106,7 +106,7 @@ export const CommentableBlock = ({
   };
 
   return (
-    <div
+    <Box
       className={[
         "commentable-block",
         isSelected || hasCommentHighlight
@@ -125,7 +125,7 @@ export const CommentableBlock = ({
         "--comment-indent-offset": `${commentIndentEm}em`,
       } as React.CSSProperties}
     >
-      <div
+      <Box
         className="commentable-content"
         onClick={handleContentClick}
         title={`Select ${formatRangeLabel(sourceRange)} for comment`}
@@ -172,14 +172,14 @@ export const CommentableBlock = ({
             </IconButton>
           </Box>
         )}
-        <div className="comment-markdown-body">
+        <Box className="comment-markdown-body">
           <SourceLineContext.Provider value={sourceLines}>
             {children}
           </SourceLineContext.Provider>
-        </div>
-      </div>
+        </Box>
+      </Box>
       {(isAdding || comments.length > 0 || error) && (
-        <div className="comment-thread">
+        <Box className="comment-thread">
           {comments.map((comment) => (
             <CommentItem
               actions={actions}
@@ -229,8 +229,8 @@ export const CommentableBlock = ({
             </Box>
           )}
           {error && <Text color="red.500" fontSize="sm">{error}</Text>}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
