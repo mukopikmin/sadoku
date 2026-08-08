@@ -949,8 +949,8 @@ Body
     expect(highlight).not.toBeNull();
     expect(highlight?.dataset.startLine).toBe("1");
     expect(highlight?.dataset.endLine).toBe("3");
-    expect(highlight?.style.top).toBe("21px");
-    expect(highlight?.style.height).toBe("118px");
+    expect(getComputedStyle(highlight!).top).toBe("21px");
+    expect(getComputedStyle(highlight!).height).toBe("118px");
     expect(
       titleBlock?.classList.contains(
         "commentable-block-range-selected",
