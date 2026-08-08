@@ -2,7 +2,7 @@ import { handleCommentsRequest } from "./comments/handler.ts";
 import type { CommentsStore } from "./comments/storage.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";
-import { createHotReloadEventStream } from "./preview/events.ts";
+import { createPreviewEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
 import { textResponse } from "./responses.ts";
 import {
@@ -12,18 +12,19 @@ import {
 } from "./source.ts";
 
 export type PreviewHandlerOptions = {
+  commentsNotificationPath?: string;
   commentsStore?: CommentsStore;
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
 };
 
 const handleHotReloadEventRequest = (
-  documentSource: string,
+  documentSource: string | undefined,
   request: Request,
   options: PreviewHandlerOptions,
 ): Response =>
   new Response(
-    createHotReloadEventStream(documentSource, request.signal, options),
+    createPreviewEventStream(documentSource, request.signal, options),
     {
       headers: {
         "content-type": "text/event-stream; charset=utf-8",
@@ -36,32 +37,7 @@ const handleHotReloadEventRequest = (
 const handleRemoteEventRequest = (
   request: Request,
   options: PreviewHandlerOptions,
-): Response => {
-  let close: (() => void) | undefined;
-  return new Response(
-    new ReadableStream({
-      start() {
-        options.onEventStreamOpen?.();
-        close = () => options.onEventStreamClose?.();
-        request.signal.addEventListener("abort", close, { once: true });
-      },
-      cancel() {
-        if (close) {
-          request.signal.removeEventListener("abort", close);
-          close();
-          close = undefined;
-        }
-      },
-    }),
-    {
-      headers: {
-        "content-type": "text/event-stream; charset=utf-8",
-        "cache-control": "no-store",
-        "connection": "keep-alive",
-      },
-    },
-  );
-};
+): Response => handleHotReloadEventRequest(undefined, request, options);
 
 export const createPreviewHandler = (
   input: string | PreviewSource,

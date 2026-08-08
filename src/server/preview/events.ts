@@ -1,12 +1,17 @@
 import { dirname, resolve } from "@std/path";
 import { formatLogMessage } from "../../log.ts";
 
-type EventStreamOptions = {
+export type EventStreamOptions = {
+  commentsNotificationPath?: string;
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
 };
 
-const reloadEvent = new TextEncoder().encode("event: reload\ndata: {}\n\n");
+const encoder = new TextEncoder();
+const invalidationEvent = (resources: string[]) =>
+  encoder.encode(
+    `event: invalidate\ndata: ${JSON.stringify({ resources })}\n\n`,
+  );
 
 export const formatPreviewReloadLog = (
   filePath: string,
@@ -21,19 +26,19 @@ export const logPreviewReload = (filePath: string): void => {
   console.log(formatPreviewReloadLog(filePath, new Date()));
 };
 
-export const createHotReloadEventStream = (
-  filePath: string,
+export const createPreviewEventStream = (
+  filePath: string | undefined,
   signal: AbortSignal,
   options: EventStreamOptions = {},
 ): ReadableStream<Uint8Array> => {
-  let watcher: Deno.FsWatcher | undefined;
+  const watchers: Deno.FsWatcher[] = [];
   let close: (() => void) | undefined;
   let closed = false;
 
   const closeOnce = (controller?: ReadableStreamDefaultController) => {
     if (closed) return;
     closed = true;
-    watcher?.close();
+    for (const watcher of watchers) watcher.close();
     options.onEventStreamClose?.();
     if (!controller) return;
     try {
@@ -46,34 +51,52 @@ export const createHotReloadEventStream = (
   return new ReadableStream({
     start(controller) {
       options.onEventStreamOpen?.();
-      watcher = Deno.watchFs(dirname(filePath));
-
       close = () => closeOnce(controller);
       signal.addEventListener("abort", close, { once: true });
 
-      (async () => {
-        try {
-          for await (const event of watcher) {
-            if (
-              event.kind === "access" ||
-              !event.paths.some((path) => resolve(path) === filePath)
-            ) {
-              continue;
-            }
+      const watch = (
+        targetPath: string,
+        resources: string[],
+        logChange?: () => void,
+      ) =>
+        (async () => {
+          const resolvedTargetPath = resolve(targetPath);
+          const watcher = Deno.watchFs(dirname(resolvedTargetPath));
+          watchers.push(watcher);
+          try {
+            for await (const event of watcher) {
+              if (
+                event.kind === "access" ||
+                !event.paths.some((path) =>
+                  resolve(path) === resolvedTargetPath
+                )
+              ) {
+                continue;
+              }
 
-            logPreviewReload(filePath);
-            controller.enqueue(reloadEvent);
+              logChange?.();
+              controller.enqueue(invalidationEvent(resources));
+            }
+          } catch (error) {
+            if (!signal.aborted) {
+              controller.error(error);
+              closeOnce();
+            }
           }
-        } catch (error) {
-          if (!signal.aborted) {
-            controller.error(error);
-          }
-        } finally {
-          if (close) {
-            signal.removeEventListener("abort", close);
-          }
-        }
-      })();
+        })();
+
+      const tasks: Promise<void>[] = [];
+      if (filePath) {
+        tasks.push(watch(filePath, ["document", "comments"], () => {
+          logPreviewReload(filePath);
+        }));
+      }
+      if (options.commentsNotificationPath) {
+        tasks.push(watch(options.commentsNotificationPath, ["comments"]));
+      }
+      Promise.all(tasks).finally(() => {
+        if (close) signal.removeEventListener("abort", close);
+      });
     },
     cancel() {
       closeOnce();

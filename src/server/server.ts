@@ -1,5 +1,6 @@
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createConfiguredCommentsStore } from "./comments/factory.ts";
+import { getCommentsNotificationFilePath } from "./comments/notifications.ts";
 import { createPreviewHandler } from "./handler.ts";
 import { createPreviewSource } from "./source.ts";
 
@@ -145,6 +146,9 @@ export const startPreviewServer = async (
     options,
     createPreviewHandler(previewSource, {
       ...shutdownScheduler,
+      commentsNotificationPath: getCommentsNotificationFilePath(
+        previewSource.commentSource,
+      ),
       commentsStore,
     }),
   );
