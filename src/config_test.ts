@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 
-import { getConfigFilePath, readConfig } from "./config.ts";
+import { getConfigFilePath, readConfig, updateThemeConfig } from "./config.ts";
 
 type ConfigEnvironmentPaths = {
   configFilePath: string;
@@ -122,6 +122,53 @@ Deno.test("rejects invalid comments directory config type", async () => {
       () => readConfig(),
       Error,
       "commentsDirectory in Sadoku config must be a string.",
+    );
+  });
+});
+
+Deno.test("reads and validates theme mode config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, 'themeMode = "dark"\n');
+    assertEquals(readConfig(), { themeMode: "dark" });
+
+    for (const invalid of ["true", '"sepia"']) {
+      await writeConfig(configFilePath, `themeMode = ${invalid}\n`);
+      assertThrows(
+        () => readConfig(),
+        Error,
+        'themeMode in Sadoku config must be either "dark" or "light".',
+      );
+    }
+  });
+});
+
+for (const themeMode of ["dark", "light"] as const) {
+  Deno.test(`saves themeMode=${themeMode} while retaining existing config`, async () => {
+    await withConfigEnvironment(async ({ configFilePath, root }) => {
+      const commentsDirectory = join(root, "comments");
+      await writeConfig(
+        configFilePath,
+        `commentsDirectory = ${
+          JSON.stringify(commentsDirectory)
+        }\ncustom = "kept"\n`,
+      );
+
+      await updateThemeConfig(themeMode);
+
+      assertEquals(readConfig(), { commentsDirectory, themeMode });
+      const saved = await Deno.readTextFile(configFilePath);
+      assertEquals(saved.includes('custom = "kept"'), true);
+    });
+  });
+}
+
+Deno.test("creates the config directory and file when saving a theme", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await updateThemeConfig("dark");
+    assertEquals(readConfig(), { themeMode: "dark" });
+    assertEquals(
+      await Deno.stat(configFilePath).then((stat) => stat.isFile),
+      true,
     );
   });
 });

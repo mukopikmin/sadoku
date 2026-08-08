@@ -5,6 +5,7 @@ import { handlePreviewDocumentRequest } from "./preview/document.ts";
 import { createHotReloadEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
 import { textResponse } from "./responses.ts";
+import { handleSettingsRequest } from "./settings/handler.ts";
 import {
   createPreviewSource,
   type PreviewSource,
@@ -88,6 +89,14 @@ async (request) => {
 
     if (pathname === "/__sadoku/document") {
       return await handlePreviewDocumentRequest(previewSource.documentSource);
+    }
+
+    if (pathname === "/__sadoku/settings") {
+      try {
+        return await handleSettingsRequest(request);
+      } catch {
+        return textResponse("Failed to access Sadoku settings.", 500);
+      }
     }
 
     if (pathname.startsWith("/__sadoku/comments")) {

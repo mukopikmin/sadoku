@@ -18,21 +18,6 @@ class TestEventSource extends EventTarget {
   close() {}
 }
 
-const createTestStorage = (initial: Record<string, string> = {}) => {
-  const values = new Map(Object.entries(initial));
-
-  return {
-    clear: vi.fn(() => values.clear()),
-    getItem: vi.fn((key: string) => values.get(key) ?? null),
-    removeItem: vi.fn((key: string) => {
-      values.delete(key);
-    }),
-    setItem: vi.fn((key: string, value: string) => {
-      values.set(key, value);
-    }),
-  };
-};
-
 afterEach(() => {
   cleanup();
   document.documentElement.className = "";
@@ -273,36 +258,43 @@ describe("App", () => {
   });
 
   it("switches between light and dark preview themes", async () => {
-    const localStorage = createTestStorage({ "sadoku-theme": "light" });
-    vi.stubGlobal("localStorage", localStorage);
     vi.stubGlobal("EventSource", TestEventSource);
+    const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/__sadoku/settings") {
+        return Promise.resolve(Response.json(
+          init?.method === "PUT"
+            ? { themeMode: "dark" }
+            : { themeMode: "light" },
+        ));
+      }
+      if (url === "/__sadoku/document") {
+        return Promise.resolve(Response.json({
+          fileUrl: "file:///tmp/example.md",
+          markdown: "```mermaid\ngraph TD\n  A --> B\n```\n",
+          title: "example.md",
+        }));
+      }
+      if (url === "/__sadoku/comments") {
+        return Promise.resolve(Response.json({
+          comments: [],
+          filePath: "/tmp/example.md",
+        }));
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    });
     vi.stubGlobal(
       "fetch",
-      vi.fn((input: RequestInfo | URL) => {
-        const url = String(input);
-        if (url === "/__sadoku/document") {
-          return Promise.resolve(Response.json({
-            fileUrl: "file:///tmp/example.md",
-            markdown: "```mermaid\ngraph TD\n  A --> B\n```\n",
-            title: "example.md",
-          }));
-        }
-        if (url === "/__sadoku/comments") {
-          return Promise.resolve(Response.json({
-            comments: [],
-            filePath: "/tmp/example.md",
-          }));
-        }
-        return Promise.resolve(new Response("Not found.", { status: 404 }));
-      }),
+      fetch,
     );
 
     render(<App />);
 
     await screen.findByRole("link", { name: "example.md" });
-    expect(document.documentElement.dataset.theme).toBe("light");
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("light")
+    );
     expect(document.documentElement.classList.contains("light")).toBe(true);
-    expect(localStorage.getItem("sadoku-theme")).toBe("light");
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
     );
@@ -317,7 +309,6 @@ describe("App", () => {
 
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(localStorage.getItem("sadoku-theme")).toBe("dark");
     expect(
       screen.getByRole("button", {
         name: "Switch to light mode",
@@ -326,6 +317,46 @@ describe("App", () => {
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
+    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+      body: JSON.stringify({ themeMode: "dark" }),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+  });
+
+  it("uses the OS theme and keeps toggling when settings requests fail", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/settings") {
+          return Promise.resolve(new Response("Failed", { status: 500 }));
+        }
+        if (url === "/__sadoku/document") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/example.md",
+            markdown: "# Example",
+            title: "example.md",
+          }));
+        }
+        if (url === "/__sadoku/comments") {
+          return Promise.resolve(
+            Response.json({ comments: [], filePath: "/tmp/example.md" }),
+          );
+        }
+        return Promise.resolve(new Response("Not found", { status: 404 }));
+      }),
+    );
+
+    render(<App />);
+    await screen.findByRole("link", { name: "example.md" });
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Switch to light mode" }),
+    );
+    expect(document.documentElement.dataset.theme).toBe("light");
   });
 
   it("shows stale comments only in the comments view", async () => {
