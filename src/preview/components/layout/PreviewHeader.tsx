@@ -72,7 +72,13 @@ export const PreviewHeader = ({
         {title}
       </Link>.
     </Text>
-    <Flex as="nav" aria-label="Preview views" wrap="wrap" gap="2">
+    <Flex
+      as="nav"
+      aria-label="Preview views"
+      alignItems="center"
+      wrap="wrap"
+      gap="2"
+    >
       <IconButton
         aria-label="Open settings"
         onClick={onOpenSettings}
