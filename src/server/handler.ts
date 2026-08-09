@@ -1,11 +1,26 @@
-import { handleCommentsRequest } from "./comments/handler.ts";
-import type { CommentsStore } from "./comments/storage.ts";
+import { Hono } from "@hono/hono/quick";
+
+import {
+  createComment,
+  createReply,
+  deleteComment,
+  deleteReply,
+  getComments,
+  setCommentResolution,
+  updateComment,
+  updateReply,
+} from "./comments/handler.ts";
+import { type CommentsStore, fileCommentsStore } from "./comments/storage.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";
 import { createPreviewEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
-import { textResponse } from "./responses.ts";
-import { handleSettingsRequest } from "./settings/handler.ts";
+import {
+  methodNotAllowedResponse,
+  notFoundResponse,
+  textResponse,
+} from "./responses.ts";
+import { getSettings, updateSettings } from "./settings/handler.ts";
 import {
   createPreviewSource,
   type PreviewSource,
@@ -40,63 +55,176 @@ const handleRemoteEventRequest = (
   options: PreviewHandlerOptions,
 ): Response => handleHotReloadEventRequest(undefined, request, options);
 
-export const createPreviewHandler = (
+export const createPreviewApp = (
   input: string | PreviewSource,
   options: PreviewHandlerOptions = {},
-): Deno.ServeHandler =>
-async (request) => {
+): Hono => {
   const previewSource = typeof input === "string"
     ? createPreviewSource(input)
     : input;
-  try {
-    const requestUrl = new URL(request.url);
-    const { pathname } = requestUrl;
+  const app = new Hono();
 
-    if (pathname === "/__sadoku/events") {
-      if (previewSource.isRemote) {
-        return handleRemoteEventRequest(request, options);
-      }
-      return handleHotReloadEventRequest(
-        previewSource.documentSource,
-        request,
-        options,
-      );
+  app.use("*", async (_context, next) => {
+    try {
+      await next();
+    } catch (error) {
+      if (error instanceof Response) return error;
+      const message = error instanceof Error ? error.message : String(error);
+      return textResponse(`Failed to render Markdown: ${message}`, 500);
     }
+  });
 
-    if (pathname === "/__sadoku/document") {
-      return await handlePreviewDocumentRequest(previewSource.documentSource);
+  app.get("/__sadoku/events", (context) => {
+    const request = context.req.raw;
+    if (previewSource.isRemote) {
+      return handleRemoteEventRequest(request, options);
     }
+    return handleHotReloadEventRequest(
+      previewSource.documentSource,
+      request,
+      options,
+    );
+  });
 
-    if (pathname === "/__sadoku/settings") {
-      try {
-        return await handleSettingsRequest(request);
-      } catch {
-        return textResponse("Failed to access Sadoku settings.", 500);
-      }
+  app.get(
+    "/__sadoku/document",
+    () => handlePreviewDocumentRequest(previewSource.documentSource),
+  );
+
+  const handleSettings = async (handle: () => Response | Promise<Response>) => {
+    try {
+      return await handle();
+    } catch {
+      return textResponse("Failed to access Sadoku settings.", 500);
     }
+  };
+  app.get("/__sadoku/settings", () => handleSettings(getSettings));
+  app.put(
+    "/__sadoku/settings",
+    (context) => handleSettings(() => updateSettings(context.req.raw)),
+  );
+  app.all("/__sadoku/settings", methodNotAllowedResponse);
 
-    if (pathname.startsWith("/__sadoku/comments")) {
-      return await handleCommentsRequest(
-        request,
+  const commentsStore = options.commentsStore ?? fileCommentsStore;
+  // Preserve the comments API's original identifier contract: route segments
+  // are converted with Number(), and any value that does not match a stored ID
+  // is handled by the use case as a missing comment or reply.
+  app.get(
+    "/__sadoku/comments",
+    () => getComments(previewSource, commentsStore),
+  );
+  app.post(
+    "/__sadoku/comments",
+    (context) => createComment(context.req.raw, previewSource, commentsStore),
+  );
+  app.put(
+    "/__sadoku/comments/:commentId",
+    (context) =>
+      updateComment(
+        context.req.raw,
         previewSource,
-        pathname,
-        options.commentsStore,
-      );
-    }
+        commentsStore,
+        Number(context.req.param("commentId")),
+      ),
+  );
+  app.delete(
+    "/__sadoku/comments/:commentId",
+    (context) =>
+      deleteComment(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+      ),
+  );
+  app.all("/__sadoku/comments/:commentId", methodNotAllowedResponse);
+  app.get(
+    "/__sadoku/comments/",
+    () => notFoundResponse("Comment not found."),
+  );
+  app.post(
+    "/__sadoku/comments/:commentId/resolve",
+    (context) =>
+      setCommentResolution(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        true,
+      ),
+  );
+  app.post(
+    "/__sadoku/comments/:commentId/reopen",
+    (context) =>
+      setCommentResolution(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        false,
+      ),
+  );
+  app.post(
+    "/__sadoku/comments/:commentId/replies",
+    (context) =>
+      createReply(
+        context.req.raw,
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+      ),
+  );
+  app.put(
+    "/__sadoku/comments/:commentId/replies/:replyId",
+    (context) =>
+      updateReply(
+        context.req.raw,
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        Number(context.req.param("replyId")),
+      ),
+  );
+  app.delete(
+    "/__sadoku/comments/:commentId/replies/:replyId",
+    (context) =>
+      deleteReply(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        Number(context.req.param("replyId")),
+      ),
+  );
 
-    if (pathname.startsWith("/assets/")) {
-      return await handlePreviewAssetRequest(pathname);
-    }
+  const handleAsset = (request: Request) =>
+    handlePreviewAssetRequest(new URL(request.url).pathname);
+  app.get("/assets/*", (context) => handleAsset(context.req.raw));
 
-    return new Response(
+  // Internal and asset URLs never fall through to the SPA. Outside the legacy
+  // comments contract above, unsupported methods use the normal route-mismatch
+  // contract and therefore return 404.
+  app.all("/__sadoku", () => notFoundResponse());
+  app.all("/__sadoku/*", () => notFoundResponse());
+  app.all("/assets", () => notFoundResponse("Asset not found."));
+  app.all("/assets/*", () => notFoundResponse("Asset not found."));
+
+  app.get("*", () =>
+    new Response(
       renderSpaShell(sourceTitle(previewSource.documentSource)),
       {
         headers: { "content-type": "text/html; charset=utf-8" },
       },
-    );
-  } catch (error) {
-    if (error instanceof Response) return error;
+    ));
+
+  app.onError((error) => {
     const message = error instanceof Error ? error.message : String(error);
     return textResponse(`Failed to render Markdown: ${message}`, 500);
-  }
+  });
+
+  return app;
+};
+
+export const createPreviewHandler = (
+  input: string | PreviewSource,
+  options: PreviewHandlerOptions = {},
+): Deno.ServeHandler => {
+  const app = createPreviewApp(input, options);
+  return (request) => app.fetch(request);
 };

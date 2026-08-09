@@ -213,11 +213,39 @@ Deno.test("stores replies on preview comments", async () => {
 
       assertEquals(replyResponse.status, 200);
       assertEquals(updatedComment.replies[0].body, "Answer");
+      const replyId = updatedComment.replies[0].id;
+
+      const updateResponse = await handler(
+        new Request(
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
+          {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ body: "Updated answer" }),
+          },
+        ),
+        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+      );
+      const commentWithUpdatedReply = await updateResponse.json();
+      assertEquals(updateResponse.status, 200);
+      assertEquals(
+        commentWithUpdatedReply.replies[0].body,
+        "Updated answer",
+      );
+
+      const deleteResponse = await handler(
+        new Request(
+          `http://127.0.0.1:3334/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
+          { method: "DELETE" },
+        ),
+        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+      );
+      assertEquals(deleteResponse.status, 204);
 
       const storedDocument = JSON.parse(
         await Deno.readTextFile(getCommentsFilePath(filePath)),
       );
-      assertEquals(storedDocument.comments[0].replies[0].body, "Answer");
+      assertEquals(storedDocument.comments[0].replies, []);
     } finally {
       await Deno.remove(filePath).catch(() => {});
       await Deno.remove(getCommentsFilePath(filePath)).catch(() => {});

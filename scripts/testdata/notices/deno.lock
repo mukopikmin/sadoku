@@ -1,0 +1,19 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@hono/hono@^4.10.0": "4.10.1",
+    "jsr:@std/assert@1.0.19": "1.0.19"
+  },
+  "jsr": {
+    "@hono/hono@4.10.1": {
+      "integrity": "fixture"
+    },
+    "@std/assert@1.0.19": {
+      "integrity": "fixture",
+      "dependencies": ["jsr:@std/internal@^1.0.12"]
+    },
+    "@std/internal@1.0.14": {
+      "integrity": "fixture"
+    }
+  }
+}

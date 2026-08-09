@@ -1,9 +1,5 @@
 import { readConfig, updatePreviewConfig } from "../config.ts";
-import {
-  methodNotAllowedResponse,
-  noStoreJson,
-  textResponse,
-} from "../responses.ts";
+import { noStoreJson, textResponse } from "../responses.ts";
 
 const invalidRequest = (message: string): Response =>
   textResponse(message, 400);
@@ -18,12 +14,11 @@ const readSettings = () => {
   };
 };
 
-export const handleSettingsRequest = async (
+export const getSettings = (): Response => noStoreJson(readSettings());
+
+export const updateSettings = async (
   request: Request,
 ): Promise<Response> => {
-  if (request.method === "GET") return noStoreJson(readSettings());
-  if (request.method !== "PUT") return methodNotAllowedResponse();
-
   const contentType = request.headers.get("content-type")?.split(";", 1)[0]
     .trim().toLowerCase();
   if (contentType !== "application/json") {
