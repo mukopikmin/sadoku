@@ -20,7 +20,7 @@ import {
   notFoundResponse,
   textResponse,
 } from "./responses.ts";
-import { handleSettingsRequest } from "./settings/handler.ts";
+import { getSettings, updateSettings } from "./settings/handler.ts";
 import {
   createPreviewSource,
   type PreviewSource,
@@ -91,15 +91,19 @@ export const createPreviewApp = (
     () => handlePreviewDocumentRequest(previewSource.documentSource),
   );
 
-  const handleSettings = async (request: Request) => {
+  const handleSettings = async (handle: () => Response | Promise<Response>) => {
     try {
-      return await handleSettingsRequest(request);
+      return await handle();
     } catch {
       return textResponse("Failed to access Sadoku settings.", 500);
     }
   };
-  app.get("/__sadoku/settings", (context) => handleSettings(context.req.raw));
-  app.put("/__sadoku/settings", (context) => handleSettings(context.req.raw));
+  app.get("/__sadoku/settings", () => handleSettings(getSettings));
+  app.put(
+    "/__sadoku/settings",
+    (context) => handleSettings(() => updateSettings(context.req.raw)),
+  );
+  app.all("/__sadoku/settings", methodNotAllowedResponse);
 
   const commentsStore = options.commentsStore ?? fileCommentsStore;
   // Preserve the comments API's original identifier contract: route segments

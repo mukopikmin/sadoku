@@ -37,6 +37,14 @@ Deno.test("keeps API, asset, and SPA routes separate", async () => {
     assertEquals(unsupportedDocument.status, 404);
     assertEquals(await unsupportedDocument.text(), "Not found.");
 
+    const unsupportedSettings = await requestHandler(
+      handler,
+      "/__sadoku/settings",
+      { method: "POST" },
+    );
+    assertEquals(unsupportedSettings.status, 405);
+    assertEquals(await unsupportedSettings.text(), "Method not allowed.");
+
     const unsupportedComment = await requestHandler(
       handler,
       "/__sadoku/comments/1",
