@@ -49,7 +49,7 @@ Deno.test("settings handler gets and updates theme mode without losing config", 
     assertEquals(await response.json(), { theme: "light" });
     assertEquals(readConfig(), {
       commentsDirectory: "/tmp/comments",
-      theme: "light",
+      themeMode: "light",
     });
   });
 });

@@ -44,14 +44,11 @@ export const useThemeMode = () => {
     root.style.colorScheme = themeMode;
   }, [themeMode]);
 
-  const toggleThemeMode = () => {
+  const changeThemeMode = (next: ThemeMode) => {
     userSelectedTheme.current = true;
-    setThemeMode((current) => {
-      const next = current === "dark" ? "light" : "dark";
-      saveThemeMutation.mutate(next);
-      return next;
-    });
+    setThemeMode(next);
+    saveThemeMutation.mutate(next);
   };
 
-  return { themeMode, toggleThemeMode };
+  return { changeThemeMode, themeMode };
 };
