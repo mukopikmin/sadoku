@@ -1,3 +1,4 @@
+import { Box } from "@chakra-ui/react";
 import {
   useCallback,
   useEffect,
@@ -306,21 +307,19 @@ export const MarkdownPreview = ({
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
-      <div className="markdown-preview" ref={previewRef}>
-        <div aria-hidden="true" className="markdown-range-highlights">
+      <Box className="markdown-preview" ref={previewRef}>
+        <Box aria-hidden="true" className="markdown-range-highlights">
           {rangeHighlightLayouts.map((layout) => (
-            <div
+            <Box
               className={`markdown-range-highlight markdown-range-highlight-${layout.kind}`}
               data-end-line={layout.endLine}
               data-start-line={layout.startLine}
+              height={`${Math.max(0, layout.bottom - layout.top - 2)}px`}
               key={`${layout.kind}-${layout.startLine}-${layout.endLine}`}
-              style={{
-                height: `${Math.max(0, layout.bottom - layout.top - 2)}px`,
-                top: `${layout.top + 1}px`,
-              }}
+              top={`${layout.top + 1}px`}
             />
           ))}
-        </div>
+        </Box>
         <ReactMarkdown
           components={components}
           rehypePlugins={[
@@ -335,7 +334,7 @@ export const MarkdownPreview = ({
         >
           {markdown}
         </ReactMarkdown>
-      </div>
+      </Box>
     </CommentRenderingContext.Provider>
   );
 };

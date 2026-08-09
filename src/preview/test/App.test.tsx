@@ -18,21 +18,6 @@ class TestEventSource extends EventTarget {
   close() {}
 }
 
-const createTestStorage = (initial: Record<string, string> = {}) => {
-  const values = new Map(Object.entries(initial));
-
-  return {
-    clear: vi.fn(() => values.clear()),
-    getItem: vi.fn((key: string) => values.get(key) ?? null),
-    removeItem: vi.fn((key: string) => {
-      values.delete(key);
-    }),
-    setItem: vi.fn((key: string, value: string) => {
-      values.set(key, value);
-    }),
-  };
-};
-
 afterEach(() => {
   cleanup();
   document.documentElement.className = "";
@@ -73,9 +58,9 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" }),
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
   });
@@ -115,12 +100,12 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" }),
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
     expect(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
 
     expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
 
@@ -139,7 +124,7 @@ describe("App", () => {
     expect(reloadButton.parentElement).toBe(previewNavigation);
     expect(
       reloadButton.previousElementSibling?.getAttribute("aria-label"),
-    ).toMatch(/^Switch to (light|dark) mode$/);
+    ).toBe("Open settings");
 
     fireEvent.click(reloadButton);
 
@@ -150,11 +135,11 @@ describe("App", () => {
     expect(documentRequests).toBe(2);
     expect(commentRequests).toBe(2);
     expect(
-      screen.getByRole("button", { name: "Comments, 0 unresolved" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
     vi.mocked(initializeMermaid).mockClear();
-    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     await screen.findByRole("heading", { name: "Updated title" });
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
     expect(document.querySelector(".mermaid")?.textContent).toBe(
@@ -267,72 +252,151 @@ describe("App", () => {
     );
     expect(getComputedStyle(main!).paddingTop).toBe("0px");
 
-    const previewButton = screen.getByRole("button", { name: "Preview" });
-    const commentsButton = screen.getByRole("button", {
+    const previewButton = screen.getByRole("tab", { name: "Preview" });
+    const commentsButton = screen.getByRole("tab", {
       name: "Comments, 0 unresolved",
     });
     expect(commentsButton.querySelector('span[aria-hidden="true"]')).toBeNull();
     expect(previewButton.parentElement).toBe(commentsButton.parentElement);
-    expect(previewButton.getAttribute("data-group-item")).toBe("");
-    expect(previewButton.getAttribute("data-first")).toBe("");
-    expect(commentsButton.getAttribute("data-group-item")).toBe("");
-    expect(commentsButton.getAttribute("data-last")).toBe("");
+    expect(previewButton.getAttribute("data-part")).toBe("trigger");
+    expect(commentsButton.getAttribute("data-part")).toBe("trigger");
+    expect(previewButton.closest('[data-part="root"]')).toBe(
+      commentsButton.closest('[data-part="root"]'),
+    );
   });
 
-  it("switches between light and dark preview themes", async () => {
-    const localStorage = createTestStorage({ "sadoku-theme": "light" });
-    vi.stubGlobal("localStorage", localStorage);
+  it("opens settings and selects and saves light and dark preview themes", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
+    const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/__sadoku/settings") {
+        return Promise.resolve(Response.json(
+          init?.method === "PUT"
+            ? JSON.parse(String(init.body))
+            : { theme: "light" },
+        ));
+      }
+      if (url === "/__sadoku/document") {
+        return Promise.resolve(Response.json({
+          fileUrl: "file:///tmp/example.md",
+          markdown: "```mermaid\ngraph TD\n  A --> B\n```\n",
+          title: "example.md",
+        }));
+      }
+      if (url === "/__sadoku/comments") {
+        return Promise.resolve(Response.json({
+          comments: [],
+          filePath: "/tmp/example.md",
+        }));
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    });
     vi.stubGlobal(
       "fetch",
-      vi.fn((input: RequestInfo | URL) => {
-        const url = String(input);
-        if (url === "/__sadoku/document") {
-          return Promise.resolve(Response.json({
-            fileUrl: "file:///tmp/example.md",
-            markdown: "```mermaid\ngraph TD\n  A --> B\n```\n",
-            title: "example.md",
-          }));
-        }
-        if (url === "/__sadoku/comments") {
-          return Promise.resolve(Response.json({
-            comments: [],
-            filePath: "/tmp/example.md",
-          }));
-        }
-        return Promise.resolve(new Response("Not found.", { status: 404 }));
-      }),
+      fetch,
     );
 
     render(<App />);
 
     await screen.findByRole("link", { name: "example.md" });
-    expect(document.documentElement.dataset.theme).toBe("light");
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("light")
+    );
     expect(document.documentElement.classList.contains("light")).toBe(true);
-    expect(localStorage.getItem("sadoku-theme")).toBe("light");
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
     );
 
-    const themeButton = screen.getByRole("button", {
-      name: "Switch to dark mode",
+    const settingsButton = screen.getByRole("button", {
+      name: "Open settings",
     });
-    expect(themeButton.textContent).toBe("");
-    expect(themeButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    const previewNavigation = screen.getByRole("navigation", {
+      name: "Preview views",
+    });
+    expect(settingsButton.parentElement).toBe(previewNavigation);
+    expect(settingsButton.textContent).toBe("");
+    expect(settingsButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
 
-    fireEvent.click(themeButton);
+    fireEvent.click(settingsButton);
 
+    expect(await screen.findByRole("dialog", { name: "Settings" })).not
+      .toBeNull();
+    const themeSelect = screen.getByRole("combobox", { name: "Theme" });
+    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    await waitFor(() => expect(document.activeElement).toBe(themeSelect));
+
+    fireEvent.change(themeSelect, { target: { value: "dark" } });
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(localStorage.getItem("sadoku-theme")).toBe("dark");
-    expect(
-      screen.getByRole("button", {
-        name: "Switch to light mode",
-      }).querySelector('svg[aria-hidden="true"]'),
-    ).not.toBeNull();
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
+    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
+    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+      body: JSON.stringify({ theme: "dark" }),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+
+    fireEvent.change(themeSelect, { target: { value: "light" } });
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.classList.contains("light")).toBe(true);
+    expect(document.documentElement.style.colorScheme).toBe("light");
+    await waitFor(() =>
+      expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
+    );
+    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+      body: JSON.stringify({ theme: "light" }),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(settingsButton));
+  });
+
+  it("uses the OS theme and applies a selected theme when saving fails", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/settings") {
+          return Promise.resolve(new Response("Failed", { status: 500 }));
+        }
+        if (url === "/__sadoku/document") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/example.md",
+            markdown: "# Example",
+            title: "example.md",
+          }));
+        }
+        if (url === "/__sadoku/comments") {
+          return Promise.resolve(
+            Response.json({ comments: [], filePath: "/tmp/example.md" }),
+          );
+        }
+        return Promise.resolve(new Response("Not found", { status: 404 }));
+      }),
+    );
+
+    render(<App />);
+    await screen.findByRole("link", { name: "example.md" });
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const themeSelect = await screen.findByRole("combobox", { name: "Theme" });
+    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
+    fireEvent.change(themeSelect, { target: { value: "light" } });
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
   it("shows stale comments only in the comments view", async () => {
@@ -412,7 +476,7 @@ describe("App", () => {
     );
     expect(screen.queryByText("Stale comment.")).toBeNull();
 
-    const commentsButton = screen.getByRole("button", {
+    const commentsButton = screen.getByRole("tab", {
       name: "Comments, 2 unresolved",
     });
     expect(

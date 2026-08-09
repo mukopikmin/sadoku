@@ -18,6 +18,7 @@ import {
   renderMarkdownHorizontalRule,
   renderMarkdownParagraph,
   renderMarkdownPre,
+  renderMarkdownTable,
   sharedMarkdownComponents,
 } from "../../markdown/markdownRenderers";
 
@@ -250,6 +251,11 @@ export const createCommentableMarkdownComponents = (): Components => ({
   ul: sharedMarkdownComponents.ul,
   p: createCommentableComponent("p", renderMarkdownParagraph),
   pre: createCommentablePre(),
-  table: createCommentableComponent("table"),
+  table: createCommentableComponent("table", renderMarkdownTable),
+  tbody: sharedMarkdownComponents.tbody,
+  td: sharedMarkdownComponents.td,
+  th: sharedMarkdownComponents.th,
+  thead: sharedMarkdownComponents.thead,
+  tr: sharedMarkdownComponents.tr,
   code: sharedMarkdownComponents.code,
 });

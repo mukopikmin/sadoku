@@ -1,5 +1,5 @@
-import { join } from "@std/path";
-import { parse } from "@std/toml";
+import { dirname, join } from "@std/path";
+import { parse, stringify } from "@std/toml";
 
 const appDirectoryName = "sadoku";
 const legacyAppDirectoryName = "mdview";
@@ -7,6 +7,7 @@ const configFileName = "config.toml";
 
 export type SadokuConfig = {
   commentsDirectory?: string;
+  themeMode?: "dark" | "light";
 };
 
 const getEnv = (name: string): string | undefined => {
@@ -55,7 +56,51 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     if (commentsDirectory) config.commentsDirectory = commentsDirectory;
   }
 
+  if ("theme_mode" in value) {
+    if (value.theme_mode !== "dark" && value.theme_mode !== "light") {
+      throw new Error(
+        'theme_mode in Sadoku config must be either "dark" or "light".',
+      );
+    }
+    config.themeMode = value.theme_mode;
+  }
+
   return config;
+};
+
+export const updateThemeConfig = async (
+  theme: "dark" | "light",
+): Promise<void> => {
+  const configFilePath = getConfigFilePath();
+  if (!configFilePath) {
+    throw new Error("Cannot locate the Sadoku config file.");
+  }
+
+  let existing: Record<string, unknown> = {};
+  try {
+    const parsed = parse(await Deno.readTextFile(configFilePath));
+    if (!isRecord(parsed)) throw new Error("Sadoku config must be a table.");
+    // Validate known settings before preserving them in the rewritten file.
+    parseConfig(parsed);
+    existing = parsed;
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
+
+  await Deno.mkdir(dirname(configFilePath), { recursive: true });
+  const temporaryPath = `${configFilePath}.${crypto.randomUUID()}.tmp`;
+  try {
+    await Deno.writeTextFile(
+      temporaryPath,
+      stringify({ ...existing, theme_mode: theme }),
+      { createNew: true },
+    );
+    await Deno.rename(temporaryPath, configFilePath);
+  } finally {
+    await Deno.remove(temporaryPath).catch((error) => {
+      if (!(error instanceof Deno.errors.NotFound)) throw error;
+    });
+  }
 };
 
 export const readConfig = (): SadokuConfig | undefined => {

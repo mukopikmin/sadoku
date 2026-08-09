@@ -5,6 +5,7 @@ import {
   getCommentsDirectoryPath,
   getConfigFilePath,
   readConfig,
+  updateThemeConfig,
 } from "./config.ts";
 
 type ConfigEnvironmentPaths = {
@@ -153,6 +154,57 @@ Deno.test("rejects invalid comments directory config type", async () => {
       () => readConfig(),
       Error,
       "commentsDirectory in Sadoku config must be a string.",
+    );
+  });
+});
+
+Deno.test("reads and validates theme mode config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, 'theme_mode = "dark"\n');
+    assertEquals(readConfig(), { themeMode: "dark" });
+
+    for (const invalid of ["true", '"sepia"']) {
+      await writeConfig(configFilePath, `theme_mode = ${invalid}\n`);
+      assertThrows(
+        () => readConfig(),
+        Error,
+        'theme_mode in Sadoku config must be either "dark" or "light".',
+      );
+    }
+  });
+});
+
+for (const theme of ["dark", "light"] as const) {
+  Deno.test(`saves theme_mode=${theme} while retaining existing config`, async () => {
+    await withConfigEnvironment(async ({ configFilePath, root }) => {
+      const commentsDirectory = join(root, "comments");
+      await writeConfig(
+        configFilePath,
+        `commentsDirectory = ${
+          JSON.stringify(commentsDirectory)
+        }\ncustom = "kept"\n`,
+      );
+
+      await updateThemeConfig(theme);
+
+      assertEquals(readConfig(), { commentsDirectory, themeMode: theme });
+      const saved = await Deno.readTextFile(configFilePath);
+      assertEquals(saved.includes('custom = "kept"'), true);
+    });
+  });
+}
+
+Deno.test("creates the config directory and file when saving a theme", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await updateThemeConfig("dark");
+    assertEquals(readConfig(), { themeMode: "dark" });
+    assertEquals(
+      await Deno.readTextFile(configFilePath),
+      'theme_mode = "dark"\n',
+    );
+    assertEquals(
+      await Deno.stat(configFilePath).then((stat) => stat.isFile),
+      true,
     );
   });
 });
