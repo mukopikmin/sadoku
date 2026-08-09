@@ -9,7 +9,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 import type { ReactNode } from "react";
-import type { CodeWrapMode } from "../../hooks/useCodeWrapMode";
 
 export type PreviewView = "comments" | "preview";
 
@@ -42,11 +41,9 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 );
 
 type PreviewHeaderProps = {
-  codeWrapMode: CodeWrapMode;
   fileUrl: string;
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
-  onToggleCodeWrapMode: () => void;
   onOpenSettings: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
@@ -57,11 +54,9 @@ type PreviewHeaderProps = {
 };
 
 export const PreviewHeader = ({
-  codeWrapMode,
   fileUrl,
   onChangeView,
   onReloadPreview,
-  onToggleCodeWrapMode,
   onOpenSettings,
   reloadAvailable,
   reloading,
@@ -84,31 +79,6 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
-      <IconButton
-        aria-label={codeWrapMode === "wrap"
-          ? "Do not wrap code blocks"
-          : "Wrap code blocks"}
-        onClick={onToggleCodeWrapMode}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="1em"
-          viewBox="0 0 16 16"
-          width="1em"
-        >
-          <path
-            d="M2 3.5h12M2 7.5h9a2.5 2.5 0 0 1 0 5H8m0 0 2-2m-2 2 2 2M2 11.5h3"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-          />
-        </svg>
-      </IconButton>
       <IconButton
         aria-label="Open settings"
         onClick={onOpenSettings}

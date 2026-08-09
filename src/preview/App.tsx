@@ -8,13 +8,12 @@ import {
   type PreviewView,
 } from "./components/layout/PreviewHeader";
 import { previewThemeCss } from "./theme";
-import { useCodeWrapMode } from "./hooks/useCodeWrapMode";
 import { useHotReload } from "./hooks/useHotReload";
 import {
   useCommentsQuery,
   usePreviewDocumentQuery,
 } from "./hooks/usePreviewData";
-import { useThemeMode } from "./hooks/useThemeMode";
+import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
 
@@ -23,8 +22,8 @@ export const App = () => {
   const commentsQuery = useCommentsQuery();
   const [view, setView] = useState<PreviewView>("preview");
   const settingsDisclosure = useDisclosure();
-  const { changeThemeMode, themeMode } = useThemeMode();
-  const { codeWrapMode, toggleCodeWrapMode } = useCodeWrapMode();
+  const { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode } =
+    usePreviewSettings();
   const { clearReloadAvailable, reloadAvailable } = useHotReload();
 
   const reloadPreview = async () => {
@@ -69,10 +68,8 @@ export const App = () => {
       <style>{previewThemeCss}</style>
       <PreviewHeader
         fileUrl={document.fileUrl}
-        codeWrapMode={codeWrapMode}
         onChangeView={setView}
         onReloadPreview={reloadPreview}
-        onToggleCodeWrapMode={toggleCodeWrapMode}
         onOpenSettings={settingsDisclosure.onOpen}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
@@ -82,6 +79,8 @@ export const App = () => {
         view={view}
       />
       <SettingsDialog
+        codeWrapMode={codeWrapMode}
+        onCodeWrapModeChange={changeCodeWrapMode}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}

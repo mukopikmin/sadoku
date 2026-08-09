@@ -4,11 +4,14 @@ import {
   IconButton,
   NativeSelect,
   Portal,
+  Switch,
   Text,
 } from "@chakra-ui/react";
-import type { ThemeMode } from "../models/theme";
+import type { CodeWrapMode, ThemeMode } from "../models/theme";
 
 type SettingsDialogProps = {
+  codeWrapMode: CodeWrapMode;
+  onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
@@ -16,6 +19,8 @@ type SettingsDialogProps = {
 };
 
 export const SettingsDialog = ({
+  codeWrapMode,
+  onCodeWrapModeChange,
   onOpenChange,
   onThemeModeChange,
   open,
@@ -40,23 +45,57 @@ export const SettingsDialog = ({
               <Dialog.Title>Settings</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              <Flex alignItems="center" justifyContent="space-between" gap="4">
-                <Text as="label" htmlFor="theme-mode" fontWeight="medium">
-                  Theme
-                </Text>
-                <NativeSelect.Root width="40">
-                  <NativeSelect.Field
-                    autoFocus
-                    id="theme-mode"
-                    onChange={(event) =>
-                      onThemeModeChange(event.currentTarget.value as ThemeMode)}
-                    value={themeMode}
+              <Flex
+                direction="column"
+                gap="4"
+              >
+                <Flex
+                  alignItems="center"
+                  justifyContent="space-between"
+                  gap="4"
+                >
+                  <Text as="label" htmlFor="theme-mode" fontWeight="medium">
+                    Theme
+                  </Text>
+                  <NativeSelect.Root width="40">
+                    <NativeSelect.Field
+                      autoFocus
+                      id="theme-mode"
+                      onChange={(event) =>
+                        onThemeModeChange(
+                          event.currentTarget.value as ThemeMode,
+                        )}
+                      value={themeMode}
+                    >
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Flex>
+                <Flex
+                  alignItems="center"
+                  justifyContent="space-between"
+                  gap="4"
+                >
+                  <Text as="div">
+                    <Text fontWeight="medium">Wrap code blocks</Text>
+                    <Text color="fg.muted" fontSize="sm">
+                      Allow long lines to wrap instead of scrolling horizontally
+                    </Text>
+                  </Text>
+                  <Switch.Root
+                    checked={codeWrapMode === "wrap"}
+                    onCheckedChange={({ checked }) =>
+                      onCodeWrapModeChange(checked ? "wrap" : "scroll")}
                   >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
+                    <Switch.HiddenInput />
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    <Switch.Label srOnly>Wrap code blocks</Switch.Label>
+                  </Switch.Root>
+                </Flex>
               </Flex>
             </Dialog.Body>
             <Dialog.CloseTrigger asChild>

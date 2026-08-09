@@ -119,9 +119,9 @@ on each request, so refreshing the page shows recent edits. When a local
 Markdown file changes, the browser preview shows a reload button so you can
 refresh it when you are ready.
 
-The preview header can switch code blocks between horizontal scrolling and soft
-wrapping. Long text without spaces, including Japanese text, wraps when soft
-wrapping is enabled. The selected behavior is saved in the browser.
+The preview settings can switch code blocks between horizontal scrolling and
+soft wrapping. Long text without spaces, including Japanese text, wraps when
+soft wrapping is enabled. The selected behavior is saved in the Sadoku config.
 
 By default, the server stops after the browser tab is closed. Use `--keep-alive`
 when you want to leave the server running.

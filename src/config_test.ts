@@ -1,7 +1,12 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 
-import { getConfigFilePath, readConfig, updateThemeConfig } from "./config.ts";
+import {
+  getConfigFilePath,
+  readConfig,
+  updateCodeWrapConfig,
+  updateThemeConfig,
+} from "./config.ts";
 
 type ConfigEnvironmentPaths = {
   configFilePath: string;
@@ -142,6 +147,22 @@ Deno.test("reads and validates theme mode config", async () => {
   });
 });
 
+Deno.test("reads and validates code wrap mode config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, 'code_wrap_mode = "wrap"\n');
+    assertEquals(readConfig(), { codeWrapMode: "wrap" });
+
+    for (const invalid of ["true", '"truncate"']) {
+      await writeConfig(configFilePath, `code_wrap_mode = ${invalid}\n`);
+      assertThrows(
+        () => readConfig(),
+        Error,
+        'code_wrap_mode in Sadoku config must be either "scroll" or "wrap".',
+      );
+    }
+  });
+});
+
 for (const theme of ["dark", "light"] as const) {
   Deno.test(`saves theme_mode=${theme} while retaining existing config`, async () => {
     await withConfigEnvironment(async ({ configFilePath, root }) => {
@@ -173,6 +194,20 @@ Deno.test("creates the config directory and file when saving a theme", async () 
     assertEquals(
       await Deno.stat(configFilePath).then((stat) => stat.isFile),
       true,
+    );
+  });
+});
+
+Deno.test("saves code wrap mode while retaining existing config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, 'theme_mode = "dark"\ncustom = "kept"\n');
+
+    await updateCodeWrapConfig("wrap");
+
+    assertEquals(readConfig(), { codeWrapMode: "wrap", themeMode: "dark" });
+    assertEquals(
+      await Deno.readTextFile(configFilePath),
+      'theme_mode = "dark"\ncustom = "kept"\ncode_wrap_mode = "wrap"\n',
     );
   });
 });
