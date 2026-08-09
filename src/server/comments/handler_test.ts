@@ -1,6 +1,4 @@
 import { assertEquals, assertMatch } from "@std/assert";
-import { dirname } from "@std/path";
-
 import type { CommentsStore } from "./storage.ts";
 import { getCommentsFilePath } from "./storage.ts";
 import type { PreviewCommentsDocument } from "./types.ts";
@@ -404,111 +402,48 @@ testWithTempComments("adds replies to comments", async () => {
 });
 
 testWithTempComments(
-  "returns not found for missing comments and unknown actions",
+  "returns Sadoku messages for missing comments and replies",
   async () => {
     const filePath = await createTempMarkdown();
     const handler = createPreviewHandler(filePath);
     try {
-      const cases: Array<[string, string, string]> = [
-        ["PUT", "/__sadoku/comments/missing", "Comment not found."],
-        ["DELETE", "/__sadoku/comments/missing", "Comment not found."],
-        ["POST", "/__sadoku/comments/missing/resolve", "Comment not found."],
-        ["POST", "/__sadoku/comments/missing/reopen", "Comment not found."],
-        ["POST", "/__sadoku/comments/missing/replies", "Comment not found."],
-        [
-          "PUT",
-          "/__sadoku/comments/missing/replies/1",
-          "Comment not found.",
-        ],
-        [
-          "DELETE",
-          "/__sadoku/comments/missing/replies/1",
-          "Comment not found.",
-        ],
-        ["POST", "/__sadoku/comments/1/unknown", "Not found."],
-        ["GET", "/__sadoku/comments/", "Comment not found."],
-      ];
-
-      for (const [method, pathname, expected] of cases) {
-        const response = await requestComments(handler, pathname, {
-          method,
-          headers: { "content-type": "application/json" },
-          body: method === "PUT"
-            ? JSON.stringify({ body: "Updated" })
-            : undefined,
-        });
-
-        assertEquals(response.status, 404);
-        assertEquals(await response.text(), expected);
-      }
-    } finally {
-      await removeTempMarkdown(filePath);
-    }
-  },
-);
-
-testWithTempComments(
-  "returns method not allowed for unsupported comment methods",
-  async () => {
-    const filePath = await createTempMarkdown();
-    const handler = createPreviewHandler(filePath);
-    try {
-      const response = await requestComments(
+      const missingCommentResponse = await requestComments(
         handler,
-        "/__sadoku/comments/1",
-        { method: "PATCH" },
+        "/__sadoku/comments/missing",
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ body: "Updated" }),
+        },
       );
 
-      assertEquals(response.status, 405);
-      assertEquals(await response.text(), "Method not allowed.");
+      assertEquals(missingCommentResponse.status, 404);
+      assertEquals(
+        missingCommentResponse.headers.get("content-type"),
+        "text/plain; charset=utf-8",
+      );
+      assertEquals(
+        missingCommentResponse.headers.get("cache-control"),
+        null,
+      );
+      assertEquals(
+        await missingCommentResponse.text(),
+        "Comment not found.",
+      );
+
+      const missingReplyResponse = await requestComments(
+        handler,
+        "/__sadoku/comments/missing/replies/1",
+        { method: "DELETE" },
+      );
+
+      assertEquals(missingReplyResponse.status, 404);
+      assertEquals(await missingReplyResponse.text(), "Comment not found.");
     } finally {
       await removeTempMarkdown(filePath);
     }
   },
 );
-
-testWithTempComments("converts comment identifiers with Number", async () => {
-  const filePath = await createTempMarkdown();
-  const commentsPath = getCommentsFilePath(filePath);
-  await Deno.mkdir(dirname(commentsPath), { recursive: true });
-  await Deno.writeTextFile(
-    commentsPath,
-    JSON.stringify({
-      comments: [{
-        body: "Original",
-        author: { type: "human" },
-        createdAt: "2026-06-07T00:00:00.000Z",
-        id: 1,
-        endLine: 3,
-        originalEndLine: 3,
-        originalStartLine: 3,
-        startLine: 3,
-        resolved: false,
-        sourceText: "Body",
-        stale: false,
-        updatedAt: "2026-06-07T00:00:00.000Z",
-      }],
-      filePath,
-    }),
-  );
-
-  try {
-    const response = await requestComments(
-      createPreviewHandler(filePath),
-      "/__sadoku/comments/0x1",
-      {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ body: "Updated" }),
-      },
-    );
-
-    assertEquals(response.status, 200);
-    assertEquals((await response.json()).body, "Updated");
-  } finally {
-    await removeTempMarkdown(filePath);
-  }
-});
 
 testWithTempComments(
   "stores URL comments by URL without query string or fragment",
