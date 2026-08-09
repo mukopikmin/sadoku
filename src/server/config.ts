@@ -6,6 +6,7 @@ const legacyAppDirectoryName = "mdview";
 const configFileName = "config.toml";
 
 export type SadokuConfig = {
+  codeWrapMode?: "scroll" | "wrap";
   commentsDirectory?: string;
   themeMode?: "dark" | "light";
 };
@@ -65,11 +66,20 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     config.themeMode = value.theme_mode;
   }
 
+  if ("code_wrap_mode" in value) {
+    if (value.code_wrap_mode !== "scroll" && value.code_wrap_mode !== "wrap") {
+      throw new Error(
+        'code_wrap_mode in Sadoku config must be either "scroll" or "wrap".',
+      );
+    }
+    config.codeWrapMode = value.code_wrap_mode;
+  }
+
   return config;
 };
 
-export const updateThemeConfig = async (
-  theme: "dark" | "light",
+const updateConfig = async (
+  updates: Record<string, unknown>,
 ): Promise<void> => {
   const configFilePath = getConfigFilePath();
   if (!configFilePath) {
@@ -92,7 +102,7 @@ export const updateThemeConfig = async (
   try {
     await Deno.writeTextFile(
       temporaryPath,
-      stringify({ ...existing, theme_mode: theme }),
+      stringify({ ...existing, ...updates }),
       { createNew: true },
     );
     await Deno.rename(temporaryPath, configFilePath);
@@ -102,6 +112,19 @@ export const updateThemeConfig = async (
     });
   }
 };
+
+export const updateThemeConfig = (theme: "dark" | "light"): Promise<void> =>
+  updateConfig({ theme_mode: theme });
+
+export const updateCodeWrapConfig = (
+  codeWrap: "scroll" | "wrap",
+): Promise<void> => updateConfig({ code_wrap_mode: codeWrap });
+
+export const updatePreviewConfig = (
+  theme: "dark" | "light",
+  codeWrap: "scroll" | "wrap",
+): Promise<void> =>
+  updateConfig({ code_wrap_mode: codeWrap, theme_mode: theme });
 
 export const readConfig = (): SadokuConfig | undefined => {
   const configFilePath = getConfigFilePath();

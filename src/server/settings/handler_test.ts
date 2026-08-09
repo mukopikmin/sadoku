@@ -28,7 +28,7 @@ const request = (
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-Deno.test("settings handler gets and updates theme mode without losing config", async () => {
+Deno.test("settings handler gets and updates preview settings without losing config", async () => {
   await withSettings(async () => {
     const path = join(
       Deno.env.get("XDG_CONFIG_HOME")!,
@@ -43,13 +43,28 @@ Deno.test("settings handler gets and updates theme mode without losing config", 
       {},
     );
     const response = await handleSettingsRequest(
-      request("PUT", { theme: "light" }),
+      request("PUT", { codeWrap: "scroll", theme: "light" }),
     );
     assertEquals(response.status, 200);
-    assertEquals(await response.json(), { theme: "light" });
+    assertEquals(await response.json(), { codeWrap: "scroll", theme: "light" });
     assertEquals(readConfig(), {
+      codeWrapMode: "scroll",
       commentsDirectory: "/tmp/comments",
       themeMode: "light",
+    });
+
+    const codeWrapResponse = await handleSettingsRequest(
+      request("PUT", { codeWrap: "wrap", theme: "dark" }),
+    );
+    assertEquals(codeWrapResponse.status, 200);
+    assertEquals(await codeWrapResponse.json(), {
+      codeWrap: "wrap",
+      theme: "dark",
+    });
+    assertEquals(readConfig(), {
+      codeWrapMode: "wrap",
+      commentsDirectory: "/tmp/comments",
+      themeMode: "dark",
     });
   });
 });
@@ -68,6 +83,9 @@ Deno.test("settings handler validates method, content type, and JSON shape", asy
         {},
         { theme: true },
         { theme: "sepia" },
+        { codeWrap: true },
+        { codeWrap: "truncate" },
+        { codeWrap: "wrap", theme: "sepia" },
         { theme: "dark", extra: 1 },
       ]
     ) {

@@ -178,6 +178,15 @@ export const previewThemeCss = `
         color: var(--chakra-colors-code-fg);
       }
 
+      .markdown-code-block {
+        white-space: pre;
+      }
+
+      :root[data-code-wrap="wrap"] .markdown-code-block {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
       .hljs-comment,
       .hljs-quote {
         color: var(--chakra-colors-syntax-comment);
