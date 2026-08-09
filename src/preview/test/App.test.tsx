@@ -18,10 +18,26 @@ class TestEventSource extends EventTarget {
   close() {}
 }
 
+const createTestStorage = (initial: Record<string, string> = {}) => {
+  const values = new Map(Object.entries(initial));
+
+  return {
+    clear: vi.fn(() => values.clear()),
+    getItem: vi.fn((key: string) => values.get(key) ?? null),
+    removeItem: vi.fn((key: string) => {
+      values.delete(key);
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      values.set(key, value);
+    }),
+  };
+};
+
 afterEach(() => {
   cleanup();
   document.documentElement.className = "";
   document.documentElement.removeAttribute("data-theme");
+  document.documentElement.removeAttribute("data-code-wrap");
   document.documentElement.removeAttribute("style");
   globalThis.localStorage?.clear?.();
   TestEventSource.instances = [];
@@ -328,7 +344,7 @@ describe("App", () => {
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({ theme: "dark" }),
+      body: JSON.stringify({ codeWrap: "scroll", theme: "dark" }),
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
@@ -341,7 +357,7 @@ describe("App", () => {
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
     );
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({ theme: "light" }),
+      body: JSON.stringify({ codeWrap: "scroll", theme: "light" }),
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
@@ -388,6 +404,66 @@ describe("App", () => {
     fireEvent.change(themeSelect, { target: { value: "light" } });
     expect(document.documentElement.dataset.theme).toBe("light");
     expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
+  });
+
+  it("persists and switches code block wrapping", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/__sadoku/settings") {
+        return Promise.resolve(Response.json(
+          init?.method === "PUT"
+            ? { codeWrap: JSON.parse(String(init.body)).codeWrap }
+            : { codeWrap: "wrap" },
+        ));
+      }
+      if (url === "/__sadoku/document") {
+        return Promise.resolve(Response.json({
+          fileUrl: "file:///tmp/example.md",
+          markdown: "```txt\n日本語の長いコードブロック\n```\n",
+          title: "example.md",
+        }));
+      }
+      if (url === "/__sadoku/comments") {
+        return Promise.resolve(Response.json({
+          comments: [],
+          filePath: "/tmp/example.md",
+        }));
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    });
+    vi.stubGlobal(
+      "fetch",
+      fetch,
+    );
+
+    render(<App />);
+
+    const code = await screen.findByText("日本語の長いコードブロック");
+    expect(document.documentElement.dataset.codeWrap).toBe("wrap");
+    expect(getComputedStyle(code).whiteSpace).toBe("pre-wrap");
+    expect(getComputedStyle(code).overflowWrap).toBe("anywhere");
+
+    expect(screen.queryByRole("button", { name: "Wrap code blocks" }))
+      .toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const wrapSwitch = await screen.findByRole("checkbox", {
+      name: "Wrap code blocks",
+    });
+    expect((wrapSwitch as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(wrapSwitch);
+
+    await waitFor(() =>
+      expect(document.documentElement.dataset.codeWrap).toBe("scroll")
+    );
+    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+      body: JSON.stringify({ codeWrap: "scroll", theme: "light" }),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+    expect(getComputedStyle(code).whiteSpace).toBe("pre");
+    expect((wrapSwitch as HTMLInputElement).checked).toBe(false);
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
