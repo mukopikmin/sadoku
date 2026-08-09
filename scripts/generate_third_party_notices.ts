@@ -12,9 +12,12 @@ type DenoConfig = {
 
 type DenoLock = {
   specifiers?: Record<string, string>;
+  jsr?: Record<string, {
+    dependencies?: string[];
+  }>;
 };
 
-type Notice = {
+export type Notice = {
   name: string;
   version: string;
   license: string;
@@ -93,9 +96,9 @@ const repositoryUrl = (
 };
 
 const noticeKey = (notice: Notice): string =>
-  `${notice.name}@${notice.version}:${notice.source}`;
+  `${notice.name}@${notice.version}`;
 
-const collectNpmNotices = async (
+export const collectNpmNotices = async (
   lockPath = "src/preview/package-lock.json",
   nodeModulesDir = "src/preview/node_modules",
 ): Promise<Notice[]> => {
@@ -169,22 +172,70 @@ const collectDirectEsmShNotices = async (): Promise<Notice[]> => {
   return notices;
 };
 
-const collectDenoNotices = async (): Promise<Notice[]> => {
-  const lock: DenoLock = JSON.parse(await readText("deno.lock"));
-  const stdPackages = Object.entries(lock.specifiers ?? {})
-    .filter(([specifier]) => specifier.startsWith("jsr:@std/"))
-    .map(([specifier, version]) => {
-      const packageName = specifier.replace(/^jsr:/, "").replace(
-        /@[^@]+$/,
-        "",
+type JsrPackageDefinition = Pick<Notice, "license" | "source">;
+
+// JSR's lockfile format deliberately contains integrity and dependency data,
+// but not licensing metadata. Keep audited metadata needed by release packages
+// here rather than assigning every JSR package the same license.
+const jsrPackageDefinitions: Record<string, JsrPackageDefinition> = {
+  "@hono/hono": {
+    license: "MIT",
+    source: "https://github.com/honojs/hono",
+  },
+};
+
+const jsrPackage = (
+  value: string,
+): { name: string; version?: string } | undefined => {
+  const match = /^(?:jsr:)?(@[^/]+\/[^@/]+)(?:@([^/]+))?/.exec(value);
+  return match ? { name: match[1], version: match[2] } : undefined;
+};
+
+const jsrMetadata = (name: string, version: string): JsrPackageDefinition => {
+  const explicit = jsrPackageDefinitions[name];
+  if (explicit) return explicit;
+  if (name.startsWith("@std/")) {
+    return {
+      license: "MIT",
+      source: `https://github.com/denoland/std/tree/main/${name.slice(5)}`,
+    };
+  }
+  return {
+    license: "UNKNOWN",
+    source: `https://jsr.io/${name}@${version}`,
+  };
+};
+
+export const collectDenoNotices = async (
+  lockPath = "deno.lock",
+): Promise<Notice[]> => {
+  const lock: DenoLock = JSON.parse(await readText(lockPath));
+  const resolved = new Map<string, string>();
+
+  for (const [specifier, version] of Object.entries(lock.specifiers ?? {})) {
+    const parsed = jsrPackage(specifier);
+    if (parsed) resolved.set(parsed.name, version);
+  }
+  for (const [key, metadata] of Object.entries(lock.jsr ?? {})) {
+    const parsed = jsrPackage(key);
+    if (parsed?.version) resolved.set(parsed.name, parsed.version);
+    for (const dependency of metadata.dependencies ?? []) {
+      const dependencyPackage = jsrPackage(dependency);
+      if (!dependencyPackage || resolved.has(dependencyPackage.name)) continue;
+      const matchingSpecifier = Object.entries(lock.specifiers ?? {}).find(
+        ([specifier]) => jsrPackage(specifier)?.name === dependencyPackage.name,
       );
-      return {
-        name: packageName,
-        version,
-        license: "MIT",
-        source: `https://jsr.io/${packageName}@${version}`,
-      };
-    });
+      if (matchingSpecifier) {
+        resolved.set(dependencyPackage.name, matchingSpecifier[1]);
+      }
+    }
+  }
+
+  const jsrPackages = [...resolved].map(([name, version]) => ({
+    name,
+    version,
+    ...jsrMetadata(name, version),
+  }));
 
   return [
     {
@@ -193,7 +244,7 @@ const collectDenoNotices = async (): Promise<Notice[]> => {
       license: "MIT",
       source: "https://github.com/denoland/deno",
     },
-    ...stdPackages,
+    ...jsrPackages,
   ];
 };
 
@@ -226,7 +277,7 @@ const renderTable = (notices: Notice[]): string => {
   ].join("\n");
 };
 
-const render = (notices: Notice[]): string => {
+export const render = (notices: Notice[]): string => {
   const sorted = notices.toSorted((a, b) =>
     a.name.localeCompare(b.name) || a.version.localeCompare(b.version)
   );
@@ -259,17 +310,20 @@ ${licenseTexts}
 `;
 };
 
-const outputPath = Deno.args[0] ?? "THIRD_PARTY_NOTICES.md";
-const notices = [
-  ...await collectDenoNotices(),
-  ...await collectDirectEsmShNotices(),
-  ...await collectNpmNotices(),
+export const uniqueNotices = (
+  notices: Notice[],
+): Notice[] => [
+  ...new Map(notices.map((notice) => [noticeKey(notice), notice])).values(),
 ];
 
-const uniqueNotices = [...new Map(notices.map((notice) => [
-  noticeKey(notice),
-  notice,
-])).values()];
+if (import.meta.main) {
+  const outputPath = Deno.args[0] ?? "THIRD_PARTY_NOTICES.md";
+  const notices = [
+    ...await collectDenoNotices(),
+    ...await collectDirectEsmShNotices(),
+    ...await collectNpmNotices(),
+  ];
 
-await Deno.writeTextFile(outputPath, render(uniqueNotices));
-console.log(`Generated ${outputPath}`);
+  await Deno.writeTextFile(outputPath, render(uniqueNotices(notices)));
+  console.log(`Generated ${outputPath}`);
+}
