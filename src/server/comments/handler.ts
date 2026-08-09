@@ -7,12 +7,7 @@ import {
 } from "./position.ts";
 import { type CommentsStore, fileCommentsStore } from "./storage.ts";
 import { readMarkdownSource } from "../source.ts";
-import {
-  methodNotAllowedResponse,
-  noStoreJson,
-  notFoundResponse,
-  textResponse,
-} from "../responses.ts";
+import { noStoreJson, notFoundResponse, textResponse } from "../responses.ts";
 
 export type { PreviewComment, PreviewCommentsDocument } from "./types.ts";
 
@@ -72,27 +67,9 @@ const createCommentNotFoundResponse = (): Response =>
 const createReplyNotFoundResponse = (): Response =>
   notFoundResponse("Reply not found.");
 
-const parseCommentRoute = (
-  pathname: string,
-  commentsPath: string,
-): { action?: string; commentId: number | undefined } | undefined => {
-  if (!pathname.startsWith(`${commentsPath}/`)) return undefined;
-
-  const id = decodeURIComponent(pathname.slice(`${commentsPath}/`.length));
-  if (id === "") return { commentId: undefined };
-
-  const actionSeparator = id.indexOf("/");
-  return {
-    action: actionSeparator === -1 ? undefined : id.slice(actionSeparator + 1),
-    commentId: Number(
-      actionSeparator === -1 ? id : id.slice(0, actionSeparator),
-    ),
-  };
-};
-
 const getNextId = (ids: number[]): number => Math.max(0, ...ids) + 1;
 
-const createComment = async (
+export const createComment = async (
   request: Request,
   source: PreviewSource,
   commentsStore: CommentsStore,
@@ -137,7 +114,7 @@ const createComment = async (
   return createCommentResponse(comment);
 };
 
-const createReply = async (
+export const createReply = async (
   request: Request,
   source: PreviewSource,
   commentsStore: CommentsStore,
@@ -180,7 +157,7 @@ const createReply = async (
   return createCommentResponse(updatedComment);
 };
 
-const updateReply = async (
+export const updateReply = async (
   request: Request,
   source: PreviewSource,
   commentsStore: CommentsStore,
@@ -226,7 +203,7 @@ const updateReply = async (
   return createCommentResponse(updatedComment);
 };
 
-const deleteReply = async (
+export const deleteReply = async (
   source: PreviewSource,
   commentsStore: CommentsStore,
   commentId: number,
@@ -266,7 +243,7 @@ const deleteReply = async (
   });
 };
 
-const setCommentResolution = async (
+export const setCommentResolution = async (
   source: PreviewSource,
   commentsStore: CommentsStore,
   commentId: number,
@@ -299,7 +276,7 @@ const setCommentResolution = async (
   return createCommentResponse(updatedComment);
 };
 
-const updateComment = async (
+export const updateComment = async (
   request: Request,
   source: PreviewSource,
   commentsStore: CommentsStore,
@@ -331,7 +308,7 @@ const updateComment = async (
   return createCommentResponse(updatedComment);
 };
 
-const deleteComment = async (
+export const deleteComment = async (
   source: PreviewSource,
   commentsStore: CommentsStore,
   commentId: number,
@@ -358,77 +335,18 @@ const deleteComment = async (
   });
 };
 
-export const handleCommentsRequest = async (
-  request: Request,
+export const getComments = async (
   source: PreviewSource,
-  pathname: string,
   commentsStore: CommentsStore = fileCommentsStore,
 ): Promise<Response> => {
-  const commentsPath = "/__sadoku/comments";
-  if (pathname === commentsPath && request.method === "GET") {
-    const {
-      previousSourceSnapshot: _previousSourceSnapshot,
-      sourceSnapshot: _sourceSnapshot,
-      ...document
-    } = await readResolvedCommentsDocument(
-      source.commentSource,
-      source.documentSource,
-      commentsStore,
-    );
-    return noStoreJson(document);
-  }
-
-  if (pathname === commentsPath && request.method === "POST") {
-    return await createComment(request, source, commentsStore);
-  }
-
-  const route = parseCommentRoute(pathname, commentsPath);
-  if (!route) return notFoundResponse();
-  if (route.commentId === undefined || Number.isNaN(route.commentId)) {
-    return createCommentNotFoundResponse();
-  }
-
-  if (
-    request.method === "POST" &&
-    (route.action === "resolve" || route.action === "reopen")
-  ) {
-    return await setCommentResolution(
-      source,
-      commentsStore,
-      route.commentId,
-      route.action === "resolve",
-    );
-  }
-
-  if (request.method === "POST" && route.action === "replies") {
-    return await createReply(request, source, commentsStore, route.commentId);
-  }
-
-  if (route.action?.startsWith("replies/")) {
-    const replyId = Number(route.action.slice("replies/".length));
-    if (Number.isNaN(replyId)) return createReplyNotFoundResponse();
-    if (request.method === "PUT") {
-      return await updateReply(
-        request,
-        source,
-        commentsStore,
-        route.commentId,
-        replyId,
-      );
-    }
-    if (request.method === "DELETE") {
-      return await deleteReply(source, commentsStore, route.commentId, replyId);
-    }
-    return methodNotAllowedResponse();
-  }
-
-  if (route.action !== undefined) return notFoundResponse();
-  if (request.method === "PUT") {
-    return await updateComment(request, source, commentsStore, route.commentId);
-  }
-  if (request.method === "DELETE") {
-    return await deleteComment(source, commentsStore, route.commentId);
-  }
-
-  return methodNotAllowedResponse();
+  const {
+    previousSourceSnapshot: _previousSourceSnapshot,
+    sourceSnapshot: _sourceSnapshot,
+    ...document
+  } = await readResolvedCommentsDocument(
+    source.commentSource,
+    source.documentSource,
+    commentsStore,
+  );
+  return noStoreJson(document);
 };

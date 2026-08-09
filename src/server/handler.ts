@@ -1,12 +1,25 @@
 import { Hono } from "@hono/hono";
 
-import { handleCommentsRequest } from "./comments/handler.ts";
-import type { CommentsStore } from "./comments/storage.ts";
+import {
+  createComment,
+  createReply,
+  deleteComment,
+  deleteReply,
+  getComments,
+  setCommentResolution,
+  updateComment,
+  updateReply,
+} from "./comments/handler.ts";
+import { type CommentsStore, fileCommentsStore } from "./comments/storage.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";
 import { createPreviewEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
-import { notFoundResponse, textResponse } from "./responses.ts";
+import {
+  methodNotAllowedResponse,
+  notFoundResponse,
+  textResponse,
+} from "./responses.ts";
 import { handleSettingsRequest } from "./settings/handler.ts";
 import {
   createPreviewSource,
@@ -88,50 +101,93 @@ export const createPreviewApp = (
   app.get("/__sadoku/settings", (context) => handleSettings(context.req.raw));
   app.put("/__sadoku/settings", (context) => handleSettings(context.req.raw));
 
-  const handleComments = (request: Request) =>
-    handleCommentsRequest(
-      request,
-      previewSource,
-      new URL(request.url).pathname,
-      options.commentsStore,
-    );
-  app.get("/__sadoku/comments", (context) => handleComments(context.req.raw));
-  app.post("/__sadoku/comments", (context) => handleComments(context.req.raw));
+  const commentsStore = options.commentsStore ?? fileCommentsStore;
+  // Preserve the comments API's original identifier contract: route segments
+  // are converted with Number(), and any value that does not match a stored ID
+  // is handled by the use case as a missing comment or reply.
+  app.get(
+    "/__sadoku/comments",
+    () => getComments(previewSource, commentsStore),
+  );
+  app.post(
+    "/__sadoku/comments",
+    (context) => createComment(context.req.raw, previewSource, commentsStore),
+  );
   app.put(
     "/__sadoku/comments/:commentId",
-    (context) => handleComments(context.req.raw),
+    (context) =>
+      updateComment(
+        context.req.raw,
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+      ),
   );
   app.delete(
     "/__sadoku/comments/:commentId",
-    (context) => handleComments(context.req.raw),
+    (context) =>
+      deleteComment(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+      ),
+  );
+  app.all("/__sadoku/comments/:commentId", methodNotAllowedResponse);
+  app.get(
+    "/__sadoku/comments/",
+    () => notFoundResponse("Comment not found."),
   );
   app.post(
     "/__sadoku/comments/:commentId/resolve",
-    (context) => handleComments(context.req.raw),
+    (context) =>
+      setCommentResolution(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        true,
+      ),
   );
   app.post(
     "/__sadoku/comments/:commentId/reopen",
-    (context) => handleComments(context.req.raw),
+    (context) =>
+      setCommentResolution(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        false,
+      ),
   );
   app.post(
     "/__sadoku/comments/:commentId/replies",
-    (context) => handleComments(context.req.raw),
+    (context) =>
+      createReply(
+        context.req.raw,
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+      ),
   );
   app.put(
     "/__sadoku/comments/:commentId/replies/:replyId",
-    (context) => handleComments(context.req.raw),
+    (context) =>
+      updateReply(
+        context.req.raw,
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        Number(context.req.param("replyId")),
+      ),
   );
   app.delete(
     "/__sadoku/comments/:commentId/replies/:replyId",
-    (context) => handleComments(context.req.raw),
+    (context) =>
+      deleteReply(
+        previewSource,
+        commentsStore,
+        Number(context.req.param("commentId")),
+        Number(context.req.param("replyId")),
+      ),
   );
-
-  // Preserve the comments API's existing 405 response (without an Allow
-  // header) after declaring every supported method above. The comments
-  // handler also retains its resource-specific 404 responses for malformed
-  // and unknown comment subpaths.
-  app.all("/__sadoku/comments", (context) => handleComments(context.req.raw));
-  app.all("/__sadoku/comments/*", (context) => handleComments(context.req.raw));
 
   const handleAsset = (request: Request) =>
     handlePreviewAssetRequest(new URL(request.url).pathname);

@@ -384,6 +384,14 @@ testWithTempComments("adds replies to comments", async () => {
     );
     assertEquals(deleteResponse.status, 204);
 
+    const missingReplyResponse = await requestComments(
+      handler,
+      `/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
+      { method: "DELETE" },
+    );
+    assertEquals(missingReplyResponse.status, 404);
+    assertEquals(await missingReplyResponse.text(), "Reply not found.");
+
     const storedResponse = await requestComments(
       handler,
       "/__sadoku/comments",
@@ -459,7 +467,7 @@ testWithTempComments(
   },
 );
 
-testWithTempComments("accepts numeric comment identifiers", async () => {
+testWithTempComments("converts comment identifiers with Number", async () => {
   const filePath = await createTempMarkdown();
   const commentsPath = getCommentsFilePath(filePath);
   await Deno.mkdir(dirname(commentsPath), { recursive: true });
@@ -487,7 +495,7 @@ testWithTempComments("accepts numeric comment identifiers", async () => {
   try {
     const response = await requestComments(
       createPreviewHandler(filePath),
-      "/__sadoku/comments/1",
+      "/__sadoku/comments/0x1",
       {
         method: "PUT",
         headers: { "content-type": "application/json" },
