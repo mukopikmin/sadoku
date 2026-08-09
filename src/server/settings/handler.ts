@@ -1,4 +1,4 @@
-import { readConfig, updatePreviewConfig } from "../../config.ts";
+import { readConfig, updatePreviewConfig } from "../config.ts";
 import {
   methodNotAllowedResponse,
   noStoreJson,

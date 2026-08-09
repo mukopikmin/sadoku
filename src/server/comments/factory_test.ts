@@ -3,6 +3,7 @@ import { join } from "@std/path";
 import { getCommentsDirectoryPath } from "./storage.ts";
 import type { PreviewCommentsDocument } from "./types.ts";
 import { createConfiguredCommentsStore } from "./factory.ts";
+import { getCommentsNotificationFilePath } from "./notifications.ts";
 import { withTempCommentsDirectory } from "../test_helpers.ts";
 
 Deno.test("configured comments store uses and closes the default SQLite database", async () => {
@@ -29,6 +30,10 @@ Deno.test("configured comments store uses and closes the default SQLite database
 
     await store.write(filePath, document);
     assertEquals(await store.read(filePath), document);
+    assertEquals(
+      (await Deno.stat(getCommentsNotificationFilePath(filePath))).isFile,
+      true,
+    );
     assertEquals(
       (await Deno.stat(join(getCommentsDirectoryPath(), "sadoku.sqlite3")))
         .isFile,

@@ -125,7 +125,11 @@ describe("App", () => {
 
     expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
 
-    TestEventSource.instances.at(-1)?.dispatchEvent(new Event("reload"));
+    TestEventSource.instances.at(-1)?.dispatchEvent(
+      new MessageEvent("invalidate", {
+        data: JSON.stringify({ resources: ["document", "comments"] }),
+      }),
+    );
 
     const reloadButton = await screen.findByRole("button", {
       name: "Reload preview",
@@ -189,7 +193,11 @@ describe("App", () => {
 
     render(<App />);
     await screen.findByRole("heading", { name: "Original title" });
-    TestEventSource.instances.at(-1)?.dispatchEvent(new Event("reload"));
+    TestEventSource.instances.at(-1)?.dispatchEvent(
+      new MessageEvent("invalidate", {
+        data: JSON.stringify({ resources: ["document", "comments"] }),
+      }),
+    );
 
     fireEvent.click(
       await screen.findByRole("button", {

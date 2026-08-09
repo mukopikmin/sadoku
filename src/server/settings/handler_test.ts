@@ -1,6 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { dirname, join } from "@std/path";
-import { readConfig } from "../../config.ts";
+import { readConfig } from "../config.ts";
 import { handleSettingsRequest } from "./handler.ts";
 
 const withSettings = async (run: () => Promise<void>) => {
