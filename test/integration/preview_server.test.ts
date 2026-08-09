@@ -20,6 +20,63 @@ Deno.test("serves hot reload events as an SSE stream", async () => {
   await response.body?.cancel();
 });
 
+Deno.test("rejects unsupported methods for the event stream route", async () => {
+  const response = await createPreviewHandler(
+    "test/integration/fixtures/comprehensive.md",
+  )(
+    new Request("http://127.0.0.1:3334/__sadoku/events", {
+      method: "POST",
+    }),
+    {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+  );
+
+  assertEquals(response.status, 404);
+  assertEquals(await response.text(), "Not found.");
+});
+
+Deno.test("notifies when an interrupted event stream closes", async () => {
+  const requestController = new AbortController();
+  let opened = 0;
+  let closed = 0;
+  const response = await createPreviewHandler(
+    "test/integration/fixtures/comprehensive.md",
+    {
+      onEventStreamOpen: () => opened += 1,
+      onEventStreamClose: () => closed += 1,
+    },
+  )(
+    new Request("http://127.0.0.1:3334/__sadoku/events", {
+      signal: requestController.signal,
+    }),
+    {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+  );
+
+  assertEquals(opened, 1);
+  requestController.abort();
+  await response.body?.pipeTo(new WritableStream());
+  assertEquals(closed, 1);
+});
+
+Deno.test("keeps remote event streams empty and reports cancellation", async () => {
+  let opened = 0;
+  let closed = 0;
+  const response = await createPreviewHandler("https://example.com/readme.md", {
+    onEventStreamOpen: () => opened += 1,
+    onEventStreamClose: () => closed += 1,
+  })(
+    new Request("http://127.0.0.1:3334/__sadoku/events"),
+    {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+  );
+
+  assertEquals(
+    response.headers.get("content-type"),
+    "text/event-stream; charset=utf-8",
+  );
+  assertEquals(opened, 1);
+  await response.body?.cancel();
+  assertEquals(closed, 1);
+});
+
 Deno.test("serves the preview client asset", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
   const response = await createPreviewHandler(filePath)(
