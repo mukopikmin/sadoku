@@ -6,7 +6,7 @@ import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";
 import { createPreviewEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
-import { textResponse } from "./responses.ts";
+import { notFoundResponse, textResponse } from "./responses.ts";
 import { handleSettingsRequest } from "./settings/handler.ts";
 import {
   createPreviewSource,
@@ -61,7 +61,7 @@ export const createPreviewApp = (
     }
   });
 
-  app.all("/__sadoku/events", (context) => {
+  app.get("/__sadoku/events", (context) => {
     const request = context.req.raw;
     if (previewSource.isRemote) {
       return handleRemoteEventRequest(request, options);
@@ -73,18 +73,20 @@ export const createPreviewApp = (
     );
   });
 
-  app.all(
+  app.get(
     "/__sadoku/document",
     () => handlePreviewDocumentRequest(previewSource.documentSource),
   );
 
-  app.all("/__sadoku/settings", async (context) => {
+  const handleSettings = async (request: Request) => {
     try {
-      return await handleSettingsRequest(context.req.raw);
+      return await handleSettingsRequest(request);
     } catch {
       return textResponse("Failed to access Sadoku settings.", 500);
     }
-  });
+  };
+  app.get("/__sadoku/settings", (context) => handleSettings(context.req.raw));
+  app.put("/__sadoku/settings", (context) => handleSettings(context.req.raw));
 
   const handleComments = (request: Request) =>
     handleCommentsRequest(
@@ -93,15 +95,57 @@ export const createPreviewApp = (
       new URL(request.url).pathname,
       options.commentsStore,
     );
+  app.get("/__sadoku/comments", (context) => handleComments(context.req.raw));
+  app.post("/__sadoku/comments", (context) => handleComments(context.req.raw));
+  app.put(
+    "/__sadoku/comments/:commentId",
+    (context) => handleComments(context.req.raw),
+  );
+  app.delete(
+    "/__sadoku/comments/:commentId",
+    (context) => handleComments(context.req.raw),
+  );
+  app.post(
+    "/__sadoku/comments/:commentId/resolve",
+    (context) => handleComments(context.req.raw),
+  );
+  app.post(
+    "/__sadoku/comments/:commentId/reopen",
+    (context) => handleComments(context.req.raw),
+  );
+  app.post(
+    "/__sadoku/comments/:commentId/replies",
+    (context) => handleComments(context.req.raw),
+  );
+  app.put(
+    "/__sadoku/comments/:commentId/replies/:replyId",
+    (context) => handleComments(context.req.raw),
+  );
+  app.delete(
+    "/__sadoku/comments/:commentId/replies/:replyId",
+    (context) => handleComments(context.req.raw),
+  );
+
+  // Preserve the comments API's existing 405 response (without an Allow
+  // header) after declaring every supported method above. The comments
+  // handler also retains its resource-specific 404 responses for malformed
+  // and unknown comment subpaths.
   app.all("/__sadoku/comments", (context) => handleComments(context.req.raw));
   app.all("/__sadoku/comments/*", (context) => handleComments(context.req.raw));
 
   const handleAsset = (request: Request) =>
     handlePreviewAssetRequest(new URL(request.url).pathname);
-  app.all("/assets/", (context) => handleAsset(context.req.raw));
-  app.all("/assets/*", (context) => handleAsset(context.req.raw));
+  app.get("/assets/*", (context) => handleAsset(context.req.raw));
 
-  app.all("*", () =>
+  // Internal and asset URLs never fall through to the SPA. Outside the legacy
+  // comments contract above, unsupported methods use the normal route-mismatch
+  // contract and therefore return 404.
+  app.all("/__sadoku", () => notFoundResponse());
+  app.all("/__sadoku/*", () => notFoundResponse());
+  app.all("/assets", () => notFoundResponse("Asset not found."));
+  app.all("/assets/*", () => notFoundResponse("Asset not found."));
+
+  app.get("*", () =>
     new Response(
       renderSpaShell(sourceTitle(previewSource.documentSource)),
       {
