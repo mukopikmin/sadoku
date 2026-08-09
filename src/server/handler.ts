@@ -1,3 +1,5 @@
+import { Hono } from "@hono/hono";
+
 import { handleCommentsRequest } from "./comments/handler.ts";
 import type { CommentsStore } from "./comments/storage.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
@@ -40,63 +42,85 @@ const handleRemoteEventRequest = (
   options: PreviewHandlerOptions,
 ): Response => handleHotReloadEventRequest(undefined, request, options);
 
-export const createPreviewHandler = (
+export const createPreviewApp = (
   input: string | PreviewSource,
   options: PreviewHandlerOptions = {},
-): Deno.ServeHandler =>
-async (request) => {
+): Hono => {
   const previewSource = typeof input === "string"
     ? createPreviewSource(input)
     : input;
-  try {
-    const requestUrl = new URL(request.url);
-    const { pathname } = requestUrl;
+  const app = new Hono();
 
-    if (pathname === "/__sadoku/events") {
-      if (previewSource.isRemote) {
-        return handleRemoteEventRequest(request, options);
-      }
-      return handleHotReloadEventRequest(
-        previewSource.documentSource,
-        request,
-        options,
-      );
+  app.use("*", async (_context, next) => {
+    try {
+      await next();
+    } catch (error) {
+      if (error instanceof Response) return error;
+      const message = error instanceof Error ? error.message : String(error);
+      return textResponse(`Failed to render Markdown: ${message}`, 500);
     }
+  });
 
-    if (pathname === "/__sadoku/document") {
-      return await handlePreviewDocumentRequest(previewSource.documentSource);
+  app.all("/__sadoku/events", (context) => {
+    const request = context.req.raw;
+    if (previewSource.isRemote) {
+      return handleRemoteEventRequest(request, options);
     }
+    return handleHotReloadEventRequest(
+      previewSource.documentSource,
+      request,
+      options,
+    );
+  });
 
-    if (pathname === "/__sadoku/settings") {
-      try {
-        return await handleSettingsRequest(request);
-      } catch {
-        return textResponse("Failed to access Sadoku settings.", 500);
-      }
+  app.all(
+    "/__sadoku/document",
+    () => handlePreviewDocumentRequest(previewSource.documentSource),
+  );
+
+  app.all("/__sadoku/settings", async (context) => {
+    try {
+      return await handleSettingsRequest(context.req.raw);
+    } catch {
+      return textResponse("Failed to access Sadoku settings.", 500);
     }
+  });
 
-    if (pathname.startsWith("/__sadoku/comments")) {
-      return await handleCommentsRequest(
-        request,
-        previewSource,
-        pathname,
-        options.commentsStore,
-      );
-    }
+  const handleComments = (request: Request) =>
+    handleCommentsRequest(
+      request,
+      previewSource,
+      new URL(request.url).pathname,
+      options.commentsStore,
+    );
+  app.all("/__sadoku/comments", (context) => handleComments(context.req.raw));
+  app.all("/__sadoku/comments/*", (context) => handleComments(context.req.raw));
 
-    if (pathname.startsWith("/assets/")) {
-      return await handlePreviewAssetRequest(pathname);
-    }
+  const handleAsset = (request: Request) =>
+    handlePreviewAssetRequest(new URL(request.url).pathname);
+  app.all("/assets/", (context) => handleAsset(context.req.raw));
+  app.all("/assets/*", (context) => handleAsset(context.req.raw));
 
-    return new Response(
+  app.all("*", () =>
+    new Response(
       renderSpaShell(sourceTitle(previewSource.documentSource)),
       {
         headers: { "content-type": "text/html; charset=utf-8" },
       },
-    );
-  } catch (error) {
-    if (error instanceof Response) return error;
+    ));
+
+  app.onError((error) => {
     const message = error instanceof Error ? error.message : String(error);
     return textResponse(`Failed to render Markdown: ${message}`, 500);
-  }
+  });
+
+  return app;
+};
+
+export const createPreviewHandler = (
+  input: string | PreviewSource,
+  options: PreviewHandlerOptions = {},
+): Deno.ServeHandler => {
+  const app = createPreviewApp(input, options);
+  return (request) => app.fetch(request);
 };
