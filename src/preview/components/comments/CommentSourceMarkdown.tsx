@@ -15,7 +15,6 @@ export const CommentSourceMarkdown = (
 ) => (
   <Box
     className="comment-source-markdown"
-    fontSize="xs"
     maxH="160px"
     overflowY="auto"
   >

@@ -89,8 +89,13 @@ describe("CommentList", () => {
       .toBe(false);
 
     const targetStyles = getComputedStyle(target);
-    expect(targetStyles.borderLeftWidth).toBe("4px");
+    expect(targetStyles.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    expect(targetStyles.borderLeftWidth).toBe("1px");
     expect(targetStyles.borderTopWidth).toBe("1px");
+    expect(getComputedStyle(sourceMarkdown).fontSize).toBe(
+      getComputedStyle(screen.getByText("Comment body stays separate."))
+        .fontSize,
+    );
   });
 
   it("labels only bot comments and replies", () => {

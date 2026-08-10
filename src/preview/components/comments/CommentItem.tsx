@@ -231,24 +231,18 @@ export const CommentItem = ({
       {showSource && comment.sourceText && (
         <Box
           as="section"
-          bg="commentTarget.bg"
-          borderBottomWidth="1px"
-          borderColor="commentTarget.border"
-          borderLeftWidth="4px"
+          borderColor="border.default"
           borderRadius="md"
-          borderRightWidth="1px"
-          borderTopWidth="1px"
+          borderWidth="1px"
           className="comment-source-target"
           mb="3"
           p="2"
         >
           <Text
-            color="commentTarget.label"
-            fontSize="2xs"
-            fontWeight="bold"
-            letterSpacing="wide"
+            color="fg.muted"
+            fontSize="xs"
+            fontWeight="semibold"
             mb="1"
-            textTransform="uppercase"
           >
             {getSourceLabel(comment)}
           </Text>
