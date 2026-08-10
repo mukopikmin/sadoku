@@ -4,6 +4,7 @@ import type { CommentActions } from "../../api/commentActions";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
+import { CommentSourceMarkdown } from "./CommentSourceMarkdown";
 import type { Comment } from "../../models/comment";
 import { ReplyItem } from "./ReplyItem";
 import { toaster } from "../ui/toaster";
@@ -228,13 +229,20 @@ export const CommentItem = ({
         This action cannot be undone.
       </ConfirmDialog>
       {showSource && comment.sourceText && (
-        <Box mb="2">
+        <Box
+          as="section"
+          bg="bg.muted"
+          borderColor="border.muted"
+          borderLeftWidth="3px"
+          borderRadius="sm"
+          className="comment-source-target"
+          mb="3"
+          p="2"
+        >
           <Text mb="1" color="fg.muted" fontSize="xs" fontWeight="semibold">
             {getSourceLabel(comment)}
           </Text>
-          <Box as="pre" maxH="160px" mb="2" fontSize="xs" whiteSpace="pre-wrap">
-            {comment.sourceText}
-          </Box>
+          <CommentSourceMarkdown>{comment.sourceText}</CommentSourceMarkdown>
         </Box>
       )}
       {isEditing
