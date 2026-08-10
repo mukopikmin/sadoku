@@ -90,8 +90,15 @@ describe("CommentList", () => {
 
     const targetStyles = getComputedStyle(target);
     expect(targetStyles.backgroundColor).toBe("rgba(0, 0, 0, 0)");
-    expect(targetStyles.borderLeftWidth).toBe("1px");
-    expect(targetStyles.borderTopWidth).toBe("1px");
+    expect(targetStyles.borderLeftStyle).toBe("none");
+    expect(targetStyles.borderTopStyle).toBe("none");
+    expect(
+      getComputedStyle(
+        screen.getByText("Comment body stays separate.").closest(
+          "article",
+        )!,
+      ).borderLeftWidth,
+    ).toBe("3px");
     expect(getComputedStyle(sourceMarkdown).fontSize).toBe(
       getComputedStyle(screen.getByText("Comment body stays separate."))
         .fontSize,

@@ -147,9 +147,15 @@ export const CommentItem = ({
   return (
     <Box
       as="article"
-      borderColor="border.muted"
+      borderBottomColor="border.muted"
+      borderBottomWidth={variant === "panel" ? "1px" : undefined}
+      borderLeftColor={variant === "panel" ? "accent" : undefined}
+      borderLeftWidth={variant === "panel" ? "3px" : undefined}
       borderRadius={variant === "panel" ? "md" : undefined}
-      borderWidth={variant === "panel" ? "1px" : undefined}
+      borderRightColor="border.muted"
+      borderRightWidth={variant === "panel" ? "1px" : undefined}
+      borderTopColor="border.muted"
+      borderTopWidth={variant === "panel" ? "1px" : undefined}
       mb="1.5"
       p={variant === "panel" ? "3" : undefined}
     >
@@ -231,12 +237,8 @@ export const CommentItem = ({
       {showSource && comment.sourceText && (
         <Box
           as="section"
-          borderColor="border.default"
-          borderRadius="md"
-          borderWidth="1px"
           className="comment-source-target"
           mb="3"
-          p="2"
         >
           <Text
             color="fg.muted"
