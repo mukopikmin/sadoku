@@ -71,6 +71,17 @@ export const sadokuChakraSystem = createSystem(
               value: { _dark: "{colors.blue.300}", base: "{colors.blue.900}" },
             },
           },
+          commentTarget: {
+            bg: {
+              value: { _dark: "{colors.blue.950}", base: "{colors.blue.50}" },
+            },
+            border: {
+              value: { _dark: "{colors.blue.800}", base: "{colors.blue.200}" },
+            },
+            label: {
+              value: { _dark: "{colors.blue.300}", base: "{colors.blue.700}" },
+            },
+          },
           fg: {
             DEFAULT: {
               value: { _dark: "{colors.gray.100}", base: "{colors.gray.950}" },

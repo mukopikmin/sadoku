@@ -89,7 +89,8 @@ describe("CommentList", () => {
       .toBe(false);
 
     const targetStyles = getComputedStyle(target);
-    expect(targetStyles.borderLeftWidth).toBe("3px");
+    expect(targetStyles.borderLeftWidth).toBe("4px");
+    expect(targetStyles.borderTopWidth).toBe("1px");
   });
 
   it("labels only bot comments and replies", () => {
