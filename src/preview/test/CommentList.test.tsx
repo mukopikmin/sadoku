@@ -66,10 +66,14 @@ describe("CommentList", () => {
     const sourceMarkdown = target.querySelector(".comment-source-markdown")!;
     expect(target.tagName).toBe("SECTION");
     expect(within(target).getByText("Target line")).not.toBeNull();
-    expect(within(sourceMarkdown).getByRole("heading", {
-      name: "Source heading",
-    })).not.toBeNull();
-    expect(within(sourceMarkdown).getByText("important").tagName).toBe("STRONG");
+    expect(
+      within(sourceMarkdown).getByRole("heading", {
+        name: "Source heading",
+      }),
+    ).not.toBeNull();
+    expect(within(sourceMarkdown).getByText("important").tagName).toBe(
+      "STRONG",
+    );
     expect(within(sourceMarkdown).getAllByRole("listitem")).toHaveLength(2);
     expect(
       within(sourceMarkdown).getByRole("link", { name: "Safe link" })
