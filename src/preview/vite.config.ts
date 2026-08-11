@@ -12,11 +12,11 @@ export default defineConfig(({ command }) => ({
   build: {
     emptyOutDir: false,
     lib: {
-      entry: resolve(__dirname, "main.tsx"),
+      entry: resolve(import.meta.dirname, "main.tsx"),
       formats: ["es"],
       fileName: () => "client.js",
     },
-    outDir: resolve(__dirname, "dist"),
+    outDir: resolve(import.meta.dirname, "dist"),
     rollupOptions: {
       output: {
         entryFileNames: "client.js",
