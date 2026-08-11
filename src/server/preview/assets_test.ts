@@ -34,3 +34,13 @@ Deno.test("serves fingerprintable assets with immutable caching", async () => {
   );
   assertEquals((await response.arrayBuffer()).byteLength > 0, true);
 });
+
+Deno.test("serves preview icons with image content types", async () => {
+  const favicon = await handlePreviewAssetRequest("/assets/favicon.ico");
+  assertEquals(favicon.status, 200);
+  assertEquals(favicon.headers.get("content-type"), "image/x-icon");
+
+  const icon = await handlePreviewAssetRequest("/assets/icon-512.png");
+  assertEquals(icon.status, 200);
+  assertEquals(icon.headers.get("content-type"), "image/png");
+});
