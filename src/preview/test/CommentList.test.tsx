@@ -36,6 +36,71 @@ const createComment = (
 });
 
 describe("CommentList", () => {
+  it("renders source text as safe GFM in a distinct target region", () => {
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        comments={[createComment({
+          body: "Comment body stays separate.",
+          sourceText: [
+            "# Source heading",
+            "",
+            "This is **important**.",
+            "",
+            "- First item",
+            "- Second item",
+            "",
+            "[Safe link](https://example.com)",
+            "",
+            "```ts",
+            "const answer = 42;",
+            "```",
+            "",
+            "<script>window.sourceTextExecuted = true</script>",
+          ].join("\n"),
+        })]}
+      />,
+    );
+
+    const target = document.querySelector(".comment-source-target")!;
+    const sourceMarkdown = target.querySelector(".comment-source-markdown")!;
+    const rootThread = document.querySelector(".comment-root-thread")!;
+    expect(target.tagName).toBe("SECTION");
+    expect(within(target).getByText("Target line")).not.toBeNull();
+    expect(
+      within(sourceMarkdown).getByRole("heading", {
+        name: "Source heading",
+      }),
+    ).not.toBeNull();
+    expect(within(sourceMarkdown).getByText("important").tagName).toBe(
+      "STRONG",
+    );
+    expect(within(sourceMarkdown).getAllByRole("listitem")).toHaveLength(2);
+    expect(
+      within(sourceMarkdown).getByRole("link", { name: "Safe link" })
+        .getAttribute("href"),
+    ).toBe("https://example.com");
+    const codeBlock = sourceMarkdown.querySelector("pre code")!;
+    expect(codeBlock.textContent).toContain("const answer = 42;");
+    expect(sourceMarkdown.querySelector("script")).toBeNull();
+    expect(sourceMarkdown.textContent).toContain(
+      "<script>window.sourceTextExecuted = true</script>",
+    );
+    expect(target.contains(screen.getByText("Comment body stays separate.")))
+      .toBe(false);
+
+    const targetStyles = getComputedStyle(target);
+    expect(targetStyles.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    expect(targetStyles.borderLeftStyle).toBe("none");
+    expect(targetStyles.borderTopStyle).toBe("none");
+    expect(target.nextElementSibling).toBe(rootThread);
+    expect(getComputedStyle(rootThread).borderLeftWidth).toBe("3px");
+    expect(getComputedStyle(sourceMarkdown).fontSize).toBe(
+      getComputedStyle(screen.getByText("Comment body stays separate."))
+        .fontSize,
+    );
+  });
+
   it("labels only bot comments and replies", () => {
     render(
       <CommentList
@@ -114,6 +179,11 @@ describe("CommentList", () => {
     expect(
       within(screen.getByRole("tabpanel", { name: "Active (1)" })).getByText(
         "Active comment.",
+      ),
+    ).not.toBeNull();
+    expect(
+      within(screen.getByRole("tabpanel", { name: "Active (1)" })).getByText(
+        "Target line",
       ),
     ).not.toBeNull();
 
