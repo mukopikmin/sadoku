@@ -273,6 +273,8 @@ describe("App", () => {
     expect(icon.getAttribute("src")).toBe("/assets/sadoku-icon.svg");
     expect(icon.getAttribute("alt")).toBe("Sadoku");
     expect(getComputedStyle(icon).flexShrink).toBe("0");
+    expect(getComputedStyle(icon).height).toBe("var(--chakra-sizes-7)");
+    expect(getComputedStyle(icon).width).toBe("var(--chakra-sizes-7)");
     expect(
       icon.parentElement?.contains(
         screen.getByText(/Previewing/),

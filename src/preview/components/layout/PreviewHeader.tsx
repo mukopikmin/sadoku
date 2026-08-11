@@ -72,6 +72,7 @@ export const PreviewHeader = ({
         as="img"
         alt="Sadoku"
         flexShrink="0"
+        h="7"
         src="/assets/sadoku-icon.svg"
         w="7"
       />

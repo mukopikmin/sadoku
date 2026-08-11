@@ -1,6 +1,6 @@
 # Sadoku
 
-![Sadoku icon](src/preview/public/sadoku-icon.svg)
+<img src="src/preview/public/sadoku-icon.svg" alt="Sadoku icon" width="64">
 
 `sadoku` is a local Markdown review tool for reading, previewing, and commenting
 on one Markdown document in your browser.
