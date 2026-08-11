@@ -72,9 +72,9 @@ export const PreviewHeader = ({
       <Image
         alt="Sadoku"
         flexShrink="0"
-        h="10"
+        h="8"
         src="/assets/icon-512.png"
-        w="10"
+        w="8"
       />
       <Text as="div" minW="0">
         Previewing{" "}

@@ -242,10 +242,10 @@ describe("App", () => {
     const brandIcon = screen.getByRole("img", { name: "Sadoku" });
     expect(brandIcon.getAttribute("src")).toBe("/assets/icon-512.png");
     expect(getComputedStyle(brandIcon).width).toBe(
-      "var(--chakra-sizes-10)",
+      "var(--chakra-sizes-8)",
     );
     expect(getComputedStyle(brandIcon).height).toBe(
-      "var(--chakra-sizes-10)",
+      "var(--chakra-sizes-8)",
     );
     const fileLink = screen.getByRole("link", { name: "example.md" });
     expect(fileLink.getAttribute("href")).toBe("file:///tmp/example.md");
