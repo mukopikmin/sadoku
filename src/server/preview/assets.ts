@@ -3,6 +3,12 @@ import { notFoundResponse } from "../responses.ts";
 
 const previewAssetRoot = new URL("../../preview/dist/", import.meta.url);
 
+const contentTypeForPath = (pathname: string): string => {
+  if (pathname.endsWith(".ico")) return "image/x-icon";
+  if (pathname.endsWith(".png")) return "image/png";
+  return "text/javascript; charset=utf-8";
+};
+
 const readAsset = async (
   pathname: string,
   prefix: string,
@@ -41,7 +47,7 @@ export const handlePreviewAssetRequest = async (
   ) as ArrayBuffer;
   return new Response(body, {
     headers: {
-      "content-type": "text/javascript; charset=utf-8",
+      "content-type": contentTypeForPath(pathname),
       "cache-control": pathname === "/assets/client.js"
         ? "no-store"
         : "public, max-age=31536000, immutable",

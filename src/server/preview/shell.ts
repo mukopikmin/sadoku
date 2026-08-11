@@ -12,6 +12,8 @@ export const renderSpaShell = (title: string): string =>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/assets/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/assets/icon-512.png">
     <title>${escapeHtml(title)}</title>
   </head>
   <body>
