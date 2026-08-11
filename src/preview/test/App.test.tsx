@@ -251,6 +251,7 @@ describe("App", () => {
     expect(headerContainer).not.toBeNull();
     const headerContainerStyles = getComputedStyle(headerContainer!);
     expect(headerContainerStyles.maxWidth).toBe("980px");
+    expect(headerContainerStyles.flexWrap).toBe("wrap");
     expect(headerContainerStyles.paddingInline).toBe(
       "var(--chakra-spacing-8)",
     );
@@ -267,6 +268,16 @@ describe("App", () => {
       "var(--chakra-spacing-8)",
     );
     expect(getComputedStyle(main!).paddingTop).toBe("0px");
+
+    const icon = screen.getByRole("img", { name: "Sadoku" });
+    expect(icon.getAttribute("src")).toBe("/assets/sadoku-icon.svg");
+    expect(icon.getAttribute("alt")).toBe("Sadoku");
+    expect(getComputedStyle(icon).flexShrink).toBe("0");
+    expect(
+      icon.parentElement?.contains(
+        screen.getByText(/Previewing/),
+      ),
+    ).toBe(true);
 
     const previewButton = screen.getByRole("tab", { name: "Preview" });
     const commentsButton = screen.getByRole("tab", {

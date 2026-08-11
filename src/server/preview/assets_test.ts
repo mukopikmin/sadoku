@@ -34,3 +34,13 @@ Deno.test("serves fingerprintable assets with immutable caching", async () => {
   );
   assertEquals((await response.arrayBuffer()).byteLength > 0, true);
 });
+
+Deno.test("serves the Sadoku icon as an SVG image", async () => {
+  const response = await handlePreviewAssetRequest(
+    "/assets/sadoku-icon.svg",
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(response.headers.get("content-type"), "image/svg+xml");
+  assertEquals((await response.text()).startsWith("<svg"), true);
+});
