@@ -62,6 +62,15 @@ Deno.test("keeps API, asset, and SPA routes separate", async () => {
     );
     assertEquals(asset.headers.get("cache-control"), "no-store");
 
+    const icon = await requestHandler(handler, "/assets/icon-512.png");
+    assertEquals(icon.status, 200);
+    assertEquals(icon.headers.get("content-type"), "image/png");
+    assertEquals(
+      icon.headers.get("cache-control"),
+      "public, max-age=31536000, immutable",
+    );
+    assertEquals((await icon.arrayBuffer()).byteLength > 0, true);
+
     const missingAsset = await requestHandler(handler, "/assets/missing.js");
     assertEquals(missingAsset.status, 404);
     assertEquals(await missingAsset.text(), "Asset not found.");

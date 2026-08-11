@@ -239,6 +239,19 @@ describe("App", () => {
 
     await screen.findByRole("link", { name: "example.md" });
 
+    const brandIcon = screen.getByRole("img", { name: "Sadoku" });
+    expect(brandIcon.getAttribute("src")).toBe("/assets/icon-512.png");
+    expect(getComputedStyle(brandIcon).width).toBe(
+      "var(--chakra-sizes-8)",
+    );
+    expect(getComputedStyle(brandIcon).height).toBe(
+      "var(--chakra-sizes-8)",
+    );
+    const fileLink = screen.getByRole("link", { name: "example.md" });
+    expect(fileLink.getAttribute("href")).toBe("file:///tmp/example.md");
+    expect(screen.getByRole("navigation", { name: "Preview views" })).not
+      .toBeNull();
+
     const header = container.querySelector("header");
     expect(header).not.toBeNull();
     const styles = getComputedStyle(header!);
@@ -257,6 +270,7 @@ describe("App", () => {
     expect(headerContainerStyles.paddingBlock).toBe(
       "var(--chakra-spacing-4)",
     );
+    expect(headerContainerStyles.flexWrap).toBe("wrap");
 
     const main = container.querySelector("main");
     expect(main).not.toBeNull();
