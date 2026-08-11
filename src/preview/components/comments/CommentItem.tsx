@@ -147,93 +147,9 @@ export const CommentItem = ({
   return (
     <Box
       as="article"
-      borderBottomColor="border.muted"
-      borderBottomWidth={variant === "panel" ? "1px" : undefined}
-      borderLeftColor={variant === "panel" ? "accent" : undefined}
-      borderLeftWidth={variant === "panel" ? "3px" : undefined}
-      borderRadius={variant === "panel" ? "md" : undefined}
-      borderRightColor="border.muted"
-      borderRightWidth={variant === "panel" ? "1px" : undefined}
-      borderTopColor="border.muted"
-      borderTopWidth={variant === "panel" ? "1px" : undefined}
       mb="1.5"
       p={variant === "panel" ? "3" : undefined}
     >
-      <Flex align="center" justify="space-between" gap="2" mb="1">
-        <Flex
-          align="center"
-          gap="2"
-          color="fg.muted"
-          fontSize="xs"
-          fontWeight="semibold"
-        >
-          <Text as="span">{lineLabel}</Text>
-          {comment.author.type === "bot" && (
-            <Badge colorPalette="purple" variant="subtle">Bot</Badge>
-          )}
-          {showState && comment.state === "resolved" && (
-            <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
-          )}
-          {showState && comment.state === "stale" && (
-            <Badge colorPalette="yellow" variant="outline">Stale</Badge>
-          )}
-        </Flex>
-        {!isEditing && (
-          <Flex wrap="wrap" gap="2">
-            {comment.state === "resolved"
-              ? (
-                <CommentActionButton
-                  disabled={isSaving}
-                  onClick={handleReopen}
-                  type="button"
-                >
-                  Reopen
-                </CommentActionButton>
-              )
-              : (
-                <CommentActionButton
-                  disabled={isSaving}
-                  onClick={handleResolve}
-                  type="button"
-                >
-                  Resolve
-                </CommentActionButton>
-              )}
-            <CommentActionButton
-              disabled={isSaving}
-              onClick={() => setIsReplying((value) => !value)}
-              type="button"
-            >
-              Reply
-            </CommentActionButton>
-            <CommentActionButton
-              disabled={isSaving}
-              onClick={() => setIsEditing(true)}
-              type="button"
-            >
-              Edit
-            </CommentActionButton>
-            <CommentActionButton
-              disabled={isSaving}
-              onClick={() => setIsDeleteDialogOpen(true)}
-              type="button"
-            >
-              Delete
-            </CommentActionButton>
-          </Flex>
-        )}
-      </Flex>
-      <ConfirmDialog
-        confirmColorPalette="red"
-        confirmLabel="Delete"
-        isPending={isSaving}
-        onConfirm={handleConfirmDelete}
-        onOpenChange={setIsDeleteDialogOpen}
-        open={isDeleteDialogOpen}
-        title="Delete comment?"
-      >
-        This action cannot be undone.
-      </ConfirmDialog>
       {showSource && comment.sourceText && (
         <Box
           as="section"
@@ -251,55 +167,138 @@ export const CommentItem = ({
           <CommentSourceMarkdown>{comment.sourceText}</CommentSourceMarkdown>
         </Box>
       )}
-      {isEditing
-        ? (
-          <CommentForm
-            disabled={isSaving}
-            onCancel={() => {
-              setDraft(comment.body);
-              setIsEditing(false);
-            }}
-            onChange={setDraft}
-            onSubmit={() => void handleUpdate()}
-            submitLabel="Save"
-            value={draft}
-          />
-        )
-        : <CommentMarkdown>{comment.body}</CommentMarkdown>}
-      {(comment.replies ?? []).length > 0 && (
-        <Stack gap="2" mt="2">
-          {(comment.replies ?? []).map((reply) => (
-            <ReplyItem
-              commentId={comment.id}
+      <Box
+        borderLeftColor={variant === "panel" ? "accent" : undefined}
+        borderLeftWidth={variant === "panel" ? "3px" : undefined}
+        className="comment-root-thread"
+        pl={variant === "panel" ? "3" : undefined}
+        py={variant === "panel" ? "2" : undefined}
+      >
+        <Flex align="center" justify="space-between" gap="2" mb="1">
+          <Flex
+            align="center"
+            gap="2"
+            color="fg.muted"
+            fontSize="xs"
+            fontWeight="semibold"
+          >
+            <Text as="span">{lineLabel}</Text>
+            {comment.author.type === "bot" && (
+              <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+            )}
+            {showState && comment.state === "resolved" && (
+              <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
+            )}
+            {showState && comment.state === "stale" && (
+              <Badge colorPalette="yellow" variant="outline">Stale</Badge>
+            )}
+          </Flex>
+          {!isEditing && (
+            <Flex wrap="wrap" gap="2">
+              {comment.state === "resolved"
+                ? (
+                  <CommentActionButton
+                    disabled={isSaving}
+                    onClick={handleReopen}
+                    type="button"
+                  >
+                    Reopen
+                  </CommentActionButton>
+                )
+                : (
+                  <CommentActionButton
+                    disabled={isSaving}
+                    onClick={handleResolve}
+                    type="button"
+                  >
+                    Resolve
+                  </CommentActionButton>
+                )}
+              <CommentActionButton
+                disabled={isSaving}
+                onClick={() => setIsReplying((value) => !value)}
+                type="button"
+              >
+                Reply
+              </CommentActionButton>
+              <CommentActionButton
+                disabled={isSaving}
+                onClick={() => setIsEditing(true)}
+                type="button"
+              >
+                Edit
+              </CommentActionButton>
+              <CommentActionButton
+                disabled={isSaving}
+                onClick={() => setIsDeleteDialogOpen(true)}
+                type="button"
+              >
+                Delete
+              </CommentActionButton>
+            </Flex>
+          )}
+        </Flex>
+        <ConfirmDialog
+          confirmColorPalette="red"
+          confirmLabel="Delete"
+          isPending={isSaving}
+          onConfirm={handleConfirmDelete}
+          onOpenChange={setIsDeleteDialogOpen}
+          open={isDeleteDialogOpen}
+          title="Delete comment?"
+        >
+          This action cannot be undone.
+        </ConfirmDialog>
+        {isEditing
+          ? (
+            <CommentForm
               disabled={isSaving}
-              key={reply.id}
-              onDelete={onDeleteReply}
-              onError={handleError}
-              onUpdate={onUpdateReply}
-              reply={reply}
-              setSaving={setIsSaving}
+              onCancel={() => {
+                setDraft(comment.body);
+                setIsEditing(false);
+              }}
+              onChange={setDraft}
+              onSubmit={() => void handleUpdate()}
+              submitLabel="Save"
+              value={draft}
             />
-          ))}
-        </Stack>
-      )}
-      {isReplying && (
-        <Box mt="2">
-          <CommentForm
-            disabled={isSaving}
-            onCancel={() => {
-              setReplyDraft("");
-              setIsReplying(false);
-            }}
-            onChange={setReplyDraft}
-            onSubmit={() => void handleReply()}
-            placeholder="Write a reply..."
-            submitLabel="Add reply"
-            textareaAriaLabel="Reply body"
-            value={replyDraft}
-          />
-        </Box>
-      )}
-      {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+          )
+          : <CommentMarkdown>{comment.body}</CommentMarkdown>}
+        {(comment.replies ?? []).length > 0 && (
+          <Stack gap="2" mt="2">
+            {(comment.replies ?? []).map((reply) => (
+              <ReplyItem
+                commentId={comment.id}
+                disabled={isSaving}
+                key={reply.id}
+                onDelete={onDeleteReply}
+                onError={handleError}
+                onUpdate={onUpdateReply}
+                reply={reply}
+                setSaving={setIsSaving}
+              />
+            ))}
+          </Stack>
+        )}
+        {isReplying && (
+          <Box mt="2">
+            <CommentForm
+              disabled={isSaving}
+              onCancel={() => {
+                setReplyDraft("");
+                setIsReplying(false);
+              }}
+              onChange={setReplyDraft}
+              onSubmit={() => void handleReply()}
+              placeholder="Write a reply..."
+              submitLabel="Add reply"
+              textareaAriaLabel="Reply body"
+              value={replyDraft}
+            />
+          </Box>
+        )}
+        {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+      </Box>
     </Box>
   );
 };

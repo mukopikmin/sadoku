@@ -64,6 +64,7 @@ describe("CommentList", () => {
 
     const target = document.querySelector(".comment-source-target")!;
     const sourceMarkdown = target.querySelector(".comment-source-markdown")!;
+    const rootThread = document.querySelector(".comment-root-thread")!;
     expect(target.tagName).toBe("SECTION");
     expect(within(target).getByText("Target line")).not.toBeNull();
     expect(
@@ -92,13 +93,8 @@ describe("CommentList", () => {
     expect(targetStyles.backgroundColor).toBe("rgba(0, 0, 0, 0)");
     expect(targetStyles.borderLeftStyle).toBe("none");
     expect(targetStyles.borderTopStyle).toBe("none");
-    expect(
-      getComputedStyle(
-        screen.getByText("Comment body stays separate.").closest(
-          "article",
-        )!,
-      ).borderLeftWidth,
-    ).toBe("3px");
+    expect(target.nextElementSibling).toBe(rootThread);
+    expect(getComputedStyle(rootThread).borderLeftWidth).toBe("3px");
     expect(getComputedStyle(sourceMarkdown).fontSize).toBe(
       getComputedStyle(screen.getByText("Comment body stays separate."))
         .fontSize,
