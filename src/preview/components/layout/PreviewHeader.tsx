@@ -4,6 +4,7 @@ import {
   Flex,
   Float,
   IconButton,
+  Image,
   Link,
   Tabs,
   Text,
@@ -31,6 +32,7 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
       maxW="980px"
       alignItems="center"
       justifyContent="space-between"
+      flexWrap="wrap"
       gap="4"
       px="8"
       py="4"
@@ -66,16 +68,27 @@ export const PreviewHeader = ({
   view,
 }: PreviewHeaderProps) => (
   <PreviewShell>
-    <Text as="div">
-      Previewing{" "}
-      <Link href={fileUrl} color="fg" fontWeight="semibold">
-        {title}
-      </Link>.
-    </Text>
+    <Flex alignItems="center" flex="1 1 16rem" gap="3" minW="0">
+      <Image
+        alt="Sadoku"
+        flexShrink="0"
+        h="10"
+        src="/icon-512.png"
+        w="10"
+      />
+      <Text as="div" minW="0">
+        Previewing{" "}
+        <Link href={fileUrl} color="fg" fontWeight="semibold">
+          {title}
+        </Link>.
+      </Text>
+    </Flex>
     <Flex
       as="nav"
       aria-label="Preview views"
       alignItems="center"
+      flex="0 1 auto"
+      minW="0"
       wrap="wrap"
       gap="2"
     >
