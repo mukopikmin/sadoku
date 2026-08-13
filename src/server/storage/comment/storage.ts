@@ -2,37 +2,24 @@ import type {
   PreviewComment,
   PreviewCommentReply,
   PreviewCommentsDocument,
-} from "./types.ts";
+} from "../../usecase/comment/types.ts";
+import type {
+  CommentsStore,
+  CommentsStoreFile,
+  CommentsStoreFileList,
+} from "../../usecase/comment/ports.ts";
+export type {
+  CommentsStore,
+  CommentsStoreFile,
+  CommentsStoreFileList,
+} from "../../usecase/comment/ports.ts";
 import { basename, join } from "@std/path";
 import {
   getCommentsDirectoryPath,
   getLegacyCommentsDirectoryPath,
-} from "../config.ts";
+} from "../../config.ts";
 
-export { getCommentsDirectoryPath } from "../config.ts";
-
-export type CommentsStore = {
-  delete: (filePath: string) => Promise<void>;
-  list: () => Promise<CommentsStoreFileList>;
-  read: (filePath: string) => Promise<PreviewCommentsDocument>;
-  write: (
-    filePath: string,
-    document: PreviewCommentsDocument,
-  ) => Promise<void>;
-};
-
-export type CommentsStoreFile = {
-  commentCount: number;
-  fileName: string;
-  markdownPath: string;
-  openCount: number;
-  updatedAt: string | undefined;
-};
-
-export type CommentsStoreFileList = {
-  entries: CommentsStoreFile[];
-  warnings: string[];
-};
+export { getCommentsDirectoryPath } from "../../config.ts";
 
 type StoredComment = {
   resolved?: boolean;

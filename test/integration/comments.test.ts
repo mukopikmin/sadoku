@@ -1,8 +1,8 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 
-import { createConfiguredCommentsStore } from "../../src/server/comments/factory.ts";
-import { getCommentsFilePath } from "../../src/server/comments/storage.ts";
+import { createConfiguredCommentsStore } from "../../src/server/storage/comment/factory.ts";
+import { getCommentsFilePath } from "../../src/server/storage/comment/storage.ts";
 import { createPreviewHandler } from "../../src/server/mod.ts";
 import { withTempCommentsDirectory } from "../../src/server/test_helpers.ts";
 

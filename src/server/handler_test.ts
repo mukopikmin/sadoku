@@ -1,6 +1,6 @@
 import { assertEquals, assertMatch } from "@std/assert";
 
-import { getCommentsFilePath } from "./comments/storage.ts";
+import { getCommentsFilePath } from "./storage/comment/storage.ts";
 import { createPreviewHandler } from "./handler.ts";
 import {
   createTempMarkdown,

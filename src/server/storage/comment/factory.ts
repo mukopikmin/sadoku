@@ -1,4 +1,4 @@
-import { openAppDatabase } from "../db/connection.ts";
+import { openAppDatabase } from "../../db/connection.ts";
 import { createSqliteCommentsStore } from "./sqlite_storage.ts";
 import type { CommentsStore } from "./storage.ts";
 import {

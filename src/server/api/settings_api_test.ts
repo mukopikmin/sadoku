@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { dirname, join } from "@std/path";
 import { readConfig } from "../config.ts";
-import { getSettings, updateSettings } from "./handler.ts";
+import { getSettings, updateSettings } from "./settings_api.ts";
 
 const withSettings = async (run: () => Promise<void>) => {
   const previous = Deno.env.get("XDG_CONFIG_HOME");

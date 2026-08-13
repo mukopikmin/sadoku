@@ -1,8 +1,8 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
-import { openAppDatabase } from "../db/connection.ts";
+import { openAppDatabase } from "../../db/connection.ts";
 import { createSqliteCommentsStore } from "./sqlite_storage.ts";
-import type { PreviewCommentsDocument } from "./types.ts";
+import type { PreviewCommentsDocument } from "../../usecase/comment/types.ts";
 
 const document = (filePath: string): PreviewCommentsDocument => ({
   comments: [

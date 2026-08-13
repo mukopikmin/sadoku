@@ -1,10 +1,10 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { getCommentsDirectoryPath } from "./storage.ts";
-import type { PreviewCommentsDocument } from "./types.ts";
+import type { PreviewCommentsDocument } from "../../usecase/comment/types.ts";
 import { createConfiguredCommentsStore } from "./factory.ts";
 import { getCommentsNotificationFilePath } from "./notifications.ts";
-import { withTempCommentsDirectory } from "../test_helpers.ts";
+import { withTempCommentsDirectory } from "../../test_helpers.ts";
 
 Deno.test("configured comments store uses and closes the default SQLite database", async () => {
   await withTempCommentsDirectory(async () => {
