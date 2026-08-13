@@ -1,15 +1,86 @@
 {
   "nodeModulesDir": "none",
+  "permissions": {
+    "app": {
+      "read": true,
+      "write": true,
+      "net": true,
+      "run": true,
+      "env": [
+        "BROWSER",
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "XDG_DATA_HOME",
+        "APPDATA",
+        "SADOKU_COMMENTS_DIR",
+        "MDVIEW_COMMENTS_DIR"
+      ]
+    },
+    "notices": {
+      "read": true,
+      "write": true
+    },
+    "compile": {
+      "read": true,
+      "write": true,
+      "run": ["deno"]
+    },
+    "dist": {
+      "read": true,
+      "write": true,
+      "run": true,
+      "net": ["127.0.0.1:39731"]
+    },
+    "release-check": {
+      "read": true,
+      "run": ["git", "gh"]
+    },
+    "release-notes": {
+      "read": true,
+      "write": true,
+      "run": ["git", "gh"]
+    },
+    "install": {
+      "read": true,
+      "write": true,
+      "run": ["deno"],
+      "env": ["HOME"]
+    },
+    "tests": {
+      "read": true,
+      "write": true,
+      "run": ["sh", "tar"],
+      "env": [
+        "HOME",
+        "PATH",
+        "XDG_CONFIG_HOME",
+        "XDG_DATA_HOME",
+        "APPDATA",
+        "SADOKU_COMMENTS_DIR",
+        "MDVIEW_COMMENTS_DIR"
+      ],
+      "net": ["127.0.0.1"]
+    }
+  },
+  "test": {
+    "permissions": "tests",
+    "include": [
+      "test/**/*.ts",
+      "scripts/**/*_test.ts",
+      "src/**/*_test.ts"
+    ]
+  },
   "tasks": {
-    "start": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --allow-read --allow-write --allow-net --allow-run --allow-env=BROWSER,HOME,XDG_CONFIG_HOME,XDG_DATA_HOME,APPDATA,SADOKU_COMMENTS_DIR,MDVIEW_COMMENTS_DIR src/main.ts start",
-    "run": "DENO_NO_PACKAGE_JSON=1 deno run --allow-read --allow-write --allow-net --allow-run --allow-env=BROWSER,HOME,XDG_CONFIG_HOME,XDG_DATA_HOME,APPDATA,SADOKU_COMMENTS_DIR,MDVIEW_COMMENTS_DIR src/main.ts",
-    "test": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno test --allow-read --allow-write --allow-run=sh,tar --allow-env=HOME,PATH,XDG_CONFIG_HOME,XDG_DATA_HOME,APPDATA,SADOKU_COMMENTS_DIR,MDVIEW_COMMENTS_DIR --allow-net=127.0.0.1 test scripts/generate_third_party_notices_test.ts scripts/install_release_test.ts scripts/install_unix_test.ts scripts/release_test.ts src/log_test.ts src/server",
-    "notices": "DENO_NO_PACKAGE_JSON=1 deno run --allow-read --allow-write scripts/generate_third_party_notices.ts",
-    "compile": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --allow-read --allow-write --allow-run=deno scripts/compile.ts",
-    "dist": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --allow-read --allow-write --allow-run --allow-net=127.0.0.1:39731 scripts/build_release.ts",
-    "release:check": "DENO_NO_PACKAGE_JSON=1 deno run --allow-run=git,gh --allow-read scripts/release.ts check",
-    "release:notes": "DENO_NO_PACKAGE_JSON=1 deno run --allow-run=git,gh --allow-read --allow-write scripts/release.ts notes",
-    "install": "npm run install:deps && npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --allow-read --allow-write --allow-run=deno --allow-env=HOME scripts/install_unix.ts"
+    "start": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=app src/main.ts start",
+    "run": "DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=app src/main.ts",
+    "test": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno test -P",
+    "notices": "DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=notices scripts/generate_third_party_notices.ts",
+    "compile": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=compile scripts/compile.ts",
+    "dist": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=dist scripts/build_release.ts",
+    "release:check": "DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=release-check scripts/release.ts check",
+    "release:notes": "DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=release-notes scripts/release.ts notes",
+    "install": "npm run install:deps && npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=install scripts/install_unix.ts",
+    "check": "DENO_NO_PACKAGE_JSON=1 deno check --lock=deno.lock src/main.ts scripts/*.ts **/*_test.ts"
   },
   "imports": {
     "@hono/hono": "jsr:@hono/hono@4.13.1",
