@@ -11,9 +11,23 @@ import {
   removeCommentsIfConfirmed,
   replyToComment,
   resolveComments,
-} from "./cli/comments.ts";
+} from "./server/cli/comment_cli.ts";
 import { logInfo } from "./log.ts";
 import { startPreviewServer } from "./server/mod.ts";
+import { createConfiguredCommentsStore } from "./server/comments/factory.ts";
+
+const withCommentsStore = async <T>(
+  operation: (
+    commentsStore: Awaited<ReturnType<typeof createConfiguredCommentsStore>>,
+  ) => Promise<T>,
+): Promise<T> => {
+  const commentsStore = await createConfiguredCommentsStore();
+  try {
+    return await operation(commentsStore);
+  } finally {
+    commentsStore.close();
+  }
+};
 
 const main = async (): Promise<void> => {
   const options = parseArgs(Deno.args);
@@ -47,7 +61,9 @@ const main = async (): Promise<void> => {
   }
 
   if (options.command === "comments-list") {
-    const result = await listCommentFiles();
+    const result = await withCommentsStore((commentsStore) =>
+      listCommentFiles({ commentsStore })
+    );
     for (const warning of result.warnings) {
       console.error(`Warning: ${warning}`);
     }
@@ -59,19 +75,29 @@ const main = async (): Promise<void> => {
     if (!options.file) {
       throw new CliUsageError("Missing Markdown file.");
     }
-    console.log(JSON.stringify(await inspectComments(options.file), null, 2));
+    console.log(
+      JSON.stringify(
+        await withCommentsStore((commentsStore) =>
+          inspectComments(options.file!, { commentsStore })
+        ),
+        null,
+        2,
+      ),
+    );
     return;
   }
 
   if (options.command === "comments-add") {
     if (!options.file) throw new CliUsageError("Missing Markdown file.");
     console.log(JSON.stringify(
-      await addComment(
-        options.file,
-        options.startLine ?? 0,
-        options.endLine ?? 0,
-        options.commentBody ?? "",
-        { asBot: options.asBot },
+      await withCommentsStore((commentsStore) =>
+        addComment(
+          options.file!,
+          options.startLine ?? 0,
+          options.endLine ?? 0,
+          options.commentBody ?? "",
+          { asBot: options.asBot, commentsStore },
+        )
       ),
       null,
       2,
@@ -85,9 +111,12 @@ const main = async (): Promise<void> => {
     }
     console.log(
       JSON.stringify(
-        await resolveComments(options.file, options.commentIds ?? [], {
-          asBot: options.asBot,
-        }),
+        await withCommentsStore((commentsStore) =>
+          resolveComments(options.file!, options.commentIds ?? [], {
+            asBot: options.asBot,
+            commentsStore,
+          })
+        ),
         null,
         2,
       ),
@@ -104,11 +133,17 @@ const main = async (): Promise<void> => {
     }
     console.log(
       JSON.stringify(
-        await replyToComment(
-          options.file,
-          options.commentId,
-          options.replyBody ?? "",
-          { asBot: options.asBot, requestReview: options.requestReview },
+        await withCommentsStore((commentsStore) =>
+          replyToComment(
+            options.file!,
+            options.commentId!,
+            options.replyBody ?? "",
+            {
+              asBot: options.asBot,
+              requestReview: options.requestReview,
+              commentsStore,
+            },
+          )
         ),
         null,
         2,
@@ -124,10 +159,16 @@ const main = async (): Promise<void> => {
 
     let filePath: string | undefined;
     if (options.force) {
-      filePath = await removeComments(options.file);
+      filePath = await withCommentsStore((commentsStore) =>
+        removeComments(options.file!, { commentsStore })
+      );
     } else {
       const answer = prompt(`Remove comments for ${options.file}? [y/N]`);
-      filePath = await removeCommentsIfConfirmed(options.file, answer ?? "");
+      filePath = await withCommentsStore((commentsStore) =>
+        removeCommentsIfConfirmed(options.file!, answer ?? "", {
+          commentsStore,
+        })
+      );
       if (!filePath) {
         console.log("Not removed.");
         return;

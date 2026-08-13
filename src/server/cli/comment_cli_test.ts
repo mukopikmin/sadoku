@@ -12,20 +12,20 @@ import {
   replyToComment,
   resolveComments,
   shouldRemoveComments,
-} from "./comments.ts";
+} from "./comment_cli.ts";
 import {
   type CommentsStore,
   type CommentsStoreFile,
   getCommentsDirectoryPath,
   getCommentsFilePath,
-} from "../server/comments/storage.ts";
-import { createConfiguredCommentsStore } from "../server/comments/factory.ts";
-import type { PreviewCommentsDocument } from "../server/comments/types.ts";
+} from "../comments/storage.ts";
+import { createConfiguredCommentsStore } from "../comments/factory.ts";
+import type { PreviewCommentsDocument } from "../comments/types.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,
   withTempCommentsDirectory,
-} from "../server/test_helpers.ts";
+} from "../test_helpers.ts";
 
 const writeCommentsDocument = async (
   filePath: string,

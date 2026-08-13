@@ -9,7 +9,7 @@ import {
   setCommentResolution,
   updateComment,
   updateReply,
-} from "./comments/handler.ts";
+} from "./api/comment_api.ts";
 import { type CommentsStore, fileCommentsStore } from "./comments/storage.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";

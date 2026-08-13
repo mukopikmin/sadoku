@@ -1,23 +1,26 @@
 import {
   type ConfiguredCommentsStore,
   createConfiguredCommentsStore,
-} from "../server/comments/factory.ts";
-import type {
-  CommentsStore,
-  CommentsStoreFile,
-} from "../server/comments/storage.ts";
+} from "../comments/factory.ts";
+import type { CommentsStore, CommentsStoreFile } from "../comments/storage.ts";
 import {
-  getLineRangeText,
-  hashSourceText,
   readResolvedCommentsDocument,
   resolveCommentPosition,
-} from "../server/comments/position.ts";
+} from "../comments/position.ts";
 import type {
   PreviewComment,
-  PreviewCommentReply,
   PreviewCommentsDocument,
-} from "../server/comments/types.ts";
-import { createPreviewSource, readMarkdownSource } from "../server/source.ts";
+} from "../usecase/comment/types.ts";
+import { createPreviewSource, readMarkdownSource } from "../source.ts";
+import {
+  addComment as addCommentUseCase,
+  addReply as addReplyUseCase,
+  setCommentsResolution,
+} from "../usecase/comment/mod.ts";
+import {
+  commentsErrorMessage,
+  isCommentsUseCaseError,
+} from "../usecase/comment/errors.ts";
 
 export type ListCommentFilesResult = {
   entries: ListedCommentFile[];
@@ -30,6 +33,19 @@ export type CommentsCliOptions = {
   asBot?: boolean;
   commentsStore?: CommentsStore;
   requestReview?: boolean;
+};
+
+const useCaseDependencies = (commentsStore: CommentsStore) => ({
+  commentsStore,
+  readMarkdown: readMarkdownSource,
+  now: () => new Date().toISOString(),
+});
+
+const mapUseCaseError = (error: unknown): never => {
+  if (isCommentsUseCaseError(error)) {
+    throw new Error(commentsErrorMessage(error));
+  }
+  throw error;
 };
 
 const withCommentsStore = async <T>(
@@ -104,40 +120,21 @@ export const addComment = async (
   body: string,
   options: CommentsCliOptions = {},
 ): Promise<PreviewComment> => {
-  const commentBody = body.trim();
-  if (commentBody === "") throw new Error("Comment body is required.");
-
   const source = createPreviewSource(filePath);
-  return await withCommentsStore(options, async (commentsStore) => {
-    const markdown = await readMarkdownSource(source.documentSource);
-    const sourceText = getLineRangeText(markdown, startLine, endLine);
-    if (sourceText === undefined) {
-      throw new Error("Comment range does not exist.");
-    }
-    const document = await commentsStore.read(source.commentSource);
-    const now = new Date().toISOString();
-    const comment: PreviewComment = {
-      author: { type: options.asBot ? "bot" : "human" },
-      body: commentBody,
-      createdAt: now,
-      endLine,
-      id: Math.max(0, ...document.comments.map((comment) => comment.id)) + 1,
-      originalEndLine: endLine,
-      originalStartLine: startLine,
-      replies: [],
-      resolved: false,
-      sourceHash: hashSourceText(sourceText),
-      sourceText,
-      stale: false,
-      startLine,
-      updatedAt: now,
-    };
-    await commentsStore.write(source.commentSource, {
-      comments: [...document.comments, comment],
-      filePath: source.commentSource,
-    });
-    return comment;
-  });
+  try {
+    return await withCommentsStore(
+      options,
+      (store) =>
+        addCommentUseCase(useCaseDependencies(store), source, {
+          startLine,
+          endLine,
+          body,
+          author: { type: options.asBot ? "bot" : "human" },
+        }),
+    );
+  } catch (error) {
+    return mapUseCaseError(error);
+  }
 };
 
 export const resolveComments = async (
@@ -150,48 +147,21 @@ export const resolveComments = async (
   }
 
   const source = createPreviewSource(filePath);
-  return await withCommentsStore(options, async (commentsStore) => {
-    const document = await commentsStore.read(source.commentSource);
-    const requestedIdEntries = commentIds.map((id) => ({
-      input: id,
-      value: Number(id),
-    }));
-    const requestedIds = new Set(
-      requestedIdEntries.map((entry) => entry.value),
+  try {
+    return await withCommentsStore(
+      options,
+      (store) =>
+        setCommentsResolution(
+          useCaseDependencies(store),
+          source,
+          commentIds,
+          true,
+          { type: options.asBot ? "bot" : "human" },
+        ),
     );
-    const knownIds = new Set(document.comments.map((comment) => comment.id));
-    const missingIds = requestedIdEntries
-      .filter((entry) =>
-        Number.isNaN(entry.value) || !knownIds.has(entry.value)
-      )
-      .map((entry) => entry.input);
-    if (missingIds.length > 0) {
-      throw new Error(`Comment not found: ${missingIds.join(", ")}`);
-    }
-
-    const now = new Date().toISOString();
-    const updatedDocument: PreviewCommentsDocument = {
-      comments: document.comments.map((comment) =>
-        requestedIds.has(comment.id)
-          ? {
-            ...comment,
-            resolved: true,
-            resolvedAt: now,
-            resolvedBy: { type: options.asBot ? "bot" : "human" },
-            updatedAt: now,
-          }
-          : comment
-      ),
-      filePath: source.commentSource,
-    };
-    await commentsStore.write(source.commentSource, updatedDocument);
-    return {
-      comments: updatedDocument.comments.filter((comment) =>
-        requestedIds.has(comment.id)
-      ),
-      filePath: source.commentSource,
-    };
-  });
+  } catch (error) {
+    return mapUseCaseError(error);
+  }
 };
 
 export const replyToComment = async (
@@ -200,58 +170,31 @@ export const replyToComment = async (
   body: string,
   options: CommentsCliOptions = {},
 ): Promise<PreviewComment> => {
-  const replyBody = body.trim();
-  if (replyBody === "") {
-    throw new Error("Reply body is required.");
-  }
-
   const source = createPreviewSource(filePath);
-  return await withCommentsStore(options, async (commentsStore) => {
-    const document = await commentsStore.read(source.commentSource);
-    const parsedCommentId = Number(commentId);
-    const index = document.comments.findIndex((comment) =>
-      comment.id === parsedCommentId
-    );
-    if (index < 0) {
-      throw new Error(`Comment not found: ${commentId}`);
-    }
-    if (options.requestReview && !options.asBot) {
-      throw new Error("Review requests require a bot reply.");
-    }
-    if (options.requestReview && document.comments[index].resolved) {
-      throw new Error("Cannot request review on a resolved comment.");
-    }
-
-    const now = new Date().toISOString();
-    const reply: PreviewCommentReply = {
-      author: { type: options.asBot ? "bot" : "human" },
-      body: replyBody,
-      createdAt: now,
-      id: Math.max(
-        0,
-        ...(document.comments[index].replies ?? []).map((reply) => reply.id),
-      ) + 1,
-      ...(options.asBot && options.requestReview
-        ? { reviewRequested: true }
-        : {}),
-      updatedAt: now,
-    };
-    const updatedComment = {
-      ...document.comments[index],
-      replies: [...(document.comments[index].replies ?? []), reply],
-      updatedAt: now,
-    };
-    const comments = [...document.comments];
-    comments[index] = updatedComment;
-    await commentsStore.write(source.commentSource, {
-      comments,
-      filePath: source.commentSource,
+  const parsedCommentId = Number(commentId);
+  if (!Number.isFinite(parsedCommentId)) {
+    throw new Error(`Comment not found: ${commentId}`);
+  }
+  try {
+    return await withCommentsStore(options, async (store) => {
+      const comment = await addReplyUseCase(
+        useCaseDependencies(store),
+        source,
+        {
+          commentId: parsedCommentId,
+          body,
+          author: { type: options.asBot ? "bot" : "human" },
+          requestReview: options.requestReview,
+        },
+      );
+      return resolveCommentPosition(
+        comment,
+        await readMarkdownSource(source.documentSource),
+      );
     });
-    return resolveCommentPosition(
-      updatedComment,
-      await readMarkdownSource(source.documentSource),
-    );
-  });
+  } catch (error) {
+    return mapUseCaseError(error);
+  }
 };
 
 export const removeComments = async (
