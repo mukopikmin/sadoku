@@ -1,4 +1,4 @@
-import { logError } from "../log.ts";
+import { logError } from "../../log.ts";
 
 type OpenBrowserCommand = {
   command: string;

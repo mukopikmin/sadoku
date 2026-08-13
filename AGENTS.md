@@ -28,10 +28,14 @@ them when making changes.
   `<feature>_cli.ts` under `src/server/cli/` for command-line adapters and
   `<feature>_api.ts` under `src/server/api/` for HTTP/API adapters; use the same
   stem for their co-located `*_test.ts` files.
-- Keep only application-wide CLI argument parsing, browser-launch behavior,
-  update commands, and other transport-neutral CLI entry-point concerns in
-  `src/cli/`. A CLI adapter for a server-side feature belongs in
-  `src/server/cli/` and calls that feature's use cases.
+- Keep all command-line interfaces under `src/server/cli/`, including
+  application-wide argument parsing, browser-launch behavior, update commands,
+  and feature-specific CLI adapters. CLI adapters call the relevant use cases
+  and remain separate from HTTP/API adapters.
+- Keep `src/main.ts` as a thin executable entry point that delegates command
+  handling to `src/server/app.ts`; do not place command dispatch or server-side
+  orchestration in it. Use `src/server/app.ts` as the composition root that
+  connects CLI adapters to server lifecycle implementations.
 - Keep HTTP routing and server lifecycle behavior in `src/server/`. HTTP
   handlers must remain adapters: parse transport input, call use cases, map
   use-case errors to HTTP responses, and avoid owning business rules.

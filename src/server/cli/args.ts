@@ -1,5 +1,5 @@
 import { parseArgs as parseCliArgs } from "@std/cli/parse-args";
-export { version } from "../version.ts";
+export { version } from "../../version.ts";
 
 export type CliOptions = {
   asBot: boolean;
