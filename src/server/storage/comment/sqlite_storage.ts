@@ -1,0 +1,316 @@
+import { basename } from "@std/path";
+import { type AppDatabase, withTransaction } from "../../db/connection.ts";
+import type {
+  CommentsStore,
+  CommentsStoreFile,
+  CommentsStoreFileList,
+} from "./storage.ts";
+import type {
+  PreviewComment,
+  PreviewCommentReply,
+  PreviewCommentsDocument,
+} from "../../usecase/comment/types.ts";
+
+type CommentDocumentRow = {
+  id: number;
+  file_path: string;
+  previous_source_snapshot: string | null;
+  source_snapshot: string | null;
+};
+
+type CommentRow = {
+  author_type: "human" | "bot";
+  body: string;
+  created_at: string;
+  end_line: number;
+  id: number;
+  local_id: number;
+  original_end_line: number;
+  original_start_line: number;
+  resolved: number;
+  resolved_at: string | null;
+  resolved_by_type: "human" | "bot" | null;
+  source_hash: string | null;
+  source_text: string | null;
+  stale: number;
+  start_line: number;
+  updated_at: string;
+};
+
+type CommentReplyRow = {
+  author_type: "human" | "bot";
+  body: string;
+  comment_id: number;
+  created_at: string;
+  local_id: number;
+  review_requested: number;
+  updated_at: string;
+};
+
+type CommentsFileRow = {
+  comment_count: number;
+  file_path: string;
+  open_count: number;
+  updated_at: string | null;
+};
+
+const emptyDocument = (filePath: string): PreviewCommentsDocument => ({
+  comments: [],
+  filePath,
+});
+
+const toBoolean = (value: number): boolean => value === 1;
+
+const latestTimestamp = (
+  document: PreviewCommentsDocument,
+): string => {
+  const timestamps = document.comments.flatMap((comment) => [
+    comment.createdAt,
+    comment.updatedAt,
+    ...(comment.resolvedAt ? [comment.resolvedAt] : []),
+    ...(comment.replies ?? []).flatMap((reply) => [
+      reply.createdAt,
+      reply.updatedAt,
+    ]),
+  ]);
+
+  return timestamps.sort().at(-1) ?? new Date().toISOString();
+};
+
+const commentFromRow = (
+  row: CommentRow,
+  replies: PreviewCommentReply[],
+): PreviewComment => ({
+  author: {
+    type: row.author_type,
+  },
+  body: row.body,
+  createdAt: row.created_at,
+  endLine: row.end_line,
+  id: row.local_id,
+  originalEndLine: row.original_end_line,
+  originalStartLine: row.original_start_line,
+  replies,
+  resolved: toBoolean(row.resolved),
+  ...(row.resolved_at === null ? {} : { resolvedAt: row.resolved_at }),
+  ...(row.resolved_by_type === null
+    ? {}
+    : { resolvedBy: { type: row.resolved_by_type } }),
+  ...(row.source_hash === null ? {} : { sourceHash: row.source_hash }),
+  ...(row.source_text === null ? {} : { sourceText: row.source_text }),
+  stale: toBoolean(row.stale),
+  startLine: row.start_line,
+  updatedAt: row.updated_at,
+});
+
+const replyFromRow = (row: CommentReplyRow): PreviewCommentReply => ({
+  author: {
+    type: row.author_type,
+  },
+  body: row.body,
+  createdAt: row.created_at,
+  id: row.local_id,
+  ...(toBoolean(row.review_requested) ? { reviewRequested: true } : {}),
+  updatedAt: row.updated_at,
+});
+
+const readDocumentRow = async (
+  database: AppDatabase,
+  filePath: string,
+): Promise<CommentDocumentRow | undefined> => {
+  const result = await database.execute<CommentDocumentRow>(
+    "SELECT id, file_path, previous_source_snapshot, source_snapshot FROM comment_document WHERE file_path = ?",
+    [filePath],
+  );
+  return result.rows?.[0];
+};
+
+const readDocumentId = async (
+  database: AppDatabase,
+  filePath: string,
+): Promise<number> => {
+  const row = await readDocumentRow(database, filePath);
+  if (row === undefined) {
+    throw new Error(`Comment document was not created for ${filePath}.`);
+  }
+  return row.id;
+};
+
+const readCommentsDocumentFromSqlite = async (
+  database: AppDatabase,
+  filePath: string,
+): Promise<PreviewCommentsDocument> => {
+  const documentRow = await readDocumentRow(database, filePath);
+  if (documentRow === undefined) return emptyDocument(filePath);
+
+  const comments = (await database.execute<CommentRow>(
+    `SELECT id, local_id, start_line, end_line, original_start_line,
+      original_end_line, body, author_type, resolved, resolved_at,
+      resolved_by_type,
+      source_hash, source_text, stale, created_at, updated_at
+      FROM comment
+      WHERE document_id = ?
+      ORDER BY local_id`,
+    [documentRow.id],
+  )).rows ?? [];
+  const replies = (await database.execute<CommentReplyRow>(
+    `SELECT comment_id, local_id, body, author_type, review_requested, created_at, updated_at
+      FROM comment_reply
+      WHERE comment_id IN (SELECT id FROM comment WHERE document_id = ?)
+      ORDER BY comment_id, local_id`,
+    [documentRow.id],
+  )).rows ?? [];
+  const repliesByCommentId = new Map<number, CommentReplyRow[]>();
+  for (const reply of replies) {
+    repliesByCommentId.set(reply.comment_id, [
+      ...(repliesByCommentId.get(reply.comment_id) ?? []),
+      reply,
+    ]);
+  }
+
+  return {
+    comments: comments.map((comment) =>
+      commentFromRow(
+        comment,
+        (repliesByCommentId.get(comment.id) ?? []).map(replyFromRow),
+      )
+    ),
+    filePath,
+    ...(documentRow.previous_source_snapshot === null
+      ? {}
+      : { previousSourceSnapshot: documentRow.previous_source_snapshot }),
+    ...(documentRow.source_snapshot === null
+      ? {}
+      : { sourceSnapshot: documentRow.source_snapshot }),
+  };
+};
+
+const writeCommentsDocumentToSqlite = async (
+  database: AppDatabase,
+  filePath: string,
+  document: PreviewCommentsDocument,
+): Promise<void> => {
+  await withTransaction(database, async () => {
+    const updatedAt = latestTimestamp(document);
+    await database.execute(
+      `INSERT INTO comment_document (
+          file_path, previous_source_snapshot, source_snapshot, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(file_path) DO UPDATE SET
+          previous_source_snapshot = excluded.previous_source_snapshot,
+          source_snapshot = excluded.source_snapshot,
+          updated_at = excluded.updated_at`,
+      [
+        filePath,
+        document.previousSourceSnapshot ?? null,
+        document.sourceSnapshot ?? null,
+        updatedAt,
+        updatedAt,
+      ],
+    );
+    const documentId = await readDocumentId(database, filePath);
+
+    await database.execute("DELETE FROM comment WHERE document_id = ?", [
+      documentId,
+    ]);
+
+    for (const comment of document.comments) {
+      await database.execute(
+        `INSERT INTO comment (
+          document_id, local_id, start_line, end_line, original_start_line,
+          original_end_line, body, author_type, resolved, resolved_at,
+          resolved_by_type, source_hash,
+          source_text, stale, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          documentId,
+          comment.id,
+          comment.startLine,
+          comment.endLine,
+          comment.originalStartLine,
+          comment.originalEndLine,
+          comment.body,
+          comment.author.type,
+          comment.resolved ? 1 : 0,
+          comment.resolvedAt ?? null,
+          comment.resolvedBy?.type ?? null,
+          comment.sourceHash ?? null,
+          comment.sourceText ?? null,
+          comment.stale ? 1 : 0,
+          comment.createdAt,
+          comment.updatedAt,
+        ],
+      );
+      const commentRow = (await database.execute<{ id: number }>(
+        "SELECT id FROM comment WHERE document_id = ? AND local_id = ?",
+        [documentId, comment.id],
+      )).rows?.[0];
+      if (commentRow === undefined) {
+        throw new Error(`Comment was not created for ${filePath}.`);
+      }
+
+      for (const reply of comment.replies ?? []) {
+        await database.execute(
+          `INSERT INTO comment_reply (
+            comment_id, local_id, body, author_type, review_requested, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            commentRow.id,
+            reply.id,
+            reply.body,
+            reply.author.type,
+            reply.reviewRequested === true ? 1 : 0,
+            reply.createdAt,
+            reply.updatedAt,
+          ],
+        );
+      }
+    }
+  });
+};
+
+const deleteCommentsDocumentFromSqlite = async (
+  database: AppDatabase,
+  filePath: string,
+): Promise<void> => {
+  const result = await database.execute(
+    "DELETE FROM comment_document WHERE file_path = ?",
+    [filePath],
+  );
+  if (result.rowsAffected === 0) throw new Deno.errors.NotFound();
+};
+
+const listCommentsFilesFromSqlite = async (
+  database: AppDatabase,
+): Promise<CommentsStoreFileList> => {
+  const rows = (await database.execute<CommentsFileRow>(
+    `SELECT comment_document.file_path,
+      COUNT(comment.id) AS comment_count,
+      SUM(CASE WHEN comment.resolved = 0 THEN 1 ELSE 0 END) AS open_count,
+      MAX(comment.updated_at) AS updated_at
+      FROM comment_document
+      INNER JOIN comment ON comment.document_id = comment_document.id
+      GROUP BY comment_document.id, comment_document.file_path
+      ORDER BY comment_document.file_path`,
+  )).rows ?? [];
+
+  const entries: CommentsStoreFile[] = rows.map((row) => ({
+    commentCount: Number(row.comment_count ?? 0),
+    fileName: basename(row.file_path),
+    markdownPath: row.file_path,
+    openCount: Number(row.open_count ?? 0),
+    updatedAt: row.updated_at ?? undefined,
+  }));
+
+  return { entries, warnings: [] };
+};
+
+export const createSqliteCommentsStore = (
+  database: AppDatabase,
+): CommentsStore => ({
+  delete: (filePath) => deleteCommentsDocumentFromSqlite(database, filePath),
+  list: () => listCommentsFilesFromSqlite(database),
+  read: (filePath) => readCommentsDocumentFromSqlite(database, filePath),
+  write: (filePath, document) =>
+    writeCommentsDocumentToSqlite(database, filePath, document),
+});

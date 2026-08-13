@@ -9,8 +9,11 @@ import {
   setCommentResolution,
   updateComment,
   updateReply,
-} from "./comments/handler.ts";
-import { type CommentsStore, fileCommentsStore } from "./comments/storage.ts";
+} from "./api/comment_api.ts";
+import {
+  type CommentsStore,
+  fileCommentsStore,
+} from "./storage/comment/storage.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";
 import { createPreviewEventStream } from "./preview/events.ts";
@@ -20,7 +23,7 @@ import {
   notFoundResponse,
   textResponse,
 } from "./responses.ts";
-import { getSettings, updateSettings } from "./settings/handler.ts";
+import { getSettings, updateSettings } from "./api/settings_api.ts";
 import {
   createPreviewSource,
   type PreviewSource,

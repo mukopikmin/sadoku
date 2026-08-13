@@ -18,13 +18,49 @@ them when making changes.
 
 ## 2. Project Architecture
 
-- Keep CLI argument parsing and browser-launch behavior in `src/cli/`.
-- Keep HTTP routing and server lifecycle behavior in `src/server/`.
+- Treat `src/server/` as the backend boundary shared by HTTP and command-line
+  entry points. Organize backend code by adapter and application-layer role:
+  keep backend CLI adapters in `src/server/cli/`, HTTP/API adapters in
+  `src/server/` (or a feature-specific API directory), use cases in
+  `src/server/usecase/`, and persistence implementations in the appropriate
+  `src/server/` storage or feature directory.
+- Name feature-specific backend adapters by feature and adapter role. Use
+  `<feature>_cli.ts` under `src/server/cli/` for command-line adapters and
+  `<feature>_api.ts` under `src/server/api/` for HTTP/API adapters; use the same
+  stem for their co-located `*_test.ts` files.
+- Keep all command-line interfaces under `src/server/cli/`, including
+  application-wide argument parsing, browser-launch behavior, update commands,
+  and feature-specific CLI adapters. CLI adapters call the relevant use cases
+  and remain separate from HTTP/API adapters.
+- Keep `src/main.ts` as a thin executable entry point that delegates command
+  handling to `src/server/app.ts`; do not place command dispatch or server-side
+  orchestration in it. Use `src/server/app.ts` as the composition root that
+  connects CLI adapters to server lifecycle implementations.
+- Keep HTTP routing and server lifecycle behavior in `src/server/`. HTTP
+  handlers must remain adapters: parse transport input, call use cases, map
+  use-case errors to HTTP responses, and avoid owning business rules.
+- Keep backend business rules and orchestration in `src/server/usecase/`. Use
+  cases must be functions and plain objects, depend on explicit ports, and
+  remain independent of Deno, HTTP `Request`/`Response`, and CLI input/output.
+- Name use-case feature directories for the domain concept in the singular (for
+  example, `src/server/usecase/comment/`). Do not derive use-case names from
+  REST resource collection paths.
+- Put each use-case operation in its own verb-oriented snake-case module (for
+  example, `add_comment.ts` and `delete_reply.ts`). Keep `mod.ts` as a thin
+  public export surface only; do not place use-case implementations in it.
+- Define persistence and other infrastructure ports with their owning use case.
+  Infrastructure implementations, database connections, notifications, and
+  resource lifecycle/close behavior remain under `src/server/` and depend on
+  those ports, not the reverse.
 - Keep preview document, asset, shell, and event-stream handling in
   `src/server/preview/`.
-- Keep comment persistence and request handling in `src/server/comments/`.
-- Keep database connections and migrations in `src/server/db/`. Keep
-  comment-store implementations and their selection in `src/server/comments/`.
+- Keep comment HTTP handling in `src/server/api/comment_api.ts`, comment CLI
+  adaptation in `src/server/cli/comment_cli.ts`, comment business rules in
+  `src/server/usecase/comment/`, and comment persistence implementations in
+  `src/server/storage/comment/`.
+- Keep database connections and migrations in `src/server/db/`. Keep storage
+  implementations and their selection under `src/server/storage/`, grouped by
+  singular domain concept.
 - Keep browser-side React code in `src/preview/`.
 - Keep HTTP response types and response-to-model conversion at the
   `src/preview/api/` boundary. Keep browser-side domain models in

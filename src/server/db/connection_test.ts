@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
 import { withTempCommentsDirectory } from "../test_helpers.ts";
-import { getCommentsDirectoryPath } from "../comments/storage.ts";
+import { getCommentsDirectoryPath } from "../storage/comment/storage.ts";
 import { getDatabaseFilePath, openAppDatabase } from "./connection.ts";
 
 Deno.test("getDatabaseFilePath stores the SQLite database under the comments directory", async () => {
