@@ -18,9 +18,9 @@ import {
   type CommentsStoreFile,
   getCommentsDirectoryPath,
   getCommentsFilePath,
-} from "../comments/storage.ts";
-import { createConfiguredCommentsStore } from "../comments/factory.ts";
-import type { PreviewCommentsDocument } from "../comments/types.ts";
+} from "../storage/comment/storage.ts";
+import { createConfiguredCommentsStore } from "../storage/comment/factory.ts";
+import type { PreviewCommentsDocument } from "../usecase/comment/types.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,

@@ -1,12 +1,15 @@
 import {
   type ConfiguredCommentsStore,
   createConfiguredCommentsStore,
-} from "../comments/factory.ts";
-import type { CommentsStore, CommentsStoreFile } from "../comments/storage.ts";
+} from "../storage/comment/factory.ts";
+import type {
+  CommentsStore,
+  CommentsStoreFile,
+} from "../storage/comment/storage.ts";
 import {
   readResolvedCommentsDocument,
   resolveCommentPosition,
-} from "../comments/position.ts";
+} from "../usecase/comment/position.ts";
 import type {
   PreviewComment,
   PreviewCommentsDocument,
@@ -105,6 +108,7 @@ export const inspectComments = async (
       source.commentSource,
       source.documentSource,
       commentsStore,
+      readMarkdownSource,
     );
     return {
       comments: document.comments.filter((comment) => !comment.resolved),

@@ -1,7 +1,10 @@
 import type { PreviewSource } from "../source.ts";
 import { readMarkdownSource } from "../source.ts";
-import { readResolvedCommentsDocument } from "../comments/position.ts";
-import { type CommentsStore, fileCommentsStore } from "../comments/storage.ts";
+import { readResolvedCommentsDocument } from "../usecase/comment/position.ts";
+import {
+  type CommentsStore,
+  fileCommentsStore,
+} from "../storage/comment/storage.ts";
 import { noStoreJson, textResponse } from "../responses.ts";
 import type { CommentsDependencies } from "../usecase/comment/ports.ts";
 import {
@@ -21,7 +24,7 @@ import {
 export type {
   PreviewComment,
   PreviewCommentsDocument,
-} from "../comments/types.ts";
+} from "../usecase/comment/types.ts";
 
 const parseJsonBody = async (request: Request): Promise<unknown> => {
   try {
@@ -192,6 +195,7 @@ export const getComments = async (
       source.commentSource,
       source.documentSource,
       commentsStore,
+      readMarkdownSource,
     );
   return noStoreJson(document);
 };

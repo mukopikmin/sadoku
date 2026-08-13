@@ -47,9 +47,13 @@ them when making changes.
   those ports, not the reverse.
 - Keep preview document, asset, shell, and event-stream handling in
   `src/server/preview/`.
-- Keep comment persistence and request handling in `src/server/comments/`.
-- Keep database connections and migrations in `src/server/db/`. Keep
-  comment-store implementations and their selection in `src/server/comments/`.
+- Keep comment HTTP handling in `src/server/api/comment_api.ts`, comment CLI
+  adaptation in `src/server/cli/comment_cli.ts`, comment business rules in
+  `src/server/usecase/comment/`, and comment persistence implementations in
+  `src/server/storage/comment/`.
+- Keep database connections and migrations in `src/server/db/`. Keep storage
+  implementations and their selection under `src/server/storage/`, grouped by
+  singular domain concept.
 - Keep browser-side React code in `src/preview/`.
 - Keep HTTP response types and response-to-model conversion at the
   `src/preview/api/` boundary. Keep browser-side domain models in

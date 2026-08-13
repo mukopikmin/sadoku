@@ -1,5 +1,5 @@
 import { basename } from "@std/path";
-import { type AppDatabase, withTransaction } from "../db/connection.ts";
+import { type AppDatabase, withTransaction } from "../../db/connection.ts";
 import type {
   CommentsStore,
   CommentsStoreFile,
@@ -9,7 +9,7 @@ import type {
   PreviewComment,
   PreviewCommentReply,
   PreviewCommentsDocument,
-} from "./types.ts";
+} from "../../usecase/comment/types.ts";
 
 type CommentDocumentRow = {
   id: number;

@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 
 import type { PreviewComment, PreviewCommentsDocument } from "./types.ts";
-import type { CommentsStore } from "./storage.ts";
+import type { CommentsStore } from "./ports.ts";
 import {
   getLineRangeText,
   getLineText,
@@ -185,6 +185,7 @@ Deno.test("rebases comments through edits and marks only deleted lines stale", a
       filePath,
       filePath,
       store,
+      Deno.readTextFile,
     );
     assertEquals(edited.comments[0].startLine, 4);
     assertEquals(edited.comments[0].originalStartLine, 3);
@@ -197,6 +198,7 @@ Deno.test("rebases comments through edits and marks only deleted lines stale", a
       filePath,
       filePath,
       store,
+      Deno.readTextFile,
     );
     assertEquals(deleted.comments[0].stale, true);
   } finally {
@@ -225,6 +227,7 @@ Deno.test("adds display lines when the stored snapshot is unchanged", async () =
       filePath,
       filePath,
       store,
+      Deno.readTextFile,
     );
     assertEquals(resolved.comments[0].displayLine, 3);
   } finally {

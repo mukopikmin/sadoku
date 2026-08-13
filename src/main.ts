@@ -14,7 +14,7 @@ import {
 } from "./server/cli/comment_cli.ts";
 import { logInfo } from "./log.ts";
 import { startPreviewServer } from "./server/mod.ts";
-import { createConfiguredCommentsStore } from "./server/comments/factory.ts";
+import { createConfiguredCommentsStore } from "./server/storage/comment/factory.ts";
 
 const withCommentsStore = async <T>(
   operation: (

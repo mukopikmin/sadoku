@@ -2,7 +2,7 @@ import { join } from "@std/path";
 import {
   getCommentsDirectoryPath,
   getCommentsFilePath,
-} from "./comments/storage.ts";
+} from "./storage/comment/storage.ts";
 
 export const serveHandlerInfo = {} as Deno.ServeHandlerInfo<Deno.NetAddr>;
 
