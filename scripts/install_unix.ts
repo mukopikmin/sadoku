@@ -28,9 +28,8 @@ const compileBinary: CompileBinary = async (buildPath, compileArgs) => {
   const result = await new Deno.Command("deno", {
     args: [
       "run",
-      "--allow-read",
-      "--allow-write",
-      "--allow-run=deno",
+      "--quiet",
+      "-P=compile",
       "scripts/compile.ts",
       ...compileArgs,
       "--output",
