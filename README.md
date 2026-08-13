@@ -263,6 +263,10 @@ Install dependencies:
 npm install
 ```
 
+Runtime and maintenance-task permissions are defined as named permission sets in
+`deno.json`. Keep task commands using their corresponding `-P` permission set
+instead of duplicating `--allow-*` flags.
+
 Run the CLI with Deno:
 
 ```sh
