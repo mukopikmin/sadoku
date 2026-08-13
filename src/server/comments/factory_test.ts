@@ -5,6 +5,7 @@ import type { PreviewCommentsDocument } from "./types.ts";
 import { createConfiguredCommentsStore } from "./factory.ts";
 import { getCommentsNotificationFilePath } from "./notifications.ts";
 import { withTempCommentsDirectory } from "../test_helpers.ts";
+import { createConfiguredStores } from "../store_factory.ts";
 
 Deno.test("configured comments store uses and closes the default SQLite database", async () => {
   await withTempCommentsDirectory(async () => {
@@ -49,5 +50,24 @@ Deno.test("configured comments store uses and closes the default SQLite database
     } finally {
       reopenedStore.close();
     }
+  });
+});
+
+Deno.test("configured document and comment stores share one closable database", async () => {
+  await withTempCommentsDirectory(async () => {
+    const stores = await createConfiguredStores();
+    const filePath = "/tmp/document-without-comments.md";
+    const document = await stores.documents.ensure(filePath);
+
+    assertEquals(await stores.documents.findById(document.id), document);
+    await assertRejects(
+      () => Deno.stat(getCommentsNotificationFilePath(filePath)),
+      Deno.errors.NotFound,
+    );
+
+    stores.close();
+    stores.close();
+    await assertRejects(() => stores.comments.read(filePath));
+    await assertRejects(() => stores.documents.findById(document.id));
   });
 });
