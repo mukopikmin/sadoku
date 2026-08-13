@@ -41,6 +41,9 @@ them when making changes.
 - Name use-case feature directories for the domain concept in the singular (for
   example, `src/server/usecase/comment/`). Do not derive use-case names from
   REST resource collection paths.
+- Put each use-case operation in its own verb-oriented snake-case module (for
+  example, `add_comment.ts` and `delete_reply.ts`). Keep `mod.ts` as a thin
+  public export surface only; do not place use-case implementations in it.
 - Define persistence and other infrastructure ports with their owning use case.
   Infrastructure implementations, database connections, notifications, and
   resource lifecycle/close behavior remain under `src/server/` and depend on
