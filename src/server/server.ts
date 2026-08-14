@@ -1,8 +1,10 @@
 import { formatLogMessage, logError, logInfo } from "../log.ts";
-import { createConfiguredCommentsStore } from "./storage/comment/factory.ts";
+import { createConfiguredStores } from "./storage/factory.ts";
 import { getCommentsNotificationFilePath } from "./storage/comment/notifications.ts";
 import { createPreviewHandler } from "./handler.ts";
 import { createPreviewSource } from "./source.ts";
+import { createDirectorySession } from "./directory_session.ts";
+import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 
 export type PreviewServerOptions = {
   file: string;
@@ -123,13 +125,14 @@ export const startPreviewServer = async (
   options: PreviewServerOptions,
 ): Promise<StartedPreviewServer> => {
   const previewSource = createPreviewSource(options.file);
+  let localStat: Deno.FileInfo | undefined;
   if (!previewSource.isRemote) {
-    const fileStat = await Deno.stat(previewSource.documentSource).catch(() =>
+    localStat = await Deno.stat(previewSource.documentSource).catch(() =>
       undefined
     );
-    if (!fileStat?.isFile) {
+    if (!localStat || (!localStat.isFile && !localStat.isDirectory)) {
       throw new Error(
-        `Markdown file not found: ${previewSource.documentSource}`,
+        `Markdown file or directory not found: ${previewSource.documentSource}`,
       );
     }
   }
@@ -141,21 +144,40 @@ export const startPreviewServer = async (
     shutdown: () => server.shutdown(),
   });
 
-  const commentsStore = await createConfiguredCommentsStore();
+  const stores = await createConfiguredStores();
+  const isDirectory = localStat?.isDirectory === true;
+  let directorySession;
+  try {
+    directorySession = isDirectory
+      ? await createDirectorySession(
+        previewSource.documentSource,
+        stores.documents,
+      )
+      : undefined;
+  } catch (error) {
+    stores.close();
+    throw error;
+  }
   server = serveOnAvailablePort(
     options,
-    createPreviewHandler(previewSource, {
-      ...shutdownScheduler,
-      commentsNotificationPath: getCommentsNotificationFilePath(
-        previewSource.commentSource,
-      ),
-      commentsStore,
-    }),
+    directorySession
+      ? createDirectoryPreviewHandler(
+        directorySession,
+        stores.comments,
+        shutdownScheduler,
+      )
+      : createPreviewHandler(previewSource, {
+        ...shutdownScheduler,
+        commentsNotificationPath: getCommentsNotificationFilePath(
+          previewSource.commentSource,
+        ),
+        commentsStore: stores.comments,
+      }),
   );
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;
 
-  server.finished.finally(() => commentsStore.close()).catch((error) => {
+  server.finished.finally(() => stores.close()).catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {
       logError(
         `Server stopped unexpectedly: ${

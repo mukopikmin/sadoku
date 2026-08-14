@@ -229,7 +229,7 @@ Deno.test("parses help", () => {
   assertEquals(parseArgs(["--help"]).help, true);
   assertEquals(parseArgs(["start", "--help"]).help, true);
   assertMatch(usage, /Defaults to 3334/);
-  assertMatch(usage, /sadoku start <file\.md\|url>/);
+  assertMatch(usage, /sadoku start <file\.md\|directory\|url>/);
   assertMatch(usage, /comments list/);
   assertMatch(usage, /comments inspect/);
   assertMatch(usage, /comments add/);

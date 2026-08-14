@@ -1,0 +1,132 @@
+import { assertEquals } from "@std/assert";
+import { join, resolve } from "@std/path";
+import { createDirectoryPreviewHandler } from "./directory_handler.ts";
+import type { CommentsStore } from "./storage/comment/storage.ts";
+import type { PreviewCommentsDocument } from "./usecase/comment/types.ts";
+import type { DirectorySession } from "./usecase/document/mod.ts";
+import { serveHandlerInfo } from "./test_helpers.ts";
+import { ensureCommentsNotificationDirectory } from "./storage/comment/notifications.ts";
+
+const createMemoryStore = (): CommentsStore => {
+  const documents = new Map<string, PreviewCommentsDocument>();
+  return {
+    delete: (path) => {
+      documents.delete(path);
+      return Promise.resolve();
+    },
+    list: () => Promise.resolve({ entries: [], warnings: [] }),
+    read: (path) =>
+      Promise.resolve(structuredClone(
+        documents.get(path) ?? {
+          comments: [],
+          filePath: path,
+        },
+      )),
+    write: (path, document) => {
+      documents.set(path, structuredClone(document));
+      return Promise.resolve();
+    },
+  };
+};
+
+const request = (
+  handler: Deno.ServeHandler,
+  path: string,
+  init?: RequestInit,
+) =>
+  handler(new Request(`http://127.0.0.1:3334${path}`, init), serveHandlerInfo);
+
+Deno.test("serves directory documents and keeps comments isolated", async () => {
+  const rootPath = await Deno.makeTempDir({ prefix: "sadoku-directory-" });
+  try {
+    const firstPath = join(rootPath, "a.md");
+    const secondPath = join(rootPath, "b.markdown");
+    await Deno.writeTextFile(firstPath, "# First\n");
+    await Deno.writeTextFile(secondPath, "# Second\n");
+    const documents = [
+      { id: 2, filePath: firstPath, relativePath: "a.md", title: "a.md" },
+      {
+        id: 7,
+        filePath: secondPath,
+        relativePath: "b.markdown",
+        title: "b.markdown",
+      },
+    ];
+    const session: DirectorySession = {
+      rootPath: resolve(rootPath),
+      documents,
+      documentsById: new Map(
+        documents.map((document) => [document.id, document]),
+      ),
+    };
+    await ensureCommentsNotificationDirectory();
+    let opened = 0;
+    const handler = createDirectoryPreviewHandler(
+      session,
+      createMemoryStore(),
+      {
+        onEventStreamOpen: () => opened++,
+      },
+    );
+
+    const list = await request(handler, "/__sadoku/documents");
+    assertEquals(await list.json(), [
+      { id: 2, relativePath: "a.md", title: "a.md" },
+      { id: 7, relativePath: "b.markdown", title: "b.markdown" },
+    ]);
+    const body = await request(handler, "/__sadoku/documents/2");
+    const bodyJson = await body.json();
+    assertEquals(bodyJson.id, 2);
+    assertEquals(bodyJson.relativePath, "a.md");
+    assertEquals(bodyJson.markdown, "# First\n");
+    assertEquals(typeof bodyJson.fileUrl, "string");
+
+    for (const id of ["0", "-1", "1.5", "missing", "3"]) {
+      assertEquals(
+        (await request(handler, `/__sadoku/documents/${id}`)).status,
+        404,
+      );
+    }
+
+    const created = await request(handler, "/__sadoku/documents/2/comments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ startLine: 1, endLine: 1, body: "Review" }),
+    });
+    assertEquals(created.status, 200);
+    const firstComments = await request(
+      handler,
+      "/__sadoku/documents/2/comments",
+    );
+    assertEquals((await firstComments.json()).comments.length, 1);
+    const secondComments = await request(
+      handler,
+      "/__sadoku/documents/7/comments",
+    );
+    assertEquals((await secondComments.json()).comments.length, 0);
+
+    const listEvents = await request(handler, "/__sadoku/events");
+    assertEquals(listEvents.status, 200);
+    await listEvents.body?.cancel();
+    const documentEvents = await request(
+      handler,
+      "/__sadoku/documents/2/events",
+    );
+    assertEquals(documentEvents.status, 200);
+    await documentEvents.body?.cancel();
+    assertEquals(opened, 2);
+  } finally {
+    await Deno.remove(rootPath, { recursive: true });
+  }
+});
+
+Deno.test("serves an empty directory session", async () => {
+  const handler = createDirectoryPreviewHandler({
+    rootPath: "/tmp/empty",
+    documents: [],
+    documentsById: new Map(),
+  }, createMemoryStore());
+  const response = await request(handler, "/__sadoku/documents");
+  assertEquals(response.status, 200);
+  assertEquals(await response.json(), []);
+});

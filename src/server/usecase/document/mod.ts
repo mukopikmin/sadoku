@@ -6,6 +6,7 @@ export type {
 } from "./ports.ts";
 export type {
   DirectoryDocument,
+  DirectorySession,
   Document,
   MarkdownDocumentPath,
 } from "./types.ts";

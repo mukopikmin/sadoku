@@ -5,6 +5,13 @@ export type Document = {
 
 export type DirectoryDocument = Document & {
   relativePath: string;
+  title: string;
+};
+
+export type DirectorySession = {
+  rootPath: string;
+  documents: DirectoryDocument[];
+  documentsById: Map<number, DirectoryDocument>;
 };
 
 export type MarkdownDocumentPath = {
