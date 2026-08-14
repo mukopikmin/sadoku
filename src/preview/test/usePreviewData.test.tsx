@@ -57,7 +57,7 @@ describe("preview data queries", () => {
 
   it("updates the shared comments cache from mutation responses", async () => {
     const queryClient = createPreviewQueryClient();
-    queryClient.setQueryData(commentsQueryKey, {
+    queryClient.setQueryData(commentsQueryKey(), {
       comments: [createComment()],
       filePath: "/tmp/example.md",
     });
@@ -87,21 +87,21 @@ describe("preview data queries", () => {
     await act(() => result.current.onCreateComment(3, "New comment.", 3));
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey,
+        commentsQueryKey(),
       )?.comments.map((comment) => comment.id),
     ).toEqual([1, 2]);
 
     await act(() => result.current.onUpdateComment(1, "Updated comment."));
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey,
+        commentsQueryKey(),
       )?.comments[0].body,
     ).toBe("Updated comment.");
 
     await act(() => result.current.onDeleteComment(1));
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey,
+        commentsQueryKey(),
       )?.comments.map((comment) => comment.id),
     ).toEqual([2]);
   });
@@ -109,7 +109,7 @@ describe("preview data queries", () => {
   it("leaves cached comments unchanged when a mutation fails", async () => {
     const comment = createComment();
     const queryClient = createPreviewQueryClient();
-    queryClient.setQueryData(commentsQueryKey, {
+    queryClient.setQueryData(commentsQueryKey(), {
       comments: [comment],
       filePath: "/tmp/example.md",
     });
@@ -127,7 +127,7 @@ describe("preview data queries", () => {
     ).rejects.toThrow("Failed to update comment: 500");
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey,
+        commentsQueryKey(),
       )?.comments,
     ).toEqual([comment]);
   });

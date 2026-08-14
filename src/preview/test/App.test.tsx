@@ -584,3 +584,64 @@ describe("App", () => {
     expect(screen.getByText("Resolved comment.")).not.toBeNull();
   });
 });
+
+describe("directory documents", () => {
+  it("lists, selects, and returns without changing the URL", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const originalUrl = location.href;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([
+            { id: 7, relativePath: "guides/start.md", title: "Start" },
+            { id: 9, relativePath: "README.md", title: "Readme" },
+          ]));
+        }
+        if (url === "/__sadoku/documents/7") {
+          return Promise.resolve(
+            Response.json({
+              fileUrl: "file:///tmp/start.md",
+              markdown: "# Start",
+              title: "Start",
+            }),
+          );
+        }
+        if (url === "/__sadoku/documents/7/comments") {
+          return Promise.resolve(
+            Response.json({ comments: [], filePath: "/tmp/start.md" }),
+          );
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "guides/start.md" }),
+    );
+    expect(await screen.findByRole("heading", { name: "Start" })).not
+      .toBeNull();
+    expect(location.href).toBe(originalUrl);
+    fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
+    expect(await screen.findByRole("button", { name: "README.md" })).not
+      .toBeNull();
+  });
+
+  it("renders the empty state", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) =>
+        Promise.resolve(
+          String(input) === "/__sadoku/documents"
+            ? Response.json([])
+            : new Response("Not found.", { status: 404 }),
+        )
+      ),
+    );
+    render(<App />);
+    expect(await screen.findByText("No Markdown documents found.")).not
+      .toBeNull();
+  });
+});

@@ -3,18 +3,22 @@ import { connectHotReload } from "../api/hotReload";
 import { useQueryClient } from "@tanstack/react-query";
 import { commentsQueryKey } from "./usePreviewData";
 
-export const useHotReload = () => {
+export const useHotReload = (documentId?: number) => {
   const [reloadAvailable, setReloadAvailable] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    setReloadAvailable(false);
     return connectHotReload({
+      documentId,
       onReloadAvailable: () => setReloadAvailable(true),
       onCommentsChanged: () => {
-        void queryClient.invalidateQueries({ queryKey: commentsQueryKey });
+        void queryClient.invalidateQueries({
+          queryKey: commentsQueryKey(documentId),
+        });
       },
     });
-  }, [queryClient]);
+  }, [documentId, queryClient]);
 
   return {
     clearReloadAvailable: () => setReloadAvailable(false),

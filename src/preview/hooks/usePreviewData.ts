@@ -12,31 +12,38 @@ import {
   updateReply,
 } from "../api/comments";
 import type { Comment, CommentsDocument } from "../models/comment";
-import { loadPreviewDocument } from "../api/document";
+import { loadDocuments, loadPreviewDocument } from "../api/document";
 
-export const previewDocumentQueryKey = ["preview-document"] as const;
-export const commentsQueryKey = ["comments"] as const;
+export const documentsQueryKey = ["documents"] as const;
+export const previewDocumentQueryKey = (documentId?: number) =>
+  ["preview-document", documentId] as const;
+export const commentsQueryKey = (documentId?: number) =>
+  ["comments", documentId] as const;
+export const useDocumentsQuery = () =>
+  useQuery({ queryFn: loadDocuments, queryKey: documentsQueryKey });
 
-export const usePreviewDocumentQuery = () =>
+export const usePreviewDocumentQuery = (documentId?: number, enabled = true) =>
   useQuery({
-    queryFn: loadPreviewDocument,
-    queryKey: previewDocumentQueryKey,
+    enabled,
+    queryFn: () => loadPreviewDocument(documentId),
+    queryKey: previewDocumentQueryKey(documentId),
   });
 
-export const useCommentsQuery = () =>
+export const useCommentsQuery = (documentId?: number, enabled = true) =>
   useQuery({
-    queryFn: loadComments,
-    queryKey: commentsQueryKey,
+    enabled,
+    queryFn: () => loadComments(documentId),
+    queryKey: commentsQueryKey(documentId),
   });
 
-export const useCommentActions = (): CommentActions => {
+export const useCommentActions = (documentId?: number): CommentActions => {
   const queryClient = useQueryClient();
 
   const updateComments = (
     updater: (current: Comment[]) => Comment[],
   ) => {
     queryClient.setQueryData<CommentsDocument>(
-      commentsQueryKey,
+      commentsQueryKey(documentId),
       (current) =>
         current && {
           ...current,
@@ -59,23 +66,23 @@ export const useCommentActions = (): CommentActions => {
       body: string;
       endLine: number;
       startLine: number;
-    }) => createComment(startLine, body, endLine),
+    }) => createComment(startLine, body, endLine, documentId),
     onSuccess: (created) => {
       updateComments((comments) => [...comments, created]);
     },
   });
   const updateCommentMutation = useMutation({
     mutationFn: ({ body, id }: { body: string; id: number }) =>
-      updateComment(id, body),
+      updateComment(id, body, documentId),
     onSuccess: replaceComment,
   });
   const replyCommentMutation = useMutation({
     mutationFn: ({ body, id }: { body: string; id: number }) =>
-      createReply(id, body),
+      createReply(id, body, documentId),
     onSuccess: replaceComment,
   });
   const deleteCommentMutation = useMutation({
-    mutationFn: deleteComment,
+    mutationFn: (id: number) => deleteComment(id, documentId),
     onSuccess: (_data, id) => {
       updateComments((comments) =>
         comments.filter((comment) => comment.id !== id)
@@ -91,7 +98,7 @@ export const useCommentActions = (): CommentActions => {
       body: string;
       commentId: number;
       replyId: number;
-    }) => updateReply(commentId, replyId, body),
+    }) => updateReply(commentId, replyId, body, documentId),
     onSuccess: replaceComment,
   });
   const deleteReplyMutation = useMutation({
@@ -101,7 +108,7 @@ export const useCommentActions = (): CommentActions => {
     }: {
       commentId: number;
       replyId: number;
-    }) => deleteReply(commentId, replyId),
+    }) => deleteReply(commentId, replyId, documentId),
     onSuccess: (_data, { commentId, replyId }) => {
       updateComments((comments) =>
         comments.map((comment) =>
@@ -118,11 +125,11 @@ export const useCommentActions = (): CommentActions => {
     },
   });
   const resolveCommentMutation = useMutation({
-    mutationFn: resolveComment,
+    mutationFn: (id: number) => resolveComment(id, documentId),
     onSuccess: replaceComment,
   });
   const reopenCommentMutation = useMutation({
-    mutationFn: reopenComment,
+    mutationFn: (id: number) => reopenComment(id, documentId),
     onSuccess: replaceComment,
   });
 

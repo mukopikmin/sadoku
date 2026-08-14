@@ -18,6 +18,17 @@ class FakeEventSource extends EventTarget {
 }
 
 describe("connectHotReload", () => {
+  it("connects document streams and closes them", () => {
+    const disconnect = connectHotReload({
+      documentId: 42,
+      EventSourceCtor: FakeEventSource as unknown as typeof EventSource,
+    });
+    expect(FakeEventSource.instances.at(-1)?.url).toBe(
+      "/__sadoku/documents/42/events",
+    );
+    disconnect();
+    expect(FakeEventSource.instances.at(-1)?.closed).toBe(true);
+  });
   it("notifies when the server invalidates the document", () => {
     let reloads = 0;
     const disconnect = connectHotReload({

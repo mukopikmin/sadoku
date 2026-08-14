@@ -53,6 +53,7 @@ type PreviewHeaderProps = {
   title: string;
   unresolvedCommentCount: number;
   view: PreviewView;
+  onBackToDocuments?: () => void;
 };
 
 export const PreviewHeader = ({
@@ -66,8 +67,19 @@ export const PreviewHeader = ({
   title,
   unresolvedCommentCount,
   view,
+  onBackToDocuments,
 }: PreviewHeaderProps) => (
   <PreviewShell>
+    {onBackToDocuments && (
+      <Link
+        as="button"
+        type="button"
+        onClick={onBackToDocuments}
+        fontWeight="semibold"
+      >
+        ← Documents
+      </Link>
+    )}
     <Flex alignItems="center" flex="1 1 16rem" gap="3" minW="0">
       <Image
         alt="Sadoku"
