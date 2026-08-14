@@ -1,4 +1,10 @@
-import { CliUsageError, parseArgs, usage, version } from "./args.ts";
+import {
+  type CliOptions,
+  CliUsageError,
+  parseArgs,
+  usage,
+  version,
+} from "./args.ts";
 import { openBrowser } from "./browser.ts";
 import { checkForUpdate, installUpdate } from "./update.ts";
 import {
@@ -14,6 +20,7 @@ import {
 import { logInfo } from "../../log.ts";
 import type { PreviewServerOptions } from "../server.ts";
 import { createConfiguredCommentsStore } from "../storage/comment/factory.ts";
+import { createPreviewSource } from "../source.ts";
 
 export type CliDependencies = {
   startPreviewServer(
@@ -48,12 +55,46 @@ const withCommentsStore = async <T>(
   }
 };
 
+const isCommentCommand = (command: CliOptions["command"]): boolean => {
+  switch (command) {
+    case "comments-add":
+    case "comments-inspect":
+    case "comments-list":
+    case "comments-reply":
+    case "comments-resolve":
+    case "comments-rm":
+      return true;
+    case "start":
+    case "update":
+    case undefined:
+      return false;
+    default: {
+      const exhaustive: never = command;
+      return exhaustive;
+    }
+  }
+};
+
 const executeCli = async (
   argv: string[],
   dependencies: CliDependencies,
   io: CliIo,
 ): Promise<void> => {
   const options = parseArgs(argv);
+
+  if (isCommentCommand(options.command) && options.file) {
+    const source = createPreviewSource(options.file);
+    if (!source.isRemote) {
+      const stat = await Deno.stat(source.documentSource).catch(() =>
+        undefined
+      );
+      if (stat?.isDirectory) {
+        throw new CliUsageError(
+          "Comment commands require a Markdown file or URL.",
+        );
+      }
+    }
+  }
 
   if (options.help) {
     io.log(usage);

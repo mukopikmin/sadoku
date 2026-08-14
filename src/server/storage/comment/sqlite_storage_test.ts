@@ -151,3 +151,36 @@ Deno.test("sqlite comments store replaces, lists, and deletes documents", async 
     await Deno.remove(root, { recursive: true });
   }
 });
+
+Deno.test("sqlite comments store omits documents without comments", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const database = await openAppDatabase({ path: join(root, "comments.db") });
+    try {
+      const store = createSqliteCommentsStore(database);
+      const now = "2026-07-04T00:00:00.000Z";
+      await database.execute(
+        "INSERT INTO comment_document (file_path, created_at, updated_at) VALUES (?, ?, ?)",
+        ["/tmp/no-comments.md", now, now],
+      );
+      const resolvedPath = "/tmp/resolved.md";
+      const resolvedDocument = document(resolvedPath);
+      resolvedDocument.comments = [
+        { ...resolvedDocument.comments[1], resolved: true },
+      ];
+      await store.write(resolvedPath, resolvedDocument);
+
+      assertEquals(
+        (await store.list()).entries.map((entry) => ({
+          markdownPath: entry.markdownPath,
+          openCount: entry.openCount,
+        })),
+        [{ markdownPath: resolvedPath, openCount: 0 }],
+      );
+    } finally {
+      database.close();
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});

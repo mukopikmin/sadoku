@@ -15,7 +15,7 @@ const stopServer = async (preview: StartedPreviewServer): Promise<void> => {
   await preview.server.finished.catch(() => {});
 };
 
-Deno.test("rejects missing files and directories", async () => {
+Deno.test("rejects missing local paths", async () => {
   const directory = await Deno.makeTempDir({ prefix: "sadoku-server-" });
   try {
     await assertRejects(
@@ -26,17 +26,7 @@ Deno.test("rejects missing files and directories", async () => {
           port: 0,
         }),
       Error,
-      "Markdown file not found:",
-    );
-    await assertRejects(
-      () =>
-        startPreviewServer({
-          file: directory,
-          host: "127.0.0.1",
-          port: 0,
-        }),
-      Error,
-      "Markdown file not found:",
+      "Markdown file or directory not found:",
     );
   } finally {
     await Deno.remove(directory, { recursive: true });
