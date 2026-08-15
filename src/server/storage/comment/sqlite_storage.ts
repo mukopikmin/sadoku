@@ -289,7 +289,7 @@ const listCommentsFilesFromSqlite = async (
       SUM(CASE WHEN comment.resolved = 0 THEN 1 ELSE 0 END) AS open_count,
       MAX(comment.updated_at) AS updated_at
       FROM comment_document
-      LEFT JOIN comment ON comment.document_id = comment_document.id
+      INNER JOIN comment ON comment.document_id = comment_document.id
       GROUP BY comment_document.id, comment_document.file_path
       ORDER BY comment_document.file_path`,
   )).rows ?? [];

@@ -559,13 +559,7 @@ Deno.test("removes comments for the specified Markdown file", async () => {
 
       assertEquals(removedFilePath, filePath);
       assertEquals(await listCommentFiles(), {
-        entries: [{
-          commentCount: 0,
-          fileName: basename(otherFilePath),
-          markdownPath: otherFilePath,
-          openCount: 0,
-          updatedAt: undefined,
-        }],
+        entries: [],
         warnings: [],
       });
     } finally {
@@ -603,7 +597,7 @@ Deno.test("keeps comments when removal confirmation is declined", async () => {
       });
 
       assertEquals(await removeCommentsIfConfirmed(filePath, "n"), undefined);
-      assertEquals((await listCommentFiles()).entries.length, 1);
+      assertEquals((await listCommentFiles()).entries.length, 0);
     } finally {
       await removeTempMarkdown(filePath);
     }
