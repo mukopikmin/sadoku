@@ -340,10 +340,12 @@ export const MarkdownPreview = ({
 };
 
 export const MarkdownPreviewPage = (
-  { markdown, theme }: Pick<MarkdownPreviewProps, "markdown" | "theme">,
+  { documentId, markdown, theme }:
+    & Pick<MarkdownPreviewProps, "markdown" | "theme">
+    & { documentId?: number },
 ) => {
-  const commentsQuery = useCommentsQuery();
-  const actions = useCommentActions();
+  const commentsQuery = useCommentsQuery(documentId);
+  const actions = useCommentActions(documentId);
   if (!commentsQuery.data) return null;
   const activeComments = commentsQuery.data.comments.filter(
     (comment): comment is ActiveComment => comment.state === "active",

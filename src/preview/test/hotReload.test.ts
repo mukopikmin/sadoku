@@ -43,6 +43,19 @@ describe("connectHotReload", () => {
     expect(events?.closed).toBe(true);
   });
 
+  it("connects to document events when a document is selected", () => {
+    const disconnect = connectHotReload({
+      documentId: 42,
+      EventSourceCtor: FakeEventSource as unknown as new (
+        url: string,
+      ) => EventSource,
+    });
+    const events = FakeEventSource.instances.at(-1);
+    expect(events?.url).toBe("/__sadoku/documents/42/events");
+    disconnect();
+    expect(events?.closed).toBe(true);
+  });
+
   it("notifies separately when only comments are invalidated", () => {
     let reloads = 0;
     let commentChanges = 0;

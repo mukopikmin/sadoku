@@ -1,6 +1,7 @@
 type EventSourceConstructor = new (url: string) => EventSource;
 
 export type HotReloadOptions = {
+  documentId?: number;
   EventSourceCtor?: EventSourceConstructor;
   onReloadAvailable?: () => void;
   onCommentsChanged?: () => void;
@@ -10,12 +11,17 @@ type InvalidationData = { resources?: unknown };
 
 export const connectHotReload = (
   {
+    documentId,
     EventSourceCtor = globalThis.EventSource,
     onReloadAvailable = () => {},
     onCommentsChanged = () => {},
   }: HotReloadOptions = {},
 ): () => void => {
-  const events = new EventSourceCtor("/__sadoku/events");
+  const events = new EventSourceCtor(
+    documentId === undefined
+      ? "/__sadoku/events"
+      : `/__sadoku/documents/${encodeURIComponent(documentId)}/events`,
+  );
   const notifyInvalidation = (event: Event) => {
     if (!(event instanceof MessageEvent)) return;
     try {

@@ -44,6 +44,7 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 
 type PreviewHeaderProps = {
   fileUrl: string;
+  onBackToDocuments?: () => void;
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
   onOpenSettings: () => void;
@@ -57,6 +58,7 @@ type PreviewHeaderProps = {
 
 export const PreviewHeader = ({
   fileUrl,
+  onBackToDocuments,
   onChangeView,
   onReloadPreview,
   onOpenSettings,
@@ -76,6 +78,16 @@ export const PreviewHeader = ({
         src="/assets/icon-512.png"
         w="8"
       />
+      {onBackToDocuments && (
+        <Link
+          as="button"
+          color="fg"
+          fontWeight="semibold"
+          onClick={onBackToDocuments}
+        >
+          ← Documents
+        </Link>
+      )}
       <Text as="div" minW="0">
         Previewing{" "}
         <Link href={fileUrl} color="fg" fontWeight="semibold">

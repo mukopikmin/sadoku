@@ -12,31 +12,43 @@ import {
   updateReply,
 } from "../api/comments";
 import type { Comment, CommentsDocument } from "../models/comment";
-import { loadPreviewDocument } from "../api/document";
+import { loadDocuments, loadPreviewDocument } from "../api/document";
 
-export const previewDocumentQueryKey = ["preview-document"] as const;
-export const commentsQueryKey = ["comments"] as const;
+export const documentsQueryKey = ["documents"] as const;
+export const previewDocumentQueryKey = (documentId?: number) =>
+  ["preview-document", documentId] as const;
+export const commentsQueryKey = (documentId?: number) =>
+  ["comments", documentId] as const;
 
-export const usePreviewDocumentQuery = () =>
+export const useDocumentsQuery = () =>
   useQuery({
-    queryFn: loadPreviewDocument,
-    queryKey: previewDocumentQueryKey,
+    queryFn: loadDocuments,
+    queryKey: documentsQueryKey,
   });
 
-export const useCommentsQuery = () =>
+export const usePreviewDocumentQuery = (documentId?: number, enabled = true) =>
   useQuery({
-    queryFn: loadComments,
-    queryKey: commentsQueryKey,
+    enabled,
+    queryFn: () => loadPreviewDocument(documentId),
+    queryKey: previewDocumentQueryKey(documentId),
   });
 
-export const useCommentActions = (): CommentActions => {
+export const useCommentsQuery = (documentId?: number, enabled = true) =>
+  useQuery({
+    enabled,
+    queryFn: () => loadComments(documentId),
+    queryKey: commentsQueryKey(documentId),
+  });
+
+export const useCommentActions = (documentId?: number): CommentActions => {
   const queryClient = useQueryClient();
 
   const updateComments = (
     updater: (current: Comment[]) => Comment[],
+    targetDocumentId = documentId,
   ) => {
     queryClient.setQueryData<CommentsDocument>(
-      commentsQueryKey,
+      commentsQueryKey(targetDocumentId),
       (current) =>
         current && {
           ...current,
@@ -44,9 +56,13 @@ export const useCommentActions = (): CommentActions => {
         },
     );
   };
-  const replaceComment = (updated: Comment) => {
-    updateComments((comments) =>
-      comments.map((comment) => comment.id === updated.id ? updated : comment)
+  const replaceComment = (updated: Comment, targetDocumentId = documentId) => {
+    updateComments(
+      (comments) =>
+        comments.map((comment) =>
+          comment.id === updated.id ? updated : comment
+        ),
+      targetDocumentId,
     );
   };
 
@@ -55,30 +71,47 @@ export const useCommentActions = (): CommentActions => {
       body,
       endLine,
       startLine,
+      targetDocumentId,
     }: {
       body: string;
       endLine: number;
       startLine: number;
-    }) => createComment(startLine, body, endLine),
-    onSuccess: (created) => {
-      updateComments((comments) => [...comments, created]);
+      targetDocumentId: number | undefined;
+    }) => createComment(startLine, body, endLine, targetDocumentId),
+    onSuccess: (created, { targetDocumentId }) => {
+      updateComments((comments) => [...comments, created], targetDocumentId);
     },
   });
   const updateCommentMutation = useMutation({
-    mutationFn: ({ body, id }: { body: string; id: number }) =>
-      updateComment(id, body),
-    onSuccess: replaceComment,
+    mutationFn: (
+      { body, id, targetDocumentId }: {
+        body: string;
+        id: number;
+        targetDocumentId?: number;
+      },
+    ) => updateComment(id, body, targetDocumentId),
+    onSuccess: (updated, { targetDocumentId }) =>
+      replaceComment(updated, targetDocumentId),
   });
   const replyCommentMutation = useMutation({
-    mutationFn: ({ body, id }: { body: string; id: number }) =>
-      createReply(id, body),
-    onSuccess: replaceComment,
+    mutationFn: (
+      { body, id, targetDocumentId }: {
+        body: string;
+        id: number;
+        targetDocumentId?: number;
+      },
+    ) => createReply(id, body, targetDocumentId),
+    onSuccess: (updated, { targetDocumentId }) =>
+      replaceComment(updated, targetDocumentId),
   });
   const deleteCommentMutation = useMutation({
-    mutationFn: deleteComment,
-    onSuccess: (_data, id) => {
-      updateComments((comments) =>
-        comments.filter((comment) => comment.id !== id)
+    mutationFn: (
+      { id, targetDocumentId }: { id: number; targetDocumentId?: number },
+    ) => deleteComment(id, targetDocumentId),
+    onSuccess: (_data, { id, targetDocumentId }) => {
+      updateComments(
+        (comments) => comments.filter((comment) => comment.id !== id),
+        targetDocumentId,
       );
     },
   });
@@ -87,69 +120,113 @@ export const useCommentActions = (): CommentActions => {
       body,
       commentId,
       replyId,
+      targetDocumentId,
     }: {
       body: string;
       commentId: number;
       replyId: number;
-    }) => updateReply(commentId, replyId, body),
-    onSuccess: replaceComment,
+      targetDocumentId?: number;
+    }) => updateReply(commentId, replyId, body, targetDocumentId),
+    onSuccess: (updated, { targetDocumentId }) =>
+      replaceComment(updated, targetDocumentId),
   });
   const deleteReplyMutation = useMutation({
     mutationFn: ({
       commentId,
       replyId,
+      targetDocumentId,
     }: {
       commentId: number;
       replyId: number;
-    }) => deleteReply(commentId, replyId),
-    onSuccess: (_data, { commentId, replyId }) => {
-      updateComments((comments) =>
-        comments.map((comment) =>
-          comment.id === commentId
-            ? {
-              ...comment,
-              replies: (comment.replies ?? []).filter((reply) =>
-                reply.id !== replyId
-              ),
-            }
-            : comment
-        )
+      targetDocumentId?: number;
+    }) => deleteReply(commentId, replyId, targetDocumentId),
+    onSuccess: (_data, { commentId, replyId, targetDocumentId }) => {
+      updateComments(
+        (comments) =>
+          comments.map((comment) =>
+            comment.id === commentId
+              ? {
+                ...comment,
+                replies: (comment.replies ?? []).filter((reply) =>
+                  reply.id !== replyId
+                ),
+              }
+              : comment
+          ),
+        targetDocumentId,
       );
     },
   });
   const resolveCommentMutation = useMutation({
-    mutationFn: resolveComment,
-    onSuccess: replaceComment,
+    mutationFn: (
+      { id, targetDocumentId }: { id: number; targetDocumentId?: number },
+    ) => resolveComment(id, targetDocumentId),
+    onSuccess: (updated, { targetDocumentId }) =>
+      replaceComment(updated, targetDocumentId),
   });
   const reopenCommentMutation = useMutation({
-    mutationFn: reopenComment,
-    onSuccess: replaceComment,
+    mutationFn: (
+      { id, targetDocumentId }: { id: number; targetDocumentId?: number },
+    ) => reopenComment(id, targetDocumentId),
+    onSuccess: (updated, { targetDocumentId }) =>
+      replaceComment(updated, targetDocumentId),
   });
 
   return {
     onCreateComment: async (startLine, body, endLine) => {
-      await createCommentMutation.mutateAsync({ body, endLine, startLine });
+      await createCommentMutation.mutateAsync({
+        body,
+        endLine,
+        startLine,
+        targetDocumentId: documentId,
+      });
     },
     onDeleteComment: async (id) => {
-      await deleteCommentMutation.mutateAsync(id);
+      await deleteCommentMutation.mutateAsync({
+        id,
+        targetDocumentId: documentId,
+      });
     },
     onDeleteReply: async (commentId, replyId) => {
-      await deleteReplyMutation.mutateAsync({ commentId, replyId });
+      await deleteReplyMutation.mutateAsync({
+        commentId,
+        replyId,
+        targetDocumentId: documentId,
+      });
     },
     onReopenComment: async (id) => {
-      await reopenCommentMutation.mutateAsync(id);
+      await reopenCommentMutation.mutateAsync({
+        id,
+        targetDocumentId: documentId,
+      });
     },
     onReplyComment: async (id, body) => {
-      await replyCommentMutation.mutateAsync({ body, id });
+      await replyCommentMutation.mutateAsync({
+        body,
+        id,
+        targetDocumentId: documentId,
+      });
     },
     onResolveComment: async (id) => {
-      await resolveCommentMutation.mutateAsync(id);
+      await resolveCommentMutation.mutateAsync({
+        id,
+        targetDocumentId: documentId,
+      });
     },
     onUpdateComment: async (id, body) => {
-      await updateCommentMutation.mutateAsync({ body, id });
+      await updateCommentMutation.mutateAsync({
+        body,
+        id,
+        targetDocumentId: documentId,
+      });
     },
     onUpdateReply: async (commentId, replyId, body) => {
-      await updateReplyMutation.mutateAsync({ body, commentId, replyId });
+      await updateReplyMutation.mutateAsync({
+        body,
+        commentId,
+        replyId,
+        targetDocumentId: documentId,
+      });
     },
   };
 };
