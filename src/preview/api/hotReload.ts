@@ -20,7 +20,7 @@ export const connectHotReload = (
   const events = new EventSourceCtor(
     documentId === undefined
       ? "/__sadoku/events"
-      : `/__sadoku/documents/${encodeURIComponent(documentId)}/events`,
+      : `/__sadoku/documents/${documentId}/events`,
   );
   const notifyInvalidation = (event: Event) => {
     if (!(event instanceof MessageEvent)) return;

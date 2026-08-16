@@ -18,7 +18,7 @@ export const loadPreviewDocument = async (
   const response = await fetch(
     documentId === undefined
       ? "/__sadoku/document"
-      : `/__sadoku/documents/${encodeURIComponent(documentId)}`,
+      : `/__sadoku/documents/${documentId}`,
   );
   if (!response.ok) {
     throw new Error(`Failed to load Markdown: ${response.status}`);

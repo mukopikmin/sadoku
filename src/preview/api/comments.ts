@@ -87,7 +87,7 @@ export const toCommentsDocument = (
 const commentsPath = (documentId?: number): string =>
   documentId === undefined
     ? "/__sadoku/comments"
-    : `/__sadoku/documents/${encodeURIComponent(documentId)}/comments`;
+    : `/__sadoku/documents/${documentId}/comments`;
 
 export const loadComments = async (
   documentId?: number,
