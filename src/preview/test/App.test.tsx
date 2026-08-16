@@ -52,14 +52,32 @@ describe("App", () => {
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url === "/__sadoku/document") {
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents/1") {
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/example.md",
             markdown: "```mermaid\ngraph TD\n  A --> B\n```\n",
             title: "example.md",
           }));
         }
-        if (url === "/__sadoku/comments") {
+        if (url === "/__sadoku/documents/1/comments") {
           return Promise.resolve(Response.json({
             comments: [],
             filePath: "/tmp/example.md",
@@ -70,6 +88,7 @@ describe("App", () => {
     );
 
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
@@ -89,7 +108,25 @@ describe("App", () => {
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url === "/__sadoku/document") {
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents/1") {
           documentRequests += 1;
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/example.md",
@@ -99,7 +136,7 @@ describe("App", () => {
             title: "example.md",
           }));
         }
-        if (url === "/__sadoku/comments") {
+        if (url === "/__sadoku/documents/1/comments") {
           commentRequests += 1;
           return Promise.resolve(Response.json({
             comments: [],
@@ -111,6 +148,7 @@ describe("App", () => {
     );
 
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
 
     await screen.findByRole("heading", { name: "Original title" });
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
@@ -171,7 +209,25 @@ describe("App", () => {
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url === "/__sadoku/document") {
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents/1") {
           documentRequests += 1;
           return documentRequests === 1
             ? Promise.resolve(Response.json({
@@ -181,7 +237,7 @@ describe("App", () => {
             }))
             : Promise.resolve(new Response("Failed.", { status: 500 }));
         }
-        if (url === "/__sadoku/comments") {
+        if (url === "/__sadoku/documents/1/comments") {
           return Promise.resolve(Response.json({
             comments: [],
             filePath: "/tmp/example.md",
@@ -192,6 +248,7 @@ describe("App", () => {
     );
 
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
     await screen.findByRole("heading", { name: "Original title" });
     TestEventSource.instances.at(-1)?.dispatchEvent(
       new MessageEvent("invalidate", {
@@ -218,14 +275,32 @@ describe("App", () => {
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url === "/__sadoku/document") {
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents/1") {
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/example.md",
             markdown: "# Title\n\nBody\n",
             title: "example.md",
           }));
         }
-        if (url === "/__sadoku/comments") {
+        if (url === "/__sadoku/documents/1/comments") {
           return Promise.resolve(Response.json({
             comments: [],
             filePath: "/tmp/example.md",
@@ -236,6 +311,7 @@ describe("App", () => {
     );
 
     const { container } = render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
 
     await screen.findByRole("link", { name: "example.md" });
 
@@ -299,6 +375,11 @@ describe("App", () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(
+          Response.json([{ id: 1, relativePath: "test.md", title: "test.md" }]),
+        );
+      }
       if (url === "/__sadoku/settings") {
         return Promise.resolve(Response.json(
           init?.method === "PUT"
@@ -306,14 +387,14 @@ describe("App", () => {
             : { theme: "light" },
         ));
       }
-      if (url === "/__sadoku/document") {
+      if (url === "/__sadoku/documents/1") {
         return Promise.resolve(Response.json({
           fileUrl: "file:///tmp/example.md",
           markdown: "```mermaid\ngraph TD\n  A --> B\n```\n",
           title: "example.md",
         }));
       }
-      if (url === "/__sadoku/comments") {
+      if (url === "/__sadoku/documents/1/comments") {
         return Promise.resolve(Response.json({
           comments: [],
           filePath: "/tmp/example.md",
@@ -327,6 +408,7 @@ describe("App", () => {
     );
 
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
 
     await screen.findByRole("link", { name: "example.md" });
     await waitFor(() =>
@@ -398,17 +480,35 @@ describe("App", () => {
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
         if (url === "/__sadoku/settings") {
           return Promise.resolve(new Response("Failed", { status: 500 }));
         }
-        if (url === "/__sadoku/document") {
+        if (url === "/__sadoku/documents/1") {
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/example.md",
             markdown: "# Example",
             title: "example.md",
           }));
         }
-        if (url === "/__sadoku/comments") {
+        if (url === "/__sadoku/documents/1/comments") {
           return Promise.resolve(
             Response.json({ comments: [], filePath: "/tmp/example.md" }),
           );
@@ -418,6 +518,7 @@ describe("App", () => {
     );
 
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
     await screen.findByRole("link", { name: "example.md" });
     expect(document.documentElement.dataset.theme).toBe("dark");
     fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
@@ -433,6 +534,11 @@ describe("App", () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(
+          Response.json([{ id: 1, relativePath: "test.md", title: "test.md" }]),
+        );
+      }
       if (url === "/__sadoku/settings") {
         return Promise.resolve(Response.json(
           init?.method === "PUT"
@@ -440,14 +546,14 @@ describe("App", () => {
             : { codeWrap: "wrap" },
         ));
       }
-      if (url === "/__sadoku/document") {
+      if (url === "/__sadoku/documents/1") {
         return Promise.resolve(Response.json({
           fileUrl: "file:///tmp/example.md",
           markdown: "```txt\n日本語の長いコードブロック\n```\n",
           title: "example.md",
         }));
       }
-      if (url === "/__sadoku/comments") {
+      if (url === "/__sadoku/documents/1/comments") {
         return Promise.resolve(Response.json({
           comments: [],
           filePath: "/tmp/example.md",
@@ -461,6 +567,7 @@ describe("App", () => {
     );
 
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
 
     const code = await screen.findByText("日本語の長いコードブロック");
     expect(document.documentElement.dataset.codeWrap).toBe("wrap");
@@ -495,14 +602,32 @@ describe("App", () => {
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        if (url === "/__sadoku/document") {
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(
+            Response.json([{
+              id: 1,
+              relativePath: "test.md",
+              title: "test.md",
+            }]),
+          );
+        }
+        if (url === "/__sadoku/documents/1") {
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/example.md",
             markdown: "# Title\n\nBody\n",
             title: "example.md",
           }));
         }
-        if (url === "/__sadoku/comments") {
+        if (url === "/__sadoku/documents/1/comments") {
           return Promise.resolve(Response.json({
             comments: [
               {
@@ -560,6 +685,7 @@ describe("App", () => {
     );
 
     render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
 
     await waitFor(() =>
       expect(screen.getByText("Active comment.")).not.toBeNull()

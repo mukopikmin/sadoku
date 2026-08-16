@@ -91,7 +91,10 @@ Deno.test("serves the preview client asset", async () => {
   );
   assertEquals(response.headers.get("cache-control"), "no-store");
   const script = await response.text();
-  assertEquals(script.includes("/__sadoku/events"), true);
+  assertEquals(script.includes("/__sadoku/documents/"), true);
+  assertEquals(script.includes('"/__sadoku/comments"'), false);
+  assertEquals(script.includes('"/__sadoku/document"'), false);
+  assertEquals(script.includes('"/__sadoku/events"'), false);
   assertEquals(script.includes("process.env"), false);
 });
 

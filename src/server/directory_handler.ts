@@ -78,17 +78,6 @@ export const createDirectoryPreviewHandler = (
     });
   });
 
-  app.get("/__sadoku/events", (context) =>
-    new Response(
-      createPreviewEventStream(undefined, context.req.raw.signal, options),
-      {
-        headers: {
-          "content-type": "text/event-stream; charset=utf-8",
-          "cache-control": "no-store",
-          connection: "keep-alive",
-        },
-      },
-    ));
   app.get("/__sadoku/documents/:documentId/events", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
     return new Response(
