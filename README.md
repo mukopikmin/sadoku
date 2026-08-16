@@ -3,10 +3,10 @@
 `sadoku` is a local Markdown review tool for reading, previewing, and commenting
 on one Markdown document in your browser.
 
-Run its `start` command with a Markdown file path or an HTTP(S) URL. It starts a
-local HTTP server, renders the source as HTML, prints the preview URL, and opens
-that URL in your default browser. Review comments stay separate from local
-Markdown files so the documents themselves stay clean.
+Run its `start` command with a Markdown file path, a directory, or an HTTP(S)
+URL. It starts a local HTTP server, renders the source as HTML, prints the
+preview URL, and opens that URL in your default browser. Review comments stay
+separate from local Markdown files so the documents themselves stay clean.
 
 ## Install
 
@@ -65,7 +65,7 @@ If `--version` is omitted, the compiled binary reports the development version
 ## Usage
 
 ```sh
-sadoku start <file.md|url> [options]
+sadoku start <file.md|directory|url> [options]
 sadoku update [--channel stable|nightly]
 ```
 

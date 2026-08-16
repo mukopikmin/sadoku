@@ -1,5 +1,6 @@
 import type { DocumentDependencies } from "./ports.ts";
 import type { DirectoryDocument } from "./types.ts";
+import { basename } from "@std/path";
 
 export const ensureDirectoryDocuments = async (
   directoryPath: string,
@@ -13,5 +14,6 @@ export const ensureDirectoryDocuments = async (
   return documents.map((document, index) => ({
     ...document,
     relativePath: markdownFiles[index].relativePath,
+    title: basename(markdownFiles[index].relativePath),
   }));
 };

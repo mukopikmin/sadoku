@@ -68,3 +68,20 @@ Deno.test("requests preview startup through an injected dependency", async () =>
     port: 3334,
   }]);
 });
+
+Deno.test("rejects directories for explicitly classified comment commands", async () => {
+  const output = captureIo();
+  const directory = await Deno.makeTempDir({ prefix: "sadoku-cli-" });
+  try {
+    assertEquals(
+      await runCli(["comments", "inspect", directory], dependencies, output.io),
+      1,
+    );
+    assertStringIncludes(
+      output.errors[0],
+      "Comment commands require a Markdown file or URL.",
+    );
+  } finally {
+    await Deno.remove(directory);
+  }
+});

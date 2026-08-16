@@ -46,11 +46,13 @@ Deno.test("ensures listed directory documents in listing order", async () => {
       filePath: "/workspace/docs/guide.md",
       id: 1,
       relativePath: "guide.md",
+      title: "guide.md",
     },
     {
       filePath: "/workspace/docs/notes.markdown",
       id: 2,
       relativePath: "notes.markdown",
+      title: "notes.markdown",
     },
   ]);
 });
