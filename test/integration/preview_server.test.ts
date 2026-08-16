@@ -1,11 +1,11 @@
 import { assertEquals } from "@std/assert";
 
-import { createPreviewHandler } from "../../src/server/mod.ts";
+import { createTestPreviewHandler } from "../../src/server/test_helpers.ts";
 
 Deno.test("serves hot reload events as an SSE stream", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
-  const response = await createPreviewHandler(filePath)(
-    new Request("http://127.0.0.1:3334/__sadoku/events"),
+  const response = await createTestPreviewHandler(filePath)(
+    new Request("http://127.0.0.1:3334/__sadoku/documents/1/events"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
   );
 
@@ -21,10 +21,10 @@ Deno.test("serves hot reload events as an SSE stream", async () => {
 });
 
 Deno.test("rejects unsupported methods for the event stream route", async () => {
-  const response = await createPreviewHandler(
+  const response = await createTestPreviewHandler(
     "test/integration/fixtures/comprehensive.md",
   )(
-    new Request("http://127.0.0.1:3334/__sadoku/events", {
+    new Request("http://127.0.0.1:3334/__sadoku/documents/1/events", {
       method: "POST",
     }),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -38,14 +38,14 @@ Deno.test("notifies when an interrupted event stream closes", async () => {
   const requestController = new AbortController();
   let opened = 0;
   let closed = 0;
-  const response = await createPreviewHandler(
+  const response = await createTestPreviewHandler(
     "test/integration/fixtures/comprehensive.md",
     {
       onEventStreamOpen: () => opened += 1,
       onEventStreamClose: () => closed += 1,
     },
   )(
-    new Request("http://127.0.0.1:3334/__sadoku/events", {
+    new Request("http://127.0.0.1:3334/__sadoku/documents/1/events", {
       signal: requestController.signal,
     }),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -60,11 +60,14 @@ Deno.test("notifies when an interrupted event stream closes", async () => {
 Deno.test("keeps remote event streams empty and reports cancellation", async () => {
   let opened = 0;
   let closed = 0;
-  const response = await createPreviewHandler("https://example.com/readme.md", {
-    onEventStreamOpen: () => opened += 1,
-    onEventStreamClose: () => closed += 1,
-  })(
-    new Request("http://127.0.0.1:3334/__sadoku/events"),
+  const response = await createTestPreviewHandler(
+    "https://example.com/readme.md",
+    {
+      onEventStreamOpen: () => opened += 1,
+      onEventStreamClose: () => closed += 1,
+    },
+  )(
+    new Request("http://127.0.0.1:3334/__sadoku/documents/1/events"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
   );
 
@@ -79,7 +82,7 @@ Deno.test("keeps remote event streams empty and reports cancellation", async () 
 
 Deno.test("serves the preview client asset", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
-  const response = await createPreviewHandler(filePath)(
+  const response = await createTestPreviewHandler(filePath)(
     new Request("http://127.0.0.1:3334/assets/client.js"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
   );
@@ -100,7 +103,7 @@ Deno.test("serves the preview client asset", async () => {
 
 Deno.test("serves the SPA shell", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
-  const response = await createPreviewHandler(filePath)(
+  const response = await createTestPreviewHandler(filePath)(
     new Request("http://127.0.0.1:3334/"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
   );
@@ -118,8 +121,8 @@ Deno.test("serves the SPA shell", async () => {
 
 Deno.test("serves the raw preview document for the SPA", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
-  const response = await createPreviewHandler(filePath)(
-    new Request("http://127.0.0.1:3334/__sadoku/document"),
+  const response = await createTestPreviewHandler(filePath)(
+    new Request("http://127.0.0.1:3334/__sadoku/documents/1"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
   );
 
