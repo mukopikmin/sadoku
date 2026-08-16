@@ -84,8 +84,15 @@ export const toCommentsDocument = (
   filePath: response.filePath,
 });
 
-export const loadComments = async (): Promise<CommentsDocument> => {
-  const response = await fetch("/__sadoku/comments");
+const commentsPath = (documentId?: number): string =>
+  documentId === undefined
+    ? "/__sadoku/comments"
+    : `/__sadoku/documents/${documentId}/comments`;
+
+export const loadComments = async (
+  documentId?: number,
+): Promise<CommentsDocument> => {
+  const response = await fetch(commentsPath(documentId));
   if (!response.ok) {
     throw new Error(`Failed to load comments: ${response.status}`);
   }
@@ -96,8 +103,9 @@ export const createComment = async (
   startLine: number,
   body: string,
   endLine: number,
+  documentId?: number,
 ): Promise<Comment> => {
-  const response = await fetch("/__sadoku/comments", {
+  const response = await fetch(commentsPath(documentId), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ startLine, endLine, body }),
@@ -111,9 +119,10 @@ export const createComment = async (
 export const createReply = async (
   commentId: number,
   body: string,
+  documentId?: number,
 ): Promise<Comment> => {
   const response = await fetch(
-    `/__sadoku/comments/${encodeURIComponent(commentId)}/replies`,
+    `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -130,9 +139,10 @@ export const updateReply = async (
   commentId: number,
   replyId: number,
   body: string,
+  documentId?: number,
 ): Promise<Comment> => {
   const response = await fetch(
-    `/__sadoku/comments/${encodeURIComponent(commentId)}/replies/${
+    `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies/${
       encodeURIComponent(replyId)
     }`,
     {
@@ -150,9 +160,10 @@ export const updateReply = async (
 export const deleteReply = async (
   commentId: number,
   replyId: number,
+  documentId?: number,
 ): Promise<void> => {
   const response = await fetch(
-    `/__sadoku/comments/${encodeURIComponent(commentId)}/replies/${
+    `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies/${
       encodeURIComponent(replyId)
     }`,
     { method: "DELETE" },
@@ -165,21 +176,28 @@ export const deleteReply = async (
 export const updateComment = async (
   id: number,
   body: string,
+  documentId?: number,
 ): Promise<Comment> => {
-  const response = await fetch(`/__sadoku/comments/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ body }),
-  });
+  const response = await fetch(
+    `${commentsPath(documentId)}/${encodeURIComponent(id)}`,
+    {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body }),
+    },
+  );
   if (!response.ok) {
     throw new Error(`Failed to update comment: ${response.status}`);
   }
   return toComment(await response.json() as CommentResponse);
 };
 
-export const resolveComment = async (id: number): Promise<Comment> => {
+export const resolveComment = async (
+  id: number,
+  documentId?: number,
+): Promise<Comment> => {
   const response = await fetch(
-    `/__sadoku/comments/${encodeURIComponent(id)}/resolve`,
+    `${commentsPath(documentId)}/${encodeURIComponent(id)}/resolve`,
     {
       method: "POST",
     },
@@ -190,9 +208,12 @@ export const resolveComment = async (id: number): Promise<Comment> => {
   return toComment(await response.json() as CommentResponse);
 };
 
-export const reopenComment = async (id: number): Promise<Comment> => {
+export const reopenComment = async (
+  id: number,
+  documentId?: number,
+): Promise<Comment> => {
   const response = await fetch(
-    `/__sadoku/comments/${encodeURIComponent(id)}/reopen`,
+    `${commentsPath(documentId)}/${encodeURIComponent(id)}/reopen`,
     {
       method: "POST",
     },
@@ -203,10 +224,16 @@ export const reopenComment = async (id: number): Promise<Comment> => {
   return toComment(await response.json() as CommentResponse);
 };
 
-export const deleteComment = async (id: number): Promise<void> => {
-  const response = await fetch(`/__sadoku/comments/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+export const deleteComment = async (
+  id: number,
+  documentId?: number,
+): Promise<void> => {
+  const response = await fetch(
+    `${commentsPath(documentId)}/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    },
+  );
   if (!response.ok) {
     throw new Error(`Failed to delete comment: ${response.status}`);
   }
