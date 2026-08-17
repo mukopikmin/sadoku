@@ -81,6 +81,16 @@ describe("directory preview", () => {
     expect(await screen.findByRole("button", { name: "guides/alpha.md" })).not
       .toBeNull();
     expect(screen.getByRole("button", { name: "beta.md" })).not.toBeNull();
+    expect(screen.getByRole("img", { name: "Sadoku" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Open settings" })).not
+      .toBeNull();
+    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    expect(
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
+    ).toHaveProperty("disabled", true);
     fireEvent.click(screen.getByRole("button", { name: "guides/alpha.md" }));
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();

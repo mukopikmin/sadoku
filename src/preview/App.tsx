@@ -124,10 +124,28 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <PreviewShell>
-          <Heading size="md">Documents</Heading>
-        </PreviewShell>
+        <PreviewHeader
+          onChangeView={setView}
+          onOpenSettings={settingsDisclosure.onOpen}
+          onReloadPreview={reloadPreview}
+          reloadAvailable={false}
+          reloading={false}
+          staleCommentCount={0}
+          title="Documents"
+          unresolvedCommentCount={0}
+          view="preview"
+          viewsDisabled
+        />
+        <SettingsDialog
+          codeWrapMode={codeWrapMode}
+          onCodeWrapModeChange={changeCodeWrapMode}
+          onOpenChange={settingsDisclosure.setOpen}
+          onThemeModeChange={changeThemeMode}
+          open={settingsDisclosure.open}
+          themeMode={themeMode}
+        />
         <Container as="main" maxW="980px" px="8" pb="16">
+          <Heading mb="4" size="md">Documents</Heading>
           {documents!.length === 0
             ? <Text color="fg.muted">No Markdown documents found.</Text>
             : (
