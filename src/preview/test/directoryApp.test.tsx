@@ -72,7 +72,7 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
-  it("lists documents, selects one without changing the URL, and returns", async () => {
+  it("lists documents, selects one without changing the URL, and returns through breadcrumbs", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
     const initialUrl = location.href;
@@ -85,7 +85,12 @@ describe("directory preview", () => {
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();
     expect(location.href).toBe(initialUrl);
-    fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Document path",
+    });
+    expect(breadcrumbs.textContent).toContain("guides/alpha.md");
+    expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     expect(await screen.findByRole("button", { name: "beta.md" })).not
       .toBeNull();
   });
@@ -116,7 +121,7 @@ describe("directory preview", () => {
     );
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
-    fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("button", { name: "beta.md" });
     expect(documentOneEvents.closed).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "beta.md" }));
@@ -136,7 +141,7 @@ describe("directory preview", () => {
     );
     expect(await screen.findByText("Failed to load Markdown: 500")).not
       .toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "beta.md" })).not.toBeNull()
     );
