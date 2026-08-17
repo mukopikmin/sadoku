@@ -9,7 +9,6 @@ import {
   updateComment,
   updateReply,
 } from "./api/comment_api.ts";
-import type { PreviewHandlerOptions } from "./handler.ts";
 import type { CommentsStore } from "./storage/comment/storage.ts";
 import type {
   DirectoryDocument,
@@ -28,6 +27,11 @@ import {
   textResponse,
 } from "./responses.ts";
 
+export type DirectoryPreviewHandlerOptions = {
+  onEventStreamClose?: () => void;
+  onEventStreamOpen?: () => void;
+};
+
 const findDocument = (
   session: DirectorySession,
   rawId: string,
@@ -40,7 +44,7 @@ const findDocument = (
 export const createDirectoryPreviewHandler = (
   session: DirectorySession,
   commentsStore: CommentsStore,
-  options: PreviewHandlerOptions = {},
+  options: DirectoryPreviewHandlerOptions = {},
 ): Deno.ServeHandler => {
   const app = new Hono();
   const resolveDocument = (rawId: string) => {
@@ -78,26 +82,19 @@ export const createDirectoryPreviewHandler = (
     });
   });
 
-  app.get("/__sadoku/events", (context) =>
-    new Response(
-      createPreviewEventStream(undefined, context.req.raw.signal, options),
-      {
-        headers: {
-          "content-type": "text/event-stream; charset=utf-8",
-          "cache-control": "no-store",
-          connection: "keep-alive",
-        },
-      },
-    ));
   app.get("/__sadoku/documents/:documentId/events", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
     return new Response(
-      createPreviewEventStream(source.documentSource, context.req.raw.signal, {
-        ...options,
-        commentsNotificationPath: getCommentsNotificationFilePath(
-          source.commentSource,
-        ),
-      }),
+      createPreviewEventStream(
+        source.isRemote ? undefined : source.documentSource,
+        context.req.raw.signal,
+        {
+          ...options,
+          commentsNotificationPath: getCommentsNotificationFilePath(
+            source.commentSource,
+          ),
+        },
+      ),
       {
         headers: {
           "content-type": "text/event-stream; charset=utf-8",

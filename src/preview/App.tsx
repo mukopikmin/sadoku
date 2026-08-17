@@ -28,10 +28,9 @@ import { SettingsDialog } from "./components/SettingsDialog";
 export const App = () => {
   const documentsQuery = useDocumentsQuery();
   const documents = documentsQuery.data;
-  const directoryMode = documents !== null && documents !== undefined;
   const [selectedDocumentId, setSelectedDocumentId] = useState<number>();
   const shouldLoadDocument = documentsQuery.isSuccess &&
-    (!directoryMode || selectedDocumentId !== undefined);
+    selectedDocumentId !== undefined;
   const documentQuery = usePreviewDocumentQuery(
     selectedDocumentId,
     shouldLoadDocument,
@@ -89,7 +88,7 @@ export const App = () => {
       </>
     );
   }
-  if (directoryMode && selectedDocumentId === undefined) {
+  if (selectedDocumentId === undefined) {
     return (
       <>
         <style>{previewThemeCss}</style>
@@ -124,11 +123,9 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewShell>
-          {directoryMode && (
-            <Button onClick={() => selectDocument(undefined)} variant="ghost">
-              ← Documents
-            </Button>
-          )}
+          <Button onClick={() => selectDocument(undefined)} variant="ghost">
+            ← Documents
+          </Button>
           {error
             ? error instanceof Error ? error.message : String(error)
             : "Loading preview..."}
@@ -148,9 +145,7 @@ export const App = () => {
       <style>{previewThemeCss}</style>
       <PreviewHeader
         fileUrl={document.fileUrl}
-        onBackToDocuments={directoryMode
-          ? () => selectDocument(undefined)
-          : undefined}
+        onBackToDocuments={() => selectDocument(undefined)}
         onChangeView={setView}
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
@@ -174,7 +169,7 @@ export const App = () => {
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
-              key={`${selectedDocumentId ?? "legacy"}-${themeMode}`}
+              key={`${selectedDocumentId}-${themeMode}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}
             />

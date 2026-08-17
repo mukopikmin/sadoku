@@ -29,14 +29,14 @@ export const useDocumentsQuery = () =>
 export const usePreviewDocumentQuery = (documentId?: number, enabled = true) =>
   useQuery({
     enabled,
-    queryFn: () => loadPreviewDocument(documentId),
+    queryFn: () => loadPreviewDocument(documentId!),
     queryKey: previewDocumentQueryKey(documentId),
   });
 
 export const useCommentsQuery = (documentId?: number, enabled = true) =>
   useQuery({
     enabled,
-    queryFn: () => loadComments(documentId),
+    queryFn: () => loadComments(documentId!),
     queryKey: commentsQueryKey(documentId),
   });
 
