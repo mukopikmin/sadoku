@@ -19,7 +19,10 @@ const documents = [
   { id: 2, relativePath: "beta.md", title: "Beta" },
 ];
 
-const installFetch = (failDocumentId?: number) =>
+const installFetch = (
+  failDocumentId?: number,
+  pendingDocument?: Promise<Response>,
+) =>
   vi.stubGlobal(
     "fetch",
     vi.fn(
@@ -33,6 +36,9 @@ const installFetch = (failDocumentId?: number) =>
         const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
         if (documentMatch) {
           const id = Number(documentMatch[1]);
+          if (pendingDocument) {
+            return pendingDocument;
+          }
           if (id === failDocumentId) {
             return Promise.resolve(
               new Response("Failed", { status: 500 }),
@@ -120,6 +126,41 @@ describe("directory preview", () => {
     render(<App />);
     expect(await screen.findByText("No Markdown documents found.")).not
       .toBeNull();
+  });
+
+  it("keeps the shared header mounted while a document loads", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    let resolveDocument!: (response: Response) => void;
+    const pendingDocument = new Promise<Response>((resolve) => {
+      resolveDocument = resolve;
+    });
+    installFetch(undefined, pendingDocument);
+    const { container } = render(<App />);
+
+    const documentButton = await screen.findByRole("button", {
+      name: "guides/alpha.md",
+    });
+    const header = container.querySelector("header");
+    fireEvent.click(documentButton);
+    expect(await screen.findByText("Loading preview...")).not.toBeNull();
+    expect(container.querySelector("header")).toBe(header);
+    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+
+    resolveDocument(Response.json({
+      fileUrl: "file:///tmp/1.md",
+      markdown: "# Document 1\n",
+      title: "Document 1",
+    }));
+    expect(await screen.findByRole("heading", { name: "Document 1" })).not
+      .toBeNull();
+    expect(container.querySelector("header")).toBe(header);
+    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
+      "disabled",
+      false,
+    );
   });
 
   it("switches document data and EventSources without showing the previous document", async () => {

@@ -175,20 +175,39 @@ export const App = () => {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <PreviewShell>
-          {error
-            ? error instanceof Error ? error.message : String(error)
-            : "Loading preview..."}
-        </PreviewShell>
-        {directoryMode && selectedDocument && (
-          <Container as="main" maxW="980px" px="8" pb="16">
+        <PreviewHeader
+          onChangeView={setView}
+          onOpenSettings={settingsDisclosure.onOpen}
+          onReloadPreview={reloadPreview}
+          reloadAvailable={false}
+          reloading={false}
+          staleCommentCount={0}
+          title={selectedDocument?.relativePath ?? "Preview"}
+          unresolvedCommentCount={0}
+          view="preview"
+          viewsDisabled
+        />
+        <SettingsDialog
+          codeWrapMode={codeWrapMode}
+          onCodeWrapModeChange={changeCodeWrapMode}
+          onOpenChange={settingsDisclosure.setOpen}
+          onThemeModeChange={changeThemeMode}
+          open={settingsDisclosure.open}
+          themeMode={themeMode}
+        />
+        <Container as="main" maxW="980px" px="8" pb="16">
+          {directoryMode && selectedDocument && (
             <DocumentBreadcrumb
               documentName={selectedDocument.relativePath}
-              onSelectDocuments={() =>
-                selectDocument(undefined)}
+              onSelectDocuments={() => selectDocument(undefined)}
             />
-          </Container>
-        )}
+          )}
+          <Text color={error ? "fg.error" : "fg.muted"}>
+            {error
+              ? error instanceof Error ? error.message : String(error)
+              : "Loading preview..."}
+          </Text>
+        </Container>
       </>
     );
   }
