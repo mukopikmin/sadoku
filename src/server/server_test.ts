@@ -33,7 +33,7 @@ Deno.test("rejects missing local paths", async () => {
   }
 });
 
-Deno.test("starts on an ephemeral port and serves the preview document", async () => {
+Deno.test("starts on an ephemeral port and serves a file as a document session", async () => {
   const filePath = await createTempMarkdown("# Server test\n");
   const preview = await startPreviewServer({
     file: filePath,
@@ -46,7 +46,28 @@ Deno.test("starts on an ephemeral port and serves the preview document", async (
     assertEquals(preview.filePath, filePath);
     assertEquals(preview.url.startsWith("http://127.0.0.1:"), true);
 
-    const response = await fetch(new URL("/__sadoku/document", preview.url));
+    const documentsResponse = await fetch(
+      new URL("/__sadoku/documents", preview.url),
+    );
+    const documents = await documentsResponse.json();
+    assertEquals(documents.length, 1);
+    assertEquals(documents[0].relativePath, filePath.split("/").at(-1));
+    for (
+      const legacyPath of [
+        "/__sadoku/document",
+        "/__sadoku/comments",
+        "/__sadoku/events",
+      ]
+    ) {
+      assertEquals(
+        (await fetch(new URL(legacyPath, preview.url))).status,
+        404,
+      );
+    }
+
+    const response = await fetch(
+      new URL(`/__sadoku/documents/${documents[0].id}`, preview.url),
+    );
     const document = await response.json();
     assertEquals(response.status, 200);
     assertEquals(document.markdown, "# Server test\n");
@@ -178,7 +199,14 @@ Deno.test("starts the preview server for a URL source", async () => {
 
   try {
     assertEquals(preview.filePath, sourceUrl);
-    const response = await fetch(new URL("/__sadoku/document", preview.url));
+    const documents = await (
+      await fetch(new URL("/__sadoku/documents", preview.url))
+    ).json();
+    assertEquals(documents.length, 1);
+    assertEquals(documents[0].relativePath, "remote.md");
+    const response = await fetch(
+      new URL(`/__sadoku/documents/${documents[0].id}`, preview.url),
+    );
     const document = await response.json();
 
     assertEquals(response.status, 200);

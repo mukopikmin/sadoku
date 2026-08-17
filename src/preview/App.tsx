@@ -120,7 +120,7 @@ export const App = () => {
       </>
     );
   }
-  if (directoryMode && selectedDocumentId === undefined) {
+  if (selectedDocumentId === undefined) {
     return (
       <>
         <style>{previewThemeCss}</style>
@@ -255,7 +255,7 @@ export const App = () => {
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
-              key={`${selectedDocumentId ?? "legacy"}-${themeMode}`}
+              key={`${selectedDocumentId}-${themeMode}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}
             />

@@ -8,6 +8,7 @@ export const useHotReload = (documentId?: number) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (documentId === undefined) return;
     return connectHotReload({
       documentId,
       onReloadAvailable: () => setReloadAvailable(true),

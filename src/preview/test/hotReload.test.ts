@@ -21,6 +21,7 @@ describe("connectHotReload", () => {
   it("notifies when the server invalidates the document", () => {
     let reloads = 0;
     const disconnect = connectHotReload({
+      documentId: 42,
       EventSourceCtor: FakeEventSource as unknown as new (
         url: string,
       ) => EventSource,
@@ -30,7 +31,7 @@ describe("connectHotReload", () => {
     });
 
     const events = FakeEventSource.instances.at(-1);
-    expect(events?.url).toBe("/__sadoku/events");
+    expect(events?.url).toBe("/__sadoku/documents/42/events");
 
     events?.dispatchEvent(
       new MessageEvent("invalidate", {
@@ -60,6 +61,7 @@ describe("connectHotReload", () => {
     let reloads = 0;
     let commentChanges = 0;
     connectHotReload({
+      documentId: 42,
       EventSourceCtor: FakeEventSource as unknown as new (
         url: string,
       ) => EventSource,
@@ -80,6 +82,7 @@ describe("connectHotReload", () => {
   it("ignores malformed invalidation events", () => {
     let reloads = 0;
     connectHotReload({
+      documentId: 42,
       EventSourceCtor: FakeEventSource as unknown as new (
         url: string,
       ) => EventSource,

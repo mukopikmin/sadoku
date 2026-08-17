@@ -1,5 +1,6 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { join } from "@std/path";
+import { listCommentFiles } from "../../src/server/cli/comment_cli.ts";
 import {
   type StartedPreviewServer,
   startPreviewServer,
@@ -11,21 +12,50 @@ const stopServer = async (preview: StartedPreviewServer) => {
   await preview.server.finished.catch(() => {});
 };
 
-Deno.test("directory preview discovers documents once and preserves legacy isolation", async () => {
+const reserveLoopbackPort = (): number => {
+  const listener = Deno.listen({ hostname: "127.0.0.1", port: 0 });
+  const port = listener.addr.port;
+  listener.close();
+  return port;
+};
+
+const readEvent = async (
+  response: Response,
+  timeout = 5_000,
+): Promise<string> => {
+  const reader = response.body!.getReader();
+  try {
+    const result = await Promise.race([
+      reader.read(),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Timed out waiting for SSE event.")),
+          timeout,
+        )
+      ),
+    ]);
+    return new TextDecoder().decode(result.value);
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+};
+
+Deno.test("directory preview supports the complete HTTP workflow", async () => {
   await withTempCommentsDirectory(async () => {
     const root = await Deno.makeTempDir({
       prefix: "sadoku-directory-integration-",
     });
     let preview: StartedPreviewServer | undefined;
     try {
+      const aPath = join(root, "a.markdown");
       await Deno.writeTextFile(join(root, "b.md"), "# B\n");
-      await Deno.writeTextFile(join(root, "a.markdown"), "# A\n");
+      await Deno.writeTextFile(aPath, "# A\n");
       await Deno.writeTextFile(join(root, "ignored.txt"), "ignored");
       preview = await startPreviewServer({
         file: root,
         host: "127.0.0.1",
         keepAlive: true,
-        port: 0,
+        port: reserveLoopbackPort(),
       });
 
       const listResponse = await fetch(
@@ -36,27 +66,111 @@ Deno.test("directory preview discovers documents once and preserves legacy isola
         documents.map((document: { relativePath: string }) =>
           document.relativePath
         ),
-        [
-          "a.markdown",
-          "b.md",
-        ],
+        ["a.markdown", "b.md"],
       );
       assertEquals("filePath" in documents[0], false);
+      const [documentA, documentB] = documents;
+
+      assertEquals((await listCommentFiles()).entries, []);
+
+      for (
+        const [document, markdown] of [
+          [documentA, "# A\n"],
+          [documentB, "# B\n"],
+        ] as const
+      ) {
+        const response = await fetch(
+          new URL(`/__sadoku/documents/${document.id}`, preview.url),
+        );
+        assertEquals(response.status, 200);
+        assertEquals((await response.json()).markdown, markdown);
+      }
+
+      const createResponse = await fetch(
+        new URL(`/__sadoku/documents/${documentA.id}/comments`, preview.url),
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ startLine: 1, endLine: 1, body: "Review A" }),
+        },
+      );
+      const comment = await createResponse.json();
+      assertEquals(createResponse.status, 200);
+
+      const commentsForB = await fetch(
+        new URL(`/__sadoku/documents/${documentB.id}/comments`, preview.url),
+      );
+      assertEquals((await commentsForB.json()).comments, []);
+      assertEquals(
+        (await listCommentFiles()).entries.map((entry) => entry.markdownPath),
+        [aPath],
+      );
+
+      const replyResponse = await fetch(
+        new URL(
+          `/__sadoku/documents/${documentA.id}/comments/${comment.id}/replies`,
+          preview.url,
+        ),
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ body: "Reply to A" }),
+        },
+      );
+      assertEquals((await replyResponse.json()).replies[0].body, "Reply to A");
+
+      const resolveUrl = new URL(
+        `/__sadoku/documents/${documentA.id}/comments/${comment.id}/resolve`,
+        preview.url,
+      );
+      assertEquals(
+        (await (await fetch(resolveUrl, { method: "POST" })).json()).resolved,
+        true,
+      );
+      const reopenUrl = new URL(
+        `/__sadoku/documents/${documentA.id}/comments/${comment.id}/reopen`,
+        preview.url,
+      );
+      assertEquals(
+        (await (await fetch(reopenUrl, { method: "POST" })).json()).resolved,
+        false,
+      );
+
+      const documentEvents = await fetch(
+        new URL(`/__sadoku/documents/${documentA.id}/events`, preview.url),
+      );
+      const eventPromise = readEvent(documentEvents);
+      await Deno.writeTextFile(aPath, "# A updated\n");
+      assertStringIncludes(await eventPromise, '"document"');
 
       await Deno.writeTextFile(join(root, "later.md"), "# Later\n");
-      const unchanged = await fetch(
-        new URL("/__sadoku/documents", preview.url),
-      );
-      assertEquals((await unchanged.json()).length, 2);
-
       assertEquals(
-        (await fetch(new URL("/__sadoku/document", preview.url))).status,
-        404,
+        (await (await fetch(new URL("/__sadoku/documents", preview.url)))
+          .json()).length,
+        2,
       );
-      const documentResponse = await fetch(
-        new URL(`/__sadoku/documents/${documents[0].id}`, preview.url),
+
+      const originalIds = documents.map((document: { id: number }) =>
+        document.id
       );
-      assertEquals((await documentResponse.json()).markdown, "# A\n");
+      await stopServer(preview);
+      preview = undefined;
+      const restarted = await startPreviewServer({
+        file: root,
+        host: "127.0.0.1",
+        keepAlive: true,
+        port: reserveLoopbackPort(),
+      });
+      preview = restarted;
+      const restartedDocuments = await (
+        await fetch(new URL("/__sadoku/documents", restarted.url))
+      ).json();
+      assertEquals(
+        restartedDocuments.filter((document: { relativePath: string }) =>
+          document.relativePath !== "later.md"
+        ).map((document: { id: number }) => document.id),
+        originalIds,
+      );
     } finally {
       if (preview) await stopServer(preview);
       await Deno.remove(root, { recursive: true });

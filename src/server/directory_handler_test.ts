@@ -106,15 +106,14 @@ Deno.test("serves directory documents and keeps comments isolated", async () => 
     assertEquals((await secondComments.json()).comments.length, 0);
 
     const listEvents = await request(handler, "/__sadoku/events");
-    assertEquals(listEvents.status, 200);
-    await listEvents.body?.cancel();
+    assertEquals(listEvents.status, 404);
     const documentEvents = await request(
       handler,
       "/__sadoku/documents/2/events",
     );
     assertEquals(documentEvents.status, 200);
     await documentEvents.body?.cancel();
-    assertEquals(opened, 2);
+    assertEquals(opened, 1);
   } finally {
     await Deno.remove(rootPath, { recursive: true });
   }
