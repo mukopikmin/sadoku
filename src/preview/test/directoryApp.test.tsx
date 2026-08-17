@@ -78,15 +78,16 @@ describe("directory preview", () => {
     const initialUrl = location.href;
     render(<App />);
 
-    expect(await screen.findByRole("button", { name: "guides/alpha.md" })).not
+    expect(await screen.findByRole("treeitem", { name: "alpha.md" })).not
       .toBeNull();
-    expect(screen.getByRole("button", { name: "beta.md" })).not.toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "guides/alpha.md" }));
+    expect(screen.getByRole("treeitem", { name: "beta.md" })).not.toBeNull();
+    expect(screen.getByRole("treeitem", { name: /guides/ })).not.toBeNull();
+    fireEvent.click(screen.getByRole("treeitem", { name: "alpha.md" }));
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();
     expect(location.href).toBe(initialUrl);
     fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
-    expect(await screen.findByRole("button", { name: "beta.md" })).not
+    expect(await screen.findByRole("treeitem", { name: "beta.md" })).not
       .toBeNull();
   });
 
@@ -112,14 +113,14 @@ describe("directory preview", () => {
     installFetch();
     render(<App />);
     fireEvent.click(
-      await screen.findByRole("button", { name: "guides/alpha.md" }),
+      await screen.findByRole("treeitem", { name: "alpha.md" }),
     );
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
     fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
-    await screen.findByRole("button", { name: "beta.md" });
+    await screen.findByRole("treeitem", { name: "beta.md" });
     expect(documentOneEvents.closed).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "beta.md" }));
+    fireEvent.click(screen.getByRole("treeitem", { name: "beta.md" }));
     expect(screen.queryByRole("heading", { name: "Document 1" })).toBeNull();
     await screen.findByRole("heading", { name: "Document 2" });
     expect(DirectoryEventSource.instances.at(-1)?.url).toBe(
@@ -132,13 +133,13 @@ describe("directory preview", () => {
     installFetch(1);
     render(<App />);
     fireEvent.click(
-      await screen.findByRole("button", { name: "guides/alpha.md" }),
+      await screen.findByRole("treeitem", { name: "alpha.md" }),
     );
     expect(await screen.findByText("Failed to load Markdown: 500")).not
       .toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "beta.md" })).not.toBeNull()
+      expect(screen.getByRole("treeitem", { name: "beta.md" })).not.toBeNull()
     );
   });
 });
