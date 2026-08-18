@@ -70,14 +70,14 @@ export const usePreviewSettings = () => {
     });
   };
 
-  const changeDefaultDirectory = (next: string) => {
+  const changeDefaultDirectory = async (next: string): Promise<void> => {
     userChangedSettings.current = true;
-    setDefaultDirectory(next);
-    saveMutation.mutate({
+    const settings = await saveMutation.mutateAsync({
       codeWrap: codeWrapMode,
       defaultDirectory: next,
       theme: themeMode,
     });
+    setDefaultDirectory(settings.defaultDirectory ?? "");
   };
 
   return {

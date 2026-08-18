@@ -1,5 +1,6 @@
 import { readConfig, updatePreviewConfig } from "../config.ts";
 import { noStoreJson, textResponse } from "../responses.ts";
+import { resolve } from "@std/path";
 
 const invalidRequest = (message: string): Response =>
   textResponse(message, 400);
@@ -18,6 +19,25 @@ const readSettings = () => {
 };
 
 export const getSettings = (): Response => noStoreJson(readSettings());
+
+const resolveAccessibleDirectory = async (
+  directory: string,
+): Promise<string | Response> => {
+  const path = resolve(directory);
+  try {
+    const stat = await Deno.stat(path);
+    if (!stat.isDirectory) {
+      return invalidRequest(`Default folder is not a directory: ${path}`);
+    }
+    await Deno.readDir(path)[Symbol.asyncIterator]().next();
+    return path;
+  } catch (error) {
+    const reason = error instanceof Deno.errors.NotFound
+      ? "does not exist"
+      : "cannot be accessed";
+    return invalidRequest(`Default folder ${reason}: ${path}`);
+  }
+};
 
 export const updateSettings = async (
   request: Request,
@@ -56,6 +76,13 @@ export const updateSettings = async (
     );
   }
 
-  await updatePreviewConfig(theme, codeWrap, defaultDirectory);
+  let resolvedDefaultDirectory = defaultDirectory;
+  if (defaultDirectory) {
+    const resolved = await resolveAccessibleDirectory(defaultDirectory);
+    if (resolved instanceof Response) return resolved;
+    resolvedDefaultDirectory = resolved;
+  }
+
+  await updatePreviewConfig(theme, codeWrap, resolvedDefaultDirectory);
   return noStoreJson(readSettings());
 };

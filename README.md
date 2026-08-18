@@ -114,9 +114,9 @@ sadoku start 'https://example.com/README.md?token=temporary'
 
 When no path is supplied, Sadoku opens the default folder configured in the
 Settings dialog. The command reports an error if no default folder has been
-configured. Use **Browse…** in the dialog to select a folder with the operating
-system-independent directory picker. An explicitly supplied path always takes
-precedence.
+configured. Enter a folder path in the Settings dialog; Sadoku verifies that it
+is an accessible directory before saving it. Relative paths are resolved to an
+absolute path when saved. An explicitly supplied path always takes precedence.
 
 Use a different port:
 

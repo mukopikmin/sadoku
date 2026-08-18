@@ -487,16 +487,6 @@ describe("App", () => {
             : { defaultDirectory: "/workspace/notes" },
         ));
       }
-      if (url.startsWith("/__sadoku/settings/directories")) {
-        const path = new URL(url, "http://localhost").searchParams.get("path");
-        return Promise.resolve(Response.json({
-          directories: path === "/workspace/notes"
-            ? [{ name: "docs", path: "/workspace/docs" }]
-            : [],
-          parent: "/workspace",
-          path: path ?? "/workspace",
-        }));
-      }
       return Promise.resolve(new Response("Not found.", { status: 404 }));
     });
     vi.stubGlobal("fetch", fetch);
@@ -509,16 +499,7 @@ describe("App", () => {
     });
     expect((input as HTMLInputElement).value).toBe("/workspace/notes");
 
-    fireEvent.click(screen.getByRole("button", { name: "Browse…" }));
-    fireEvent.click(await screen.findByRole("button", { name: "docs" }));
-    await screen.findByText("/workspace/docs");
-    fireEvent.click(screen.getByRole("button", {
-      name: "Select this folder",
-    }));
-    expect((input as HTMLInputElement).value).toBe("/workspace/docs");
-    expect(fetch).toHaveBeenCalledWith(
-      "/__sadoku/settings/directories?path=%2Fworkspace%2Fnotes",
-    );
+    fireEvent.change(input, { target: { value: "/workspace/docs" } });
     const saveButton = screen.getByRole("button", { name: "Save" });
     await waitFor(() =>
       expect((saveButton as HTMLButtonElement).disabled).toBe(false)
@@ -535,6 +516,46 @@ describe("App", () => {
         headers: { "content-type": "application/json" },
         method: "PUT",
       })
+    );
+  });
+
+  it("shows server validation errors for the default folder", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([]));
+        }
+        if (url === "/__sadoku/settings" && init?.method === "PUT") {
+          return Promise.resolve(
+            new Response("Default folder does not exist: /missing", {
+              status: 400,
+            }),
+          );
+        }
+        if (url === "/__sadoku/settings") {
+          return Promise.resolve(Response.json({}));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+
+    render(<App />);
+    await screen.findByText("No Markdown documents found.");
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    fireEvent.change(
+      await screen.findByRole("textbox", {
+        name: "Default folder",
+      }),
+      { target: { value: "/missing" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
+      "Default folder does not exist: /missing",
     );
   });
 

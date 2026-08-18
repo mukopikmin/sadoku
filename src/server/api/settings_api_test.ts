@@ -3,12 +3,12 @@ import { dirname, join } from "@std/path";
 import { readConfig } from "../config.ts";
 import { getSettings, updateSettings } from "./settings_api.ts";
 
-const withSettings = async (run: () => Promise<void>) => {
+const withSettings = async (run: (root: string) => Promise<void>) => {
   const previous = Deno.env.get("XDG_CONFIG_HOME");
   const root = await Deno.makeTempDir();
   Deno.env.set("XDG_CONFIG_HOME", root);
   try {
-    await run();
+    await run(root);
   } finally {
     previous === undefined
       ? Deno.env.delete("XDG_CONFIG_HOME")
@@ -73,11 +73,13 @@ Deno.test("PUT updates preview settings without losing config", async () => {
 });
 
 Deno.test("GET and PUT expose the default preview directory", async () => {
-  await withSettings(async () => {
+  await withSettings(async (root) => {
+    const defaultDirectory = join(root, "notes");
+    await Deno.mkdir(defaultDirectory);
     const response = await updateSettings(
       request({
         codeWrap: "wrap",
-        defaultDirectory: "/workspace/notes",
+        defaultDirectory,
         theme: "dark",
       }),
     );
@@ -85,15 +87,33 @@ Deno.test("GET and PUT expose the default preview directory", async () => {
     assertEquals(response.status, 200);
     assertEquals(await response.json(), {
       codeWrap: "wrap",
-      defaultDirectory: "/workspace/notes",
+      defaultDirectory,
       theme: "dark",
     });
-    assertEquals(readConfig()?.defaultDirectory, "/workspace/notes");
+    assertEquals(readConfig()?.defaultDirectory, defaultDirectory);
     assertEquals(await getSettings().json(), {
       codeWrap: "wrap",
-      defaultDirectory: "/workspace/notes",
+      defaultDirectory,
       theme: "dark",
     });
+  });
+});
+
+Deno.test("PUT rejects inaccessible default preview directories", async () => {
+  await withSettings(async (root) => {
+    const missing = join(root, "missing");
+    const response = await updateSettings(request({
+      codeWrap: "wrap",
+      defaultDirectory: missing,
+      theme: "dark",
+    }));
+
+    assertEquals(response.status, 400);
+    assertEquals(
+      await response.text(),
+      `Default folder does not exist: ${missing}`,
+    );
+    assertEquals(readConfig(), undefined);
   });
 });
 

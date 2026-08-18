@@ -57,41 +57,10 @@ const saveSetting = async (
     body: JSON.stringify(update),
   });
   if (!response.ok) {
-    throw new Error(`Failed to save settings: ${response.status}`);
+    const message = await response.text();
+    throw new Error(message || `Failed to save settings: ${response.status}`);
   }
   return toPreviewSettings(await response.json() as SettingsResponse);
 };
 
 export const saveSettings = saveSetting;
-
-export type DirectoryListing = {
-  directories: Array<{ name: string; path: string }>;
-  parent?: string;
-  path: string;
-};
-
-export const loadDirectories = async (
-  path?: string,
-): Promise<DirectoryListing> => {
-  const query = path ? `?path=${encodeURIComponent(path)}` : "";
-  const response = await fetch(`/__sadoku/settings/directories${query}`);
-  if (!response.ok) {
-    throw new Error(`Failed to load directories: ${response.status}`);
-  }
-  const body: unknown = await response.json();
-  const value = body as Record<string, unknown>;
-  if (
-    typeof body !== "object" || body === null ||
-    typeof value.path !== "string" ||
-    (value.parent !== undefined && typeof value.parent !== "string") ||
-    !Array.isArray(value.directories) ||
-    value.directories.some((directory) =>
-      typeof directory !== "object" || directory === null ||
-      typeof (directory as Record<string, unknown>).name !== "string" ||
-      typeof (directory as Record<string, unknown>).path !== "string"
-    )
-  ) {
-    throw new Error("Directory listing response was invalid.");
-  }
-  return body as DirectoryListing;
-};

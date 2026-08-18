@@ -120,22 +120,11 @@ Deno.test("serves directory documents and keeps comments isolated", async () => 
 });
 
 Deno.test("serves an empty directory session", async () => {
-  const handler = createDirectoryPreviewHandler(
-    {
-      rootPath: "/tmp/empty",
-      documents: [],
-      documentsById: new Map(),
-    },
-    createMemoryStore(),
-    {
-      listDirectories: (path) =>
-        Promise.resolve({
-          directories: [{ name: "docs", path: "/workspace/docs" }],
-          parent: "/workspace",
-          path: path ?? "/workspace/notes",
-        }),
-    },
-  );
+  const handler = createDirectoryPreviewHandler({
+    rootPath: "/tmp/empty",
+    documents: [],
+    documentsById: new Map(),
+  }, createMemoryStore());
   const response = await request(handler, "/__sadoku/documents");
   assertEquals(response.status, 200);
   assertEquals(await response.json(), []);
@@ -143,21 +132,5 @@ Deno.test("serves an empty directory session", async () => {
   assertEquals(
     (await request(handler, "/__sadoku/settings")).status,
     200,
-  );
-  const directories = await request(
-    handler,
-    "/__sadoku/settings/directories?path=%2Fworkspace%2Fnotes",
-  );
-  assertEquals(directories.status, 200);
-  assertEquals(await directories.json(), {
-    directories: [{ name: "docs", path: "/workspace/docs" }],
-    parent: "/workspace",
-    path: "/workspace/notes",
-  });
-  assertEquals(
-    (await request(handler, "/__sadoku/settings/directories", {
-      method: "POST",
-    })).status,
-    405,
   );
 });

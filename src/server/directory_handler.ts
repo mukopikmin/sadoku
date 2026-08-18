@@ -27,12 +27,10 @@ import {
   textResponse,
 } from "./responses.ts";
 import { getSettings, updateSettings } from "./api/settings_api.ts";
-import { listDirectories } from "./directory_picker.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
-  listDirectories?: typeof listDirectories;
 };
 
 const findDocument = (
@@ -50,7 +48,6 @@ export const createDirectoryPreviewHandler = (
   options: DirectoryPreviewHandlerOptions = {},
 ): Deno.ServeHandler => {
   const app = new Hono();
-  const loadDirectories = options.listDirectories ?? listDirectories;
   const resolveDocument = (rawId: string) => {
     const document = findDocument(session, rawId);
     if (!document) throw notFoundResponse("Document not found.");
@@ -73,13 +70,7 @@ export const createDirectoryPreviewHandler = (
     )));
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
-  app.get("/__sadoku/settings/directories", async (context) => {
-    return noStoreJson(
-      await loadDirectories(context.req.query("path")),
-    );
-  });
   app.all("/__sadoku/settings", methodNotAllowedResponse);
-  app.all("/__sadoku/settings/directories", methodNotAllowedResponse);
   app.get("/__sadoku/documents/:documentId", async (context) => {
     const { document, source } = resolveDocument(
       context.req.param("documentId"),
