@@ -387,6 +387,11 @@ describe("App", () => {
             : { theme: "light" },
         ));
       }
+      if (url === "/__sadoku/settings/select-directory") {
+        return Promise.resolve(Response.json({
+          directory: "/workspace/docs",
+        }));
+      }
       if (url === "/__sadoku/documents/1") {
         return Promise.resolve(Response.json({
           fileUrl: "file:///tmp/example.md",
@@ -487,6 +492,11 @@ describe("App", () => {
             : { defaultDirectory: "/workspace/notes" },
         ));
       }
+      if (url === "/__sadoku/settings/select-directory") {
+        return Promise.resolve(Response.json({
+          directory: "/workspace/docs",
+        }));
+      }
       return Promise.resolve(new Response("Not found.", { status: 404 }));
     });
     vi.stubGlobal("fetch", fetch);
@@ -499,7 +509,14 @@ describe("App", () => {
     });
     expect((input as HTMLInputElement).value).toBe("/workspace/notes");
 
-    fireEvent.change(input, { target: { value: "/workspace/docs" } });
+    fireEvent.click(screen.getByRole("button", { name: "Browse…" }));
+    await waitFor(() =>
+      expect((input as HTMLInputElement).value).toBe("/workspace/docs")
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      "/__sadoku/settings/select-directory",
+      { method: "POST" },
+    );
     const saveButton = screen.getByRole("button", { name: "Save" });
     await waitFor(() =>
       expect((saveButton as HTMLButtonElement).disabled).toBe(false)

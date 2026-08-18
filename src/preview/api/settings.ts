@@ -63,3 +63,21 @@ const saveSetting = async (
 };
 
 export const saveSettings = saveSetting;
+
+export const selectDirectory = async (): Promise<string | undefined> => {
+  const response = await fetch("/__sadoku/settings/select-directory", {
+    method: "POST",
+  });
+  if (response.status === 204) return undefined;
+  if (!response.ok) {
+    throw new Error(`Failed to open directory picker: ${response.status}`);
+  }
+  const body: unknown = await response.json();
+  if (
+    typeof body !== "object" || body === null ||
+    typeof (body as Record<string, unknown>).directory !== "string"
+  ) {
+    throw new Error("Directory picker response was invalid.");
+  }
+  return (body as { directory: string }).directory;
+};

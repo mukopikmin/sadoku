@@ -25,6 +25,7 @@ import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { DocumentTree } from "./components/DocumentTree";
+import { selectDirectory } from "./api/settings";
 
 type DocumentBreadcrumbProps = {
   documentName: string;
@@ -148,6 +149,7 @@ export const App = () => {
           onCodeWrapModeChange={changeCodeWrapMode}
           onDefaultDirectoryChange={changeDefaultDirectory}
           onOpenChange={settingsDisclosure.setOpen}
+          onSelectDirectory={selectDirectory}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
           themeMode={themeMode}
@@ -193,6 +195,7 @@ export const App = () => {
           onCodeWrapModeChange={changeCodeWrapMode}
           onDefaultDirectoryChange={changeDefaultDirectory}
           onOpenChange={settingsDisclosure.setOpen}
+          onSelectDirectory={selectDirectory}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
           themeMode={themeMode}
@@ -244,6 +247,7 @@ export const App = () => {
         onCodeWrapModeChange={changeCodeWrapMode}
         onDefaultDirectoryChange={changeDefaultDirectory}
         onOpenChange={settingsDisclosure.setOpen}
+        onSelectDirectory={selectDirectory}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}
         themeMode={themeMode}

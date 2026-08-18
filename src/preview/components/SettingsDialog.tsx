@@ -17,6 +17,7 @@ type SettingsDialogProps = {
   defaultDirectory: string;
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onDefaultDirectoryChange: (defaultDirectory: string) => void;
+  onSelectDirectory: () => Promise<string | undefined>;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
@@ -29,11 +30,14 @@ export const SettingsDialog = ({
   onCodeWrapModeChange,
   onDefaultDirectoryChange,
   onOpenChange,
+  onSelectDirectory,
   onThemeModeChange,
   open,
   themeMode,
 }: SettingsDialogProps) => {
   const [directoryInput, setDirectoryInput] = useState(defaultDirectory);
+  const [directoryPickerError, setDirectoryPickerError] = useState<string>();
+  const [directoryPickerPending, setDirectoryPickerPending] = useState(false);
 
   useEffect(() => setDirectoryInput(defaultDirectory), [defaultDirectory]);
 
@@ -127,12 +131,41 @@ export const SettingsDialog = ({
                       value={directoryInput}
                     />
                     <Button
+                      onClick={async () => {
+                        setDirectoryPickerError(undefined);
+                        setDirectoryPickerPending(true);
+                        try {
+                          const selected = await onSelectDirectory();
+                          if (selected !== undefined) {
+                            setDirectoryInput(selected);
+                          }
+                        } catch (error) {
+                          setDirectoryPickerError(
+                            error instanceof Error
+                              ? error.message
+                              : String(error),
+                          );
+                        } finally {
+                          setDirectoryPickerPending(false);
+                        }
+                      }}
+                      loading={directoryPickerPending}
+                      variant="outline"
+                    >
+                      Browse…
+                    </Button>
+                    <Button
                       disabled={directoryInput === defaultDirectory}
                       onClick={() => onDefaultDirectoryChange(directoryInput)}
                     >
                       Save
                     </Button>
                   </Flex>
+                  {directoryPickerError && (
+                    <Text color="fg.error" fontSize="sm" role="alert">
+                      {directoryPickerError}
+                    </Text>
+                  )}
                 </Flex>
               </Flex>
             </Dialog.Body>

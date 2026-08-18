@@ -26,10 +26,13 @@ import {
   notFoundResponse,
   textResponse,
 } from "./responses.ts";
+import { getSettings, updateSettings } from "./api/settings_api.ts";
+import { selectDirectory } from "./directory_picker.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
+  selectDirectory?: () => Promise<string | undefined>;
 };
 
 const findDocument = (
@@ -47,6 +50,7 @@ export const createDirectoryPreviewHandler = (
   options: DirectoryPreviewHandlerOptions = {},
 ): Deno.ServeHandler => {
   const app = new Hono();
+  const openDirectoryPicker = options.selectDirectory ?? selectDirectory;
   const resolveDocument = (rawId: string) => {
     const document = findDocument(session, rawId);
     if (!document) throw notFoundResponse("Document not found.");
@@ -67,6 +71,16 @@ export const createDirectoryPreviewHandler = (
     noStoreJson(session.documents.map(
       ({ id, relativePath, title }) => ({ id, relativePath, title }),
     )));
+  app.get("/__sadoku/settings", getSettings);
+  app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
+  app.post("/__sadoku/settings/select-directory", async () => {
+    const directory = await openDirectoryPicker();
+    return directory === undefined
+      ? new Response(null, { status: 204 })
+      : noStoreJson({ directory });
+  });
+  app.all("/__sadoku/settings", methodNotAllowedResponse);
+  app.all("/__sadoku/settings/select-directory", methodNotAllowedResponse);
   app.get("/__sadoku/documents/:documentId", async (context) => {
     const { document, source } = resolveDocument(
       context.req.param("documentId"),

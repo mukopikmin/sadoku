@@ -120,12 +120,32 @@ Deno.test("serves directory documents and keeps comments isolated", async () => 
 });
 
 Deno.test("serves an empty directory session", async () => {
-  const handler = createDirectoryPreviewHandler({
-    rootPath: "/tmp/empty",
-    documents: [],
-    documentsById: new Map(),
-  }, createMemoryStore());
+  const handler = createDirectoryPreviewHandler(
+    {
+      rootPath: "/tmp/empty",
+      documents: [],
+      documentsById: new Map(),
+    },
+    createMemoryStore(),
+    { selectDirectory: () => Promise.resolve("/workspace/notes") },
+  );
   const response = await request(handler, "/__sadoku/documents");
   assertEquals(response.status, 200);
   assertEquals(await response.json(), []);
+
+  assertEquals(
+    (await request(handler, "/__sadoku/settings")).status,
+    200,
+  );
+  const selected = await request(
+    handler,
+    "/__sadoku/settings/select-directory",
+    { method: "POST" },
+  );
+  assertEquals(selected.status, 200);
+  assertEquals(await selected.json(), { directory: "/workspace/notes" });
+  assertEquals(
+    (await request(handler, "/__sadoku/settings/select-directory")).status,
+    405,
+  );
 });
