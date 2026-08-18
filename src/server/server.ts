@@ -1,9 +1,7 @@
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createConfiguredStores } from "./storage/factory.ts";
-import { getCommentsNotificationFilePath } from "./storage/comment/notifications.ts";
-import { createPreviewHandler } from "./handler.ts";
 import { createPreviewSource } from "./source.ts";
-import { createDirectorySession } from "./directory_session.ts";
+import { createPreviewSession } from "./directory_session.ts";
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 
 export type PreviewServerOptions = {
@@ -125,17 +123,6 @@ export const startPreviewServer = async (
   options: PreviewServerOptions,
 ): Promise<StartedPreviewServer> => {
   const previewSource = createPreviewSource(options.file);
-  let localStat: Deno.FileInfo | undefined;
-  if (!previewSource.isRemote) {
-    localStat = await Deno.stat(previewSource.documentSource).catch(() =>
-      undefined
-    );
-    if (!localStat || (!localStat.isFile && !localStat.isDirectory)) {
-      throw new Error(
-        `Markdown file or directory not found: ${previewSource.documentSource}`,
-      );
-    }
-  }
 
   let server: Deno.HttpServer<Deno.NetAddr>;
   const shutdownScheduler = createPreviewShutdownScheduler({
@@ -145,34 +132,23 @@ export const startPreviewServer = async (
   });
 
   const stores = await createConfiguredStores();
-  const isDirectory = localStat?.isDirectory === true;
-  let directorySession;
+  let previewSession;
   try {
-    directorySession = isDirectory
-      ? await createDirectorySession(
-        previewSource.documentSource,
-        stores.documents,
-      )
-      : undefined;
+    previewSession = await createPreviewSession(
+      previewSource.documentSource,
+      stores.documents,
+    );
   } catch (error) {
     stores.close();
     throw error;
   }
   server = serveOnAvailablePort(
     options,
-    directorySession
-      ? createDirectoryPreviewHandler(
-        directorySession,
-        stores.comments,
-        shutdownScheduler,
-      )
-      : createPreviewHandler(previewSource, {
-        ...shutdownScheduler,
-        commentsNotificationPath: getCommentsNotificationFilePath(
-          previewSource.commentSource,
-        ),
-        commentsStore: stores.comments,
-      }),
+    createDirectoryPreviewHandler(
+      previewSession,
+      stores.comments,
+      shutdownScheduler,
+    ),
   );
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;

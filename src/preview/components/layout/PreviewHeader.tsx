@@ -43,8 +43,7 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 );
 
 type PreviewHeaderProps = {
-  fileUrl: string;
-  onBackToDocuments?: () => void;
+  fileUrl?: string;
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
   onOpenSettings: () => void;
@@ -54,11 +53,11 @@ type PreviewHeaderProps = {
   title: string;
   unresolvedCommentCount: number;
   view: PreviewView;
+  viewsDisabled?: boolean;
 };
 
 export const PreviewHeader = ({
   fileUrl,
-  onBackToDocuments,
   onChangeView,
   onReloadPreview,
   onOpenSettings,
@@ -68,6 +67,7 @@ export const PreviewHeader = ({
   title,
   unresolvedCommentCount,
   view,
+  viewsDisabled = false,
 }: PreviewHeaderProps) => (
   <PreviewShell>
     <Flex alignItems="center" flex="1 1 16rem" gap="3" minW="0">
@@ -78,22 +78,16 @@ export const PreviewHeader = ({
         src="/assets/icon-512.png"
         w="8"
       />
-      {onBackToDocuments && (
-        <Link
-          as="button"
-          color="fg"
-          fontWeight="semibold"
-          onClick={onBackToDocuments}
-        >
-          ← Documents
-        </Link>
-      )}
-      <Text as="div" minW="0">
-        Previewing{" "}
-        <Link href={fileUrl} color="fg" fontWeight="semibold">
-          {title}
-        </Link>.
-      </Text>
+      {fileUrl
+        ? (
+          <Text as="div" minW="0">
+            Previewing{" "}
+            <Link href={fileUrl} color="fg" fontWeight="semibold">
+              {title}
+            </Link>.
+          </Text>
+        )
+        : <Text fontWeight="semibold">{title}</Text>}
     </Flex>
     <Flex
       as="nav"
@@ -162,6 +156,7 @@ export const PreviewHeader = ({
       >
         <Tabs.List>
           <Tabs.Trigger
+            disabled={viewsDisabled}
             onClick={() => onChangeView("preview")}
             value="preview"
           >
@@ -169,6 +164,7 @@ export const PreviewHeader = ({
           </Tabs.Trigger>
           <Tabs.Trigger
             aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
+            disabled={viewsDisabled}
             onClick={() => onChangeView("comments")}
             position="relative"
             value="comments"

@@ -2,7 +2,7 @@ import { assertEquals, assertMatch } from "@std/assert";
 import type { CommentsStore } from "../storage/comment/storage.ts";
 import { getCommentsFilePath } from "../storage/comment/storage.ts";
 import type { PreviewCommentsDocument } from "../usecase/comment/types.ts";
-import { createPreviewHandler } from "../mod.ts";
+import { createTestPreviewHandler } from "../test_helpers.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,
@@ -72,7 +72,7 @@ const createMemoryCommentsStore = (): {
 
 testWithTempComments("validates comment creation input", async () => {
   const filePath = await createTempMarkdown();
-  const handler = createPreviewHandler(filePath);
+  const handler = createTestPreviewHandler(filePath);
   const cases: Array<{
     body: BodyInit | null;
     expected: string;
@@ -113,7 +113,7 @@ testWithTempComments("validates comment creation input", async () => {
     for (const testCase of cases) {
       const response = await requestComments(
         handler,
-        "/__sadoku/comments",
+        "/__sadoku/documents/1/comments",
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -135,11 +135,11 @@ testWithTempComments("validates comment creation input", async () => {
 
 testWithTempComments("creates comments for a source line range", async () => {
   const filePath = await createTempMarkdown("one\ntwo\nthree\nfour\nfive");
-  const handler = createPreviewHandler(filePath);
+  const handler = createTestPreviewHandler(filePath);
   try {
     const response = await requestComments(
       handler,
-      "/__sadoku/comments",
+      "/__sadoku/documents/1/comments",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -166,12 +166,12 @@ testWithTempComments("creates comments for a source line range", async () => {
 testWithTempComments("uses an injected comments store", async () => {
   const filePath = await createTempMarkdown();
   const { documents, store, writes } = createMemoryCommentsStore();
-  const handler = createPreviewHandler(filePath, { commentsStore: store });
+  const handler = createTestPreviewHandler(filePath, { commentsStore: store });
 
   try {
     const createResponse = await requestComments(
       handler,
-      "/__sadoku/comments",
+      "/__sadoku/documents/1/comments",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -191,7 +191,10 @@ testWithTempComments("uses an injected comments store", async () => {
       "Stored elsewhere.",
     );
 
-    const listResponse = await requestComments(handler, "/__sadoku/comments");
+    const listResponse = await requestComments(
+      handler,
+      "/__sadoku/documents/1/comments",
+    );
     const listedDocument = await listResponse.json();
 
     assertEquals(listResponse.status, 200);
@@ -201,7 +204,7 @@ testWithTempComments("uses an injected comments store", async () => {
 
     const updateResponse = await requestComments(
       handler,
-      `/__sadoku/comments/${createdComment.id}`,
+      `/__sadoku/documents/1/comments/${createdComment.id}`,
       {
         method: "PUT",
         headers: { "content-type": "application/json" },
@@ -268,8 +271,8 @@ testWithTempComments(
 
     try {
       const response = await requestComments(
-        createPreviewHandler(filePath, { commentsStore: store }),
-        "/__sadoku/comments",
+        createTestPreviewHandler(filePath, { commentsStore: store }),
+        "/__sadoku/documents/1/comments",
       );
       const document = await response.json();
       assertEquals(response.status, 200);
@@ -286,11 +289,11 @@ testWithTempComments(
 
 testWithTempComments("trims comment bodies before storing them", async () => {
   const filePath = await createTempMarkdown();
-  const handler = createPreviewHandler(filePath);
+  const handler = createTestPreviewHandler(filePath);
   try {
     const response = await requestComments(
       handler,
-      "/__sadoku/comments",
+      "/__sadoku/documents/1/comments",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -315,11 +318,11 @@ testWithTempComments("trims comment bodies before storing them", async () => {
 
 testWithTempComments("adds replies to comments", async () => {
   const filePath = await createTempMarkdown();
-  const handler = createPreviewHandler(filePath);
+  const handler = createTestPreviewHandler(filePath);
   try {
     const createResponse = await requestComments(
       handler,
-      "/__sadoku/comments",
+      "/__sadoku/documents/1/comments",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -330,7 +333,7 @@ testWithTempComments("adds replies to comments", async () => {
 
     const replyResponse = await requestComments(
       handler,
-      `/__sadoku/comments/${createdComment.id}/replies`,
+      `/__sadoku/documents/1/comments/${createdComment.id}/replies`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -347,7 +350,7 @@ testWithTempComments("adds replies to comments", async () => {
 
     const updateResponse = await requestComments(
       handler,
-      `/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
+      `/__sadoku/documents/1/comments/${createdComment.id}/replies/${replyId}`,
       {
         method: "PUT",
         headers: { "content-type": "application/json" },
@@ -365,7 +368,7 @@ testWithTempComments("adds replies to comments", async () => {
 
     const invalidResponse = await requestComments(
       handler,
-      `/__sadoku/comments/${createdComment.id}/replies`,
+      `/__sadoku/documents/1/comments/${createdComment.id}/replies`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -377,14 +380,14 @@ testWithTempComments("adds replies to comments", async () => {
 
     const deleteResponse = await requestComments(
       handler,
-      `/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
+      `/__sadoku/documents/1/comments/${createdComment.id}/replies/${replyId}`,
       { method: "DELETE" },
     );
     assertEquals(deleteResponse.status, 204);
 
     const missingReplyResponse = await requestComments(
       handler,
-      `/__sadoku/comments/${createdComment.id}/replies/${replyId}`,
+      `/__sadoku/documents/1/comments/${createdComment.id}/replies/${replyId}`,
       { method: "DELETE" },
     );
     assertEquals(missingReplyResponse.status, 404);
@@ -392,7 +395,7 @@ testWithTempComments("adds replies to comments", async () => {
 
     const storedResponse = await requestComments(
       handler,
-      "/__sadoku/comments",
+      "/__sadoku/documents/1/comments",
     );
     const storedDocument = await storedResponse.json();
     assertEquals(storedDocument.comments[0].replies, []);
@@ -405,11 +408,11 @@ testWithTempComments(
   "returns Sadoku messages for missing comments and replies",
   async () => {
     const filePath = await createTempMarkdown();
-    const handler = createPreviewHandler(filePath);
+    const handler = createTestPreviewHandler(filePath);
     try {
       const missingCommentResponse = await requestComments(
         handler,
-        "/__sadoku/comments/missing",
+        "/__sadoku/documents/1/comments/missing",
         {
           method: "PUT",
           headers: { "content-type": "application/json" },
@@ -433,7 +436,7 @@ testWithTempComments(
 
       const missingReplyResponse = await requestComments(
         handler,
-        "/__sadoku/comments/missing/replies/1",
+        "/__sadoku/documents/1/comments/missing/replies/1",
         { method: "DELETE" },
       );
 
@@ -456,13 +459,13 @@ testWithTempComments(
       },
     );
     const baseUrl = `http://127.0.0.1:${source.addr.port}/remote.md`;
-    const firstHandler = createPreviewHandler(`${baseUrl}?token=a#section`);
-    const secondHandler = createPreviewHandler(`${baseUrl}?token=b`);
+    const firstHandler = createTestPreviewHandler(`${baseUrl}?token=a#section`);
+    const secondHandler = createTestPreviewHandler(`${baseUrl}?token=b`);
 
     try {
       const createResponse = await requestComments(
         firstHandler,
-        "/__sadoku/comments",
+        "/__sadoku/documents/1/comments",
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -480,7 +483,7 @@ testWithTempComments(
 
       const listResponse = await requestComments(
         secondHandler,
-        "/__sadoku/comments",
+        "/__sadoku/documents/1/comments",
       );
       const document = await listResponse.json();
 

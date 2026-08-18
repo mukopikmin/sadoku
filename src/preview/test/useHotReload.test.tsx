@@ -15,13 +15,13 @@ class TestEventSource extends EventTarget {
 }
 
 const HookProbe = () => {
-  const { reloadAvailable } = useHotReload();
+  const { reloadAvailable } = useHotReload(42);
 
   return <div>{reloadAvailable ? "reload available" : "waiting"}</div>;
 };
 
 const CommentsHookProbe = () => {
-  useCommentsQuery();
+  useCommentsQuery(42);
   return <HookProbe />;
 };
 

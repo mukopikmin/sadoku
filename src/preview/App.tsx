@@ -1,4 +1,5 @@
 import {
+  Breadcrumb,
   Button,
   Container,
   Heading,
@@ -24,6 +25,36 @@ import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { DocumentTree } from "./components/DocumentTree";
+
+type DocumentBreadcrumbProps = {
+  documentName: string;
+  onSelectDocuments: () => void;
+};
+
+const DocumentBreadcrumb = ({
+  documentName,
+  onSelectDocuments,
+}: DocumentBreadcrumbProps) => (
+  <Breadcrumb.Root aria-label="Document path" mb="6">
+    <Breadcrumb.List>
+      <Breadcrumb.Item>
+        <Breadcrumb.Link
+          href="#"
+          onClick={(event) => {
+            event.preventDefault();
+            onSelectDocuments();
+          }}
+        >
+          Documents
+        </Breadcrumb.Link>
+      </Breadcrumb.Item>
+      <Breadcrumb.Separator />
+      <Breadcrumb.Item>
+        <Breadcrumb.CurrentLink>{documentName}</Breadcrumb.CurrentLink>
+      </Breadcrumb.Item>
+    </Breadcrumb.List>
+  </Breadcrumb.Root>
+);
 
 export const App = () => {
   const documentsQuery = useDocumentsQuery();
@@ -89,14 +120,32 @@ export const App = () => {
       </>
     );
   }
-  if (directoryMode && selectedDocumentId === undefined) {
+  if (selectedDocumentId === undefined) {
     return (
       <>
         <style>{previewThemeCss}</style>
-        <PreviewShell>
-          <Heading size="md">Documents</Heading>
-        </PreviewShell>
+        <PreviewHeader
+          onChangeView={setView}
+          onOpenSettings={settingsDisclosure.onOpen}
+          onReloadPreview={reloadPreview}
+          reloadAvailable={false}
+          reloading={false}
+          staleCommentCount={0}
+          title="Documents"
+          unresolvedCommentCount={0}
+          view="preview"
+          viewsDisabled
+        />
+        <SettingsDialog
+          codeWrapMode={codeWrapMode}
+          onCodeWrapModeChange={changeCodeWrapMode}
+          onOpenChange={settingsDisclosure.setOpen}
+          onThemeModeChange={changeThemeMode}
+          open={settingsDisclosure.open}
+          themeMode={themeMode}
+        />
         <Container as="main" maxW="980px" px="8" pb="16">
+          <Heading mb="4" size="md">Documents</Heading>
           {documents!.length === 0
             ? <Text color="fg.muted">No Markdown documents found.</Text>
             : (
@@ -112,25 +161,54 @@ export const App = () => {
 
   if (!documentQuery.data || !commentsQuery.data) {
     const error = documentQuery.error ?? commentsQuery.error;
+    const selectedDocument = documents?.find((item) =>
+      item.id === selectedDocumentId
+    );
     return (
       <>
         <style>{previewThemeCss}</style>
-        <PreviewShell>
-          {directoryMode && (
-            <Button onClick={() => selectDocument(undefined)} variant="ghost">
-              ← Documents
-            </Button>
+        <PreviewHeader
+          onChangeView={setView}
+          onOpenSettings={settingsDisclosure.onOpen}
+          onReloadPreview={reloadPreview}
+          reloadAvailable={false}
+          reloading={false}
+          staleCommentCount={0}
+          title={selectedDocument?.relativePath ?? "Preview"}
+          unresolvedCommentCount={0}
+          view="preview"
+          viewsDisabled
+        />
+        <SettingsDialog
+          codeWrapMode={codeWrapMode}
+          onCodeWrapModeChange={changeCodeWrapMode}
+          onOpenChange={settingsDisclosure.setOpen}
+          onThemeModeChange={changeThemeMode}
+          open={settingsDisclosure.open}
+          themeMode={themeMode}
+        />
+        <Container as="main" maxW="980px" px="8" pb="16">
+          {directoryMode && selectedDocument && (
+            <DocumentBreadcrumb
+              documentName={selectedDocument.relativePath}
+              onSelectDocuments={() => selectDocument(undefined)}
+            />
           )}
-          {error
-            ? error instanceof Error ? error.message : String(error)
-            : "Loading preview..."}
-        </PreviewShell>
+          <Text color={error ? "fg.error" : "fg.muted"}>
+            {error
+              ? error instanceof Error ? error.message : String(error)
+              : "Loading preview..."}
+          </Text>
+        </Container>
       </>
     );
   }
 
   const { comments } = commentsQuery.data;
   const document = documentQuery.data;
+  const selectedDocument = documents?.find((item) =>
+    item.id === selectedDocumentId
+  );
   const staleCommentCount =
     comments.filter((comment) => comment.state === "stale").length;
   const unresolvedCommentCount = comments.filter(isUnresolvedComment).length;
@@ -140,9 +218,6 @@ export const App = () => {
       <style>{previewThemeCss}</style>
       <PreviewHeader
         fileUrl={document.fileUrl}
-        onBackToDocuments={directoryMode
-          ? () => selectDocument(undefined)
-          : undefined}
         onChangeView={setView}
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
@@ -162,11 +237,17 @@ export const App = () => {
         themeMode={themeMode}
       />
       <Container as="main" maxW="980px" px="8" pt="0" pb="16">
+        {directoryMode && selectedDocument && (
+          <DocumentBreadcrumb
+            documentName={selectedDocument.relativePath}
+            onSelectDocuments={() => selectDocument(undefined)}
+          />
+        )}
         {view === "preview"
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
-              key={`${selectedDocumentId ?? "legacy"}-${themeMode}`}
+              key={`${selectedDocumentId}-${themeMode}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}
             />

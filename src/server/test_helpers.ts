@@ -1,8 +1,36 @@
 import { join } from "@std/path";
 import {
+  type CommentsStore,
+  fileCommentsStore,
   getCommentsDirectoryPath,
   getCommentsFilePath,
 } from "./storage/comment/storage.ts";
+import { createDirectoryPreviewHandler } from "./directory_handler.ts";
+import type { DirectoryPreviewHandlerOptions } from "./directory_handler.ts";
+import { createPreviewSource, sourceTitle } from "./source.ts";
+
+export const createTestPreviewHandler = (
+  input: string,
+  options: DirectoryPreviewHandlerOptions & { commentsStore?: CommentsStore } =
+    {},
+): Deno.ServeHandler => {
+  const source = createPreviewSource(input);
+  const document = {
+    filePath: source.documentSource,
+    id: 1,
+    relativePath: sourceTitle(source.documentSource),
+    title: sourceTitle(source.documentSource),
+  };
+  return createDirectoryPreviewHandler(
+    {
+      rootPath: source.documentSource,
+      documents: [document],
+      documentsById: new Map([[document.id, document]]),
+    },
+    options.commentsStore ?? fileCommentsStore,
+    options,
+  );
+};
 
 export const serveHandlerInfo = {} as Deno.ServeHandlerInfo<Deno.NetAddr>;
 

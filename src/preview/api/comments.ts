@@ -84,13 +84,11 @@ export const toCommentsDocument = (
   filePath: response.filePath,
 });
 
-const commentsPath = (documentId?: number): string =>
-  documentId === undefined
-    ? "/__sadoku/comments"
-    : `/__sadoku/documents/${documentId}/comments`;
+const commentsPath = (documentId: number): string =>
+  `/__sadoku/documents/${documentId}/comments`;
 
 export const loadComments = async (
-  documentId?: number,
+  documentId: number,
 ): Promise<CommentsDocument> => {
   const response = await fetch(commentsPath(documentId));
   if (!response.ok) {
@@ -103,7 +101,7 @@ export const createComment = async (
   startLine: number,
   body: string,
   endLine: number,
-  documentId?: number,
+  documentId: number,
 ): Promise<Comment> => {
   const response = await fetch(commentsPath(documentId), {
     method: "POST",
@@ -119,7 +117,7 @@ export const createComment = async (
 export const createReply = async (
   commentId: number,
   body: string,
-  documentId?: number,
+  documentId: number,
 ): Promise<Comment> => {
   const response = await fetch(
     `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies`,
@@ -139,7 +137,7 @@ export const updateReply = async (
   commentId: number,
   replyId: number,
   body: string,
-  documentId?: number,
+  documentId: number,
 ): Promise<Comment> => {
   const response = await fetch(
     `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies/${
@@ -160,7 +158,7 @@ export const updateReply = async (
 export const deleteReply = async (
   commentId: number,
   replyId: number,
-  documentId?: number,
+  documentId: number,
 ): Promise<void> => {
   const response = await fetch(
     `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies/${
@@ -176,7 +174,7 @@ export const deleteReply = async (
 export const updateComment = async (
   id: number,
   body: string,
-  documentId?: number,
+  documentId: number,
 ): Promise<Comment> => {
   const response = await fetch(
     `${commentsPath(documentId)}/${encodeURIComponent(id)}`,
@@ -194,7 +192,7 @@ export const updateComment = async (
 
 export const resolveComment = async (
   id: number,
-  documentId?: number,
+  documentId: number,
 ): Promise<Comment> => {
   const response = await fetch(
     `${commentsPath(documentId)}/${encodeURIComponent(id)}/resolve`,
@@ -210,7 +208,7 @@ export const resolveComment = async (
 
 export const reopenComment = async (
   id: number,
-  documentId?: number,
+  documentId: number,
 ): Promise<Comment> => {
   const response = await fetch(
     `${commentsPath(documentId)}/${encodeURIComponent(id)}/reopen`,
@@ -226,7 +224,7 @@ export const reopenComment = async (
 
 export const deleteComment = async (
   id: number,
-  documentId?: number,
+  documentId: number,
 ): Promise<void> => {
   const response = await fetch(
     `${commentsPath(documentId)}/${encodeURIComponent(id)}`,

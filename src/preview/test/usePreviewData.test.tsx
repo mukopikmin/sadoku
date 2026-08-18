@@ -45,8 +45,8 @@ describe("preview data queries", () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const first = renderHook(useCommentsQuery, { wrapper });
-    const second = renderHook(useCommentsQuery, { wrapper });
+    const first = renderHook(() => useCommentsQuery(42), { wrapper });
+    const second = renderHook(() => useCommentsQuery(42), { wrapper });
 
     await waitFor(() => {
       expect(first.result.current.isSuccess).toBe(true);
@@ -57,7 +57,7 @@ describe("preview data queries", () => {
 
   it("updates the shared comments cache from mutation responses", async () => {
     const queryClient = createPreviewQueryClient();
-    queryClient.setQueryData(commentsQueryKey(), {
+    queryClient.setQueryData(commentsQueryKey(42), {
       comments: [createComment()],
       filePath: "/tmp/example.md",
     });
@@ -68,40 +68,49 @@ describe("preview data queries", () => {
       "fetch",
       vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
-        if (url === "/__sadoku/comments" && init?.method === "POST") {
+        if (
+          url === "/__sadoku/documents/42/comments" &&
+          init?.method === "POST"
+        ) {
           return Promise.resolve(Response.json(createComment({ id: 2 })));
         }
-        if (url === "/__sadoku/comments/1" && init?.method === "PUT") {
+        if (
+          url === "/__sadoku/documents/42/comments/1" &&
+          init?.method === "PUT"
+        ) {
           return Promise.resolve(Response.json(createComment({
             body: "Updated comment.",
           })));
         }
-        if (url === "/__sadoku/comments/1" && init?.method === "DELETE") {
+        if (
+          url === "/__sadoku/documents/42/comments/1" &&
+          init?.method === "DELETE"
+        ) {
           return Promise.resolve(new Response(null, { status: 204 }));
         }
         return Promise.resolve(new Response("Not found.", { status: 404 }));
       }),
     );
-    const { result } = renderHook(useCommentActions, { wrapper });
+    const { result } = renderHook(() => useCommentActions(42), { wrapper });
 
     await act(() => result.current.onCreateComment(3, "New comment.", 3));
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(),
+        commentsQueryKey(42),
       )?.comments.map((comment) => comment.id),
     ).toEqual([1, 2]);
 
     await act(() => result.current.onUpdateComment(1, "Updated comment."));
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(),
+        commentsQueryKey(42),
       )?.comments[0].body,
     ).toBe("Updated comment.");
 
     await act(() => result.current.onDeleteComment(1));
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(),
+        commentsQueryKey(42),
       )?.comments.map((comment) => comment.id),
     ).toEqual([2]);
   });
@@ -109,7 +118,7 @@ describe("preview data queries", () => {
   it("leaves cached comments unchanged when a mutation fails", async () => {
     const comment = createComment();
     const queryClient = createPreviewQueryClient();
-    queryClient.setQueryData(commentsQueryKey(), {
+    queryClient.setQueryData(commentsQueryKey(42), {
       comments: [comment],
       filePath: "/tmp/example.md",
     });
@@ -120,14 +129,14 @@ describe("preview data queries", () => {
       "fetch",
       vi.fn(() => Promise.resolve(new Response("Failed.", { status: 500 }))),
     );
-    const { result } = renderHook(useCommentActions, { wrapper });
+    const { result } = renderHook(() => useCommentActions(42), { wrapper });
 
     await expect(
       act(() => result.current.onUpdateComment(1, "Rejected update.")),
     ).rejects.toThrow("Failed to update comment: 500");
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(),
+        commentsQueryKey(42),
       )?.comments,
     ).toEqual([comment]);
   });

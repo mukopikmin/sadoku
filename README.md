@@ -1,7 +1,8 @@
 # <img src="src/preview/public/icon-512.png" alt="Sadoku icon" width="40" height="40" align="absmiddle"> Sadoku
 
 `sadoku` is a local Markdown review tool for reading, previewing, and commenting
-on one Markdown document in your browser.
+on either a single Markdown document or the Markdown documents in a local
+directory from your browser.
 
 Run its `start` command with a Markdown file path, a directory, or an HTTP(S)
 URL. It starts a local HTTP server, renders the source as HTML, prints the
@@ -80,6 +81,30 @@ Preview a file:
 ```sh
 sadoku start README.md
 ```
+
+Preview the Markdown documents in a directory:
+
+```sh
+sadoku start ./docs
+```
+
+For a directory preview, Sadoku scans only the files directly inside the
+specified directory when the server starts. It does not search subdirectories. A
+document must be a regular file whose extension is `.md` or `.markdown`,
+compared case-insensitively; symbolic links are not followed.
+
+The initial screen lists the discovered documents. Selecting a document stores
+the selection in React state without changing the URL. Reloading the page
+returns to the list, as does the `Documents` action in an open document.
+
+The document list is generated once at startup. Files added or removed after
+startup are not reflected automatically, but change notifications continue to
+work for the selected document.
+
+The initial directory-preview implementation intentionally does not include
+recursive discovery, `.gitignore` handling, search, a tree view, per-document
+URLs, live rescanning of the directory, or deletion of individual comments from
+the CLI.
 
 Preview Markdown from a URL:
 
