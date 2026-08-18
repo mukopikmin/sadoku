@@ -23,6 +23,7 @@ import { createConfiguredCommentsStore } from "../storage/comment/factory.ts";
 import { createPreviewSource } from "../source.ts";
 
 export type CliDependencies = {
+  getDefaultDirectory(): string | undefined;
   startPreviewServer(
     options: PreviewServerOptions,
   ): Promise<{ filePath: string; url: string }>;
@@ -243,12 +244,16 @@ const executeCli = async (
     return;
   }
 
-  if (!options.file) {
+  const file = options.file ??
+    (options.command === "start"
+      ? dependencies.getDefaultDirectory()
+      : undefined);
+  if (!file) {
     throw new CliUsageError("Missing Markdown file.");
   }
 
   const preview = await dependencies.startPreviewServer({
-    file: options.file,
+    file,
     host: options.host,
     keepAlive: options.keepAlive,
     port: options.port,

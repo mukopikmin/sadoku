@@ -72,6 +72,31 @@ Deno.test("PUT updates preview settings without losing config", async () => {
   });
 });
 
+Deno.test("GET and PUT expose the default preview directory", async () => {
+  await withSettings(async () => {
+    const response = await updateSettings(
+      request({
+        codeWrap: "wrap",
+        defaultDirectory: "/workspace/notes",
+        theme: "dark",
+      }),
+    );
+
+    assertEquals(response.status, 200);
+    assertEquals(await response.json(), {
+      codeWrap: "wrap",
+      defaultDirectory: "/workspace/notes",
+      theme: "dark",
+    });
+    assertEquals(readConfig()?.defaultDirectory, "/workspace/notes");
+    assertEquals(await getSettings().json(), {
+      codeWrap: "wrap",
+      defaultDirectory: "/workspace/notes",
+      theme: "dark",
+    });
+  });
+});
+
 Deno.test("PUT rejects an invalid Content-Type", async () => {
   await withSettings(async () => {
     assertEquals(

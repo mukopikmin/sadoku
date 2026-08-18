@@ -8,6 +8,7 @@ const configFileName = "config.toml";
 export type SadokuConfig = {
   codeWrapMode?: "scroll" | "wrap";
   commentsDirectory?: string;
+  defaultDirectory?: string;
   themeMode?: "dark" | "light";
 };
 
@@ -55,6 +56,14 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     }
 
     if (commentsDirectory) config.commentsDirectory = commentsDirectory;
+  }
+
+  if ("default_directory" in value) {
+    const defaultDirectory = value.default_directory;
+    if (typeof defaultDirectory !== "string") {
+      throw new Error("default_directory in Sadoku config must be a string.");
+    }
+    if (defaultDirectory) config.defaultDirectory = defaultDirectory;
   }
 
   if ("theme_mode" in value) {
@@ -123,8 +132,15 @@ export const updateCodeWrapConfig = (
 export const updatePreviewConfig = (
   theme: "dark" | "light",
   codeWrap: "scroll" | "wrap",
+  defaultDirectory?: string,
 ): Promise<void> =>
-  updateConfig({ code_wrap_mode: codeWrap, theme_mode: theme });
+  updateConfig({
+    code_wrap_mode: codeWrap,
+    ...(defaultDirectory === undefined
+      ? {}
+      : { default_directory: defaultDirectory }),
+    theme_mode: theme,
+  });
 
 export const readConfig = (): SadokuConfig | undefined => {
   const configFilePath = getConfigFilePath();

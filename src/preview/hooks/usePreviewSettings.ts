@@ -12,6 +12,7 @@ const getPreferredThemeMode = (): ThemeMode =>
 
 export const usePreviewSettings = () => {
   const [codeWrapMode, setCodeWrapMode] = useState<CodeWrapMode>("scroll");
+  const [defaultDirectory, setDefaultDirectory] = useState("");
   const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
   const userChangedSettings = useRef(false);
   const queryClient = useQueryClient();
@@ -31,6 +32,7 @@ export const usePreviewSettings = () => {
     if (settingsQuery.data.codeWrap !== undefined) {
       setCodeWrapMode(settingsQuery.data.codeWrap);
     }
+    setDefaultDirectory(settingsQuery.data.defaultDirectory ?? "");
     if (settingsQuery.data.theme !== undefined) {
       setThemeMode(settingsQuery.data.theme);
     }
@@ -51,14 +53,39 @@ export const usePreviewSettings = () => {
   const changeCodeWrapMode = (next: CodeWrapMode) => {
     userChangedSettings.current = true;
     setCodeWrapMode(next);
-    saveMutation.mutate({ codeWrap: next, theme: themeMode });
+    saveMutation.mutate({
+      codeWrap: next,
+      ...(defaultDirectory ? { defaultDirectory } : {}),
+      theme: themeMode,
+    });
   };
 
   const changeThemeMode = (next: ThemeMode) => {
     userChangedSettings.current = true;
     setThemeMode(next);
-    saveMutation.mutate({ codeWrap: codeWrapMode, theme: next });
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      ...(defaultDirectory ? { defaultDirectory } : {}),
+      theme: next,
+    });
   };
 
-  return { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode };
+  const changeDefaultDirectory = (next: string) => {
+    userChangedSettings.current = true;
+    setDefaultDirectory(next);
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      defaultDirectory: next,
+      theme: themeMode,
+    });
+  };
+
+  return {
+    changeCodeWrapMode,
+    changeDefaultDirectory,
+    changeThemeMode,
+    codeWrapMode,
+    defaultDirectory,
+    themeMode,
+  };
 };

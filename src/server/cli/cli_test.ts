@@ -3,6 +3,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { type CliDependencies, type CliIo, runCli } from "./cli.ts";
 
 const dependencies: CliDependencies = {
+  getDefaultDirectory: () => undefined,
   startPreviewServer: () =>
     Promise.reject(new Error("The test must not start the preview server.")),
 };
@@ -49,6 +50,7 @@ Deno.test("requests preview startup through an injected dependency", async () =>
   const exitCode = await runCli(
     ["start", "README.md", "--no-open"],
     {
+      getDefaultDirectory: () => undefined,
       startPreviewServer: (options) => {
         startupOptions.push(options);
         return Promise.resolve({
@@ -63,6 +65,34 @@ Deno.test("requests preview startup through an injected dependency", async () =>
   assertEquals(exitCode, 0);
   assertEquals(startupOptions, [{
     file: "README.md",
+    host: "127.0.0.1",
+    keepAlive: false,
+    port: 3334,
+  }]);
+});
+
+Deno.test("starts the configured default directory when source is omitted", async () => {
+  const output = captureIo();
+  const startupOptions: unknown[] = [];
+
+  const exitCode = await runCli(
+    ["start", "--no-open"],
+    {
+      getDefaultDirectory: () => "/workspace/notes",
+      startPreviewServer: (options) => {
+        startupOptions.push(options);
+        return Promise.resolve({
+          filePath: "/workspace/notes",
+          url: "http://127.0.0.1:3334/",
+        });
+      },
+    },
+    output.io,
+  );
+
+  assertEquals(exitCode, 0);
+  assertEquals(startupOptions, [{
+    file: "/workspace/notes",
     host: "127.0.0.1",
     keepAlive: false,
     port: 3334,

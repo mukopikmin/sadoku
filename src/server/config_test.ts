@@ -106,6 +106,23 @@ Deno.test("reads comments directory from config", async () => {
   });
 });
 
+Deno.test("reads and validates the default preview directory", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(
+      configFilePath,
+      'default_directory = "/workspace/notes"\n',
+    );
+    assertEquals(readConfig(), { defaultDirectory: "/workspace/notes" });
+
+    await writeConfig(configFilePath, "default_directory = 42\n");
+    assertThrows(
+      () => readConfig(),
+      Error,
+      "default_directory in Sadoku config must be a string.",
+    );
+  });
+});
+
 Deno.test("prefers the comments directory environment override", async () => {
   await withConfigEnvironment(async ({ root }) => {
     const commentsDirectory = join(root, "environment-comments");

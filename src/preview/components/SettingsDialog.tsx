@@ -1,17 +1,22 @@
 import {
+  Button,
   Dialog,
   Flex,
   IconButton,
+  Input,
   NativeSelect,
   Portal,
   Switch,
   Text,
 } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import type { CodeWrapMode, ThemeMode } from "../models/theme";
 
 type SettingsDialogProps = {
   codeWrapMode: CodeWrapMode;
+  defaultDirectory: string;
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
+  onDefaultDirectoryChange: (defaultDirectory: string) => void;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
@@ -20,12 +25,18 @@ type SettingsDialogProps = {
 
 export const SettingsDialog = ({
   codeWrapMode,
+  defaultDirectory,
   onCodeWrapModeChange,
+  onDefaultDirectoryChange,
   onOpenChange,
   onThemeModeChange,
   open,
   themeMode,
 }: SettingsDialogProps) => {
+  const [directoryInput, setDirectoryInput] = useState(defaultDirectory);
+
+  useEffect(() => setDirectoryInput(defaultDirectory), [defaultDirectory]);
+
   return (
     <Dialog.Root
       finalFocusEl={() =>
@@ -95,6 +106,33 @@ export const SettingsDialog = ({
                     </Switch.Control>
                     <Switch.Label srOnly>Wrap code blocks</Switch.Label>
                   </Switch.Root>
+                </Flex>
+                <Flex direction="column" gap="2">
+                  <Text
+                    as="label"
+                    htmlFor="default-directory"
+                    fontWeight="medium"
+                  >
+                    Default folder
+                  </Text>
+                  <Text color="fg.muted" fontSize="sm">
+                    Used when sadoku start is run without a file or folder.
+                  </Text>
+                  <Flex gap="2">
+                    <Input
+                      id="default-directory"
+                      onChange={(event) =>
+                        setDirectoryInput(event.currentTarget.value)}
+                      placeholder="/path/to/markdown"
+                      value={directoryInput}
+                    />
+                    <Button
+                      disabled={directoryInput === defaultDirectory}
+                      onClick={() => onDefaultDirectoryChange(directoryInput)}
+                    >
+                      Save
+                    </Button>
+                  </Flex>
                 </Flex>
               </Flex>
             </Dialog.Body>

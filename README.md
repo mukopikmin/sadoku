@@ -66,7 +66,7 @@ If `--version` is omitted, the compiled binary reports the development version
 ## Usage
 
 ```sh
-sadoku start <file.md|directory|url> [options]
+sadoku start [file.md|directory|url] [options]
 sadoku update [--channel stable|nightly]
 ```
 
@@ -111,6 +111,10 @@ Preview Markdown from a URL:
 ```sh
 sadoku start 'https://example.com/README.md?token=temporary'
 ```
+
+When no path is supplied, Sadoku opens the default folder configured in the
+Settings dialog. The command reports an error if no default folder has been
+configured. An explicitly supplied path always takes precedence.
 
 Use a different port:
 
@@ -167,6 +171,7 @@ directory:
 
 ```toml
 commentsDirectory = "/path/to/sadoku/comments"
+default_directory = "/path/to/markdown"
 theme_mode = "dark"
 ```
 

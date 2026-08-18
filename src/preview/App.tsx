@@ -73,8 +73,14 @@ export const App = () => {
   );
   const [view, setView] = useState<PreviewView>("preview");
   const settingsDisclosure = useDisclosure();
-  const { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode } =
-    usePreviewSettings();
+  const {
+    changeCodeWrapMode,
+    changeDefaultDirectory,
+    changeThemeMode,
+    codeWrapMode,
+    defaultDirectory,
+    themeMode,
+  } = usePreviewSettings();
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
     selectedDocumentId,
   );
@@ -138,7 +144,9 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          defaultDirectory={defaultDirectory}
           onCodeWrapModeChange={changeCodeWrapMode}
+          onDefaultDirectoryChange={changeDefaultDirectory}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -181,7 +189,9 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          defaultDirectory={defaultDirectory}
           onCodeWrapModeChange={changeCodeWrapMode}
+          onDefaultDirectoryChange={changeDefaultDirectory}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -230,7 +240,9 @@ export const App = () => {
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
+        defaultDirectory={defaultDirectory}
         onCodeWrapModeChange={changeCodeWrapMode}
+        onDefaultDirectoryChange={changeDefaultDirectory}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}

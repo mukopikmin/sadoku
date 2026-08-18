@@ -2,11 +2,13 @@ import type { CodeWrapMode, PreviewSettings, ThemeMode } from "../models/theme";
 
 export type SettingsResponse = {
   codeWrap?: unknown;
+  defaultDirectory?: unknown;
   theme?: unknown;
 };
 
 export type SettingsUpdate = {
   codeWrap: CodeWrapMode;
+  defaultDirectory?: string;
   theme: ThemeMode;
 };
 
@@ -23,7 +25,19 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
   ) {
     throw new Error("Settings response contained an invalid code wrap mode.");
   }
-  return { codeWrap: response.codeWrap, theme: response.theme };
+  if (
+    response.defaultDirectory !== undefined &&
+    typeof response.defaultDirectory !== "string"
+  ) {
+    throw new Error(
+      "Settings response contained an invalid default directory.",
+    );
+  }
+  return {
+    codeWrap: response.codeWrap,
+    defaultDirectory: response.defaultDirectory,
+    theme: response.theme,
+  };
 };
 
 export const loadSettings = async (): Promise<PreviewSettings> => {

@@ -19,6 +19,19 @@ Deno.test("uses the default host and port", () => {
   });
 });
 
+Deno.test("parses start without a source for configured default use", () => {
+  assertEquals(parseArgs(["start"]), {
+    asBot: false,
+    command: "start",
+    file: undefined,
+    force: false,
+    host: "127.0.0.1",
+    keepAlive: false,
+    open: true,
+    port: 3334,
+  });
+});
+
 Deno.test("parses URL sources", () => {
   const source = "https://example.com/README.md?token=temporary";
   assertEquals(parseArgs(["start", source]), {
@@ -229,7 +242,7 @@ Deno.test("parses help", () => {
   assertEquals(parseArgs(["--help"]).help, true);
   assertEquals(parseArgs(["start", "--help"]).help, true);
   assertMatch(usage, /Defaults to 3334/);
-  assertMatch(usage, /sadoku start <file\.md\|directory\|url>/);
+  assertMatch(usage, /sadoku start \[file\.md\|directory\|url\]/);
   assertMatch(usage, /comments list/);
   assertMatch(usage, /comments inspect/);
   assertMatch(usage, /comments add/);

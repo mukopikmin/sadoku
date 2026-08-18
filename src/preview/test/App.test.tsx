@@ -473,6 +473,52 @@ describe("App", () => {
     await waitFor(() => expect(document.activeElement).toBe(settingsButton));
   });
 
+  it("loads and saves the default folder from settings", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(Response.json([]));
+      }
+      if (url === "/__sadoku/settings") {
+        return Promise.resolve(Response.json(
+          init?.method === "PUT"
+            ? JSON.parse(String(init.body))
+            : { defaultDirectory: "/workspace/notes" },
+        ));
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    });
+    vi.stubGlobal("fetch", fetch);
+
+    render(<App />);
+    await screen.findByText("No Markdown documents found.");
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const input = await screen.findByRole("textbox", {
+      name: "Default folder",
+    });
+    expect((input as HTMLInputElement).value).toBe("/workspace/notes");
+
+    fireEvent.change(input, { target: { value: "/workspace/docs" } });
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    await waitFor(() =>
+      expect((saveButton as HTMLButtonElement).disabled).toBe(false)
+    );
+    fireEvent.click(saveButton);
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+        body: JSON.stringify({
+          codeWrap: "scroll",
+          defaultDirectory: "/workspace/docs",
+          theme: "light",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PUT",
+      })
+    );
+  });
+
   it("uses the OS theme and applies a selected theme when saving fails", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));

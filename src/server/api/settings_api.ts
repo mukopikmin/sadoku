@@ -11,6 +11,9 @@ const readSettings = () => {
     ...(config?.codeWrapMode === undefined
       ? {}
       : { codeWrap: config.codeWrapMode }),
+    ...(config?.defaultDirectory === undefined
+      ? {}
+      : { defaultDirectory: config.defaultDirectory }),
   };
 };
 
@@ -37,17 +40,22 @@ export const updateSettings = async (
     );
   }
 
-  const { codeWrap, theme } = body as Record<string, unknown>;
+  const { codeWrap, defaultDirectory, theme } = body as Record<string, unknown>;
+  const keys = Object.keys(body);
   if (
-    Object.keys(body).length !== 2 ||
+    (keys.length !== 2 && keys.length !== 3) ||
+    keys.some((key) =>
+      key !== "theme" && key !== "codeWrap" && key !== "defaultDirectory"
+    ) ||
     (theme !== "dark" && theme !== "light") ||
-    (codeWrap !== "scroll" && codeWrap !== "wrap")
+    (codeWrap !== "scroll" && codeWrap !== "wrap") ||
+    (defaultDirectory !== undefined && typeof defaultDirectory !== "string")
   ) {
     return invalidRequest(
-      'Request body must contain only theme ("dark" or "light") and codeWrap ("scroll" or "wrap").',
+      'Request body must contain theme ("dark" or "light"), codeWrap ("scroll" or "wrap"), and optionally defaultDirectory (a string).',
     );
   }
 
-  await updatePreviewConfig(theme, codeWrap);
+  await updatePreviewConfig(theme, codeWrap, defaultDirectory);
   return noStoreJson(readSettings());
 };
