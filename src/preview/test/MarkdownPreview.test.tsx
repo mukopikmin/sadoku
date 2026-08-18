@@ -196,6 +196,11 @@ console.log("<ok>");
 
     expect(container.querySelector("h1#title a.heading-anchor")?.textContent)
       .toBe("Title!");
+    expect(
+      container.querySelector("h1#title a.heading-anchor")?.getAttribute(
+        "target",
+      ),
+    ).toBeNull();
     expect(container.querySelector("h2#title-1 a.heading-anchor")?.textContent)
       .toBe("Title!");
     expect(
@@ -237,6 +242,8 @@ Footnote-looking text stays plain.[^note]
 
     expect(link.getAttribute("href")).toBe("https://example.com");
     expect(link.getAttribute("title")).toBe("Site title");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
     expect(image.getAttribute("src")).toBe("logo.png");
     expect(image.getAttribute("title")).toBe("Logo title");
     expect(container.querySelector("p")).not.toBeNull();
