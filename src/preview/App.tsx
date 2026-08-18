@@ -3,7 +3,6 @@ import {
   Button,
   Container,
   Heading,
-  Stack,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -31,19 +30,28 @@ import {
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
+import { DocumentTree } from "./components/DocumentTree";
 
 type DocumentBreadcrumbProps = {
   documentName: string;
+  onSelectDocuments: () => void;
 };
 
 const DocumentBreadcrumb = ({
   documentName,
+  onSelectDocuments,
 }: DocumentBreadcrumbProps) => (
   <Breadcrumb.Root aria-label="Document path" mb="6">
     <Breadcrumb.List>
       <Breadcrumb.Item>
-        <Breadcrumb.Link asChild>
-          <RouterLink to="/">Documents</RouterLink>
+        <Breadcrumb.Link
+          href="#"
+          onClick={(event) => {
+            event.preventDefault();
+            onSelectDocuments();
+          }}
+        >
+          Documents
         </Breadcrumb.Link>
       </Breadcrumb.Item>
       <Breadcrumb.Separator />
@@ -108,6 +116,13 @@ export const App = () => {
         ? "/documents/$documentId/comments"
         : "/documents/$documentId",
       params: { documentId: String(selectedDocumentId) },
+    });
+  };
+
+  const selectDocument = (id: number) => {
+    void navigate({
+      to: "/documents/$documentId",
+      params: { documentId: String(id) },
     });
   };
 
@@ -195,23 +210,10 @@ export const App = () => {
           {documents!.length === 0
             ? <Text color="fg.muted">No Markdown documents found.</Text>
             : (
-              <Stack align="stretch" gap="2">
-                {documents!.map((document) => (
-                  <Button
-                    asChild
-                    justifyContent="flex-start"
-                    key={document.id}
-                    variant="ghost"
-                  >
-                    <RouterLink
-                      params={{ documentId: String(document.id) }}
-                      to="/documents/$documentId"
-                    >
-                      {document.relativePath}
-                    </RouterLink>
-                  </Button>
-                ))}
-              </Stack>
+              <DocumentTree
+                documents={documents!}
+                onSelectDocument={selectDocument}
+              />
             )}
         </Container>
       </>
@@ -250,6 +252,7 @@ export const App = () => {
           {directoryMode && selectedDocument && (
             <DocumentBreadcrumb
               documentName={selectedDocument.relativePath}
+              onSelectDocuments={() => void navigate({ to: "/" })}
             />
           )}
           <Text color={error ? "fg.error" : "fg.muted"}>
@@ -298,6 +301,7 @@ export const App = () => {
         {directoryMode && selectedDocument && (
           <DocumentBreadcrumb
             documentName={selectedDocument.relativePath}
+            onSelectDocuments={() => void navigate({ to: "/" })}
           />
         )}
         {view === "preview"
