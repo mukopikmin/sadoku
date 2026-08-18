@@ -1,4 +1,5 @@
 import { basename, join } from "@std/path";
+import { fetchPreviewDocument } from "./release_verification.ts";
 
 type Target = {
   id: string;
@@ -270,8 +271,7 @@ const verifyNativeBinary = async (binaryPath: string): Promise<void> => {
       throw new Error("Preview page did not include the preview client.");
     }
 
-    const document = await (await fetch(new URL("/__sadoku/document", url)))
-      .json() as { markdown?: string };
+    const document = await fetchPreviewDocument(url);
     if (!document.markdown?.includes("```mermaid")) {
       throw new Error("Preview document API did not return the Mermaid block.");
     }
