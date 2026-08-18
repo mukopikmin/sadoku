@@ -88,7 +88,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
@@ -148,7 +148,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
     await screen.findByRole("heading", { name: "Original title" });
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
@@ -248,7 +248,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
     await screen.findByRole("heading", { name: "Original title" });
     TestEventSource.instances.at(-1)?.dispatchEvent(
       new MessageEvent("invalidate", {
@@ -311,7 +311,7 @@ describe("App", () => {
     );
 
     const { container } = render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
     await screen.findByRole("link", { name: "example.md" });
 
@@ -408,7 +408,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
     await screen.findByRole("link", { name: "example.md" });
     await waitFor(() =>
@@ -518,7 +518,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
     await screen.findByRole("link", { name: "example.md" });
     expect(document.documentElement.dataset.theme).toBe("dark");
     fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
@@ -567,7 +567,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
     const code = await screen.findByText("日本語の長いコードブロック");
     expect(document.documentElement.dataset.codeWrap).toBe("wrap");
@@ -685,7 +685,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
     await waitFor(() =>
       expect(screen.getByText("Active comment.")).not.toBeNull()

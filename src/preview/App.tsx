@@ -3,7 +3,6 @@ import {
   Button,
   Container,
   Heading,
-  Stack,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -25,6 +24,7 @@ import {
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
+import { DocumentTree } from "./components/DocumentTree";
 
 type DocumentBreadcrumbProps = {
   documentName: string;
@@ -149,18 +149,10 @@ export const App = () => {
           {documents!.length === 0
             ? <Text color="fg.muted">No Markdown documents found.</Text>
             : (
-              <Stack align="stretch" gap="2">
-                {documents!.map((document) => (
-                  <Button
-                    justifyContent="flex-start"
-                    key={document.id}
-                    onClick={() => selectDocument(document.id)}
-                    variant="ghost"
-                  >
-                    {document.relativePath}
-                  </Button>
-                ))}
-              </Stack>
+              <DocumentTree
+                documents={documents!}
+                onSelectDocument={selectDocument}
+              />
             )}
         </Container>
       </>
