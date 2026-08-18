@@ -127,7 +127,14 @@ Deno.test("serves an empty directory session", async () => {
       documentsById: new Map(),
     },
     createMemoryStore(),
-    { selectDirectory: () => Promise.resolve("/workspace/notes") },
+    {
+      listDirectories: (path) =>
+        Promise.resolve({
+          directories: [{ name: "docs", path: "/workspace/docs" }],
+          parent: "/workspace",
+          path: path ?? "/workspace/notes",
+        }),
+    },
   );
   const response = await request(handler, "/__sadoku/documents");
   assertEquals(response.status, 200);
@@ -137,15 +144,20 @@ Deno.test("serves an empty directory session", async () => {
     (await request(handler, "/__sadoku/settings")).status,
     200,
   );
-  const selected = await request(
+  const directories = await request(
     handler,
-    "/__sadoku/settings/select-directory",
-    { method: "POST" },
+    "/__sadoku/settings/directories?path=%2Fworkspace%2Fnotes",
   );
-  assertEquals(selected.status, 200);
-  assertEquals(await selected.json(), { directory: "/workspace/notes" });
+  assertEquals(directories.status, 200);
+  assertEquals(await directories.json(), {
+    directories: [{ name: "docs", path: "/workspace/docs" }],
+    parent: "/workspace",
+    path: "/workspace/notes",
+  });
   assertEquals(
-    (await request(handler, "/__sadoku/settings/select-directory")).status,
+    (await request(handler, "/__sadoku/settings/directories", {
+      method: "POST",
+    })).status,
     405,
   );
 });

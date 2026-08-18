@@ -64,20 +64,34 @@ const saveSetting = async (
 
 export const saveSettings = saveSetting;
 
-export const selectDirectory = async (): Promise<string | undefined> => {
-  const response = await fetch("/__sadoku/settings/select-directory", {
-    method: "POST",
-  });
-  if (response.status === 204) return undefined;
+export type DirectoryListing = {
+  directories: Array<{ name: string; path: string }>;
+  parent?: string;
+  path: string;
+};
+
+export const loadDirectories = async (
+  path?: string,
+): Promise<DirectoryListing> => {
+  const query = path ? `?path=${encodeURIComponent(path)}` : "";
+  const response = await fetch(`/__sadoku/settings/directories${query}`);
   if (!response.ok) {
-    throw new Error(`Failed to open directory picker: ${response.status}`);
+    throw new Error(`Failed to load directories: ${response.status}`);
   }
   const body: unknown = await response.json();
+  const value = body as Record<string, unknown>;
   if (
     typeof body !== "object" || body === null ||
-    typeof (body as Record<string, unknown>).directory !== "string"
+    typeof value.path !== "string" ||
+    (value.parent !== undefined && typeof value.parent !== "string") ||
+    !Array.isArray(value.directories) ||
+    value.directories.some((directory) =>
+      typeof directory !== "object" || directory === null ||
+      typeof (directory as Record<string, unknown>).name !== "string" ||
+      typeof (directory as Record<string, unknown>).path !== "string"
+    )
   ) {
-    throw new Error("Directory picker response was invalid.");
+    throw new Error("Directory listing response was invalid.");
   }
-  return (body as { directory: string }).directory;
+  return body as DirectoryListing;
 };

@@ -1,74 +1,32 @@
-type DirectoryPickerCommand = {
-  args: string[];
-  command: string;
+import { dirname, join, resolve } from "@std/path";
+
+export type DirectoryListing = {
+  directories: Array<{ name: string; path: string }>;
+  parent?: string;
+  path: string;
 };
 
-export const buildDirectoryPickerCommand = (
-  os: typeof Deno.build.os = Deno.build.os,
-): DirectoryPickerCommand | undefined => {
-  switch (os) {
-    case "darwin":
-      return {
-        command: "osascript",
-        args: [
-          "-e",
-          'POSIX path of (choose folder with prompt "Select the default folder")',
-        ],
-      };
-    case "windows":
-      return {
-        command: "powershell.exe",
-        args: [
-          "-NoProfile",
-          "-STA",
-          "-Command",
-          [
-            "Add-Type -AssemblyName System.Windows.Forms",
-            "$dialog = New-Object System.Windows.Forms.FolderBrowserDialog",
-            "$dialog.Description = 'Select the default folder'",
-            "if ($dialog.ShowDialog() -eq 'OK') { [Console]::OutputEncoding = [Text.Encoding]::UTF8; Write-Output $dialog.SelectedPath }",
-          ].join("; "),
-        ],
-      };
-    case "linux":
-      return {
-        command: "zenity",
-        args: [
-          "--file-selection",
-          "--directory",
-          "--title=Select the default folder",
-        ],
-      };
-    default:
-      return undefined;
-  }
-};
-
-export const selectDirectory = async (): Promise<string | undefined> => {
-  const picker = buildDirectoryPickerCommand();
-  if (!picker) {
-    throw new Error(
-      `Directory selection is not supported on ${Deno.build.os}.`,
-    );
+export const listDirectories = async (
+  requestedPath?: string,
+): Promise<DirectoryListing> => {
+  const path = resolve(requestedPath || Deno.cwd());
+  const stat = await Deno.stat(path);
+  if (!stat.isDirectory) {
+    throw new Error(`Not a directory: ${path}`);
   }
 
-  let result: Deno.CommandOutput;
-  try {
-    result = await new Deno.Command(picker.command, {
-      args: picker.args,
-      stderr: "null",
-      stdout: "piped",
-    }).output();
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      throw new Error(
-        `Directory selection requires ${picker.command} to be installed.`,
-      );
+  const directories: DirectoryListing["directories"] = [];
+  for await (const entry of Deno.readDir(path)) {
+    if (entry.isDirectory && !entry.isSymlink) {
+      directories.push({ name: entry.name, path: join(path, entry.name) });
     }
-    throw error;
   }
+  directories.sort((left, right) => left.name.localeCompare(right.name));
 
-  if (!result.success) return undefined;
-  const directory = new TextDecoder().decode(result.stdout).trim();
-  return directory || undefined;
+  const parent = dirname(path);
+  return {
+    directories,
+    ...(parent === path ? {} : { parent }),
+    path,
+  };
 };

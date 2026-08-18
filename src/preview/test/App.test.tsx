@@ -387,11 +387,6 @@ describe("App", () => {
             : { theme: "light" },
         ));
       }
-      if (url === "/__sadoku/settings/select-directory") {
-        return Promise.resolve(Response.json({
-          directory: "/workspace/docs",
-        }));
-      }
       if (url === "/__sadoku/documents/1") {
         return Promise.resolve(Response.json({
           fileUrl: "file:///tmp/example.md",
@@ -492,9 +487,14 @@ describe("App", () => {
             : { defaultDirectory: "/workspace/notes" },
         ));
       }
-      if (url === "/__sadoku/settings/select-directory") {
+      if (url.startsWith("/__sadoku/settings/directories")) {
+        const path = new URL(url, "http://localhost").searchParams.get("path");
         return Promise.resolve(Response.json({
-          directory: "/workspace/docs",
+          directories: path === "/workspace/notes"
+            ? [{ name: "docs", path: "/workspace/docs" }]
+            : [],
+          parent: "/workspace",
+          path: path ?? "/workspace",
         }));
       }
       return Promise.resolve(new Response("Not found.", { status: 404 }));
@@ -510,12 +510,14 @@ describe("App", () => {
     expect((input as HTMLInputElement).value).toBe("/workspace/notes");
 
     fireEvent.click(screen.getByRole("button", { name: "Browse…" }));
-    await waitFor(() =>
-      expect((input as HTMLInputElement).value).toBe("/workspace/docs")
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "docs" }));
+    await screen.findByText("/workspace/docs");
+    fireEvent.click(screen.getByRole("button", {
+      name: "Select this folder",
+    }));
+    expect((input as HTMLInputElement).value).toBe("/workspace/docs");
     expect(fetch).toHaveBeenCalledWith(
-      "/__sadoku/settings/select-directory",
-      { method: "POST" },
+      "/__sadoku/settings/directories?path=%2Fworkspace%2Fnotes",
     );
     const saveButton = screen.getByRole("button", { name: "Save" });
     await waitFor(() =>

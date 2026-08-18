@@ -11,13 +11,14 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import type { CodeWrapMode, ThemeMode } from "../models/theme";
+import type { DirectoryListing } from "../api/settings";
 
 type SettingsDialogProps = {
   codeWrapMode: CodeWrapMode;
   defaultDirectory: string;
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onDefaultDirectoryChange: (defaultDirectory: string) => void;
-  onSelectDirectory: () => Promise<string | undefined>;
+  onLoadDirectories: (path?: string) => Promise<DirectoryListing>;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
@@ -30,7 +31,7 @@ export const SettingsDialog = ({
   onCodeWrapModeChange,
   onDefaultDirectoryChange,
   onOpenChange,
-  onSelectDirectory,
+  onLoadDirectories,
   onThemeModeChange,
   open,
   themeMode,
@@ -38,8 +39,23 @@ export const SettingsDialog = ({
   const [directoryInput, setDirectoryInput] = useState(defaultDirectory);
   const [directoryPickerError, setDirectoryPickerError] = useState<string>();
   const [directoryPickerPending, setDirectoryPickerPending] = useState(false);
+  const [directoryListing, setDirectoryListing] = useState<DirectoryListing>();
 
   useEffect(() => setDirectoryInput(defaultDirectory), [defaultDirectory]);
+
+  const loadPickerDirectory = async (path?: string) => {
+    setDirectoryPickerError(undefined);
+    setDirectoryPickerPending(true);
+    try {
+      setDirectoryListing(await onLoadDirectories(path));
+    } catch (error) {
+      setDirectoryPickerError(
+        error instanceof Error ? error.message : String(error),
+      );
+    } finally {
+      setDirectoryPickerPending(false);
+    }
+  };
 
   return (
     <Dialog.Root
@@ -131,24 +147,8 @@ export const SettingsDialog = ({
                       value={directoryInput}
                     />
                     <Button
-                      onClick={async () => {
-                        setDirectoryPickerError(undefined);
-                        setDirectoryPickerPending(true);
-                        try {
-                          const selected = await onSelectDirectory();
-                          if (selected !== undefined) {
-                            setDirectoryInput(selected);
-                          }
-                        } catch (error) {
-                          setDirectoryPickerError(
-                            error instanceof Error
-                              ? error.message
-                              : String(error),
-                          );
-                        } finally {
-                          setDirectoryPickerPending(false);
-                        }
-                      }}
+                      onClick={() =>
+                        loadPickerDirectory(directoryInput || undefined)}
                       loading={directoryPickerPending}
                       variant="outline"
                     >
@@ -165,6 +165,75 @@ export const SettingsDialog = ({
                     <Text color="fg.error" fontSize="sm" role="alert">
                       {directoryPickerError}
                     </Text>
+                  )}
+                  {directoryListing && (
+                    <Flex
+                      borderColor="border"
+                      borderRadius="md"
+                      borderWidth="1px"
+                      direction="column"
+                      gap="2"
+                      padding="3"
+                    >
+                      <Text
+                        fontSize="sm"
+                        fontWeight="medium"
+                        wordBreak="break-all"
+                      >
+                        {directoryListing.path}
+                      </Text>
+                      <Flex gap="2">
+                        <Button
+                          disabled={!directoryListing.parent}
+                          onClick={() =>
+                            loadPickerDirectory(directoryListing.parent)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          Up
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setDirectoryInput(directoryListing.path);
+                            setDirectoryListing(undefined);
+                          }}
+                          size="sm"
+                        >
+                          Select this folder
+                        </Button>
+                        <Button
+                          onClick={() => setDirectoryListing(undefined)}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          Cancel
+                        </Button>
+                      </Flex>
+                      <Flex
+                        direction="column"
+                        maxHeight="48"
+                        overflowY="auto"
+                      >
+                        {directoryListing.directories.length === 0
+                          ? (
+                            <Text color="fg.muted" fontSize="sm">
+                              No subfolders.
+                            </Text>
+                          )
+                          : directoryListing.directories.map((directory) => (
+                            <Button
+                              justifyContent="flex-start"
+                              key={directory.path}
+                              onClick={() =>
+                                loadPickerDirectory(directory.path)}
+                              size="sm"
+                              variant="ghost"
+                            >
+                              {directory.name}
+                            </Button>
+                          ))}
+                      </Flex>
+                    </Flex>
                   )}
                 </Flex>
               </Flex>
