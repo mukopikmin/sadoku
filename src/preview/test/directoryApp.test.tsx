@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  fireEvent,
+  renderWithRouter as render,
+  screen,
+  waitFor,
+} from "./testUtils";
 import { App } from "../App";
 
 class DirectoryEventSource extends EventTarget {
@@ -78,10 +84,9 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
-  it("lists documents, selects one without changing the URL, and returns through breadcrumbs", async () => {
+  it("lists documents, routes to one, and returns through breadcrumbs", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
-    const initialUrl = location.href;
     render(<App />);
 
     expect(await screen.findByRole("treeitem", { name: "alpha.md" })).not
@@ -101,7 +106,7 @@ describe("directory preview", () => {
     fireEvent.click(screen.getByRole("treeitem", { name: "alpha.md" }));
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();
-    expect(location.href).toBe(initialUrl);
+    expect(location.pathname).toBe("/documents/1");
     const breadcrumbs = screen.getByRole("navigation", {
       name: "Document path",
     });
@@ -110,6 +115,51 @@ describe("directory preview", () => {
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     expect(await screen.findByRole("treeitem", { name: "beta.md" })).not
       .toBeNull();
+    expect(location.pathname).toBe("/");
+  });
+
+  it("routes between preview and comments and restores the view from history", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("treeitem", { name: "alpha.md" }),
+    );
+    await screen.findByRole("heading", { name: "Document 1" });
+    fireEvent.click(
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
+    );
+    await waitFor(() =>
+      expect(location.pathname).toBe("/documents/1/comments")
+    );
+    expect(await screen.findByRole("heading", { name: /comments \(0\)/i }))
+      .not.toBeNull();
+
+    history.replaceState(null, "", "/documents/1");
+    dispatchEvent(new PopStateEvent("popstate"));
+    await waitFor(() => expect(location.pathname).toBe("/documents/1"));
+    expect(
+      screen.getByRole("tab", { name: "Preview" }).getAttribute(
+        "aria-selected",
+      ),
+    ).toBe("true");
+  });
+
+  it("opens a document comments deep link and shows invalid documents as not found", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    history.replaceState(null, "", "/documents/2/comments");
+    const { unmount } = render(<App />);
+    expect(await screen.findByRole("heading", { name: /comments \(0\)/i }))
+      .not.toBeNull();
+    expect(location.pathname).toBe("/documents/2/comments");
+
+    unmount();
+    history.replaceState(null, "", "/documents/999");
+    render(<App />);
+    expect(await screen.findByText("Document not found.")).not.toBeNull();
+    expect(document.title).toBe("Not Found — Sadoku");
   });
 
   it("renders the empty state", async () => {
@@ -141,10 +191,9 @@ describe("directory preview", () => {
     const documentButton = await screen.findByRole("treeitem", {
       name: "alpha.md",
     });
-    const header = container.querySelector("header");
     fireEvent.click(documentButton);
     expect(await screen.findByText("Loading preview...")).not.toBeNull();
-    expect(container.querySelector("header")).toBe(header);
+    expect(container.querySelector("header")).not.toBeNull();
     expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
       "disabled",
       true,
@@ -157,7 +206,7 @@ describe("directory preview", () => {
     }));
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();
-    expect(container.querySelector("header")).toBe(header);
+    expect(container.querySelector("header")).not.toBeNull();
     expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
       "disabled",
       false,

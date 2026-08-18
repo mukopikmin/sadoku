@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  fireEvent,
+  renderWithRouter as render,
+  screen,
+  waitFor,
+} from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { initializeMermaid } from "../markdown/mermaid";
@@ -156,10 +162,12 @@ describe("App", () => {
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
-    expect(
-      screen.getByRole("tab", { name: "Comments, 0 unresolved" })
-        .getAttribute("aria-selected"),
-    ).toBe("true");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("tab", { name: "Comments, 0 unresolved" })
+          .getAttribute("aria-selected"),
+      ).toBe("true")
+    );
 
     expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
 
@@ -701,7 +709,7 @@ describe("App", () => {
       .toBe("2");
     fireEvent.click(commentsButton);
 
-    expect(screen.getByText("Active comment.")).not.toBeNull();
+    expect(await screen.findByText("Active comment.")).not.toBeNull();
     expect(screen.queryByText("Stale comment.")).toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
     expect(screen.getByText("Stale comment.")).not.toBeNull();

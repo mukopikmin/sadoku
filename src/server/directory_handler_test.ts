@@ -81,6 +81,18 @@ Deno.test("serves directory documents and keeps comments isolated", async () => 
     assertEquals(bodyJson.markdown, "# First\n");
     assertEquals(typeof bodyJson.fileUrl, "string");
 
+    for (const path of ["/documents/2", "/documents/2/comments"]) {
+      const shell = await request(handler, path);
+      assertEquals(shell.status, 200);
+      assertEquals(
+        shell.headers.get("content-type"),
+        "text/html; charset=utf-8",
+      );
+      const html = await shell.text();
+      assertEquals(html.includes('id="sadoku-client-root"'), true);
+      assertEquals(html.includes('src="/assets/client.js"'), true);
+    }
+
     for (const id of ["0", "-1", "1.5", "missing", "3"]) {
       assertEquals(
         (await request(handler, `/__sadoku/documents/${id}`)).status,
