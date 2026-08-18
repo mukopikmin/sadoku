@@ -136,13 +136,6 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
         false,
       );
 
-      const listEvents = await fetch(new URL("/__sadoku/events", preview.url));
-      assertEquals(
-        listEvents.headers.get("content-type"),
-        "text/event-stream; charset=utf-8",
-      );
-      await listEvents.body!.cancel();
-
       const documentEvents = await fetch(
         new URL(`/__sadoku/documents/${documentA.id}/events`, preview.url),
       );

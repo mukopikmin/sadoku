@@ -19,7 +19,10 @@ const documents = [
   { id: 2, relativePath: "beta.md", title: "Beta" },
 ];
 
-const installFetch = (failDocumentId?: number) =>
+const installFetch = (
+  failDocumentId?: number,
+  pendingDocument?: Promise<Response>,
+) =>
   vi.stubGlobal(
     "fetch",
     vi.fn(
@@ -33,6 +36,9 @@ const installFetch = (failDocumentId?: number) =>
         const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
         if (documentMatch) {
           const id = Number(documentMatch[1]);
+          if (pendingDocument) {
+            return pendingDocument;
+          }
           if (id === failDocumentId) {
             return Promise.resolve(
               new Response("Failed", { status: 500 }),
@@ -72,7 +78,7 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
-  it("lists documents, selects one without changing the URL, and returns", async () => {
+  it("lists documents, selects one without changing the URL, and returns through breadcrumbs", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
     const initialUrl = location.href;
@@ -81,11 +87,26 @@ describe("directory preview", () => {
     expect(await screen.findByRole("button", { name: "guides/alpha.md" })).not
       .toBeNull();
     expect(screen.getByRole("button", { name: "beta.md" })).not.toBeNull();
+    expect(screen.getByRole("img", { name: "Sadoku" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Open settings" })).not
+      .toBeNull();
+    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    expect(
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
+    ).toHaveProperty("disabled", true);
     fireEvent.click(screen.getByRole("button", { name: "guides/alpha.md" }));
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();
     expect(location.href).toBe(initialUrl);
-    fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
+    const breadcrumbs = screen.getByRole("navigation", {
+      name: "Document path",
+    });
+    expect(breadcrumbs.textContent).toContain("guides/alpha.md");
+    expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     expect(await screen.findByRole("button", { name: "beta.md" })).not
       .toBeNull();
   });
@@ -107,6 +128,41 @@ describe("directory preview", () => {
       .toBeNull();
   });
 
+  it("keeps the shared header mounted while a document loads", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    let resolveDocument!: (response: Response) => void;
+    const pendingDocument = new Promise<Response>((resolve) => {
+      resolveDocument = resolve;
+    });
+    installFetch(undefined, pendingDocument);
+    const { container } = render(<App />);
+
+    const documentButton = await screen.findByRole("button", {
+      name: "guides/alpha.md",
+    });
+    const header = container.querySelector("header");
+    fireEvent.click(documentButton);
+    expect(await screen.findByText("Loading preview...")).not.toBeNull();
+    expect(container.querySelector("header")).toBe(header);
+    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+
+    resolveDocument(Response.json({
+      fileUrl: "file:///tmp/1.md",
+      markdown: "# Document 1\n",
+      title: "Document 1",
+    }));
+    expect(await screen.findByRole("heading", { name: "Document 1" })).not
+      .toBeNull();
+    expect(container.querySelector("header")).toBe(header);
+    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
+
   it("switches document data and EventSources without showing the previous document", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
@@ -116,7 +172,7 @@ describe("directory preview", () => {
     );
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
-    fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("button", { name: "beta.md" });
     expect(documentOneEvents.closed).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "beta.md" }));
@@ -136,7 +192,7 @@ describe("directory preview", () => {
     );
     expect(await screen.findByText("Failed to load Markdown: 500")).not
       .toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "← Documents" }));
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "beta.md" })).not.toBeNull()
     );
