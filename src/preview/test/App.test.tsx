@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  fireEvent,
+  renderWithRouter as render,
+  screen,
+  waitFor,
+} from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { initializeMermaid } from "../markdown/mermaid";
@@ -88,7 +94,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
@@ -148,7 +154,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
 
     await screen.findByRole("heading", { name: "Original title" });
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
@@ -156,10 +162,12 @@ describe("App", () => {
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
-    expect(
-      screen.getByRole("tab", { name: "Comments, 0 unresolved" })
-        .getAttribute("aria-selected"),
-    ).toBe("true");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("tab", { name: "Comments, 0 unresolved" })
+          .getAttribute("aria-selected"),
+      ).toBe("true")
+    );
 
     expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
 
@@ -248,7 +256,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
     await screen.findByRole("heading", { name: "Original title" });
     TestEventSource.instances.at(-1)?.dispatchEvent(
       new MessageEvent("invalidate", {
@@ -311,7 +319,7 @@ describe("App", () => {
     );
 
     const { container } = render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
 
     await screen.findByRole("link", { name: "example.md" });
 
@@ -408,7 +416,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
 
     await screen.findByRole("link", { name: "example.md" });
     await waitFor(() =>
@@ -518,7 +526,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
     await screen.findByRole("link", { name: "example.md" });
     expect(document.documentElement.dataset.theme).toBe("dark");
     fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
@@ -567,7 +575,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
 
     const code = await screen.findByText("日本語の長いコードブロック");
     expect(document.documentElement.dataset.codeWrap).toBe("wrap");
@@ -685,7 +693,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "test.md" }));
+    fireEvent.click(await screen.findByRole("link", { name: "test.md" }));
 
     await waitFor(() =>
       expect(screen.getByText("Active comment.")).not.toBeNull()
@@ -701,7 +709,7 @@ describe("App", () => {
       .toBe("2");
     fireEvent.click(commentsButton);
 
-    expect(screen.getByText("Active comment.")).not.toBeNull();
+    expect(await screen.findByText("Active comment.")).not.toBeNull();
     expect(screen.queryByText("Stale comment.")).toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
     expect(screen.getByText("Stale comment.")).not.toBeNull();

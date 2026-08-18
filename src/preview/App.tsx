@@ -8,6 +8,12 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import {
+  Link as RouterLink,
+  useMatchRoute,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { CommentListPage } from "./pages/comments/CommentList";
 import { MarkdownPreviewPage } from "./pages/markdown/MarkdownPreview";
 import {
@@ -28,24 +34,16 @@ import { SettingsDialog } from "./components/SettingsDialog";
 
 type DocumentBreadcrumbProps = {
   documentName: string;
-  onSelectDocuments: () => void;
 };
 
 const DocumentBreadcrumb = ({
   documentName,
-  onSelectDocuments,
 }: DocumentBreadcrumbProps) => (
   <Breadcrumb.Root aria-label="Document path" mb="6">
     <Breadcrumb.List>
       <Breadcrumb.Item>
-        <Breadcrumb.Link
-          href="#"
-          onClick={(event) => {
-            event.preventDefault();
-            onSelectDocuments();
-          }}
-        >
-          Documents
+        <Breadcrumb.Link asChild>
+          <RouterLink to="/">Documents</RouterLink>
         </Breadcrumb.Link>
       </Breadcrumb.Item>
       <Breadcrumb.Separator />
@@ -57,10 +55,30 @@ const DocumentBreadcrumb = ({
 );
 
 export const App = () => {
+  const matchRoute = useMatchRoute();
+  const navigate = useNavigate();
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const commentsMatch = matchRoute({
+    to: "/documents/$documentId/comments",
+  });
+  const previewMatch = matchRoute({ to: "/documents/$documentId" });
+  const rawDocumentId = commentsMatch
+    ? commentsMatch.documentId
+    : previewMatch
+    ? previewMatch.documentId
+    : undefined;
+  const parsedDocumentId = rawDocumentId && /^[1-9]\d*$/.test(rawDocumentId)
+    ? Number(rawDocumentId)
+    : undefined;
+  const routeDocumentId = Number.isSafeInteger(parsedDocumentId)
+    ? parsedDocumentId
+    : undefined;
   const documentsQuery = useDocumentsQuery();
   const documents = documentsQuery.data;
   const directoryMode = documents !== null && documents !== undefined;
-  const [selectedDocumentId, setSelectedDocumentId] = useState<number>();
+  const selectedDocumentId = routeDocumentId;
   const shouldLoadDocument = documentsQuery.isSuccess &&
     (!directoryMode || selectedDocumentId !== undefined);
   const documentQuery = usePreviewDocumentQuery(
@@ -71,7 +89,7 @@ export const App = () => {
     selectedDocumentId,
     shouldLoadDocument,
   );
-  const [view, setView] = useState<PreviewView>("preview");
+  const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
   const { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode } =
     usePreviewSettings();
@@ -80,12 +98,17 @@ export const App = () => {
   );
 
   useEffect(() => {
-    setView("preview");
     clearReloadAvailable();
   }, [selectedDocumentId]);
 
-  const selectDocument = (id: number | undefined) => {
-    setSelectedDocumentId(id);
+  const changeView = (nextView: PreviewView) => {
+    if (nextView === view || selectedDocumentId === undefined) return;
+    void navigate({
+      to: nextView === "comments"
+        ? "/documents/$documentId/comments"
+        : "/documents/$documentId",
+      params: { documentId: String(selectedDocumentId) },
+    });
   };
 
   const reloadPreview = async () => {
@@ -99,10 +122,14 @@ export const App = () => {
   };
 
   useEffect(() => {
-    if (documentQuery.data) {
-      globalThis.document.title = documentQuery.data.title;
+    if (pathname === "/") {
+      globalThis.document.title = "Documents — Sadoku";
+    } else if (documentQuery.data) {
+      globalThis.document.title = view === "comments"
+        ? `Comments — ${documentQuery.data.title} — Sadoku`
+        : `${documentQuery.data.title} — Sadoku`;
     }
-  }, [documentQuery.data]);
+  }, [documentQuery.data, pathname, view]);
 
   if (documentsQuery.isPending) {
     return (
@@ -120,12 +147,31 @@ export const App = () => {
       </>
     );
   }
+  const routeIsList = pathname === "/";
+  const selectedDocumentExists = selectedDocumentId !== undefined &&
+    documents?.some((document) => document.id === selectedDocumentId);
+  if (!routeIsList && (!rawDocumentId || !selectedDocumentExists)) {
+    globalThis.document.title = "Not Found — Sadoku";
+    return (
+      <>
+        <style>{previewThemeCss}</style>
+        <PreviewShell>
+          <Text fontWeight="semibold">Document not found.</Text>
+        </PreviewShell>
+        <Container as="main" maxW="980px" px="8" pb="16">
+          <Button asChild variant="outline">
+            <RouterLink to="/">Back to documents</RouterLink>
+          </Button>
+        </Container>
+      </>
+    );
+  }
   if (selectedDocumentId === undefined) {
     return (
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
-          onChangeView={setView}
+          onChangeView={() => {}}
           onOpenSettings={settingsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
@@ -152,12 +198,17 @@ export const App = () => {
               <Stack align="stretch" gap="2">
                 {documents!.map((document) => (
                   <Button
+                    asChild
                     justifyContent="flex-start"
                     key={document.id}
-                    onClick={() => selectDocument(document.id)}
                     variant="ghost"
                   >
-                    {document.relativePath}
+                    <RouterLink
+                      params={{ documentId: String(document.id) }}
+                      to="/documents/$documentId"
+                    >
+                      {document.relativePath}
+                    </RouterLink>
                   </Button>
                 ))}
               </Stack>
@@ -176,7 +227,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
-          onChangeView={setView}
+          onChangeView={changeView}
           onOpenSettings={settingsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
@@ -199,7 +250,6 @@ export const App = () => {
           {directoryMode && selectedDocument && (
             <DocumentBreadcrumb
               documentName={selectedDocument.relativePath}
-              onSelectDocuments={() => selectDocument(undefined)}
             />
           )}
           <Text color={error ? "fg.error" : "fg.muted"}>
@@ -226,7 +276,7 @@ export const App = () => {
       <style>{previewThemeCss}</style>
       <PreviewHeader
         fileUrl={document.fileUrl}
-        onChangeView={setView}
+        onChangeView={changeView}
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
         reloadAvailable={reloadAvailable}
@@ -248,7 +298,6 @@ export const App = () => {
         {directoryMode && selectedDocument && (
           <DocumentBreadcrumb
             documentName={selectedDocument.relativePath}
-            onSelectDocuments={() => selectDocument(undefined)}
           />
         )}
         {view === "preview"
