@@ -373,7 +373,7 @@ For native targets, the release build starts the compiled binary on
 | Bold and italic emphasis                           | Supported     | `**bold**` and `_italic_` render as emphasis.                      |
 | Unordered, ordered, and nested lists               | Supported     | Nested unordered and ordered lists are preserved.                  |
 | Blockquotes and horizontal rules                   | Supported     | Standard quote blocks and thematic breaks render normally.         |
-| Links and images                                   | Supported     | Link and image titles are preserved.                               |
+| Links and images                                   | Supported     | Links open in a new tab; link and image titles are preserved.      |
 | Reference-style links and images                   | Supported     | Link definitions such as `[id]: https://example.com` are resolved. |
 | Inline code, indented code, and fenced code blocks | Supported     | Code content is escaped by default.                                |
 | Hard line breaks                                   | Supported     | Standard Markdown hard breaks render as line breaks.               |
