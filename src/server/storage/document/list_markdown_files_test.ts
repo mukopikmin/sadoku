@@ -2,24 +2,76 @@ import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { listMarkdownFiles } from "../../storage/document/list_markdown_files.ts";
 
-Deno.test("lists only regular Markdown files directly in a directory", async () => {
+Deno.test("recursively lists regular Markdown files outside excluded directories", async () => {
   const root = await Deno.makeTempDir();
   try {
     for (const name of ["z.MARKDOWN", "a.md", "B.Md", "notes.txt"]) {
       await Deno.writeTextFile(join(root, name), "content");
     }
-    await Deno.mkdir(join(root, "nested"));
-    await Deno.writeTextFile(join(root, "nested", "hidden.md"), "content");
+    await Deno.mkdir(join(root, "nested", "deeper"), { recursive: true });
+    await Deno.writeTextFile(join(root, "nested", "guide.md"), "content");
+    await Deno.writeTextFile(
+      join(root, "nested", "deeper", "reference.MaRkDoWn"),
+      "content",
+    );
+    await Deno.mkdir(join(root, "nested", "deeper", "too-deep"));
+    await Deno.writeTextFile(
+      join(root, "nested", "deeper", "too-deep", "excluded.md"),
+      "content",
+    );
+    await Deno.writeTextFile(
+      join(root, "nested", "deeper", "ignored.txt"),
+      "content",
+    );
+    await Deno.mkdir(join(root, "nested", ".git"));
+    await Deno.writeTextFile(
+      join(root, "nested", ".git", "private.md"),
+      "content",
+    );
+    await Deno.mkdir(join(root, "nested", "deeper", "node_modules"));
+    await Deno.writeTextFile(
+      join(root, "nested", "deeper", "node_modules", "package.md"),
+      "content",
+    );
     await Deno.symlink(join(root, "a.md"), join(root, "linked.md"));
+    await Deno.symlink(join(root, "nested"), join(root, "linked-directory"));
 
     const documents = await listMarkdownFiles(root);
 
     assertEquals(
       documents,
-      ["B.Md", "a.md", "z.MARKDOWN"].map((name) => ({
+      [
+        "B.Md",
+        "a.md",
+        join("nested", "deeper", "reference.MaRkDoWn"),
+        join("nested", "guide.md"),
+        "z.MARKDOWN",
+      ].map((name) => ({
         absolutePath: join(root, name),
         relativePath: name,
       })),
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("limits the result to 20 Markdown files", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    for (let index = 0; index < 25; index++) {
+      await Deno.writeTextFile(
+        join(root, `document-${index.toString().padStart(2, "0")}.md`),
+        "content",
+      );
+    }
+
+    const documents = await listMarkdownFiles(root);
+
+    assertEquals(documents.length, 20);
+    assertEquals(
+      documents.map((document) => document.relativePath),
+      documents.map((document) => document.relativePath).toSorted(),
     );
   } finally {
     await Deno.remove(root, { recursive: true });

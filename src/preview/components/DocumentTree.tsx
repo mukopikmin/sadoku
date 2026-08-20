@@ -1,5 +1,5 @@
-import { Box, createTreeCollection, HStack, TreeView } from "@chakra-ui/react";
-import { useMemo } from "react";
+import { createTreeCollection, TreeView } from "@chakra-ui/react";
+import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
 
 type DocumentTreeNode = {
@@ -55,6 +55,41 @@ const getDirectoryValues = (node: DocumentTreeNode): string[] =>
     child.children ? [child.value, ...getDirectoryValues(child)] : []
   );
 
+const FolderIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    height="1em"
+    viewBox="0 0 24 24"
+    width="1em"
+  >
+    <path
+      d="M3 6.75A1.75 1.75 0 0 1 4.75 5h4.1l2 2h8.4A1.75 1.75 0 0 1 21 8.75v8.5A1.75 1.75 0 0 1 19.25 19H4.75A1.75 1.75 0 0 1 3 17.25Z"
+      stroke="currentColor"
+      strokeLinejoin="round"
+      strokeWidth="1.7"
+    />
+  </svg>
+);
+
+const FileIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    height="1em"
+    viewBox="0 0 24 24"
+    width="1em"
+  >
+    <path
+      d="M6 3.75h7l5 5v11.5H6Z"
+      stroke="currentColor"
+      strokeLinejoin="round"
+      strokeWidth="1.7"
+    />
+    <path d="M13 3.75v5h5" stroke="currentColor" strokeWidth="1.7" />
+  </svg>
+);
+
 type DocumentTreeProps = {
   documents: DocumentSummary[];
   onSelectDocument: (id: number) => void;
@@ -73,11 +108,15 @@ export const DocumentTree = (
       }),
     [rootNode],
   );
+  const [expandedValue, setExpandedValue] = useState<string[]>(() =>
+    getDirectoryValues(rootNode)
+  );
 
   return (
     <TreeView.Root
       collection={collection}
-      defaultExpandedValue={getDirectoryValues(rootNode)}
+      expandedValue={expandedValue}
+      onExpandedChange={({ expandedValue }) => setExpandedValue(expandedValue)}
       onSelectionChange={({ selectedNodes }) => {
         const selectedDocument = selectedNodes.find((node) =>
           node.documentId !== undefined
@@ -86,6 +125,10 @@ export const DocumentTree = (
           onSelectDocument(selectedDocument.documentId);
         }
       }}
+      borderColor="border.muted"
+      borderRadius="lg"
+      borderWidth="1px"
+      p="2"
     >
       <TreeView.Tree aria-label="Documents">
         <TreeView.Node<DocumentTreeNode>
@@ -96,29 +139,37 @@ export const DocumentTree = (
           render={({ node, nodeState }) =>
             nodeState.isBranch
               ? (
-                <TreeView.BranchControl>
-                  <TreeView.BranchTrigger aria-label={`${node.name} folder`}>
-                    <TreeView.BranchIndicator
-                      color="fg.muted"
-                      fontSize="xs"
-                      transition="transform 0.15s"
-                      _open={{ transform: "rotate(90deg)" }}
-                    >
-                      ▶
-                    </TreeView.BranchIndicator>
+                <TreeView.BranchControl
+                  borderRadius="md"
+                  px="2"
+                  py="1.5"
+                  role="none"
+                  _hover={{ bg: "bg.muted" }}
+                >
+                  <TreeView.BranchTrigger
+                    aria-label={`${node.name} folder`}
+                    display="flex"
+                    gap="2"
+                    width="full"
+                  >
+                    <FolderIcon />
+                    <TreeView.BranchText fontWeight="medium">
+                      {node.name}
+                    </TreeView.BranchText>
                   </TreeView.BranchTrigger>
-                  <HStack gap="2">
-                    <Box aria-hidden="true" color="fg.muted">▰</Box>
-                    <TreeView.BranchText>{node.name}</TreeView.BranchText>
-                  </HStack>
                 </TreeView.BranchControl>
               )
               : (
-                <TreeView.Item cursor="pointer">
-                  <HStack gap="2">
-                    <Box aria-hidden="true" color="fg.muted">▤</Box>
-                    <TreeView.ItemText>{node.name}</TreeView.ItemText>
-                  </HStack>
+                <TreeView.Item
+                  borderRadius="md"
+                  cursor="pointer"
+                  gap="2"
+                  px="2"
+                  py="1.5"
+                  _hover={{ bg: "bg.muted" }}
+                >
+                  <FileIcon />
+                  <TreeView.ItemText>{node.name}</TreeView.ItemText>
                 </TreeView.Item>
               )}
         />

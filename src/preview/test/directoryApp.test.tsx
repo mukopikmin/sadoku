@@ -93,6 +93,8 @@ describe("directory preview", () => {
       .toBeNull();
     expect(screen.getByRole("treeitem", { name: "beta.md" })).not.toBeNull();
     expect(screen.getByRole("treeitem", { name: /guides/ })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "guides folder" })).not
+      .toBeNull();
     expect(screen.getByRole("img", { name: "Sadoku" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Open settings" })).not
       .toBeNull();
