@@ -9,7 +9,7 @@ export const renderMarkdownParagraph = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
 ) => (
-  <Text as="p" mt="0" mb="4" {...elementProps}>
+  <Text as="p" m="0" pb="4" {...elementProps}>
     {children}
   </Text>
 );

@@ -9,7 +9,7 @@ export const renderMarkdownTable = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
 ) => (
-  <Table.Root mb="4" size="sm" variant="outline" {...elementProps}>
+  <Table.Root m="0" pb="4" size="sm" variant="outline" {...elementProps}>
     {children}
   </Table.Root>
 );

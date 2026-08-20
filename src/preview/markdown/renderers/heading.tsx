@@ -29,9 +29,9 @@ export const renderMarkdownHeading = (
     fontSize={headingSizes[tagName]}
     fontWeight="semibold"
     lineHeight="1.25"
-    mt="6"
-    mb="4"
-    pb={tagName === "h1" || tagName === "h2" ? "0.3em" : "0"}
+    m="0"
+    pt="6"
+    pb={tagName === "h1" || tagName === "h2" ? "calc(1rem + 0.3em)" : "4"}
     {...elementProps}
   >
     {children}
