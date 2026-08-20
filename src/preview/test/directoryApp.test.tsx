@@ -217,11 +217,12 @@ describe("directory preview", () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
     render(<App />);
+    const firstDocument = await screen.findByRole("treeitem", {
+      name: "alpha.md",
+    });
     const keepAliveEvents = DirectoryEventSource.instances.at(-1)!;
     expect(keepAliveEvents.url).toBe("/__sadoku/events");
-    fireEvent.click(
-      await screen.findByRole("treeitem", { name: "alpha.md" }),
-    );
+    fireEvent.click(firstDocument);
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
