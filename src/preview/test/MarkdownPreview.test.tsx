@@ -137,12 +137,8 @@ console.log("<ok>");
     expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
     expect(getComputedStyle(unorderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(unorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(unorderedList!).paddingTop).toBe(
-      "var(--chakra-spacing-2)",
-    );
-    expect(getComputedStyle(unorderedList!).paddingBottom).toBe(
-      "var(--chakra-spacing-4)",
-    );
+    expect(getComputedStyle(unorderedList!).paddingTop).toBe("0px");
+    expect(getComputedStyle(unorderedList!).paddingBottom).toBe("0");
     expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
     expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
@@ -154,7 +150,7 @@ console.log("<ok>");
 
   it("stacks blocks with a fixed gap and keeps highlights within padding", () => {
     expect(previewThemeCss).toMatch(
-      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: 2px;/,
+      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: 0\.5rem;/,
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-content::before\s*\{[^}]*top: 0;[^}]*bottom: 0;/,
@@ -296,11 +292,8 @@ After
     expect(horizontalRule?.getAttribute("aria-orientation")).toBe(
       "horizontal",
     );
-    expect(getComputedStyle(horizontalRule!.parentElement!).paddingTop).toBe(
-      "var(--chakra-spacing-6)",
-    );
-    expect(getComputedStyle(horizontalRule!.parentElement!).paddingBottom).toBe(
-      "var(--chakra-spacing-6)",
+    expect(getComputedStyle(horizontalRule!.parentElement!).paddingBlock).toBe(
+      "var(--chakra-spacing-4)",
     );
   });
 
@@ -331,10 +324,14 @@ After
     );
     expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expectComputedStyleValue(nestedUnorderedList!, "padding-top", "0.25em");
+    expect(getComputedStyle(nestedUnorderedList!).paddingTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
     expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
-    expectComputedStyleValue(nestedOrderedList!, "padding-top", "0.25em");
+    expect(getComputedStyle(nestedOrderedList!).paddingTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",
     );
@@ -582,6 +579,18 @@ graph TD
 
     expect(container.querySelector("pre code.language-ts")).not.toBeNull();
     expect(container.querySelector("pre.mermaid")).not.toBeNull();
+    const codeRoot = container.querySelector<HTMLElement>(
+      '[data-source-line="1"] .comment-markdown-body > :first-child',
+    );
+    const mermaidContainer = container.querySelector<HTMLElement>(
+      '[data-source-line="5"] .mermaid-container',
+    );
+    expect(Number.parseFloat(getComputedStyle(codeRoot!).paddingBottom)).toBe(
+      0,
+    );
+    expect(
+      Number.parseFloat(getComputedStyle(mermaidContainer!).paddingBottom),
+    ).toBe(0);
     expect(previewThemeCss).toMatch(
       /\.commentable-block:not\(\.commentable-block-selected\):hover > \.commentable-content pre,[^{]*\.commentable-block:not\(\.commentable-block-selected\):focus-within > \.commentable-content pre\s*\{[^}]*background: color-mix\(in srgb, var\(--chakra-colors-accent\) 14%, var\(--chakra-colors-canvas\)\);/,
     );

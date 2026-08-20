@@ -15,7 +15,6 @@ export const renderMarkdownBlockquote = (
     borderLeftWidth="4px"
     color="fg.muted"
     m="0"
-    pb="4"
     pl="4"
     {...elementProps}
   >

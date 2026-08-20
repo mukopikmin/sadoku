@@ -19,8 +19,7 @@ export const MarkdownOrderedList = ({
         className={mergeClassNames("comment-markdown-list", className)}
         listStylePosition="outside"
         m="0"
-        pt={isNested ? "0.25em" : "2"}
-        pb={isNested ? "0" : "4"}
+        pt={isNested ? "2" : "0"}
         ps={`${markdownListIndentEm}em`}
         {...props}
       >

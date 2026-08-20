@@ -282,7 +282,7 @@ export const previewThemeCss = `
       .markdown-preview {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 0.5rem;
         isolation: isolate;
         position: relative;
       }

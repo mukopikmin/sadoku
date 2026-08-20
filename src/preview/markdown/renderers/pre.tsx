@@ -54,7 +54,6 @@ export const renderMarkdownPre = (
     color="code.fg"
     lineHeight="1.45"
     m="0"
-    pb="4"
   >
     <ChakraCodeBlock.Content>
       <ChakraCodeBlock.Code

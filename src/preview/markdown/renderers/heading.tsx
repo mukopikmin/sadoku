@@ -30,8 +30,8 @@ export const renderMarkdownHeading = (
     fontWeight="semibold"
     lineHeight="1.25"
     m="0"
-    pt="6"
-    pb={tagName === "h1" || tagName === "h2" ? "calc(1rem + 0.3em)" : "4"}
+    pt="4"
+    pb={tagName === "h1" || tagName === "h2" ? "0.3em" : "0"}
     {...elementProps}
   >
     {children}
