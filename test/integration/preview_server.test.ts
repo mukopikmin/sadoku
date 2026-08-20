@@ -34,7 +34,7 @@ Deno.test("rejects unsupported methods for the event stream route", async () => 
   assertEquals(await response.text(), "Not found.");
 });
 
-Deno.test("notifies when an interrupted event stream closes", async () => {
+Deno.test("notifies when an interrupted session event stream closes", async () => {
   const requestController = new AbortController();
   let opened = 0;
   let closed = 0;
@@ -45,7 +45,7 @@ Deno.test("notifies when an interrupted event stream closes", async () => {
       onEventStreamClose: () => closed += 1,
     },
   )(
-    new Request("http://127.0.0.1:3334/__sadoku/documents/1/events", {
+    new Request("http://127.0.0.1:3334/__sadoku/events", {
       signal: requestController.signal,
     }),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
