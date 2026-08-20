@@ -23,6 +23,7 @@ class DirectoryEventSource extends EventTarget {
 const documents = [
   { id: 1, relativePath: "guides/alpha.md", title: "Alpha" },
   { id: 2, relativePath: "beta.md", title: "Beta" },
+  { id: 3, relativePath: "guides/nested/gamma.md", title: "Gamma" },
 ];
 
 const installFetch = (
@@ -112,7 +113,16 @@ describe("directory preview", () => {
     const breadcrumbs = screen.getByRole("navigation", {
       name: "Document path",
     });
-    expect(breadcrumbs.textContent).toContain("guides/alpha.md");
+    expect(breadcrumbs.textContent).toContain("guides");
+    expect(breadcrumbs.textContent).toContain("alpha.md");
+    fireEvent.click(screen.getByRole("button", { name: "guides" }));
+    const directoryDialog = await screen.findByRole("dialog", {
+      name: "guides",
+    });
+    expect(directoryDialog.textContent).toContain("alpha.md");
+    expect(directoryDialog.textContent).not.toContain("gamma.md");
+    fireEvent.click(screen.getByRole("button", { name: "alpha.md" }));
+    await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     expect(await screen.findByRole("treeitem", { name: "beta.md" })).not
