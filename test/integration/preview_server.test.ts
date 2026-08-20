@@ -24,7 +24,7 @@ Deno.test("rejects unsupported methods for the event stream route", async () => 
   const response = await createTestPreviewHandler(
     "test/integration/fixtures/comprehensive.md",
   )(
-    new Request("http://127.0.0.1:3334/__sadoku/documents/1/events", {
+    new Request("http://127.0.0.1:3334/__sadoku/events", {
       method: "POST",
     }),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
@@ -57,7 +57,7 @@ Deno.test("notifies when an interrupted event stream closes", async () => {
   assertEquals(closed, 1);
 });
 
-Deno.test("keeps remote event streams empty and reports cancellation", async () => {
+Deno.test("keeps the session event stream empty and reports cancellation", async () => {
   let opened = 0;
   let closed = 0;
   const response = await createTestPreviewHandler(
@@ -67,7 +67,7 @@ Deno.test("keeps remote event streams empty and reports cancellation", async () 
       onEventStreamClose: () => closed += 1,
     },
   )(
-    new Request("http://127.0.0.1:3334/__sadoku/documents/1/events"),
+    new Request("http://127.0.0.1:3334/__sadoku/events"),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
   );
 
@@ -97,7 +97,7 @@ Deno.test("serves the preview client asset", async () => {
   assertEquals(script.includes("/__sadoku/documents/"), true);
   assertEquals(script.includes('"/__sadoku/comments"'), false);
   assertEquals(script.includes('"/__sadoku/document"'), false);
-  assertEquals(script.includes('"/__sadoku/events"'), false);
+  assertEquals(script.includes('"/__sadoku/events"'), true);
   assertEquals(script.includes("process.env"), false);
 });
 

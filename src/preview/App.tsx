@@ -22,6 +22,7 @@ import {
 } from "./components/layout/PreviewHeader";
 import { previewThemeCss } from "./theme";
 import { useHotReload } from "./hooks/useHotReload";
+import { connectPreviewKeepAlive } from "./api/hotReload";
 import {
   useCommentsQuery,
   useDocumentsQuery,
@@ -104,6 +105,8 @@ export const App = () => {
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
     selectedDocumentId,
   );
+
+  useEffect(() => connectPreviewKeepAlive(), []);
 
   useEffect(() => {
     clearReloadAvailable();
