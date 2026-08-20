@@ -2,6 +2,9 @@ import { extname, join, resolve } from "@std/path";
 import type { MarkdownDocumentPath } from "../../usecase/document/types.ts";
 
 const markdownExtensions = new Set([".md", ".markdown"]);
+const excludedDirectories = new Set([".git", "node_modules"]);
+const maxDirectoryDepth = 2;
+const maxMarkdownFiles = 20;
 
 export const listMarkdownFiles = async (
   directoryPath: string,
@@ -9,14 +12,36 @@ export const listMarkdownFiles = async (
   const absoluteDirectoryPath = resolve(directoryPath);
   const documents: MarkdownDocumentPath[] = [];
 
-  for await (const entry of Deno.readDir(absoluteDirectoryPath)) {
-    if (!entry.isFile || entry.isSymlink) continue;
-    if (!markdownExtensions.has(extname(entry.name).toLowerCase())) continue;
-    documents.push({
-      absolutePath: join(absoluteDirectoryPath, entry.name),
-      relativePath: entry.name,
-    });
-  }
+  const visitDirectory = async (
+    absolutePath: string,
+    relativePath: string,
+    depth: number,
+  ): Promise<void> => {
+    for await (const entry of Deno.readDir(absolutePath)) {
+      if (documents.length >= maxMarkdownFiles) return;
+      if (entry.isSymlink) continue;
+
+      const entryAbsolutePath = join(absolutePath, entry.name);
+      const entryRelativePath = join(relativePath, entry.name);
+      if (entry.isDirectory) {
+        if (
+          depth < maxDirectoryDepth &&
+          !excludedDirectories.has(entry.name)
+        ) {
+          await visitDirectory(entryAbsolutePath, entryRelativePath, depth + 1);
+        }
+        continue;
+      }
+      if (!entry.isFile) continue;
+      if (!markdownExtensions.has(extname(entry.name).toLowerCase())) continue;
+      documents.push({
+        absolutePath: entryAbsolutePath,
+        relativePath: entryRelativePath,
+      });
+    }
+  };
+
+  await visitDirectory(absoluteDirectoryPath, "", 0);
 
   return documents.sort((left, right) =>
     left.relativePath < right.relativePath
