@@ -188,3 +188,34 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
     }
   });
 });
+
+Deno.test("directory preview lists the nested fixture documents", async () => {
+  await withTempCommentsDirectory(async () => {
+    const preview = await startPreviewServer({
+      file: "test/integration/fixtures",
+      host: "127.0.0.1",
+      keepAlive: true,
+      port: reserveLoopbackPort(),
+    });
+    try {
+      const response = await fetch(
+        new URL("/__sadoku/documents", preview.url),
+      );
+      const documents = await response.json();
+
+      assertEquals(
+        documents.map((document: { relativePath: string }) =>
+          document.relativePath
+        ),
+        [
+          "comprehensive.md",
+          join("guides", "overview.md"),
+          join("guides", "setup", "local.md"),
+          "second.md",
+        ],
+      );
+    } finally {
+      await stopServer(preview);
+    }
+  });
+});
