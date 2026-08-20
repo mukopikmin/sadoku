@@ -455,28 +455,32 @@ describe("App", () => {
     expect((maxFilesInput as HTMLInputElement).value).toBe("20");
 
     fireEvent.change(maxDepthInput, { target: { value: "4" } });
-    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({
-        codeWrap: "scroll",
-        maxDepth: 4,
-        maxFiles: 20,
-        theme: "light",
-      }),
-      headers: { "content-type": "application/json" },
-      method: "PUT",
-    });
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+        body: JSON.stringify({
+          codeWrap: "scroll",
+          maxDepth: 4,
+          maxFiles: 20,
+          theme: "light",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PUT",
+      })
+    );
 
     fireEvent.change(maxFilesInput, { target: { value: "100" } });
-    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({
-        codeWrap: "scroll",
-        maxDepth: 4,
-        maxFiles: 100,
-        theme: "light",
-      }),
-      headers: { "content-type": "application/json" },
-      method: "PUT",
-    });
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+        body: JSON.stringify({
+          codeWrap: "scroll",
+          maxDepth: 4,
+          maxFiles: 100,
+          theme: "light",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PUT",
+      })
+    );
 
     fireEvent.change(themeSelect, { target: { value: "dark" } });
     expect(document.documentElement.dataset.theme).toBe("dark");
