@@ -112,7 +112,7 @@ const executeCli = async (
     io.log(`Update channel: ${plan.channel}`);
     io.log(`Available version: ${plan.targetVersion}`);
     if (!plan.updateAvailable) {
-      io.log(`Already up to date: ${plan.targetVersion}`);
+      io.log(`No newer version available: ${plan.targetVersion}`);
       return;
     }
     if (!io.confirm(`Update Sadoku to ${plan.targetVersion}?`)) {

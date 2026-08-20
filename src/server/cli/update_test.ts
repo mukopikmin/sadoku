@@ -235,6 +235,54 @@ Deno.test("resolves the latest stable release and skips its download when curren
   }
 });
 
+Deno.test("does not downgrade a stable version newer than the latest release", async () => {
+  const root = await Deno.makeTempDir();
+  const executable = join(root, "sadoku");
+  await Deno.writeTextFile(executable, "newer");
+  const deps = dependencies(
+    executable,
+    new Uint8Array(),
+    "0".repeat(64),
+    "2.0.0",
+  );
+  deps.fetch = (() =>
+    Promise.resolve(
+      new Response(JSON.stringify({ tag_name: "v1.9.9" })),
+    )) as typeof fetch;
+  try {
+    const result = await updateSadoku("2.0.0", "stable", deps);
+    assertEquals(result, {
+      channel: "stable",
+      currentVersion: "2.0.0",
+      targetVersion: "1.9.9",
+      updated: false,
+    });
+    assertEquals(await Deno.readTextFile(executable), "newer");
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("does not downgrade a nightly build from a newer day", async () => {
+  const data = await fixture("nightly-20260803-a1b2c3d4");
+  const executable = join(data.root, "installed-sadoku");
+  await Deno.writeTextFile(executable, "newer");
+  let deps = dependencies(executable, data.bytes, data.checksum, data.version);
+  deps = withArchiveFetch(deps, data.bytes, data.checksum);
+  try {
+    const result = await updateSadoku(
+      "nightly-20260804-deadbeef",
+      "nightly",
+      deps,
+    );
+    assertEquals(result.updated, false);
+    assertEquals(result.targetVersion, data.version);
+    assertEquals(await Deno.readTextFile(executable), "newer");
+  } finally {
+    await Deno.remove(data.root, { recursive: true });
+  }
+});
+
 Deno.test("preserves the existing binary when atomic replacement fails", async () => {
   const data = await fixture("nightly-20260803-a1b2c3d4");
   const executable = join(data.root, "installed-sadoku");

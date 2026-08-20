@@ -38,7 +38,7 @@ sadoku update --channel nightly
 The command first checks release metadata without downloading or replacing the
 binary. If an update is available, Sadoku shows the target version and asks for
 confirmation before downloading and installing it. No confirmation is shown when
-the current version is already up to date.
+the current version is already up to date or newer than the available version.
 
 When `--channel` is omitted, versions in the `nightly-YYYYMMDD-<commit-hash>`
 format stay on nightly. Release versions and builds whose origin cannot be

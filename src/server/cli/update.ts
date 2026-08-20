@@ -219,6 +219,45 @@ const parseBinaryVersion = (output: string): string => {
   return match[1];
 };
 
+const stableVersionParts = (version: string): number[] | undefined => {
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+  return match?.slice(1, 4).map(Number);
+};
+
+const updateIsNewer = (
+  channel: UpdateChannel,
+  currentVersion: string,
+  targetVersion: string,
+): boolean => {
+  if (currentVersion === targetVersion) return false;
+
+  if (channel === "nightly") {
+    const currentDay = currentVersion.match(/^nightly-(\d{8})-[0-9a-f]+$/i)
+      ?.[1];
+    const targetDay = targetVersion.match(/^nightly-(\d{8})-[0-9a-f]+$/i)
+      ?.[1];
+    if (currentDay && targetDay && currentDay !== targetDay) {
+      return targetDay > currentDay;
+    }
+    return true;
+  }
+
+  const current = stableVersionParts(currentVersion);
+  const target = stableVersionParts(targetVersion);
+  if (!current || !target) return true;
+  for (let index = 0; index < current.length; index++) {
+    if (target[index] !== current[index]) {
+      return target[index] > current[index];
+    }
+  }
+
+  // The release endpoint can return a prerelease-like tag. When the numeric
+  // parts match, only replace a prerelease build with the final release.
+  const currentIsPrerelease = currentVersion.includes("-");
+  const targetIsPrerelease = targetVersion.includes("-");
+  return currentIsPrerelease && !targetIsPrerelease;
+};
+
 export const checkForUpdate = async (
   currentVersion: string,
   requestedChannel?: UpdateChannel,
@@ -263,7 +302,7 @@ export const checkForUpdate = async (
     executable,
     target,
     targetVersion,
-    updateAvailable: currentVersion !== targetVersion,
+    updateAvailable: updateIsNewer(channel, currentVersion, targetVersion),
   };
 };
 
