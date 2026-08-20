@@ -282,7 +282,7 @@ export const previewThemeCss = `
       .markdown-preview {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: var(--chakra-spacing-2);
         isolation: isolate;
         position: relative;
       }
@@ -392,14 +392,10 @@ export const previewThemeCss = `
       }
 
       .comment-thread {
-        margin: calc(-1 * var(--chakra-spacing-2)) 0 var(--chakra-spacing-3);
+        margin: var(--chakra-spacing-2) 0 var(--chakra-spacing-3);
         margin-left: calc(0em - var(--comment-indent-offset, 0em));
         border-left: 3px solid var(--chakra-colors-accent);
         padding: var(--chakra-spacing-2) 0 1px var(--chakra-spacing-3);
-      }
-
-      .commentable-list-item > .comment-thread {
-        margin-top: var(--chakra-spacing-2);
       }
 
       .mermaid-container .mermaid {

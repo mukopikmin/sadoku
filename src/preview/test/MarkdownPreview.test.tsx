@@ -150,12 +150,18 @@ console.log("<ok>");
 
   it("stacks blocks with a fixed gap and keeps highlights within padding", () => {
     expect(previewThemeCss).toMatch(
-      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: 0\.5rem;/,
+      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-2\);/,
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-content::before\s*\{[^}]*top: 0;[^}]*bottom: 0;/,
     );
     expect(previewThemeCss).not.toContain("--comment-highlight-spacing");
+    expect(previewThemeCss).toMatch(
+      /\.comment-thread\s*\{[^}]*margin: var\(--chakra-spacing-2\) 0 var\(--chakra-spacing-3\);/,
+    );
+    expect(previewThemeCss).not.toContain(
+      "margin: calc(-1 * var(--chakra-spacing-2))",
+    );
   });
 
   it("keeps native list markers above full-width highlight backgrounds", () => {
