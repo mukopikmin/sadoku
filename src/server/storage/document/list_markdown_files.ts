@@ -3,14 +3,24 @@ import type { MarkdownDocumentPath } from "../../usecase/document/types.ts";
 
 const markdownExtensions = new Set([".md", ".markdown"]);
 const excludedDirectories = new Set([".git", "node_modules"]);
-const maxDirectoryDepth = 2;
-const maxMarkdownFiles = 20;
+export const defaultDirectoryScanOptions = {
+  maxDepth: 2,
+  maxFiles: 20,
+} as const;
+
+export type DirectoryScanOptions = {
+  maxDepth?: number;
+  maxFiles?: number;
+};
 
 export const listMarkdownFiles = async (
   directoryPath: string,
+  options: DirectoryScanOptions = {},
 ): Promise<MarkdownDocumentPath[]> => {
   const absoluteDirectoryPath = resolve(directoryPath);
   const documents: MarkdownDocumentPath[] = [];
+  const maxDepth = options.maxDepth ?? defaultDirectoryScanOptions.maxDepth;
+  const maxFiles = options.maxFiles ?? defaultDirectoryScanOptions.maxFiles;
 
   const visitDirectory = async (
     absolutePath: string,
@@ -18,14 +28,14 @@ export const listMarkdownFiles = async (
     depth: number,
   ): Promise<void> => {
     for await (const entry of Deno.readDir(absolutePath)) {
-      if (documents.length >= maxMarkdownFiles) return;
+      if (documents.length >= maxFiles) return;
       if (entry.isSymlink) continue;
 
       const entryAbsolutePath = join(absolutePath, entry.name);
       const entryRelativePath = join(relativePath, entry.name);
       if (entry.isDirectory) {
         if (
-          depth < maxDirectoryDepth &&
+          depth < maxDepth &&
           !excludedDirectories.has(entry.name)
         ) {
           await visitDirectory(entryAbsolutePath, entryRelativePath, depth + 1);

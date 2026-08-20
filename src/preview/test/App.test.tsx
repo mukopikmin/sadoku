@@ -445,6 +445,38 @@ describe("App", () => {
     const themeSelect = screen.getByRole("combobox", { name: "Theme" });
     expect((themeSelect as HTMLSelectElement).value).toBe("light");
     await waitFor(() => expect(document.activeElement).toBe(themeSelect));
+    const maxDepthInput = screen.getByRole("spinbutton", {
+      name: "Maximum depth",
+    });
+    const maxFilesInput = screen.getByRole("spinbutton", {
+      name: "Maximum files",
+    });
+    expect((maxDepthInput as HTMLInputElement).value).toBe("2");
+    expect((maxFilesInput as HTMLInputElement).value).toBe("20");
+
+    fireEvent.change(maxDepthInput, { target: { value: "4" } });
+    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+      body: JSON.stringify({
+        codeWrap: "scroll",
+        maxDepth: 4,
+        maxFiles: 20,
+        theme: "light",
+      }),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
+
+    fireEvent.change(maxFilesInput, { target: { value: "100" } });
+    expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+      body: JSON.stringify({
+        codeWrap: "scroll",
+        maxDepth: 4,
+        maxFiles: 100,
+        theme: "light",
+      }),
+      headers: { "content-type": "application/json" },
+      method: "PUT",
+    });
 
     fireEvent.change(themeSelect, { target: { value: "dark" } });
     expect(document.documentElement.dataset.theme).toBe("dark");
@@ -456,7 +488,12 @@ describe("App", () => {
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({ codeWrap: "scroll", theme: "dark" }),
+      body: JSON.stringify({
+        codeWrap: "scroll",
+        maxDepth: 4,
+        maxFiles: 100,
+        theme: "dark",
+      }),
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
@@ -469,7 +506,12 @@ describe("App", () => {
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" })
     );
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({ codeWrap: "scroll", theme: "light" }),
+      body: JSON.stringify({
+        codeWrap: "scroll",
+        maxDepth: 4,
+        maxFiles: 100,
+        theme: "light",
+      }),
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
@@ -595,7 +637,12 @@ describe("App", () => {
       expect(document.documentElement.dataset.codeWrap).toBe("scroll")
     );
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
-      body: JSON.stringify({ codeWrap: "scroll", theme: "light" }),
+      body: JSON.stringify({
+        codeWrap: "scroll",
+        maxDepth: 2,
+        maxFiles: 20,
+        theme: "light",
+      }),
       headers: { "content-type": "application/json" },
       method: "PUT",
     });

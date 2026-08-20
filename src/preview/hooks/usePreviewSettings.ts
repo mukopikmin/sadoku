@@ -13,6 +13,8 @@ const getPreferredThemeMode = (): ThemeMode =>
 export const usePreviewSettings = () => {
   const [codeWrapMode, setCodeWrapMode] = useState<CodeWrapMode>("scroll");
   const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
+  const [maxDepth, setMaxDepth] = useState(2);
+  const [maxFiles, setMaxFiles] = useState(20);
   const userChangedSettings = useRef(false);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({
@@ -34,6 +36,8 @@ export const usePreviewSettings = () => {
     if (settingsQuery.data.theme !== undefined) {
       setThemeMode(settingsQuery.data.theme);
     }
+    setMaxDepth(settingsQuery.data.maxDepth);
+    setMaxFiles(settingsQuery.data.maxFiles);
   }, [settingsQuery.data]);
 
   useEffect(() => {
@@ -51,14 +55,47 @@ export const usePreviewSettings = () => {
   const changeCodeWrapMode = (next: CodeWrapMode) => {
     userChangedSettings.current = true;
     setCodeWrapMode(next);
-    saveMutation.mutate({ codeWrap: next, theme: themeMode });
+    saveMutation.mutate({
+      codeWrap: next,
+      maxDepth,
+      maxFiles,
+      theme: themeMode,
+    });
   };
 
   const changeThemeMode = (next: ThemeMode) => {
     userChangedSettings.current = true;
     setThemeMode(next);
-    saveMutation.mutate({ codeWrap: codeWrapMode, theme: next });
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      maxDepth,
+      maxFiles,
+      theme: next,
+    });
   };
 
-  return { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode };
+  const changeDirectoryLimits = (
+    nextMaxDepth: number,
+    nextMaxFiles: number,
+  ) => {
+    userChangedSettings.current = true;
+    setMaxDepth(nextMaxDepth);
+    setMaxFiles(nextMaxFiles);
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      maxDepth: nextMaxDepth,
+      maxFiles: nextMaxFiles,
+      theme: themeMode,
+    });
+  };
+
+  return {
+    changeCodeWrapMode,
+    changeDirectoryLimits,
+    changeThemeMode,
+    codeWrapMode,
+    maxDepth,
+    maxFiles,
+    themeMode,
+  };
 };

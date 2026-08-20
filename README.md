@@ -66,7 +66,7 @@ If `--version` is omitted, the compiled binary reports the development version
 ## Usage
 
 ```sh
-sadoku start <file.md|directory|url> [options]
+sadoku start <file.md|directory|url> [--max-depth <depth>] [--max-files <count>] [options]
 sadoku update [--channel stable|nightly]
 ```
 
@@ -88,10 +88,22 @@ Preview the Markdown documents in a directory:
 sadoku start ./docs
 ```
 
-For a directory preview, Sadoku scans only the files directly inside the
-specified directory when the server starts. It does not search subdirectories. A
-document must be a regular file whose extension is `.md` or `.markdown`,
-compared case-insensitively; symbolic links are not followed.
+For a directory preview, Sadoku scans up to two directory levels and loads up to
+20 documents by default. Use `--max-depth` to change the deepest level scanned
+(`0` scans only the specified directory) and `--max-files` to change the file
+limit:
+
+```sh
+sadoku start ./docs --max-depth 4 --max-files 100
+```
+
+These defaults can also be changed under **Settings → Directory discovery** in
+the preview. Settings saved there apply when the next directory preview starts;
+command-line options override the saved defaults for that invocation.
+
+A document must be a regular file whose extension is `.md` or `.markdown`,
+compared case-insensitively; `.git` and `node_modules` directories and symbolic
+links are not followed.
 
 The initial screen lists the discovered documents. Selecting a document stores
 the selection in React state without changing the URL. Reloading the page
@@ -101,10 +113,9 @@ The document list is generated once at startup. Files added or removed after
 startup are not reflected automatically, but change notifications continue to
 work for the selected document.
 
-The initial directory-preview implementation intentionally does not include
-recursive discovery, `.gitignore` handling, search, a tree view, per-document
-URLs, live rescanning of the directory, or deletion of individual comments from
-the CLI.
+The directory-preview implementation does not include `.gitignore` handling,
+search, per-document URLs, live rescanning of the directory, or deletion of
+individual comments from the CLI.
 
 Preview Markdown from a URL:
 

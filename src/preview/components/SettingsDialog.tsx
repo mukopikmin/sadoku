@@ -2,6 +2,7 @@ import {
   Dialog,
   Flex,
   IconButton,
+  Input,
   NativeSelect,
   Portal,
   Switch,
@@ -11,7 +12,10 @@ import type { CodeWrapMode, ThemeMode } from "../models/theme";
 
 type SettingsDialogProps = {
   codeWrapMode: CodeWrapMode;
+  maxDepth: number;
+  maxFiles: number;
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
+  onDirectoryLimitsChange: (maxDepth: number, maxFiles: number) => void;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
@@ -20,7 +24,10 @@ type SettingsDialogProps = {
 
 export const SettingsDialog = ({
   codeWrapMode,
+  maxDepth,
+  maxFiles,
   onCodeWrapModeChange,
+  onDirectoryLimitsChange,
   onOpenChange,
   onThemeModeChange,
   open,
@@ -95,6 +102,58 @@ export const SettingsDialog = ({
                     </Switch.Control>
                     <Switch.Label srOnly>Wrap code blocks</Switch.Label>
                   </Switch.Root>
+                </Flex>
+                <Flex direction="column" gap="3">
+                  <Text as="div">
+                    <Text fontWeight="medium">Directory discovery</Text>
+                    <Text color="fg.muted" fontSize="sm">
+                      Changes apply the next time a directory preview starts.
+                    </Text>
+                  </Text>
+                  <Flex
+                    alignItems="center"
+                    justifyContent="space-between"
+                    gap="4"
+                  >
+                    <Text as="label" htmlFor="directory-max-depth">
+                      Maximum depth
+                    </Text>
+                    <Input
+                      id="directory-max-depth"
+                      min="0"
+                      onChange={(event) => {
+                        const value = Number(event.currentTarget.value);
+                        if (Number.isInteger(value) && value >= 0) {
+                          onDirectoryLimitsChange(value, maxFiles);
+                        }
+                      }}
+                      type="number"
+                      value={maxDepth}
+                      width="24"
+                    />
+                  </Flex>
+                  <Flex
+                    alignItems="center"
+                    justifyContent="space-between"
+                    gap="4"
+                  >
+                    <Text as="label" htmlFor="directory-max-files">
+                      Maximum files
+                    </Text>
+                    <Input
+                      id="directory-max-files"
+                      min="1"
+                      onChange={(event) => {
+                        const value = Number(event.currentTarget.value);
+                        if (Number.isInteger(value) && value >= 1) {
+                          onDirectoryLimitsChange(maxDepth, value);
+                        }
+                      }}
+                      type="number"
+                      value={maxFiles}
+                      width="24"
+                    />
+                  </Flex>
                 </Flex>
               </Flex>
             </Dialog.Body>
