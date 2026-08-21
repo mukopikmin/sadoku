@@ -39,6 +39,7 @@ export const createPreviewEventStream = (
     if (closed) return;
     closed = true;
     for (const watcher of watchers) watcher.close();
+    if (close) signal.removeEventListener("abort", close);
     options.onEventStreamClose?.();
     if (!controller) return;
     try {
@@ -94,9 +95,7 @@ export const createPreviewEventStream = (
       if (options.commentsNotificationPath) {
         tasks.push(watch(options.commentsNotificationPath, ["comments"]));
       }
-      Promise.all(tasks).finally(() => {
-        if (close) signal.removeEventListener("abort", close);
-      });
+      void Promise.all(tasks);
     },
     cancel() {
       closeOnce();

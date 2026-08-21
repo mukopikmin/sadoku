@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { connectHotReload } from "../api/hotReload";
+import { connectHotReload, connectPreviewKeepAlive } from "../api/hotReload";
 
 class FakeEventSource extends EventTarget {
   static instances: FakeEventSource[] = [];
@@ -18,6 +18,17 @@ class FakeEventSource extends EventTarget {
 }
 
 describe("connectHotReload", () => {
+  it("keeps the preview session alive independently of a document", () => {
+    const disconnect = connectPreviewKeepAlive(
+      FakeEventSource as unknown as new (url: string) => EventSource,
+    );
+    const events = FakeEventSource.instances.at(-1);
+
+    expect(events?.url).toBe("/__sadoku/events");
+    disconnect();
+    expect(events?.closed).toBe(true);
+  });
+
   it("notifies when the server invalidates the document", () => {
     let reloads = 0;
     const disconnect = connectHotReload({

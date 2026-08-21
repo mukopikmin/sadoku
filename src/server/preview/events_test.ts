@@ -140,3 +140,16 @@ Deno.test("reports stream closure only once after abort and cancellation", async
     await Deno.remove(directory, { recursive: true }).catch(() => {});
   }
 });
+
+Deno.test("keeps an empty event stream open until its signal aborts", async () => {
+  const controller = new AbortController();
+  let closed = 0;
+  const stream = createPreviewEventStream(undefined, controller.signal, {
+    onEventStreamClose: () => closed += 1,
+  });
+  const reader = stream.getReader();
+
+  controller.abort();
+  await readUntilDone(reader);
+  assertEquals(closed, 1);
+});

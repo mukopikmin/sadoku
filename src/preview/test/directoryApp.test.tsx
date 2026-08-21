@@ -225,24 +225,29 @@ describe("directory preview", () => {
     );
   });
 
-  it("switches document data and EventSources without showing the previous document", async () => {
+  it("keeps the preview alive while switching document EventSources", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
     render(<App />);
-    fireEvent.click(
-      await screen.findByRole("treeitem", { name: "alpha.md" }),
-    );
+    const firstDocument = await screen.findByRole("treeitem", {
+      name: "alpha.md",
+    });
+    const keepAliveEvents = DirectoryEventSource.instances.at(-1)!;
+    expect(keepAliveEvents.url).toBe("/__sadoku/events");
+    fireEvent.click(firstDocument);
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "beta.md" });
     expect(documentOneEvents.closed).toBe(true);
+    expect(keepAliveEvents.closed).toBe(false);
     fireEvent.click(screen.getByRole("treeitem", { name: "beta.md" }));
     expect(screen.queryByRole("heading", { name: "Document 1" })).toBeNull();
     await screen.findByRole("heading", { name: "Document 2" });
     expect(DirectoryEventSource.instances.at(-1)?.url).toBe(
       "/__sadoku/documents/2/events",
     );
+    expect(keepAliveEvents.closed).toBe(false);
   });
 
   it("can return to the list after a document error", async () => {
