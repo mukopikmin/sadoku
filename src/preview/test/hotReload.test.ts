@@ -20,13 +20,39 @@ class FakeEventSource extends EventTarget {
 describe("connectHotReload", () => {
   it("keeps the preview session alive independently of a document", () => {
     const disconnect = connectPreviewKeepAlive(
-      FakeEventSource as unknown as new (url: string) => EventSource,
+      {
+        EventSourceCtor: FakeEventSource as unknown as new (
+          url: string,
+        ) => EventSource,
+      },
     );
     const events = FakeEventSource.instances.at(-1);
 
     expect(events?.url).toBe("/__sadoku/events");
     disconnect();
     expect(events?.closed).toBe(true);
+  });
+
+  it("reports when the preview connection is lost and restored", () => {
+    let connectionLost = false;
+    const disconnect = connectPreviewKeepAlive({
+      EventSourceCtor: FakeEventSource as unknown as new (
+        url: string,
+      ) => EventSource,
+      onConnectionLost: () => connectionLost = true,
+      onConnectionRestored: () => connectionLost = false,
+    });
+    const events = FakeEventSource.instances.at(-1)!;
+
+    events.dispatchEvent(new Event("error"));
+    expect(connectionLost).toBe(true);
+
+    events.dispatchEvent(new Event("open"));
+    expect(connectionLost).toBe(false);
+
+    disconnect();
+    events.dispatchEvent(new Event("error"));
+    expect(connectionLost).toBe(false);
   });
 
   it("notifies when the server invalidates the document", () => {

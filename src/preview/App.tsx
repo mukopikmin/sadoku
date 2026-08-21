@@ -70,13 +70,18 @@ export const App = () => {
   );
   const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
+  const [connectionLost, setConnectionLost] = useState(false);
   const { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode } =
     usePreviewSettings();
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
     selectedDocumentId,
   );
 
-  useEffect(() => connectPreviewKeepAlive(), []);
+  useEffect(() =>
+    connectPreviewKeepAlive({
+      onConnectionLost: () => setConnectionLost(true),
+      onConnectionRestored: () => setConnectionLost(false),
+    }), []);
 
   useEffect(() => {
     clearReloadAvailable();
@@ -159,6 +164,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={() => {}}
           onOpenSettings={settingsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
@@ -202,6 +208,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={changeView}
           onOpenSettings={settingsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
@@ -253,6 +260,7 @@ export const App = () => {
     <>
       <style>{previewThemeCss}</style>
       <PreviewHeader
+        connectionLost={connectionLost}
         fileUrl={document.fileUrl}
         onChangeView={changeView}
         onReloadPreview={reloadPreview}

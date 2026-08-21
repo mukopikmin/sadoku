@@ -104,6 +104,14 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+
+    TestEventSource.instances[0]?.dispatchEvent(new Event("error"));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Connection lost",
+    );
+
+    TestEventSource.instances[0]?.dispatchEvent(new Event("open"));
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
 
   it("reloads the Markdown and comments without changing views", async () => {
