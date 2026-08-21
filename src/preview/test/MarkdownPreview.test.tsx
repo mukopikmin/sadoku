@@ -128,6 +128,13 @@ console.log("<ok>");
     expect(container.querySelector("strong")?.textContent).toBe("world");
     const unorderedList = container.querySelector("ul");
     expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    expect(
+      getComputedStyle(
+        container.querySelectorAll("ul > li")[1].querySelector(
+          ".commentable-content",
+        )!,
+      ).paddingTop,
+    ).toBe("var(--chakra-spacing-1)");
     expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
       false,
     );
@@ -263,6 +270,12 @@ Footnote-looking text stays plain.[^note]
     expect(container.querySelector("td strong")?.textContent).toBe("beta");
     expect(container.querySelector("table")?.className).toContain(
       "chakra-table__root",
+    );
+    expect(
+      getComputedStyle(container.querySelector("table")!.parentElement!)
+        .paddingBlock,
+    ).toBe(
+      "var(--chakra-spacing-2)",
     );
     expect(container.querySelector("thead")?.className).toContain(
       "chakra-table__header",

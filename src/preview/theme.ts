@@ -174,6 +174,10 @@ export const previewThemeCss = `
         list-style-type: none;
       }
 
+      .markdown-preview .comment-markdown-list > li + li > .commentable-list-item > .commentable-content {
+        padding-top: var(--chakra-spacing-1);
+      }
+
       .hljs {
         color: var(--chakra-colors-code-fg);
       }
