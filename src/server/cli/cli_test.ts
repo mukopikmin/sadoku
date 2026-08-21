@@ -69,6 +69,35 @@ Deno.test("requests preview startup through an injected dependency", async () =>
   }]);
 });
 
+Deno.test("passes directory scan limits to preview startup", async () => {
+  const output = captureIo();
+  let startupOptions: unknown;
+
+  const exitCode = await runCli(
+    ["start", "docs", "--max-depth", "4", "--max-files", "50", "--no-open"],
+    {
+      startPreviewServer: (options) => {
+        startupOptions = options;
+        return Promise.resolve({
+          filePath: "/workspace/sadoku/docs",
+          url: "http://127.0.0.1:3334/",
+        });
+      },
+    },
+    output.io,
+  );
+
+  assertEquals(exitCode, 0);
+  assertEquals(startupOptions, {
+    file: "docs",
+    host: "127.0.0.1",
+    keepAlive: false,
+    maxDepth: 4,
+    maxFiles: 50,
+    port: 3334,
+  });
+});
+
 Deno.test("rejects directories for explicitly classified comment commands", async () => {
   const output = captureIo();
   const directory = await Deno.makeTempDir({ prefix: "sadoku-cli-" });

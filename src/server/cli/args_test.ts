@@ -82,6 +82,30 @@ Deno.test("parses keep-alive option", () => {
   });
 });
 
+Deno.test("parses directory scan limits", () => {
+  assertEquals(
+    parseArgs([
+      "start",
+      "docs",
+      "--max-depth",
+      "0",
+      "--max-files=100",
+    ]),
+    {
+      asBot: false,
+      command: "start",
+      file: "docs",
+      force: false,
+      host: "127.0.0.1",
+      keepAlive: false,
+      maxDepth: 0,
+      maxFiles: 100,
+      open: true,
+      port: 3334,
+    },
+  );
+});
+
 Deno.test("parses comments list command", () => {
   assertEquals(parseArgs(["comments", "list"]), {
     asBot: false,
@@ -275,6 +299,7 @@ Deno.test("rejects invalid update arguments and command-specific options", () =>
       ["update", "--no-open"],
       ["update", "--force"],
       ["start", "README.md", "--channel", "stable"],
+      ["update", "--max-depth", "1"],
     ]
   ) {
     assertThrows(() => parseArgs(args), CliUsageError);
@@ -345,6 +370,17 @@ Deno.test("throws usage errors for invalid options", () => {
     assertThrows(() => parseArgs(["start", "README.md", "--port", "nope"])),
     CliUsageError,
   );
+  for (
+    const args of [
+      ["start", "docs", "--max-depth", "-1"],
+      ["start", "docs", "--max-depth", "1.5"],
+      ["start", "docs", "--max-files", "0"],
+      ["start", "docs", "--max-files", "many"],
+      ["comments", "list", "--max-files", "10"],
+    ]
+  ) {
+    assertInstanceOf(assertThrows(() => parseArgs(args)), CliUsageError);
+  }
   assertInstanceOf(
     assertThrows(() => parseArgs(["start", "README.md", "--unknown"])),
     CliUsageError,

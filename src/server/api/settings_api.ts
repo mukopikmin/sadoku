@@ -1,5 +1,6 @@
 import { readConfig, updatePreviewConfig } from "../config.ts";
 import { noStoreJson, textResponse } from "../responses.ts";
+import { defaultDirectoryScanOptions } from "../storage/document/list_markdown_files.ts";
 
 const invalidRequest = (message: string): Response =>
   textResponse(message, 400);
@@ -11,6 +12,8 @@ const readSettings = () => {
     ...(config?.codeWrapMode === undefined
       ? {}
       : { codeWrap: config.codeWrapMode }),
+    maxDepth: config?.directoryMaxDepth ?? defaultDirectoryScanOptions.maxDepth,
+    maxFiles: config?.directoryMaxFiles ?? defaultDirectoryScanOptions.maxFiles,
   };
 };
 
@@ -37,17 +40,27 @@ export const updateSettings = async (
     );
   }
 
-  const { codeWrap, theme } = body as Record<string, unknown>;
+  const { codeWrap, maxDepth, maxFiles, theme } = body as Record<
+    string,
+    unknown
+  >;
   if (
-    Object.keys(body).length !== 2 ||
+    Object.keys(body).length !== 4 ||
     (theme !== "dark" && theme !== "light") ||
-    (codeWrap !== "scroll" && codeWrap !== "wrap")
+    (codeWrap !== "scroll" && codeWrap !== "wrap") ||
+    !Number.isInteger(maxDepth) || (maxDepth as number) < 0 ||
+    !Number.isInteger(maxFiles) || (maxFiles as number) < 1
   ) {
     return invalidRequest(
-      'Request body must contain only theme ("dark" or "light") and codeWrap ("scroll" or "wrap").',
+      "Request body must contain valid theme, codeWrap, maxDepth, and maxFiles settings.",
     );
   }
 
-  await updatePreviewConfig(theme, codeWrap);
+  await updatePreviewConfig(
+    theme,
+    codeWrap,
+    maxDepth as number,
+    maxFiles as number,
+  );
   return noStoreJson(readSettings());
 };

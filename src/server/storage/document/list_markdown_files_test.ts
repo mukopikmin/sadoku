@@ -78,6 +78,44 @@ Deno.test("limits the result to 20 Markdown files", async () => {
   }
 });
 
+Deno.test("uses configured directory depth and file limits", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    await Deno.writeTextFile(join(root, "root.md"), "content");
+    await Deno.mkdir(join(root, "one", "two", "three"), { recursive: true });
+    await Deno.writeTextFile(join(root, "one", "one.md"), "content");
+    await Deno.writeTextFile(join(root, "one", "two", "two.md"), "content");
+    await Deno.writeTextFile(
+      join(root, "one", "two", "three", "three.md"),
+      "content",
+    );
+
+    assertEquals(
+      (await listMarkdownFiles(root, { maxDepth: 0, maxFiles: 10 })).map(
+        (document) => document.relativePath,
+      ),
+      ["root.md"],
+    );
+    assertEquals(
+      (await listMarkdownFiles(root, { maxDepth: 3, maxFiles: 2 })).length,
+      2,
+    );
+    assertEquals(
+      (await listMarkdownFiles(root, { maxDepth: 3, maxFiles: 10 })).map(
+        (document) => document.relativePath,
+      ),
+      [
+        join("one", "one.md"),
+        join("one", "two", "three", "three.md"),
+        join("one", "two", "two.md"),
+        "root.md",
+      ],
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("returns an empty list for an empty directory", async () => {
   const root = await Deno.makeTempDir();
   try {

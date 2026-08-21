@@ -21,6 +21,8 @@ export type CliOptions = {
   force: boolean;
   host: string;
   keepAlive: boolean;
+  maxDepth?: number;
+  maxFiles?: number;
   open: boolean;
   port: number;
   replyBody?: string;
@@ -38,7 +40,7 @@ export class CliUsageError extends Error {
 }
 
 export const usage = `Usage:
-  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
+  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive]
   sadoku comments add <file.md|url> <start-line> <end-line> <body> [--as-bot]
   sadoku comments inspect <file.md|url>
   sadoku comments reply <file.md|url> <comment-id> <body> [--as-bot] [--request-review]
@@ -52,6 +54,8 @@ Options:
   --host       Host to bind. Defaults to 127.0.0.1.
   --no-open    Do not open the preview in your browser automatically.
   --keep-alive Keep the server running after the browser tab is closed.
+  --max-depth  Maximum directory depth to scan. Defaults to 2 (0 scans only the root).
+  --max-files  Maximum number of Markdown files to load. Defaults to 20.
   --force      Remove comments without prompting.
   --as-bot     Attribute comment actions to a bot.
   --request-review
@@ -84,7 +88,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         host: "127.0.0.1",
         port: "3334",
       },
-      string: ["channel", "host", "port"],
+      string: ["channel", "host", "max-depth", "max-files", "port"],
       unknown: (arg) => {
         if (!arg.startsWith("-")) return true;
         throw new CliUsageError(`Unknown option: ${arg}`);
@@ -103,6 +107,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
   ): void => {
     if (
       flags.host !== "127.0.0.1" || flags.port !== "3334" ||
+      flags["max-depth"] !== undefined || flags["max-files"] !== undefined ||
       flags["keep-alive"] || flags["no-open"] ||
       (!allowAsBot && flags["as-bot"]) ||
       (!allowRequestReview && flags["request-review"])
@@ -119,6 +124,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
     }
     if (
       flags.host !== "127.0.0.1" || flags.port !== "3334" ||
+      flags["max-depth"] !== undefined || flags["max-files"] !== undefined ||
       flags["keep-alive"] || flags["no-open"] || flags["as-bot"] ||
       flags["request-review"] || flags.force
     ) {
@@ -329,6 +335,24 @@ export const parseArgs = (argv: string[]): CliOptions => {
     throw new CliUsageError(`Invalid port: ${flags.port}`);
   }
 
+  const maxDepth = flags["max-depth"] === undefined
+    ? undefined
+    : Number(flags["max-depth"]);
+  if (maxDepth !== undefined && (!Number.isInteger(maxDepth) || maxDepth < 0)) {
+    throw new CliUsageError(
+      `Invalid maximum directory depth: ${flags["max-depth"]}`,
+    );
+  }
+
+  const maxFiles = flags["max-files"] === undefined
+    ? undefined
+    : Number(flags["max-files"]);
+  if (maxFiles !== undefined && (!Number.isInteger(maxFiles) || maxFiles < 1)) {
+    throw new CliUsageError(
+      `Invalid maximum file count: ${flags["max-files"]}`,
+    );
+  }
+
   const options: CliOptions = {
     asBot: Boolean(flags["as-bot"]),
     command: flags._[0]?.toString() === "start" ? "start" : undefined,
@@ -336,6 +360,8 @@ export const parseArgs = (argv: string[]): CliOptions => {
     force: false,
     host: flags.host?.toString() ?? "127.0.0.1",
     keepAlive: Boolean(flags["keep-alive"]),
+    ...(maxDepth !== undefined ? { maxDepth } : {}),
+    ...(maxFiles !== undefined ? { maxFiles } : {}),
     open: !flags["no-open"],
     port,
   };
