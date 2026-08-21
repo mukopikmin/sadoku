@@ -4,6 +4,7 @@ import {
   renderWithRouter as render,
   screen,
   waitFor,
+  within,
 } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
@@ -451,6 +452,22 @@ describe("App", () => {
     const maxFilesInput = screen.getByRole("spinbutton", {
       name: "Maximum files",
     });
+    const directoryDiscovery = screen.getByRole("group", {
+      name: "Directory discovery",
+    });
+    expect(
+      within(directoryDiscovery).getByRole("spinbutton", {
+        name: "Maximum depth",
+      }),
+    ).toBe(maxDepthInput);
+    expect(
+      within(directoryDiscovery).getByRole("spinbutton", {
+        name: "Maximum files",
+      }),
+    ).toBe(maxFilesInput);
+    expect(getComputedStyle(directoryDiscovery).paddingInlineStart).not.toBe(
+      "0px",
+    );
     expect((maxDepthInput as HTMLInputElement).value).toBe("2");
     expect((maxFilesInput as HTMLInputElement).value).toBe("20");
 

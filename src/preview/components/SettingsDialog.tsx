@@ -105,54 +105,69 @@ export const SettingsDialog = ({
                 </Flex>
                 <Flex direction="column" gap="3">
                   <Text as="div">
-                    <Text fontWeight="medium">Directory discovery</Text>
-                    <Text color="fg.muted" fontSize="sm">
+                    <Text id="directory-discovery-label" fontWeight="medium">
+                      Directory discovery
+                    </Text>
+                    <Text
+                      color="fg.muted"
+                      fontSize="sm"
+                      id="directory-discovery-description"
+                    >
                       Changes apply the next time a directory preview starts.
                     </Text>
                   </Text>
                   <Flex
-                    alignItems="center"
-                    justifyContent="space-between"
-                    gap="4"
+                    aria-describedby="directory-discovery-description"
+                    aria-labelledby="directory-discovery-label"
+                    direction="column"
+                    gap="3"
+                    ps="4"
+                    role="group"
                   >
-                    <Text as="label" htmlFor="directory-max-depth">
-                      Maximum depth
-                    </Text>
-                    <Input
-                      id="directory-max-depth"
-                      min="0"
-                      onChange={(event) => {
-                        const value = Number(event.currentTarget.value);
-                        if (Number.isInteger(value) && value >= 0) {
-                          onDirectoryLimitsChange(value, maxFiles);
-                        }
-                      }}
-                      type="number"
-                      value={maxDepth}
-                      width="24"
-                    />
-                  </Flex>
-                  <Flex
-                    alignItems="center"
-                    justifyContent="space-between"
-                    gap="4"
-                  >
-                    <Text as="label" htmlFor="directory-max-files">
-                      Maximum files
-                    </Text>
-                    <Input
-                      id="directory-max-files"
-                      min="1"
-                      onChange={(event) => {
-                        const value = Number(event.currentTarget.value);
-                        if (Number.isInteger(value) && value >= 1) {
-                          onDirectoryLimitsChange(maxDepth, value);
-                        }
-                      }}
-                      type="number"
-                      value={maxFiles}
-                      width="24"
-                    />
+                    <Flex
+                      alignItems="center"
+                      justifyContent="space-between"
+                      gap="4"
+                    >
+                      <Text as="label" htmlFor="directory-max-depth">
+                        Maximum depth
+                      </Text>
+                      <Input
+                        id="directory-max-depth"
+                        min="0"
+                        onChange={(event) => {
+                          const value = Number(event.currentTarget.value);
+                          if (Number.isInteger(value) && value >= 0) {
+                            onDirectoryLimitsChange(value, maxFiles);
+                          }
+                        }}
+                        type="number"
+                        value={maxDepth}
+                        width="24"
+                      />
+                    </Flex>
+                    <Flex
+                      alignItems="center"
+                      justifyContent="space-between"
+                      gap="4"
+                    >
+                      <Text as="label" htmlFor="directory-max-files">
+                        Maximum files
+                      </Text>
+                      <Input
+                        id="directory-max-files"
+                        min="1"
+                        onChange={(event) => {
+                          const value = Number(event.currentTarget.value);
+                          if (Number.isInteger(value) && value >= 1) {
+                            onDirectoryLimitsChange(maxDepth, value);
+                          }
+                        }}
+                        type="number"
+                        value={maxFiles}
+                        width="24"
+                      />
+                    </Flex>
                   </Flex>
                 </Flex>
               </Flex>
