@@ -176,23 +176,25 @@ const createCommentablePre = () => {
     const element = mermaidCode === undefined
       ? renderMarkdownPre(elementProps, children)
       : (
-        <Box className="mermaid-container" position="relative">
-          <pre className="mermaid">{mermaidCode}</pre>
-          <Button
-            aria-label="Zoom Mermaid diagram"
-            bg="canvas"
-            className="mermaid-zoom-button"
-            color="fg"
-            position="absolute"
-            right="2"
-            size="xs"
-            title="Zoom Mermaid diagram"
-            top="2"
-            type="button"
-            variant="outline"
-          >
-            Zoom
-          </Button>
+        <Box className="mermaid-container" py="2">
+          <Box position="relative">
+            <pre className="mermaid">{mermaidCode}</pre>
+            <Button
+              aria-label="Zoom Mermaid diagram"
+              bg="canvas"
+              className="mermaid-zoom-button"
+              color="fg"
+              position="absolute"
+              right="2"
+              size="xs"
+              title="Zoom Mermaid diagram"
+              top="2"
+              type="button"
+              variant="outline"
+            >
+              Zoom
+            </Button>
+          </Box>
         </Box>
       );
     if (!sourceRange || ancestorSourceLines.has(sourceRange.startLine)) {
