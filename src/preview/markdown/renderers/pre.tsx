@@ -53,8 +53,7 @@ export const renderMarkdownPre = (
     bg="canvas.subtle"
     color="code.fg"
     lineHeight="1.45"
-    mt="0"
-    mb="4"
+    m="0"
   >
     <ChakraCodeBlock.Content>
       <ChakraCodeBlock.Code

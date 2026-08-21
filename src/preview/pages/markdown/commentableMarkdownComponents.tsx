@@ -176,7 +176,7 @@ const createCommentablePre = () => {
     const element = mermaidCode === undefined
       ? renderMarkdownPre(elementProps, children)
       : (
-        <Box className="mermaid-container" mb="4" position="relative">
+        <Box className="mermaid-container" position="relative">
           <pre className="mermaid">{mermaidCode}</pre>
           <Button
             aria-label="Zoom Mermaid diagram"

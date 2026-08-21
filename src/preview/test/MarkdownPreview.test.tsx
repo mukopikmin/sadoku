@@ -135,12 +135,10 @@ console.log("<ok>");
       true,
     );
     expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
-    expect(getComputedStyle(unorderedList!).marginTop).toBe(
-      "var(--chakra-spacing-2)",
-    );
-    expect(getComputedStyle(unorderedList!).marginBottom).toBe(
-      "var(--chakra-spacing-4)",
-    );
+    expect(getComputedStyle(unorderedList!).marginTop).toBe("0px");
+    expect(getComputedStyle(unorderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(unorderedList!).paddingTop).toBe("0px");
+    expect(getComputedStyle(unorderedList!).paddingBottom).toBe("0");
     expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
     expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
@@ -150,25 +148,19 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
-  it("leaves a two-pixel gap between adjacent highlight backgrounds", () => {
+  it("stacks blocks with a fixed gap and keeps highlights within padding", () => {
     expect(previewThemeCss).toMatch(
-      /\.commentable-content::before\s*\{[^}]*top: calc\(-1 \* var\(--comment-highlight-spacing-before\) \+ 1px\);[^}]*bottom: calc\(-1 \* var\(--comment-highlight-spacing-after\) \+ 1px\);/,
-    );
-    expect(previewThemeCss).not.toContain("inset: -4px -8px");
-  });
-
-  it("defines highlight spacing by Markdown element type", () => {
-    expect(previewThemeCss).toMatch(
-      /\.commentable-heading\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-4\);/,
+      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-2\);/,
     );
     expect(previewThemeCss).toMatch(
-      /\.commentable-horizontal-rule\s*\{[^}]*--comment-highlight-spacing-before: var\(--chakra-spacing-6\);[^}]*--comment-highlight-spacing-after: var\(--chakra-spacing-6\);/,
+      /\.commentable-content::before\s*\{[^}]*top: 0;[^}]*bottom: 0;/,
     );
+    expect(previewThemeCss).not.toContain("--comment-highlight-spacing");
     expect(previewThemeCss).toMatch(
-      /\.commentable-block\s*\{[^}]*--comment-highlight-spacing-before: 0px;[^}]*--comment-highlight-spacing-after: 0px;/,
+      /\.comment-thread\s*\{[^}]*margin: var\(--chakra-spacing-2\) 0 var\(--chakra-spacing-3\);/,
     );
-    expect(previewThemeCss).toMatch(
-      /\.commentable-block:has\(\+ \.commentable-heading\)[^{]*\{[^}]*bottom: 1px;/,
+    expect(previewThemeCss).not.toContain(
+      "margin: calc(-1 * var(--chakra-spacing-2))",
     );
   });
 
@@ -306,11 +298,8 @@ After
     expect(horizontalRule?.getAttribute("aria-orientation")).toBe(
       "horizontal",
     );
-    expect(getComputedStyle(horizontalRule!.parentElement!).marginTop).toBe(
-      "var(--chakra-spacing-6)",
-    );
-    expect(getComputedStyle(horizontalRule!.parentElement!).marginBottom).toBe(
-      "var(--chakra-spacing-6)",
+    expect(getComputedStyle(horizontalRule!.parentElement!).paddingBlock).toBe(
+      "var(--chakra-spacing-4)",
     );
   });
 
@@ -339,10 +328,16 @@ After
     expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
       "0px",
     );
-    expectComputedStyleValue(nestedUnorderedList!, "margin-top", "0.25em");
+    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expectComputedStyleValue(nestedOrderedList!, "margin-top", "0.25em");
+    expect(getComputedStyle(nestedUnorderedList!).paddingTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
+    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
+    expect(getComputedStyle(nestedOrderedList!).paddingTop).toBe(
+      "var(--chakra-spacing-2)",
+    );
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",
     );
@@ -590,6 +585,18 @@ graph TD
 
     expect(container.querySelector("pre code.language-ts")).not.toBeNull();
     expect(container.querySelector("pre.mermaid")).not.toBeNull();
+    const codeRoot = container.querySelector<HTMLElement>(
+      '[data-source-line="1"] .comment-markdown-body > :first-child',
+    );
+    const mermaidContainer = container.querySelector<HTMLElement>(
+      '[data-source-line="5"] .mermaid-container',
+    );
+    expect(Number.parseFloat(getComputedStyle(codeRoot!).paddingBottom)).toBe(
+      0,
+    );
+    expect(
+      Number.parseFloat(getComputedStyle(mermaidContainer!).paddingBottom),
+    ).toBe(0);
     expect(previewThemeCss).toMatch(
       /\.commentable-block:not\(\.commentable-block-selected\):hover > \.commentable-content pre,[^{]*\.commentable-block:not\(\.commentable-block-selected\):focus-within > \.commentable-content pre\s*\{[^}]*background: color-mix\(in srgb, var\(--chakra-colors-accent\) 14%, var\(--chakra-colors-canvas\)\);/,
     );
@@ -938,14 +945,12 @@ Body
     const bodyContent = bodyBlock?.querySelector<HTMLElement>(
       ":scope > .commentable-content",
     );
-    const heading = titleContent?.querySelector<HTMLElement>("h1");
-    const paragraph = bodyContent?.querySelector<HTMLElement>("p");
     expect(preview).not.toBeNull();
     expect(titleContent).not.toBeNull();
     expect(bodyContent).not.toBeNull();
     preview!.getBoundingClientRect = () => mockRect(100, 400);
-    heading!.getBoundingClientRect = () => mockRect(120, 150);
-    paragraph!.getBoundingClientRect = () => mockRect(200, 240);
+    titleContent!.getBoundingClientRect = () => mockRect(120, 150);
+    bodyContent!.getBoundingClientRect = () => mockRect(200, 240);
 
     fireEvent.click(titleContent!);
     fireEvent.click(bodyContent!, { shiftKey: true });
