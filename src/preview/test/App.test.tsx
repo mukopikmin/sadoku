@@ -106,7 +106,7 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
 
     TestEventSource.instances[0]?.dispatchEvent(new Event("error"));
-    expect(await screen.findByRole("status")).toHaveTextContent(
+    expect((await screen.findByRole("status")).textContent).toContain(
       "Connection lost",
     );
 
