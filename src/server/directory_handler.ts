@@ -71,6 +71,17 @@ export const createDirectoryPreviewHandler = (
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
   app.all("/__sadoku/settings", methodNotAllowedResponse);
+  app.get("/__sadoku/events", (context) =>
+    new Response(
+      createPreviewEventStream(undefined, context.req.raw.signal, options),
+      {
+        headers: {
+          "content-type": "text/event-stream; charset=utf-8",
+          "cache-control": "no-store",
+          connection: "keep-alive",
+        },
+      },
+    ));
   app.get("/__sadoku/documents/:documentId", async (context) => {
     const { document, source } = resolveDocument(
       context.req.param("documentId"),
@@ -93,7 +104,6 @@ export const createDirectoryPreviewHandler = (
         source.isRemote ? undefined : source.documentSource,
         context.req.raw.signal,
         {
-          ...options,
           commentsNotificationPath: getCommentsNotificationFilePath(
             source.commentSource,
           ),

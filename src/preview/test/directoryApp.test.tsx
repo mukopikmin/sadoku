@@ -23,6 +23,7 @@ class DirectoryEventSource extends EventTarget {
 const documents = [
   { id: 1, relativePath: "guides/alpha.md", title: "Alpha" },
   { id: 2, relativePath: "beta.md", title: "Beta" },
+  { id: 3, relativePath: "guides/nested/gamma.md", title: "Gamma" },
 ];
 
 const installFetch = (
@@ -112,7 +113,16 @@ describe("directory preview", () => {
     const breadcrumbs = screen.getByRole("navigation", {
       name: "Document path",
     });
-    expect(breadcrumbs.textContent).toContain("guides/alpha.md");
+    expect(breadcrumbs.textContent).toContain("guides");
+    expect(breadcrumbs.textContent).toContain("alpha.md");
+    fireEvent.click(screen.getByRole("button", { name: "guides" }));
+    const directoryDialog = await screen.findByRole("dialog", {
+      name: "guides",
+    });
+    expect(directoryDialog.textContent).toContain("alpha.md");
+    expect(directoryDialog.textContent).not.toContain("gamma.md");
+    fireEvent.click(screen.getByRole("button", { name: "alpha.md" }));
+    await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     expect(await screen.findByRole("treeitem", { name: "beta.md" })).not
@@ -215,24 +225,29 @@ describe("directory preview", () => {
     );
   });
 
-  it("switches document data and EventSources without showing the previous document", async () => {
+  it("keeps the preview alive while switching document EventSources", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
     render(<App />);
-    fireEvent.click(
-      await screen.findByRole("treeitem", { name: "alpha.md" }),
-    );
+    const firstDocument = await screen.findByRole("treeitem", {
+      name: "alpha.md",
+    });
+    const keepAliveEvents = DirectoryEventSource.instances.at(-1)!;
+    expect(keepAliveEvents.url).toBe("/__sadoku/events");
+    fireEvent.click(firstDocument);
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "beta.md" });
     expect(documentOneEvents.closed).toBe(true);
+    expect(keepAliveEvents.closed).toBe(false);
     fireEvent.click(screen.getByRole("treeitem", { name: "beta.md" }));
     expect(screen.queryByRole("heading", { name: "Document 1" })).toBeNull();
     await screen.findByRole("heading", { name: "Document 2" });
     expect(DirectoryEventSource.instances.at(-1)?.url).toBe(
       "/__sadoku/documents/2/events",
     );
+    expect(keepAliveEvents.closed).toBe(false);
   });
 
   it("can return to the list after a document error", async () => {

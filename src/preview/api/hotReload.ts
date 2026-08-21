@@ -9,6 +9,13 @@ export type HotReloadOptions = {
 
 type InvalidationData = { resources?: unknown };
 
+export const connectPreviewKeepAlive = (
+  EventSourceCtor: EventSourceConstructor = globalThis.EventSource,
+): () => void => {
+  const events = new EventSourceCtor("/__sadoku/events");
+  return () => events.close();
+};
+
 export const connectHotReload = (
   {
     documentId,

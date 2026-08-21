@@ -56,7 +56,6 @@ Deno.test("starts on an ephemeral port and serves a file as a document session",
       const legacyPath of [
         "/__sadoku/document",
         "/__sadoku/comments",
-        "/__sadoku/events",
       ]
     ) {
       assertEquals(
