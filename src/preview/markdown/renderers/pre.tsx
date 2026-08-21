@@ -1,4 +1,4 @@
-import { CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
+import { Box, CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
 import type React from "react";
 import { CodeBlockContext } from "../codeBlockContext";
 import type {
@@ -45,28 +45,30 @@ export const renderMarkdownPre = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
 ) => (
-  <ChakraCodeBlock.Root
-    code={getCodeBlockText(children)}
-    language={getCodeBlockLanguage(children)}
-    borderColor="border.muted"
-    borderRadius="sm"
-    bg="canvas.subtle"
-    color="code.fg"
-    lineHeight="1.45"
-    m="0"
-  >
-    <ChakraCodeBlock.Content>
-      <ChakraCodeBlock.Code
-        overflow="auto"
-        p="4"
-        {...elementProps}
-      >
-        <CodeBlockContext.Provider value={true}>
-          {children}
-        </CodeBlockContext.Provider>
-      </ChakraCodeBlock.Code>
-    </ChakraCodeBlock.Content>
-  </ChakraCodeBlock.Root>
+  <Box py="2">
+    <ChakraCodeBlock.Root
+      code={getCodeBlockText(children)}
+      language={getCodeBlockLanguage(children)}
+      borderColor="border.muted"
+      borderRadius="sm"
+      bg="canvas.subtle"
+      color="code.fg"
+      lineHeight="1.45"
+      m="0"
+    >
+      <ChakraCodeBlock.Content>
+        <ChakraCodeBlock.Code
+          overflow="auto"
+          p="4"
+          {...elementProps}
+        >
+          <CodeBlockContext.Provider value={true}>
+            {children}
+          </CodeBlockContext.Provider>
+        </ChakraCodeBlock.Code>
+      </ChakraCodeBlock.Content>
+    </ChakraCodeBlock.Root>
+  </Box>
 );
 
 export const MarkdownPre = ({

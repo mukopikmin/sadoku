@@ -482,6 +482,10 @@ const value = 1;
       "var(--chakra-colors-code-fg)",
     );
     const code = pre.querySelector("code")!;
+    const codeWrapper = pre.closest(".comment-markdown-body")
+      ?.firstElementChild;
+    expect(getComputedStyle(codeWrapper!).paddingBlock)
+      .toBe("var(--chakra-spacing-2)");
     expect(getComputedStyle(code).display).toBe("block");
     expect(getComputedStyle(code).whiteSpace).toBe("pre");
     expect(previewThemeCss).toContain(
@@ -604,12 +608,12 @@ graph TD
     const mermaidContainer = container.querySelector<HTMLElement>(
       '[data-source-line="5"] .mermaid-container',
     );
-    expect(Number.parseFloat(getComputedStyle(codeRoot!).paddingBottom)).toBe(
-      0,
+    expect(getComputedStyle(codeRoot!).paddingBlock).toBe(
+      "var(--chakra-spacing-2)",
     );
-    expect(
-      Number.parseFloat(getComputedStyle(mermaidContainer!).paddingBottom),
-    ).toBe(0);
+    expect(getComputedStyle(mermaidContainer!).paddingBlock).toBe(
+      "var(--chakra-spacing-2)",
+    );
     expect(previewThemeCss).toMatch(
       /\.commentable-block:not\(\.commentable-block-selected\):hover > \.commentable-content pre,[^{]*\.commentable-block:not\(\.commentable-block-selected\):focus-within > \.commentable-content pre\s*\{[^}]*background: color-mix\(in srgb, var\(--chakra-colors-accent\) 14%, var\(--chakra-colors-canvas\)\);/,
     );
