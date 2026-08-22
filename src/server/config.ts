@@ -10,8 +10,15 @@ export type SadokuConfig = {
   commentsDirectory?: string;
   directoryMaxDepth?: number;
   directoryMaxFiles?: number;
+  fontScale?: number;
   themeMode?: "dark" | "light";
 };
+
+export const fontScaleLimits = { min: 0.75, max: 1.5 } as const;
+
+export const isValidFontScale = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) &&
+  value >= fontScaleLimits.min && value <= fontScaleLimits.max;
 
 const getEnv = (name: string): string | undefined => {
   try {
@@ -101,6 +108,15 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     config.directoryMaxFiles = value.directory_max_files as number;
   }
 
+  if ("font_scale" in value) {
+    if (!isValidFontScale(value.font_scale)) {
+      throw new Error(
+        `font_scale in Sadoku config must be a finite number between ${fontScaleLimits.min} and ${fontScaleLimits.max}.`,
+      );
+    }
+    config.fontScale = value.font_scale;
+  }
+
   return config;
 };
 
@@ -151,6 +167,7 @@ export const updatePreviewConfig = (
   codeWrap: "scroll" | "wrap",
   directoryMaxDepth?: number,
   directoryMaxFiles?: number,
+  fontScale = 1,
 ): Promise<void> =>
   updateConfig({
     code_wrap_mode: codeWrap,
@@ -160,6 +177,7 @@ export const updatePreviewConfig = (
     ...(directoryMaxFiles === undefined
       ? {}
       : { directory_max_files: directoryMaxFiles }),
+    font_scale: fontScale,
     theme_mode: theme,
   });
 
