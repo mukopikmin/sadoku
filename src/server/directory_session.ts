@@ -39,11 +39,12 @@ export const createPreviewSession = async (
 ): Promise<DirectorySession> => {
   const source = createPreviewSource(input);
   if (source.isRemote) {
-    const document = await documentStore.ensure(source.documentSource);
+    const document = await documentStore.ensure(source.commentSource);
     const title = basename(new URL(source.documentSource).pathname) ||
       new URL(source.documentSource).hostname;
     return createSession(source.documentSource, [{
       ...document,
+      filePath: source.documentSource,
       relativePath: title,
       title,
     }]);

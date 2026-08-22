@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 
 import { type CliDependencies, type CliIo, runCli } from "./cli.ts";
+import { withTempCommentsDirectory } from "../test_helpers.ts";
 
 const dependencies: CliDependencies = {
   startPreviewServer: () =>
@@ -69,19 +70,40 @@ Deno.test("requests preview startup through an injected dependency", async () =>
   }]);
 });
 
-Deno.test("rejects directories for explicitly classified comment commands", async () => {
-  const output = captureIo();
-  const directory = await Deno.makeTempDir({ prefix: "sadoku-cli-" });
-  try {
-    assertEquals(
-      await runCli(["comments", "inspect", directory], dependencies, output.io),
-      1,
-    );
-    assertStringIncludes(
-      output.errors[0],
-      "Comment commands require a Markdown file or URL.",
-    );
-  } finally {
-    await Deno.remove(directory);
-  }
+Deno.test("registers a source on demand before adding a comment", async () => {
+  await withTempCommentsDirectory(async () => {
+    const file = await Deno.makeTempFile({ suffix: ".md" });
+    await Deno.writeTextFile(file, "# Heading\n");
+    try {
+      const output = captureIo();
+      assertEquals(
+        await runCli(
+          [
+            "comment",
+            "add",
+            "--source",
+            file,
+            "--ensure-document",
+            "--start-line",
+            "1",
+            "--body",
+            "Check the heading.",
+          ],
+          dependencies,
+          output.io,
+        ),
+        0,
+      );
+      assertEquals(JSON.parse(output.logs[0]).body, "Check the heading.");
+
+      const documents = captureIo();
+      assertEquals(
+        await runCli(["document", "list"], dependencies, documents.io),
+        0,
+      );
+      assertEquals(JSON.parse(documents.logs[0]), [{ filePath: file, id: 1 }]);
+    } finally {
+      await Deno.remove(file);
+    }
+  });
 });
