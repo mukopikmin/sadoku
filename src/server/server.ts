@@ -1,6 +1,6 @@
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createConfiguredStores } from "./storage/factory.ts";
-import { createPreviewSource } from "./source.ts";
+import { createPreviewSource, readMarkdownSource } from "./source.ts";
 import { createPreviewSession } from "./directory_session.ts";
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 import { readConfig } from "./config.ts";
@@ -156,8 +156,25 @@ export const startPreviewServer = async (
       previewSession,
       stores.comments,
       shutdownScheduler,
+      stores.documents,
     ),
   );
+
+  // Populate archival snapshots only after the server is listening so that
+  // reading many documents never delays startup. The conditional database
+  // update also makes this safe to race with a user's first document request.
+  void (async () => {
+    for (const document of previewSession.documents) {
+      if (document.deleted) continue;
+      try {
+        const markdown = await readMarkdownSource(document.filePath);
+        await stores.documents.initializeSnapshot?.(document.id, markdown);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      } catch {
+        // A file may disappear while the background snapshot queue is running.
+      }
+    }
+  })();
 
   const url = `http://${server.addr.hostname}:${server.addr.port}/`;
 

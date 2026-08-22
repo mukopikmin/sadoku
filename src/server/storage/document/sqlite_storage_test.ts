@@ -104,3 +104,26 @@ Deno.test("sqlite document store finds documents by ID and file path", async () 
     await Deno.remove(root, { recursive: true });
   }
 });
+
+Deno.test("sqlite document store initializes a snapshot only once", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const database = await openAppDatabase({
+      path: join(root, "documents.db"),
+    });
+    try {
+      const store = createSqliteDocumentStore(database);
+      const document = await store.ensure("document.md");
+      assertEquals(await store.readSnapshot?.(document.id), undefined);
+
+      await store.initializeSnapshot?.(document.id, "first");
+      await store.initializeSnapshot?.(document.id, "second");
+
+      assertEquals(await store.readSnapshot?.(document.id), "first");
+    } finally {
+      database.close();
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});

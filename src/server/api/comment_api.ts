@@ -73,9 +73,22 @@ const parseCommentRange = (
   return { endLine, startLine };
 };
 
-const dependencies = (commentsStore: CommentsStore): CommentsDependencies => ({
+const dependencies = (
+  commentsStore: CommentsStore,
+  source: PreviewSource,
+): CommentsDependencies => ({
   commentsStore,
-  readMarkdown: readMarkdownSource,
+  readMarkdown: async (markdownSource) => {
+    try {
+      return await readMarkdownSource(markdownSource);
+    } catch (error) {
+      if (markdownSource !== source.documentSource) throw error;
+      const snapshot = (await commentsStore.read(source.commentSource))
+        .sourceSnapshot;
+      if (snapshot === undefined) throw error;
+      return snapshot;
+    }
+  },
   now: () => new Date().toISOString(),
 });
 
@@ -121,7 +134,7 @@ export const createComment = async (
   const range = parseCommentRange(value);
   const body = parseCommentBody(value);
   return await respond(() =>
-    addComment(dependencies(store), source, { ...range, body })
+    addComment(dependencies(store, source), source, { ...range, body })
   );
 };
 export const createReply = async (
@@ -132,7 +145,7 @@ export const createReply = async (
 ): Promise<Response> => {
   const body = parseCommentBody(await parseJsonBody(request));
   return await respond(() =>
-    addReply(dependencies(store), source, { commentId, body })
+    addReply(dependencies(store, source), source, { commentId, body })
   );
 };
 export const updateReply = async (
@@ -144,7 +157,7 @@ export const updateReply = async (
 ): Promise<Response> => {
   const body = parseCommentBody(await parseJsonBody(request));
   return await respond(() =>
-    updateReplyUseCase(dependencies(store), source, {
+    updateReplyUseCase(dependencies(store, source), source, {
       commentId,
       replyId,
       body,
@@ -158,7 +171,7 @@ export const deleteReply = (
   replyId: number,
 ): Promise<Response> =>
   empty(() =>
-    deleteReplyUseCase(dependencies(store), source, commentId, replyId)
+    deleteReplyUseCase(dependencies(store, source), source, commentId, replyId)
   );
 export const setCommentResolution = (
   source: PreviewSource,
@@ -167,7 +180,12 @@ export const setCommentResolution = (
   resolved: boolean,
 ): Promise<Response> =>
   respond(() =>
-    setResolutionUseCase(dependencies(store), source, commentId, resolved)
+    setResolutionUseCase(
+      dependencies(store, source),
+      source,
+      commentId,
+      resolved,
+    )
   );
 export const updateComment = async (
   request: Request,
@@ -177,7 +195,7 @@ export const updateComment = async (
 ): Promise<Response> => {
   const body = parseCommentBody(await parseJsonBody(request));
   return await respond(() =>
-    updateCommentUseCase(dependencies(store), source, commentId, body)
+    updateCommentUseCase(dependencies(store, source), source, commentId, body)
   );
 };
 export const deleteComment = (
@@ -185,7 +203,9 @@ export const deleteComment = (
   store: CommentsStore,
   commentId: number,
 ): Promise<Response> =>
-  empty(() => deleteCommentUseCase(dependencies(store), source, commentId));
+  empty(() =>
+    deleteCommentUseCase(dependencies(store, source), source, commentId)
+  );
 export const getComments = async (
   source: PreviewSource,
   commentsStore: CommentsStore = fileCommentsStore,
@@ -195,7 +215,7 @@ export const getComments = async (
       source.commentSource,
       source.documentSource,
       commentsStore,
-      readMarkdownSource,
+      dependencies(commentsStore, source).readMarkdown,
     );
   return noStoreJson(document);
 };

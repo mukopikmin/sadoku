@@ -1,10 +1,11 @@
-import { createTreeCollection, TreeView } from "@chakra-ui/react";
+import { Badge, createTreeCollection, TreeView } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
 
 type DocumentTreeNode = {
   children?: DocumentTreeNode[];
   documentId?: number;
+  deleted?: boolean;
   name: string;
   value: string;
 };
@@ -26,6 +27,7 @@ const createDocumentTree = (documents: DocumentSummary[]) => {
       if (isDocument) {
         parent.children!.push({
           documentId: document.id,
+          deleted: document.deleted,
           name: part,
           value: `document:${document.id}`,
         });
@@ -170,6 +172,9 @@ export const DocumentTree = (
                 >
                   <FileIcon />
                   <TreeView.ItemText>{node.name}</TreeView.ItemText>
+                  {node.deleted && (
+                    <Badge ms="auto" colorPalette="red">Deleted</Badge>
+                  )}
                 </TreeView.Item>
               )}
         />
