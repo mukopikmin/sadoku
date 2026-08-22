@@ -191,18 +191,7 @@ export const MarkdownPreview = ({
         block.querySelector<HTMLElement>(":scope > .commentable-content")
       ).filter((content): content is HTMLElement => content !== null);
       if (contents.length === 0) return [];
-      const rects = contents.map((content) => {
-        const element = content.querySelector<HTMLElement>(
-          ":scope > .comment-markdown-body > :first-child",
-        );
-        const rect = (element ?? content).getBoundingClientRect();
-        const style = element ? getComputedStyle(element) : undefined;
-        return {
-          top: rect.top - (Number.parseFloat(style?.marginTop ?? "0") || 0),
-          bottom: rect.bottom +
-            (Number.parseFloat(style?.marginBottom ?? "0") || 0),
-        };
-      });
+      const rects = contents.map((content) => content.getBoundingClientRect());
       return [{
         ...range,
         top: Math.min(...rects.map((rect) => rect.top)) - previewRect.top,

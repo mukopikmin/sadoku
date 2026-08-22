@@ -4,7 +4,10 @@ import type {
   DirectorySession,
   DocumentStore,
 } from "./usecase/document/mod.ts";
-import { listMarkdownFiles } from "./storage/document/list_markdown_files.ts";
+import {
+  type DirectoryScanOptions,
+  listMarkdownFiles,
+} from "./storage/document/list_markdown_files.ts";
 import { createPreviewSource } from "./source.ts";
 
 const createSession = (
@@ -19,11 +22,13 @@ const createSession = (
 export const createDirectorySession = async (
   rootPath: string,
   documentStore: DocumentStore,
+  scanOptions: DirectoryScanOptions = {},
 ): Promise<DirectorySession> => {
   const resolvedRootPath = resolve(rootPath);
   const documents = await ensureDirectoryDocuments(resolvedRootPath, {
     documentStore,
-    listMarkdownFiles,
+    listMarkdownFiles: (directoryPath) =>
+      listMarkdownFiles(directoryPath, scanOptions),
   });
   return createSession(resolvedRootPath, documents);
 };
@@ -36,14 +41,16 @@ export const createDirectorySession = async (
 export const createPreviewSession = async (
   input: string,
   documentStore: DocumentStore,
+  scanOptions: DirectoryScanOptions = {},
 ): Promise<DirectorySession> => {
   const source = createPreviewSource(input);
   if (source.isRemote) {
-    const document = await documentStore.ensure(source.documentSource);
+    const document = await documentStore.ensure(source.commentSource);
     const title = basename(new URL(source.documentSource).pathname) ||
       new URL(source.documentSource).hostname;
     return createSession(source.documentSource, [{
       ...document,
+      filePath: source.documentSource,
       relativePath: title,
       title,
     }]);
@@ -56,7 +63,11 @@ export const createPreviewSession = async (
     );
   }
   if (stat.isDirectory) {
-    return await createDirectorySession(source.documentSource, documentStore);
+    return await createDirectorySession(
+      source.documentSource,
+      documentStore,
+      scanOptions,
+    );
   }
 
   const document = await documentStore.ensure(source.documentSource);

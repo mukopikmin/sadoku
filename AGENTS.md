@@ -95,6 +95,11 @@ them when making changes.
 ## 4. Preview Client and Generated Assets
 
 - Follow the existing React and TypeScript patterns in `src/preview/`.
+- Lay out Markdown document blocks as a stack with a consistent `gap`. Do not
+  create block-to-block spacing with margins on individual Markdown elements.
+- When a Markdown element needs additional vertical breathing room, add padding
+  inside that element's commentable content instead. The padding must be
+  included in the selectable comment-highlight area.
 - Keep Markdown feature support aligned with the table in `README.md`. Update
   the table and tests when support changes.
 - `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are

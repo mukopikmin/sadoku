@@ -1,4 +1,4 @@
-import { Table } from "@chakra-ui/react";
+import { Box, Table } from "@chakra-ui/react";
 import type React from "react";
 import type {
   MarkdownComponentProps,
@@ -9,9 +9,11 @@ export const renderMarkdownTable = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
 ) => (
-  <Table.Root mb="4" size="sm" variant="outline" {...elementProps}>
-    {children}
-  </Table.Root>
+  <Box py="2">
+    <Table.Root m="0" size="sm" variant="outline" {...elementProps}>
+      {children}
+    </Table.Root>
+  </Box>
 );
 
 export const MarkdownTable = ({

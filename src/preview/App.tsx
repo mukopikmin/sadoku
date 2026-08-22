@@ -1,5 +1,4 @@
 import {
-  Breadcrumb,
   Button,
   Container,
   Heading,
@@ -22,6 +21,7 @@ import {
 } from "./components/layout/PreviewHeader";
 import { previewThemeCss } from "./theme";
 import { useHotReload } from "./hooks/useHotReload";
+import { connectPreviewKeepAlive } from "./api/hotReload";
 import {
   useCommentsQuery,
   useDocumentsQuery,
@@ -31,36 +31,7 @@ import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { DocumentTree } from "./components/DocumentTree";
-
-type DocumentBreadcrumbProps = {
-  documentName: string;
-  onSelectDocuments: () => void;
-};
-
-const DocumentBreadcrumb = ({
-  documentName,
-  onSelectDocuments,
-}: DocumentBreadcrumbProps) => (
-  <Breadcrumb.Root aria-label="Document path" mb="6">
-    <Breadcrumb.List>
-      <Breadcrumb.Item>
-        <Breadcrumb.Link
-          href="#"
-          onClick={(event) => {
-            event.preventDefault();
-            onSelectDocuments();
-          }}
-        >
-          Documents
-        </Breadcrumb.Link>
-      </Breadcrumb.Item>
-      <Breadcrumb.Separator />
-      <Breadcrumb.Item>
-        <Breadcrumb.CurrentLink>{documentName}</Breadcrumb.CurrentLink>
-      </Breadcrumb.Item>
-    </Breadcrumb.List>
-  </Breadcrumb.Root>
-);
+import { DocumentBreadcrumb } from "./components/DocumentBreadcrumb";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -99,11 +70,22 @@ export const App = () => {
   );
   const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
-  const { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode } =
-    usePreviewSettings();
+  const {
+    changeCodeWrapMode,
+    changeDirectoryLimits,
+    changeFontScale,
+    changeThemeMode,
+    codeWrapMode,
+    fontScale,
+    maxDepth,
+    maxFiles,
+    themeMode,
+  } = usePreviewSettings();
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
     selectedDocumentId,
   );
+
+  useEffect(() => connectPreviewKeepAlive(), []);
 
   useEffect(() => {
     clearReloadAvailable();
@@ -199,7 +181,12 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          fontScale={fontScale}
+          maxDepth={maxDepth}
+          maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
+          onDirectoryLimitsChange={changeDirectoryLimits}
+          onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -242,7 +229,12 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          fontScale={fontScale}
+          maxDepth={maxDepth}
+          maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
+          onDirectoryLimitsChange={changeDirectoryLimits}
+          onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -251,7 +243,9 @@ export const App = () => {
         <Container as="main" maxW="980px" px="8" pb="16">
           {directoryMode && selectedDocument && (
             <DocumentBreadcrumb
-              documentName={selectedDocument.relativePath}
+              document={selectedDocument}
+              documents={documents!}
+              onSelectDocument={selectDocument}
               onSelectDocuments={() => void navigate({ to: "/" })}
             />
           )}
@@ -291,7 +285,12 @@ export const App = () => {
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
+        fontScale={fontScale}
+        maxDepth={maxDepth}
+        maxFiles={maxFiles}
         onCodeWrapModeChange={changeCodeWrapMode}
+        onDirectoryLimitsChange={changeDirectoryLimits}
+        onFontScaleChange={changeFontScale}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}
@@ -300,7 +299,9 @@ export const App = () => {
       <Container as="main" maxW="980px" px="8" pt="0" pb="16">
         {directoryMode && selectedDocument && (
           <DocumentBreadcrumb
-            documentName={selectedDocument.relativePath}
+            document={selectedDocument}
+            documents={documents!}
+            onSelectDocument={selectDocument}
             onSelectDocuments={() => void navigate({ to: "/" })}
           />
         )}
@@ -308,7 +309,7 @@ export const App = () => {
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
-              key={`${selectedDocumentId}-${themeMode}`}
+              key={`${selectedDocumentId}-${themeMode}-${fontScale}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}
             />

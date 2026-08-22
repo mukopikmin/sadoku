@@ -38,7 +38,7 @@ sadoku update --channel nightly
 The command first checks release metadata without downloading or replacing the
 binary. If an update is available, Sadoku shows the target version and asks for
 confirmation before downloading and installing it. No confirmation is shown when
-the current version is already up to date.
+the current version is already up to date or newer than the available version.
 
 When `--channel` is omitted, versions in the `nightly-YYYYMMDD-<commit-hash>`
 format stay on nightly. Release versions and builds whose origin cannot be
@@ -66,7 +66,9 @@ If `--version` is omitted, the compiled binary reports the development version
 ## Usage
 
 ```sh
-sadoku start <file.md|directory|url> [options]
+sadoku start <file.md|directory|url> [--max-depth <depth>] [--max-files <count>] [options]
+sadoku document <add|inspect|list> ...
+sadoku comment <operation> ...
 sadoku update [--channel stable|nightly]
 ```
 
@@ -88,10 +90,22 @@ Preview the Markdown documents in a directory:
 sadoku start ./docs
 ```
 
-For a directory preview, Sadoku scans only the files directly inside the
-specified directory when the server starts. It does not search subdirectories. A
-document must be a regular file whose extension is `.md` or `.markdown`,
-compared case-insensitively; symbolic links are not followed.
+For a directory preview, Sadoku scans up to two directory levels and loads up to
+20 documents by default. Use `--max-depth` to change the deepest level scanned
+(`0` scans only the specified directory) and `--max-files` to change the file
+limit:
+
+```sh
+sadoku start ./docs --max-depth 4 --max-files 100
+```
+
+These defaults can also be changed under **Settings → Directory discovery** in
+the preview. Settings saved there apply when the next directory preview starts;
+command-line options override the saved defaults for that invocation.
+
+A document must be a regular file whose extension is `.md` or `.markdown`,
+compared case-insensitively; `.git` and `node_modules` directories and symbolic
+links are not followed.
 
 The initial screen lists the discovered documents. Selecting a document stores
 the selection in React state without changing the URL. Reloading the page
@@ -101,10 +115,9 @@ The document list is generated once at startup. Files added or removed after
 startup are not reflected automatically, but change notifications continue to
 work for the selected document.
 
-The initial directory-preview implementation intentionally does not include
-recursive discovery, `.gitignore` handling, search, a tree view, per-document
-URLs, live rescanning of the directory, or deletion of individual comments from
-the CLI.
+The directory-preview implementation does not include `.gitignore` handling,
+search, per-document URLs, live rescanning of the directory, or deletion of
+individual comments from the CLI.
 
 Preview Markdown from a URL:
 
@@ -185,63 +198,60 @@ For URL previews, comments are keyed by the URL without its query string or
 fragment. The full URL is still used to fetch Markdown, so temporary tokens can
 be present in the URL without splitting comments across multiple comment files.
 
-List stored comment files:
+Register a document and use its stable ID in later commands:
 
 ```sh
-sadoku comments list
+sadoku document add README.md
+sadoku document list
+sadoku document inspect <document-id>
 ```
 
-Inspect unresolved comments for a Markdown source as JSON:
+List comments for a registered document:
 
 ```sh
-sadoku comments inspect README.md
+sadoku comment list --document <document-id>
 ```
 
-Reply to a comment without resolving it:
+You can select a document by source instead. By default the source must already
+be registered. `comment add` can register it idempotently with
+`--ensure-document`:
 
 ```sh
-sadoku comments reply README.md <comment-id> "Need more context."
+sadoku comment add --source README.md --ensure-document \
+  --start-line 10 --end-line 12 --body "Check this section."
 ```
 
-Add a comment for a Markdown line range from the CLI:
+When `--end-line` is omitted, it defaults to `--start-line`. Comment input uses
+named options so IDs, line numbers, and bodies cannot be confused:
 
 ```sh
-sadoku comments add README.md <start-line> <end-line> "Check this section."
+sadoku comment add --document <document-id> \
+  --start-line 10 --body "Check this line."
+sadoku comment update <comment-id> --document <document-id> \
+  --body "Updated comment."
+sadoku comment delete <comment-id> --document <document-id>
 ```
 
-Pass `--as-bot` to `comments add` or `comments reply` to attribute the new
-comment or reply to a bot. Preview-server interactions remain human-authored:
+Resolve or reopen one or more comments:
 
 ```sh
-sadoku comments add README.md 10 12 "Automated review." --as-bot
-sadoku comments reply README.md <comment-id> "Applied the change." --as-bot
+sadoku comment resolve <comment-id>... --document <document-id> [--as-bot]
+sadoku comment reopen <comment-id>... --document <document-id>
 ```
 
-Mark one or more comments as resolved:
+Reply operations remain nested under the singular `comment` resource:
 
 ```sh
-sadoku comments resolve README.md <comment-id>... [--as-bot]
+sadoku comment reply add --document <document-id> --comment <comment-id> \
+  --body "Need more context."
+sadoku comment reply update <reply-id> --document <document-id> \
+  --comment <comment-id> --body "Updated reply."
+sadoku comment reply delete <reply-id> --document <document-id> \
+  --comment <comment-id>
 ```
 
-Resolved comments record whether a human or bot performed the action. Pass
-`--as-bot` to attribute a CLI resolution to a bot; preview resolutions are
-human-authored.
-
-The list shows each stored comment file, the target Markdown path, comment
-count, unresolved comment count, and the latest `updatedAt` value from the
-stored comments.
-
-Remove all stored comments for a Markdown source:
-
-```sh
-sadoku comments rm README.md
-```
-
-The remove command prompts before deleting. Pass `--force` to skip the prompt:
-
-```sh
-sadoku comments rm README.md --force
-```
+Pass `--as-bot` to comment creation, resolution, or reply creation to attribute
+the action to a bot. `--request-review` is accepted for bot reply creation.
 
 ## Comment Storage
 
@@ -259,7 +269,17 @@ mdview comment directories, and legacy `*.mdview-comments.json` sidecar files.
 | `--host <host>`     | Hostname or IP address to bind.                            | `127.0.0.1`            |
 | `--no-open`         | Do not open the preview URL in your browser automatically. | Opens browser          |
 | `--keep-alive`      | Keep the server running after the browser tab is closed.   | Stops after tab closes |
+| `--max-depth <n>`   | Maximum directory depth to scan.                           | `2`                    |
+| `--max-files <n>`   | Maximum number of Markdown files to load.                  | `20`                   |
+| `--document <id>`   | Select an existing document by ID.                         |                        |
+| `--source <source>` | Select a registered Markdown file or URL.                  |                        |
+| `--ensure-document` | Register `--source` when adding a comment.                 | Disabled               |
+| `--comment <id>`    | Select the parent comment for a reply operation.           |                        |
+| `--start-line <n>`  | Select the first line for a new comment.                   |                        |
+| `--end-line <n>`    | Select the last line for a new comment.                    | Start line             |
+| `--body <text>`     | Set the comment or reply body.                             |                        |
 | `--as-bot`          | Attribute comment actions to a bot.                        | Human                  |
+| `--request-review`  | Mark a bot reply as requesting review.                     | Disabled               |
 | `-v, --version`     | Print the CLI version.                                     |                        |
 | `-h, --help`        | Print command help.                                        |                        |
 
@@ -373,7 +393,7 @@ For native targets, the release build starts the compiled binary on
 | Bold and italic emphasis                           | Supported     | `**bold**` and `_italic_` render as emphasis.                      |
 | Unordered, ordered, and nested lists               | Supported     | Nested unordered and ordered lists are preserved.                  |
 | Blockquotes and horizontal rules                   | Supported     | Standard quote blocks and thematic breaks render normally.         |
-| Links and images                                   | Supported     | Link and image titles are preserved.                               |
+| Links and images                                   | Supported     | Links open in a new tab; link and image titles are preserved.      |
 | Reference-style links and images                   | Supported     | Link definitions such as `[id]: https://example.com` are resolved. |
 | Inline code, indented code, and fenced code blocks | Supported     | Code content is escaped by default.                                |
 | Hard line breaks                                   | Supported     | Standard Markdown hard breaks render as line breaks.               |
