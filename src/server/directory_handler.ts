@@ -27,10 +27,13 @@ import {
   textResponse,
 } from "./responses.ts";
 import { getSettings, updateSettings } from "./api/settings_api.ts";
+import { getDatabaseStatistics } from "./api/statistics_api.ts";
+import type { StatisticsReader } from "./usecase/statistics/get_statistics.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
+  statistics?: StatisticsReader;
 };
 
 const findDocument = (
@@ -71,6 +74,13 @@ export const createDirectoryPreviewHandler = (
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
   app.all("/__sadoku/settings", methodNotAllowedResponse);
+  if (options.statistics) {
+    app.get(
+      "/__sadoku/statistics",
+      () => getDatabaseStatistics(options.statistics!),
+    );
+    app.all("/__sadoku/statistics", methodNotAllowedResponse);
+  }
   app.get("/__sadoku/events", (context) =>
     new Response(
       createPreviewEventStream(undefined, context.req.raw.signal, options),

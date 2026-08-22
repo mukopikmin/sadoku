@@ -47,6 +47,7 @@ type PreviewHeaderProps = {
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
   onOpenSettings: () => void;
+  onOpenStatistics: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
   staleCommentCount: number;
@@ -61,6 +62,7 @@ export const PreviewHeader = ({
   onChangeView,
   onReloadPreview,
   onOpenSettings,
+  onOpenStatistics,
   reloadAvailable,
   reloading,
   staleCommentCount,
@@ -98,6 +100,35 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
+      <IconButton
+        aria-label="Open database statistics"
+        onClick={onOpenStatistics}
+        size="sm"
+        type="button"
+        variant="outline"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="1em"
+          viewBox="0 0 16 16"
+          width="1em"
+        >
+          <ellipse
+            cx="8"
+            cy="3.5"
+            rx="5"
+            ry="2"
+            stroke="currentColor"
+            strokeWidth="1.3"
+          />
+          <path
+            d="M3 3.5v4c0 1.1 2.2 2 5 2s5-.9 5-2v-4M3 7.5v4c0 1.1 2.2 2 5 2s5-.9 5-2v-4"
+            stroke="currentColor"
+            strokeWidth="1.3"
+          />
+        </svg>
+      </IconButton>
       <IconButton
         aria-label="Open settings"
         onClick={onOpenSettings}
