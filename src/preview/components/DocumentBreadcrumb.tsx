@@ -1,4 +1,5 @@
 import {
+  Badge,
   Breadcrumb,
   Button,
   Dialog,
@@ -105,15 +106,28 @@ export const DocumentBreadcrumb = ({
                     <Flex direction="column" gap="2">
                       {directoryDocuments.map((item) => (
                         <Button
+                          aria-current={item.id === document.id
+                            ? "page"
+                            : undefined}
+                          colorPalette={item.id === document.id
+                            ? "blue"
+                            : undefined}
                           justifyContent="flex-start"
                           key={item.id}
                           onClick={() => {
                             setOpenDirectory(null);
                             onSelectDocument(item.id);
                           }}
-                          variant="ghost"
+                          variant={item.id === document.id ? "subtle" : "ghost"}
                         >
-                          {fileName(item.relativePath)}
+                          <Text flex="1" textAlign="start">
+                            {fileName(item.relativePath)}
+                          </Text>
+                          {item.id === document.id && (
+                            <Badge colorPalette="blue" variant="solid">
+                              Current
+                            </Badge>
+                          )}
                         </Button>
                       ))}
                     </Flex>

@@ -121,7 +121,11 @@ describe("directory preview", () => {
     });
     expect(directoryDialog.textContent).toContain("alpha.md");
     expect(directoryDialog.textContent).not.toContain("gamma.md");
-    fireEvent.click(screen.getByRole("button", { name: "alpha.md" }));
+    const currentDocument = screen.getByRole("button", {
+      name: "alpha.md Current",
+    });
+    expect(currentDocument.getAttribute("aria-current")).toBe("page");
+    fireEvent.click(currentDocument);
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
