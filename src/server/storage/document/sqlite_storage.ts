@@ -7,6 +7,8 @@ type DocumentRow = {
   id: number;
 };
 
+type SnapshotRow = { source_snapshot: string | null };
+
 const documentFromRow = (row: DocumentRow): Document => ({
   filePath: row.file_path,
   id: row.id,
@@ -65,6 +67,20 @@ export const createSqliteDocumentStore = (
         "SELECT id, file_path FROM comment_document ORDER BY id",
       );
       return (result.rows ?? []).map(documentFromRow);
+    },
+    readSnapshot: async (id) => {
+      const row = (await database.execute<SnapshotRow>(
+        "SELECT source_snapshot FROM comment_document WHERE id = ?",
+        [id],
+      )).rows?.[0];
+      return row?.source_snapshot ?? undefined;
+    },
+    initializeSnapshot: async (id, markdown) => {
+      await database.execute(
+        `UPDATE comment_document SET source_snapshot = ?
+          WHERE id = ? AND source_snapshot IS NULL`,
+        [markdown, id],
+      );
     },
   };
 };
