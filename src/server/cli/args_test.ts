@@ -38,7 +38,9 @@ Deno.test("parses and validates directory scan limits", () => {
       ["start", "docs", "--max-depth", "-1"],
       ["start", "docs", "--max-depth", "1.5"],
       ["start", "docs", "--max-files", "0"],
+      ["start", "docs", "--max-files", "many"],
       ["comment", "list", "--document", "1", "--max-files", "10"],
+      ["update", "--max-depth", "1"],
     ]
   ) {
     assertThrows(() => parseArgs(args), CliUsageError);
