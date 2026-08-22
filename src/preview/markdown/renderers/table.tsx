@@ -9,8 +9,14 @@ export const renderMarkdownTable = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
 ) => (
-  <Box py="2">
-    <Table.Root m="0" size="sm" variant="outline" {...elementProps}>
+  <Box maxW="100%" overflowX="auto" py="2" w="fit-content">
+    <Table.Root
+      m="0"
+      size="sm"
+      variant="outline"
+      w="max-content"
+      {...elementProps}
+    >
       {children}
     </Table.Root>
   </Box>
