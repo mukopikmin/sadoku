@@ -1,5 +1,11 @@
 type EventSourceConstructor = new (url: string) => EventSource;
 
+export type PreviewKeepAliveOptions = {
+  EventSourceCtor?: EventSourceConstructor;
+  onConnectionLost?: () => void;
+  onConnectionRestored?: () => void;
+};
+
 export type HotReloadOptions = {
   documentId: number;
   EventSourceCtor?: EventSourceConstructor;
@@ -10,10 +16,21 @@ export type HotReloadOptions = {
 type InvalidationData = { resources?: unknown };
 
 export const connectPreviewKeepAlive = (
-  EventSourceCtor: EventSourceConstructor = globalThis.EventSource,
+  {
+    EventSourceCtor = globalThis.EventSource,
+    onConnectionLost = () => {},
+    onConnectionRestored = () => {},
+  }: PreviewKeepAliveOptions = {},
 ): () => void => {
   const events = new EventSourceCtor("/__sadoku/events");
-  return () => events.close();
+  events.addEventListener("error", onConnectionLost);
+  events.addEventListener("open", onConnectionRestored);
+
+  return () => {
+    events.removeEventListener("error", onConnectionLost);
+    events.removeEventListener("open", onConnectionRestored);
+    events.close();
+  };
 };
 
 export const connectHotReload = (
