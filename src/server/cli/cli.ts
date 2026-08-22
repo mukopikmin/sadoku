@@ -9,23 +9,30 @@ import { openBrowser } from "./browser.ts";
 import { checkForUpdate, installUpdate } from "./update.ts";
 import {
   addComment,
-  formatCommentFilesTable,
-  inspectComments,
-  listCommentFiles,
-  removeComments,
-  removeCommentsIfConfirmed,
+  deleteComment,
+  deleteReply,
+  listDocumentComments,
   replyToComment,
   resolveComments,
+  updateComment,
+  updateReply,
 } from "./comment_cli.ts";
+import {
+  addDocument,
+  inspectDocument,
+  listRegisteredDocuments,
+} from "./document_cli.ts";
 import { logInfo } from "../../log.ts";
 import type { PreviewServerOptions } from "../server.ts";
-import { createConfiguredCommentsStore } from "../storage/comment/factory.ts";
+import { createConfiguredStores } from "../storage/factory.ts";
 import { createPreviewSource } from "../source.ts";
+import type { ConfiguredStores } from "../storage/factory.ts";
 
 export type CliDependencies = {
-  startPreviewServer(
-    options: PreviewServerOptions,
-  ): Promise<{ filePath: string; url: string }>;
+  startPreviewServer(options: PreviewServerOptions): Promise<{
+    filePath: string;
+    url: string;
+  }>;
 };
 
 export type CliIo = {
@@ -42,36 +49,41 @@ const defaultCliIo: CliIo = {
   prompt,
 };
 
-const withCommentsStore = async <T>(
-  operation: (
-    commentsStore: Awaited<ReturnType<typeof createConfiguredCommentsStore>>,
-  ) => Promise<T>,
-): Promise<T> => {
-  const commentsStore = await createConfiguredCommentsStore();
-  try {
-    return await operation(commentsStore);
-  } finally {
-    commentsStore.close();
+const printJson = (io: CliIo, value: unknown) =>
+  io.log(JSON.stringify(value, null, 2));
+
+const resolveCommentSource = async (
+  options: CliOptions,
+  stores: ConfiguredStores,
+): Promise<string> => {
+  if (options.documentId !== undefined) {
+    const document = await stores.documents.findById(options.documentId);
+    if (!document) throw new Error(`Document not found: ${options.documentId}`);
+    return document.filePath;
   }
+
+  const input = options.source!;
+  const source = createPreviewSource(input);
+  const document = await stores.documents.findByFilePath(source.commentSource);
+  if (!document) {
+    if (!options.ensureDocument) {
+      throw new Error(
+        `Document is not registered: ${source.commentSource}. Pass --ensure-document to register it.`,
+      );
+    }
+    await stores.documents.ensure(source.commentSource);
+  }
+  return source.documentSource;
 };
 
-const isCommentCommand = (command: CliOptions["command"]): boolean => {
-  switch (command) {
-    case "comments-add":
-    case "comments-inspect":
-    case "comments-list":
-    case "comments-reply":
-    case "comments-resolve":
-    case "comments-rm":
-      return true;
-    case "start":
-    case "update":
-    case undefined:
-      return false;
-    default: {
-      const exhaustive: never = command;
-      return exhaustive;
-    }
+const runWithStores = async <T>(
+  operation: (stores: ConfiguredStores) => Promise<T>,
+): Promise<T> => {
+  const stores = await createConfiguredStores();
+  try {
+    return await operation(stores);
+  } finally {
+    stores.close();
   }
 };
 
@@ -81,30 +93,8 @@ const executeCli = async (
   io: CliIo,
 ): Promise<void> => {
   const options = parseArgs(argv);
-
-  if (isCommentCommand(options.command) && options.file) {
-    const source = createPreviewSource(options.file);
-    if (!source.isRemote) {
-      const stat = await Deno.stat(source.documentSource).catch(() =>
-        undefined
-      );
-      if (stat?.isDirectory) {
-        throw new CliUsageError(
-          "Comment commands require a Markdown file or URL.",
-        );
-      }
-    }
-  }
-
-  if (options.help) {
-    io.log(usage);
-    return;
-  }
-
-  if (options.version) {
-    io.log(`sadoku ${version}`);
-    return;
-  }
+  if (options.help) return io.log(usage);
+  if (options.version) return io.log(`sadoku ${version}`);
 
   if (options.command === "update") {
     const plan = await checkForUpdate(version, options.channel);
@@ -112,141 +102,121 @@ const executeCli = async (
     io.log(`Update channel: ${plan.channel}`);
     io.log(`Available version: ${plan.targetVersion}`);
     if (!plan.updateAvailable) {
-      io.log(`No newer version available: ${plan.targetVersion}`);
-      return;
+      return io.log(`No newer version available: ${plan.targetVersion}`);
     }
     if (!io.confirm(`Update Sadoku to ${plan.targetVersion}?`)) {
-      io.log("Update cancelled.");
-      return;
+      return io.log("Update cancelled.");
     }
     const result = await installUpdate(plan);
     io.log(`Updated to: ${result.targetVersion}`);
     return;
   }
 
-  if (options.command === "comments-list") {
-    const result = await withCommentsStore((commentsStore) =>
-      listCommentFiles({ commentsStore })
-    );
-    for (const warning of result.warnings) {
-      io.error(`Warning: ${warning}`);
-    }
-    io.log(formatCommentFilesTable(result.entries).trimEnd());
-    return;
-  }
-
-  if (options.command === "comments-inspect") {
-    if (!options.file) {
-      throw new CliUsageError("Missing Markdown file.");
-    }
-    io.log(
-      JSON.stringify(
-        await withCommentsStore((commentsStore) =>
-          inspectComments(options.file!, { commentsStore })
-        ),
-        null,
-        2,
-      ),
-    );
-    return;
-  }
-
-  if (options.command === "comments-add") {
-    if (!options.file) throw new CliUsageError("Missing Markdown file.");
-    io.log(JSON.stringify(
-      await withCommentsStore((commentsStore) =>
-        addComment(
-          options.file!,
-          options.startLine ?? 0,
-          options.endLine ?? 0,
-          options.commentBody ?? "",
-          { asBot: options.asBot, commentsStore },
-        )
-      ),
-      null,
-      2,
-    ));
-    return;
-  }
-
-  if (options.command === "comments-resolve") {
-    if (!options.file) {
-      throw new CliUsageError("Missing Markdown file.");
-    }
-    io.log(
-      JSON.stringify(
-        await withCommentsStore((commentsStore) =>
-          resolveComments(options.file!, options.commentIds ?? [], {
-            asBot: options.asBot,
-            commentsStore,
-          })
-        ),
-        null,
-        2,
-      ),
-    );
-    return;
-  }
-
-  if (options.command === "comments-reply") {
-    if (!options.file) {
-      throw new CliUsageError("Missing Markdown file.");
-    }
-    if (!options.commentId) {
-      throw new CliUsageError("Missing comment ID.");
-    }
-    io.log(
-      JSON.stringify(
-        await withCommentsStore((commentsStore) =>
-          replyToComment(
-            options.file!,
-            options.commentId!,
-            options.replyBody ?? "",
-            {
-              asBot: options.asBot,
-              requestReview: options.requestReview,
-              commentsStore,
-            },
-          )
-        ),
-        null,
-        2,
-      ),
-    );
-    return;
-  }
-
-  if (options.command === "comments-rm") {
-    if (!options.file) {
-      throw new CliUsageError("Missing Markdown file.");
-    }
-
-    let filePath: string | undefined;
-    if (options.force) {
-      filePath = await withCommentsStore((commentsStore) =>
-        removeComments(options.file!, { commentsStore })
-      );
-    } else {
-      const answer = io.prompt(`Remove comments for ${options.file}? [y/N]`);
-      filePath = await withCommentsStore((commentsStore) =>
-        removeCommentsIfConfirmed(options.file!, answer ?? "", {
-          commentsStore,
-        })
-      );
-      if (!filePath) {
-        io.log("Not removed.");
-        return;
+  if (options.command?.startsWith("document-")) {
+    await runWithStores(async (stores) => {
+      if (options.command === "document-list") {
+        return printJson(io, await listRegisteredDocuments(stores.documents));
       }
-    }
+      if (options.command === "document-add") {
+        return printJson(
+          io,
+          await addDocument(options.source!, stores.documents),
+        );
+      }
+      return printJson(
+        io,
+        await inspectDocument(options.documentId!, stores.documents),
+      );
+    });
+    return;
+  }
 
-    io.log(`Removed comments for ${filePath}`);
+  if (options.command?.startsWith("comment-")) {
+    await runWithStores(async (stores) => {
+      const source = await resolveCommentSource(options, stores);
+      const commentOptions = {
+        asBot: options.asBot,
+        commentsStore: stores.comments,
+        requestReview: options.requestReview,
+      };
+      switch (options.command) {
+        case "comment-list":
+          return printJson(
+            io,
+            await listDocumentComments(source, commentOptions),
+          );
+        case "comment-add":
+          return printJson(
+            io,
+            await addComment(
+              source,
+              options.startLine!,
+              options.endLine!,
+              options.body!,
+              commentOptions,
+            ),
+          );
+        case "comment-update":
+          return printJson(
+            io,
+            await updateComment(
+              source,
+              options.commentId!,
+              options.body!,
+              commentOptions,
+            ),
+          );
+        case "comment-delete":
+          await deleteComment(source, options.commentId!, commentOptions);
+          return io.log(`Deleted comment ${options.commentId}.`);
+        case "comment-resolve":
+        case "comment-reopen":
+          return printJson(
+            io,
+            await resolveComments(
+              source,
+              options.commentIds!.map(String),
+              commentOptions,
+              options.command === "comment-resolve",
+            ),
+          );
+        case "comment-reply-add":
+          return printJson(
+            io,
+            await replyToComment(
+              source,
+              String(options.commentId),
+              options.body!,
+              commentOptions,
+            ),
+          );
+        case "comment-reply-update":
+          return printJson(
+            io,
+            await updateReply(
+              source,
+              options.commentId!,
+              options.replyId!,
+              options.body!,
+              commentOptions,
+            ),
+          );
+        case "comment-reply-delete":
+          await deleteReply(
+            source,
+            options.commentId!,
+            options.replyId!,
+            commentOptions,
+          );
+          return io.log(`Deleted reply ${options.replyId}.`);
+      }
+    });
     return;
   }
 
   if (!options.file) {
-    throw new CliUsageError("Missing Markdown file.");
+    throw new CliUsageError("Missing Markdown file or directory.");
   }
-
   const preview = await dependencies.startPreviewServer({
     file: options.file,
     host: options.host,
@@ -255,13 +225,9 @@ const executeCli = async (
     ...(options.maxFiles !== undefined ? { maxFiles: options.maxFiles } : {}),
     port: options.port,
   });
-
   logInfo(`Serving ${preview.filePath}`);
   logInfo(`Preview: ${preview.url}`);
-
-  if (options.open) {
-    await openBrowser(preview.url);
-  }
+  if (options.open) await openBrowser(preview.url);
 };
 
 export const runCli = async (
@@ -273,11 +239,8 @@ export const runCli = async (
     await executeCli(argv, dependencies, io);
     return 0;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    io.error(message);
-    if (error instanceof CliUsageError) {
-      io.error(usage);
-    }
+    io.error(error instanceof Error ? error.message : String(error));
+    if (error instanceof CliUsageError) io.error(usage);
     return 1;
   }
 };

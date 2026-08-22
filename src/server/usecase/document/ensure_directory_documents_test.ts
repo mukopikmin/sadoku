@@ -17,6 +17,7 @@ Deno.test("ensures listed directory documents in listing order", async () => {
     },
     findByFilePath: () => Promise.resolve(undefined),
     findById: () => Promise.resolve(undefined),
+    list: () => Promise.resolve([]),
   };
 
   const result = await ensureDirectoryDocuments(
@@ -67,6 +68,7 @@ Deno.test("does not write when listing the directory fails", async () => {
     },
     findByFilePath: () => Promise.resolve(undefined),
     findById: () => Promise.resolve(undefined),
+    list: () => Promise.resolve([]),
   };
 
   const error = new Deno.errors.NotFound("missing directory");

@@ -18,7 +18,11 @@ import { createPreviewSource, readMarkdownSource } from "../source.ts";
 import {
   addComment as addCommentUseCase,
   addReply as addReplyUseCase,
+  deleteComment as deleteCommentUseCase,
+  deleteReply as deleteReplyUseCase,
   setCommentsResolution,
+  updateComment as updateCommentUseCase,
+  updateReply as updateReplyUseCase,
 } from "../usecase/comment/mod.ts";
 import {
   commentsErrorMessage,
@@ -117,6 +121,23 @@ export const inspectComments = async (
   });
 };
 
+export const listDocumentComments = async (
+  filePath: string,
+  options: CommentsCliOptions = {},
+): Promise<PreviewCommentsDocument> => {
+  const source = createPreviewSource(filePath);
+  return await withCommentsStore(options, async (commentsStore) => {
+    const { previousSourceSnapshot: _, sourceSnapshot: __, ...document } =
+      await readResolvedCommentsDocument(
+        source.commentSource,
+        source.documentSource,
+        commentsStore,
+        readMarkdownSource,
+      );
+    return document;
+  });
+};
+
 export const addComment = async (
   filePath: string,
   startLine: number,
@@ -145,6 +166,7 @@ export const resolveComments = async (
   filePath: string,
   commentIds: string[],
   options: CommentsCliOptions = {},
+  resolved = true,
 ): Promise<PreviewCommentsDocument> => {
   if (commentIds.length === 0) {
     throw new Error("At least one comment ID is required.");
@@ -159,7 +181,7 @@ export const resolveComments = async (
           useCaseDependencies(store),
           source,
           commentIds,
-          true,
+          resolved,
           { type: options.asBot ? "bot" : "human" },
         ),
     );
@@ -198,6 +220,89 @@ export const replyToComment = async (
     });
   } catch (error) {
     return mapUseCaseError(error);
+  }
+};
+
+export const updateComment = async (
+  filePath: string,
+  commentId: number,
+  body: string,
+  options: CommentsCliOptions = {},
+) => {
+  const source = createPreviewSource(filePath);
+  try {
+    return await withCommentsStore(
+      options,
+      (store) =>
+        updateCommentUseCase(
+          useCaseDependencies(store),
+          source,
+          commentId,
+          body,
+        ),
+    );
+  } catch (error) {
+    return mapUseCaseError(error);
+  }
+};
+
+export const deleteComment = async (
+  filePath: string,
+  commentId: number,
+  options: CommentsCliOptions = {},
+): Promise<void> => {
+  const source = createPreviewSource(filePath);
+  try {
+    await withCommentsStore(
+      options,
+      (store) =>
+        deleteCommentUseCase(useCaseDependencies(store), source, commentId),
+    );
+  } catch (error) {
+    mapUseCaseError(error);
+  }
+};
+
+export const updateReply = async (
+  filePath: string,
+  commentId: number,
+  replyId: number,
+  body: string,
+  options: CommentsCliOptions = {},
+) => {
+  const source = createPreviewSource(filePath);
+  try {
+    return await withCommentsStore(
+      options,
+      (store) =>
+        updateReplyUseCase(useCaseDependencies(store), source, {
+          body,
+          commentId,
+          replyId,
+        }),
+    );
+  } catch (error) {
+    return mapUseCaseError(error);
+  }
+};
+
+export const deleteReply = async (
+  filePath: string,
+  commentId: number,
+  replyId: number,
+  options: CommentsCliOptions = {},
+): Promise<void> => {
+  const source = createPreviewSource(filePath);
+  try {
+    await withCommentsStore(options, (store) =>
+      deleteReplyUseCase(
+        useCaseDependencies(store),
+        source,
+        commentId,
+        replyId,
+      ));
+  } catch (error) {
+    mapUseCaseError(error);
   }
 };
 

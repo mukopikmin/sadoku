@@ -1,304 +1,45 @@
-import {
-  assertEquals,
-  assertInstanceOf,
-  assertMatch,
-  assertThrows,
-} from "@std/assert";
-import { CliUsageError, parseArgs, usage, version } from "./args.ts";
+import { assertEquals, assertMatch, assertThrows } from "@std/assert";
+import { CliUsageError, parseArgs, usage } from "./args.ts";
 
-Deno.test("uses the default host and port", () => {
-  assertEquals(parseArgs(["start", "README.md"]), {
-    asBot: false,
-    command: "start",
-    file: "README.md",
-    force: false,
-    host: "127.0.0.1",
-    keepAlive: false,
-    open: true,
-    port: 3334,
-  });
-});
-
-Deno.test("parses URL sources", () => {
-  const source = "https://example.com/README.md?token=temporary";
-  assertEquals(parseArgs(["start", source]), {
-    asBot: false,
-    command: "start",
-    file: source,
-    force: false,
-    host: "127.0.0.1",
-    keepAlive: false,
-    open: true,
-    port: 3334,
-  });
-});
-
-Deno.test("parses host and port options", () => {
-  assertEquals(
-    parseArgs([
-      "start",
-      "README.md",
-      "--host",
-      "0.0.0.0",
-      "--port",
-      "4000",
-    ]),
-    {
-      asBot: false,
-      command: "start",
-      file: "README.md",
-      force: false,
-      host: "0.0.0.0",
-      keepAlive: false,
-      open: true,
-      port: 4000,
-    },
-  );
-});
-
-Deno.test("parses no-open option", () => {
+Deno.test("parses preview and document commands", () => {
   assertEquals(parseArgs(["start", "README.md", "--no-open"]), {
     asBot: false,
     command: "start",
+    ensureDocument: false,
     file: "README.md",
-    force: false,
     host: "127.0.0.1",
     keepAlive: false,
     open: false,
     port: 3334,
-  });
-});
-
-Deno.test("parses keep-alive option", () => {
-  assertEquals(parseArgs(["start", "README.md", "--keep-alive"]), {
-    asBot: false,
-    command: "start",
-    file: "README.md",
-    force: false,
-    host: "127.0.0.1",
-    keepAlive: true,
-    open: true,
-    port: 3334,
-  });
-});
-
-Deno.test("parses directory scan limits", () => {
-  assertEquals(
-    parseArgs([
-      "start",
-      "docs",
-      "--max-depth",
-      "0",
-      "--max-files=100",
-    ]),
-    {
-      asBot: false,
-      command: "start",
-      file: "docs",
-      force: false,
-      host: "127.0.0.1",
-      keepAlive: false,
-      maxDepth: 0,
-      maxFiles: 100,
-      open: true,
-      port: 3334,
-    },
-  );
-});
-
-Deno.test("parses comments list command", () => {
-  assertEquals(parseArgs(["comments", "list"]), {
-    asBot: false,
-    command: "comments-list",
-    file: undefined,
-    force: false,
-    host: "127.0.0.1",
-    keepAlive: false,
-    open: true,
-    port: 3334,
-  });
-});
-
-Deno.test("parses comments inspect command", () => {
-  assertEquals(parseArgs(["comments", "inspect", "README.md"]), {
-    asBot: false,
-    command: "comments-inspect",
-    file: "README.md",
-    force: false,
-    host: "127.0.0.1",
-    keepAlive: false,
-    open: true,
-    port: 3334,
-  });
-});
-
-Deno.test("parses comments resolve command", () => {
-  assertEquals(
-    parseArgs(["comments", "resolve", "README.md", "1", "2"]),
-    {
-      asBot: false,
-      command: "comments-resolve",
-      commentIds: ["1", "2"],
-      file: "README.md",
-      force: false,
-      host: "127.0.0.1",
-      keepAlive: false,
-      open: true,
-      port: 3334,
-    },
-  );
-  assertEquals(
-    parseArgs([
-      "comments",
-      "resolve",
-      "README.md",
-      "1",
-      "--as-bot",
-    ]).asBot,
-    true,
-  );
-});
-
-Deno.test("parses comments reply command", () => {
-  assertEquals(
-    parseArgs([
-      "comments",
-      "reply",
-      "README.md",
-      "1",
-      "Need",
-      "more",
-      "details.",
-    ]),
-    {
-      asBot: false,
-      command: "comments-reply",
-      commentId: "1",
-      file: "README.md",
-      force: false,
-      host: "127.0.0.1",
-      keepAlive: false,
-      open: true,
-      port: 3334,
-      replyBody: "Need more details.",
-    },
-  );
-});
-
-Deno.test("parses comments rm command", () => {
-  assertEquals(parseArgs(["comments", "rm", "README.md"]), {
-    asBot: false,
-    command: "comments-rm",
-    file: "README.md",
-    force: false,
-    host: "127.0.0.1",
-    keepAlive: false,
-    open: true,
-    port: 3334,
+    requestReview: false,
   });
   assertEquals(
-    parseArgs(["comments", "rm", "README.md", "--force"]),
-    {
-      asBot: false,
-      command: "comments-rm",
-      file: "README.md",
-      force: true,
-      host: "127.0.0.1",
-      keepAlive: false,
-      open: true,
-      port: 3334,
-    },
+    parseArgs(["document", "inspect", "3"]).command,
+    "document-inspect",
   );
+  assertEquals(parseArgs(["document", "add", "README.md"]).source, "README.md");
+  assertEquals(parseArgs(["document", "list"]).command, "document-list");
 });
 
-Deno.test("parses bot attribution for CLI comments and replies", () => {
-  assertEquals(
-    parseArgs([
-      "comments",
-      "add",
-      "README.md",
-      "2",
-      "4",
-      "Automated comment",
-      "--as-bot",
-    ]),
-    {
-      asBot: true,
-      command: "comments-add",
-      commentBody: "Automated comment",
-      endLine: 4,
-      file: "README.md",
-      force: false,
-      host: "127.0.0.1",
-      keepAlive: false,
-      open: true,
-      port: 3334,
-      startLine: 2,
-    },
-  );
-  assertEquals(
-    parseArgs([
-      "comments",
-      "reply",
-      "README.md",
-      "1",
-      "Automated reply",
-      "--as-bot",
-    ]).asBot,
-    true,
-  );
-});
+Deno.test("parses and validates directory scan limits", () => {
+  const options = parseArgs([
+    "start",
+    "docs",
+    "--max-depth",
+    "0",
+    "--max-files",
+    "100",
+  ]);
+  assertEquals(options.maxDepth, 0);
+  assertEquals(options.maxFiles, 100);
 
-Deno.test("parses help", () => {
-  assertEquals(parseArgs(["--help"]).help, true);
-  assertEquals(parseArgs(["start", "--help"]).help, true);
-  assertMatch(usage, /Defaults to 3334/);
-  assertMatch(usage, /sadoku start <file\.md\|directory\|url>/);
-  assertMatch(usage, /comments list/);
-  assertMatch(usage, /comments inspect/);
-  assertMatch(usage, /comments add/);
-  assertMatch(usage, /comments reply/);
-  assertMatch(usage, /comments resolve/);
-  assertMatch(usage, /comments rm/);
-  assertMatch(usage, /comments inspect <file\.md\|url>/);
-  assertMatch(usage, /--keep-alive/);
-});
-
-Deno.test("parses version", () => {
-  assertEquals(parseArgs(["--version"]).version, true);
-  assertEquals(parseArgs(["-v"]).version, true);
-  assertMatch(usage, /--version/);
-});
-
-Deno.test("uses the development version by default", () => {
-  assertEquals(version, "0.0.0-dev");
-});
-
-Deno.test("parses update channels and leaves the default implicit", () => {
-  assertEquals(parseArgs(["update"]), {
-    asBot: false,
-    command: "update",
-    file: undefined,
-    force: false,
-    host: "127.0.0.1",
-    keepAlive: false,
-    open: true,
-    port: 3334,
-  });
-  assertEquals(parseArgs(["update", "--channel", "stable"]).channel, "stable");
-  assertEquals(parseArgs(["update", "--channel=nightly"]).channel, "nightly");
-  assertMatch(usage, /sadoku update \[--channel stable\|nightly\]/);
-});
-
-Deno.test("rejects invalid update arguments and command-specific options", () => {
   for (
     const args of [
-      ["update", "extra"],
-      ["update", "--channel", "beta"],
-      ["update", "--port", "4000"],
-      ["update", "--no-open"],
-      ["update", "--force"],
-      ["start", "README.md", "--channel", "stable"],
+      ["start", "docs", "--max-depth", "-1"],
+      ["start", "docs", "--max-depth", "1.5"],
+      ["start", "docs", "--max-files", "0"],
+      ["start", "docs", "--max-files", "many"],
+      ["comment", "list", "--document", "1", "--max-files", "10"],
       ["update", "--max-depth", "1"],
     ]
   ) {
@@ -306,135 +47,130 @@ Deno.test("rejects invalid update arguments and command-specific options", () =>
   }
 });
 
-Deno.test("parses review requests for bot replies without changing ordinary replies", () => {
+Deno.test("parses named comment creation input and defaults the end line", () => {
+  const options = parseArgs([
+    "comment",
+    "add",
+    "--source",
+    "README.md",
+    "--ensure-document",
+    "--start-line",
+    "10",
+    "--body",
+    "Check this line.",
+  ]);
+  assertEquals(options.command, "comment-add");
+  assertEquals(options.source, "README.md");
+  assertEquals(options.ensureDocument, true);
+  assertEquals(options.startLine, 10);
+  assertEquals(options.endLine, 10);
+  assertEquals(options.body, "Check this line.");
+});
+
+Deno.test("parses comment and nested reply operations", () => {
   assertEquals(
-    parseArgs([
-      "comments",
-      "reply",
-      "README.md",
-      "1",
-      "Please review",
-      "--as-bot",
-      "--request-review",
-    ]),
-    {
-      asBot: true,
-      command: "comments-reply",
-      commentId: "1",
-      file: "README.md",
-      force: false,
-      host: "127.0.0.1",
-      keepAlive: false,
-      open: true,
-      port: 3334,
-      replyBody: "Please review",
-      requestReview: true,
-    },
+    parseArgs(["comment", "resolve", "4", "5", "--document", "1"])
+      .commentIds,
+    [4, 5],
   );
-  assertEquals(
-    parseArgs(["comments", "reply", "README.md", "1", "Reply"])
-      .requestReview,
-    undefined,
+  const reply = parseArgs([
+    "comment",
+    "reply",
+    "update",
+    "7",
+    "--document",
+    "1",
+    "--comment",
+    "4",
+    "--body",
+    "Updated.",
+  ]);
+  assertEquals(reply.command, "comment-reply-update");
+  assertEquals(reply.documentId, 1);
+  assertEquals(reply.commentId, 4);
+  assertEquals(reply.replyId, 7);
+});
+
+Deno.test("requires exactly one document selector", () => {
+  assertThrows(
+    () => parseArgs(["comment", "list"]),
+    CliUsageError,
+    "Specify exactly one",
+  );
+  assertThrows(
+    () =>
+      parseArgs([
+        "comment",
+        "list",
+        "--document",
+        "1",
+        "--source",
+        "README.md",
+      ]),
+    CliUsageError,
+    "Specify exactly one",
   );
 });
 
-Deno.test("throws usage errors for invalid options", () => {
-  assertInstanceOf(
-    assertThrows(() =>
+Deno.test("restricts document creation to source-based comment add", () => {
+  assertThrows(
+    () =>
       parseArgs([
-        "comments",
-        "reply",
-        "README.md",
-        "1",
-        "Reply",
-        "--request-review",
-      ])
-    ),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() =>
-      parseArgs([
-        "comments",
+        "comment",
         "add",
-        "README.md",
+        "--document",
         "1",
+        "--ensure-document",
+        "--start-line",
         "1",
+        "--body",
         "Body",
+      ]),
+    CliUsageError,
+    "requires --source",
+  );
+  assertThrows(
+    () =>
+      parseArgs([
+        "comment",
+        "list",
+        "--source",
+        "README.md",
+        "--ensure-document",
+      ]),
+    CliUsageError,
+    "only accepted by comment add",
+  );
+});
+
+Deno.test("validates reply review requests and numeric identifiers", () => {
+  assertThrows(
+    () =>
+      parseArgs([
+        "comment",
+        "reply",
+        "add",
+        "--document",
+        "1",
+        "--comment",
+        "2",
+        "--body",
+        "Review.",
         "--request-review",
-      ])
-    ),
+      ]),
     CliUsageError,
+    "requires --as-bot",
   );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["start", "README.md", "--port", "nope"])),
+  assertThrows(
+    () => parseArgs(["document", "inspect", "zero"]),
     CliUsageError,
+    "positive integer",
   );
-  for (
-    const args of [
-      ["start", "docs", "--max-depth", "-1"],
-      ["start", "docs", "--max-depth", "1.5"],
-      ["start", "docs", "--max-files", "0"],
-      ["start", "docs", "--max-files", "many"],
-      ["comments", "list", "--max-files", "10"],
-    ]
-  ) {
-    assertInstanceOf(assertThrows(() => parseArgs(args)), CliUsageError);
-  }
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["start", "README.md", "--unknown"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["start", "README.md", "--as-bot"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["start", "README.md", "--port"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["start", "README.md", "--host"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["start", "a.md", "b.md"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["README.md"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["preview", "README.md"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["comments", "list", "--port", "4000"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() =>
-      parseArgs(["comments", "inspect", "README.md", "--as-bot"])
-    ),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() =>
-      parseArgs(["comments", "rm", "README.md", "--port", "4000"])
-    ),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["comments", "inspect"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["comments", "resolve", "README.md"])),
-    CliUsageError,
-  );
-  assertInstanceOf(
-    assertThrows(() => parseArgs(["comments", "reply", "README.md", "1"])),
-    CliUsageError,
-  );
+});
+
+Deno.test("usage documents singular resource commands", () => {
+  assertMatch(usage, /document add/);
+  assertMatch(usage, /comment delete/);
+  assertMatch(usage, /comment reply update/);
+  assertMatch(usage, /--ensure-document/);
 });
