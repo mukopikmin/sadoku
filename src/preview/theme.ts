@@ -16,20 +16,20 @@ export const sadokuChakraSystem = createSystem(
     theme: {
       tokens: {
         fontSizes: {
-          "2xs": { value: "0.55rem" },
-          xs: { value: "0.7rem" },
-          sm: { value: "0.8rem" },
-          md: { value: "0.9rem" },
-          lg: { value: "1rem" },
-          xl: { value: "1.1rem" },
-          "2xl": { value: "1.35rem" },
-          "3xl": { value: "1.65rem" },
-          "4xl": { value: "2rem" },
-          "5xl": { value: "2.7rem" },
-          "6xl": { value: "3.4rem" },
-          "7xl": { value: "4rem" },
-          "8xl": { value: "5.4rem" },
-          "9xl": { value: "7.2rem" },
+          "2xs": { value: "calc(0.55rem * var(--sadoku-font-scale, 1))" },
+          xs: { value: "calc(0.7rem * var(--sadoku-font-scale, 1))" },
+          sm: { value: "calc(0.8rem * var(--sadoku-font-scale, 1))" },
+          md: { value: "calc(0.9rem * var(--sadoku-font-scale, 1))" },
+          lg: { value: "calc(1rem * var(--sadoku-font-scale, 1))" },
+          xl: { value: "calc(1.1rem * var(--sadoku-font-scale, 1))" },
+          "2xl": { value: "calc(1.35rem * var(--sadoku-font-scale, 1))" },
+          "3xl": { value: "calc(1.65rem * var(--sadoku-font-scale, 1))" },
+          "4xl": { value: "calc(2rem * var(--sadoku-font-scale, 1))" },
+          "5xl": { value: "calc(2.7rem * var(--sadoku-font-scale, 1))" },
+          "6xl": { value: "calc(3.4rem * var(--sadoku-font-scale, 1))" },
+          "7xl": { value: "calc(4rem * var(--sadoku-font-scale, 1))" },
+          "8xl": { value: "calc(5.4rem * var(--sadoku-font-scale, 1))" },
+          "9xl": { value: "calc(7.2rem * var(--sadoku-font-scale, 1))" },
         },
         fonts: {
           body: {
@@ -172,6 +172,10 @@ export const previewThemeCss = `
 
       .comment-markdown-list > .task-list-item {
         list-style-type: none;
+      }
+
+      .markdown-preview .comment-markdown-list > li + li > .commentable-list-item > .commentable-content {
+        padding-top: var(--chakra-spacing-1);
       }
 
       .hljs {

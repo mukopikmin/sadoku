@@ -147,10 +147,13 @@ export const initializeMermaid = async (
   }
 
   const { default: mermaid } = await importMermaid();
+  const fontScale = Number(
+    document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
+  ) || 1;
   mermaid.initialize({
     startOnLoad: false,
     theme: theme ?? (prefersDark() ? "dark" : "default"),
-    themeVariables: { fontSize: "0.9rem" },
+    themeVariables: { fontSize: `${0.9 * fontScale}rem` },
   });
   await mermaid.run({ nodes });
   initializeMermaidZoom(document);

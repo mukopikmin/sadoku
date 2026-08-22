@@ -13,6 +13,9 @@ const getPreferredThemeMode = (): ThemeMode =>
 export const usePreviewSettings = () => {
   const [codeWrapMode, setCodeWrapMode] = useState<CodeWrapMode>("scroll");
   const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
+  const [fontScale, setFontScale] = useState(1);
+  const [maxDepth, setMaxDepth] = useState(2);
+  const [maxFiles, setMaxFiles] = useState(20);
   const userChangedSettings = useRef(false);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({
@@ -34,7 +37,17 @@ export const usePreviewSettings = () => {
     if (settingsQuery.data.theme !== undefined) {
       setThemeMode(settingsQuery.data.theme);
     }
+    setFontScale(settingsQuery.data.fontScale);
+    setMaxDepth(settingsQuery.data.maxDepth);
+    setMaxFiles(settingsQuery.data.maxFiles);
   }, [settingsQuery.data]);
+
+  useEffect(() => {
+    globalThis.document.documentElement.style.setProperty(
+      "--sadoku-font-scale",
+      String(fontScale),
+    );
+  }, [fontScale]);
 
   useEffect(() => {
     globalThis.document.documentElement.dataset.codeWrap = codeWrapMode;
@@ -51,14 +64,64 @@ export const usePreviewSettings = () => {
   const changeCodeWrapMode = (next: CodeWrapMode) => {
     userChangedSettings.current = true;
     setCodeWrapMode(next);
-    saveMutation.mutate({ codeWrap: next, theme: themeMode });
+    saveMutation.mutate({
+      codeWrap: next,
+      fontScale,
+      maxDepth,
+      maxFiles,
+      theme: themeMode,
+    });
   };
 
   const changeThemeMode = (next: ThemeMode) => {
     userChangedSettings.current = true;
     setThemeMode(next);
-    saveMutation.mutate({ codeWrap: codeWrapMode, theme: next });
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      fontScale,
+      maxDepth,
+      maxFiles,
+      theme: next,
+    });
   };
 
-  return { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode };
+  const changeFontScale = (next: number) => {
+    userChangedSettings.current = true;
+    setFontScale(next);
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      fontScale: next,
+      maxDepth,
+      maxFiles,
+      theme: themeMode,
+    });
+  };
+
+  const changeDirectoryLimits = (
+    nextMaxDepth: number,
+    nextMaxFiles: number,
+  ) => {
+    userChangedSettings.current = true;
+    setMaxDepth(nextMaxDepth);
+    setMaxFiles(nextMaxFiles);
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      fontScale,
+      maxDepth: nextMaxDepth,
+      maxFiles: nextMaxFiles,
+      theme: themeMode,
+    });
+  };
+
+  return {
+    changeCodeWrapMode,
+    changeDirectoryLimits,
+    changeFontScale,
+    changeThemeMode,
+    codeWrapMode,
+    fontScale,
+    maxDepth,
+    maxFiles,
+    themeMode,
+  };
 };

@@ -191,6 +191,22 @@ Deno.test("reads and validates code wrap mode config", async () => {
   });
 });
 
+Deno.test("reads and validates font scale config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(configFilePath, "font_scale = 1.2\n");
+    assertEquals(readConfig(), { fontScale: 1.2 });
+
+    for (const invalid of ["0.74", "1.51", '"1"']) {
+      await writeConfig(configFilePath, `font_scale = ${invalid}\n`);
+      assertThrows(
+        () => readConfig(),
+        Error,
+        "font_scale in Sadoku config must be a finite number between 0.75 and 1.5.",
+      );
+    }
+  });
+});
+
 for (const theme of ["dark", "light"] as const) {
   Deno.test(`saves theme_mode=${theme} while retaining existing config`, async () => {
     await withConfigEnvironment(async ({ configFilePath, root }) => {

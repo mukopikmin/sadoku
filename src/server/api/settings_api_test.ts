@@ -24,7 +24,11 @@ const request = (
   new Request("http://localhost/__sadoku/settings", {
     method: "PUT",
     headers: { "content-type": contentType },
-    body: JSON.stringify(body),
+    body: JSON.stringify(
+      typeof body === "object" && body !== null && !Array.isArray(body)
+        ? { fontScale: 1, ...body }
+        : body,
+    ),
   });
 
 Deno.test("GET reads preview settings", async () => {
@@ -44,7 +48,13 @@ Deno.test("GET reads preview settings", async () => {
 
     assertEquals(response.status, 200);
     assertEquals(response.headers.get("cache-control"), "no-store");
-    assertEquals(await response.json(), { codeWrap: "scroll", theme: "light" });
+    assertEquals(await response.json(), {
+      codeWrap: "scroll",
+      fontScale: 1,
+      maxDepth: 2,
+      maxFiles: 20,
+      theme: "light",
+    });
   });
 });
 
@@ -59,14 +69,29 @@ Deno.test("PUT updates preview settings without losing config", async () => {
     await Deno.writeTextFile(path, 'commentsDirectory = "/tmp/comments"\n');
 
     const response = await updateSettings(
-      request({ codeWrap: "wrap", theme: "dark" }),
+      request({
+        codeWrap: "wrap",
+        fontScale: 1.2,
+        maxDepth: 4,
+        maxFiles: 100,
+        theme: "dark",
+      }),
     );
 
     assertEquals(response.status, 200);
-    assertEquals(await response.json(), { codeWrap: "wrap", theme: "dark" });
+    assertEquals(await response.json(), {
+      codeWrap: "wrap",
+      fontScale: 1.2,
+      maxDepth: 4,
+      maxFiles: 100,
+      theme: "dark",
+    });
     assertEquals(readConfig(), {
       codeWrapMode: "wrap",
       commentsDirectory: "/tmp/comments",
+      directoryMaxDepth: 4,
+      directoryMaxFiles: 100,
+      fontScale: 1.2,
       themeMode: "dark",
     });
   });
@@ -76,7 +101,7 @@ Deno.test("PUT rejects an invalid Content-Type", async () => {
   await withSettings(async () => {
     assertEquals(
       (await updateSettings(request(
-        { codeWrap: "wrap", theme: "dark" },
+        { codeWrap: "wrap", maxDepth: 2, maxFiles: 20, theme: "dark" },
         "text/plain",
       ))).status,
       400,
@@ -99,7 +124,12 @@ Deno.test("PUT rejects invalid JSON", async () => {
 Deno.test("PUT rejects invalid theme values", async () => {
   await withSettings(async () => {
     assertEquals(
-      (await updateSettings(request({ codeWrap: "wrap", theme: "sepia" })))
+      (await updateSettings(request({
+        codeWrap: "wrap",
+        maxDepth: 2,
+        maxFiles: 20,
+        theme: "sepia",
+      })))
         .status,
       400,
     );
@@ -110,9 +140,53 @@ Deno.test("PUT rejects extra properties", async () => {
   await withSettings(async () => {
     assertEquals(
       (await updateSettings(
-        request({ codeWrap: "wrap", theme: "dark", extra: true }),
+        request({
+          codeWrap: "wrap",
+          extra: true,
+          maxDepth: 2,
+          maxFiles: 20,
+          theme: "dark",
+        }),
       )).status,
       400,
     );
+  });
+});
+
+Deno.test("PUT rejects invalid directory discovery limits", async () => {
+  await withSettings(async () => {
+    for (
+      const limits of [
+        { maxDepth: -1, maxFiles: 20 },
+        { maxDepth: 2.5, maxFiles: 20 },
+        { maxDepth: 2, maxFiles: 0 },
+      ]
+    ) {
+      assertEquals(
+        (await updateSettings(request({
+          codeWrap: "wrap",
+          ...limits,
+          theme: "dark",
+        }))).status,
+        400,
+      );
+    }
+  });
+});
+
+Deno.test("PUT rejects invalid font scales", async () => {
+  await withSettings(async () => {
+    for (const fontScale of [0.74, 1.51, "1", null]) {
+      assertEquals(
+        (await updateSettings(request({
+          codeWrap: "wrap",
+          fontScale,
+          maxDepth: 2,
+          maxFiles: 20,
+          theme: "dark",
+        }))).status,
+        400,
+      );
+    }
   });
 });

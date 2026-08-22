@@ -60,5 +60,11 @@ export const createSqliteDocumentStore = (
       }),
     findByFilePath,
     findById,
+    list: async () => {
+      const result = await database.execute<DocumentRow>(
+        "SELECT id, file_path FROM comment_document ORDER BY id",
+      );
+      return (result.rows ?? []).map(documentFromRow);
+    },
   };
 };

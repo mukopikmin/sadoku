@@ -8,8 +8,17 @@ const configFileName = "config.toml";
 export type SadokuConfig = {
   codeWrapMode?: "scroll" | "wrap";
   commentsDirectory?: string;
+  directoryMaxDepth?: number;
+  directoryMaxFiles?: number;
+  fontScale?: number;
   themeMode?: "dark" | "light";
 };
+
+export const fontScaleLimits = { min: 0.75, max: 1.5 } as const;
+
+export const isValidFontScale = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) &&
+  value >= fontScaleLimits.min && value <= fontScaleLimits.max;
 
 const getEnv = (name: string): string | undefined => {
   try {
@@ -75,6 +84,39 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     config.codeWrapMode = value.code_wrap_mode;
   }
 
+  if ("directory_max_depth" in value) {
+    if (
+      !Number.isInteger(value.directory_max_depth) ||
+      (value.directory_max_depth as number) < 0
+    ) {
+      throw new Error(
+        "directory_max_depth in Sadoku config must be a non-negative integer.",
+      );
+    }
+    config.directoryMaxDepth = value.directory_max_depth as number;
+  }
+
+  if ("directory_max_files" in value) {
+    if (
+      !Number.isInteger(value.directory_max_files) ||
+      (value.directory_max_files as number) < 1
+    ) {
+      throw new Error(
+        "directory_max_files in Sadoku config must be a positive integer.",
+      );
+    }
+    config.directoryMaxFiles = value.directory_max_files as number;
+  }
+
+  if ("font_scale" in value) {
+    if (!isValidFontScale(value.font_scale)) {
+      throw new Error(
+        `font_scale in Sadoku config must be a finite number between ${fontScaleLimits.min} and ${fontScaleLimits.max}.`,
+      );
+    }
+    config.fontScale = value.font_scale;
+  }
+
   return config;
 };
 
@@ -123,8 +165,21 @@ export const updateCodeWrapConfig = (
 export const updatePreviewConfig = (
   theme: "dark" | "light",
   codeWrap: "scroll" | "wrap",
+  directoryMaxDepth?: number,
+  directoryMaxFiles?: number,
+  fontScale = 1,
 ): Promise<void> =>
-  updateConfig({ code_wrap_mode: codeWrap, theme_mode: theme });
+  updateConfig({
+    code_wrap_mode: codeWrap,
+    ...(directoryMaxDepth === undefined
+      ? {}
+      : { directory_max_depth: directoryMaxDepth }),
+    ...(directoryMaxFiles === undefined
+      ? {}
+      : { directory_max_files: directoryMaxFiles }),
+    font_scale: fontScale,
+    theme_mode: theme,
+  });
 
 export const readConfig = (): SadokuConfig | undefined => {
   const configFilePath = getConfigFilePath();

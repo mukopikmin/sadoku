@@ -5,6 +5,7 @@ export type DocumentStore = {
   ensureMany: (filePaths: string[]) => Promise<Document[]>;
   findById: (id: number) => Promise<Document | undefined>;
   findByFilePath: (filePath: string) => Promise<Document | undefined>;
+  list: () => Promise<Document[]>;
 };
 
 export type ListMarkdownFiles = (

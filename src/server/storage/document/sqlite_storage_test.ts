@@ -96,6 +96,7 @@ Deno.test("sqlite document store finds documents by ID and file path", async () 
       assertEquals(await store.findByFilePath(document.filePath), document);
       assertEquals(await store.findById(-1), undefined);
       assertEquals(await store.findByFilePath("missing.md"), undefined);
+      assertEquals(await store.list(), [document]);
     } finally {
       database.close();
     }
