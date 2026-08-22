@@ -21,6 +21,7 @@ import {
 } from "./components/layout/PreviewHeader";
 import { previewThemeCss } from "./theme";
 import { useHotReload } from "./hooks/useHotReload";
+import { connectPreviewKeepAlive } from "./api/hotReload";
 import {
   useCommentsQuery,
   useDocumentsQuery,
@@ -69,11 +70,20 @@ export const App = () => {
   );
   const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
-  const { changeCodeWrapMode, changeThemeMode, codeWrapMode, themeMode } =
-    usePreviewSettings();
+  const {
+    changeCodeWrapMode,
+    changeDirectoryLimits,
+    changeThemeMode,
+    codeWrapMode,
+    maxDepth,
+    maxFiles,
+    themeMode,
+  } = usePreviewSettings();
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
     selectedDocumentId,
   );
+
+  useEffect(() => connectPreviewKeepAlive(), []);
 
   useEffect(() => {
     clearReloadAvailable();
@@ -169,7 +179,10 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          maxDepth={maxDepth}
+          maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
+          onDirectoryLimitsChange={changeDirectoryLimits}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -212,7 +225,10 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          maxDepth={maxDepth}
+          maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
+          onDirectoryLimitsChange={changeDirectoryLimits}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -263,7 +279,10 @@ export const App = () => {
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
+        maxDepth={maxDepth}
+        maxFiles={maxFiles}
         onCodeWrapModeChange={changeCodeWrapMode}
+        onDirectoryLimitsChange={changeDirectoryLimits}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}

@@ -30,6 +30,8 @@ export type CliOptions = {
   file?: string;
   host: string;
   keepAlive: boolean;
+  maxDepth?: number;
+  maxFiles?: number;
   open: boolean;
   port: number;
   replyId?: number;
@@ -48,7 +50,7 @@ export class CliUsageError extends Error {
 }
 
 export const usage = `Usage:
-  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--no-open] [--keep-alive]
+  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive]
   sadoku document add <file.md|url>
   sadoku document inspect <document-id>
   sadoku document list
@@ -77,6 +79,8 @@ Options:
   --host            Preview host. Defaults to 127.0.0.1.
   --no-open         Do not open the preview automatically.
   --keep-alive      Keep the server running after the browser tab closes.
+  --max-depth       Maximum directory depth to scan. Defaults to 2 (0 scans only the root).
+  --max-files       Maximum number of Markdown files to load. Defaults to 20.
   --channel         Update channel.
   -v, --version     Show version.
   -h, --help        Show this help message.
@@ -112,6 +116,8 @@ export const parseArgs = (argv: string[]): CliOptions => {
         "document",
         "end-line",
         "host",
+        "max-depth",
+        "max-files",
         "port",
         "source",
         "start-line",
@@ -128,11 +134,22 @@ export const parseArgs = (argv: string[]): CliOptions => {
   }
 
   const words = flags._.map(String);
+  const maxDepth = flags["max-depth"] === undefined
+    ? undefined
+    : Number(flags["max-depth"]);
+  if (maxDepth !== undefined && (!Number.isInteger(maxDepth) || maxDepth < 0)) {
+    throw new CliUsageError("--max-depth must be a non-negative integer.");
+  }
+  const maxFiles = flags["max-files"] === undefined
+    ? undefined
+    : positiveInteger(flags["max-files"], "--max-files");
   const base: CliOptions = {
     asBot: Boolean(flags["as-bot"]),
     ensureDocument: Boolean(flags["ensure-document"]),
     host: flags.host?.toString() ?? "127.0.0.1",
     keepAlive: Boolean(flags["keep-alive"]),
+    ...(maxDepth !== undefined ? { maxDepth } : {}),
+    ...(maxFiles !== undefined ? { maxFiles } : {}),
     open: !flags["no-open"],
     port: positiveInteger(flags.port, "Port"),
     requestReview: Boolean(flags["request-review"]),
@@ -168,7 +185,8 @@ export const parseArgs = (argv: string[]): CliOptions => {
     }
     if (
       hasCommentOption || base.host !== "127.0.0.1" || base.port !== 3334 ||
-      !base.open || base.keepAlive
+      !base.open || base.keepAlive || maxDepth !== undefined ||
+      maxFiles !== undefined
     ) {
       throw new CliUsageError(
         "update does not accept preview, document, or comment options.",
@@ -186,7 +204,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
   const noPreviewOptions = () => {
     if (
       base.host !== "127.0.0.1" || base.port !== 3334 || !base.open ||
-      base.keepAlive
+      base.keepAlive || maxDepth !== undefined || maxFiles !== undefined
     ) {
       throw new CliUsageError("This command does not accept preview options.");
     }

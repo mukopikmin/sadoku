@@ -174,6 +174,10 @@ export const previewThemeCss = `
         list-style-type: none;
       }
 
+      .markdown-preview .comment-markdown-list > li + li > .commentable-list-item > .commentable-content {
+        padding-top: var(--chakra-spacing-1);
+      }
+
       .hljs {
         color: var(--chakra-colors-code-fg);
       }
@@ -280,6 +284,9 @@ export const previewThemeCss = `
       }
 
       .markdown-preview {
+        display: flex;
+        flex-direction: column;
+        gap: var(--chakra-spacing-2);
         isolation: isolate;
         position: relative;
       }
@@ -319,26 +326,7 @@ export const previewThemeCss = `
       }
 
       .commentable-block {
-        --comment-highlight-spacing-before: 0px;
-        --comment-highlight-spacing-after: 0px;
-      }
-
-      .commentable-heading {
-        --comment-highlight-spacing-before: var(--chakra-spacing-6);
-        --comment-highlight-spacing-after: var(--chakra-spacing-4);
-      }
-
-      :where(
-        .commentable-blockquote,
-        .commentable-code-block,
-        .commentable-paragraph
-      ) {
-        --comment-highlight-spacing-after: var(--chakra-spacing-4);
-      }
-
-      .commentable-horizontal-rule {
-        --comment-highlight-spacing-before: var(--chakra-spacing-6);
-        --comment-highlight-spacing-after: var(--chakra-spacing-6);
+        margin: 0;
       }
 
       .commentable-list-item {
@@ -363,19 +351,14 @@ export const previewThemeCss = `
         content: "";
         position: absolute;
         z-index: -1;
-        top: calc(-1 * var(--comment-highlight-spacing-before) + 1px);
+        top: 0;
         right: calc(-1 * var(--chakra-spacing-2));
-        bottom: calc(-1 * var(--comment-highlight-spacing-after) + 1px);
+        bottom: 0;
         left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));
         border-radius: var(--chakra-radii-sm);
         background: var(--chakra-colors-transparent);
         pointer-events: none;
         transition: background-color 120ms ease;
-      }
-
-      .commentable-block:has(+ .commentable-heading)
-        > .commentable-content::before {
-        bottom: 1px;
       }
 
       .commentable-block:not(.commentable-block-selected):not(.commentable-block-continuous-highlight):has(.comment-thread) > .commentable-content::before {
@@ -413,14 +396,10 @@ export const previewThemeCss = `
       }
 
       .comment-thread {
-        margin: calc(-1 * var(--chakra-spacing-2)) 0 var(--chakra-spacing-3);
+        margin: var(--chakra-spacing-2) 0 var(--chakra-spacing-3);
         margin-left: calc(0em - var(--comment-indent-offset, 0em));
         border-left: 3px solid var(--chakra-colors-accent);
         padding: var(--chakra-spacing-2) 0 1px var(--chakra-spacing-3);
-      }
-
-      .commentable-list-item > .comment-thread {
-        margin-top: var(--chakra-spacing-2);
       }
 
       .mermaid-container .mermaid {

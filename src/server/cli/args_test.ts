@@ -21,6 +21,30 @@ Deno.test("parses preview and document commands", () => {
   assertEquals(parseArgs(["document", "list"]).command, "document-list");
 });
 
+Deno.test("parses and validates directory scan limits", () => {
+  const options = parseArgs([
+    "start",
+    "docs",
+    "--max-depth",
+    "0",
+    "--max-files",
+    "100",
+  ]);
+  assertEquals(options.maxDepth, 0);
+  assertEquals(options.maxFiles, 100);
+
+  for (
+    const args of [
+      ["start", "docs", "--max-depth", "-1"],
+      ["start", "docs", "--max-depth", "1.5"],
+      ["start", "docs", "--max-files", "0"],
+      ["comment", "list", "--document", "1", "--max-files", "10"],
+    ]
+  ) {
+    assertThrows(() => parseArgs(args), CliUsageError);
+  }
+});
+
 Deno.test("parses named comment creation input and defaults the end line", () => {
   const options = parseArgs([
     "comment",

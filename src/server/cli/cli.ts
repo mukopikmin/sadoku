@@ -221,6 +221,8 @@ const executeCli = async (
     file: options.file,
     host: options.host,
     keepAlive: options.keepAlive,
+    ...(options.maxDepth !== undefined ? { maxDepth: options.maxDepth } : {}),
+    ...(options.maxFiles !== undefined ? { maxFiles: options.maxFiles } : {}),
     port: options.port,
   });
   logInfo(`Serving ${preview.filePath}`);

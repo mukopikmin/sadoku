@@ -3,11 +3,14 @@ import { createConfiguredStores } from "./storage/factory.ts";
 import { createPreviewSource } from "./source.ts";
 import { createPreviewSession } from "./directory_session.ts";
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
+import { readConfig } from "./config.ts";
 
 export type PreviewServerOptions = {
   file: string;
   host: string;
   keepAlive?: boolean;
+  maxDepth?: number;
+  maxFiles?: number;
   port: number;
 };
 
@@ -123,6 +126,7 @@ export const startPreviewServer = async (
   options: PreviewServerOptions,
 ): Promise<StartedPreviewServer> => {
   const previewSource = createPreviewSource(options.file);
+  const config = readConfig();
 
   let server: Deno.HttpServer<Deno.NetAddr>;
   const shutdownScheduler = createPreviewShutdownScheduler({
@@ -137,6 +141,10 @@ export const startPreviewServer = async (
     previewSession = await createPreviewSession(
       previewSource.documentSource,
       stores.documents,
+      {
+        maxDepth: options.maxDepth ?? config?.directoryMaxDepth,
+        maxFiles: options.maxFiles ?? config?.directoryMaxFiles,
+      },
     );
   } catch (error) {
     stores.close();

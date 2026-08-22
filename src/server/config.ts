@@ -8,6 +8,8 @@ const configFileName = "config.toml";
 export type SadokuConfig = {
   codeWrapMode?: "scroll" | "wrap";
   commentsDirectory?: string;
+  directoryMaxDepth?: number;
+  directoryMaxFiles?: number;
   themeMode?: "dark" | "light";
 };
 
@@ -75,6 +77,30 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     config.codeWrapMode = value.code_wrap_mode;
   }
 
+  if ("directory_max_depth" in value) {
+    if (
+      !Number.isInteger(value.directory_max_depth) ||
+      (value.directory_max_depth as number) < 0
+    ) {
+      throw new Error(
+        "directory_max_depth in Sadoku config must be a non-negative integer.",
+      );
+    }
+    config.directoryMaxDepth = value.directory_max_depth as number;
+  }
+
+  if ("directory_max_files" in value) {
+    if (
+      !Number.isInteger(value.directory_max_files) ||
+      (value.directory_max_files as number) < 1
+    ) {
+      throw new Error(
+        "directory_max_files in Sadoku config must be a positive integer.",
+      );
+    }
+    config.directoryMaxFiles = value.directory_max_files as number;
+  }
+
   return config;
 };
 
@@ -123,8 +149,19 @@ export const updateCodeWrapConfig = (
 export const updatePreviewConfig = (
   theme: "dark" | "light",
   codeWrap: "scroll" | "wrap",
+  directoryMaxDepth?: number,
+  directoryMaxFiles?: number,
 ): Promise<void> =>
-  updateConfig({ code_wrap_mode: codeWrap, theme_mode: theme });
+  updateConfig({
+    code_wrap_mode: codeWrap,
+    ...(directoryMaxDepth === undefined
+      ? {}
+      : { directory_max_depth: directoryMaxDepth }),
+    ...(directoryMaxFiles === undefined
+      ? {}
+      : { directory_max_files: directoryMaxFiles }),
+    theme_mode: theme,
+  });
 
 export const readConfig = (): SadokuConfig | undefined => {
   const configFilePath = getConfigFilePath();
