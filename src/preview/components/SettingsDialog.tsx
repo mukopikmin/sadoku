@@ -1,4 +1,5 @@
 import {
+  Button,
   Dialog,
   Flex,
   IconButton,
@@ -12,10 +13,12 @@ import type { CodeWrapMode, ThemeMode } from "../models/theme";
 
 type SettingsDialogProps = {
   codeWrapMode: CodeWrapMode;
+  fontScale: number;
   maxDepth: number;
   maxFiles: number;
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onDirectoryLimitsChange: (maxDepth: number, maxFiles: number) => void;
+  onFontScaleChange: (fontScale: number) => void;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
@@ -24,15 +27,23 @@ type SettingsDialogProps = {
 
 export const SettingsDialog = ({
   codeWrapMode,
+  fontScale,
   maxDepth,
   maxFiles,
   onCodeWrapModeChange,
   onDirectoryLimitsChange,
+  onFontScaleChange,
   onOpenChange,
   onThemeModeChange,
   open,
   themeMode,
 }: SettingsDialogProps) => {
+  const fontScales = [0.75, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5];
+  const scaleIndex = fontScales.findIndex((scale) => scale >= fontScale);
+  const decreaseScale = fontScales[Math.max(0, scaleIndex - 1)];
+  const increaseScale =
+    fontScales[Math.min(fontScales.length - 1, scaleIndex + 1)];
+
   return (
     <Dialog.Root
       finalFocusEl={() =>
@@ -79,6 +90,54 @@ export const SettingsDialog = ({
                     </NativeSelect.Field>
                     <NativeSelect.Indicator />
                   </NativeSelect.Root>
+                </Flex>
+                <Flex
+                  alignItems="center"
+                  justifyContent="space-between"
+                  gap="4"
+                >
+                  <Text as="div">
+                    <Text fontWeight="medium">Text size</Text>
+                    <Text color="fg.muted" fontSize="sm">
+                      Adjust text throughout the preview
+                    </Text>
+                  </Text>
+                  <Flex alignItems="center" gap="2">
+                    <IconButton
+                      aria-label="Decrease text size"
+                      disabled={fontScale <= fontScales[0]}
+                      onClick={() => onFontScaleChange(decreaseScale)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      −
+                    </IconButton>
+                    <Text
+                      aria-live="polite"
+                      minW="12"
+                      textAlign="center"
+                    >
+                      {Math.round(fontScale * 100)}%
+                    </Text>
+                    <IconButton
+                      aria-label="Increase text size"
+                      disabled={fontScale >= fontScales.at(-1)!}
+                      onClick={() => onFontScaleChange(increaseScale)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      +
+                    </IconButton>
+                    <Button
+                      aria-label="Reset text size to 100%"
+                      disabled={fontScale === 1}
+                      onClick={() => onFontScaleChange(1)}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      Reset
+                    </Button>
+                  </Flex>
                 </Flex>
                 <Flex
                   alignItems="center"

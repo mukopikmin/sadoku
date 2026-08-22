@@ -73,8 +73,10 @@ export const App = () => {
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
+    changeFontScale,
     changeThemeMode,
     codeWrapMode,
+    fontScale,
     maxDepth,
     maxFiles,
     themeMode,
@@ -179,10 +181,12 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
+          onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -225,10 +229,12 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
+          onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -279,10 +285,12 @@ export const App = () => {
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
+        fontScale={fontScale}
         maxDepth={maxDepth}
         maxFiles={maxFiles}
         onCodeWrapModeChange={changeCodeWrapMode}
         onDirectoryLimitsChange={changeDirectoryLimits}
+        onFontScaleChange={changeFontScale}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}
@@ -301,7 +309,7 @@ export const App = () => {
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
-              key={`${selectedDocumentId}-${themeMode}`}
+              key={`${selectedDocumentId}-${themeMode}-${fontScale}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}
             />

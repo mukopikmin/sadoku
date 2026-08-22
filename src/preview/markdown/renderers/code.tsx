@@ -22,7 +22,9 @@ export const MarkdownCode = ({
       color={isCodeBlock ? "code.fg" : "fg"}
       display={isCodeBlock ? "block" : undefined}
       fontFamily="mono"
-      fontSize={isCodeBlock ? "0.8rem" : "0.8em"}
+      fontSize={isCodeBlock
+        ? "calc(0.8rem * var(--sadoku-font-scale, 1))"
+        : "0.8em"}
       {...props}
     >
       {children}
