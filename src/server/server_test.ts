@@ -52,6 +52,10 @@ Deno.test("starts on an ephemeral port and serves a file as a document session",
     const documents = await documentsResponse.json();
     assertEquals(documents.length, 1);
     assertEquals(documents[0].relativePath, filePath.split("/").at(-1));
+    assertEquals(
+      new URL(preview.url).pathname,
+      `/documents/${documents[0].id}`,
+    );
     for (
       const legacyPath of [
         "/__sadoku/document",
@@ -111,7 +115,11 @@ Deno.test("increments the port when the requested port is in use", async () => {
     });
 
     assertEquals(preview.server.addr.port, occupiedPort + 1);
-    assertEquals(preview.url, `http://127.0.0.1:${occupiedPort + 1}/`);
+    assertEquals(
+      new URL(preview.url).origin,
+      `http://127.0.0.1:${occupiedPort + 1}`,
+    );
+    assertEquals(new URL(preview.url).pathname.startsWith("/documents/"), true);
   } finally {
     occupiedListener.close();
     if (preview) await stopServer(preview);
@@ -203,6 +211,10 @@ Deno.test("starts the preview server for a URL source", async () => {
     ).json();
     assertEquals(documents.length, 1);
     assertEquals(documents[0].relativePath, "remote.md");
+    assertEquals(
+      new URL(preview.url).pathname,
+      `/documents/${documents[0].id}`,
+    );
     const response = await fetch(
       new URL(`/__sadoku/documents/${documents[0].id}`, preview.url),
     );
@@ -215,5 +227,27 @@ Deno.test("starts the preview server for a URL source", async () => {
     await stopServer(preview);
     await source.shutdown().catch(() => {});
     await source.finished.catch(() => {});
+  }
+});
+
+Deno.test("keeps the root URL for a directory containing one document", async () => {
+  const directory = await Deno.makeTempDir({ prefix: "sadoku-server-" });
+  await Deno.writeTextFile(`${directory}/only.md`, "# Only document\n");
+  const preview = await startPreviewServer({
+    file: directory,
+    host: "127.0.0.1",
+    keepAlive: true,
+    port: 0,
+  });
+
+  try {
+    const documents = await (
+      await fetch(new URL("/__sadoku/documents", preview.url))
+    ).json();
+    assertEquals(documents.length, 1);
+    assertEquals(new URL(preview.url).pathname, "/");
+  } finally {
+    await stopServer(preview);
+    await Deno.remove(directory, { recursive: true });
   }
 });

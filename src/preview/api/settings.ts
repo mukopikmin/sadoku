@@ -2,6 +2,7 @@ import type { CodeWrapMode, PreviewSettings, ThemeMode } from "../models/theme";
 
 export type SettingsResponse = {
   codeWrap?: unknown;
+  fontScale?: unknown;
   maxDepth?: unknown;
   maxFiles?: unknown;
   theme?: unknown;
@@ -9,6 +10,7 @@ export type SettingsResponse = {
 
 export type SettingsUpdate = {
   codeWrap: CodeWrapMode;
+  fontScale: number;
   maxDepth: number;
   maxFiles: number;
   theme: ThemeMode;
@@ -29,6 +31,13 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
   }
   const maxDepth = response.maxDepth ?? 2;
   const maxFiles = response.maxFiles ?? 20;
+  const fontScale = response.fontScale ?? 1;
+  if (
+    typeof fontScale !== "number" || !Number.isFinite(fontScale) ||
+    fontScale < 0.75 || fontScale > 1.5
+  ) {
+    throw new Error("Settings response contained an invalid font scale.");
+  }
   if (!Number.isInteger(maxDepth) || (maxDepth as number) < 0) {
     throw new Error("Settings response contained an invalid maximum depth.");
   }
@@ -39,6 +48,7 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
   }
   return {
     codeWrap: response.codeWrap,
+    fontScale,
     maxDepth: maxDepth as number,
     maxFiles: maxFiles as number,
     theme: response.theme,

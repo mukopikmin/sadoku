@@ -126,6 +126,9 @@ export const startPreviewServer = async (
   options: PreviewServerOptions,
 ): Promise<StartedPreviewServer> => {
   const previewSource = createPreviewSource(options.file);
+  const isDirectory = !previewSource.isRemote &&
+    (await Deno.stat(previewSource.documentSource).catch(() => undefined))
+        ?.isDirectory === true;
   const config = readConfig();
 
   let server: Deno.HttpServer<Deno.NetAddr>;
@@ -176,7 +179,10 @@ export const startPreviewServer = async (
     }
   })();
 
-  const url = `http://${server.addr.hostname}:${server.addr.port}/`;
+  const pathname = isDirectory
+    ? "/"
+    : `/documents/${previewSession.documents[0].id}`;
+  const url = `http://${server.addr.hostname}:${server.addr.port}${pathname}`;
 
   server.finished.finally(() => stores.close()).catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {

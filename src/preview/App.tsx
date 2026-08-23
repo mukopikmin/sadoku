@@ -71,11 +71,14 @@ export const App = () => {
   );
   const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
+  const [connectionLost, setConnectionLost] = useState(false);
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
+    changeFontScale,
     changeThemeMode,
     codeWrapMode,
+    fontScale,
     maxDepth,
     maxFiles,
     themeMode,
@@ -84,7 +87,11 @@ export const App = () => {
     selectedDocumentId,
   );
 
-  useEffect(() => connectPreviewKeepAlive(), []);
+  useEffect(() =>
+    connectPreviewKeepAlive({
+      onConnectionLost: () => setConnectionLost(true),
+      onConnectionRestored: () => setConnectionLost(false),
+    }), []);
 
   useEffect(() => {
     clearReloadAvailable();
@@ -167,6 +174,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={() => {}}
           onOpenSettings={settingsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
@@ -180,10 +188,12 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
+          onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -213,6 +223,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={changeView}
           onOpenSettings={settingsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
@@ -226,10 +237,12 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
+          onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -267,6 +280,7 @@ export const App = () => {
     <>
       <style>{previewThemeCss}</style>
       <PreviewHeader
+        connectionLost={connectionLost}
         fileUrl={document.fileUrl}
         onChangeView={changeView}
         onReloadPreview={reloadPreview}
@@ -280,10 +294,12 @@ export const App = () => {
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
+        fontScale={fontScale}
         maxDepth={maxDepth}
         maxFiles={maxFiles}
         onCodeWrapModeChange={changeCodeWrapMode}
         onDirectoryLimitsChange={changeDirectoryLimits}
+        onFontScaleChange={changeFontScale}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}
@@ -314,7 +330,7 @@ export const App = () => {
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
-              key={`${selectedDocumentId}-${themeMode}`}
+              key={`${selectedDocumentId}-${themeMode}-${fontScale}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}
             />

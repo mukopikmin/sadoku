@@ -1,4 +1,5 @@
 import {
+  Badge,
   Box,
   Container,
   Flex,
@@ -43,6 +44,7 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 );
 
 type PreviewHeaderProps = {
+  connectionLost: boolean;
   fileUrl?: string;
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
@@ -57,6 +59,7 @@ type PreviewHeaderProps = {
 };
 
 export const PreviewHeader = ({
+  connectionLost,
   fileUrl,
   onChangeView,
   onReloadPreview,
@@ -98,6 +101,15 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
+      {connectionLost && (
+        <Badge
+          colorPalette="red"
+          role="status"
+          variant="solid"
+        >
+          Connection lost
+        </Badge>
+      )}
       <IconButton
         aria-label="Open settings"
         onClick={onOpenSettings}

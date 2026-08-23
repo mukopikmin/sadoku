@@ -1,4 +1,8 @@
-import { readConfig, updatePreviewConfig } from "../config.ts";
+import {
+  isValidFontScale,
+  readConfig,
+  updatePreviewConfig,
+} from "../config.ts";
 import { noStoreJson, textResponse } from "../responses.ts";
 import { defaultDirectoryScanOptions } from "../storage/document/list_markdown_files.ts";
 
@@ -12,6 +16,7 @@ const readSettings = () => {
     ...(config?.codeWrapMode === undefined
       ? {}
       : { codeWrap: config.codeWrapMode }),
+    fontScale: config?.fontScale ?? 1,
     maxDepth: config?.directoryMaxDepth ?? defaultDirectoryScanOptions.maxDepth,
     maxFiles: config?.directoryMaxFiles ?? defaultDirectoryScanOptions.maxFiles,
   };
@@ -40,19 +45,20 @@ export const updateSettings = async (
     );
   }
 
-  const { codeWrap, maxDepth, maxFiles, theme } = body as Record<
+  const { codeWrap, fontScale, maxDepth, maxFiles, theme } = body as Record<
     string,
     unknown
   >;
   if (
-    Object.keys(body).length !== 4 ||
+    Object.keys(body).length !== 5 ||
     (theme !== "dark" && theme !== "light") ||
     (codeWrap !== "scroll" && codeWrap !== "wrap") ||
+    !isValidFontScale(fontScale) ||
     !Number.isInteger(maxDepth) || (maxDepth as number) < 0 ||
     !Number.isInteger(maxFiles) || (maxFiles as number) < 1
   ) {
     return invalidRequest(
-      "Request body must contain valid theme, codeWrap, maxDepth, and maxFiles settings.",
+      "Request body must contain valid theme, codeWrap, fontScale, maxDepth, and maxFiles settings.",
     );
   }
 
@@ -61,6 +67,7 @@ export const updateSettings = async (
     codeWrap,
     maxDepth as number,
     maxFiles as number,
+    fontScale,
   );
   return noStoreJson(readSettings());
 };

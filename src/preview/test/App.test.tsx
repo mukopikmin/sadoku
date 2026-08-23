@@ -105,6 +105,14 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
+
+    TestEventSource.instances[0]?.dispatchEvent(new Event("error"));
+    expect((await screen.findByRole("status")).textContent).toContain(
+      "Connection lost",
+    );
+
+    TestEventSource.instances[0]?.dispatchEvent(new Event("open"));
+    await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
 
   it("reloads the Markdown and comments without changing views", async () => {
@@ -446,6 +454,43 @@ describe("App", () => {
     const themeSelect = screen.getByRole("combobox", { name: "Theme" });
     expect((themeSelect as HTMLSelectElement).value).toBe("light");
     await waitFor(() => expect(document.activeElement).toBe(themeSelect));
+    const decreaseTextSize = screen.getByRole("button", {
+      name: "Decrease text size",
+    });
+    const increaseTextSize = screen.getByRole("button", {
+      name: "Increase text size",
+    });
+    const resetTextSize = screen.getByRole("button", {
+      name: "Reset text size to 100%",
+    });
+    expect(screen.getByText("100%")).not.toBeNull();
+    expect((resetTextSize as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(increaseTextSize);
+    expect(screen.getByText("110%")).not.toBeNull();
+    expect(document.documentElement.style.getPropertyValue(
+      "--sadoku-font-scale",
+    )).toBe("1.1");
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+        body: JSON.stringify({
+          codeWrap: "scroll",
+          fontScale: 1.1,
+          maxDepth: 2,
+          maxFiles: 20,
+          theme: "light",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PUT",
+      })
+    );
+    expect((decreaseTextSize as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(resetTextSize);
+    expect(screen.getByText("100%")).not.toBeNull();
+    expect(document.documentElement.style.getPropertyValue(
+      "--sadoku-font-scale",
+    )).toBe("1");
+
     const maxDepthInput = screen.getByRole("spinbutton", {
       name: "Maximum depth",
     });
@@ -476,6 +521,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          fontScale: 1,
           maxDepth: 4,
           maxFiles: 20,
           theme: "light",
@@ -490,6 +536,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          fontScale: 1,
           maxDepth: 4,
           maxFiles: 100,
           theme: "light",
@@ -511,6 +558,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        fontScale: 1,
         maxDepth: 4,
         maxFiles: 100,
         theme: "dark",
@@ -529,6 +577,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        fontScale: 1,
         maxDepth: 4,
         maxFiles: 100,
         theme: "light",
@@ -660,6 +709,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        fontScale: 1,
         maxDepth: 2,
         maxFiles: 20,
         theme: "light",
