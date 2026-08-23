@@ -21,9 +21,14 @@ class DirectoryEventSource extends EventTarget {
 }
 
 const documents = [
-  { id: 1, relativePath: "guides/alpha.md", title: "Alpha" },
-  { id: 2, relativePath: "beta.md", title: "Beta" },
-  { id: 3, relativePath: "guides/nested/gamma.md", title: "Gamma" },
+  { deleted: false, id: 1, relativePath: "guides/alpha.md", title: "Alpha" },
+  { deleted: true, id: 2, relativePath: "beta.md", title: "Beta" },
+  {
+    deleted: false,
+    id: 3,
+    relativePath: "guides/nested/gamma.md",
+    title: "Gamma",
+  },
 ];
 
 const installFetch = (
@@ -52,6 +57,7 @@ const installFetch = (
             );
           }
           return Promise.resolve(Response.json({
+            deleted: id === 2,
             fileUrl: `file:///tmp/${id}.md`,
             markdown: `# Document ${id}\n`,
             title: `Document ${id}`,
@@ -92,7 +98,8 @@ describe("directory preview", () => {
 
     expect(await screen.findByRole("treeitem", { name: "alpha.md" })).not
       .toBeNull();
-    expect(screen.getByRole("treeitem", { name: "beta.md" })).not.toBeNull();
+    expect(screen.getByRole("treeitem", { name: "beta.mdDeleted" })).not
+      .toBeNull();
     expect(screen.getByRole("treeitem", { name: /guides/ })).not.toBeNull();
     expect(screen.getByRole("button", { name: "guides folder" })).not
       .toBeNull();
@@ -129,9 +136,21 @@ describe("directory preview", () => {
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
-    expect(await screen.findByRole("treeitem", { name: "beta.md" })).not
+    expect(await screen.findByRole("treeitem", { name: "beta.mdDeleted" })).not
       .toBeNull();
     expect(location.pathname).toBe("/");
+  });
+
+  it("marks deleted documents and explains that their snapshot is shown", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("treeitem", { name: "beta.mdDeleted" }),
+    );
+    expect(await screen.findByText("Deleted document")).not.toBeNull();
+    expect(screen.getByText(/saved snapshot is being shown/)).not.toBeNull();
   });
 
   it("routes between preview and comments and restores the view from history", async () => {
@@ -242,10 +261,10 @@ describe("directory preview", () => {
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
-    await screen.findByRole("treeitem", { name: "beta.md" });
+    await screen.findByRole("treeitem", { name: "beta.mdDeleted" });
     expect(documentOneEvents.closed).toBe(true);
     expect(keepAliveEvents.closed).toBe(false);
-    fireEvent.click(screen.getByRole("treeitem", { name: "beta.md" }));
+    fireEvent.click(screen.getByRole("treeitem", { name: "beta.mdDeleted" }));
     expect(screen.queryByRole("heading", { name: "Document 1" })).toBeNull();
     await screen.findByRole("heading", { name: "Document 2" });
     expect(DirectoryEventSource.instances.at(-1)?.url).toBe(
@@ -265,7 +284,8 @@ describe("directory preview", () => {
       .toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await waitFor(() =>
-      expect(screen.getByRole("treeitem", { name: "beta.md" })).not.toBeNull()
+      expect(screen.getByRole("treeitem", { name: "beta.mdDeleted" })).not
+        .toBeNull()
     );
   });
 });

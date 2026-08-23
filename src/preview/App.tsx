@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Container,
   Heading,
@@ -312,6 +313,18 @@ export const App = () => {
             onSelectDocument={selectDocument}
             onSelectDocuments={() => void navigate({ to: "/" })}
           />
+        )}
+        {document.deleted && (
+          <Alert.Root status="warning" mb="6">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Deleted document</Alert.Title>
+              <Alert.Description>
+                The original file no longer exists. A saved snapshot is being
+                shown instead.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
         )}
         {view === "preview"
           ? (

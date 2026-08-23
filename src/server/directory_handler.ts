@@ -14,6 +14,7 @@ import type {
   DirectoryDocument,
   DirectorySession,
 } from "./usecase/document/mod.ts";
+import type { DocumentStore } from "./usecase/document/mod.ts";
 import { createPreviewSource } from "./source.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { handlePreviewDocumentRequest } from "./preview/document.ts";
@@ -46,6 +47,7 @@ export const createDirectoryPreviewHandler = (
   session: DirectorySession,
   commentsStore: CommentsStore,
   options: DirectoryPreviewHandlerOptions = {},
+  documentStore?: DocumentStore,
 ): Deno.ServeHandler => {
   const app = new Hono();
   const resolveDocument = (rawId: string) => {
@@ -66,7 +68,12 @@ export const createDirectoryPreviewHandler = (
 
   app.get("/__sadoku/documents", () =>
     noStoreJson(session.documents.map(
-      ({ id, relativePath, title }) => ({ id, relativePath, title }),
+      ({ deleted, id, relativePath, title }) => ({
+        deleted,
+        id,
+        relativePath,
+        title,
+      }),
     )));
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
@@ -86,12 +93,25 @@ export const createDirectoryPreviewHandler = (
     const { document, source } = resolveDocument(
       context.req.param("documentId"),
     );
-    const response = await handlePreviewDocumentRequest(source.documentSource);
-    const body = await response.json();
+    let body: { fileUrl?: string; markdown: string; title?: string };
+    if (document.deleted) {
+      const markdown = await documentStore?.readSnapshot?.(document.id);
+      if (markdown === undefined) {
+        throw notFoundResponse("Saved Markdown snapshot not found.");
+      }
+      body = { markdown };
+    } else {
+      const response = await handlePreviewDocumentRequest(
+        source.documentSource,
+      );
+      body = await response.json();
+      await documentStore?.initializeSnapshot?.(document.id, body.markdown);
+    }
     return noStoreJson({
       id: document.id,
       relativePath: document.relativePath,
       title: document.title,
+      deleted: document.deleted,
       fileUrl: body.fileUrl,
       markdown: body.markdown,
     });

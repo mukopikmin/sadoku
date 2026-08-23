@@ -50,6 +50,7 @@ export const createPreviewSession = async (
       new URL(source.documentSource).hostname;
     return createSession(source.documentSource, [{
       ...document,
+      deleted: false,
       filePath: source.documentSource,
       relativePath: title,
       title,
@@ -74,6 +75,7 @@ export const createPreviewSession = async (
   const title = basename(source.documentSource);
   return createSession(dirname(source.documentSource), [{
     ...document,
+    deleted: false,
     relativePath: title,
     title,
   }]);
