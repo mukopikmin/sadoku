@@ -32,7 +32,9 @@ export const listMarkdownFiles = async (
       if (entry.isSymlink) continue;
 
       const entryAbsolutePath = join(absolutePath, entry.name);
-      const entryRelativePath = join(relativePath, entry.name);
+      const entryRelativePath = relativePath
+        ? `${relativePath}/${entry.name}`
+        : entry.name;
       if (entry.isDirectory) {
         if (
           depth < maxDepth &&
