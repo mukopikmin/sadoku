@@ -26,6 +26,20 @@ curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh |
 
 Make sure `$HOME/.local/bin` is included in your `PATH`.
 
+On Windows x64, run the following command in PowerShell. The installer verifies
+the release checksum, installs `sadoku.exe` under
+`%LOCALAPPDATA%\Programs\sadoku`, and adds that directory to your user `PATH`:
+
+```powershell
+irm https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.ps1 | iex
+```
+
+To install the latest tested nightly build instead:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.ps1))) -Nightly
+```
+
 An installed binary can update itself in place. Stable releases use GitHub's
 latest release; nightly builds use the moving `nightly` release:
 

@@ -54,3 +54,15 @@ jobs:
           trap 'rm -rf "$install_home"' EXIT
           HOME="$install_home" deno task install --version 0.0.0-ci
           test "$("$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
+
+  windows-installer:
+    name: Windows installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test Windows installer
+        shell: powershell
+        run: .\scripts\install_windows_test.ps1
