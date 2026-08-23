@@ -141,6 +141,28 @@ describe("directory preview", () => {
     expect(location.pathname).toBe("/");
   });
 
+  it("expands directories only from their explicit expand control", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    render(<App />);
+
+    await screen.findByRole("treeitem", { name: "alpha.md" });
+    const guides = screen.getByRole("treeitem", { name: /guides/ });
+    const expandGuides = screen.getByRole("button", { name: "guides folder" });
+
+    fireEvent.click(guides);
+    expect(screen.getByRole("treeitem", { name: "alpha.md" })).not.toBeNull();
+
+    fireEvent.click(expandGuides);
+    await waitFor(() =>
+      expect(screen.queryByRole("treeitem", { name: "alpha.md" })).toBeNull()
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "guides folder" }));
+    expect(await screen.findByRole("treeitem", { name: "alpha.md" })).not
+      .toBeNull();
+  });
+
   it("marks deleted documents and explains that their snapshot is shown", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();

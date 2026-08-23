@@ -92,6 +92,24 @@ const FileIcon = () => (
   </svg>
 );
 
+const ChevronRightIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    height="1em"
+    viewBox="0 0 24 24"
+    width="1em"
+  >
+    <path
+      d="m9 18 6-6-6-6"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+    />
+  </svg>
+);
+
 type DocumentTreeProps = {
   documents: DocumentSummary[];
   onSelectDocument: (id: number) => void;
@@ -117,6 +135,7 @@ export const DocumentTree = (
   return (
     <TreeView.Root
       collection={collection}
+      expandOnClick={false}
       expandedValue={expandedValue}
       onExpandedChange={({ expandedValue }) => setExpandedValue(expandedValue)}
       onSelectionChange={({ selectedNodes }) => {
@@ -134,7 +153,6 @@ export const DocumentTree = (
     >
       <TreeView.Tree aria-label="Documents">
         <TreeView.Node<DocumentTreeNode>
-          branchContentProps={{ ps: "5" }}
           indentGuide={
             <TreeView.BranchIndentGuide borderColor="border.muted" />
           }
@@ -143,30 +161,26 @@ export const DocumentTree = (
               ? (
                 <TreeView.BranchControl
                   borderRadius="md"
-                  px="2"
                   py="1.5"
-                  role="none"
                   _hover={{ bg: "bg.muted" }}
                 >
                   <TreeView.BranchTrigger
                     aria-label={`${node.name} folder`}
-                    display="flex"
-                    gap="2"
-                    width="full"
                   >
-                    <FolderIcon />
-                    <TreeView.BranchText fontWeight="medium">
-                      {node.name}
-                    </TreeView.BranchText>
+                    <TreeView.BranchIndicator>
+                      <ChevronRightIcon />
+                    </TreeView.BranchIndicator>
                   </TreeView.BranchTrigger>
+                  <FolderIcon />
+                  <TreeView.BranchText fontWeight="medium">
+                    {node.name}
+                  </TreeView.BranchText>
                 </TreeView.BranchControl>
               )
               : (
                 <TreeView.Item
                   borderRadius="md"
                   cursor="pointer"
-                  gap="2"
-                  px="2"
                   py="1.5"
                   _hover={{ bg: "bg.muted" }}
                 >
