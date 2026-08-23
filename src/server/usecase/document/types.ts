@@ -4,6 +4,7 @@ export type Document = {
 };
 
 export type DirectoryDocument = Document & {
+  deleted: boolean;
   relativePath: string;
   title: string;
 };

@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Container,
   Heading,
@@ -72,6 +73,7 @@ export const App = () => {
   const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
+  const [connectionLost, setConnectionLost] = useState(false);
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
@@ -87,7 +89,11 @@ export const App = () => {
     selectedDocumentId,
   );
 
-  useEffect(() => connectPreviewKeepAlive(), []);
+  useEffect(() =>
+    connectPreviewKeepAlive({
+      onConnectionLost: () => setConnectionLost(true),
+      onConnectionRestored: () => setConnectionLost(false),
+    }), []);
 
   useEffect(() => {
     clearReloadAvailable();
@@ -170,6 +176,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={() => {}}
           onOpenSettings={settingsDisclosure.onOpen}
           onOpenStatistics={statisticsDisclosure.onOpen}
@@ -223,6 +230,7 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={changeView}
           onOpenSettings={settingsDisclosure.onOpen}
           onOpenStatistics={statisticsDisclosure.onOpen}
@@ -284,6 +292,7 @@ export const App = () => {
     <>
       <style>{previewThemeCss}</style>
       <PreviewHeader
+        connectionLost={connectionLost}
         fileUrl={document.fileUrl}
         onChangeView={changeView}
         onReloadPreview={reloadPreview}
@@ -321,6 +330,18 @@ export const App = () => {
             onSelectDocument={selectDocument}
             onSelectDocuments={() => void navigate({ to: "/" })}
           />
+        )}
+        {document.deleted && (
+          <Alert.Root status="warning" mb="6">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Deleted document</Alert.Title>
+              <Alert.Description>
+                The original file no longer exists. A saved snapshot is being
+                shown instead.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
         )}
         {view === "preview"
           ? (

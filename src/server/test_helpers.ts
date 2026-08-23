@@ -16,6 +16,7 @@ export const createTestPreviewHandler = (
 ): Deno.ServeHandler => {
   const source = createPreviewSource(input);
   const document = {
+    deleted: false,
     filePath: source.documentSource,
     id: 1,
     relativePath: sourceTitle(source.documentSource),

@@ -1,6 +1,6 @@
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createConfiguredStores } from "./storage/factory.ts";
-import { createPreviewSource } from "./source.ts";
+import { createPreviewSource, readMarkdownSource } from "./source.ts";
 import { createPreviewSession } from "./directory_session.ts";
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 import { readConfig } from "./config.ts";
@@ -126,6 +126,9 @@ export const startPreviewServer = async (
   options: PreviewServerOptions,
 ): Promise<StartedPreviewServer> => {
   const previewSource = createPreviewSource(options.file);
+  const isDirectory = !previewSource.isRemote &&
+    (await Deno.stat(previewSource.documentSource).catch(() => undefined))
+        ?.isDirectory === true;
   const config = readConfig();
 
   let server: Deno.HttpServer<Deno.NetAddr>;
@@ -156,10 +159,30 @@ export const startPreviewServer = async (
       previewSession,
       stores.comments,
       { ...shutdownScheduler, statistics: stores.statistics },
+      stores.documents,
     ),
   );
 
-  const url = `http://${server.addr.hostname}:${server.addr.port}/`;
+  // Populate archival snapshots only after the server is listening so that
+  // reading many documents never delays startup. The conditional database
+  // update also makes this safe to race with a user's first document request.
+  void (async () => {
+    for (const document of previewSession.documents) {
+      if (document.deleted) continue;
+      try {
+        const markdown = await readMarkdownSource(document.filePath);
+        await stores.documents.initializeSnapshot?.(document.id, markdown);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      } catch {
+        // A file may disappear while the background snapshot queue is running.
+      }
+    }
+  })();
+
+  const pathname = isDirectory
+    ? "/"
+    : `/documents/${previewSession.documents[0].id}`;
+  const url = `http://${server.addr.hostname}:${server.addr.port}${pathname}`;
 
   server.finished.finally(() => stores.close()).catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {
