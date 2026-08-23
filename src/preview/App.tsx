@@ -33,6 +33,7 @@ import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { DocumentTree } from "./components/DocumentTree";
 import { DocumentBreadcrumb } from "./components/DocumentBreadcrumb";
+import { StatisticsDialog } from "./components/StatisticsDialog";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -71,6 +72,7 @@ export const App = () => {
   );
   const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
+  const statisticsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
   const {
     changeCodeWrapMode,
@@ -177,6 +179,7 @@ export const App = () => {
           connectionLost={connectionLost}
           onChangeView={() => {}}
           onOpenSettings={settingsDisclosure.onOpen}
+          onOpenStatistics={statisticsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -185,6 +188,10 @@ export const App = () => {
           unresolvedCommentCount={0}
           view="preview"
           viewsDisabled
+        />
+        <StatisticsDialog
+          onOpenChange={statisticsDisclosure.setOpen}
+          open={statisticsDisclosure.open}
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
@@ -226,6 +233,7 @@ export const App = () => {
           connectionLost={connectionLost}
           onChangeView={changeView}
           onOpenSettings={settingsDisclosure.onOpen}
+          onOpenStatistics={statisticsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -234,6 +242,10 @@ export const App = () => {
           unresolvedCommentCount={0}
           view="preview"
           viewsDisabled
+        />
+        <StatisticsDialog
+          onOpenChange={statisticsDisclosure.setOpen}
+          open={statisticsDisclosure.open}
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
@@ -285,12 +297,17 @@ export const App = () => {
         onChangeView={changeView}
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
+        onOpenStatistics={statisticsDisclosure.onOpen}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
         staleCommentCount={staleCommentCount}
         title={document.title}
         unresolvedCommentCount={unresolvedCommentCount}
         view={view}
+      />
+      <StatisticsDialog
+        onOpenChange={statisticsDisclosure.setOpen}
+        open={statisticsDisclosure.open}
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
