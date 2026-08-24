@@ -1,4 +1,4 @@
-import { Badge, Box, Flex } from "@chakra-ui/react";
+import { Badge, Box, Flex, IconButton, Menu, Portal } from "@chakra-ui/react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
@@ -68,11 +68,10 @@ export const ReplyItem = ({
       borderRadius="sm"
       className="comment-reply"
       ml="4"
-      mt="2"
       pl="3"
-      pr="2"
+      pr="1"
       position="relative"
-      py="2"
+      py="1"
     >
       {reply.author.type === "bot" && (
         <Flex
@@ -81,8 +80,8 @@ export const ReplyItem = ({
           color="fg.muted"
           fontSize="xs"
           fontWeight="semibold"
-          mb="1"
-          pr="36"
+          mb="0.5"
+          pr="8"
         >
           <Badge colorPalette="purple" variant="subtle">Bot</Badge>
           {reply.reviewRequested && (
@@ -93,26 +92,37 @@ export const ReplyItem = ({
         </Flex>
       )}
       {!isEditing && (
-        <Flex gap="2" position="absolute" right="2" top="2" wrap="wrap">
-          <CommentActionButton
-            aria-label="Edit reply"
-            disabled={disabled}
-            onClick={() =>
-              setIsEditing(true)}
-            type="button"
-          >
-            Edit
-          </CommentActionButton>
-          <CommentActionButton
-            aria-label="Delete reply"
-            disabled={disabled}
-            onClick={() =>
-              setIsDeleteDialogOpen(true)}
-            type="button"
-          >
-            Delete
-          </CommentActionButton>
-        </Flex>
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <IconButton
+              aria-label="More actions for reply"
+              disabled={disabled}
+              minW="6"
+              position="absolute"
+              right="0"
+              size="xs"
+              top="0"
+              variant="ghost"
+            >
+              ⋯
+            </IconButton>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content>
+                <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
+                  Edit
+                </Menu.Item>
+                <Menu.Item
+                  value="delete"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
+                  Delete
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
       )}
       <ConfirmDialog
         confirmColorPalette="red"
@@ -143,7 +153,7 @@ export const ReplyItem = ({
           />
         )
         : (
-          <Box pr="36">
+          <Box pr="8">
             <CommentMarkdown>{reply.body}</CommentMarkdown>
           </Box>
         )}

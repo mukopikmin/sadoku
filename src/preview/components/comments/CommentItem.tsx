@@ -1,4 +1,13 @@
-import { Badge, Box, Flex, Stack, Text } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Flex,
+  IconButton,
+  Menu,
+  Portal,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { ConfirmDialog } from "../ConfirmDialog";
@@ -147,14 +156,13 @@ export const CommentItem = ({
   return (
     <Box
       as="article"
-      mb="1.5"
-      p={variant === "panel" ? "3" : undefined}
+      p={variant === "panel" ? "2" : undefined}
     >
       {showSource && comment.sourceText && (
         <Box
           as="section"
           className="comment-source-target"
-          mb="3"
+          mb="2"
         >
           <Text
             color="fg.muted"
@@ -172,17 +180,11 @@ export const CommentItem = ({
         borderLeftWidth={variant === "panel" ? "3px" : undefined}
         className="comment-root-thread"
         pl={variant === "panel" ? "3" : undefined}
-        py={variant === "panel" ? "2" : undefined}
+        position="relative"
       >
-        <Flex align="center" justify="space-between" gap="2" mb="1">
-          <Flex
-            align="center"
-            gap="2"
-            color="fg.muted"
-            fontSize="xs"
-            fontWeight="semibold"
-          >
-            <Text as="span">{lineLabel}</Text>
+        {(comment.author.type === "bot" ||
+          (showState && comment.state !== "active")) && (
+          <Flex align="center" gap="1.5" mb="0.5" pr="8">
             {comment.author.type === "bot" && (
               <Badge colorPalette="purple" variant="subtle">Bot</Badge>
             )}
@@ -193,51 +195,52 @@ export const CommentItem = ({
               <Badge colorPalette="yellow" variant="outline">Stale</Badge>
             )}
           </Flex>
-          {!isEditing && (
-            <Flex wrap="wrap" gap="2">
-              {comment.state === "resolved"
-                ? (
-                  <CommentActionButton
-                    disabled={isSaving}
-                    onClick={handleReopen}
-                    type="button"
+        )}
+        {!isEditing && (
+          <Menu.Root>
+            <Menu.Trigger asChild>
+              <IconButton
+                aria-label="More actions"
+                disabled={isSaving}
+                minW="6"
+                position="absolute"
+                right="0"
+                size="xs"
+                top="0"
+                variant="ghost"
+              >
+                ⋯
+              </IconButton>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content>
+                  <Box color="fg.muted" fontSize="xs" px="2" py="1">
+                    {lineLabel}
+                  </Box>
+                  <Menu.Separator />
+                  <Menu.Item
+                    value={comment.state === "resolved" ? "reopen" : "resolve"}
+                    onClick={comment.state === "resolved"
+                      ? handleReopen
+                      : handleResolve}
                   >
-                    Reopen
-                  </CommentActionButton>
-                )
-                : (
-                  <CommentActionButton
-                    disabled={isSaving}
-                    onClick={handleResolve}
-                    type="button"
+                    {comment.state === "resolved" ? "Reopen" : "Resolve"}
+                  </Menu.Item>
+                  <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
+                    Edit
+                  </Menu.Item>
+                  <Menu.Item
+                    value="delete"
+                    onClick={() => setIsDeleteDialogOpen(true)}
                   >
-                    Resolve
-                  </CommentActionButton>
-                )}
-              <CommentActionButton
-                disabled={isSaving}
-                onClick={() => setIsReplying((value) => !value)}
-                type="button"
-              >
-                Reply
-              </CommentActionButton>
-              <CommentActionButton
-                disabled={isSaving}
-                onClick={() => setIsEditing(true)}
-                type="button"
-              >
-                Edit
-              </CommentActionButton>
-              <CommentActionButton
-                disabled={isSaving}
-                onClick={() => setIsDeleteDialogOpen(true)}
-                type="button"
-              >
-                Delete
-              </CommentActionButton>
-            </Flex>
-          )}
-        </Flex>
+                    Delete
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
+        )}
         <ConfirmDialog
           confirmColorPalette="red"
           confirmLabel="Delete"
@@ -263,9 +266,13 @@ export const CommentItem = ({
               value={draft}
             />
           )
-          : <CommentMarkdown>{comment.body}</CommentMarkdown>}
+          : (
+            <Box pr="8">
+              <CommentMarkdown>{comment.body}</CommentMarkdown>
+            </Box>
+          )}
         {(comment.replies ?? []).length > 0 && (
-          <Stack gap="2" mt="2">
+          <Stack gap="1" mt="1.5">
             {(comment.replies ?? []).map((reply) => (
               <ReplyItem
                 commentId={comment.id}
@@ -279,6 +286,17 @@ export const CommentItem = ({
               />
             ))}
           </Stack>
+        )}
+        {!isEditing && !isReplying && (
+          <Flex justify="flex-end" mt="1">
+            <CommentActionButton
+              disabled={isSaving}
+              onClick={() => setIsReplying(true)}
+              type="button"
+            >
+              Reply
+            </CommentActionButton>
+          </Flex>
         )}
         {isReplying && (
           <Box mt="2">

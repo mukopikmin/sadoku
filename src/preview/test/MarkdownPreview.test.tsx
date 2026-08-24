@@ -861,12 +861,13 @@ Body
       updatedAt: "2026-06-05T00:00:00.000Z",
     }], { onResolveComment });
 
-    screen.getByRole("button", { name: "Resolve" }).click();
+    screen.getByRole("button", { name: "More actions" }).click();
+    (await screen.findByRole("menuitem", { name: "Resolve" })).click();
 
     await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
   });
 
-  it("renders a range comment once at its end line", () => {
+  it("renders a range comment once at its end line", async () => {
     const { container } = renderMarkdown("# Title\n\nBody\n", [{
       body: "Clarify this range.",
       author: { type: "human" },
@@ -882,7 +883,9 @@ Body
       updatedAt: "2026-06-05T00:00:00.000Z",
     }]);
 
-    expect(screen.getAllByText("Lines 1-3")).toHaveLength(1);
+    expect(screen.queryByText("Lines 1-3")).toBeNull();
+    screen.getByRole("button", { name: "More actions" }).click();
+    expect(await screen.findByText("Lines 1-3")).not.toBeNull();
     expect(screen.getAllByText("Clarify this range.")).toHaveLength(1);
     expect(
       container.querySelector('[data-source-line="1"] .comment-thread'),
