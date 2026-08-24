@@ -49,6 +49,19 @@ const createDocumentTree = (documents: DocumentSummary[]) => {
     });
   }
 
+  const sortChildren = (node: DocumentTreeNode) => {
+    node.children?.sort((left, right) => {
+      const leftIsDirectory = left.children !== undefined;
+      const rightIsDirectory = right.children !== undefined;
+      if (leftIsDirectory !== rightIsDirectory) {
+        return leftIsDirectory ? -1 : 1;
+      }
+      return left.name.localeCompare(right.name);
+    });
+    node.children?.forEach(sortChildren);
+  };
+  sortChildren(root);
+
   return root;
 };
 
