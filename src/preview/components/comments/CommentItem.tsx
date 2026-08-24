@@ -16,6 +16,7 @@ import { CommentMarkdown } from "./CommentMarkdown";
 import { CommentSourceMarkdown } from "./CommentSourceMarkdown";
 import type { Comment } from "../../models/comment";
 import { ReplyItem } from "./ReplyItem";
+import { MoreActionsIcon } from "./MoreActionsIcon";
 import { toaster } from "../ui/toaster";
 
 export type CommentItemProps = {
@@ -207,9 +208,9 @@ export const CommentItem = ({
                 right="0"
                 size="xs"
                 top="0"
-                variant="ghost"
+                variant="outline"
               >
-                ⋯
+                <MoreActionsIcon />
               </IconButton>
             </Menu.Trigger>
             <Portal>

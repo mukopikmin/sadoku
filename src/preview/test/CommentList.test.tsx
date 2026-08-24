@@ -250,6 +250,9 @@ describe("CommentList", () => {
     const firstMenuButton = screen.getAllByRole("button", {
       name: "More actions",
     })[0];
+    expect(firstMenuButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    expect(firstMenuButton.textContent).toBe("");
     firstMenuButton.focus();
     fireEvent.keyDown(firstMenuButton, { key: "Enter" });
     expect(await screen.findByText("Lines 3-5")).not.toBeNull();

@@ -4,6 +4,7 @@ import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
+import { MoreActionsIcon } from "./MoreActionsIcon";
 
 type ReplyItemProps = {
   commentId: number;
@@ -102,9 +103,9 @@ export const ReplyItem = ({
               right="0"
               size="xs"
               top="0"
-              variant="ghost"
+              variant="outline"
             >
-              ⋯
+              <MoreActionsIcon />
             </IconButton>
           </Menu.Trigger>
           <Portal>
