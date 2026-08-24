@@ -208,7 +208,7 @@ export const CommentItem = ({
                 right="0"
                 size="xs"
                 top="0"
-                variant="outline"
+                variant="ghost"
               >
                 <MoreActionsIcon />
               </IconButton>
