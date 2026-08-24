@@ -203,7 +203,6 @@ export const CommentItem = ({
               <IconButton
                 aria-label="More actions"
                 disabled={isSaving}
-                minW="6"
                 position="absolute"
                 right="0"
                 size="xs"

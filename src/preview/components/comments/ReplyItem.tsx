@@ -98,7 +98,6 @@ export const ReplyItem = ({
             <IconButton
               aria-label="More actions for reply"
               disabled={disabled}
-              minW="6"
               position="absolute"
               right="0"
               size="xs"
