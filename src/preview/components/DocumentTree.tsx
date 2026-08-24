@@ -197,6 +197,11 @@ export const DocumentTree = (
                   py="1.5"
                   _hover={{ bg: "bg.muted" }}
                 >
+                  <TreeView.ItemIndicator
+                    aria-hidden="true"
+                    flexShrink="0"
+                    width="var(--tree-icon-size)"
+                  />
                   <FileIcon />
                   <TreeView.ItemText>{node.name}</TreeView.ItemText>
                   {node.deleted && (
