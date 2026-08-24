@@ -1,4 +1,4 @@
-import { Badge, Box, Flex, Text } from "@chakra-ui/react";
+import { Badge, Box, Flex } from "@chakra-ui/react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
@@ -60,6 +60,8 @@ export const ReplyItem = ({
 
   return (
     <Box
+      aria-label="Reply"
+      as="article"
       bg="canvas.subtle"
       borderColor="border.muted"
       borderLeftWidth="3px"
@@ -69,47 +71,49 @@ export const ReplyItem = ({
       mt="2"
       pl="3"
       pr="2"
+      position="relative"
       py="2"
     >
-      <Flex align="center" justify="space-between" gap="2" mb="1">
+      {reply.author.type === "bot" && (
         <Flex
           align="center"
           gap="2"
           color="fg.muted"
           fontSize="xs"
           fontWeight="semibold"
+          mb="1"
+          pr="36"
         >
-          <Text>Reply</Text>
-          {reply.author.type === "bot" && (
-            <Badge colorPalette="purple" variant="subtle">Bot</Badge>
-          )}
-          {reply.author.type === "bot" && reply.reviewRequested && (
+          <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+          {reply.reviewRequested && (
             <Badge colorPalette="blue" variant="subtle">
               Review requested
             </Badge>
           )}
         </Flex>
-        {!isEditing && (
-          <Flex wrap="wrap" gap="2">
-            <CommentActionButton
-              aria-label="Edit reply"
-              disabled={disabled}
-              onClick={() => setIsEditing(true)}
-              type="button"
-            >
-              Edit
-            </CommentActionButton>
-            <CommentActionButton
-              aria-label="Delete reply"
-              disabled={disabled}
-              onClick={() => setIsDeleteDialogOpen(true)}
-              type="button"
-            >
-              Delete
-            </CommentActionButton>
-          </Flex>
-        )}
-      </Flex>
+      )}
+      {!isEditing && (
+        <Flex gap="2" position="absolute" right="2" top="2" wrap="wrap">
+          <CommentActionButton
+            aria-label="Edit reply"
+            disabled={disabled}
+            onClick={() =>
+              setIsEditing(true)}
+            type="button"
+          >
+            Edit
+          </CommentActionButton>
+          <CommentActionButton
+            aria-label="Delete reply"
+            disabled={disabled}
+            onClick={() =>
+              setIsDeleteDialogOpen(true)}
+            type="button"
+          >
+            Delete
+          </CommentActionButton>
+        </Flex>
+      )}
       <ConfirmDialog
         confirmColorPalette="red"
         confirmLabel="Delete"
@@ -138,7 +142,11 @@ export const ReplyItem = ({
             value={draft}
           />
         )
-        : <CommentMarkdown>{reply.body}</CommentMarkdown>}
+        : (
+          <Box pr="36">
+            <CommentMarkdown>{reply.body}</CommentMarkdown>
+          </Box>
+        )}
     </Box>
   );
 };

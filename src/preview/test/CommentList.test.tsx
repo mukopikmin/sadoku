@@ -308,7 +308,7 @@ describe("CommentList", () => {
     await waitFor(() => expect(onDeleteComment).toHaveBeenCalledWith(1));
   });
 
-  it("shows and creates replies", async () => {
+  it("shows accessible reply cards without visual reply labels", async () => {
     const onDeleteReply = vi.fn(async () => {});
     const onReplyComment = vi.fn(async () => {});
     const onUpdateReply = vi.fn(async () => {});
@@ -320,28 +320,49 @@ describe("CommentList", () => {
           onUpdateReply,
         })}
         comments={[createComment({
-          replies: [{
-            body: "Existing reply.",
-            author: { type: "bot" },
-            createdAt: "2026-06-05T01:00:00.000Z",
-            id: 1,
-            reviewRequested: true,
-            updatedAt: "2026-06-05T01:00:00.000Z",
-          }],
+          replies: [
+            {
+              body: "First human reply.\n\nSecond line in the same reply.",
+              author: { type: "human" },
+              createdAt: "2026-06-05T01:00:00.000Z",
+              id: 1,
+              updatedAt: "2026-06-05T01:00:00.000Z",
+            },
+            {
+              body: "Existing bot reply.",
+              author: { type: "bot" },
+              createdAt: "2026-06-05T02:00:00.000Z",
+              id: 2,
+              reviewRequested: true,
+              updatedAt: "2026-06-05T02:00:00.000Z",
+            },
+          ],
         })]}
       />,
     );
 
-    const existingReply = screen.getByText("Existing reply.");
+    const existingReply = screen.getByText("First human reply.");
     const replyContainer = existingReply.closest(".comment-reply");
     expect(existingReply).not.toBeNull();
+    expect(screen.getByText("Second line in the same reply.")).not.toBeNull();
+    const replyCards = screen.getAllByRole("article", { name: "Reply" });
+    expect(replyCards).toHaveLength(2);
+    expect(replyCards.every((card) => card.classList.contains("comment-reply")))
+      .toBe(true);
+    const humanReply = within(replyCards[0]);
+    expect(within(replyCards[0]).queryByText("Reply")).toBeNull();
+    expect(within(replyCards[1]).queryByText("Reply")).toBeNull();
+    expect(within(replyCards[0]).queryByText("Bot")).toBeNull();
+    expect(within(replyCards[1]).getByText("Bot")).not.toBeNull();
     expect(screen.getByText("Review requested")).not.toBeNull();
     expect(screen.getAllByText("Review requested")).toHaveLength(1);
     expect(getComputedStyle(replyContainer!).marginLeft).toBe(
       "var(--chakra-spacing-4)",
     );
     expect(getComputedStyle(replyContainer!).borderLeftWidth).toBe("3px");
-    fireEvent.click(screen.getByRole("button", { name: "Reply" }));
+    const newReplyButton = screen.getByRole("button", { name: "Reply" });
+    expect(newReplyButton.textContent).toContain("Reply");
+    fireEvent.click(newReplyButton);
     expect(document.activeElement).toBe(
       screen.getByRole("textbox", { name: "Reply body" }),
     );
@@ -359,12 +380,12 @@ describe("CommentList", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Edit reply" }).hasAttribute(
+        humanReply.getByRole("button", { name: "Edit reply" }).hasAttribute(
           "disabled",
         ),
       ).toBe(false)
     );
-    fireEvent.click(screen.getByRole("button", { name: "Edit reply" }));
+    fireEvent.click(humanReply.getByRole("button", { name: "Edit reply" }));
     expect(document.activeElement).toBe(
       screen.getByRole("textbox", {
         name: "Edit reply body",
@@ -393,7 +414,7 @@ describe("CommentList", () => {
       )
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete reply" }));
+    fireEvent.click(humanReply.getByRole("button", { name: "Delete reply" }));
     expect(onDeleteReply).not.toHaveBeenCalled();
     const dialog = await screen.findByRole("alertdialog", {
       name: "Delete reply?",
@@ -402,7 +423,7 @@ describe("CommentList", () => {
     expect(onDeleteReply).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete reply" }));
+    fireEvent.click(humanReply.getByRole("button", { name: "Delete reply" }));
     fireEvent.click(
       within(
         await screen.findByRole("alertdialog", {
