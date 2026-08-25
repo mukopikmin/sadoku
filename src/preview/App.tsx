@@ -34,6 +34,7 @@ import { SettingsDialog } from "./components/SettingsDialog";
 import { DocumentTree } from "./components/DocumentTree";
 import { DocumentBreadcrumb } from "./components/DocumentBreadcrumb";
 import { StatisticsDialog } from "./components/StatisticsDialog";
+import { useScrollPosition } from "./hooks/useScrollPosition";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -71,6 +72,11 @@ export const App = () => {
     shouldLoadDocument,
   );
   const view: PreviewView = commentsMatch ? "comments" : "preview";
+  const saveScrollPosition = useScrollPosition(
+    selectedDocumentId,
+    view,
+    Boolean(documentQuery.data && commentsQuery.data),
+  );
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
@@ -101,6 +107,7 @@ export const App = () => {
 
   const changeView = (nextView: PreviewView) => {
     if (nextView === view || selectedDocumentId === undefined) return;
+    saveScrollPosition();
     void navigate({
       to: nextView === "comments"
         ? "/documents/$documentId/comments"
@@ -110,10 +117,16 @@ export const App = () => {
   };
 
   const selectDocument = (id: number) => {
+    saveScrollPosition();
     void navigate({
       to: "/documents/$documentId",
       params: { documentId: String(id) },
     });
+  };
+
+  const selectDocuments = () => {
+    saveScrollPosition();
+    void navigate({ to: "/" });
   };
 
   const reloadPreview = async () => {
@@ -266,7 +279,7 @@ export const App = () => {
               document={selectedDocument}
               documents={documents!}
               onSelectDocument={selectDocument}
-              onSelectDocuments={() => void navigate({ to: "/" })}
+              onSelectDocuments={selectDocuments}
             />
           )}
           <Text color={error ? "fg.error" : "fg.muted"}>
@@ -328,7 +341,7 @@ export const App = () => {
             document={selectedDocument}
             documents={documents!}
             onSelectDocument={selectDocument}
-            onSelectDocuments={() => void navigate({ to: "/" })}
+            onSelectDocuments={selectDocuments}
           />
         )}
         {document.deleted && (
@@ -347,6 +360,8 @@ export const App = () => {
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
+              documentPath={selectedDocument?.relativePath ??
+                document.fileUrl ?? document.title}
               key={`${selectedDocumentId}-${themeMode}-${fontScale}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}

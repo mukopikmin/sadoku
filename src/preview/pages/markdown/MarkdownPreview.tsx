@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react";
+import { Box, DataList } from "@chakra-ui/react";
 import {
   useCallback,
   useEffect,
@@ -29,11 +29,15 @@ import {
   useCommentActions,
   useCommentsQuery,
 } from "../../hooks/usePreviewData";
+import { CommentableBlock } from "./CommentableBlock";
+import { getCommentableBlockProps } from "./commentableMarkdownComponents";
+import { extractAgentFrontMatter } from "./frontMatter";
 import { RawMarkdownDialog } from "./RawMarkdownDialog";
 
 export type MarkdownPreviewProps = {
   actions: CommentActions;
   comments: ActiveComment[];
+  documentPath?: string;
   markdown: string;
   theme: "dark" | "default";
 };
@@ -124,9 +128,14 @@ const isSelectedSingleLine = (
 export const MarkdownPreview = ({
   actions,
   comments,
+  documentPath,
   markdown,
   theme,
 }: MarkdownPreviewProps) => {
+  const frontMatter = useMemo(
+    () => extractAgentFrontMatter(markdown, documentPath),
+    [documentPath, markdown],
+  );
   const previewRef = useRef<HTMLDivElement>(null);
   const [commentableLines, setCommentableLines] = useState<number[]>([]);
   const commentsByLine = useMemo(() => {
@@ -296,6 +305,7 @@ export const MarkdownPreview = ({
     onSelectCommentRange: handleSelectCommentRange,
     selectedRange,
   };
+  const renderedMarkdown = frontMatter?.bodyMarkdown ?? markdown;
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
@@ -320,6 +330,39 @@ export const MarkdownPreview = ({
             />
           ))}
         </Box>
+        {frontMatter && (
+          <DataList.Root
+            orientation={{ base: "vertical", md: "horizontal" }}
+            gap="0"
+          >
+            {frontMatter.items.map((item) => (
+              <CommentableBlock
+                {...getCommentableBlockProps(commentRenderingContext, {
+                  startLine: item.startLine,
+                  endLine: item.endLine,
+                })}
+                key={`${item.key}-${item.startLine}`}
+              >
+                <DataList.Item
+                  alignItems="start"
+                  gap={{ base: "1", md: "2" }}
+                  py="1"
+                >
+                  <DataList.ItemLabel minW={{ md: "auto" }}>
+                    {item.key}
+                  </DataList.ItemLabel>
+                  <DataList.ItemValue
+                    minW="0"
+                    overflowWrap="anywhere"
+                    whiteSpace="pre-wrap"
+                  >
+                    {item.value}
+                  </DataList.ItemValue>
+                </DataList.Item>
+              </CommentableBlock>
+            ))}
+          </DataList.Root>
+        )}
         <ReactMarkdown
           components={components}
           rehypePlugins={[
@@ -332,7 +375,7 @@ export const MarkdownPreview = ({
           ]}
           remarkPlugins={sharedMarkdownRemarkPlugins}
         >
-          {markdown}
+          {renderedMarkdown}
         </ReactMarkdown>
       </Box>
     </CommentRenderingContext.Provider>
@@ -340,8 +383,8 @@ export const MarkdownPreview = ({
 };
 
 export const MarkdownPreviewPage = (
-  { documentId, markdown, theme }:
-    & Pick<MarkdownPreviewProps, "markdown" | "theme">
+  { documentId, documentPath, markdown, theme }:
+    & Pick<MarkdownPreviewProps, "documentPath" | "markdown" | "theme">
     & { documentId?: number },
 ) => {
   const commentsQuery = useCommentsQuery(documentId);
@@ -354,6 +397,7 @@ export const MarkdownPreviewPage = (
     <MarkdownPreview
       actions={actions}
       comments={activeComments}
+      documentPath={documentPath}
       markdown={markdown}
       theme={theme}
     />

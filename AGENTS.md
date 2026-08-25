@@ -61,6 +61,15 @@ them when making changes.
 - Keep database connections and migrations in `src/server/db/`. Keep storage
   implementations and their selection under `src/server/storage/`, grouped by
   singular domain concept.
+- Treat database migrations as append-only. Never edit a migration after it has
+  been added; add a new migration with the next four-digit zero-padded version
+  instead. Register each migration in `MIGRATIONS` and add a co-located test
+  covering fresh-database behavior and, when applicable, upgrades from the
+  previous schema.
+- Write persistent configuration and storage files atomically: create and finish
+  writing a temporary file in the destination directory, then rename it into
+  place. Clean up temporary files on failure, and do not truncate an existing
+  persistent file before its replacement has been written successfully.
 - Keep browser-side React code in `src/preview/`.
 - Keep HTTP response types and response-to-model conversion at the
   `src/preview/api/` boundary. Keep browser-side domain models in
@@ -71,12 +80,35 @@ them when making changes.
 - Preserve the boundary between the Deno server and the browser client. Pass
   data through the existing HTTP endpoints instead of importing server modules
   into client code.
+- Treat existing HTTP endpoint paths, status codes, and response fields as
+  contracts between the Deno server and preview client. When changing a
+  contract, update the server adapter tests, preview API response types and
+  conversion tests, and at least one behavioral client or integration test in
+  the same change. Prefer backward-compatible additions over silently renaming
+  or removing fields used by the preview client.
+- Build HTTP responses through the shared helpers in `src/server/responses.ts`;
+  do not duplicate common response construction in individual handlers. Serve
+  dynamic preview, comment, and settings data with `Cache-Control: no-store`
+  unless the resource has an explicit immutable caching policy. Use
+  `204 No Content` for successful delete operations that return no updated
+  resource.
+- Map discriminated use-case errors explicitly at each adapter boundary. Keep
+  HTTP status codes and response wording out of use cases.
+- For remote Markdown sources, preserve the complete URL only for fetching. Use
+  the canonical comment source, with query strings and fragments removed, for
+  document identity and persistent comment storage. Do not persist credentials,
+  access tokens, or other URL query parameters in document or comment
+  identifiers. Reuse `createPreviewSource` instead of implementing source
+  canonicalization independently.
 
 ## 2.1 TypeScript Style
 
 - Prefer plain objects, functions, and factory helpers over `class`
   declarations. Do not introduce classes unless there is a strong
   interoperability reason.
+- Error subclasses are an allowed interoperability exception when callers need
+  `instanceof Error`, a distinct error type, or structured error metadata.
+  Prefer discriminated plain-object errors for use-case business failures.
 
 ## 3. Deno and Runtime Behavior
 
@@ -95,6 +127,20 @@ them when making changes.
 ## 4. Preview Client and Generated Assets
 
 - Follow the existing React and TypeScript patterns in `src/preview/`.
+- Keep browser-side `fetch`, HTTP status handling, response types, and
+  response-to-model conversion in `src/preview/api/`; UI components and pages
+  must not call application endpoints directly.
+- Manage server-backed preview state through the existing React Query hooks.
+  Reuse query keys and invalidation helpers instead of creating independent
+  component-local caches. Validate untrusted response fields at the API boundary
+  when they affect rendering, routing, configuration, or discriminated model
+  state.
+- Build preview UI with Chakra UI components and existing Sadoku semantic
+  tokens. Prefer Chakra layout and style props over new ad hoc CSS. Add reusable
+  colors to `src/preview/theme.ts` as semantic tokens with both light and dark
+  values; do not hard-code theme-specific colors in feature components. Reuse
+  components under `src/preview/components/ui/` before introducing a new dialog,
+  notification, or common control implementation.
 - Lay out Markdown document blocks as a stack with a consistent `gap`. Do not
   create block-to-block spacing with margins on individual Markdown elements.
 - When a Markdown element needs additional vertical breathing room, add padding

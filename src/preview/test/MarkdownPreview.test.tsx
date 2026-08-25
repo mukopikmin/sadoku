@@ -42,6 +42,7 @@ const renderMarkdown = (
     ) => Promise<void>;
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
+  documentPath?: string,
 ) => {
   ensurePreviewThemeStyle();
   const result = render(
@@ -51,6 +52,7 @@ const renderMarkdown = (
         onResolveComment: callbacks.onResolveComment ?? (async () => {}),
       })}
       comments={comments}
+      documentPath={documentPath}
       markdown={markdown}
       theme="default"
     />,
@@ -85,6 +87,76 @@ const expectComputedStyleValue = (
 };
 
 describe("MarkdownPreview", () => {
+  it("renders agent front matter as commentable plain-text metadata", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      `---
+name: Reviewer
+description: |
+  First line with **Markdown**.
+  <img src=x onerror=alert(1)>
+unknown-key: visible
+---
+# Instructions
+
+Review carefully.
+`,
+      [],
+      { onCreateComment },
+      "tools/SKILL.md",
+    );
+
+    const dataList = container.querySelector(".chakra-data-list__root");
+    expect(dataList).not.toBeNull();
+    expect(
+      getComputedStyle(
+        dataList!.querySelector("dt")!,
+      )
+        .minWidth,
+    ).toBe("auto");
+    expect(dataList?.textContent).toContain("nameReviewer");
+    expect(dataList?.textContent).toContain(
+      "descriptionFirst line with **Markdown**.\n<img src=x onerror=alert(1)>",
+    );
+    expect(dataList?.textContent).toContain("unknown-keyvisible");
+    expect(dataList?.querySelector("strong, img")).toBeNull();
+    expect(container.textContent).not.toContain("---");
+    expect(screen.getByRole("heading", { name: "Instructions" })).not
+      .toBeNull();
+    expect(
+      container.querySelector("h1")?.closest(".commentable-block")
+        ?.getAttribute("data-source-line"),
+    )
+      .toBe("8");
+
+    fireEvent.click(screen.getByText("Reviewer"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on line 2" }),
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      {
+        target: { value: "Metadata comment" },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(2, "Metadata comment", 2)
+    );
+  });
+
+  it.each([
+    ["a regular Markdown file", "notes.md", "---\nname: Plain\n---\n# Body"],
+    ["unterminated front matter", "SKILL.md", "---\nname: Plain\n# Body"],
+    ["invalid front matter", "AGENTS.md", "---\nnot valid yaml\n---\n# Body"],
+  ])("keeps %s as ordinary Markdown", (_label, documentPath, markdown) => {
+    const { container } = renderMarkdown(markdown, [], {}, documentPath);
+
+    expect(container.querySelector(".chakra-data-list__root")).toBeNull();
+    expect(container.textContent).toMatch(/Plain|not valid yaml/);
+    expect(container.querySelector("hr")).not.toBeNull();
+  });
+
   it("uses Chakra tokens for custom preview colors and spacing", () => {
     expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
     expect(previewThemeCss).not.toMatch(/\brgba?\(/);
