@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
@@ -7,6 +7,7 @@ import {
   waitFor,
 } from "./testUtils";
 import { App } from "../App";
+import { clearScrollPositions } from "../hooks/useScrollPosition";
 
 class DirectoryEventSource extends EventTarget {
   static instances: DirectoryEventSource[] = [];
@@ -84,8 +85,13 @@ const installFetch = (
     ),
   );
 
+beforeEach(() => {
+  vi.stubGlobal("scrollTo", vi.fn());
+});
+
 afterEach(() => {
   cleanup();
+  clearScrollPositions();
   DirectoryEventSource.instances = [];
   vi.unstubAllGlobals();
 });
@@ -201,6 +207,67 @@ describe("directory preview", () => {
         "aria-selected",
       ),
     ).toBe("true");
+  });
+
+  it("restores independent view and document scroll positions", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    let scrollY = 0;
+    vi.stubGlobal("scrollY", 0);
+    Object.defineProperty(globalThis, "scrollY", {
+      configurable: true,
+      get: () => scrollY,
+    });
+    vi.stubGlobal(
+      "scrollTo",
+      vi.fn((optionsOrX: ScrollToOptions | number, y?: number) => {
+        scrollY = typeof optionsOrX === "number" ? y ?? 0 : optionsOrX.top ?? 0;
+      }),
+    );
+    const setScrollY = (value: number) => {
+      scrollY = value;
+      document.dispatchEvent(new Event("scroll"));
+    };
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("treeitem", { name: "alpha.md" }),
+    );
+    await screen.findByRole("heading", { name: "Document 1" });
+    await waitFor(() => expect(scrollY).toBe(0));
+    setScrollY(120);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    fireEvent.click(
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
+    );
+    await screen.findByRole("heading", { name: /comments \(0\)/i });
+    await waitFor(() => expect(scrollY).toBe(0));
+    setScrollY(340);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+    await waitFor(() => expect(location.pathname).toBe("/documents/1"));
+    await waitFor(() => expect(scrollY).toBe(120));
+    setScrollY(scrollY);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    history.back();
+    await waitFor(() =>
+      expect(location.pathname).toBe("/documents/1/comments")
+    );
+    await waitFor(() => expect(scrollY).toBe(340));
+
+    history.forward();
+    await waitFor(() => expect(location.pathname).toBe("/documents/1"));
+    await waitFor(() => expect(scrollY).toBe(120));
+
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
+    fireEvent.click(
+      await screen.findByRole("treeitem", { name: "beta.mdDeleted" }),
+    );
+    await screen.findByText("Deleted document");
+    await waitFor(() => expect(scrollY).toBe(0));
   });
 
   it("opens a document comments deep link and shows invalid documents as not found", async () => {
