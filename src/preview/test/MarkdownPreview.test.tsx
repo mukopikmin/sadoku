@@ -523,6 +523,34 @@ const value = 1;
     );
   });
 
+  it("shows the selected source as raw Markdown in a dialog", async () => {
+    const { container } = renderMarkdown(`# Title
+
+Paragraph with **formatting**.
+`);
+
+    fireEvent.click(container.querySelector("p")!);
+    const addCommentButton = screen.getByRole("button", {
+      name: "Add comment on line 3",
+    });
+    const rawMarkdownButton = screen.getByRole("button", {
+      name: "View raw Markdown for line 3",
+    });
+
+    expect(addCommentButton.nextElementSibling).toBe(rawMarkdownButton);
+    fireEvent.click(rawMarkdownButton);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "Raw Markdown — line 3",
+    });
+    expect(dialog.querySelector("pre code")?.textContent).toBe(
+      "Paragraph with **formatting**.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
   it("creates comments for the full table range", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown(
