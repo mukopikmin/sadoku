@@ -32,6 +32,7 @@ export type CommentControlProps = {
   activeRange?: CommentRange;
   onCloseCommentForm: () => void;
   onOpenCommentForm: () => void;
+  onOpenRawMarkdown: (range: CommentRange) => void;
   onSelectCommentRange: (
     range: CommentRange,
     options: CommentRangeSelectionOptions,

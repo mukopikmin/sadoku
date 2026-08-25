@@ -32,6 +32,7 @@ import {
 import { CommentableBlock } from "./CommentableBlock";
 import { getCommentableBlockProps } from "./commentableMarkdownComponents";
 import { extractAgentFrontMatter } from "./frontMatter";
+import { RawMarkdownDialog } from "./RawMarkdownDialog";
 
 export type MarkdownPreviewProps = {
   actions: CommentActions;
@@ -168,6 +169,7 @@ export const MarkdownPreview = ({
   const [activeRange, setActiveRange] = useState<CommentRange>();
   const [lineSelectionAnchor, setLineSelectionAnchor] = useState<number>();
   const [selectedRange, setSelectedRange] = useState<CommentRange>();
+  const [rawMarkdownRange, setRawMarkdownRange] = useState<CommentRange>();
   const continuousSelectedRange = selectedRange &&
       selectedRange.startLine < selectedRange.endLine
     ? selectedRange
@@ -299,6 +301,7 @@ export const MarkdownPreview = ({
     commentHighlightsByLine,
     onCloseCommentForm: handleCloseCommentForm,
     onOpenCommentForm: handleOpenCommentForm,
+    onOpenRawMarkdown: setRawMarkdownRange,
     onSelectCommentRange: handleSelectCommentRange,
     selectedRange,
   };
@@ -306,6 +309,14 @@ export const MarkdownPreview = ({
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
+      <RawMarkdownDialog
+        markdown={markdown}
+        onOpenChange={(open) => {
+          if (!open) setRawMarkdownRange(undefined);
+        }}
+        open={rawMarkdownRange !== undefined}
+        range={rawMarkdownRange}
+      />
       <Box className="markdown-preview" ref={previewRef}>
         <Box aria-hidden="true" className="markdown-range-highlights">
           {rangeHighlightLayouts.map((layout) => (
