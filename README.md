@@ -26,6 +26,20 @@ curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh |
 
 Make sure `$HOME/.local/bin` is included in your `PATH`.
 
+On Windows x64, run the following command in PowerShell. The installer verifies
+the release checksum, installs `sadoku.exe` under
+`%LOCALAPPDATA%\Programs\sadoku`, and adds that directory to your user `PATH`:
+
+```powershell
+irm https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.ps1 | iex
+```
+
+To install the latest tested nightly build instead:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.ps1))) -Nightly
+```
+
 An installed binary can update itself in place. Stable releases use GitHub's
 latest release; nightly builds use the moving `nightly` release:
 
@@ -72,11 +86,12 @@ sadoku comment <operation> ...
 sadoku update [--channel stable|nightly]
 ```
 
-Self-update supports compiled Linux x64 and macOS arm64 binaries. It verifies
-the downloaded archive's SHA-256 checksum and replaces the executable
-atomically. It is unavailable on Windows, unsupported architectures, read-only
-installations, and source runs such as `deno run src/main.ts`; use the installer
-or build tools in those cases.
+Self-update supports compiled Linux x64, macOS arm64, and Windows x64 binaries.
+It verifies the downloaded archive's SHA-256 checksum before replacing the
+executable. On Windows, replacement finishes in a background PowerShell process
+after the current Sadoku process exits. Self-update is unavailable on
+unsupported architectures, read-only installations, and source runs such as
+`deno run src/main.ts`; use the installer or build tools in those cases.
 
 Preview a file:
 
@@ -349,9 +364,9 @@ commit hash, such as `nightly-20260729-a1b2c3d4`.
 The installer and `sadoku update` both download from
 `https://github.com/mukopikmin/sadoku`. Stable Unix assets are named
 `sadoku-v<version>-<target>.tar.gz`, while moving nightly Unix assets are named
-`sadoku-nightly-<target>.tar.gz`; each has a same-name `.sha256` companion.
-Self-update supports the `linux-x64` and `darwin-arm64` targets. Release builds
-also produce `windows-x64`, but Windows self-update is not supported.
+`sadoku-nightly-<target>.tar.gz`. Windows assets use the corresponding `.zip`
+names. Each archive has a same-name `.sha256` companion. Self-update supports
+the `linux-x64`, `darwin-arm64`, and `windows-x64` targets.
 
 Build release archives under `dist/`:
 

@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Container,
   Heading,
@@ -32,6 +33,7 @@ import { isUnresolvedComment } from "./models/comment";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { DocumentTree } from "./components/DocumentTree";
 import { DocumentBreadcrumb } from "./components/DocumentBreadcrumb";
+import { StatisticsDialog } from "./components/StatisticsDialog";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -70,6 +72,8 @@ export const App = () => {
   );
   const view: PreviewView = commentsMatch ? "comments" : "preview";
   const settingsDisclosure = useDisclosure();
+  const statisticsDisclosure = useDisclosure();
+  const [connectionLost, setConnectionLost] = useState(false);
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
@@ -85,7 +89,11 @@ export const App = () => {
     selectedDocumentId,
   );
 
-  useEffect(() => connectPreviewKeepAlive(), []);
+  useEffect(() =>
+    connectPreviewKeepAlive({
+      onConnectionLost: () => setConnectionLost(true),
+      onConnectionRestored: () => setConnectionLost(false),
+    }), []);
 
   useEffect(() => {
     clearReloadAvailable();
@@ -168,8 +176,10 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={() => {}}
           onOpenSettings={settingsDisclosure.onOpen}
+          onOpenStatistics={statisticsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -178,6 +188,10 @@ export const App = () => {
           unresolvedCommentCount={0}
           view="preview"
           viewsDisabled
+        />
+        <StatisticsDialog
+          onOpenChange={statisticsDisclosure.setOpen}
+          open={statisticsDisclosure.open}
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
@@ -216,8 +230,10 @@ export const App = () => {
       <>
         <style>{previewThemeCss}</style>
         <PreviewHeader
+          connectionLost={connectionLost}
           onChangeView={changeView}
           onOpenSettings={settingsDisclosure.onOpen}
+          onOpenStatistics={statisticsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -226,6 +242,10 @@ export const App = () => {
           unresolvedCommentCount={0}
           view="preview"
           viewsDisabled
+        />
+        <StatisticsDialog
+          onOpenChange={statisticsDisclosure.setOpen}
+          open={statisticsDisclosure.open}
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
@@ -272,16 +292,22 @@ export const App = () => {
     <>
       <style>{previewThemeCss}</style>
       <PreviewHeader
+        connectionLost={connectionLost}
         fileUrl={document.fileUrl}
         onChangeView={changeView}
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
+        onOpenStatistics={statisticsDisclosure.onOpen}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
         staleCommentCount={staleCommentCount}
         title={document.title}
         unresolvedCommentCount={unresolvedCommentCount}
         view={view}
+      />
+      <StatisticsDialog
+        onOpenChange={statisticsDisclosure.setOpen}
+        open={statisticsDisclosure.open}
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
@@ -304,6 +330,18 @@ export const App = () => {
             onSelectDocument={selectDocument}
             onSelectDocuments={() => void navigate({ to: "/" })}
           />
+        )}
+        {document.deleted && (
+          <Alert.Root status="warning" mb="6">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Deleted document</Alert.Title>
+              <Alert.Description>
+                The original file no longer exists. A saved snapshot is being
+                shown instead.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
         )}
         {view === "preview"
           ? (

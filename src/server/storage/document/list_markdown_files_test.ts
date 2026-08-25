@@ -43,8 +43,8 @@ Deno.test("recursively lists regular Markdown files outside excluded directories
       [
         "B.Md",
         "a.md",
-        join("nested", "deeper", "reference.MaRkDoWn"),
-        join("nested", "guide.md"),
+        "nested/deeper/reference.MaRkDoWn",
+        "nested/guide.md",
         "z.MARKDOWN",
       ].map((name) => ({
         absolutePath: join(root, name),

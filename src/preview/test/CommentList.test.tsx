@@ -216,7 +216,7 @@ describe("CommentList", () => {
     );
   });
 
-  it("formats source ranges in list headings", () => {
+  it("shows source ranges only in action menus", async () => {
     render(
       <CommentList
         actions={createCommentActions()}
@@ -246,10 +246,29 @@ describe("CommentList", () => {
       />,
     );
 
-    expect(screen.getByText("Lines 3-5")).not.toBeNull();
-    expect(screen.getByText("Lines 7-8 (originally lines 2-3)")).not.toBeNull();
+    expect(screen.queryByText("Lines 3-5")).toBeNull();
+    const firstMenuButton = screen.getAllByRole("button", {
+      name: "More actions",
+    })[0];
+    expect(firstMenuButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    expect(firstMenuButton.textContent).toBe("");
+    firstMenuButton.focus();
+    fireEvent.keyDown(firstMenuButton, { key: "Enter" });
+    expect(await screen.findByText("Lines 3-5")).not.toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Resolve" })).not.toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Edit" })).not.toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Delete" })).not.toBeNull();
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    await waitFor(() => expect(document.activeElement).toBe(firstMenuButton));
+    fireEvent.click(screen.getAllByRole("button", { name: "More actions" })[1]);
+    expect(await screen.findByText("Lines 7-8 (originally lines 2-3)"))
+      .not.toBeNull();
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
     fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
-    expect(screen.getByText("Originally lines 4-6")).not.toBeNull();
+    expect(screen.queryByText("Originally lines 4-6")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByText("Originally lines 4-6")).not.toBeNull();
   });
 
   it("updates and deletes comments", async () => {
@@ -271,7 +290,8 @@ describe("CommentList", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
     expect(document.activeElement).toBe(screen.getByRole("textbox"));
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Updated body." },
@@ -287,8 +307,8 @@ describe("CommentList", () => {
       )
     );
 
-    const deleteButton = await screen.findByRole("button", { name: "Delete" });
-    fireEvent.click(deleteButton);
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
     expect(onDeleteComment).not.toHaveBeenCalled();
     const dialog = await screen.findByRole("alertdialog", {
       name: "Delete comment?",
@@ -297,7 +317,8 @@ describe("CommentList", () => {
     expect(onDeleteComment).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 
-    fireEvent.click(deleteButton);
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
     fireEvent.click(
       within(
         await screen.findByRole("alertdialog", {
@@ -308,7 +329,7 @@ describe("CommentList", () => {
     await waitFor(() => expect(onDeleteComment).toHaveBeenCalledWith(1));
   });
 
-  it("shows and creates replies", async () => {
+  it("shows accessible reply cards without visual reply labels", async () => {
     const onDeleteReply = vi.fn(async () => {});
     const onReplyComment = vi.fn(async () => {});
     const onUpdateReply = vi.fn(async () => {});
@@ -320,28 +341,54 @@ describe("CommentList", () => {
           onUpdateReply,
         })}
         comments={[createComment({
-          replies: [{
-            body: "Existing reply.",
-            author: { type: "bot" },
-            createdAt: "2026-06-05T01:00:00.000Z",
-            id: 1,
-            reviewRequested: true,
-            updatedAt: "2026-06-05T01:00:00.000Z",
-          }],
+          replies: [
+            {
+              body: "First human reply.\n\nSecond line in the same reply.",
+              author: { type: "human" },
+              createdAt: "2026-06-05T01:00:00.000Z",
+              id: 1,
+              updatedAt: "2026-06-05T01:00:00.000Z",
+            },
+            {
+              body: "Existing bot reply.",
+              author: { type: "bot" },
+              createdAt: "2026-06-05T02:00:00.000Z",
+              id: 2,
+              reviewRequested: true,
+              updatedAt: "2026-06-05T02:00:00.000Z",
+            },
+          ],
         })]}
       />,
     );
 
-    const existingReply = screen.getByText("Existing reply.");
+    const existingReply = screen.getByText("First human reply.");
     const replyContainer = existingReply.closest(".comment-reply");
     expect(existingReply).not.toBeNull();
+    expect(screen.getByText("Second line in the same reply.")).not.toBeNull();
+    const replyCards = screen.getAllByRole("article", { name: "Reply" });
+    expect(replyCards).toHaveLength(2);
+    expect(replyCards.every((card) => card.classList.contains("comment-reply")))
+      .toBe(true);
+    expect(replyCards.map((card) => getComputedStyle(card).marginTop))
+      .toEqual(["0", "0"]);
+    const humanReply = within(replyCards[0]);
+    expect(within(replyCards[0]).queryByText("Reply")).toBeNull();
+    expect(within(replyCards[1]).queryByText("Reply")).toBeNull();
+    expect(within(replyCards[0]).queryByText("Bot")).toBeNull();
+    expect(within(replyCards[1]).getByText("Bot")).not.toBeNull();
     expect(screen.getByText("Review requested")).not.toBeNull();
     expect(screen.getAllByText("Review requested")).toHaveLength(1);
+    expect(screen.queryByText("Line 3")).toBeNull();
+    expect(screen.queryByRole("menuitem")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Reply" })).toHaveLength(1);
     expect(getComputedStyle(replyContainer!).marginLeft).toBe(
       "var(--chakra-spacing-4)",
     );
     expect(getComputedStyle(replyContainer!).borderLeftWidth).toBe("3px");
-    fireEvent.click(screen.getByRole("button", { name: "Reply" }));
+    const newReplyButton = screen.getByRole("button", { name: "Reply" });
+    expect(newReplyButton.textContent).toContain("Reply");
+    fireEvent.click(newReplyButton);
     expect(document.activeElement).toBe(
       screen.getByRole("textbox", { name: "Reply body" }),
     );
@@ -359,12 +406,16 @@ describe("CommentList", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Edit reply" }).hasAttribute(
-          "disabled",
-        ),
+        humanReply.getByRole("button", { name: "More actions for reply" })
+          .hasAttribute(
+            "disabled",
+          ),
       ).toBe(false)
     );
-    fireEvent.click(screen.getByRole("button", { name: "Edit reply" }));
+    fireEvent.click(
+      humanReply.getByRole("button", { name: "More actions for reply" }),
+    );
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
     expect(document.activeElement).toBe(
       screen.getByRole("textbox", {
         name: "Edit reply body",
@@ -393,7 +444,10 @@ describe("CommentList", () => {
       )
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete reply" }));
+    fireEvent.click(
+      humanReply.getByRole("button", { name: "More actions for reply" }),
+    );
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
     expect(onDeleteReply).not.toHaveBeenCalled();
     const dialog = await screen.findByRole("alertdialog", {
       name: "Delete reply?",
@@ -402,7 +456,10 @@ describe("CommentList", () => {
     expect(onDeleteReply).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete reply" }));
+    fireEvent.click(
+      humanReply.getByRole("button", { name: "More actions for reply" }),
+    );
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
     fireEvent.click(
       within(
         await screen.findByRole("alertdialog", {
@@ -467,7 +524,8 @@ describe("CommentList", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Resolve" }));
     await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
 
     expect(await screen.findByText("Comment resolved")).not.toBeNull();
@@ -475,7 +533,8 @@ describe("CommentList", () => {
     await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(1));
 
     fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
-    fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Reopen" }));
     await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(3));
   });
 
@@ -490,7 +549,8 @@ describe("CommentList", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Resolve" }));
 
     expect(await screen.findByText("Could not resolve comment")).not.toBeNull();
     expect(screen.getAllByText("Server unavailable.").length).toBeGreaterThan(
@@ -510,7 +570,8 @@ describe("CommentList", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Resolve" }));
     fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
 
     expect(await screen.findByText("Could not reopen comment")).not.toBeNull();

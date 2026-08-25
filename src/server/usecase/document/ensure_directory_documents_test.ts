@@ -44,12 +44,14 @@ Deno.test("ensures listed directory documents in listing order", async () => {
   ]]);
   assertEquals(result, [
     {
+      deleted: false,
       filePath: "/workspace/docs/guide.md",
       id: 1,
       relativePath: "guide.md",
       title: "guide.md",
     },
     {
+      deleted: false,
       filePath: "/workspace/docs/notes.markdown",
       id: 2,
       relativePath: "notes.markdown",
@@ -85,4 +87,32 @@ Deno.test("does not write when listing the directory fails", async () => {
     assertEquals(caught, error);
   }
   assertEquals(ensureManyCalled, false);
+});
+
+Deno.test("includes deleted stored documents only from the selected directory", async () => {
+  const documentStore: DocumentStore = {
+    ensure: () => Promise.reject(new Error("unexpected ensure")),
+    ensureMany: () => Promise.resolve([]),
+    findByFilePath: () => Promise.resolve(undefined),
+    findById: () => Promise.resolve(undefined),
+    list: () =>
+      Promise.resolve([
+        { id: 3, filePath: "/workspace/docs/deleted.md" },
+        { id: 4, filePath: "/workspace/other/private.md" },
+      ]),
+  };
+
+  assertEquals(
+    await ensureDirectoryDocuments("/workspace/docs", {
+      documentStore,
+      listMarkdownFiles: () => Promise.resolve([]),
+    }),
+    [{
+      deleted: true,
+      filePath: "/workspace/docs/deleted.md",
+      id: 3,
+      relativePath: "deleted.md",
+      title: "deleted.md",
+    }],
+  );
 });

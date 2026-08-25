@@ -38,7 +38,9 @@ export type UpdateDependencies = {
   execPath(): string;
   fetch: typeof fetch;
   fs: UpdateFileSystem;
+  pid: number;
   platform: { os: string; arch: string };
+  spawn(command: string, args: string[]): void;
   run(
     command: string,
     args: string[],
@@ -58,8 +60,8 @@ export const releaseTarget = (
   if (platform.os === "darwin" && platform.arch === "aarch64") {
     return "darwin-arm64";
   }
-  if (platform.os === "windows") {
-    throw new Error("Self-update is not supported on Windows.");
+  if (platform.os === "windows" && platform.arch === "x86_64") {
+    return "windows-x64";
   }
   throw new Error(
     `Self-update is not supported on ${platform.os}/${platform.arch}.`,
@@ -70,10 +72,12 @@ export const archiveName = (
   channel: UpdateChannel,
   version: string,
   target: string,
-): string =>
-  channel === "nightly"
-    ? `sadoku-nightly-${target}.tar.gz`
-    : `sadoku-v${version}-${target}.tar.gz`;
+): string => {
+  const extension = target === "windows-x64" ? "zip" : "tar.gz";
+  return channel === "nightly"
+    ? `sadoku-nightly-${target}.${extension}`
+    : `sadoku-v${version}-${target}.${extension}`;
+};
 
 const defaultDependencies = (): UpdateDependencies => ({
   execPath: () => Deno.execPath(),
@@ -89,7 +93,17 @@ const defaultDependencies = (): UpdateDependencies => ({
     stat: Deno.stat,
     writeFile: Deno.writeFile,
   },
+  pid: Deno.pid,
   platform: Deno.build,
+  spawn: (command, args) => {
+    const child = new Deno.Command(command, {
+      args,
+      stdin: "null",
+      stdout: "null",
+      stderr: "null",
+    }).spawn();
+    child.unref();
+  },
   run: async (command, args) => {
     const result = await new Deno.Command(command, {
       args,
@@ -331,20 +345,35 @@ export const installUpdate = async (
     prefix: "sadoku-update-",
   });
   let stagedPath: string | undefined;
+  let helperPath: string | undefined;
   try {
     const archivePath = join(workDir, archive);
     await dependencies.fs.writeFile(archivePath, archiveBytes);
-    const extracted = await dependencies.run("tar", [
-      "-xzf",
-      archivePath,
-      "-C",
-      workDir,
-    ]);
+    const windows = plan.target === "windows-x64";
+    const extracted = windows
+      ? await dependencies.run("powershell.exe", [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Expand-Archive -LiteralPath $args[0] -DestinationPath $args[1] -Force",
+        archivePath,
+        workDir,
+      ])
+      : await dependencies.run("tar", [
+        "-xzf",
+        archivePath,
+        "-C",
+        workDir,
+      ]);
     if (!extracted.success) {
       throw new Error(`Could not extract release archive: ${extracted.output}`);
     }
-    const archiveRoot = archive.replace(/\.tar\.gz$/, "");
-    const binaryPath = join(workDir, archiveRoot, "sadoku");
+    const archiveRoot = archive.replace(/\.(?:tar\.gz|zip)$/, "");
+    const binaryPath = join(
+      workDir,
+      archiveRoot,
+      windows ? "sadoku.exe" : "sadoku",
+    );
     const binaryInfo = await dependencies.fs.stat(binaryPath).catch(() =>
       undefined
     );
@@ -375,19 +404,60 @@ export const installUpdate = async (
       );
     });
     await dependencies.fs.copyFile(binaryPath, stagedPath);
-    await dependencies.fs.chmod(stagedPath, 0o755);
-    await dependencies.fs.rename(stagedPath, executable).catch((error) => {
-      throw new Error(
-        `Could not atomically replace Sadoku; the existing binary was preserved: ${
-          error instanceof Error ? error.message : error
-        }`,
+    if (windows) {
+      helperPath = await dependencies.fs.makeTempFile({
+        dir: dirname(executable),
+        prefix: ".sadoku-update-",
+        suffix: ".ps1",
+      });
+      const quote = (value: string): string => value.replaceAll("'", "''");
+      const script = `$ErrorActionPreference = "Stop"
+$updated = $false
+try {
+    Wait-Process -Id ${dependencies.pid} -ErrorAction SilentlyContinue
+    Move-Item -LiteralPath '${quote(stagedPath)}' -Destination '${
+        quote(executable)
+      }' -Force
+    $updated = $true
+} finally {
+    if (-not $updated) { Remove-Item -LiteralPath '${
+        quote(stagedPath)
+      }' -Force -ErrorAction SilentlyContinue }
+    Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
+}
+`;
+      await dependencies.fs.writeFile(
+        helperPath,
+        new TextEncoder().encode(script),
       );
-    });
-    stagedPath = undefined;
+      dependencies.spawn("powershell.exe", [
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        helperPath,
+      ]);
+      stagedPath = undefined;
+      helperPath = undefined;
+    } else {
+      await dependencies.fs.chmod(stagedPath, 0o755);
+      await dependencies.fs.rename(stagedPath, executable).catch((error) => {
+        throw new Error(
+          `Could not atomically replace Sadoku; the existing binary was preserved: ${
+            error instanceof Error ? error.message : error
+          }`,
+        );
+      });
+      stagedPath = undefined;
+    }
     return { channel, currentVersion, targetVersion, updated: true };
   } finally {
     if (stagedPath) {
       await dependencies.fs.remove(stagedPath).catch(() => undefined);
+    }
+    if (helperPath) {
+      await dependencies.fs.remove(helperPath).catch(() => undefined);
     }
     await dependencies.fs.remove(workDir, { recursive: true }).catch(() =>
       undefined

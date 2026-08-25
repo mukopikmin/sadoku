@@ -18,6 +18,7 @@ vi.mock("../markdown/mermaid", () => ({
 
 afterEach(() => {
   globalThis.getSelection()?.removeAllRanges();
+  document.documentElement.removeAttribute("data-code-wrap");
   cleanup();
   vi.mocked(initializeMermaid).mockReset();
 });
@@ -529,6 +530,40 @@ const value = 1;
     );
   });
 
+  it("shows the selected source as raw Markdown in a dialog", async () => {
+    const { container } = renderMarkdown(`# Title
+
+Paragraph with **formatting**.
+`);
+
+    fireEvent.click(container.querySelector("p")!);
+    const addCommentButton = screen.getByRole("button", {
+      name: "Add comment on line 3",
+    });
+    const rawMarkdownButton = screen.getByRole("button", {
+      name: "View raw Markdown for line 3",
+    });
+
+    expect(addCommentButton.nextElementSibling).toBe(rawMarkdownButton);
+    fireEvent.click(rawMarkdownButton);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "Raw Markdown — line 3",
+    });
+    expect(dialog.querySelector("pre code")?.textContent).toBe(
+      "Paragraph with **formatting**.",
+    );
+    const rawMarkdown = dialog.querySelector("pre")!;
+    expect(getComputedStyle(rawMarkdown).whiteSpace).toBe("pre");
+
+    document.documentElement.dataset.codeWrap = "wrap";
+    expect(getComputedStyle(rawMarkdown).whiteSpace).toBe("pre-wrap");
+    expect(getComputedStyle(rawMarkdown).overflowWrap).toBe("anywhere");
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
   it("creates comments for the full table range", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown(
@@ -867,12 +902,13 @@ Body
       updatedAt: "2026-06-05T00:00:00.000Z",
     }], { onResolveComment });
 
-    screen.getByRole("button", { name: "Resolve" }).click();
+    screen.getByRole("button", { name: "More actions" }).click();
+    (await screen.findByRole("menuitem", { name: "Resolve" })).click();
 
     await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
   });
 
-  it("renders a range comment once at its end line", () => {
+  it("renders a range comment once at its end line", async () => {
     const { container } = renderMarkdown("# Title\n\nBody\n", [{
       body: "Clarify this range.",
       author: { type: "human" },
@@ -888,7 +924,9 @@ Body
       updatedAt: "2026-06-05T00:00:00.000Z",
     }]);
 
-    expect(screen.getAllByText("Lines 1-3")).toHaveLength(1);
+    expect(screen.queryByText("Lines 1-3")).toBeNull();
+    screen.getByRole("button", { name: "More actions" }).click();
+    expect(await screen.findByText("Lines 1-3")).not.toBeNull();
     expect(screen.getAllByText("Clarify this range.")).toHaveLength(1);
     expect(
       container.querySelector('[data-source-line="1"] .comment-thread'),
