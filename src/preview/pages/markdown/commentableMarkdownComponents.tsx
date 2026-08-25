@@ -62,7 +62,7 @@ const getMermaidCodeText = (
   return String(child.props.children).replace(/\n$/, "");
 };
 
-const getCommentableBlockProps = (
+export const getCommentableBlockProps = (
   context: CommentRenderingContextValue,
   sourceRange: { endLine: number; startLine: number },
 ) => {
