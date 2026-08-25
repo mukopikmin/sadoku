@@ -347,6 +347,8 @@ export const App = () => {
           ? (
             <MarkdownPreviewPage
               documentId={selectedDocumentId}
+              documentPath={selectedDocument?.relativePath ??
+                document.fileUrl ?? document.title}
               key={`${selectedDocumentId}-${themeMode}-${fontScale}`}
               markdown={document.markdown}
               theme={themeMode === "dark" ? "dark" : "default"}
