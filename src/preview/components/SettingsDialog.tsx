@@ -9,6 +9,7 @@ import {
   Switch,
   Text,
 } from "@chakra-ui/react";
+import { useRef } from "react";
 import type { CodeWrapMode, ThemeMode } from "../models/theme";
 
 type SettingsDialogProps = {
@@ -38,6 +39,7 @@ export const SettingsDialog = ({
   open,
   themeMode,
 }: SettingsDialogProps) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const fontScales = [0.75, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5];
   const scaleIndex = fontScales.findIndex((scale) => scale >= fontScale);
   const decreaseScale = fontScales[Math.max(0, scaleIndex - 1)];
@@ -50,15 +52,14 @@ export const SettingsDialog = ({
         globalThis.document.querySelector<HTMLButtonElement>(
           'button[aria-label="Open settings"]',
         )}
-      initialFocusEl={() =>
-        globalThis.document.getElementById("theme-mode") as HTMLSelectElement}
+      initialFocusEl={() => contentRef.current}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
     >
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content>
+          <Dialog.Content ref={contentRef}>
             <Dialog.Header>
               <Dialog.Title>Settings</Dialog.Title>
             </Dialog.Header>
@@ -77,7 +78,6 @@ export const SettingsDialog = ({
                   </Text>
                   <NativeSelect.Root width="40">
                     <NativeSelect.Field
-                      autoFocus
                       id="theme-mode"
                       onChange={(event) =>
                         onThemeModeChange(
@@ -232,7 +232,11 @@ export const SettingsDialog = ({
               </Flex>
             </Dialog.Body>
             <Dialog.CloseTrigger asChild>
-              <IconButton aria-label="Close settings" size="sm" variant="ghost">
+              <IconButton
+                aria-label="Close settings"
+                size="sm"
+                variant="ghost"
+              >
                 <svg
                   aria-hidden="true"
                   fill="none"

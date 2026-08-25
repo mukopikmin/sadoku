@@ -453,7 +453,11 @@ describe("App", () => {
       .toBeNull();
     const themeSelect = screen.getByRole("combobox", { name: "Theme" });
     expect((themeSelect as HTMLSelectElement).value).toBe("light");
-    await waitFor(() => expect(document.activeElement).toBe(themeSelect));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("dialog", { name: "Settings" }),
+      )
+    );
     const decreaseTextSize = screen.getByRole("button", {
       name: "Decrease text size",
     });
