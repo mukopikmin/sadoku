@@ -135,7 +135,10 @@ testWithTempComments("validates comment creation input", async () => {
 
 testWithTempComments("creates comments for a source line range", async () => {
   const filePath = await createTempMarkdown("one\ntwo\nthree\nfour\nfive");
-  const handler = createTestPreviewHandler(filePath);
+  const logs: string[] = [];
+  const handler = createTestPreviewHandler(filePath, {
+    log: (message) => logs.push(message),
+  });
   try {
     const response = await requestComments(
       handler,
@@ -158,6 +161,11 @@ testWithTempComments("creates comments for a source line range", async () => {
     assertEquals(comment.originalStartLine, 2);
     assertEquals(comment.originalEndLine, 4);
     assertEquals(comment.sourceText, "two\nthree\nfour");
+    assertEquals(logs.length, 1);
+    assertMatch(
+      logs[0],
+      /^Processed comment request: POST \/__sadoku\/documents\/1\/comments -> 200 \(\d+ms\)$/,
+    );
   } finally {
     await removeTempMarkdown(filePath);
   }

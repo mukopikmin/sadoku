@@ -1,4 +1,5 @@
 import { Hono } from "@hono/hono/quick";
+import type { Context, Next } from "@hono/hono";
 import {
   createComment,
   createReply,
@@ -30,8 +31,10 @@ import {
 import { getSettings, updateSettings } from "./api/settings_api.ts";
 import { getDatabaseStatistics } from "./api/statistics_api.ts";
 import type { StatisticsReader } from "./usecase/statistics/get_statistics.ts";
+import { logInfo } from "../log.ts";
 
 export type DirectoryPreviewHandlerOptions = {
+  log?: (message: string) => void;
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
   statistics?: StatisticsReader;
@@ -53,6 +56,7 @@ export const createDirectoryPreviewHandler = (
   documentStore?: DocumentStore,
 ): Deno.ServeHandler => {
   const app = new Hono();
+  const log = options.log ?? logInfo;
   const resolveDocument = (rawId: string) => {
     const document = findDocument(session, rawId);
     if (!document) throw notFoundResponse("Document not found.");
@@ -68,6 +72,17 @@ export const createDirectoryPreviewHandler = (
       return textResponse(`Failed to render Markdown: ${message}`, 500);
     }
   });
+
+  const logCommentRequest = async (context: Context, next: Next) => {
+    const startedAt = performance.now();
+    await next();
+    log(
+      `Processed comment request: ${context.req.method} ${context.req.path} -> ${context.res.status} (${
+        Math.round(performance.now() - startedAt)
+      }ms)`,
+    );
+  };
+  app.use("/__sadoku/documents/:documentId/comments/*", logCommentRequest);
 
   app.get("/__sadoku/documents", () =>
     noStoreJson(session.documents.map(
