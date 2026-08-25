@@ -49,6 +49,7 @@ export const CommentableBlock = ({
   sourceRange,
   onCloseCommentForm,
   onOpenCommentForm,
+  onOpenRawMarkdown,
   onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
@@ -131,8 +132,10 @@ export const CommentableBlock = ({
         title={`Select ${formatRangeLabel(sourceRange)} for comment`}
       >
         {isRangeActionLine && !isAdding && (
-          <Box
+          <Flex
             className="comment-line-gutter"
+            direction="column"
+            gap="1"
             left={commentGutterLeft}
             mb={{ base: "1.5", md: "0" }}
             position={{ base: "static", md: "absolute" }}
@@ -170,7 +173,39 @@ export const CommentableBlock = ({
                 />
               </svg>
             </IconButton>
-          </Box>
+            <IconButton
+              aria-label={`View raw Markdown for ${
+                formatRangeLabel(pendingRange)
+              }`}
+              bg="canvas"
+              borderColor="border"
+              boxSize="6"
+              color="fg.muted"
+              fontSize="xs"
+              minW="6"
+              onClick={() => onOpenRawMarkdown(pendingRange)}
+              p="0"
+              title={`View raw Markdown for ${formatRangeLabel(pendingRange)}`}
+              type="button"
+              variant="outline"
+            >
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="1em"
+                viewBox="0 0 16 16"
+                width="1em"
+              >
+                <path
+                  d="m5.5 4-4 4 4 4M10.5 4l4 4-4 4"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                />
+              </svg>
+            </IconButton>
+          </Flex>
         )}
         <Box className="comment-markdown-body">
           <SourceLineContext.Provider value={sourceLines}>
