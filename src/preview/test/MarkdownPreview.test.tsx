@@ -107,6 +107,12 @@ Review carefully.
 
     const dataList = container.querySelector(".chakra-data-list__root");
     expect(dataList).not.toBeNull();
+    expect(
+      getComputedStyle(
+        dataList!.querySelector("dt")!,
+      )
+        .minWidth,
+    ).toBe("auto");
     expect(dataList?.textContent).toContain("nameReviewer");
     expect(dataList?.textContent).toContain(
       "descriptionFirst line with **Markdown**.\n<img src=x onerror=alert(1)>",

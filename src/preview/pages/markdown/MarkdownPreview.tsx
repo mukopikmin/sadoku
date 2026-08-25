@@ -334,9 +334,12 @@ export const MarkdownPreview = ({
               >
                 <DataList.Item
                   alignItems="start"
+                  gap={{ base: "1", md: "2" }}
                   py="1"
                 >
-                  <DataList.ItemLabel>{item.key}</DataList.ItemLabel>
+                  <DataList.ItemLabel minW={{ md: "auto" }}>
+                    {item.key}
+                  </DataList.ItemLabel>
                   <DataList.ItemValue
                     minW="0"
                     overflowWrap="anywhere"
