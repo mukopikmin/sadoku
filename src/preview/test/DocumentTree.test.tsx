@@ -57,4 +57,24 @@ describe("DocumentTree", () => {
       "zeta.md",
     ]);
   });
+
+  it("reserves the expand-control column before file icons", () => {
+    const { container } = render(
+      <DocumentTree
+        documents={[
+          {
+            deleted: false,
+            id: 1,
+            relativePath: "folder/file.md",
+            title: "File",
+          },
+        ]}
+        onSelectDocument={vi.fn()}
+      />,
+    );
+
+    const item = container.querySelector("[data-part='item']");
+    expect(item?.children[0].getAttribute("data-part")).toBe("item-indicator");
+    expect(item?.children[1].tagName).toBe("svg");
+  });
 });
