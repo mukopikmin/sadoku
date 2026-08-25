@@ -278,6 +278,12 @@ Footnote-looking text stays plain.[^note]
     ).toBe(
       "var(--chakra-spacing-2)",
     );
+    const table = container.querySelector("table")!;
+    const tableContainer = table.parentElement!;
+    expect(getComputedStyle(table).width).toBe("max-content");
+    expect(getComputedStyle(tableContainer).width).toBe("fit-content");
+    expect(getComputedStyle(tableContainer).maxWidth).toBe("100%");
+    expect(getComputedStyle(tableContainer).overflowX).toBe("auto");
     expect(container.querySelector("thead")?.className).toContain(
       "chakra-table__header",
     );

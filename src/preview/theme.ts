@@ -252,15 +252,6 @@ export const previewThemeCss = `
       }
 
 
-      .comment-markdown-body table {
-        display: block;
-        overflow: auto;
-        width: max-content;
-        max-width: 100%;
-        border-spacing: 0;
-        border-collapse: collapse;
-      }
-
       .comment-body-markdown {
         overflow-wrap: anywhere;
       }

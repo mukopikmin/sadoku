@@ -492,6 +492,12 @@ describe("CommentList", () => {
     expect(container.querySelector("strong")?.textContent).toBe("Important");
     expect(container.querySelectorAll("ul > li")).toHaveLength(2);
     expect(container.querySelector("table td")?.textContent).toBe("1");
+    const table = container.querySelector("table")!;
+    const tableContainer = table.parentElement!;
+    expect(getComputedStyle(table).width).toBe("max-content");
+    expect(getComputedStyle(tableContainer).width).toBe("fit-content");
+    expect(getComputedStyle(tableContainer).maxWidth).toBe("100%");
+    expect(getComputedStyle(tableContainer).overflowX).toBe("auto");
     expect(
       screen.getByRole("link", { name: "documentation" }).getAttribute("href"),
     )
