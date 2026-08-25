@@ -334,9 +334,6 @@ export const MarkdownPreview = ({
               >
                 <DataList.Item
                   alignItems="start"
-                  gridTemplateColumns={{
-                    md: "minmax(8rem, 12rem) minmax(0, 1fr)",
-                  }}
                   py="1"
                 >
                   <DataList.ItemLabel>{item.key}</DataList.ItemLabel>
