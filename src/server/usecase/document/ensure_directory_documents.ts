@@ -1,7 +1,10 @@
 import type { DocumentDependencies } from "./ports.ts";
 import type { DirectoryDocument } from "./types.ts";
-import { basename } from "@std/path";
 import { isAbsolute, relative } from "@std/path";
+import { toDocumentRelativePath } from "./relative_path.ts";
+
+const documentTitle = (relativePath: string): string =>
+  relativePath.split("/").at(-1) ?? relativePath;
 
 export const ensureDirectoryDocuments = async (
   directoryPath: string,
@@ -24,19 +27,26 @@ export const ensureDirectoryDocuments = async (
   });
 
   return [
-    ...documents.map((document, index) => ({
-      ...document,
-      deleted: false,
-      relativePath: markdownFiles[index].relativePath,
-      title: basename(markdownFiles[index].relativePath),
-    })),
+    ...documents.map((document, index) => {
+      const relativePath = toDocumentRelativePath(
+        markdownFiles[index].relativePath,
+      );
+      return {
+        ...document,
+        deleted: false,
+        relativePath,
+        title: documentTitle(relativePath),
+      };
+    }),
     ...deletedDocuments.map((document) => {
-      const relativePath = relative(directoryPath, document.filePath);
+      const relativePath = toDocumentRelativePath(
+        relative(directoryPath, document.filePath),
+      );
       return {
         ...document,
         deleted: true,
         relativePath,
-        title: basename(relativePath),
+        title: documentTitle(relativePath),
       };
     }),
   ].sort((left, right) => left.relativePath.localeCompare(right.relativePath));

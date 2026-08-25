@@ -158,7 +158,7 @@ export const startPreviewServer = async (
     createDirectoryPreviewHandler(
       previewSession,
       stores.comments,
-      shutdownScheduler,
+      { ...shutdownScheduler, statistics: stores.statistics },
       stores.documents,
     ),
   );

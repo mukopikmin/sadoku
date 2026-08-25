@@ -14,6 +14,14 @@ import { sadokuChakraSystem } from "../theme";
 import { Toaster } from "../components/ui/toaster";
 import { createPreviewRouter } from "../router";
 
+class TestResizeObserver implements ResizeObserver {
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+}
+
+globalThis.ResizeObserver ??= TestResizeObserver;
+
 const TestProvider = ({ children }: { children: ReactNode }) => {
   const [queryClient] = useState(createPreviewQueryClient);
   return (

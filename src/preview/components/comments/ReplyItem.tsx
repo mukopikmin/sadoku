@@ -1,9 +1,10 @@
-import { Badge, Box, Flex, Text } from "@chakra-ui/react";
+import { Badge, Box, Flex, IconButton, Menu, Portal } from "@chakra-ui/react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
+import { MoreActionsIcon } from "./MoreActionsIcon";
 
 type ReplyItemProps = {
   commentId: number;
@@ -60,56 +61,69 @@ export const ReplyItem = ({
 
   return (
     <Box
+      aria-label="Reply"
+      as="article"
       bg="canvas.subtle"
       borderColor="border.muted"
       borderLeftWidth="3px"
       borderRadius="sm"
       className="comment-reply"
       ml="4"
-      mt="2"
       pl="3"
-      pr="2"
-      py="2"
+      pr="1"
+      position="relative"
+      py="1"
     >
-      <Flex align="center" justify="space-between" gap="2" mb="1">
+      {reply.author.type === "bot" && (
         <Flex
           align="center"
           gap="2"
           color="fg.muted"
           fontSize="xs"
           fontWeight="semibold"
+          mb="0.5"
+          pr="8"
         >
-          <Text>Reply</Text>
-          {reply.author.type === "bot" && (
-            <Badge colorPalette="purple" variant="subtle">Bot</Badge>
-          )}
-          {reply.author.type === "bot" && reply.reviewRequested && (
+          <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+          {reply.reviewRequested && (
             <Badge colorPalette="blue" variant="subtle">
               Review requested
             </Badge>
           )}
         </Flex>
-        {!isEditing && (
-          <Flex wrap="wrap" gap="2">
-            <CommentActionButton
-              aria-label="Edit reply"
+      )}
+      {!isEditing && (
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <IconButton
+              aria-label="More actions for reply"
               disabled={disabled}
-              onClick={() => setIsEditing(true)}
-              type="button"
+              position="absolute"
+              right="0"
+              size="xs"
+              top="0"
+              variant="ghost"
             >
-              Edit
-            </CommentActionButton>
-            <CommentActionButton
-              aria-label="Delete reply"
-              disabled={disabled}
-              onClick={() => setIsDeleteDialogOpen(true)}
-              type="button"
-            >
-              Delete
-            </CommentActionButton>
-          </Flex>
-        )}
-      </Flex>
+              <MoreActionsIcon />
+            </IconButton>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content>
+                <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
+                  Edit
+                </Menu.Item>
+                <Menu.Item
+                  value="delete"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
+                  Delete
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
+      )}
       <ConfirmDialog
         confirmColorPalette="red"
         confirmLabel="Delete"
@@ -138,7 +152,11 @@ export const ReplyItem = ({
             value={draft}
           />
         )
-        : <CommentMarkdown>{reply.body}</CommentMarkdown>}
+        : (
+          <Box pr="8">
+            <CommentMarkdown>{reply.body}</CommentMarkdown>
+          </Box>
+        )}
     </Box>
   );
 };
