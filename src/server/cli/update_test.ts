@@ -4,6 +4,8 @@ import {
   archiveName,
   checkForUpdate,
   defaultUpdateChannel,
+  installUpdate,
+  releaseTarget,
   type UpdateDependencies,
   updateSadoku,
   verifyChecksum,
@@ -57,7 +59,9 @@ const dependencies = (
     stat: Deno.stat,
     writeFile: Deno.writeFile,
   },
+  pid: 1234,
   platform: { os: "linux", arch: "x86_64" },
+  spawn: () => undefined,
   run: async (command, args) => {
     if (command === "tar") {
       const result = await new Deno.Command(command, { args }).output();
@@ -111,6 +115,63 @@ Deno.test("selects channels and keeps archive naming aligned with releases", () 
     archiveName("nightly", "nightly", "darwin-arm64"),
     "sadoku-nightly-darwin-arm64.tar.gz",
   );
+  assertEquals(releaseTarget({ os: "windows", arch: "x86_64" }), "windows-x64");
+  assertEquals(
+    archiveName("stable", "1.2.3", "windows-x64"),
+    "sadoku-v1.2.3-windows-x64.zip",
+  );
+});
+
+Deno.test("schedules Windows replacement after the current process exits", async () => {
+  const root = await Deno.makeTempDir();
+  const executable = join(root, "sadoku.exe");
+  await Deno.writeTextFile(executable, "old");
+  const archive = new TextEncoder().encode("zip fixture");
+  const checksum = await hexDigest(archive);
+  const spawned: { command: string; args: string[] }[] = [];
+  const deps = dependencies(executable, archive, checksum, "1.2.3");
+  deps.platform = { os: "windows", arch: "x86_64" };
+  deps.fetch = ((input) =>
+    Promise.resolve(
+      new Response(
+        String(input).endsWith(".sha256") ? checksum : archive,
+      ),
+    )) as typeof fetch;
+  deps.run = async (command, args) => {
+    if (command === "powershell.exe") {
+      const archiveRoot = join(args.at(-1)!, "sadoku-v1.2.3-windows-x64");
+      await Deno.mkdir(archiveRoot);
+      await Deno.writeTextFile(join(archiveRoot, "sadoku.exe"), "new");
+      return { success: true, output: "" };
+    }
+    return { success: true, output: "sadoku 1.2.3" };
+  };
+  deps.spawn = (command, args) => spawned.push({ command, args });
+
+  try {
+    const result = await installUpdate({
+      archive: "sadoku-v1.2.3-windows-x64.zip",
+      channel: "stable",
+      currentVersion: "1.2.2",
+      downloadBaseUrl: "https://example.test/release",
+      executable,
+      target: "windows-x64",
+      targetVersion: "1.2.3",
+      updateAvailable: true,
+    }, deps);
+
+    assertEquals(result.updated, true);
+    assertEquals(await Deno.readTextFile(executable), "old");
+    assertEquals(spawned.length, 1);
+    assertEquals(spawned[0].command, "powershell.exe");
+    const helperPath = spawned[0].args.at(-1)!;
+    const helper = await Deno.readTextFile(helperPath);
+    assertStringIncludes(helper, "Wait-Process -Id 1234");
+    assertStringIncludes(helper, "Move-Item -LiteralPath");
+    assertStringIncludes(helper, executable);
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
 });
 
 Deno.test("validates SHA-256 checksum syntax and content", async () => {
@@ -204,6 +265,42 @@ Deno.test("checks nightly metadata without downloading update assets", async () 
     assertEquals(await Deno.readTextFile(executable), "old");
   } finally {
     await Deno.remove(data.root, { recursive: true });
+  }
+});
+
+Deno.test("resolves nightly dates in UTC across a timezone boundary", async () => {
+  const root = await Deno.makeTempDir();
+  const executable = join(root, "sadoku");
+  await Deno.writeTextFile(executable, "fixture");
+  const sha = `c1648a3b${"0".repeat(32)}`;
+  const deps = dependencies(
+    executable,
+    new Uint8Array(),
+    "0".repeat(64),
+    "nightly-20260824-c1648a3b",
+  );
+  deps.fetch = ((input) => {
+    const url = String(input);
+    return Promise.resolve(
+      new Response(JSON.stringify(
+        url.includes("/git/ref/tags/nightly") ? { object: { sha } } : {
+          commit: {
+            committer: { date: "2026-08-24T23:54:06Z" },
+          },
+        },
+      )),
+    );
+  }) as typeof fetch;
+
+  try {
+    const plan = await checkForUpdate(
+      "nightly-20260823-deadbeef",
+      "nightly",
+      deps,
+    );
+    assertEquals(plan.targetVersion, "nightly-20260824-c1648a3b");
+  } finally {
+    await Deno.remove(root, { recursive: true });
   }
 });
 

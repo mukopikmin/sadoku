@@ -204,3 +204,31 @@ Deno.test("serves an empty directory session", async () => {
   assertEquals(response.status, 200);
   assertEquals(await response.json(), []);
 });
+
+Deno.test("serves database statistics from the configured reader", async () => {
+  const expected = {
+    commentCount: { bot: 2, human: 5 },
+    databaseSize: 4096,
+    documentCount: 3,
+  };
+  const handler = createDirectoryPreviewHandler(
+    {
+      rootPath: "/tmp/empty",
+      documents: [],
+      documentsById: new Map(),
+    },
+    createMemoryStore(),
+    {
+      statistics: { read: () => Promise.resolve(expected) },
+    },
+  );
+
+  const response = await request(handler, "/__sadoku/statistics");
+  assertEquals(response.status, 200);
+  assertEquals(response.headers.get("cache-control"), "no-store");
+  assertEquals(await response.json(), expected);
+  assertEquals(
+    (await request(handler, "/__sadoku/statistics", { method: "POST" })).status,
+    405,
+  );
+});
