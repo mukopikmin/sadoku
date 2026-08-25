@@ -268,6 +268,42 @@ Deno.test("checks nightly metadata without downloading update assets", async () 
   }
 });
 
+Deno.test("resolves nightly dates in UTC across a timezone boundary", async () => {
+  const root = await Deno.makeTempDir();
+  const executable = join(root, "sadoku");
+  await Deno.writeTextFile(executable, "fixture");
+  const sha = `c1648a3b${"0".repeat(32)}`;
+  const deps = dependencies(
+    executable,
+    new Uint8Array(),
+    "0".repeat(64),
+    "nightly-20260824-c1648a3b",
+  );
+  deps.fetch = ((input) => {
+    const url = String(input);
+    return Promise.resolve(
+      new Response(JSON.stringify(
+        url.includes("/git/ref/tags/nightly") ? { object: { sha } } : {
+          commit: {
+            committer: { date: "2026-08-24T23:54:06Z" },
+          },
+        },
+      )),
+    );
+  }) as typeof fetch;
+
+  try {
+    const plan = await checkForUpdate(
+      "nightly-20260823-deadbeef",
+      "nightly",
+      deps,
+    );
+    assertEquals(plan.targetVersion, "nightly-20260824-c1648a3b");
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("resolves the latest stable release and skips its download when current", async () => {
   const root = await Deno.makeTempDir();
   const executable = join(root, "sadoku");
