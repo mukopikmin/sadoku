@@ -39,11 +39,11 @@ export const RawMarkdownDialog = ({
                 as="pre"
                 bg="code.bg"
                 borderRadius="md"
+                className="markdown-code-block"
                 color="code.fg"
                 maxH="60vh"
                 overflow="auto"
                 p="4"
-                whiteSpace="pre"
               >
                 <code>{source}</code>
               </Box>

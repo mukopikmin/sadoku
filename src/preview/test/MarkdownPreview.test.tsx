@@ -18,6 +18,7 @@ vi.mock("../markdown/mermaid", () => ({
 
 afterEach(() => {
   globalThis.getSelection()?.removeAllRanges();
+  document.documentElement.removeAttribute("data-code-wrap");
   cleanup();
   vi.mocked(initializeMermaid).mockReset();
 });
@@ -546,6 +547,12 @@ Paragraph with **formatting**.
     expect(dialog.querySelector("pre code")?.textContent).toBe(
       "Paragraph with **formatting**.",
     );
+    const rawMarkdown = dialog.querySelector("pre")!;
+    expect(getComputedStyle(rawMarkdown).whiteSpace).toBe("pre");
+
+    document.documentElement.dataset.codeWrap = "wrap";
+    expect(getComputedStyle(rawMarkdown).whiteSpace).toBe("pre-wrap");
+    expect(getComputedStyle(rawMarkdown).overflowWrap).toBe("anywhere");
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
