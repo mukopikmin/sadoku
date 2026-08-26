@@ -218,12 +218,12 @@ describe("directory preview", () => {
       configurable: true,
       get: () => scrollY,
     });
-    vi.stubGlobal(
-      "scrollTo",
-      vi.fn((optionsOrX: ScrollToOptions | number, y?: number) => {
+    const scrollTo = vi.fn(
+      (optionsOrX: ScrollToOptions | number, y?: number) => {
         scrollY = typeof optionsOrX === "number" ? y ?? 0 : optionsOrX.top ?? 0;
-      }),
+      },
     );
+    vi.stubGlobal("scrollTo", scrollTo);
     const setScrollY = (value: number) => {
       scrollY = value;
       document.dispatchEvent(new Event("scroll"));
@@ -234,7 +234,8 @@ describe("directory preview", () => {
       await screen.findByRole("treeitem", { name: "alpha.md" }),
     );
     await screen.findByRole("heading", { name: "Document 1" });
-    await waitFor(() => expect(scrollY).toBe(0));
+    await waitFor(() => expect(scrollTo).toHaveBeenCalled());
+    expect(scrollY).toBe(0);
     setScrollY(120);
     await new Promise((resolve) => setTimeout(resolve, 150));
 
