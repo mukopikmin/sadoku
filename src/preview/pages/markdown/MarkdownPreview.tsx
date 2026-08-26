@@ -370,6 +370,10 @@ export const MarkdownPreview = ({
             [rehypeAutolinkHeadings, {
               behavior: "wrap",
               properties: { className: "heading-anchor" },
+              test: (heading) =>
+                !heading.children.some((child) =>
+                  child.type === "element" && child.tagName === "a"
+                ),
             }],
             ...sharedMarkdownRehypePlugins,
           ]}

@@ -280,6 +280,23 @@ console.log("<ok>");
     ).toBe("Rich Heading");
   });
 
+  it("does not wrap headings that contain links in a permalink", () => {
+    const { container } = renderMarkdown(
+      "## Terraform Cloud の Sentinel Policy Override を承認行為とする([BOADR-315](https://app.notion.com/p/368ee7728c57806c8a5ad4043597c6b5) で検討した案)",
+    );
+
+    const heading = container.querySelector("h2");
+    expect(heading).not.toBeNull();
+    expect(heading?.textContent).toBe(
+      "Terraform Cloud の Sentinel Policy Override を承認行為とする(BOADR-315 で検討した案)",
+    );
+    expect(
+      heading?.querySelector("a")?.getAttribute("href"),
+    ).toBe("https://app.notion.com/p/368ee7728c57806c8a5ad4043597c6b5");
+    expect(heading?.querySelector("a a")).toBeNull();
+    expect(heading?.querySelector("a.heading-anchor")).toBeNull();
+  });
+
   it("escapes raw html", () => {
     const { container } = renderMarkdown("<script>alert(1)</script>");
 
