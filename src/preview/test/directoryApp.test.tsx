@@ -237,7 +237,6 @@ describe("directory preview", () => {
     await waitFor(() => expect(scrollTo).toHaveBeenCalled());
     expect(scrollY).toBe(0);
     setScrollY(120);
-    await new Promise((resolve) => setTimeout(resolve, 150));
 
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
@@ -245,13 +244,11 @@ describe("directory preview", () => {
     await screen.findByRole("heading", { name: /comments \(0\)/i });
     await waitFor(() => expect(scrollY).toBe(0));
     setScrollY(340);
-    await new Promise((resolve) => setTimeout(resolve, 150));
 
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     await waitFor(() => expect(scrollY).toBe(120));
     setScrollY(scrollY);
-    await new Promise((resolve) => setTimeout(resolve, 150));
 
     history.back();
     await waitFor(() =>

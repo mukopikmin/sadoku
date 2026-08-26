@@ -153,7 +153,7 @@ export const initializeMermaid = async (
   mermaid.initialize({
     startOnLoad: false,
     theme: theme ?? (prefersDark() ? "dark" : "default"),
-    themeVariables: { fontSize: `${0.9 * fontScale}rem` },
+    themeVariables: { fontSize: `${fontScale}rem` },
   });
   await mermaid.run({ nodes });
   initializeMermaidZoom(document);
