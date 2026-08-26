@@ -567,6 +567,7 @@ const value = 1;
     expect(getComputedStyle(pre).color).toBe(
       "var(--chakra-colors-code-fg)",
     );
+    expect(getComputedStyle(pre).lineHeight).toBe("1.5");
     const code = pre.querySelector("code")!;
     const codeWrapper = pre.closest(".comment-markdown-body")
       ?.firstElementChild;
