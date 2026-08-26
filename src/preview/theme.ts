@@ -9,7 +9,7 @@ export const sadokuChakraSystem = createSystem(
         color: "fg",
         fontFamily: "body",
         fontSize: "md",
-        lineHeight: "1.65",
+        lineHeight: "1.7",
         margin: 0,
       },
     },
@@ -277,7 +277,7 @@ export const previewThemeCss = `
       .markdown-preview {
         display: flex;
         flex-direction: column;
-        gap: var(--chakra-spacing-2);
+        gap: var(--chakra-spacing-3);
         isolation: isolate;
         position: relative;
       }

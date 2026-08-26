@@ -228,9 +228,12 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
-  it("stacks blocks with a fixed gap and keeps highlights within padding", () => {
+  it("uses the document line height, stacks blocks with a fixed gap, and keeps highlights within padding", () => {
+    expect(sadokuChakraSystem._config.globalCss?.body).toMatchObject({
+      lineHeight: "1.7",
+    });
     expect(previewThemeCss).toMatch(
-      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-2\);/,
+      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-3\);/,
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-content::before\s*\{[^}]*top: 0;[^}]*bottom: 0;/,
