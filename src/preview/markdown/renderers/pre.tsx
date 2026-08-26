@@ -53,7 +53,6 @@ export const renderMarkdownPre = (
       borderRadius="sm"
       bg="canvas.subtle"
       color="code.fg"
-      lineHeight="1.5"
       m="0"
     >
       <ChakraCodeBlock.Content>

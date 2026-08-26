@@ -567,13 +567,13 @@ const value = 1;
     expect(getComputedStyle(pre).color).toBe(
       "var(--chakra-colors-code-fg)",
     );
-    expect(getComputedStyle(pre).lineHeight).toBe("1.5");
     const code = pre.querySelector("code")!;
     const codeWrapper = pre.closest(".comment-markdown-body")
       ?.firstElementChild;
     expect(getComputedStyle(codeWrapper!).paddingBlock)
       .toBe("var(--chakra-spacing-2)");
     expect(getComputedStyle(code).display).toBe("block");
+    expect(getComputedStyle(code).lineHeight).toBe("1.5");
     expect(getComputedStyle(code).whiteSpace).toBe("pre");
     expect(previewThemeCss).toContain(
       ".hljs {\n        color: var(--chakra-colors-code-fg);",
