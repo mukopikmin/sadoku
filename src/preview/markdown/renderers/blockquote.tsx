@@ -16,6 +16,7 @@ export const renderMarkdownBlockquote = (
     color="fg.muted"
     m="0"
     pl="4"
+    py="2"
     {...elementProps}
   >
     {children}
