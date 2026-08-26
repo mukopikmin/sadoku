@@ -934,8 +934,13 @@ Body
     const { container } = renderMarkdown(`> Quoted text
 `);
 
-    expect(container.querySelector("blockquote p")?.textContent).toBe(
+    const blockquote = container.querySelector("blockquote");
+
+    expect(blockquote?.querySelector("p")?.textContent).toBe(
       "Quoted text",
+    );
+    expect(getComputedStyle(blockquote!).paddingBlock).toBe(
+      "var(--chakra-spacing-2)",
     );
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
