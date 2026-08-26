@@ -230,7 +230,11 @@ console.log("<ok>");
 
   it("uses the document line height, stacks blocks with a fixed gap, and keeps highlights within padding", () => {
     expect(sadokuChakraSystem._config.globalCss?.body).toMatchObject({
+      fontSize: "md",
       lineHeight: "1.7",
+    });
+    expect(sadokuChakraSystem._config.theme?.tokens?.fontSizes?.md).toEqual({
+      value: "calc(1rem * var(--sadoku-font-scale, 1))",
     });
     expect(previewThemeCss).toMatch(
       /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-3\);/,
