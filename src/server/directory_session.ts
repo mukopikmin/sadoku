@@ -5,9 +5,11 @@ import type {
   DocumentStore,
 } from "./usecase/document/mod.ts";
 import {
+  defaultDirectoryScanOptions,
   type DirectoryScanOptions,
   listMarkdownFiles,
 } from "./storage/document/list_markdown_files.ts";
+import { pathExists } from "./storage/document/path_exists.ts";
 import { createPreviewSource } from "./source.ts";
 
 const createSession = (
@@ -29,7 +31,8 @@ export const createDirectorySession = async (
     documentStore,
     listMarkdownFiles: (directoryPath) =>
       listMarkdownFiles(directoryPath, scanOptions),
-  });
+    pathExists,
+  }, scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles);
   return createSession(resolvedRootPath, documents);
 };
 
