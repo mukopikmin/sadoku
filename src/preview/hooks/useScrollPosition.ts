@@ -8,8 +8,9 @@ const scrollKey = (documentId: number, view: ScrollView) =>
   `${documentId}:${view}`;
 
 /**
- * Restores scroll for in-app document/view transitions. History traversal is
- * deliberately left to TanStack Router's per-history-entry restoration.
+ * Restores scroll for document/view transitions, including browser history
+ * traversal. The popstate marker prevents the outgoing view's cleanup from
+ * overwriting its previously saved position after the URL has changed.
  */
 export const useScrollPosition = (
   documentId: number | undefined,
@@ -45,7 +46,6 @@ export const useScrollPosition = (
     const key = scrollKey(documentId, view);
     if (historyTraversal.current) {
       historyTraversal.current = false;
-      return;
     }
 
     const frame = globalThis.requestAnimationFrame(() => {
