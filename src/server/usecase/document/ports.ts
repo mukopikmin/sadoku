@@ -14,7 +14,10 @@ export type ListMarkdownFiles = (
   directoryPath: string,
 ) => Promise<MarkdownDocumentPath[]>;
 
+export type PathExists = (filePath: string) => Promise<boolean>;
+
 export type DocumentDependencies = {
   documentStore: DocumentStore;
   listMarkdownFiles: ListMarkdownFiles;
+  pathExists: PathExists;
 };

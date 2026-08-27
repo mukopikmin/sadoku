@@ -6,6 +6,7 @@ export type {
   DocumentDependencies,
   DocumentStore,
   ListMarkdownFiles,
+  PathExists,
 } from "./ports.ts";
 export type {
   DirectoryDocument,

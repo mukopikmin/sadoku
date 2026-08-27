@@ -108,7 +108,11 @@ sadoku start ./docs
 For a directory preview, Sadoku scans up to two directory levels and loads up to
 20 documents by default. Use `--max-depth` to change the deepest level scanned
 (`0` scans only the specified directory) and `--max-files` to change the file
-limit:
+limit. The document list contains at most `--max-files` entries in total,
+including saved entries for files that were deleted. A saved document is marked
+as deleted only when its path no longer exists; files omitted because the scan
+reached its file or depth limit, or because they are under excluded `.git` or
+`node_modules` directories, are not reported as deleted:
 
 ```sh
 sadoku start ./docs --max-depth 4 --max-files 100

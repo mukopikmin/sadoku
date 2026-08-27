@@ -9,8 +9,12 @@ const documentTitle = (relativePath: string): string =>
 export const ensureDirectoryDocuments = async (
   directoryPath: string,
   deps: DocumentDependencies,
+  maxDocuments: number,
 ): Promise<DirectoryDocument[]> => {
-  const markdownFiles = await deps.listMarkdownFiles(directoryPath);
+  const markdownFiles = (await deps.listMarkdownFiles(directoryPath)).slice(
+    0,
+    maxDocuments,
+  );
   const documents = await deps.documentStore.ensureMany(
     markdownFiles.map((document) => document.absolutePath),
   );
@@ -18,7 +22,7 @@ export const ensureDirectoryDocuments = async (
     markdownFiles.map((document) => document.absolutePath),
   );
   const storedDocuments = await deps.documentStore.list();
-  const deletedDocuments = storedDocuments.filter((document) => {
+  const storedDocumentsInDirectory = storedDocuments.filter((document) => {
     if (!isAbsolute(document.filePath)) return false;
     const relativePath = relative(directoryPath, document.filePath);
     return relativePath !== "" && !isAbsolute(relativePath) &&
@@ -26,6 +30,15 @@ export const ensureDirectoryDocuments = async (
       !relativePath.startsWith("..\\") &&
       !presentPaths.has(document.filePath);
   });
+
+  const deletedDocuments = [];
+  const deletedDocumentLimit = Math.max(0, maxDocuments - documents.length);
+  for (const document of storedDocumentsInDirectory) {
+    if (deletedDocuments.length >= deletedDocumentLimit) break;
+    if (!await deps.pathExists(document.filePath)) {
+      deletedDocuments.push(document);
+    }
+  }
 
   return [
     ...documents.map((document, index) => {
