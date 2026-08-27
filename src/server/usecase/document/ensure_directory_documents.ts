@@ -19,6 +19,7 @@ export const ensureDirectoryDocuments = async (
   );
   const storedDocuments = await deps.documentStore.list();
   const deletedDocuments = storedDocuments.filter((document) => {
+    if (!isAbsolute(document.filePath)) return false;
     const relativePath = relative(directoryPath, document.filePath);
     return relativePath !== "" && !isAbsolute(relativePath) &&
       relativePath !== ".." && !relativePath.startsWith("../") &&
