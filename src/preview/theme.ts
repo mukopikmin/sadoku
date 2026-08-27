@@ -9,7 +9,7 @@ export const sadokuChakraSystem = createSystem(
         color: "fg",
         fontFamily: "body",
         fontSize: "md",
-        lineHeight: "1.65",
+        lineHeight: "1.7",
         margin: 0,
       },
     },
@@ -19,7 +19,7 @@ export const sadokuChakraSystem = createSystem(
           "2xs": { value: "calc(0.55rem * var(--sadoku-font-scale, 1))" },
           xs: { value: "calc(0.7rem * var(--sadoku-font-scale, 1))" },
           sm: { value: "calc(0.8rem * var(--sadoku-font-scale, 1))" },
-          md: { value: "calc(0.9rem * var(--sadoku-font-scale, 1))" },
+          md: { value: "calc(1rem * var(--sadoku-font-scale, 1))" },
           lg: { value: "calc(1rem * var(--sadoku-font-scale, 1))" },
           xl: { value: "calc(1.1rem * var(--sadoku-font-scale, 1))" },
           "2xl": { value: "calc(1.35rem * var(--sadoku-font-scale, 1))" },
@@ -277,7 +277,7 @@ export const previewThemeCss = `
       .markdown-preview {
         display: flex;
         flex-direction: column;
-        gap: var(--chakra-spacing-2);
+        gap: var(--chakra-spacing-3);
         isolation: isolate;
         position: relative;
       }

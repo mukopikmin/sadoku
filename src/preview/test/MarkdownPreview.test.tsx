@@ -228,9 +228,16 @@ console.log("<ok>");
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 
-  it("stacks blocks with a fixed gap and keeps highlights within padding", () => {
+  it("uses the document line height, stacks blocks with a fixed gap, and keeps highlights within padding", () => {
+    expect(sadokuChakraSystem._config.globalCss?.body).toMatchObject({
+      fontSize: "md",
+      lineHeight: "1.7",
+    });
+    expect(sadokuChakraSystem._config.theme?.tokens?.fontSizes?.md).toEqual({
+      value: "calc(1rem * var(--sadoku-font-scale, 1))",
+    });
     expect(previewThemeCss).toMatch(
-      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-2\);/,
+      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-3\);/,
     );
     expect(previewThemeCss).toMatch(
       /\.commentable-content::before\s*\{[^}]*top: 0;[^}]*bottom: 0;/,
@@ -278,6 +285,23 @@ console.log("<ok>");
     expect(
       container.querySelector("h3#rich-heading a.heading-anchor")?.textContent,
     ).toBe("Rich Heading");
+  });
+
+  it("does not wrap headings that contain links in a permalink", () => {
+    const { container } = renderMarkdown(
+      "## Terraform Cloud の Sentinel Policy Override を承認行為とする([BOADR-315](https://app.notion.com/p/368ee7728c57806c8a5ad4043597c6b5) で検討した案)",
+    );
+
+    const heading = container.querySelector("h2");
+    expect(heading).not.toBeNull();
+    expect(heading?.textContent).toBe(
+      "Terraform Cloud の Sentinel Policy Override を承認行為とする(BOADR-315 で検討した案)",
+    );
+    expect(
+      heading?.querySelector("a")?.getAttribute("href"),
+    ).toBe("https://app.notion.com/p/368ee7728c57806c8a5ad4043597c6b5");
+    expect(heading?.querySelector("a a")).toBeNull();
+    expect(heading?.querySelector("a.heading-anchor")).toBeNull();
   });
 
   it("escapes raw html", () => {
@@ -566,6 +590,7 @@ const value = 1;
     expect(getComputedStyle(codeWrapper!).paddingBlock)
       .toBe("var(--chakra-spacing-2)");
     expect(getComputedStyle(code).display).toBe("block");
+    expect(getComputedStyle(code).lineHeight).toBe("1.5");
     expect(getComputedStyle(code).whiteSpace).toBe("pre");
     expect(previewThemeCss).toContain(
       ".hljs {\n        color: var(--chakra-colors-code-fg);",
@@ -934,8 +959,13 @@ Body
     const { container } = renderMarkdown(`> Quoted text
 `);
 
-    expect(container.querySelector("blockquote p")?.textContent).toBe(
+    const blockquote = container.querySelector("blockquote");
+
+    expect(blockquote?.querySelector("p")?.textContent).toBe(
       "Quoted text",
+    );
+    expect(getComputedStyle(blockquote!).paddingBlock).toBe(
+      "var(--chakra-spacing-2)",
     );
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,

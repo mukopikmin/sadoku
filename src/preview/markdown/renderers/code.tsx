@@ -25,6 +25,7 @@ export const MarkdownCode = ({
       fontSize={isCodeBlock
         ? "calc(0.8rem * var(--sadoku-font-scale, 1))"
         : "0.8em"}
+      lineHeight={isCodeBlock ? "1.5" : undefined}
       {...props}
     >
       {children}

@@ -1,4 +1,4 @@
-# <img src="src/preview/public/icon-512.png" alt="Sadoku icon" width="40" height="40" align="absmiddle"> Sadoku
+# Sadoku
 
 `sadoku` is a local Markdown review tool for reading, previewing, and commenting
 on either a single Markdown document or the Markdown documents in a local

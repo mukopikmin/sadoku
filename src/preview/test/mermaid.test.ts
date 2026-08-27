@@ -59,7 +59,7 @@ describe("initializeMermaid", () => {
       {
         startOnLoad: false,
         theme: "dark",
-        themeVariables: { fontSize: "0.9rem" },
+        themeVariables: { fontSize: "1rem" },
       },
     ]);
     expect(calls[1]).toEqual([
@@ -118,7 +118,7 @@ describe("initializeMermaid", () => {
       {
         startOnLoad: false,
         theme: "default",
-        themeVariables: { fontSize: "0.9rem" },
+        themeVariables: { fontSize: "1rem" },
       },
     ]);
   });

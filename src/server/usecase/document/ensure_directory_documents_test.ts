@@ -103,6 +103,8 @@ Deno.test("includes deleted stored documents only from the selected directory", 
       Promise.resolve([
         { id: 3, filePath: "/workspace/docs/deleted.md" },
         { id: 4, filePath: "/workspace/other/private.md" },
+        { id: 5, filePath: "http://127.0.0.1:54256/remote.md" },
+        { id: 6, filePath: "https://example.com/docs/remote.md" },
       ]),
   };
 
