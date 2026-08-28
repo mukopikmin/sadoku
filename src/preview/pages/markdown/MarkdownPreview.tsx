@@ -244,6 +244,9 @@ export const MarkdownPreview = ({
         heading?.matches("h1, h2, h3, h4, h5, h6") &&
         previewRef.current?.contains(heading)
       ) {
+        const headerHeight = document.querySelector("header")
+          ?.getBoundingClientRect().height ?? 0;
+        heading.style.scrollMarginTop = `${headerHeight}px`;
         heading.scrollIntoView();
       }
     };

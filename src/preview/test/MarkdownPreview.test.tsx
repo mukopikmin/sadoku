@@ -327,6 +327,9 @@ Paragraph
   it("scrolls to encoded headings on initial load and later hash changes", () => {
     const scrollIntoView = vi.fn();
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const header = document.createElement("header");
+    header.getBoundingClientRect = () => mockRect(0, 72);
+    document.body.append(header);
     globalThis.history.replaceState(null, "", "/#%E6%97%A5%E6%9C%AC%E8%AA%9E");
     renderMarkdown(`# 日本語
 
@@ -336,6 +339,7 @@ Paragraph
     const japaneseHeading = screen.getByRole("heading", { name: "日本語" });
     expect(scrollIntoView).toHaveBeenCalledOnce();
     expect(scrollIntoView.mock.instances[0]).toBe(japaneseHeading);
+    expect(japaneseHeading.style.scrollMarginTop).toBe("72px");
 
     scrollIntoView.mockClear();
     globalThis.history.replaceState(null, "", "/#next");
@@ -354,6 +358,7 @@ Paragraph
     expect(() => fireEvent(globalThis, new HashChangeEvent("hashchange")))
       .not.toThrow();
     expect(scrollIntoView).not.toHaveBeenCalled();
+    header.remove();
   });
 
   it("scrolls to a hashed heading created by a Markdown update", () => {
