@@ -287,6 +287,102 @@ console.log("<ok>");
     ).toBe("Rich Heading");
   });
 
+  it("copies the selected heading's unique link without offering links for regular blocks", async () => {
+    globalThis.history.replaceState(null, "", "/docs/readme?mode=review");
+    const writeText = vi.fn(async () => {});
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    renderMarkdown(`# Title
+
+Paragraph
+
+## Title
+`);
+
+    fireEvent.click(screen.getByText("Paragraph"));
+    expect(screen.queryByRole("button", { name: "Copy link to heading" }))
+      .toBeNull();
+
+    fireEvent.click(screen.getByRole("heading", { level: 2, name: "Title" }));
+    const copyButton = screen.getByRole("button", {
+      name: "Copy link to heading",
+    });
+    expect(copyButton.closest(".comment-line-gutter")).not.toBeNull();
+    expect(copyButton.getAttribute("title")).toBe("Copy link to heading");
+
+    fireEvent.click(copyButton);
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        `${globalThis.location.origin}/docs/readme?mode=review#title-1`,
+      )
+    );
+    expect(screen.queryByPlaceholderText("Write a GitHub PR comment..."))
+      .toBeNull();
+  });
+
+  it("scrolls to encoded headings on initial load and later hash changes", () => {
+    const scrollIntoView = vi.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    globalThis.history.replaceState(null, "", "/#%E6%97%A5%E6%9C%AC%E8%AA%9E");
+    renderMarkdown(`# 日本語
+
+## Next
+`);
+
+    const japaneseHeading = screen.getByRole("heading", { name: "日本語" });
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView.mock.instances[0]).toBe(japaneseHeading);
+
+    scrollIntoView.mockClear();
+    globalThis.history.replaceState(null, "", "/#next");
+    fireEvent(globalThis, new HashChangeEvent("hashchange"));
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView.mock.instances[0]).toBe(
+      screen.getByRole("heading", { name: "Next" }),
+    );
+
+    scrollIntoView.mockClear();
+    globalThis.history.replaceState(null, "", "/#missing");
+    fireEvent(globalThis, new HashChangeEvent("hashchange"));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    globalThis.history.replaceState(null, "", "/#%E0%A4%A");
+    expect(() => fireEvent(globalThis, new HashChangeEvent("hashchange")))
+      .not.toThrow();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("scrolls to a hashed heading created by a Markdown update", () => {
+    const scrollIntoView = vi.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    globalThis.history.replaceState(null, "", "/#later");
+    const actions = createCommentActions();
+    const result = render(
+      <MarkdownPreview
+        actions={actions}
+        comments={[]}
+        markdown="Before"
+        theme="default"
+      />,
+    );
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    result.rerender(
+      <MarkdownPreview
+        actions={actions}
+        comments={[]}
+        markdown="# Later"
+        theme="default"
+      />,
+    );
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView.mock.instances[0]).toBe(
+      screen.getByRole("heading", { name: "Later" }),
+    );
+  });
+
   it("does not wrap headings that contain links in a permalink", () => {
     const { container } = renderMarkdown(
       "## Terraform Cloud の Sentinel Policy Override を承認行為とする([BOADR-315](https://app.notion.com/p/368ee7728c57806c8a5ad4043597c6b5) で検討した案)",
