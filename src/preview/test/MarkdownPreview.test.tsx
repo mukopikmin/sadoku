@@ -287,13 +287,10 @@ console.log("<ok>");
     ).toBe("Rich Heading");
   });
 
-  it("copies the selected heading's unique link without offering links for regular blocks", async () => {
+  it("updates the URL for the selected unique heading without offering links for regular blocks", async () => {
     globalThis.history.replaceState(null, "", "/docs/readme?mode=review");
-    const writeText = vi.fn(async () => {});
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText },
-    });
+    const scrollIntoView = vi.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
     renderMarkdown(`# Title
 
 Paragraph
@@ -302,22 +299,27 @@ Paragraph
 `);
 
     fireEvent.click(screen.getByText("Paragraph"));
-    expect(screen.queryByRole("button", { name: "Copy link to heading" }))
+    expect(
+      screen.queryByRole("button", { name: "Update URL with heading link" }),
+    )
       .toBeNull();
 
     fireEvent.click(screen.getByRole("heading", { level: 2, name: "Title" }));
-    const copyButton = screen.getByRole("button", {
-      name: "Copy link to heading",
+    const headingLinkButton = screen.getByRole("button", {
+      name: "Update URL with heading link",
     });
-    expect(copyButton.closest(".comment-line-gutter")).not.toBeNull();
-    expect(copyButton.getAttribute("title")).toBe("Copy link to heading");
+    expect(headingLinkButton.closest(".comment-line-gutter")).not.toBeNull();
+    expect(headingLinkButton.getAttribute("title")).toBe(
+      "Update URL with heading link",
+    );
 
-    fireEvent.click(copyButton);
+    fireEvent.click(headingLinkButton);
     await waitFor(() =>
-      expect(writeText).toHaveBeenCalledWith(
+      expect(globalThis.location.href).toBe(
         `${globalThis.location.origin}/docs/readme?mode=review#title-1`,
       )
     );
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
     expect(screen.queryByPlaceholderText("Write a GitHub PR comment..."))
       .toBeNull();
   });

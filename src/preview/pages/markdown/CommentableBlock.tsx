@@ -22,7 +22,6 @@ import {
   MarkdownListDepthContext,
   markdownListIndentEm,
 } from "../../markdown/markdownRenderers";
-import { toaster } from "../../components/ui/toaster";
 
 type CommentableBlockProps = CommentControlProps & {
   children: React.ReactNode;
@@ -109,29 +108,14 @@ export const CommentableBlock = ({
     event.stopPropagation();
   };
 
-  const handleCopyHeadingLink = async (
+  const handleSetHeadingLink = (
     event: React.MouseEvent<HTMLButtonElement>,
   ) => {
     event.preventDefault();
     event.stopPropagation();
     if (!headingId) return;
 
-    const url = new URL(globalThis.location.href);
-    url.hash = headingId;
-    try {
-      await navigator.clipboard.writeText(url.href);
-      toaster.create({
-        title: "Heading link copied",
-        type: "success",
-      });
-    } catch (error) {
-      toaster.create({
-        closable: true,
-        description: error instanceof Error ? error.message : String(error),
-        title: "Could not copy heading link",
-        type: "error",
-      });
-    }
+    globalThis.location.hash = headingId;
   };
 
   return (
@@ -203,16 +187,16 @@ export const CommentableBlock = ({
             </IconButton>
             {headingId && isSelected && (
               <IconButton
-                aria-label="Copy link to heading"
+                aria-label="Update URL with heading link"
                 bg="canvas"
                 borderColor="border"
                 boxSize="6"
                 color="fg.muted"
                 fontSize="xs"
                 minW="6"
-                onClick={handleCopyHeadingLink}
+                onClick={handleSetHeadingLink}
                 p="0"
-                title="Copy link to heading"
+                title="Update URL with heading link"
                 type="button"
                 variant="outline"
               >
