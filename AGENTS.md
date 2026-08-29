@@ -141,6 +141,10 @@ them when making changes.
   values; do not hard-code theme-specific colors in feature components. Reuse
   components under `src/preview/components/ui/` before introducing a new dialog,
   notification, or common control implementation.
+- Prefer toolkit defaults, responsive component recipes, semantic tokens, and
+  component props such as `size` over explicit values or custom code. Add an
+  override only when a product requirement cannot be expressed by the toolkit's
+  existing API.
 - Lay out Markdown document blocks as a stack with a consistent `gap`. Do not
   create block-to-block spacing with margins on individual Markdown elements.
 - When a Markdown element needs additional vertical breathing room, add padding
