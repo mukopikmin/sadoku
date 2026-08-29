@@ -119,6 +119,15 @@ describe("MarkdownPreview", () => {
     expect(commentable?.getAttribute("data-source-end-line")).toBe("5");
   });
 
+  it("removes surrounding blank lines but preserves blank lines in the body", () => {
+    const { container } = renderMarkdown(
+      "<!--\n\nfirst line\n\nlast line\n\n-->",
+    );
+
+    const body = container.querySelector("[data-html-comment] p");
+    expect(body?.textContent).toBe("first line\n\nlast line");
+  });
+
   it("keeps unfinished comments and ordinary raw HTML as safe text", () => {
     const { container } = renderMarkdown(
       "<!-- unfinished\n\n<section><strong>ordinary HTML</strong></section>",
