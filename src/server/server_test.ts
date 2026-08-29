@@ -266,3 +266,27 @@ Deno.test("keeps the root URL for a directory containing one document", async ()
     await Deno.remove(directory, { recursive: true });
   }
 });
+
+Deno.test("server shutdown drains directory background processing", async () => {
+  const directory = await Deno.makeTempDir({ prefix: "sadoku-server-stop-" });
+  for (let index = 0; index < 40; index += 1) {
+    await Deno.writeTextFile(
+      `${directory}/${index}.md`,
+      `# Document ${index}\n${"content\n".repeat(100)}`,
+    );
+  }
+
+  const preview = await startPreviewServer({
+    file: directory,
+    host: "127.0.0.1",
+    keepAlive: true,
+    port: 0,
+  });
+
+  await stopServer(preview);
+  // Removing the source immediately after shutdown would race any queue work
+  // that had survived the server lifecycle.
+  await Deno.remove(directory, { recursive: true });
+  await wait(20);
+  assertEquals(await Deno.stat(directory).catch(() => undefined), undefined);
+});
