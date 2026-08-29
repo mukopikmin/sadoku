@@ -79,9 +79,9 @@ export const PreviewHeader = ({
       <Image
         alt="Sadoku"
         flexShrink="0"
-        h="8"
-        src="/assets/icon.svg"
-        w="8"
+        h="6"
+        src="/assets/icon-512.png"
+        w="6"
       />
       {fileUrl
         ? (

@@ -43,8 +43,4 @@ Deno.test("serves preview icons with image content types", async () => {
   const icon = await handlePreviewAssetRequest("/assets/icon-512.png");
   assertEquals(icon.status, 200);
   assertEquals(icon.headers.get("content-type"), "image/png");
-
-  const vectorIcon = await handlePreviewAssetRequest("/assets/icon.svg");
-  assertEquals(vectorIcon.status, 200);
-  assertEquals(vectorIcon.headers.get("content-type"), "image/svg+xml");
 });

@@ -6,7 +6,6 @@ const previewAssetRoot = new URL("../../preview/dist/", import.meta.url);
 const contentTypeForPath = (pathname: string): string => {
   if (pathname.endsWith(".ico")) return "image/x-icon";
   if (pathname.endsWith(".png")) return "image/png";
-  if (pathname.endsWith(".svg")) return "image/svg+xml";
   return "text/javascript; charset=utf-8";
 };
 

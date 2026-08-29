@@ -333,12 +333,12 @@ describe("App", () => {
     await screen.findByRole("link", { name: "example.md" });
 
     const brandIcon = screen.getByRole("img", { name: "Sadoku" });
-    expect(brandIcon.getAttribute("src")).toBe("/assets/icon.svg");
+    expect(brandIcon.getAttribute("src")).toBe("/assets/icon-512.png");
     expect(getComputedStyle(brandIcon).width).toBe(
-      "var(--chakra-sizes-8)",
+      "var(--chakra-sizes-6)",
     );
     expect(getComputedStyle(brandIcon).height).toBe(
-      "var(--chakra-sizes-8)",
+      "var(--chakra-sizes-6)",
     );
     const fileLink = screen.getByRole("link", { name: "example.md" });
     expect(fileLink.getAttribute("href")).toBe("file:///tmp/example.md");
