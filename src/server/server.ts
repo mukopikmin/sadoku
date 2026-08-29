@@ -8,6 +8,7 @@ import {
 } from "./directory_session.ts";
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 import { readConfig } from "./config.ts";
+import { initializeSnapshotQueue } from "./preview/snapshot_queue.ts";
 
 export type PreviewServerOptions = {
   file: string;
@@ -139,6 +140,11 @@ export const startPreviewServer = async (
 
   let server: Deno.HttpServer<Deno.NetAddr>;
   const preparationController = new AbortController();
+  const backgroundTasks = new Set<Promise<unknown>>();
+  const trackBackground = (task: Promise<unknown>) => {
+    backgroundTasks.add(task);
+    task.finally(() => backgroundTasks.delete(task)).catch(() => {});
+  };
   const shutdownScheduler = createPreviewShutdownScheduler({
     filePath: previewSource.documentSource,
     keepAlive: options.keepAlive,
@@ -185,7 +191,7 @@ export const startPreviewServer = async (
   );
 
   if (directoryState) {
-    void prepareDirectorySession(
+    const preparation = prepareDirectorySession(
       directoryState,
       stores.documents,
       {
@@ -195,33 +201,30 @@ export const startPreviewServer = async (
       preparationController.signal,
     ).then(() => {
       if (directoryState.status.state !== "ready") return;
-      void initializeSnapshots(
-        directoryState.session.documents,
-        stores.documents,
-      );
+      return initializeSnapshotQueue({
+        documents: directoryState.session.documents,
+        initializeSnapshot: (id, markdown) =>
+          stores.documents.initializeSnapshot?.(id, markdown) ??
+            Promise.resolve(),
+        readMarkdown: readMarkdownSource,
+        signal: preparationController.signal,
+      });
     });
+    trackBackground(preparation);
   }
 
   // Populate archival snapshots only after the server is listening so that
   // reading many documents never delays startup. The conditional database
   // update also makes this safe to race with a user's first document request.
-  const initializeSnapshots = async (
-    documents: typeof previewSession.documents,
-    documentStore: typeof stores.documents,
-  ) => {
-    for (const document of documents) {
-      if (document.deleted) continue;
-      try {
-        const markdown = await readMarkdownSource(document.filePath);
-        await documentStore.initializeSnapshot?.(document.id, markdown);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      } catch {
-        // A file may disappear while the background snapshot queue is running.
-      }
-    }
-  };
   if (!directoryState) {
-    void initializeSnapshots(previewSession.documents, stores.documents);
+    trackBackground(initializeSnapshotQueue({
+      documents: previewSession.documents,
+      initializeSnapshot: (id, markdown) =>
+        stores.documents.initializeSnapshot?.(id, markdown) ??
+          Promise.resolve(),
+      readMarkdown: readMarkdownSource,
+      signal: preparationController.signal,
+    }));
   }
 
   const pathname = isDirectory
@@ -229,9 +232,16 @@ export const startPreviewServer = async (
     : `/documents/${previewSession.documents[0].id}`;
   const url = `http://${server.addr.hostname}:${server.addr.port}${pathname}`;
 
+  const shutdown = server.shutdown.bind(server);
+  server.shutdown = async () => {
+    preparationController.abort();
+    await shutdown();
+    await Promise.allSettled([...backgroundTasks]);
+  };
+
   server.finished.finally(() => {
     preparationController.abort();
-    stores.close();
+    void Promise.allSettled([...backgroundTasks]).then(() => stores.close());
   }).catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {
       logError(
