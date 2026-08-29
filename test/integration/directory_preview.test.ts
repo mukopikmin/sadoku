@@ -68,6 +68,17 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
         port: reserveLoopbackPort(),
       });
 
+      let directoryStatus: { state: string };
+      do {
+        directoryStatus = await (await fetch(
+          new URL("/__sadoku/directory-status", preview.url),
+        )).json();
+        if (directoryStatus.state === "loading") {
+          await new Promise((resolve) => setTimeout(resolve, 5));
+        }
+      } while (directoryStatus.state === "loading");
+      assertEquals(directoryStatus.state, "ready");
+
       const listResponse = await fetch(
         new URL("/__sadoku/documents", preview.url),
       );
@@ -198,6 +209,16 @@ Deno.test("directory preview lists the nested fixture documents", async () => {
       port: reserveLoopbackPort(),
     });
     try {
+      let status: { state: string };
+      do {
+        status = await (await fetch(
+          new URL("/__sadoku/directory-status", preview.url),
+        )).json();
+        if (status.state === "loading") {
+          await new Promise((resolve) => setTimeout(resolve, 5));
+        }
+      } while (status.state === "loading");
+      assertEquals(status.state, "ready");
       const response = await fetch(
         new URL("/__sadoku/documents", preview.url),
       );

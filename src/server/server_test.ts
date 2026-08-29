@@ -241,6 +241,14 @@ Deno.test("keeps the root URL for a directory containing one document", async ()
   });
 
   try {
+    let status: { state: string; detected: number; registered: number };
+    do {
+      status = await (await fetch(
+        new URL("/__sadoku/directory-status", preview.url),
+      )).json();
+      if (status.state === "loading") await wait(5);
+    } while (status.state === "loading");
+    assertEquals(status, { state: "ready", detected: 1, registered: 1 });
     const documents = await (
       await fetch(new URL("/__sadoku/documents", preview.url))
     ).json();

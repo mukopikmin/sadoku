@@ -12,6 +12,7 @@ export type DocumentStore = {
 
 export type ListMarkdownFiles = (
   directoryPath: string,
+  signal?: AbortSignal,
 ) => Promise<MarkdownDocumentPath[]>;
 
 export type PathExists = (filePath: string) => Promise<boolean>;

@@ -13,8 +13,10 @@ import {
 } from "../api/comments";
 import type { Comment, CommentsDocument } from "../models/comment";
 import { loadDocuments, loadPreviewDocument } from "../api/document";
+import { loadDirectoryStatus } from "../api/directoryStatus";
 
 export const documentsQueryKey = ["documents"] as const;
+export const directoryStatusQueryKey = ["directory-status"] as const;
 export const previewDocumentQueryKey = (documentId?: number) =>
   ["preview-document", documentId] as const;
 export const commentsQueryKey = (documentId?: number) =>
@@ -24,6 +26,14 @@ export const useDocumentsQuery = () =>
   useQuery({
     queryFn: loadDocuments,
     queryKey: documentsQueryKey,
+  });
+
+export const useDirectoryStatusQuery = () =>
+  useQuery({
+    queryFn: loadDirectoryStatus,
+    queryKey: directoryStatusQueryKey,
+    refetchInterval: (query) =>
+      query.state.data?.state === "loading" ? 250 : false,
   });
 
 export const usePreviewDocumentQuery = (documentId?: number, enabled = true) =>

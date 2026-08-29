@@ -16,6 +16,7 @@ export type DirectoryScanOptions = {
 export const listMarkdownFiles = async (
   directoryPath: string,
   options: DirectoryScanOptions = {},
+  signal?: AbortSignal,
 ): Promise<MarkdownDocumentPath[]> => {
   const absoluteDirectoryPath = resolve(directoryPath);
   const documents: MarkdownDocumentPath[] = [];
@@ -28,6 +29,7 @@ export const listMarkdownFiles = async (
     depth: number,
   ): Promise<void> => {
     for await (const entry of Deno.readDir(absolutePath)) {
+      signal?.throwIfAborted();
       if (documents.length >= maxFiles) return;
       if (entry.isSymlink) continue;
 
@@ -54,6 +56,7 @@ export const listMarkdownFiles = async (
   };
 
   await visitDirectory(absoluteDirectoryPath, "", 0);
+  signal?.throwIfAborted();
 
   return documents.sort((left, right) =>
     left.relativePath < right.relativePath

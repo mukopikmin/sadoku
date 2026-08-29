@@ -30,11 +30,14 @@ import {
 import { getSettings, updateSettings } from "./api/settings_api.ts";
 import { getDatabaseStatistics } from "./api/statistics_api.ts";
 import type { StatisticsReader } from "./usecase/statistics/get_statistics.ts";
+import type { DirectorySessionState } from "./directory_session.ts";
+import { getDirectoryStatus } from "./api/directory_status_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
   statistics?: StatisticsReader;
+  directoryState?: DirectorySessionState;
 };
 
 const findDocument = (
@@ -78,6 +81,13 @@ export const createDirectoryPreviewHandler = (
         title,
       }),
     )));
+  if (options.directoryState) {
+    app.get(
+      "/__sadoku/directory-status",
+      () => getDirectoryStatus(options.directoryState!),
+    );
+    app.all("/__sadoku/directory-status", methodNotAllowedResponse);
+  }
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
   app.all("/__sadoku/settings", methodNotAllowedResponse);

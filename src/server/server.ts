@@ -1,7 +1,11 @@
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createConfiguredStores } from "./storage/factory.ts";
 import { createPreviewSource, readMarkdownSource } from "./source.ts";
-import { createPreviewSession } from "./directory_session.ts";
+import {
+  createLoadingDirectorySession,
+  createPreviewSession,
+  prepareDirectorySession,
+} from "./directory_session.ts";
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 import { readConfig } from "./config.ts";
 
@@ -132,22 +136,25 @@ export const startPreviewServer = async (
   const config = readConfig();
 
   let server: Deno.HttpServer<Deno.NetAddr>;
+  const preparationController = new AbortController();
   const shutdownScheduler = createPreviewShutdownScheduler({
     filePath: previewSource.documentSource,
     keepAlive: options.keepAlive,
-    shutdown: () => server.shutdown(),
+    shutdown: () => {
+      preparationController.abort();
+      return server.shutdown();
+    },
   });
 
   const stores = await createConfiguredStores();
   let previewSession;
+  const directoryState = isDirectory
+    ? createLoadingDirectorySession(previewSource.documentSource)
+    : undefined;
   try {
-    previewSession = await createPreviewSession(
+    previewSession = directoryState?.session ?? await createPreviewSession(
       previewSource.documentSource,
       stores.documents,
-      {
-        maxDepth: options.maxDepth ?? config?.directoryMaxDepth,
-        maxFiles: options.maxFiles ?? config?.directoryMaxFiles,
-      },
     );
   } catch (error) {
     stores.close();
@@ -158,33 +165,64 @@ export const startPreviewServer = async (
     createDirectoryPreviewHandler(
       previewSession,
       stores.comments,
-      { ...shutdownScheduler, statistics: stores.statistics },
+      {
+        ...shutdownScheduler,
+        directoryState,
+        statistics: stores.statistics,
+      },
       stores.documents,
     ),
   );
 
+  if (directoryState) {
+    void prepareDirectorySession(
+      directoryState,
+      stores.documents,
+      {
+        maxDepth: options.maxDepth ?? config?.directoryMaxDepth,
+        maxFiles: options.maxFiles ?? config?.directoryMaxFiles,
+      },
+      preparationController.signal,
+    ).then(() => {
+      if (directoryState.status.state !== "ready") return;
+      void initializeSnapshots(
+        directoryState.session.documents,
+        stores.documents,
+      );
+    });
+  }
+
   // Populate archival snapshots only after the server is listening so that
   // reading many documents never delays startup. The conditional database
   // update also makes this safe to race with a user's first document request.
-  void (async () => {
-    for (const document of previewSession.documents) {
+  const initializeSnapshots = async (
+    documents: typeof previewSession.documents,
+    documentStore: typeof stores.documents,
+  ) => {
+    for (const document of documents) {
       if (document.deleted) continue;
       try {
         const markdown = await readMarkdownSource(document.filePath);
-        await stores.documents.initializeSnapshot?.(document.id, markdown);
+        await documentStore.initializeSnapshot?.(document.id, markdown);
         await new Promise((resolve) => setTimeout(resolve, 0));
       } catch {
         // A file may disappear while the background snapshot queue is running.
       }
     }
-  })();
+  };
+  if (!directoryState) {
+    void initializeSnapshots(previewSession.documents, stores.documents);
+  }
 
   const pathname = isDirectory
     ? "/"
     : `/documents/${previewSession.documents[0].id}`;
   const url = `http://${server.addr.hostname}:${server.addr.port}${pathname}`;
 
-  server.finished.finally(() => stores.close()).catch((error) => {
+  server.finished.finally(() => {
+    preparationController.abort();
+    stores.close();
+  }).catch((error) => {
     if (!(error instanceof Deno.errors.Interrupted)) {
       logError(
         `Server stopped unexpectedly: ${
