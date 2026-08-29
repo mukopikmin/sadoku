@@ -424,6 +424,7 @@ For native targets, the release build starts the compiled binary on
 | GitHub-style tables                                | Supported     | Table alignment markers are preserved.                                       |
 | Syntax highlighting                                | Supported     | Common code fence languages are highlighted with highlight.js.               |
 | Mermaid diagrams                                   | Supported     | Fenced `mermaid` code blocks render from local preview assets.               |
+| HTML comments                                      | Supported     | Complete comments render as commentable plain-text cards.                    |
 | Raw HTML                                           | Not supported | Raw HTML is escaped for safer previews.                                      |
 | Footnotes                                          | Not supported | No footnote plugin is enabled.                                               |
 | Definition lists                                   | Not supported | No definition list plugin is enabled.                                        |

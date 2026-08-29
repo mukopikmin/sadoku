@@ -10,6 +10,7 @@ import {
   MarkdownH6,
 } from "./renderers/heading";
 import { MarkdownHorizontalRule } from "./renderers/horizontalRule";
+import { MarkdownHtmlComment } from "./renderers/htmlComment";
 import { MarkdownImage } from "./renderers/image";
 import { MarkdownInput } from "./renderers/input";
 import { MarkdownLink } from "./renderers/link";
@@ -37,6 +38,7 @@ export { mergeClassNames } from "./rendererUtils";
 export { renderMarkdownBlockquote } from "./renderers/blockquote";
 export { renderMarkdownHeading } from "./renderers/heading";
 export { renderMarkdownHorizontalRule } from "./renderers/horizontalRule";
+export { renderMarkdownHtmlComment } from "./renderers/htmlComment";
 export { renderMarkdownParagraph } from "./renderers/paragraph";
 export { renderMarkdownPre } from "./renderers/pre";
 export { renderMarkdownTable } from "./renderers/table";
@@ -65,4 +67,5 @@ export const sharedMarkdownComponents: Components = {
   thead: MarkdownTableHeader,
   tr: MarkdownTableRow,
   ul: MarkdownUnorderedList,
+  "html-comment": MarkdownHtmlComment,
 };
