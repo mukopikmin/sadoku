@@ -1,4 +1,4 @@
-import { Box, Text } from "@chakra-ui/react";
+import { Badge, Box, Text } from "@chakra-ui/react";
 import type React from "react";
 import type {
   MarkdownComponentProps,
@@ -19,10 +19,16 @@ export const renderMarkdownHtmlComment = (
     px="4"
     py="3"
     {...elementProps}
+    data-html-comment=""
   >
-    <Text color="fg.muted" fontSize="xs" fontWeight="semibold" mb="2">
+    <Badge
+      aria-hidden="true"
+      color="fg.muted"
+      mb="2"
+      variant="outline"
+    >
       HTML COMMENT
-    </Text>
+    </Badge>
     <Text color="fg.muted" fontFamily="mono" whiteSpace="pre-wrap">
       {children}
     </Text>

@@ -94,7 +94,8 @@ describe("MarkdownPreview", () => {
 
     const labels = screen.getAllByText("HTML COMMENT");
     expect(labels).toHaveLength(2);
-    const cards = labels.map((label) => label.parentElement!);
+    expect(labels.every((label) => label.tagName === "SPAN")).toBe(true);
+    const cards = labels.map((label) => label.closest("[data-html-comment]")!);
     expect(cards[0].textContent).toContain(
       " **not bold** <img src=x onerror=alert(1)> ",
     );
