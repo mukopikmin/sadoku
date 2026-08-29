@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { toString } from "mdast-util-to-string";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
+import { ChevronRightIcon } from "../../components/ui/ChevronRightIcon";
 
 export type TableOfContentsItem = {
   id: string;
@@ -44,12 +45,11 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       >
         <Collapsible.Indicator
           _open={{ transform: "rotate(90deg)" }}
-          aria-hidden="true"
           fontSize="sm"
           lineHeight="1"
           transition="transform 0.2s"
         >
-          ▶
+          <ChevronRightIcon />
         </Collapsible.Indicator>
         <Text fontWeight="semibold">Table of contents</Text>
       </Collapsible.Trigger>

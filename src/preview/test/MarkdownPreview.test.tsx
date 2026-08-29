@@ -270,8 +270,11 @@ console.log("<ok>");
 
     const trigger = screen.getByRole("button", { name: "Table of contents" });
     const indicator = trigger.querySelector("[data-part=indicator]");
-    expect(indicator?.textContent?.trim()).toBe("▶");
-    expect(indicator?.getAttribute("aria-hidden")).toBe("true");
+    const indicatorIcon = indicator?.querySelector("svg");
+    expect(indicatorIcon?.getAttribute("viewBox")).toBe("0 0 24 24");
+    expect(indicatorIcon?.getAttribute("aria-hidden")).toBe("true");
+    expect(indicatorIcon?.querySelector("path")?.getAttribute("d"))
+      .toBe("m9 18 6-6-6-6");
     expect(indicator?.getAttribute("data-state")).toBe("closed");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
