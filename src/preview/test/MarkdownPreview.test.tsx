@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActiveComment } from "../models/comment";
@@ -265,18 +266,17 @@ console.log("<ok>");
     );
   });
 
-  it("renders a closed table of contents and toggles it from the trigger", async () => {
-    const { container } = renderMarkdown("# Only heading");
+  it("opens the table of contents from a floating action button", async () => {
+    renderMarkdown("# Only heading");
 
     const trigger = screen.getByRole("button", { name: "Table of contents" });
-    const indicator = trigger.querySelector("[data-part=indicator]");
-    const indicatorIcon = indicator?.querySelector("svg");
-    expect(indicatorIcon?.getAttribute("viewBox")).toBe("0 0 24 24");
-    expect(indicatorIcon?.getAttribute("aria-hidden")).toBe("true");
-    expect(indicatorIcon?.querySelector("path")?.getAttribute("d"))
-      .toBe("m9 18 6-6-6-6");
-    expect(indicator?.getAttribute("data-state")).toBe("closed");
+    const triggerIcon = trigger.querySelector("svg");
+    expect(triggerIcon?.getAttribute("viewBox")).toBe("0 0 16 16");
+    expect(triggerIcon?.getAttribute("aria-hidden")).toBe("true");
+    expect(triggerIcon?.querySelector("path")?.getAttribute("d"))
+      .toBe("M5 4h9M5 8h9M5 12h9");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(getComputedStyle(trigger.parentElement!).position).toBe("fixed");
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
       .toBeNull();
 
@@ -284,9 +284,12 @@ console.log("<ok>");
     await waitFor(() =>
       expect(trigger.getAttribute("aria-expanded")).toBe("true")
     );
-    expect(indicator?.getAttribute("data-state")).toBe("open");
+    const navigation = screen.getByRole("navigation", {
+      name: "Table of contents",
+    });
     expect(
-      container.querySelector("nav a")?.getAttribute("href"),
+      within(navigation).getByRole("link", { name: "Only heading" })
+        .getAttribute("href"),
     ).toBe("#only-heading");
 
     fireEvent.click(trigger);
@@ -301,16 +304,11 @@ console.log("<ok>");
     fireEvent.click(
       screen.getByRole("button", { name: "Table of contents" }),
     );
-    await waitFor(() =>
-      expect(
-        screen.getByText("No headings").closest("[data-part=content]")
-          ?.getAttribute("data-state"),
-      ).toBe("open")
-    );
+    expect(await screen.findByText("No headings")).not.toBeNull();
   });
 
   it("links nested, duplicate, Japanese, and decorated headings to their rendered IDs", async () => {
-    const { container } = renderMarkdown(`# Title!
+    renderMarkdown(`# Title!
 
 ## Title!
 
@@ -334,7 +332,10 @@ console.log("<ok>");
       ["日本語", "#日本語"],
       ["Rich Heading", "#rich-heading"],
     ];
-    const links = [...container.querySelectorAll<HTMLAnchorElement>("nav a")];
+    const navigation = screen.getByRole("navigation", {
+      name: "Table of contents",
+    });
+    const links = [...navigation.querySelectorAll<HTMLAnchorElement>("a")];
     expect(links).toHaveLength(4);
     expectedLinks.forEach(([name, href], index) => {
       expect(links[index].textContent).toBe(name);
@@ -348,7 +349,7 @@ console.log("<ok>");
       .toBe(4);
   });
 
-  it("keeps the table of contents open after a link updates the hash and scrolls", async () => {
+  it("closes the table of contents after a link updates the hash and scrolls", async () => {
     globalThis.history.replaceState(null, "", "/docs/readme");
     const scrollIntoView = vi.fn();
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
@@ -359,7 +360,10 @@ console.log("<ok>");
 
     const trigger = screen.getByRole("button", { name: "Table of contents" });
     fireEvent.click(trigger);
-    const targetLink = screen.getByRole("link", { name: "Target" });
+    const navigation = await screen.findByRole("navigation", {
+      name: "Table of contents",
+    });
+    const targetLink = within(navigation).getByRole("link", { name: "Target" });
     fireEvent.click(targetLink);
     globalThis.location.hash = targetLink.getAttribute("href")!;
 
@@ -372,7 +376,9 @@ console.log("<ok>");
       screen.getByRole("heading", { name: "Target" }).style.scrollMarginTop,
     )
       .toBe("72px");
-    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    await waitFor(() =>
+      expect(trigger.getAttribute("aria-expanded")).toBe("false")
+    );
     expect(screen.queryByPlaceholderText("Write a GitHub PR comment..."))
       .toBeNull();
     header.remove();
