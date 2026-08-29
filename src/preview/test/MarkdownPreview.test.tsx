@@ -290,6 +290,9 @@ console.log("<ok>");
     const navigation = screen.getByRole("navigation", {
       name: "Table of contents",
     });
+    expect(getComputedStyle(navigation).fontSize).toBe(
+      "var(--chakra-font-sizes-md)",
+    );
     expect(
       within(navigation).getByRole("link", { name: "Only heading" })
         .getAttribute("href"),

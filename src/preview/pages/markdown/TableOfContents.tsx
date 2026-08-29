@@ -91,6 +91,7 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
             maxH="min(60vh, 32rem)"
             maxW="calc(100vw - 2rem)"
             overflowY="auto"
+            textStyle="md"
             width="20rem"
           >
             <Popover.Arrow>
