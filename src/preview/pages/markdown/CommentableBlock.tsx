@@ -29,6 +29,7 @@ type CommentableBlockProps = CommentControlProps & {
   comments: ActiveComment[];
   hasCommentHighlight: boolean;
   hasContinuousHighlight: boolean;
+  headingId?: string;
   isAdding: boolean;
   isRangeActionLine: boolean;
   isSelected: boolean;
@@ -43,6 +44,7 @@ export const CommentableBlock = ({
   comments,
   hasCommentHighlight,
   hasContinuousHighlight,
+  headingId,
   isAdding,
   isRangeActionLine,
   isSelected,
@@ -104,6 +106,16 @@ export const CommentableBlock = ({
 
     onSelectCommentRange(sourceRange, { extend: event.shiftKey });
     event.stopPropagation();
+  };
+
+  const handleSetHeadingLink = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!headingId) return;
+
+    globalThis.location.hash = headingId;
   };
 
   return (
@@ -173,6 +185,37 @@ export const CommentableBlock = ({
                 />
               </svg>
             </IconButton>
+            {headingId && isSelected && (
+              <IconButton
+                aria-label="Update URL with heading link"
+                bg="canvas"
+                borderColor="border"
+                boxSize="6"
+                color="fg.muted"
+                fontSize="xs"
+                minW="6"
+                onClick={handleSetHeadingLink}
+                p="0"
+                title="Update URL with heading link"
+                type="button"
+                variant="outline"
+              >
+                <svg
+                  aria-hidden="true"
+                  fill="none"
+                  height="1em"
+                  viewBox="0 0 16 16"
+                  width="1em"
+                >
+                  <path
+                    d="M6.5 9.5 9.5 6.5M5.25 11.75l-1 1a2.12 2.12 0 0 1-3-3l2.5-2.5a2.12 2.12 0 0 1 3 0M10.75 4.25l1-1a2.12 2.12 0 1 1 3 3l-2.5 2.5a2.12 2.12 0 0 1-3 0"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </IconButton>
+            )}
             <IconButton
               aria-label={`View raw Markdown for ${
                 formatRangeLabel(pendingRange)
