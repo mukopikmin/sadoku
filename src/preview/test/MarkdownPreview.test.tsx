@@ -269,6 +269,10 @@ console.log("<ok>");
     const { container } = renderMarkdown("# Only heading");
 
     const trigger = screen.getByRole("button", { name: "Table of contents" });
+    const indicator = trigger.querySelector("[data-part=indicator]");
+    expect(indicator?.textContent?.trim()).toBe("▶");
+    expect(indicator?.getAttribute("aria-hidden")).toBe("true");
+    expect(indicator?.getAttribute("data-state")).toBe("closed");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
       .toBeNull();
@@ -277,6 +281,7 @@ console.log("<ok>");
     await waitFor(() =>
       expect(trigger.getAttribute("aria-expanded")).toBe("true")
     );
+    expect(indicator?.getAttribute("data-state")).toBe("open");
     expect(
       container.querySelector("nav a")?.getAttribute("href"),
     ).toBe("#only-heading");

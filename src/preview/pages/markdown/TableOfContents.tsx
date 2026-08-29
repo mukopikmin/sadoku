@@ -42,7 +42,15 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
         textAlign="start"
         width="full"
       >
-        <Collapsible.Indicator />
+        <Collapsible.Indicator
+          _open={{ transform: "rotate(90deg)" }}
+          aria-hidden="true"
+          fontSize="sm"
+          lineHeight="1"
+          transition="transform 0.2s"
+        >
+          ▶
+        </Collapsible.Indicator>
         <Text fontWeight="semibold">Table of contents</Text>
       </Collapsible.Trigger>
       <Collapsible.Content>
