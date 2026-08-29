@@ -291,8 +291,12 @@ console.log("<ok>");
       name: "Table of contents",
     });
     expect(getComputedStyle(navigation).fontSize).toBe(
-      "var(--chakra-font-sizes-xl)",
+      "var(--chakra-font-sizes-md)",
     );
+    expect(
+      getComputedStyle(navigation.closest("[data-part=content]")!)
+        .getPropertyValue("--popover-size"),
+    ).toBe("var(--chakra-sizes-sm)");
     expect(
       within(navigation).getByRole("link", { name: "Only heading" })
         .getAttribute("href"),

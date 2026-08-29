@@ -89,8 +89,9 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       <Portal>
         <Popover.Positioner>
           <Popover.Content
+            css={{ "--popover-size": "sizes.sm" }}
             overflowY="auto"
-            textStyle="xl"
+            textStyle="md"
           >
             <Popover.Arrow>
               <Popover.ArrowTip />
