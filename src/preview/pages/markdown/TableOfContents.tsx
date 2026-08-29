@@ -51,7 +51,7 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       <Box
         bottom={{ base: "4", md: "6" }}
         position="fixed"
-        right={{ base: "4", md: "6" }}
+        right="max(var(--chakra-spacing-8), calc((100vw - 980px) / 2 + var(--chakra-spacing-8)))"
         zIndex="dropdown"
       >
         <Popover.Trigger asChild>

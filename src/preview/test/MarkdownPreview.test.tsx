@@ -277,6 +277,9 @@ console.log("<ok>");
       .toBe("M5 4h9M5 8h9M5 12h9");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(getComputedStyle(trigger.parentElement!).position).toBe("fixed");
+    expect(getComputedStyle(trigger.parentElement!).right).toBe(
+      "max(var(--chakra-spacing-8), calc((100vw - 980px) / 2 + var(--chakra-spacing-8)))",
+    );
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
       .toBeNull();
 
