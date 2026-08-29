@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 
 import {
   createPreviewShutdownScheduler,
@@ -35,16 +35,23 @@ Deno.test("rejects missing local paths", async () => {
 
 Deno.test("starts on an ephemeral port and serves a file as a document session", async () => {
   const filePath = await createTempMarkdown("# Server test\n");
+  const logs: string[] = [];
   const preview = await startPreviewServer({
     file: filePath,
     host: "127.0.0.1",
     keepAlive: true,
+    log: (message) => logs.push(message),
     port: 0,
   });
 
   try {
     assertEquals(preview.filePath, filePath);
     assertEquals(preview.url.startsWith("http://127.0.0.1:"), true);
+    assertEquals(logs.length, 1);
+    assertMatch(
+      logs[0],
+      new RegExp(`^Registered document: id=\\d+ path=${filePath}$`),
+    );
 
     const documentsResponse = await fetch(
       new URL("/__sadoku/documents", preview.url),

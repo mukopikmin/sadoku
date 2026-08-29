@@ -108,6 +108,7 @@ const createCommentableComponent = (
     elementProps: Omit<CommentableComponentProps, "children" | "node">,
     children: React.ReactNode,
   ) => React.ReactNode,
+  isHeading = false,
 ) => {
   return ({
     children,
@@ -125,7 +126,12 @@ const createCommentableComponent = (
     }
 
     return (
-      <CommentableBlock {...getCommentableBlockProps(context, sourceRange)}>
+      <CommentableBlock
+        {...getCommentableBlockProps(context, sourceRange)}
+        headingId={isHeading && typeof elementProps.id === "string"
+          ? elementProps.id
+          : undefined}
+      >
         {element}
       </CommentableBlock>
     );
@@ -219,31 +225,37 @@ export const createCommentableMarkdownComponents = (): Components => ({
     "h1",
     (elementProps, children) =>
       renderMarkdownHeading("h1", elementProps, children),
+    true,
   ),
   h2: createCommentableComponent(
     "h2",
     (elementProps, children) =>
       renderMarkdownHeading("h2", elementProps, children),
+    true,
   ),
   h3: createCommentableComponent(
     "h3",
     (elementProps, children) =>
       renderMarkdownHeading("h3", elementProps, children),
+    true,
   ),
   h4: createCommentableComponent(
     "h4",
     (elementProps, children) =>
       renderMarkdownHeading("h4", elementProps, children),
+    true,
   ),
   h5: createCommentableComponent(
     "h5",
     (elementProps, children) =>
       renderMarkdownHeading("h5", elementProps, children),
+    true,
   ),
   h6: createCommentableComponent(
     "h6",
     (elementProps, children) =>
       renderMarkdownHeading("h6", elementProps, children),
+    true,
   ),
   hr: createCommentableComponent("hr", renderMarkdownHorizontalRule),
   input: sharedMarkdownComponents.input,

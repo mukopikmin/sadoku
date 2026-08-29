@@ -230,6 +230,33 @@ export const MarkdownPreview = ({
   }, [markdown]);
 
   useLayoutEffect(() => {
+    const scrollToHash = () => {
+      const encodedId = globalThis.location.hash.slice(1);
+      if (!encodedId) return;
+      let id: string;
+      try {
+        id = decodeURIComponent(encodedId);
+      } catch {
+        return;
+      }
+      const heading = document.getElementById(id);
+      if (
+        heading?.matches("h1, h2, h3, h4, h5, h6") &&
+        previewRef.current?.contains(heading)
+      ) {
+        const headerHeight = document.querySelector("header")
+          ?.getBoundingClientRect().height ?? 0;
+        heading.style.scrollMarginTop = `${headerHeight}px`;
+        heading.scrollIntoView();
+      }
+    };
+
+    scrollToHash();
+    globalThis.addEventListener("hashchange", scrollToHash);
+    return () => globalThis.removeEventListener("hashchange", scrollToHash);
+  }, [frontMatter?.bodyMarkdown, markdown]);
+
+  useLayoutEffect(() => {
     updateRangeHighlightLayouts();
     const preview = previewRef.current;
     if (!preview) return;

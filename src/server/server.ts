@@ -13,6 +13,7 @@ export type PreviewServerOptions = {
   file: string;
   host: string;
   keepAlive?: boolean;
+  log?: (message: string) => void;
   maxDepth?: number;
   maxFiles?: number;
   port: number;
@@ -134,6 +135,7 @@ export const startPreviewServer = async (
     (await Deno.stat(previewSource.documentSource).catch(() => undefined))
         ?.isDirectory === true;
   const config = readConfig();
+  const log = options.log ?? logInfo;
 
   let server: Deno.HttpServer<Deno.NetAddr>;
   const preparationController = new AbortController();
@@ -160,6 +162,13 @@ export const startPreviewServer = async (
     stores.close();
     throw error;
   }
+  for (const document of previewSession.documents) {
+    log(
+      `Registered document: id=${document.id} path=${document.filePath}${
+        document.deleted ? " (saved snapshot)" : ""
+      }`,
+    );
+  }
   server = serveOnAvailablePort(
     options,
     createDirectoryPreviewHandler(
@@ -167,6 +176,7 @@ export const startPreviewServer = async (
       stores.comments,
       {
         ...shutdownScheduler,
+        log,
         directoryState,
         statistics: stores.statistics,
       },
