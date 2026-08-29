@@ -333,7 +333,7 @@ describe("App", () => {
     await screen.findByRole("link", { name: "example.md" });
 
     const brandIcon = screen.getByRole("img", { name: "Sadoku" });
-    expect(brandIcon.getAttribute("src")).toBe("/assets/icon-512.png");
+    expect(brandIcon.getAttribute("src")).toBe("/assets/icon.svg");
     expect(getComputedStyle(brandIcon).width).toBe(
       "var(--chakra-sizes-8)",
     );
