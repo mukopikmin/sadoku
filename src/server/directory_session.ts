@@ -21,6 +21,81 @@ const createSession = (
   documentsById: new Map(documents.map((document) => [document.id, document])),
 });
 
+export type DirectorySessionStatus =
+  | { state: "loading"; detected: number; registered: number }
+  | { state: "ready"; detected: number; registered: number }
+  | {
+    state: "error";
+    detected: number;
+    registered: number;
+    error: { name: string; message: string };
+  };
+
+export type DirectorySessionState = {
+  session: DirectorySession;
+  status: DirectorySessionStatus;
+};
+
+export const createLoadingDirectorySession = (
+  rootPath: string,
+): DirectorySessionState => ({
+  session: createSession(resolve(rootPath), []),
+  status: { state: "loading", detected: 0, registered: 0 },
+});
+
+export const prepareDirectorySession = async (
+  state: DirectorySessionState,
+  documentStore: DocumentStore,
+  scanOptions: DirectoryScanOptions = {},
+  signal?: AbortSignal,
+): Promise<void> => {
+  try {
+    const documents = await ensureDirectoryDocuments(
+      state.session.rootPath,
+      {
+        documentStore,
+        listMarkdownFiles: (directoryPath, scanSignal) =>
+          listMarkdownFiles(directoryPath, scanOptions, scanSignal),
+        pathExists,
+      },
+      scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles,
+      {
+        signal,
+        onDetected: (detected) => {
+          state.status = { ...state.status, detected };
+        },
+        onRegistered: (registered) => {
+          state.status = { ...state.status, registered };
+        },
+      },
+    );
+    state.session.documents.splice(
+      0,
+      state.session.documents.length,
+      ...documents,
+    );
+    state.session.documentsById.clear();
+    for (const document of documents) {
+      state.session.documentsById.set(document.id, document);
+    }
+    state.status = {
+      state: "ready",
+      detected: state.status.detected,
+      registered: state.status.registered,
+    };
+  } catch (error) {
+    const normalized = error instanceof Error
+      ? error
+      : new Error(String(error));
+    state.status = {
+      state: "error",
+      detected: state.status.detected,
+      registered: state.status.registered,
+      error: { name: normalized.name, message: normalized.message },
+    };
+  }
+};
+
 export const createDirectorySession = async (
   rootPath: string,
   documentStore: DocumentStore,
@@ -29,8 +104,8 @@ export const createDirectorySession = async (
   const resolvedRootPath = resolve(rootPath);
   const documents = await ensureDirectoryDocuments(resolvedRootPath, {
     documentStore,
-    listMarkdownFiles: (directoryPath) =>
-      listMarkdownFiles(directoryPath, scanOptions),
+    listMarkdownFiles: (directoryPath, signal) =>
+      listMarkdownFiles(directoryPath, scanOptions, signal),
     pathExists,
   }, scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles);
   return createSession(resolvedRootPath, documents);

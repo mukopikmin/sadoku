@@ -25,6 +25,7 @@ import { useHotReload } from "./hooks/useHotReload";
 import { connectPreviewKeepAlive } from "./api/hotReload";
 import {
   useCommentsQuery,
+  useDirectoryStatusQuery,
   useDocumentsQuery,
   usePreviewDocumentQuery,
 } from "./hooks/usePreviewData";
@@ -58,6 +59,8 @@ export const App = () => {
     ? parsedDocumentId
     : undefined;
   const documentsQuery = useDocumentsQuery();
+  const directoryStatusQuery = useDirectoryStatusQuery();
+  const directoryStatus = directoryStatusQuery.data;
   const documents = documentsQuery.data;
   const directoryMode = documents !== null && documents !== undefined;
   const selectedDocumentId = routeDocumentId;
@@ -149,6 +152,10 @@ export const App = () => {
     }
   }, [documentQuery.data, pathname, view]);
 
+  useEffect(() => {
+    if (directoryStatus?.state === "ready") void documentsQuery.refetch();
+  }, [directoryStatus?.state]);
+
   if (documentsQuery.isPending) {
     return (
       <>
@@ -221,7 +228,32 @@ export const App = () => {
         />
         <Container as="main" maxW="980px" px="8" pb="16">
           <Heading mb="4" size="md">Documents</Heading>
-          {documents!.length === 0
+          {directoryStatus?.state === "loading"
+            ? (
+              <Alert.Root status="info">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>ドキュメントを検出しています</Alert.Title>
+                  <Alert.Description>
+                    検出 {directoryStatus.detected} 件・登録{" "}
+                    {directoryStatus.registered} 件
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
+            )
+            : directoryStatus?.state === "error"
+            ? (
+              <Alert.Root status="error">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>ドキュメントを読み込めませんでした</Alert.Title>
+                  <Alert.Description>
+                    {directoryStatus.error?.message}
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
+            )
+            : documents!.length === 0
             ? <Text color="fg.muted">No Markdown documents found.</Text>
             : (
               <DocumentTree

@@ -35,12 +35,22 @@ const documents = [
 const installFetch = (
   failDocumentId?: number,
   pendingDocument?: Promise<Response>,
+  directoryStatuses?: Array<Record<string, unknown>>,
 ) =>
   vi.stubGlobal(
     "fetch",
     vi.fn(
       (input: RequestInfo | URL) => {
         const url = String(input);
+        if (url === "/__sadoku/directory-status") {
+          if (!directoryStatuses) {
+            return Promise.resolve(new Response("Not found", { status: 404 }));
+          }
+          const status = directoryStatuses.length > 1
+            ? directoryStatuses.shift()
+            : directoryStatuses[0];
+          return Promise.resolve(Response.json(status));
+        }
         if (url === "/__sadoku/documents") {
           return Promise.resolve(
             Response.json(documents),
@@ -97,6 +107,38 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
+  it("shows preparation progress and switches to the list when ready", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch(undefined, undefined, [
+      { state: "loading", detected: 3, registered: 1 },
+      { state: "ready", detected: 3, registered: 3 },
+    ]);
+    render(<App />);
+
+    expect(await screen.findByText("ドキュメントを検出しています")).not
+      .toBeNull();
+    expect(screen.getByText("検出 3 件・登録 1 件")).not.toBeNull();
+    expect(
+      await screen.findByRole("treeitem", { name: "alpha.md" }, {
+        timeout: 1500,
+      }),
+    ).not.toBeNull();
+  });
+
+  it("shows directory preparation failures", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch(undefined, undefined, [{
+      state: "error",
+      detected: 2,
+      registered: 0,
+      error: { name: "Error", message: "scan failed" },
+    }]);
+    render(<App />);
+
+    expect(await screen.findByText("ドキュメントを読み込めませんでした"))
+      .not.toBeNull();
+    expect(screen.getByText("scan failed")).not.toBeNull();
+  });
   it("lists documents, routes to one, and returns through breadcrumbs", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();

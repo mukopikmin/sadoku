@@ -10,14 +10,27 @@ export const ensureDirectoryDocuments = async (
   directoryPath: string,
   deps: DocumentDependencies,
   maxDocuments: number,
+  options: {
+    signal?: AbortSignal;
+    onDetected?: (count: number) => void;
+    onRegistered?: (count: number) => void;
+  } = {},
 ): Promise<DirectoryDocument[]> => {
-  const markdownFiles = (await deps.listMarkdownFiles(directoryPath)).slice(
+  options.signal?.throwIfAborted();
+  const markdownFiles = (await deps.listMarkdownFiles(
+    directoryPath,
+    options.signal,
+  )).slice(
     0,
     maxDocuments,
   );
+  options.onDetected?.(markdownFiles.length);
+  options.signal?.throwIfAborted();
   const documents = await deps.documentStore.ensureMany(
     markdownFiles.map((document) => document.absolutePath),
   );
+  options.onRegistered?.(documents.length);
+  options.signal?.throwIfAborted();
   const presentPaths = new Set(
     markdownFiles.map((document) => document.absolutePath),
   );
@@ -34,6 +47,7 @@ export const ensureDirectoryDocuments = async (
   const deletedDocuments = [];
   const deletedDocumentLimit = Math.max(0, maxDocuments - documents.length);
   for (const document of storedDocumentsInDirectory) {
+    options.signal?.throwIfAborted();
     if (deletedDocuments.length >= deletedDocumentLimit) break;
     if (!await deps.pathExists(document.filePath)) {
       deletedDocuments.push(document);
