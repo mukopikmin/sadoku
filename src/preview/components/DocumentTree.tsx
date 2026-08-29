@@ -1,6 +1,7 @@
 import { Badge, createTreeCollection, TreeView } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
+import { ChevronRightIcon } from "./ui/ChevronRightIcon";
 
 type DocumentTreeNode = {
   children?: DocumentTreeNode[];
@@ -102,24 +103,6 @@ const FileIcon = () => (
       strokeWidth="1.7"
     />
     <path d="M13 3.75v5h5" stroke="currentColor" strokeWidth="1.7" />
-  </svg>
-);
-
-const ChevronRightIcon = () => (
-  <svg
-    aria-hidden="true"
-    fill="none"
-    height="1em"
-    viewBox="0 0 24 24"
-    width="1em"
-  >
-    <path
-      d="m9 18 6-6-6-6"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-    />
   </svg>
 );
 
