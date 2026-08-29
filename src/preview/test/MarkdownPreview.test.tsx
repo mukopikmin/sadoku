@@ -291,7 +291,7 @@ console.log("<ok>");
       name: "Table of contents",
     });
     expect(getComputedStyle(navigation).fontSize).toBe(
-      "var(--chakra-font-sizes-md)",
+      "var(--chakra-font-sizes-xl)",
     );
     expect(
       within(navigation).getByRole("link", { name: "Only heading" })

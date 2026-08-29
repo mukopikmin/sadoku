@@ -47,7 +47,7 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       onOpenChange={({ open }) => setOpen(open)}
       open={open}
       positioning={{ placement: "top-end" }}
-      size="md"
+      size="lg"
     >
       <Box
         bottom={{ base: "4", md: "6" }}
@@ -90,7 +90,7 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
         <Popover.Positioner>
           <Popover.Content
             overflowY="auto"
-            textStyle="md"
+            textStyle="xl"
           >
             <Popover.Arrow>
               <Popover.ArrowTip />
