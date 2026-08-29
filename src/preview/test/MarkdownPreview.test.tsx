@@ -199,11 +199,11 @@ console.log("<ok>");
     expect(container.querySelector("h1#title .heading-anchor")?.textContent)
       .toBe("Title");
     expect(container.querySelector("strong")?.textContent).toBe("world");
-    const unorderedList = container.querySelector("ul");
-    expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    const unorderedList = container.querySelector("ul.comment-markdown-list");
+    expect(unorderedList?.querySelectorAll(":scope > li")).toHaveLength(2);
     expect(
       getComputedStyle(
-        container.querySelectorAll("ul > li")[1].querySelector(
+        unorderedList!.querySelectorAll(":scope > li")[1].querySelector(
           ".commentable-content",
         )!,
       ).paddingTop,
@@ -263,6 +263,111 @@ console.log("<ok>");
     expect(previewThemeCss).toContain(
       "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));",
     );
+  });
+
+  it("renders a closed table of contents and toggles it from the trigger", async () => {
+    const { container } = renderMarkdown("# Only heading");
+
+    const trigger = screen.getByRole("button", { name: "Table of contents" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("navigation", { name: "Table of contents" }))
+      .toBeNull();
+
+    fireEvent.click(trigger);
+    await waitFor(() =>
+      expect(trigger.getAttribute("aria-expanded")).toBe("true")
+    );
+    expect(
+      container.querySelector("nav a")?.getAttribute("href"),
+    ).toBe("#only-heading");
+
+    fireEvent.click(trigger);
+    await waitFor(() =>
+      expect(trigger.getAttribute("aria-expanded")).toBe("false")
+    );
+  });
+
+  it("shows an empty table of contents for Markdown without headings", async () => {
+    renderMarkdown("A paragraph without headings.");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Table of contents" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText("No headings").closest("[data-part=content]")
+          ?.getAttribute("data-state"),
+      ).toBe("open")
+    );
+  });
+
+  it("links nested, duplicate, Japanese, and decorated headings to their rendered IDs", async () => {
+    const { container } = renderMarkdown(`# Title!
+
+## Title!
+
+### 日本語
+
+###### **Rich** \`Heading\`
+`);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Table of contents" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Table of contents" })
+          .getAttribute("aria-expanded"),
+      ).toBe("true")
+    );
+    const expectedLinks = [
+      ["Title!", "#title"],
+      ["Title!", "#title-1"],
+      ["日本語", "#日本語"],
+      ["Rich Heading", "#rich-heading"],
+    ];
+    const links = [...container.querySelectorAll<HTMLAnchorElement>("nav a")];
+    expect(links).toHaveLength(4);
+    expectedLinks.forEach(([name, href], index) => {
+      expect(links[index].textContent).toBe(name);
+      expect(links[index].getAttribute("href")).toBe(href);
+      const id = decodeURIComponent(href.slice(1));
+      expect(document.getElementById(id)).not.toBeNull();
+    });
+    expect(links.map((link) => link.parentElement?.dataset.headingLevel))
+      .toEqual(["1", "2", "3", "6"]);
+    expect(new Set(links.map((link) => link.parentElement?.className)).size)
+      .toBe(4);
+  });
+
+  it("keeps the table of contents open after a link updates the hash and scrolls", async () => {
+    globalThis.history.replaceState(null, "", "/docs/readme");
+    const scrollIntoView = vi.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const header = document.createElement("header");
+    header.getBoundingClientRect = () => mockRect(0, 72);
+    document.body.append(header);
+    renderMarkdown("# First\n\n## Target");
+
+    const trigger = screen.getByRole("button", { name: "Table of contents" });
+    fireEvent.click(trigger);
+    const targetLink = screen.getByRole("link", { name: "Target" });
+    fireEvent.click(targetLink);
+    globalThis.location.hash = targetLink.getAttribute("href")!;
+
+    await waitFor(() => expect(globalThis.location.hash).toBe("#target"));
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
+    expect(scrollIntoView.mock.instances[0]).toBe(
+      screen.getByRole("heading", { name: "Target" }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Target" }).style.scrollMarginTop,
+    )
+      .toBe("72px");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.queryByPlaceholderText("Write a GitHub PR comment..."))
+      .toBeNull();
+    header.remove();
   });
 
   it("renders stable heading anchor links", () => {
@@ -411,7 +516,9 @@ Paragraph
     const { container } = renderMarkdown("<script>alert(1)</script>");
 
     expect(container.querySelector("script")).toBeNull();
-    expect(container.textContent).toBe("<script>alert(1)</script>");
+    expect(container.querySelector(".commentable-content")?.textContent).toBe(
+      "<script>alert(1)</script>",
+    );
     expect(container.querySelector('[data-source-line="1"]')).not.toBeNull();
   });
 
@@ -736,7 +843,7 @@ const value = 1;
 Paragraph with **formatting**.
 `);
 
-    fireEvent.click(container.querySelector("p")!);
+    fireEvent.click(container.querySelector(".commentable-content p")!);
     const addCommentButton = screen.getByRole("button", {
       name: "Add comment on line 3",
     });

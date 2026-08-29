@@ -55,7 +55,8 @@ Paragraph with [a link](https://example.com) and \`code\`.
     for (
       const selector of ["h2", "p", "blockquote", "ul", "hr", "pre", "code"]
     ) {
-      const documentElement = documentMarkdown.querySelector(selector)!;
+      const documentElement = [...documentMarkdown.querySelectorAll(selector)]
+        .find((element) => !element.closest("[data-scope=collapsible]"))!;
       const commentElement = commentMarkdown.querySelector(selector)!;
       expect(documentElement.tagName).toBe(commentElement.tagName);
       expect(documentElement.className).toBe(commentElement.className);
