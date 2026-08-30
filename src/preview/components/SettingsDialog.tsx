@@ -1,5 +1,4 @@
 import {
-  Button,
   Dialog,
   Flex,
   IconButton,
@@ -55,6 +54,7 @@ export const SettingsDialog = ({
       initialFocusEl={() => contentRef.current}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
+      size="lg"
     >
       <Portal>
         <Dialog.Backdrop />
@@ -102,7 +102,11 @@ export const SettingsDialog = ({
                       Adjust text throughout the preview
                     </Text>
                   </Text>
-                  <Flex alignItems="center" gap="2">
+                  <Flex
+                    aria-label="Text size controls"
+                    gap="2"
+                    role="group"
+                  >
                     <IconButton
                       aria-label="Decrease text size"
                       disabled={fontScale <= fontScales[0]}
@@ -128,15 +132,6 @@ export const SettingsDialog = ({
                     >
                       +
                     </IconButton>
-                    <Button
-                      aria-label="Reset text size to 100%"
-                      disabled={fontScale === 1}
-                      onClick={() => onFontScaleChange(1)}
-                      size="sm"
-                      variant="ghost"
-                    >
-                      Reset
-                    </Button>
                   </Flex>
                 </Flex>
                 <Flex
@@ -172,7 +167,7 @@ export const SettingsDialog = ({
                       fontSize="sm"
                       id="directory-discovery-description"
                     >
-                      Changes apply the next time a directory preview starts.
+                      Changes apply the next time a directory preview starts
                     </Text>
                   </Text>
                   <Flex
