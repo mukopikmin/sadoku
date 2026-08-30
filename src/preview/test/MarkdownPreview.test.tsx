@@ -10,6 +10,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
+import { DocumentActionBar } from "../components/DocumentActionBar";
 import { initializeMermaid } from "../markdown/mermaid";
 import { previewThemeCss, sadokuChakraSystem } from "../theme";
 
@@ -47,16 +48,19 @@ const renderMarkdown = (
 ) => {
   ensurePreviewThemeStyle();
   const result = render(
-    <MarkdownPreview
-      actions={createCommentActions({
-        onCreateComment: callbacks.onCreateComment ?? (async () => {}),
-        onResolveComment: callbacks.onResolveComment ?? (async () => {}),
-      })}
-      comments={comments}
-      documentPath={documentPath}
-      markdown={markdown}
-      theme="default"
-    />,
+    <>
+      <DocumentActionBar markdown={markdown} onOpenInstructions={() => {}} />
+      <MarkdownPreview
+        actions={createCommentActions({
+          onCreateComment: callbacks.onCreateComment ?? (async () => {}),
+          onResolveComment: callbacks.onResolveComment ?? (async () => {}),
+        })}
+        comments={comments}
+        documentPath={documentPath}
+        markdown={markdown}
+        theme="default"
+      />
+    </>,
   );
   return { ...result, container: result.container };
 };
@@ -270,16 +274,13 @@ console.log("<ok>");
     renderMarkdown("# Only heading");
 
     const trigger = screen.getByRole("button", { name: "Table of contents" });
-    const triggerIcon = trigger.querySelector("svg");
-    expect(triggerIcon?.getAttribute("viewBox")).toBe("0 0 16 16");
-    expect(triggerIcon?.getAttribute("aria-hidden")).toBe("true");
-    expect(triggerIcon?.querySelector("path")?.getAttribute("d"))
-      .toBe("M5 4h9M5 8h9M5 12h9");
+    const actionBar = screen.getByRole("dialog", {
+      name: "Document actions",
+    });
+    expect(actionBar.getAttribute("data-part")).toBe("content");
+    expect(within(actionBar).getByRole("button", { name: "Instructions" }))
+      .not.toBeNull();
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(getComputedStyle(trigger.parentElement!).position).toBe("fixed");
-    expect(getComputedStyle(trigger.parentElement!).right).toBe(
-      "max(var(--chakra-spacing-8), calc((100vw - 980px) / 2 + var(--chakra-spacing-8)))",
-    );
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
       .toBeNull();
 
@@ -892,7 +893,11 @@ Paragraph with **formatting**.
     expect(getComputedStyle(rawMarkdown).overflowWrap).toBe("anywhere");
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", {
+        name: "Raw Markdown — line 3",
+      })).toBeNull()
+    );
   });
 
   it("creates comments for the full table range", async () => {

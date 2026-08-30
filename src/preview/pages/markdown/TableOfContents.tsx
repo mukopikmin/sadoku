@@ -1,6 +1,6 @@
 import {
   Box,
-  IconButton,
+  Button,
   Link,
   List,
   Popover,
@@ -49,43 +49,32 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       positioning={{ placement: "top-end" }}
       size="lg"
     >
-      <Box
-        bottom={{ base: "4", md: "6" }}
-        position="fixed"
-        right="max(var(--chakra-spacing-8), calc((100vw - 980px) / 2 + var(--chakra-spacing-8)))"
-        zIndex="dropdown"
-      >
-        <Popover.Trigger asChild>
-          <IconButton
-            aria-label="Table of contents"
-            bg="canvas"
-            boxShadow="md"
-            color="fg"
-            rounded="full"
-            size="lg"
-            type="button"
-            variant="outline"
+      <Popover.Trigger asChild>
+        <Button
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <svg
+            aria-hidden="true"
+            fill="none"
+            height="1em"
+            viewBox="0 0 16 16"
+            width="1em"
           >
-            <svg
-              aria-hidden="true"
-              fill="none"
-              height="1em"
-              viewBox="0 0 16 16"
-              width="1em"
-            >
-              <path
-                d="M5 4h9M5 8h9M5 12h9"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth="1.5"
-              />
-              <circle cx="2" cy="4" fill="currentColor" r="1" />
-              <circle cx="2" cy="8" fill="currentColor" r="1" />
-              <circle cx="2" cy="12" fill="currentColor" r="1" />
-            </svg>
-          </IconButton>
-        </Popover.Trigger>
-      </Box>
+            <path
+              d="M5 4h9M5 8h9M5 12h9"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="1.5"
+            />
+            <circle cx="2" cy="4" fill="currentColor" r="1" />
+            <circle cx="2" cy="8" fill="currentColor" r="1" />
+            <circle cx="2" cy="12" fill="currentColor" r="1" />
+          </svg>
+          Table of contents
+        </Button>
+      </Popover.Trigger>
       <Portal>
         <Popover.Positioner>
           <Popover.Content

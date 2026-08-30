@@ -388,6 +388,92 @@ describe("App", () => {
     );
   });
 
+  it("opens instructions for the selected document from its action bar", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const instructionRequests: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([
+            { id: 1, relativePath: "first.md", title: "first.md" },
+            { id: 2, relativePath: "second.md", title: "second.md" },
+          ]));
+        }
+        if (/^\/__sadoku\/documents\/[12]$/.test(url)) {
+          const id = url.endsWith("2") ? 2 : 1;
+          return Promise.resolve(Response.json({
+            markdown: `# Document ${id}`,
+            title: `document-${id}.md`,
+          }));
+        }
+        if (/^\/__sadoku\/documents\/[12]\/comments$/.test(url)) {
+          return Promise.resolve(Response.json({ comments: [] }));
+        }
+        if (/^\/__sadoku\/documents\/[12]\/instructions$/.test(url)) {
+          instructionRequests.push(url);
+          return Promise.resolve(Response.json({ instructions: [] }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+
+    const { container } = render(<App />);
+    expect(screen.queryByRole("button", { name: "Instructions" })).toBeNull();
+
+    fireEvent.click(await screen.findByRole("treeitem", { name: "first.md" }));
+    const firstActionBar = await screen.findByRole("dialog", {
+      name: "Document actions",
+    });
+    const firstInstructionsButton = within(firstActionBar).getByRole("button", {
+      name: "Instructions",
+    });
+    expect(
+      firstInstructionsButton.querySelector("svg")?.getAttribute(
+        "aria-hidden",
+      ),
+    ).toBe("true");
+    const tableOfContentsButton = within(firstActionBar).getByRole("button", {
+      name: "Table of contents",
+    });
+    expect(
+      tableOfContentsButton.querySelector("svg")?.getAttribute(
+        "aria-hidden",
+      ),
+    ).toBe("true");
+    expect(container.querySelector("header")?.contains(firstInstructionsButton))
+      .toBe(false);
+    fireEvent.click(firstInstructionsButton);
+    expect(
+      await screen.findByRole("dialog", { name: "Document instructions" }),
+    ).not.toBeNull();
+    await waitFor(() =>
+      expect(instructionRequests).toEqual([
+        "/__sadoku/documents/1/instructions",
+      ])
+    );
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "Close document instructions",
+    }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Document instructions" }))
+        .toBeNull()
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "second.md" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Instructions" }),
+    );
+    await waitFor(() =>
+      expect(instructionRequests).toEqual([
+        "/__sadoku/documents/1/instructions",
+        "/__sadoku/documents/2/instructions",
+      ])
+    );
+  });
+
   it("opens settings and selects and saves light and dark preview themes", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
