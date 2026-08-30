@@ -553,6 +553,7 @@ describe("App", () => {
     const textSizeControls = screen.getByRole("group", {
       name: "Text size controls",
     });
+    expect(getComputedStyle(textSizeControls).alignItems).toBe("center");
     expect(textSizeControls.contains(decreaseTextSize)).toBe(true);
     expect(textSizeControls.contains(increaseTextSize)).toBe(true);
     expect(screen.queryByRole("button", {
@@ -569,6 +570,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          excludedDirectories: [".git", "node_modules"],
           fontScale: 1.1,
           maxDepth: 2,
           maxFiles: 20,
@@ -610,6 +612,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          excludedDirectories: [".git", "node_modules"],
           fontScale: 1.1,
           maxDepth: 4,
           maxFiles: 20,
@@ -625,6 +628,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          excludedDirectories: [".git", "node_modules"],
           fontScale: 1.1,
           maxDepth: 4,
           maxFiles: 100,
@@ -647,6 +651,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        excludedDirectories: [".git", "node_modules"],
         fontScale: 1.1,
         maxDepth: 4,
         maxFiles: 100,
@@ -666,6 +671,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        excludedDirectories: [".git", "node_modules"],
         fontScale: 1.1,
         maxDepth: 4,
         maxFiles: 100,
@@ -674,6 +680,38 @@ describe("App", () => {
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
+
+    const excludedDirectoriesInput = screen.getByRole("textbox", {
+      name: "Excluded directories",
+    });
+    const excludedDirectoriesControl = excludedDirectoriesInput.closest(
+      '[data-part="root"][data-scope="tags-input"]',
+    );
+    expect(getComputedStyle(excludedDirectoriesControl!).display).toBe("grid");
+    expect(
+      getComputedStyle(screen.getByText("Excluded directories")).alignItems,
+    )
+      .toBe("center");
+    expect((excludedDirectoriesInput as HTMLInputElement).value).toBe("");
+    expect(screen.getByText(".git")).not.toBeNull();
+    expect(screen.getByText("node_modules")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", {
+      name: "Delete tag node_modules",
+    }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+        body: JSON.stringify({
+          codeWrap: "scroll",
+          excludedDirectories: [".git"],
+          fontScale: 1.1,
+          maxDepth: 4,
+          maxFiles: 100,
+          theme: "light",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PUT",
+      })
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
     await waitFor(() =>
@@ -751,8 +789,14 @@ describe("App", () => {
       if (url === "/__sadoku/settings") {
         return Promise.resolve(Response.json(
           init?.method === "PUT"
-            ? { codeWrap: JSON.parse(String(init.body)).codeWrap }
-            : { codeWrap: "wrap" },
+            ? {
+              codeWrap: JSON.parse(String(init.body)).codeWrap,
+              excludedDirectories: [".git", "node_modules"],
+            }
+            : {
+              codeWrap: "wrap",
+              excludedDirectories: [".git", "node_modules"],
+            },
         ));
       }
       if (url === "/__sadoku/documents/1") {
@@ -798,6 +842,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        excludedDirectories: [".git", "node_modules"],
         fontScale: 1,
         maxDepth: 2,
         maxFiles: 20,

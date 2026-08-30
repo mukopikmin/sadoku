@@ -26,7 +26,11 @@ const request = (
     headers: { "content-type": contentType },
     body: JSON.stringify(
       typeof body === "object" && body !== null && !Array.isArray(body)
-        ? { fontScale: 1, ...body }
+        ? {
+          excludedDirectories: [".git", "node_modules"],
+          fontScale: 1,
+          ...body,
+        }
         : body,
     ),
   });
@@ -50,6 +54,7 @@ Deno.test("GET reads preview settings", async () => {
     assertEquals(response.headers.get("cache-control"), "no-store");
     assertEquals(await response.json(), {
       codeWrap: "scroll",
+      excludedDirectories: [".git", "node_modules"],
       fontScale: 1,
       maxDepth: 2,
       maxFiles: 20,
@@ -71,6 +76,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
     const response = await updateSettings(
       request({
         codeWrap: "wrap",
+        excludedDirectories: [".git", "vendor"],
         fontScale: 1.2,
         maxDepth: 4,
         maxFiles: 100,
@@ -81,6 +87,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
     assertEquals(response.status, 200);
     assertEquals(await response.json(), {
       codeWrap: "wrap",
+      excludedDirectories: [".git", "vendor"],
       fontScale: 1.2,
       maxDepth: 4,
       maxFiles: 100,
@@ -91,6 +98,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
       commentsDirectory: "/tmp/comments",
       directoryMaxDepth: 4,
       directoryMaxFiles: 100,
+      excludedDirectories: [".git", "vendor"],
       fontScale: 1.2,
       themeMode: "dark",
     });
@@ -166,6 +174,30 @@ Deno.test("PUT rejects invalid directory discovery limits", async () => {
         (await updateSettings(request({
           codeWrap: "wrap",
           ...limits,
+          theme: "dark",
+        }))).status,
+        400,
+      );
+    }
+  });
+});
+
+Deno.test("PUT rejects invalid excluded directories", async () => {
+  await withSettings(async () => {
+    for (
+      const excludedDirectories of [
+        "vendor",
+        ["vendor", "vendor"],
+        ["nested/vendor"],
+        [".."],
+      ]
+    ) {
+      assertEquals(
+        (await updateSettings(request({
+          codeWrap: "wrap",
+          excludedDirectories,
+          maxDepth: 2,
+          maxFiles: 20,
           theme: "dark",
         }))).status,
         400,

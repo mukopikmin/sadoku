@@ -89,9 +89,11 @@ export const App = () => {
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
+    changeExcludedDirectories,
     changeFontScale,
     changeThemeMode,
     codeWrapMode,
+    excludedDirectories,
     fontScale,
     maxDepth,
     maxFiles,
@@ -218,11 +220,13 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          excludedDirectories={excludedDirectories}
           fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
+          onExcludedDirectoriesChange={changeExcludedDirectories}
           onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
@@ -297,11 +301,13 @@ export const App = () => {
         />
         <SettingsDialog
           codeWrapMode={codeWrapMode}
+          excludedDirectories={excludedDirectories}
           fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
+          onExcludedDirectoriesChange={changeExcludedDirectories}
           onFontScaleChange={changeFontScale}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
@@ -364,11 +370,13 @@ export const App = () => {
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
+        excludedDirectories={excludedDirectories}
         fontScale={fontScale}
         maxDepth={maxDepth}
         maxFiles={maxFiles}
         onCodeWrapModeChange={changeCodeWrapMode}
         onDirectoryLimitsChange={changeDirectoryLimits}
+        onExcludedDirectoriesChange={changeExcludedDirectories}
         onFontScaleChange={changeFontScale}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}

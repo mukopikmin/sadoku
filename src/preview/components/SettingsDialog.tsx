@@ -6,18 +6,21 @@ import {
   NativeSelect,
   Portal,
   Switch,
+  TagsInput,
   Text,
 } from "@chakra-ui/react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { CodeWrapMode, ThemeMode } from "../models/theme";
 
 type SettingsDialogProps = {
   codeWrapMode: CodeWrapMode;
+  excludedDirectories: string[];
   fontScale: number;
   maxDepth: number;
   maxFiles: number;
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onDirectoryLimitsChange: (maxDepth: number, maxFiles: number) => void;
+  onExcludedDirectoriesChange: (excludedDirectories: string[]) => void;
   onFontScaleChange: (fontScale: number) => void;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
@@ -27,11 +30,13 @@ type SettingsDialogProps = {
 
 export const SettingsDialog = ({
   codeWrapMode,
+  excludedDirectories,
   fontScale,
   maxDepth,
   maxFiles,
   onCodeWrapModeChange,
   onDirectoryLimitsChange,
+  onExcludedDirectoriesChange,
   onFontScaleChange,
   onOpenChange,
   onThemeModeChange,
@@ -39,6 +44,12 @@ export const SettingsDialog = ({
   themeMode,
 }: SettingsDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [excludedDirectoriesError, setExcludedDirectoriesError] = useState<
+    string
+  >();
+  const isValidExcludedDirectory = (directory: string) =>
+    directory.length > 0 && directory !== "." && directory !== ".." &&
+    !directory.includes("/") && !directory.includes("\\");
   const fontScales = [0.75, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5];
   const scaleIndex = fontScales.findIndex((scale) => scale >= fontScale);
   const decreaseScale = fontScales[Math.max(0, scaleIndex - 1)];
@@ -103,6 +114,7 @@ export const SettingsDialog = ({
                     </Text>
                   </Text>
                   <Flex
+                    alignItems="center"
                     aria-label="Text size controls"
                     gap="2"
                     role="group"
@@ -222,6 +234,58 @@ export const SettingsDialog = ({
                         width="24"
                       />
                     </Flex>
+                    <TagsInput.Root
+                      addOnPaste
+                      alignItems="start"
+                      aria-describedby="excluded-directories-help"
+                      blurBehavior="add"
+                      display="grid"
+                      gap="4"
+                      gridTemplateColumns={{
+                        base: "1fr",
+                        sm: "1fr minmax(0, 15rem)",
+                      }}
+                      invalid={excludedDirectoriesError !== undefined}
+                      onInputValueChange={() =>
+                        setExcludedDirectoriesError(undefined)}
+                      onValueChange={({ value }) => {
+                        setExcludedDirectoriesError(undefined);
+                        onExcludedDirectoriesChange(value);
+                      }}
+                      onValueInvalid={() =>
+                        setExcludedDirectoriesError(
+                          "Enter a directory name without path separators.",
+                        )}
+                      sanitizeValue={(value) => value.trim()}
+                      validate={({ inputValue }) =>
+                        isValidExcludedDirectory(inputValue.trim())}
+                      value={excludedDirectories}
+                    >
+                      <TagsInput.Label
+                        alignItems="center"
+                        display="flex"
+                        minH="10"
+                      >
+                        Excluded directories
+                      </TagsInput.Label>
+                      <Flex direction="column" gap="1" minW="0">
+                        <TagsInput.Control>
+                          <TagsInput.Items />
+                          <TagsInput.Input placeholder="Add a directory" />
+                        </TagsInput.Control>
+                        <TagsInput.HiddenInput />
+                        <Text
+                          color={excludedDirectoriesError
+                            ? "fg.error"
+                            : "fg.muted"}
+                          fontSize="sm"
+                          id="excluded-directories-help"
+                        >
+                          {excludedDirectoriesError ??
+                            "Press Enter or comma to add a name. Names match at every level."}
+                        </Text>
+                      </Flex>
+                    </TagsInput.Root>
                   </Flex>
                 </Flex>
               </Flex>

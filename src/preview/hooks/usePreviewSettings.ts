@@ -14,6 +14,10 @@ export const usePreviewSettings = () => {
   const [codeWrapMode, setCodeWrapMode] = useState<CodeWrapMode>("scroll");
   const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
   const [fontScale, setFontScale] = useState(1);
+  const [excludedDirectories, setExcludedDirectories] = useState<string[]>([
+    ".git",
+    "node_modules",
+  ]);
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxFiles, setMaxFiles] = useState(20);
   const userChangedSettings = useRef(false);
@@ -38,6 +42,7 @@ export const usePreviewSettings = () => {
       setThemeMode(settingsQuery.data.theme);
     }
     setFontScale(settingsQuery.data.fontScale);
+    setExcludedDirectories(settingsQuery.data.excludedDirectories);
     setMaxDepth(settingsQuery.data.maxDepth);
     setMaxFiles(settingsQuery.data.maxFiles);
   }, [settingsQuery.data]);
@@ -66,6 +71,7 @@ export const usePreviewSettings = () => {
     setCodeWrapMode(next);
     saveMutation.mutate({
       codeWrap: next,
+      excludedDirectories,
       fontScale,
       maxDepth,
       maxFiles,
@@ -78,6 +84,7 @@ export const usePreviewSettings = () => {
     setThemeMode(next);
     saveMutation.mutate({
       codeWrap: codeWrapMode,
+      excludedDirectories,
       fontScale,
       maxDepth,
       maxFiles,
@@ -90,6 +97,7 @@ export const usePreviewSettings = () => {
     setFontScale(next);
     saveMutation.mutate({
       codeWrap: codeWrapMode,
+      excludedDirectories,
       fontScale: next,
       maxDepth,
       maxFiles,
@@ -106,6 +114,7 @@ export const usePreviewSettings = () => {
     setMaxFiles(nextMaxFiles);
     saveMutation.mutate({
       codeWrap: codeWrapMode,
+      excludedDirectories,
       fontScale,
       maxDepth: nextMaxDepth,
       maxFiles: nextMaxFiles,
@@ -113,12 +122,27 @@ export const usePreviewSettings = () => {
     });
   };
 
+  const changeExcludedDirectories = (next: string[]) => {
+    userChangedSettings.current = true;
+    setExcludedDirectories(next);
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      excludedDirectories: next,
+      fontScale,
+      maxDepth,
+      maxFiles,
+      theme: themeMode,
+    });
+  };
+
   return {
     changeCodeWrapMode,
     changeDirectoryLimits,
+    changeExcludedDirectories,
     changeFontScale,
     changeThemeMode,
     codeWrapMode,
+    excludedDirectories,
     fontScale,
     maxDepth,
     maxFiles,
