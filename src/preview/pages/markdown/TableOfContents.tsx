@@ -1,6 +1,6 @@
 import {
   Box,
-  IconButton,
+  Button,
   Link,
   List,
   Popover,
@@ -50,34 +50,13 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       size="lg"
     >
       <Popover.Trigger asChild>
-        <IconButton
-          aria-label="Table of contents"
-          bg="canvas"
-          boxShadow="md"
-          color="fg"
-          rounded="full"
-          size="lg"
+        <Button
+          size="sm"
           type="button"
           variant="outline"
         >
-          <svg
-            aria-hidden="true"
-            fill="none"
-            height="1em"
-            viewBox="0 0 16 16"
-            width="1em"
-          >
-            <path
-              d="M5 4h9M5 8h9M5 12h9"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="1.5"
-            />
-            <circle cx="2" cy="4" fill="currentColor" r="1" />
-            <circle cx="2" cy="8" fill="currentColor" r="1" />
-            <circle cx="2" cy="12" fill="currentColor" r="1" />
-          </svg>
-        </IconButton>
+          Table of contents
+        </Button>
       </Popover.Trigger>
       <Portal>
         <Popover.Positioner>

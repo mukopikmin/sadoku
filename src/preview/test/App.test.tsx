@@ -423,7 +423,7 @@ describe("App", () => {
     expect(screen.queryByRole("button", { name: "Instructions" })).toBeNull();
 
     fireEvent.click(await screen.findByRole("treeitem", { name: "first.md" }));
-    const firstActionBar = await screen.findByRole("navigation", {
+    const firstActionBar = await screen.findByRole("dialog", {
       name: "Document actions",
     });
     const firstInstructionsButton = within(firstActionBar).getByRole("button", {
