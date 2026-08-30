@@ -29,6 +29,16 @@ Deno.test("rejects invalid release versions", () => {
   );
 });
 
+Deno.test("rejects prerelease and build metadata for stable releases", () => {
+  for (const version of ["0.1.0-rc.1", "0.1.0+build.1"]) {
+    assertThrows(
+      () => parseArguments(["check", "--version", version]),
+      Error,
+      "Invalid semantic version",
+    );
+  }
+});
+
 Deno.test("selects the newest non-draft stable release", () => {
   assertEquals(
     selectPreviousStableTag([

@@ -31,7 +31,7 @@ export const parseArguments = (args: string[]): ReleaseArguments => {
   const version = versionIndex === -1 ? undefined : args[versionIndex + 1];
   if (!version) throw new Error("Missing --version <version>.");
   if (
-    !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)
+    !/^\d+\.\d+\.\d+$/.test(version)
   ) {
     throw new Error(`Invalid semantic version: ${version}`);
   }

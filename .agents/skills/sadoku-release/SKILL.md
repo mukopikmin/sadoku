@@ -1,6 +1,6 @@
 ---
 name: sadoku-release
-description: Propose a semantic version, then prepare and publish Sadoku stable releases with deterministic preflight checks, generated release-note review, explicit approval gates, tag creation, GitHub Actions monitoring, and final artifact verification. Use when asked to prepare, cut, publish, or verify a Sadoku stable release, whether or not a version is specified.
+description: Propose a semantic version, then orchestrate GitHub Actions that prepare and publish Sadoku stable releases with an explicit approval gate. Use when asked to prepare, cut, publish, or verify a Sadoku stable release, whether or not a version is specified.
 ---
 
 # Sadoku Release
@@ -11,12 +11,15 @@ the user's language.
 
 ## Safety Rules
 
-- Release only the exact tested commit on `main` that matches `origin/main`.
+- Release only the exact tested commit on `main`. Let GitHub Actions make this
+  decision; local inspection is advisory.
 - Never delete, stash, commit, or overwrite user changes to obtain a clean tree.
 - Never force, move, or reuse a release tag that points to another commit.
-- Never push a release tag until the user approves the generated notes and SHA.
+- Never start the Publish Release workflow until the user approves the generated
+  notes, SHA, and release-plan digest produced by Prepare Release.
 - Invalidate approval if `HEAD`, `origin/main`, or the generated notes change.
-- Never publish from a failed or missing `Test` workflow run.
+- Never bypass a failed Prepare Release workflow or publish artifacts built
+  outside it.
 - Treat `v0.0.0-nightly` as a prerelease, never as the stable notes baseline.
 - Do not repair or overwrite a failed published release without new approval.
 
@@ -42,8 +45,7 @@ the user's language.
 4. Present the current stable version, proposed version, increment category,
    rationale, and the principal pull requests or changes in the user's language.
    Ask the user to approve the proposal or provide another version. This is a
-   mandatory gate: do not synchronize `main`, run preflight, build artifacts, or
-   create a tag until the version is confirmed.
+   mandatory gate: do not start Prepare Release until the version is confirmed.
 5. If the user supplied a version, still compare it with the changes. Warn about
    a suspected semantic-version mismatch and require explicit confirmation
    before proceeding.
@@ -51,13 +53,15 @@ the user's language.
    and derive the tag as `v<version>`.
 7. Report any open pull requests that the release will omit.
 
-### 2. Synchronize `main`
+### 2. Select the Target Commit
 
-1. Stop if tracked or untracked user files would be overwritten.
-2. Run `git fetch origin --prune`, switch to `main`, and fast-forward only to
-   `origin/main`. Do not use `git fetch --tags`: the rolling nightly tag moves
-   and must not be forced over a local tag.
-3. Do not merge divergent work. Stop and report the divergence.
+1. Fetch `origin/main` without modifying the user's working tree and resolve its
+   full commit SHA. Do not switch branches, pull, build, or require a clean
+   tree.
+2. Do not use `git fetch --tags`: the rolling nightly tag moves and must not be
+   forced over a local tag.
+3. Use the full `origin/main` SHA as the preparation input. GitHub Actions must
+   reject it if it no longer matches `main` or lacks a successful `Test` run.
 4. For the first stable release only, verify `release-notes-baseline` exists at
    the repository root commit. If it is absent, show the root SHA and ask for
    approval before creating and pushing that lightweight non-release tag.
@@ -65,67 +69,80 @@ the user's language.
    generation when it is missing locally. Never fetch the nightly tag with a
    forced refspec.
 
-### 3. Run Preflight
+### 3. Prepare in GitHub Actions
 
-Run:
-
-```sh
-deno task release:check --version <version>
-```
-
-Require `ok: true` in its JSON result. The task verifies the branch, clean tree,
-remote SHA, ahead/behind counts, baseline, release-tag absence, and successful
-`Test` workflow for the exact SHA. Do not bypass a failed check.
-
-Run the repository checks required by `.github/workflows/test.yml`. Build
-release artifacts with `deno task dist --version <version>` in a clean
-environment and verify the native binary before requesting approval.
-
-### 4. Generate and Review Notes
-
-Generate the exact GitHub release-note preview without creating a release:
+Start the version-controlled workflow:
 
 ```sh
-deno task release:notes --version <version> --output /tmp/sadoku-release-notes.json
+gh workflow run release_prepare.yml \
+  -f version=<version> \
+  -f target_sha=<full-origin-main-sha>
 ```
 
-Read the JSON and present the target SHA, start tag, title, and body. Confirm
-that expected merged pull requests are present, open pull requests are absent,
-the changelog is non-empty, and no private or unsuitable text appears.
+Find the resulting `Prepare Release` run and monitor it until it succeeds or
+fails. The workflow, not the agent's machine, verifies the target SHA,
+successful `Test` run, tag and release absence, builds and verifies release
+artifacts, and generates the release plan. Do not duplicate these decisions or
+build release artifacts locally. On failure, report the failing step and logs.
 
-Stop and ask the user to approve both the displayed notes and exact target SHA.
-This is a mandatory gate, not a non-blocking question.
+### 4. Review the Prepared Plan
 
-### 5. Revalidate and Tag
+Download the `release-candidate` artifact from the exact preparation run into a
+temporary directory. Read `release-plan.json` and `release-notes.md`, calculate
+the plan's SHA-256 locally, and require it to match the digest shown in the
+workflow summary. Do not edit or repackage the artifact.
+
+```sh
+gh run download <prepare-run-id> --name release-candidate --dir <temporary-dir>
+```
+
+Present the preparation run URL, target SHA, start tag, title, notes, artifact
+names and checksums, and release-plan SHA-256. Confirm that expected merged pull
+requests are present, open pull requests are absent, the changelog is non-empty,
+and no private or unsuitable text appears.
+
+Stop and ask the user to approve the displayed notes, exact target SHA, and plan
+SHA-256. This is a mandatory gate, not a non-blocking question.
+
+### 5. Publish the Approved Candidate
 
 After approval:
 
-1. Fetch again without changing the approved commit.
-2. Rerun `release:check` and `release:notes`.
-3. Compare the SHA, start tag, title, and body with the approved JSON. If any
-   field differs, discard approval and return to review.
-4. Create an annotated `v<version>` tag on the full approved SHA and show the
-   tag before pushing it.
-5. Push only that tag without force. Tag push starts the Release workflow.
+1. Start `Publish Release` with only the approved preparation run ID and plan
+   digest:
+
+   ```sh
+   gh workflow run release.yml \
+     -f prepare_run_id=<prepare-run-id> \
+     -f plan_sha256=<approved-plan-sha256>
+   ```
+
+2. Do not create or push a tag locally. The workflow revalidates `main`, the
+   latest stable release, tag and release absence, the plan digest, and every
+   artifact checksum before it creates the annotated tag and GitHub release.
+3. If revalidation fails, discard approval and return to Inspect. Never change
+   workflow inputs to bypass a failed invariant.
 
 ### 6. Monitor and Verify
 
-1. Monitor the Release workflow for the tagged SHA until it succeeds or fails.
+1. Monitor the exact Publish Release run until it succeeds or fails.
 2. On failure, report the failing step and logs. Do not move the tag or replace
    the release automatically.
 3. On success, verify the release is stable and latest, its target SHA matches,
    generated notes use the approved start tag, and all three platform archives,
    per-archive SHA-256 files, and `checksums.txt` are attached.
-4. Download the published checksums and verify assets where practical.
+4. Use the workflow's deterministic verification as the source of truth. You may
+   download published checksums for an additional independent check.
 5. Report the release URL, tag, SHA, notes range, assets, verification results,
    and omitted open pull requests.
 
 ## Retry Rules
 
-- Before tag push, rerun safely from Inspect or Preflight.
+- Before publication, start a new preparation run if the target or release state
+  changes. Never reuse approval for another preparation run.
 - If the baseline tag exists at the expected root SHA, reuse it; if it points
   elsewhere, stop.
 - If the release tag exists at the approved SHA but no release exists, stop and
-  ask whether to retry the workflow. Do not push or recreate it automatically.
+  report the partial publication. Do not push or recreate it automatically.
 - If a GitHub release already exists for the tag, verify and report it instead
   of creating a duplicate.
