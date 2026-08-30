@@ -14,7 +14,14 @@ questions, and the final report.
 ## Workflow
 
 1. Identify the target Markdown document.
-2. List its comments:
+2. List its document instructions, then list its comments:
+
+   ```sh
+   sadoku instruction list --source <markdown-path>
+   ```
+
+   Apply every instruction returned by the command throughout the review. Then
+   retrieve the comments:
 
    ```sh
    sadoku comment list --source <markdown-path>

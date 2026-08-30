@@ -22,6 +22,12 @@ import {
   inspectDocument,
   listRegisteredDocuments,
 } from "./document_cli.ts";
+import {
+  addInstruction,
+  deleteInstruction,
+  listInstructions,
+  updateInstruction,
+} from "./instruction_cli.ts";
 import { logInfo } from "../../log.ts";
 import type { PreviewServerOptions } from "../server.ts";
 import { createConfiguredStores } from "../storage/factory.ts";
@@ -74,6 +80,26 @@ const resolveCommentSource = async (
     await stores.documents.ensure(source.commentSource);
   }
   return source.documentSource;
+};
+
+const resolveInstructionDocument = async (
+  options: CliOptions,
+  stores: ConfiguredStores,
+) => {
+  if (options.documentId !== undefined) {
+    const document = await stores.documents.findById(options.documentId);
+    if (!document) throw new Error(`Document not found: ${options.documentId}`);
+    return document;
+  }
+
+  const source = createPreviewSource(options.source!);
+  const document = await stores.documents.findByFilePath(source.commentSource);
+  if (!document) {
+    throw new Error(
+      `Document is not registered: ${source.commentSource}. Run \`sadoku document add ${options.source}\` first.`,
+    );
+  }
+  return document;
 };
 
 const runWithStores = async <T>(
@@ -209,6 +235,49 @@ const executeCli = async (
             commentOptions,
           );
           return io.log(`Deleted reply ${options.replyId}.`);
+      }
+    });
+    return;
+  }
+
+  if (options.command?.startsWith("instruction-")) {
+    await runWithStores(async (stores) => {
+      const document = await resolveInstructionDocument(options, stores);
+      switch (options.command) {
+        case "instruction-list":
+          return printJson(io, {
+            document,
+            instructions: await listInstructions(
+              document.id,
+              stores.instructions,
+            ),
+          });
+        case "instruction-add":
+          return printJson(
+            io,
+            await addInstruction(
+              document.id,
+              options.content!,
+              stores.instructions,
+            ),
+          );
+        case "instruction-update":
+          return printJson(
+            io,
+            await updateInstruction(
+              document.id,
+              options.instructionId!,
+              options.content!,
+              stores.instructions,
+            ),
+          );
+        case "instruction-delete":
+          await deleteInstruction(
+            document.id,
+            options.instructionId!,
+            stores.instructions,
+          );
+          return io.log(`Deleted instruction ${options.instructionId}.`);
       }
     });
     return;

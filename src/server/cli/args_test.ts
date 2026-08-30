@@ -173,4 +173,87 @@ Deno.test("usage documents singular resource commands", () => {
   assertMatch(usage, /comment delete/);
   assertMatch(usage, /comment reply update/);
   assertMatch(usage, /--ensure-document/);
+  assertMatch(usage, /instruction list \(--document <id> \| --source/);
+  assertMatch(usage, /instruction add .*--content <text>/);
+  assertMatch(usage, /instruction update <instruction-id>/);
+  assertMatch(usage, /instruction delete <instruction-id>/);
+});
+
+Deno.test("parses every instruction command", () => {
+  assertEquals(
+    parseArgs(["instruction", "list", "--document", "3"]).command,
+    "instruction-list",
+  );
+  assertEquals(
+    parseArgs([
+      "instruction",
+      "add",
+      "--source",
+      "README.md",
+      "--content",
+      "Keep this concise.",
+    ]).content,
+    "Keep this concise.",
+  );
+  const update = parseArgs([
+    "instruction",
+    "update",
+    "4",
+    "--document",
+    "3",
+    "--content",
+    "Updated.",
+  ]);
+  assertEquals(update.command, "instruction-update");
+  assertEquals(update.instructionId, 4);
+  assertEquals(
+    parseArgs(["instruction", "delete", "4", "--source", "README.md"])
+      .command,
+    "instruction-delete",
+  );
+});
+
+Deno.test("validates instruction selectors, IDs, and required content", () => {
+  for (
+    const args of [
+      ["instruction", "list"],
+      ["instruction", "list", "--document", "1", "--source", "README.md"],
+      ["instruction", "update", "0", "--document", "1", "--content", "x"],
+      ["instruction", "delete", "nope", "--document", "1"],
+      ["instruction", "add", "--document", "1"],
+      ["instruction", "update", "1", "--document", "1"],
+    ]
+  ) assertThrows(() => parseArgs(args), CliUsageError);
+});
+
+Deno.test("rejects forbidden options on instruction commands", () => {
+  for (
+    const option of [
+      ["--ensure-document"],
+      ["--body", "x"],
+      ["--comment", "1"],
+      ["--start-line", "1"],
+      ["--as-bot"],
+      ["--port", "4000"],
+      ["--channel", "stable"],
+    ]
+  ) {
+    assertThrows(
+      () => parseArgs(["instruction", "list", "--document", "1", ...option]),
+      CliUsageError,
+    );
+  }
+  assertThrows(
+    () =>
+      parseArgs([
+        "instruction",
+        "delete",
+        "1",
+        "--document",
+        "1",
+        "--content",
+        "x",
+      ]),
+    CliUsageError,
+  );
 });
