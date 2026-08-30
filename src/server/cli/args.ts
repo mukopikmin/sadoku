@@ -7,6 +7,10 @@ export type CliCommand =
   | "document-add"
   | "document-inspect"
   | "document-list"
+  | "instruction-add"
+  | "instruction-delete"
+  | "instruction-list"
+  | "instruction-update"
   | "comment-add"
   | "comment-delete"
   | "comment-list"
@@ -24,11 +28,13 @@ export type CliOptions = {
   command?: CliCommand;
   commentId?: number;
   commentIds?: number[];
+  content?: string;
   documentId?: number;
   endLine?: number;
   ensureDocument: boolean;
   file?: string;
   host: string;
+  instructionId?: number;
   keepAlive: boolean;
   maxDepth?: number;
   maxFiles?: number;
@@ -54,6 +60,10 @@ export const usage = `Usage:
   sadoku document add <file.md|url>
   sadoku document inspect <document-id>
   sadoku document list
+  sadoku instruction list (--document <id> | --source <file.md|url>)
+  sadoku instruction add (--document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction update <instruction-id> (--document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction delete <instruction-id> (--document <id> | --source <file.md|url>)
   sadoku comment list (--document <id> | --source <file.md|url>)
   sadoku comment add (--document <id> | --source <file.md|url> [--ensure-document]) --start-line <line> [--end-line <line>] --body <text> [--as-bot]
   sadoku comment update <comment-id> (--document <id> | --source <file.md|url>) --body <text>
@@ -73,6 +83,7 @@ Options:
   --start-line      First commented line.
   --end-line        Last commented line. Defaults to --start-line.
   --body            Comment or reply body.
+  --content         Instruction content.
   --as-bot          Attribute supported comment actions to a bot.
   --request-review  Request review in a bot reply (requires --as-bot).
   -p, --port        Starting preview port. Defaults to 3334.
@@ -113,6 +124,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         "body",
         "channel",
         "comment",
+        "content",
         "document",
         "end-line",
         "host",
@@ -163,9 +175,12 @@ export const parseArgs = (argv: string[]): CliOptions => {
     flags["end-line"] !== undefined || flags.source !== undefined ||
     flags["start-line"] !== undefined || flags["as-bot"] ||
     flags["ensure-document"] || flags["request-review"];
+  const hasInstructionOption = flags.content !== undefined;
 
   if (words[0] === "start" || words.length === 0) {
-    if (hasCommentOption || flags.channel !== undefined) {
+    if (
+      hasCommentOption || hasInstructionOption || flags.channel !== undefined
+    ) {
       throw new CliUsageError(
         "Preview commands do not accept document, comment, or update options.",
       );
@@ -184,7 +199,8 @@ export const parseArgs = (argv: string[]): CliOptions => {
       throw new CliUsageError("update does not accept positional arguments.");
     }
     if (
-      hasCommentOption || base.host !== "127.0.0.1" || base.port !== 3334 ||
+      hasCommentOption || hasInstructionOption || base.host !== "127.0.0.1" ||
+      base.port !== 3334 ||
       !base.open || base.keepAlive || maxDepth !== undefined ||
       maxFiles !== undefined
     ) {
@@ -212,7 +228,9 @@ export const parseArgs = (argv: string[]): CliOptions => {
   noPreviewOptions();
 
   if (words[0] === "document") {
-    if (hasCommentOption || flags.channel !== undefined) {
+    if (
+      hasCommentOption || hasInstructionOption || flags.channel !== undefined
+    ) {
       throw new CliUsageError(
         "document commands do not accept comment or update options.",
       );
@@ -233,11 +251,73 @@ export const parseArgs = (argv: string[]): CliOptions => {
     throw new CliUsageError("Invalid document command.");
   }
 
+  if (words[0] === "instruction") {
+    if (flags.channel !== undefined) {
+      throw new CliUsageError("--channel is only accepted by update.");
+    }
+    if (
+      flags.body !== undefined || flags.comment !== undefined ||
+      flags["start-line"] !== undefined || flags["end-line"] !== undefined ||
+      flags["as-bot"] || flags["ensure-document"] ||
+      flags["request-review"]
+    ) {
+      throw new CliUsageError(
+        "instruction commands do not accept comment options or --ensure-document.",
+      );
+    }
+    const documentId = flags.document === undefined
+      ? undefined
+      : positiveInteger(flags.document, "Document ID");
+    const source = flags.source?.toString();
+    if ((documentId === undefined) === (source === undefined)) {
+      throw new CliUsageError("Specify exactly one of --document or --source.");
+    }
+    const target = { documentId, source };
+    const content = flags.content?.toString();
+    if (words[1] === "list" && words.length === 2) {
+      if (content !== undefined) {
+        throw new CliUsageError("instruction list does not accept --content.");
+      }
+      return { ...base, ...target, command: "instruction-list" };
+    }
+    if (words[1] === "add" && words.length === 2) {
+      if (content === undefined) {
+        throw new CliUsageError("--content is required.");
+      }
+      return { ...base, ...target, command: "instruction-add", content };
+    }
+    if (
+      (words[1] === "update" || words[1] === "delete") && words.length === 3
+    ) {
+      if (words[1] === "update" && content === undefined) {
+        throw new CliUsageError("--content is required.");
+      }
+      if (words[1] === "delete" && content !== undefined) {
+        throw new CliUsageError(
+          "instruction delete does not accept --content.",
+        );
+      }
+      return {
+        ...base,
+        ...target,
+        command: `instruction-${words[1]}` as CliCommand,
+        ...(content !== undefined ? { content } : {}),
+        instructionId: positiveInteger(words[2], "Instruction ID"),
+      };
+    }
+    throw new CliUsageError("Invalid instruction command.");
+  }
+
   if (words[0] !== "comment") {
     throw new CliUsageError(`Invalid command: ${words[0]}`);
   }
   if (flags.channel !== undefined) {
     throw new CliUsageError("--channel is only accepted by update.");
+  }
+  if (hasInstructionOption) {
+    throw new CliUsageError(
+      "--content is only accepted by instruction commands.",
+    );
   }
   const documentId = flags.document === undefined
     ? undefined
