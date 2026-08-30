@@ -32,8 +32,8 @@ export const instructionsQueryKey = (documentId?: number) =>
   ["instructions", documentId] as const;
 export const tagsQueryKey = ["tags"] as const;
 
-export const useTagsQuery = () =>
-  useQuery({ queryFn: loadTags, queryKey: tagsQueryKey });
+export const useTagsQuery = (enabled = true) =>
+  useQuery({ enabled, queryFn: loadTags, queryKey: tagsQueryKey });
 export const useTagActions = (documentId: number) => {
   const queryClient = useQueryClient();
   const refresh = async () => {

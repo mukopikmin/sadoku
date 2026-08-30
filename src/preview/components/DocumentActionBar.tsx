@@ -4,15 +4,24 @@ import { TableOfContents } from "../pages/markdown/TableOfContents";
 type DocumentActionBarProps = {
   markdown?: string;
   onOpenInstructions: () => void;
+  onOpenTags: () => void;
 };
 
 export const DocumentActionBar = (
-  { markdown, onOpenInstructions }: DocumentActionBarProps,
+  { markdown, onOpenInstructions, onOpenTags }: DocumentActionBarProps,
 ) => (
   <ActionBar.Root open>
     <Portal>
       <ActionBar.Positioner>
         <ActionBar.Content aria-label="Document actions">
+          <Button
+            onClick={onOpenTags}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Tags
+          </Button>
           <Button
             onClick={onOpenInstructions}
             size="sm"
