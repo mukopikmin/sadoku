@@ -683,18 +683,17 @@ describe("App", () => {
     const excludedDirectoriesInput = screen.getByRole("textbox", {
       name: "Excluded directories",
     });
-    expect((excludedDirectoriesInput as HTMLTextAreaElement).value).toBe(
-      ".git\nnode_modules",
-    );
-    fireEvent.change(excludedDirectoriesInput, {
-      target: { value: ".git\nvendor\nvendor" },
-    });
-    fireEvent.blur(excludedDirectoriesInput);
+    expect((excludedDirectoriesInput as HTMLInputElement).value).toBe("");
+    expect(screen.getByText(".git")).not.toBeNull();
+    expect(screen.getByText("node_modules")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", {
+      name: "Delete tag node_modules",
+    }));
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
-          excludedDirectories: [".git", "vendor"],
+          excludedDirectories: [".git"],
           fontScale: 1.1,
           maxDepth: 4,
           maxFiles: 100,

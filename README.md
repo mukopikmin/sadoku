@@ -145,9 +145,9 @@ sadoku start ./docs --max-depth 4 --max-files 100
 
 These defaults can also be changed under **Settings → Directory discovery** in
 the preview. Settings saved there apply when the next directory preview starts;
-command-line options override the saved defaults for that invocation. The
-excluded directory names can also be edited there, one name per line. They match
-directories at every scanned level; remove all names to disable directory
+command-line options override the saved defaults for that invocation. Excluded
+directory names can also be added and removed there as tags. They match
+directories at every scanned level; remove all tags to disable directory
 exclusions.
 
 A document must be a regular file whose extension is `.md` or `.markdown`,
