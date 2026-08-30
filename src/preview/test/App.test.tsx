@@ -688,6 +688,10 @@ describe("App", () => {
       '[data-part="root"][data-scope="tags-input"]',
     );
     expect(getComputedStyle(excludedDirectoriesControl!).display).toBe("grid");
+    expect(
+      getComputedStyle(screen.getByText("Excluded directories")).alignItems,
+    )
+      .toBe("center");
     expect((excludedDirectoriesInput as HTMLInputElement).value).toBe("");
     expect(screen.getByText(".git")).not.toBeNull();
     expect(screen.getByText("node_modules")).not.toBeNull();

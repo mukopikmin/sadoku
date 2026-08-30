@@ -261,7 +261,11 @@ export const SettingsDialog = ({
                         isValidExcludedDirectory(inputValue.trim())}
                       value={excludedDirectories}
                     >
-                      <TagsInput.Label>
+                      <TagsInput.Label
+                        alignItems="center"
+                        display="flex"
+                        minH="10"
+                      >
                         Excluded directories
                       </TagsInput.Label>
                       <Flex direction="column" gap="1" minW="0">
