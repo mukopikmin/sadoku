@@ -233,47 +233,54 @@ export const SettingsDialog = ({
                         width="24"
                       />
                     </Flex>
-                    <Flex direction="column" gap="1">
-                      <TagsInput.Root
-                        addOnPaste
-                        aria-describedby="excluded-directories-help"
-                        blurBehavior="add"
-                        invalid={excludedDirectoriesError !== undefined}
-                        onInputValueChange={() =>
-                          setExcludedDirectoriesError(undefined)}
-                        onValueChange={({ value }) => {
-                          setExcludedDirectoriesError(undefined);
-                          onExcludedDirectoriesChange(value);
-                        }}
-                        onValueInvalid={() =>
-                          setExcludedDirectoriesError(
-                            "Enter a directory name without path separators.",
-                          )}
-                        sanitizeValue={(value) => value.trim()}
-                        validate={({ inputValue }) =>
-                          isValidExcludedDirectory(inputValue.trim())}
-                        value={excludedDirectories}
-                      >
-                        <TagsInput.Label>
-                          Excluded directories
-                        </TagsInput.Label>
+                    <TagsInput.Root
+                      addOnPaste
+                      alignItems="start"
+                      aria-describedby="excluded-directories-help"
+                      blurBehavior="add"
+                      display="grid"
+                      gap="4"
+                      gridTemplateColumns={{
+                        base: "1fr",
+                        sm: "1fr minmax(0, 15rem)",
+                      }}
+                      invalid={excludedDirectoriesError !== undefined}
+                      onInputValueChange={() =>
+                        setExcludedDirectoriesError(undefined)}
+                      onValueChange={({ value }) => {
+                        setExcludedDirectoriesError(undefined);
+                        onExcludedDirectoriesChange(value);
+                      }}
+                      onValueInvalid={() =>
+                        setExcludedDirectoriesError(
+                          "Enter a directory name without path separators.",
+                        )}
+                      sanitizeValue={(value) => value.trim()}
+                      validate={({ inputValue }) =>
+                        isValidExcludedDirectory(inputValue.trim())}
+                      value={excludedDirectories}
+                    >
+                      <TagsInput.Label>
+                        Excluded directories
+                      </TagsInput.Label>
+                      <Flex direction="column" gap="1" minW="0">
                         <TagsInput.Control>
                           <TagsInput.Items />
                           <TagsInput.Input placeholder="Add a directory" />
                         </TagsInput.Control>
                         <TagsInput.HiddenInput />
-                      </TagsInput.Root>
-                      <Text
-                        color={excludedDirectoriesError
-                          ? "fg.error"
-                          : "fg.muted"}
-                        fontSize="sm"
-                        id="excluded-directories-help"
-                      >
-                        {excludedDirectoriesError ??
-                          "Press Enter or comma to add a name. Names match at every level."}
-                      </Text>
-                    </Flex>
+                        <Text
+                          color={excludedDirectoriesError
+                            ? "fg.error"
+                            : "fg.muted"}
+                          fontSize="sm"
+                          id="excluded-directories-help"
+                        >
+                          {excludedDirectoriesError ??
+                            "Press Enter or comma to add a name. Names match at every level."}
+                        </Text>
+                      </Flex>
+                    </TagsInput.Root>
                   </Flex>
                 </Flex>
               </Flex>

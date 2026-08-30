@@ -683,6 +683,10 @@ describe("App", () => {
     const excludedDirectoriesInput = screen.getByRole("textbox", {
       name: "Excluded directories",
     });
+    const excludedDirectoriesControl = excludedDirectoriesInput.closest(
+      '[data-part="root"][data-scope="tags-input"]',
+    );
+    expect(getComputedStyle(excludedDirectoriesControl!).display).toBe("grid");
     expect((excludedDirectoriesInput as HTMLInputElement).value).toBe("");
     expect(screen.getByText(".git")).not.toBeNull();
     expect(screen.getByText("node_modules")).not.toBeNull();
