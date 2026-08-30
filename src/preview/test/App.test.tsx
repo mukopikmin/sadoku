@@ -553,6 +553,16 @@ describe("App", () => {
     const resetTextSize = screen.getByRole("button", {
       name: "Reset text size to 100%",
     });
+    const textSizeControls = screen.getByRole("group", {
+      name: "Text size controls",
+    });
+    expect(textSizeControls.children).toHaveLength(2);
+    expect(textSizeControls.children[0]?.contains(decreaseTextSize)).toBe(true);
+    expect(textSizeControls.children[0]?.contains(increaseTextSize)).toBe(true);
+    expect(textSizeControls.children[1]).toBe(resetTextSize);
+    expect(globalThis.getComputedStyle(resetTextSize).alignSelf).toBe(
+      "flex-end",
+    );
     expect(screen.getByText("100%")).not.toBeNull();
     expect((resetTextSize as HTMLButtonElement).disabled).toBe(true);
 

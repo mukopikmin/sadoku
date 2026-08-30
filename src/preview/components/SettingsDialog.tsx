@@ -55,6 +55,7 @@ export const SettingsDialog = ({
       initialFocusEl={() => contentRef.current}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
+      size="lg"
     >
       <Portal>
         <Dialog.Backdrop />
@@ -102,33 +103,41 @@ export const SettingsDialog = ({
                       Adjust text throughout the preview
                     </Text>
                   </Text>
-                  <Flex alignItems="center" gap="2">
-                    <IconButton
-                      aria-label="Decrease text size"
-                      disabled={fontScale <= fontScales[0]}
-                      onClick={() => onFontScaleChange(decreaseScale)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      −
-                    </IconButton>
-                    <Text
-                      aria-live="polite"
-                      minW="12"
-                      textAlign="center"
-                    >
-                      {Math.round(fontScale * 100)}%
-                    </Text>
-                    <IconButton
-                      aria-label="Increase text size"
-                      disabled={fontScale >= fontScales.at(-1)!}
-                      onClick={() => onFontScaleChange(increaseScale)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      +
-                    </IconButton>
+                  <Flex
+                    aria-label="Text size controls"
+                    direction="column"
+                    gap="2"
+                    role="group"
+                  >
+                    <Flex alignItems="center" gap="2">
+                      <IconButton
+                        aria-label="Decrease text size"
+                        disabled={fontScale <= fontScales[0]}
+                        onClick={() => onFontScaleChange(decreaseScale)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        −
+                      </IconButton>
+                      <Text
+                        aria-live="polite"
+                        minW="12"
+                        textAlign="center"
+                      >
+                        {Math.round(fontScale * 100)}%
+                      </Text>
+                      <IconButton
+                        aria-label="Increase text size"
+                        disabled={fontScale >= fontScales.at(-1)!}
+                        onClick={() => onFontScaleChange(increaseScale)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        +
+                      </IconButton>
+                    </Flex>
                     <Button
+                      alignSelf="flex-end"
                       aria-label="Reset text size to 100%"
                       disabled={fontScale === 1}
                       onClick={() => onFontScaleChange(1)}
