@@ -430,10 +430,18 @@ describe("App", () => {
       name: "Instructions",
     });
     expect(
-      within(firstActionBar).getByRole("button", {
-        name: "Table of contents",
-      }),
-    ).not.toBeNull();
+      firstInstructionsButton.querySelector("svg")?.getAttribute(
+        "aria-hidden",
+      ),
+    ).toBe("true");
+    const tableOfContentsButton = within(firstActionBar).getByRole("button", {
+      name: "Table of contents",
+    });
+    expect(
+      tableOfContentsButton.querySelector("svg")?.getAttribute(
+        "aria-hidden",
+      ),
+    ).toBe("true");
     expect(container.querySelector("header")?.contains(firstInstructionsButton))
       .toBe(false);
     fireEvent.click(firstInstructionsButton);
