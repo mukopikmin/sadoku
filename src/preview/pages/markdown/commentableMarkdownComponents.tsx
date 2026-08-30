@@ -16,6 +16,7 @@ import {
   renderMarkdownBlockquote,
   renderMarkdownHeading,
   renderMarkdownHorizontalRule,
+  renderMarkdownHtmlComment,
   renderMarkdownParagraph,
   renderMarkdownPre,
   renderMarkdownTable,
@@ -103,7 +104,7 @@ export const getCommentableBlockProps = (
 };
 
 const createCommentableComponent = (
-  tagName: keyof React.JSX.IntrinsicElements,
+  tagName: string,
   renderElement?: (
     elementProps: Omit<CommentableComponentProps, "children" | "node">,
     children: React.ReactNode,
@@ -258,6 +259,10 @@ export const createCommentableMarkdownComponents = (): Components => ({
     true,
   ),
   hr: createCommentableComponent("hr", renderMarkdownHorizontalRule),
+  "html-comment": createCommentableComponent(
+    "html-comment",
+    renderMarkdownHtmlComment,
+  ),
   input: sharedMarkdownComponents.input,
   li: createCommentableListItem(),
   img: sharedMarkdownComponents.img,

@@ -92,6 +92,83 @@ const expectComputedStyleValue = (
 };
 
 describe("MarkdownPreview", () => {
+  it("renders complete single-line and empty HTML comments as plain-text cards", () => {
+    const { container } = renderMarkdown(
+      "<!-- **not bold** <img src=x onerror=alert(1)> -->\n\n<!-- -->",
+    );
+
+    const labels = screen.getAllByText("HTML COMMENT");
+    expect(labels).toHaveLength(2);
+    expect(labels.every((label) => label.tagName === "SPAN")).toBe(true);
+    const cards = labels.map((label) => label.closest("[data-html-comment]")!);
+    expect(cards[0].textContent).toContain(
+      " **not bold** <img src=x onerror=alert(1)> ",
+    );
+    expect(cards[0].querySelector("strong, img")).toBeNull();
+    expect(cards[1].textContent?.trim()).toBe("HTML COMMENT");
+    expect(container.querySelectorAll("html-comment")).toHaveLength(0);
+  });
+
+  it("preserves multiline HTML comment text and its source range", () => {
+    const { container } = renderMarkdown(
+      "Before\n\n<!-- first line\n# still plain text\nlast line -->\n\nAfter",
+    );
+
+    const card = screen.getByText("HTML COMMENT").parentElement!;
+    expect(card.textContent).toContain(
+      " first line\n# still plain text\nlast line ",
+    );
+    expect(card.querySelector("h1")).toBeNull();
+    const commentable = card.closest(".commentable-block");
+    expect(commentable?.getAttribute("data-source-line")).toBe("3");
+    expect(commentable?.getAttribute("data-source-end-line")).toBe("5");
+  });
+
+  it("removes surrounding blank lines but preserves blank lines in the body", () => {
+    const { container } = renderMarkdown(
+      "<!--\n\nfirst line\n\nlast line\n\n-->",
+    );
+
+    const body = container.querySelector("[data-html-comment] p");
+    expect(body?.textContent).toBe("first line\n\nlast line");
+  });
+
+  it("keeps unfinished comments and ordinary raw HTML as safe text", () => {
+    const { container } = renderMarkdown(
+      "<!-- unfinished\n\n<section><strong>ordinary HTML</strong></section>",
+    );
+
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    expect(container.textContent).toContain("<!-- unfinished");
+    expect(container.textContent).toContain(
+      "<section><strong>ordinary HTML</strong></section>",
+    );
+    expect(container.querySelector("section, strong")).toBeNull();
+  });
+
+  it("adds a review comment for the complete HTML comment source range", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    renderMarkdown("intro\n\n<!-- one\ntwo -->", [], { onCreateComment });
+
+    fireEvent.click(screen.getByText("two", { exact: false }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add comment on lines 3-4" }),
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+      { target: { value: "Review this comment" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        3,
+        "Review this comment",
+        4,
+      )
+    );
+  });
+
   it("renders agent front matter as commentable plain-text metadata", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown(
