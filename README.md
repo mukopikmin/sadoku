@@ -9,6 +9,11 @@ URL. It starts a local HTTP server, renders the source as HTML, prints the
 preview URL, and opens that URL in your default browser. Review comments stay
 separate from local Markdown files so the documents themselves stay clean.
 
+Use **Instructions** in a document preview to keep multiple pieces of guidance
+or background information alongside that document without adding them to its
+Markdown source. Instructions are stored locally in Sadoku's database and can be
+added, edited, or deleted independently.
+
 ## Install
 
 On Linux x64 and macOS arm64, install the latest release binary to

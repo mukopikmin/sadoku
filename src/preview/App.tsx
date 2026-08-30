@@ -36,6 +36,7 @@ import { DocumentTree } from "./components/DocumentTree";
 import { DocumentBreadcrumb } from "./components/DocumentBreadcrumb";
 import { StatisticsDialog } from "./components/StatisticsDialog";
 import { useScrollPosition } from "./hooks/useScrollPosition";
+import { DocumentInstructionsDialog } from "./components/DocumentInstructionsDialog";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -82,6 +83,7 @@ export const App = () => {
   );
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
+  const instructionsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
   const {
     changeCodeWrapMode,
@@ -342,6 +344,7 @@ export const App = () => {
         onChangeView={changeView}
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
+        onOpenInstructions={instructionsDisclosure.onOpen}
         onOpenStatistics={statisticsDisclosure.onOpen}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
@@ -353,6 +356,11 @@ export const App = () => {
       <StatisticsDialog
         onOpenChange={statisticsDisclosure.setOpen}
         open={statisticsDisclosure.open}
+      />
+      <DocumentInstructionsDialog
+        documentId={selectedDocumentId}
+        onOpenChange={instructionsDisclosure.setOpen}
+        open={instructionsDisclosure.open}
       />
       <SettingsDialog
         codeWrapMode={codeWrapMode}

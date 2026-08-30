@@ -13,7 +13,8 @@ export const notFoundResponse = (body = "Not found."): Response =>
 export const methodNotAllowedResponse = (): Response =>
   textResponse("Method not allowed.", 405);
 
-export const noStoreJson = (value: unknown): Response =>
+export const noStoreJson = (value: unknown, status = 200): Response =>
   Response.json(value, {
+    status,
     headers: { "cache-control": noStoreCacheControl },
   });

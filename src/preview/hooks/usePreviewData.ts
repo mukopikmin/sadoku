@@ -14,6 +14,12 @@ import {
 import type { Comment, CommentsDocument } from "../models/comment";
 import { loadDocuments, loadPreviewDocument } from "../api/document";
 import { loadDirectoryStatus } from "../api/directoryStatus";
+import {
+  createInstruction,
+  deleteInstruction,
+  loadInstructions,
+  updateInstruction,
+} from "../api/instructions";
 
 export const documentsQueryKey = ["documents"] as const;
 export const directoryStatusQueryKey = ["directory-status"] as const;
@@ -21,6 +27,43 @@ export const previewDocumentQueryKey = (documentId?: number) =>
   ["preview-document", documentId] as const;
 export const commentsQueryKey = (documentId?: number) =>
   ["comments", documentId] as const;
+export const instructionsQueryKey = (documentId?: number) =>
+  ["instructions", documentId] as const;
+
+export const useInstructionsQuery = (documentId?: number, enabled = true) =>
+  useQuery({
+    enabled,
+    queryFn: () => loadInstructions(documentId!),
+    queryKey: instructionsQueryKey(documentId),
+  });
+
+export const useInstructionActions = (documentId: number) => {
+  const queryClient = useQueryClient();
+  const refresh = () =>
+    queryClient.invalidateQueries({
+      queryKey: instructionsQueryKey(documentId),
+    });
+  const createMutation = useMutation({
+    mutationFn: (content: string) => createInstruction(documentId, content),
+    onSuccess: refresh,
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, content }: { id: number; content: string }) =>
+      updateInstruction(documentId, id, content),
+    onSuccess: refresh,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteInstruction(documentId, id),
+    onSuccess: refresh,
+  });
+  return {
+    create: createMutation.mutateAsync,
+    delete: deleteMutation.mutateAsync,
+    pending: createMutation.isPending || updateMutation.isPending ||
+      deleteMutation.isPending,
+    update: updateMutation.mutateAsync,
+  };
+};
 
 export const useDocumentsQuery = () =>
   useQuery({

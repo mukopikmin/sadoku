@@ -187,6 +187,7 @@ export const startPreviewServer = async (
         statistics: stores.statistics,
       },
       stores.documents,
+      stores.instructions,
     ),
   );
 
