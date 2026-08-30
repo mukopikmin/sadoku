@@ -1,7 +1,7 @@
 import { extname, join, resolve } from "@std/path";
 import type { MarkdownDocumentPath } from "../../usecase/document/types.ts";
 
-const markdownExtensions = new Set([".md", ".markdown"]);
+export const defaultMarkdownExtensions = [".md", ".markdown"] as const;
 export const defaultExcludedDirectories = [".git", "node_modules"] as const;
 export const defaultDirectoryScanOptions = {
   maxDepth: 2,
@@ -10,6 +10,7 @@ export const defaultDirectoryScanOptions = {
 
 export type DirectoryScanOptions = {
   excludedDirectories?: readonly string[];
+  markdownExtensions?: readonly string[];
   maxDepth?: number;
   maxFiles?: number;
 };
@@ -23,6 +24,11 @@ export const listMarkdownFiles = async (
   const documents: MarkdownDocumentPath[] = [];
   const excludedDirectories = new Set(
     options.excludedDirectories ?? defaultExcludedDirectories,
+  );
+  const markdownExtensions = new Set(
+    (options.markdownExtensions ?? defaultMarkdownExtensions).map((extension) =>
+      extension.toLowerCase()
+    ),
   );
   const maxDepth = options.maxDepth ?? defaultDirectoryScanOptions.maxDepth;
   const maxFiles = options.maxFiles ?? defaultDirectoryScanOptions.maxFiles;

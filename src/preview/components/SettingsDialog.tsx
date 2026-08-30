@@ -18,10 +18,12 @@ type SettingsDialogProps = {
   fontScale: number;
   maxDepth: number;
   maxFiles: number;
+  markdownExtensions: string[];
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onDirectoryLimitsChange: (maxDepth: number, maxFiles: number) => void;
   onExcludedDirectoriesChange: (excludedDirectories: string[]) => void;
   onFontScaleChange: (fontScale: number) => void;
+  onMarkdownExtensionsChange: (markdownExtensions: string[]) => void;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
@@ -34,10 +36,12 @@ export const SettingsDialog = ({
   fontScale,
   maxDepth,
   maxFiles,
+  markdownExtensions,
   onCodeWrapModeChange,
   onDirectoryLimitsChange,
   onExcludedDirectoriesChange,
   onFontScaleChange,
+  onMarkdownExtensionsChange,
   onOpenChange,
   onThemeModeChange,
   open,
@@ -45,6 +49,9 @@ export const SettingsDialog = ({
 }: SettingsDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [excludedDirectoriesError, setExcludedDirectoriesError] = useState<
+    string
+  >();
+  const [markdownExtensionsError, setMarkdownExtensionsError] = useState<
     string
   >();
   const isValidExcludedDirectory = (directory: string) =>
@@ -283,6 +290,64 @@ export const SettingsDialog = ({
                         >
                           {excludedDirectoriesError ??
                             "Press Enter or comma to add a name. Names match at every level."}
+                        </Text>
+                      </Flex>
+                    </TagsInput.Root>
+                    <TagsInput.Root
+                      addOnPaste
+                      alignItems="start"
+                      aria-describedby="markdown-extensions-help"
+                      blurBehavior="add"
+                      display="grid"
+                      gap="4"
+                      gridTemplateColumns={{
+                        base: "1fr",
+                        sm: "1fr minmax(0, 15rem)",
+                      }}
+                      invalid={markdownExtensionsError !== undefined}
+                      onInputValueChange={() =>
+                        setMarkdownExtensionsError(undefined)}
+                      onValueChange={({ value }) => {
+                        if (value.length === 0) {
+                          setMarkdownExtensionsError(
+                            "Add at least one extension.",
+                          );
+                          return;
+                        }
+                        setMarkdownExtensionsError(undefined);
+                        onMarkdownExtensionsChange(value);
+                      }}
+                      onValueInvalid={() =>
+                        setMarkdownExtensionsError(
+                          "Enter an extension beginning with a dot.",
+                        )}
+                      sanitizeValue={(value) => value.trim().toLowerCase()}
+                      validate={({ inputValue }) =>
+                        /^\.[^.\\/]+$/.test(inputValue.trim())}
+                      value={markdownExtensions}
+                    >
+                      <TagsInput.Label
+                        alignItems="center"
+                        display="flex"
+                        minH="10"
+                      >
+                        Markdown extensions
+                      </TagsInput.Label>
+                      <Flex direction="column" gap="1" minW="0">
+                        <TagsInput.Control>
+                          <TagsInput.Items />
+                          <TagsInput.Input placeholder="Add an extension" />
+                        </TagsInput.Control>
+                        <TagsInput.HiddenInput />
+                        <Text
+                          color={markdownExtensionsError
+                            ? "fg.error"
+                            : "fg.muted"}
+                          fontSize="sm"
+                          id="markdown-extensions-help"
+                        >
+                          {markdownExtensionsError ??
+                            "Press Enter or comma to add an extension such as .mdx."}
                         </Text>
                       </Flex>
                     </TagsInput.Root>

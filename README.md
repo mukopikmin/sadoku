@@ -150,9 +150,14 @@ directory names can also be added and removed there as tags. They match
 directories at every scanned level; remove all tags to disable directory
 exclusions.
 
-A document must be a regular file whose extension is `.md` or `.markdown`,
-compared case-insensitively; `.git` and `node_modules` directories and symbolic
-links are not followed.
+Markdown extensions can also be added and removed there as tags. Extensions must
+begin with a dot, are compared case-insensitively, and at least one must remain
+configured. The defaults are `.md` and `.markdown`; replacing them means that
+omitted defaults are no longer detected. Like the other directory discovery
+settings, extension changes take effect for the next directory preview.
+
+A document must be a regular file whose extension matches the configured list;
+excluded directories and symbolic links are not followed.
 
 The initial screen lists the discovered documents. Selecting a document stores
 the selection in React state without changing the URL. Reloading the page

@@ -7,5 +7,6 @@ export type PreviewSettings = {
   fontScale: number;
   maxDepth: number;
   maxFiles: number;
+  markdownExtensions: string[];
   theme?: ThemeMode;
 };

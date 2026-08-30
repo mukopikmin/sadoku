@@ -91,12 +91,14 @@ export const App = () => {
     changeDirectoryLimits,
     changeExcludedDirectories,
     changeFontScale,
+    changeMarkdownExtensions,
     changeThemeMode,
     codeWrapMode,
     excludedDirectories,
     fontScale,
     maxDepth,
     maxFiles,
+    markdownExtensions,
     themeMode,
   } = usePreviewSettings();
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
@@ -224,10 +226,12 @@ export const App = () => {
           fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
+          markdownExtensions={markdownExtensions}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
           onExcludedDirectoriesChange={changeExcludedDirectories}
           onFontScaleChange={changeFontScale}
+          onMarkdownExtensionsChange={changeMarkdownExtensions}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -305,10 +309,12 @@ export const App = () => {
           fontScale={fontScale}
           maxDepth={maxDepth}
           maxFiles={maxFiles}
+          markdownExtensions={markdownExtensions}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
           onExcludedDirectoriesChange={changeExcludedDirectories}
           onFontScaleChange={changeFontScale}
+          onMarkdownExtensionsChange={changeMarkdownExtensions}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
@@ -374,10 +380,12 @@ export const App = () => {
         fontScale={fontScale}
         maxDepth={maxDepth}
         maxFiles={maxFiles}
+        markdownExtensions={markdownExtensions}
         onCodeWrapModeChange={changeCodeWrapMode}
         onDirectoryLimitsChange={changeDirectoryLimits}
         onExcludedDirectoriesChange={changeExcludedDirectories}
         onFontScaleChange={changeFontScale}
+        onMarkdownExtensionsChange={changeMarkdownExtensions}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}

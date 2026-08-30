@@ -11,6 +11,7 @@ export type SadokuConfig = {
   directoryMaxDepth?: number;
   directoryMaxFiles?: number;
   excludedDirectories?: string[];
+  markdownExtensions?: string[];
   fontScale?: number;
   themeMode?: "dark" | "light";
 };
@@ -24,6 +25,15 @@ export const isValidExcludedDirectories = (
 ): value is string[] =>
   Array.isArray(value) && value.every(isValidExcludedDirectory) &&
   new Set(value).size === value.length;
+
+export const isValidMarkdownExtension = (value: unknown): value is string =>
+  typeof value === "string" && /^\.[^.\\/]+$/.test(value);
+
+export const isValidMarkdownExtensions = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.length > 0 &&
+  value.every(isValidMarkdownExtension) &&
+  new Set(value.map((extension) => extension.toLowerCase())).size ===
+    value.length;
 
 export const fontScaleLimits = { min: 0.75, max: 1.5 } as const;
 
@@ -128,6 +138,15 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     config.excludedDirectories = value.excluded_directories;
   }
 
+  if ("markdown_extensions" in value) {
+    if (!isValidMarkdownExtensions(value.markdown_extensions)) {
+      throw new Error(
+        "markdown_extensions in Sadoku config must be a non-empty array of unique file extensions beginning with a dot.",
+      );
+    }
+    config.markdownExtensions = value.markdown_extensions;
+  }
+
   if ("font_scale" in value) {
     if (!isValidFontScale(value.font_scale)) {
       throw new Error(
@@ -189,6 +208,7 @@ export const updatePreviewConfig = (
   directoryMaxFiles?: number,
   fontScale = 1,
   excludedDirectories?: string[],
+  markdownExtensions?: string[],
 ): Promise<void> =>
   updateConfig({
     code_wrap_mode: codeWrap,
@@ -202,6 +222,9 @@ export const updatePreviewConfig = (
     ...(excludedDirectories === undefined
       ? {}
       : { excluded_directories: excludedDirectories }),
+    ...(markdownExtensions === undefined
+      ? {}
+      : { markdown_extensions: markdownExtensions }),
     theme_mode: theme,
   });
 

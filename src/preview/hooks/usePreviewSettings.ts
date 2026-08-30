@@ -20,6 +20,10 @@ export const usePreviewSettings = () => {
   ]);
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxFiles, setMaxFiles] = useState(20);
+  const [markdownExtensions, setMarkdownExtensions] = useState<string[]>([
+    ".md",
+    ".markdown",
+  ]);
   const userChangedSettings = useRef(false);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({
@@ -45,6 +49,7 @@ export const usePreviewSettings = () => {
     setExcludedDirectories(settingsQuery.data.excludedDirectories);
     setMaxDepth(settingsQuery.data.maxDepth);
     setMaxFiles(settingsQuery.data.maxFiles);
+    setMarkdownExtensions(settingsQuery.data.markdownExtensions);
   }, [settingsQuery.data]);
 
   useEffect(() => {
@@ -75,6 +80,7 @@ export const usePreviewSettings = () => {
       fontScale,
       maxDepth,
       maxFiles,
+      markdownExtensions,
       theme: themeMode,
     });
   };
@@ -88,6 +94,7 @@ export const usePreviewSettings = () => {
       fontScale,
       maxDepth,
       maxFiles,
+      markdownExtensions,
       theme: next,
     });
   };
@@ -101,6 +108,7 @@ export const usePreviewSettings = () => {
       fontScale: next,
       maxDepth,
       maxFiles,
+      markdownExtensions,
       theme: themeMode,
     });
   };
@@ -118,6 +126,7 @@ export const usePreviewSettings = () => {
       fontScale,
       maxDepth: nextMaxDepth,
       maxFiles: nextMaxFiles,
+      markdownExtensions,
       theme: themeMode,
     });
   };
@@ -131,6 +140,21 @@ export const usePreviewSettings = () => {
       fontScale,
       maxDepth,
       maxFiles,
+      markdownExtensions,
+      theme: themeMode,
+    });
+  };
+
+  const changeMarkdownExtensions = (next: string[]) => {
+    userChangedSettings.current = true;
+    setMarkdownExtensions(next);
+    saveMutation.mutate({
+      codeWrap: codeWrapMode,
+      excludedDirectories,
+      fontScale,
+      markdownExtensions: next,
+      maxDepth,
+      maxFiles,
       theme: themeMode,
     });
   };
@@ -140,12 +164,14 @@ export const usePreviewSettings = () => {
     changeDirectoryLimits,
     changeExcludedDirectories,
     changeFontScale,
+    changeMarkdownExtensions,
     changeThemeMode,
     codeWrapMode,
     excludedDirectories,
     fontScale,
     maxDepth,
     maxFiles,
+    markdownExtensions,
     themeMode,
   };
 };
