@@ -86,6 +86,7 @@ export const App = () => {
   const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
+  const [showHtmlComments, setShowHtmlComments] = useState(true);
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
@@ -395,6 +396,8 @@ export const App = () => {
         <DocumentActionBar
           markdown={view === "preview" ? document.markdown : undefined}
           onOpenInstructions={instructionsDisclosure.onOpen}
+          onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
+          showHtmlComments={showHtmlComments}
         />
         {document.deleted && (
           <Alert.Root status="warning" mb="6">
@@ -416,6 +419,7 @@ export const App = () => {
                 document.fileUrl ?? document.title}
               key={`${selectedDocumentId}-${themeMode}-${fontScale}`}
               markdown={document.markdown}
+              showHtmlComments={showHtmlComments}
               theme={themeMode === "dark" ? "dark" : "default"}
             />
           )

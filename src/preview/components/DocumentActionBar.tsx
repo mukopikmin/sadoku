@@ -4,10 +4,17 @@ import { TableOfContents } from "../pages/markdown/TableOfContents";
 type DocumentActionBarProps = {
   markdown?: string;
   onOpenInstructions: () => void;
+  onToggleHtmlComments: () => void;
+  showHtmlComments: boolean;
 };
 
 export const DocumentActionBar = (
-  { markdown, onOpenInstructions }: DocumentActionBarProps,
+  {
+    markdown,
+    onOpenInstructions,
+    onToggleHtmlComments,
+    showHtmlComments,
+  }: DocumentActionBarProps,
 ) => (
   <ActionBar.Root open>
     <Portal>
@@ -41,6 +48,15 @@ export const DocumentActionBar = (
               />
             </svg>
             Instructions
+          </Button>
+          <Button
+            aria-pressed={!showHtmlComments}
+            onClick={onToggleHtmlComments}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {showHtmlComments ? "Hide HTML comments" : "Show HTML comments"}
           </Button>
           {markdown !== undefined && <TableOfContents markdown={markdown} />}
         </ActionBar.Content>
