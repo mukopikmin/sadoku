@@ -1,89 +1,125 @@
-name: Release
+name: Publish Release
 
 on:
-  push:
-    tags:
-      - "v*"
-      - "[0-9]*"
+  workflow_dispatch:
+    inputs:
+      prepare_run_id:
+        description: Successful Prepare Release workflow run ID
+        required: true
+        type: string
+      plan_sha256:
+        description: Approved SHA-256 of release-plan.json
+        required: true
+        type: string
 
 permissions:
+  actions: read
   contents: write
 
+concurrency:
+  group: stable-release
+  cancel-in-progress: false
+
 jobs:
-  release:
-    name: Build and publish release
+  publish:
+    name: Publish approved release candidate
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: v2.8.0
-
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: src/preview/package-lock.json
-
-      - name: Install client dependencies
-        run: npm ci --prefix src/preview
-
-      - name: Resolve release version
-        id: version
+      - name: Validate inputs
+        env:
+          PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
+          PLAN_SHA256: ${{ inputs.plan_sha256 }}
         run: |
-          tag="${GITHUB_REF_NAME}"
-          version="${tag#v}"
+          [[ "${PREPARE_RUN_ID}" =~ ^[0-9]+$ ]]
+          [[ "${PLAN_SHA256}" =~ ^[0-9a-f]{64}$ ]]
 
-          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Tag '${tag}' is not a supported semantic version tag." >&2
-            echo "Use a tag like v1.2.3 or 1.2.3." >&2
-            exit 1
-          fi
-
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-
-      - name: Build release artifacts
-        run: deno task dist --version "${{ steps.version.outputs.version }}"
-
-      - name: Resolve release notes start tag
-        id: notes
+      - name: Verify preparation run
         env:
           GH_TOKEN: ${{ github.token }}
+          PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
         run: |
-          previous_tag="$(
-            gh release list \
-              --exclude-drafts \
-              --exclude-pre-releases \
-              --limit 1 \
-              --json tagName \
-              --jq '.[0].tagName // ""'
-          )"
-          if [[ -z "${previous_tag}" ]]; then
-            previous_tag="release-notes-baseline"
-          fi
-          start_sha="$(
-            git ls-remote --exit-code --tags origin "refs/tags/${previous_tag}" |
-              awk '{print $1}'
-          )"
-          if [[ "${previous_tag}" == "release-notes-baseline" ]]; then
-            root_sha="$(git rev-list --max-parents=0 HEAD)"
-            test "${start_sha}" = "${root_sha}"
-          fi
-          echo "start-tag=${previous_tag}" >> "${GITHUB_OUTPUT}"
+          test "$(gh run view "${PREPARE_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --json conclusion --jq .conclusion)" = success
+          test "$(gh run view "${PREPARE_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --json workflowName --jq .workflowName)" = "Prepare Release"
+
+      - name: Download approved release candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
+        run: gh run download "${PREPARE_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --name release-candidate --dir candidate
+
+      - name: Verify approved plan and artifacts
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAN_SHA256: ${{ inputs.plan_sha256 }}
+        run: |
+          echo "${PLAN_SHA256}  candidate/release-plan.json" | sha256sum --check --strict
+          version="$(jq -er .version candidate/release-plan.json)"
+          tag="$(jq -er .tag candidate/release-plan.json)"
+          target_sha="$(jq -er .targetSha candidate/release-plan.json)"
+          previous_tag="$(jq -er .previousStableTag candidate/release-plan.json)"
+          test "${tag}" = "v${version}"
+          [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "${target_sha}" =~ ^[0-9a-f]{40}$ ]]
+
+          current_main="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)"
+          test "${target_sha}" = "${current_main}"
+          current_previous="$(gh release list --repo "${GITHUB_REPOSITORY}" --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName // "release-notes-baseline"')"
+          test "${previous_tag}" = "${current_previous}"
+          ! gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1
+          ! git ls-remote --exit-code --tags "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${tag}" >/dev/null 2>&1
+
+          echo "$(jq -er .notesSha256 candidate/release-plan.json)  candidate/release-notes.md" |
+            sha256sum --check --strict
+          (cd candidate/dist && sha256sum --check --strict checksums.txt)
+          jq -r '.artifacts[] | "\(.sha256)  candidate/dist/\(.name)"' candidate/release-plan.json |
+            sha256sum --check --strict
+          while read -r checksum name; do
+            test "$(cat "candidate/dist/${name}.sha256")" = "${checksum}"
+          done < candidate/dist/checksums.txt
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "target-sha=${target_sha}" >> "${GITHUB_OUTPUT}"
+          echo "title=$(jq -er .title candidate/release-plan.json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Checkout approved commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.plan.outputs.target-sha }}
+          fetch-depth: 0
+
+      - name: Create and push annotated tag
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
+          TARGET_SHA: ${{ steps.plan.outputs.target-sha }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag --annotate "${TAG}" "${TARGET_SHA}" --message "Release ${TAG}"
+          git push origin "refs/tags/${TAG}"
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+          TITLE: ${{ steps.plan.outputs.title }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" dist/* \
-            --title "${GITHUB_REF_NAME}" \
-            --generate-notes \
-            --notes-start-tag "${{ steps.notes.outputs.start-tag }}" \
+          gh release create "${TAG}" candidate/dist/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${TITLE}" \
+            --notes-file candidate/release-notes.md \
             --verify-tag
+
+      - name: Verify published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+          TARGET_SHA: ${{ steps.plan.outputs.target-sha }}
+        run: |
+          test "$(git rev-list -n 1 "${TAG}")" = "${TARGET_SHA}"
+          test "$(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json isDraft,isPrerelease --jq '[.isDraft,.isPrerelease] | @tsv')" = $'false\tfalse'
+          expected="$(find candidate/dist -maxdepth 1 -type f -printf '%f\n' | sort)"
+          actual="$(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets[].name' | sort)"
+          test "${actual}" = "${expected}"

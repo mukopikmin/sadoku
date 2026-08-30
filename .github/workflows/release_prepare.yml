@@ -1,0 +1,108 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable semantic version without a v prefix
+        required: true
+        type: string
+      target_sha:
+        description: Exact main commit to release
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: stable-release-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Build and verify release candidate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate inputs
+        env:
+          VERSION: ${{ inputs.version }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+        run: |
+          [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Checkout target commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.target_sha }}
+          fetch-depth: 0
+
+      - name: Verify target and successful tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          git fetch origin main --no-tags
+          test "${TARGET_SHA}" = "$(git rev-parse origin/main)"
+          test "$(gh run list --workflow Test --branch main --commit "${TARGET_SHA}" --limit 1 --json conclusion --jq '.[0].conclusion // ""')" = success
+          ! git ls-remote --exit-code --tags origin "refs/tags/v${VERSION}" >/dev/null 2>&1
+          ! gh release view "v${VERSION}" >/dev/null 2>&1
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.8.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/preview/package-lock.json
+
+      - name: Install client dependencies
+        run: npm ci --prefix src/preview
+
+      - name: Build and verify release artifacts
+        run: deno task dist --version "${{ inputs.version }}"
+
+      - name: Generate release notes and immutable plan
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+        run: |
+          deno task release:notes --version "${VERSION}" --output release-notes.json
+          jq -er .body release-notes.json > release-notes.md
+          test -s release-notes.md
+          jq -n \
+            --arg version "${VERSION}" \
+            --arg tag "v${VERSION}" \
+            --arg targetSha "${TARGET_SHA}" \
+            --arg previousStableTag "$(jq -er .previousStableTag release-notes.json)" \
+            --arg title "$(jq -er .title release-notes.json)" \
+            --arg notesSha256 "$(sha256sum release-notes.md | cut -d' ' -f1)" \
+            --argjson artifacts "$(cd dist && awk '{print $1, $2}' checksums.txt | jq -Rn '[inputs | split(" ") | {sha256: .[0], name: .[-1]}]')" \
+            '{version:$version,tag:$tag,targetSha:$targetSha,previousStableTag:$previousStableTag,title:$title,notesSha256:$notesSha256,artifacts:$artifacts}' \
+            > release-plan.json
+          plan_sha256="$(sha256sum release-plan.json | cut -d' ' -f1)"
+          echo "plan-sha256=${plan_sha256}" >> "${GITHUB_OUTPUT}"
+          echo "Release plan SHA-256: ${plan_sha256}" >> "${GITHUB_STEP_SUMMARY}"
+          cat release-notes.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload release candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-candidate
+          path: |
+            dist/
+            release-plan.json
+            release-notes.json
+            release-notes.md
+          if-no-files-found: error
+          retention-days: 7
