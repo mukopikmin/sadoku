@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { loadSettings, saveSettings } from "../api/settings";
-import type { CodeWrapMode, ThemeMode } from "../models/theme";
+import type {
+  CodeWrapMode,
+  ResolvedPreviewSettings,
+  ThemeMode,
+} from "../models/theme";
 
 export const settingsQueryKey = ["settings"] as const;
 
@@ -11,19 +15,15 @@ const getPreferredThemeMode = (): ThemeMode =>
     : "light";
 
 export const usePreviewSettings = () => {
-  const [codeWrapMode, setCodeWrapMode] = useState<CodeWrapMode>("scroll");
-  const [themeMode, setThemeMode] = useState<ThemeMode>(getPreferredThemeMode);
-  const [fontScale, setFontScale] = useState(1);
-  const [excludedDirectories, setExcludedDirectories] = useState<string[]>([
-    ".git",
-    "node_modules",
-  ]);
-  const [maxDepth, setMaxDepth] = useState(2);
-  const [maxFiles, setMaxFiles] = useState(20);
-  const [markdownExtensions, setMarkdownExtensions] = useState<string[]>([
-    ".md",
-    ".markdown",
-  ]);
+  const [settings, setSettings] = useState<ResolvedPreviewSettings>(() => ({
+    codeWrap: "scroll",
+    excludedDirectories: [".git", "node_modules"],
+    fontScale: 1,
+    markdownExtensions: [".md", ".markdown"],
+    maxDepth: 2,
+    maxFiles: 20,
+    theme: getPreferredThemeMode(),
+  }));
   const userChangedSettings = useRef(false);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({
@@ -39,124 +39,68 @@ export const usePreviewSettings = () => {
 
   useEffect(() => {
     if (userChangedSettings.current || settingsQuery.data === undefined) return;
-    if (settingsQuery.data.codeWrap !== undefined) {
-      setCodeWrapMode(settingsQuery.data.codeWrap);
-    }
-    if (settingsQuery.data.theme !== undefined) {
-      setThemeMode(settingsQuery.data.theme);
-    }
-    setFontScale(settingsQuery.data.fontScale);
-    setExcludedDirectories(settingsQuery.data.excludedDirectories);
-    setMaxDepth(settingsQuery.data.maxDepth);
-    setMaxFiles(settingsQuery.data.maxFiles);
-    setMarkdownExtensions(settingsQuery.data.markdownExtensions);
+    setSettings((current) => ({
+      ...current,
+      ...settingsQuery.data,
+      codeWrap: settingsQuery.data.codeWrap ?? current.codeWrap,
+      theme: settingsQuery.data.theme ?? current.theme,
+    }));
   }, [settingsQuery.data]);
 
   useEffect(() => {
     globalThis.document.documentElement.style.setProperty(
       "--sadoku-font-scale",
-      String(fontScale),
+      String(settings.fontScale),
     );
-  }, [fontScale]);
+  }, [settings.fontScale]);
 
   useEffect(() => {
-    globalThis.document.documentElement.dataset.codeWrap = codeWrapMode;
-  }, [codeWrapMode]);
+    globalThis.document.documentElement.dataset.codeWrap = settings.codeWrap;
+  }, [settings.codeWrap]);
 
   useEffect(() => {
     const root = globalThis.document.documentElement;
-    root.dataset.theme = themeMode;
-    root.classList.toggle("dark", themeMode === "dark");
-    root.classList.toggle("light", themeMode === "light");
-    root.style.colorScheme = themeMode;
-  }, [themeMode]);
+    root.dataset.theme = settings.theme;
+    root.classList.toggle("dark", settings.theme === "dark");
+    root.classList.toggle("light", settings.theme === "light");
+    root.style.colorScheme = settings.theme;
+  }, [settings.theme]);
+
+  const changeSettings = (changes: Partial<ResolvedPreviewSettings>) => {
+    userChangedSettings.current = true;
+    const next = { ...settings, ...changes };
+    setSettings(next);
+    saveMutation.mutate(next);
+  };
 
   const changeCodeWrapMode = (next: CodeWrapMode) => {
-    userChangedSettings.current = true;
-    setCodeWrapMode(next);
-    saveMutation.mutate({
-      codeWrap: next,
-      excludedDirectories,
-      fontScale,
-      maxDepth,
-      maxFiles,
-      markdownExtensions,
-      theme: themeMode,
-    });
+    changeSettings({ codeWrap: next });
   };
 
   const changeThemeMode = (next: ThemeMode) => {
-    userChangedSettings.current = true;
-    setThemeMode(next);
-    saveMutation.mutate({
-      codeWrap: codeWrapMode,
-      excludedDirectories,
-      fontScale,
-      maxDepth,
-      maxFiles,
-      markdownExtensions,
-      theme: next,
-    });
+    changeSettings({ theme: next });
   };
 
   const changeFontScale = (next: number) => {
-    userChangedSettings.current = true;
-    setFontScale(next);
-    saveMutation.mutate({
-      codeWrap: codeWrapMode,
-      excludedDirectories,
-      fontScale: next,
-      maxDepth,
-      maxFiles,
-      markdownExtensions,
-      theme: themeMode,
-    });
+    changeSettings({ fontScale: next });
   };
 
   const changeDirectoryLimits = (
     nextMaxDepth: number,
     nextMaxFiles: number,
   ) => {
-    userChangedSettings.current = true;
-    setMaxDepth(nextMaxDepth);
-    setMaxFiles(nextMaxFiles);
-    saveMutation.mutate({
-      codeWrap: codeWrapMode,
-      excludedDirectories,
-      fontScale,
+    changeSettings({
       maxDepth: nextMaxDepth,
       maxFiles: nextMaxFiles,
-      markdownExtensions,
-      theme: themeMode,
     });
   };
 
   const changeExcludedDirectories = (next: string[]) => {
-    userChangedSettings.current = true;
-    setExcludedDirectories(next);
-    saveMutation.mutate({
-      codeWrap: codeWrapMode,
-      excludedDirectories: next,
-      fontScale,
-      maxDepth,
-      maxFiles,
-      markdownExtensions,
-      theme: themeMode,
-    });
+    changeSettings({ excludedDirectories: next });
   };
 
   const changeMarkdownExtensions = (next: string[]) => {
-    userChangedSettings.current = true;
-    setMarkdownExtensions(next);
-    saveMutation.mutate({
-      codeWrap: codeWrapMode,
-      excludedDirectories,
-      fontScale,
-      markdownExtensions: next,
-      maxDepth,
-      maxFiles,
-      theme: themeMode,
-    });
+    changeSettings({ markdownExtensions: next });
   };
 
   return {
@@ -166,12 +110,6 @@ export const usePreviewSettings = () => {
     changeFontScale,
     changeMarkdownExtensions,
     changeThemeMode,
-    codeWrapMode,
-    excludedDirectories,
-    fontScale,
-    maxDepth,
-    maxFiles,
-    markdownExtensions,
-    themeMode,
+    settings,
   };
 };

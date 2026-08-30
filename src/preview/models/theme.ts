@@ -10,3 +10,8 @@ export type PreviewSettings = {
   markdownExtensions: string[];
   theme?: ThemeMode;
 };
+
+export type ResolvedPreviewSettings = PreviewSettings & {
+  codeWrap: CodeWrapMode;
+  theme: ThemeMode;
+};

@@ -10,15 +10,13 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useRef, useState } from "react";
-import type { CodeWrapMode, ThemeMode } from "../models/theme";
+import type {
+  CodeWrapMode,
+  ResolvedPreviewSettings,
+  ThemeMode,
+} from "../models/theme";
 
 type SettingsDialogProps = {
-  codeWrapMode: CodeWrapMode;
-  excludedDirectories: string[];
-  fontScale: number;
-  maxDepth: number;
-  maxFiles: number;
-  markdownExtensions: string[];
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onDirectoryLimitsChange: (maxDepth: number, maxFiles: number) => void;
   onExcludedDirectoriesChange: (excludedDirectories: string[]) => void;
@@ -27,16 +25,10 @@ type SettingsDialogProps = {
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
   open: boolean;
-  themeMode: ThemeMode;
+  settings: ResolvedPreviewSettings;
 };
 
 export const SettingsDialog = ({
-  codeWrapMode,
-  excludedDirectories,
-  fontScale,
-  maxDepth,
-  maxFiles,
-  markdownExtensions,
   onCodeWrapModeChange,
   onDirectoryLimitsChange,
   onExcludedDirectoriesChange,
@@ -45,7 +37,15 @@ export const SettingsDialog = ({
   onOpenChange,
   onThemeModeChange,
   open,
-  themeMode,
+  settings: {
+    codeWrap: codeWrapMode,
+    excludedDirectories,
+    fontScale,
+    markdownExtensions,
+    maxDepth,
+    maxFiles,
+    theme: themeMode,
+  },
 }: SettingsDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [excludedDirectoriesError, setExcludedDirectoriesError] = useState<
