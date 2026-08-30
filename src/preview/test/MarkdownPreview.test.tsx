@@ -49,7 +49,11 @@ const renderMarkdown = (
   ensurePreviewThemeStyle();
   const result = render(
     <>
-      <DocumentActionBar markdown={markdown} onOpenInstructions={() => {}} />
+      <DocumentActionBar
+        markdown={markdown}
+        onOpenInstructions={() => {}}
+        onOpenTags={() => {}}
+      />
       <MarkdownPreview
         actions={createCommentActions({
           onCreateComment: callbacks.onCreateComment ?? (async () => {}),

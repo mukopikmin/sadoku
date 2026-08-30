@@ -38,6 +38,7 @@ import { StatisticsDialog } from "./components/StatisticsDialog";
 import { useScrollPosition } from "./hooks/useScrollPosition";
 import { DocumentInstructionsDialog } from "./components/DocumentInstructionsDialog";
 import { DocumentActionBar } from "./components/DocumentActionBar";
+import { DocumentTagsDialog } from "./components/DocumentTagsDialog";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -85,6 +86,7 @@ export const App = () => {
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
+  const tagsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
   const {
     changeCodeWrapMode,
@@ -368,6 +370,12 @@ export const App = () => {
         onOpenChange={instructionsDisclosure.setOpen}
         open={instructionsDisclosure.open}
       />
+      <DocumentTagsDialog
+        documentId={selectedDocumentId}
+        onOpenChange={tagsDisclosure.setOpen}
+        open={tagsDisclosure.open}
+        tags={document.tags ?? []}
+      />
       <SettingsDialog
         codeWrapMode={codeWrapMode}
         excludedDirectories={excludedDirectories}
@@ -395,6 +403,7 @@ export const App = () => {
         <DocumentActionBar
           markdown={view === "preview" ? document.markdown : undefined}
           onOpenInstructions={instructionsDisclosure.onOpen}
+          onOpenTags={tagsDisclosure.onOpen}
         />
         {document.deleted && (
           <Alert.Root status="warning" mb="6">
