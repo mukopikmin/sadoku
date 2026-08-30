@@ -37,6 +37,7 @@ import { DocumentBreadcrumb } from "./components/DocumentBreadcrumb";
 import { StatisticsDialog } from "./components/StatisticsDialog";
 import { useScrollPosition } from "./hooks/useScrollPosition";
 import { DocumentInstructionsDialog } from "./components/DocumentInstructionsDialog";
+import { DocumentActionBar } from "./components/DocumentActionBar";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -344,7 +345,6 @@ export const App = () => {
         onChangeView={changeView}
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
-        onOpenInstructions={instructionsDisclosure.onOpen}
         onOpenStatistics={statisticsDisclosure.onOpen}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
@@ -384,6 +384,9 @@ export const App = () => {
             onSelectDocuments={selectDocuments}
           />
         )}
+        <DocumentActionBar
+          onOpenInstructions={instructionsDisclosure.onOpen}
+        />
         {document.deleted && (
           <Alert.Root status="warning" mb="6">
             <Alert.Indicator />
