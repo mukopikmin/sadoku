@@ -145,8 +145,9 @@ describe("MarkdownPreview", () => {
     expect(labels).toHaveLength(2);
     expect(labels.every((label) => label.tagName === "SPAN")).toBe(true);
     const cards = labels.map((label) => label.closest("[data-html-comment]")!);
-    expect(cards[0].textContent).toContain(
-      " **not bold** <img src=x onerror=alert(1)> ",
+    const body = cards[0].querySelector("p");
+    expect(body?.textContent).toBe(
+      "**not bold** <img src=x onerror=alert(1)>",
     );
     expect(cards[0].querySelector("strong, img")).toBeNull();
     expect(cards[1].textContent?.trim()).toBe("HTML COMMENT");
@@ -159,8 +160,8 @@ describe("MarkdownPreview", () => {
     );
 
     const card = screen.getByText("HTML COMMENT").parentElement!;
-    expect(card.textContent).toContain(
-      " first line\n# still plain text\nlast line ",
+    expect(card.querySelector("p")?.textContent).toBe(
+      "first line\n# still plain text\nlast line",
     );
     expect(card.querySelector("h1")).toBeNull();
     const commentable = card.closest(".commentable-block");

@@ -18,10 +18,7 @@ const plainTextFromNode = (node: MarkdownAstNode): string => {
   return node.children?.map(plainTextFromNode).join("") ?? "";
 };
 
-const removeSurroundingBlankLines = (value: string): string =>
-  value
-    .replace(/^(?:[^\S\r\n]*(?:\r\n|\n))+/, "")
-    .replace(/(?:(?:\r\n|\n)[^\S\r\n]*)+$/, "");
+const trimHtmlComment = (value: string): string => value.trim();
 
 const preserveUnsupportedSyntax = () => (tree: MarkdownAstNode) => {
   const transformChildren = (parent: MarkdownAstNode) => {
@@ -35,7 +32,7 @@ const preserveUnsupportedSyntax = () => (tree: MarkdownAstNode) => {
             type: "htmlComment",
             children: [{
               type: "text",
-              value: removeSurroundingBlankLines(htmlComment[1]),
+              value: trimHtmlComment(htmlComment[1]),
             }],
             data: { hName: "html-comment" },
             position: node.position,
