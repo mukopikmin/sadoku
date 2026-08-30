@@ -3,6 +3,7 @@ import { Children, createElement, isValidElement, useContext } from "react";
 import type React from "react";
 import type { Components } from "react-markdown";
 import { CommentableBlock } from "./CommentableBlock";
+import { Tooltip } from "../../components/ui/tooltip";
 import {
   type CommentableComponentProps,
   type CommentRenderingContextValue,
@@ -186,21 +187,22 @@ const createCommentablePre = () => {
         <Box className="mermaid-container" py="2">
           <Box position="relative">
             <pre className="mermaid">{mermaidCode}</pre>
-            <Button
-              aria-label="Zoom Mermaid diagram"
-              bg="canvas"
-              className="mermaid-zoom-button"
-              color="fg"
-              position="absolute"
-              right="2"
-              size="xs"
-              title="Zoom Mermaid diagram"
-              top="2"
-              type="button"
-              variant="outline"
-            >
-              Zoom
-            </Button>
+            <Tooltip content="Zoom Mermaid diagram">
+              <Button
+                aria-label="Zoom Mermaid diagram"
+                bg="canvas"
+                className="mermaid-zoom-button"
+                color="fg"
+                position="absolute"
+                right="2"
+                size="xs"
+                top="2"
+                type="button"
+                variant="outline"
+              >
+                Zoom
+              </Button>
+            </Tooltip>
           </Box>
         </Box>
       );
