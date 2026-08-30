@@ -392,10 +392,12 @@ export const App = () => {
             onSelectDocuments={selectDocuments}
           />
         )}
-        <DocumentActionBar
-          markdown={view === "preview" ? document.markdown : undefined}
-          onOpenInstructions={instructionsDisclosure.onOpen}
-        />
+        {view === "preview" && (
+          <DocumentActionBar
+            markdown={document.markdown}
+            onOpenInstructions={instructionsDisclosure.onOpen}
+          />
+        )}
         {document.deleted && (
           <Alert.Root status="warning" mb="6">
             <Alert.Indicator />
