@@ -7,9 +7,4 @@ export interface TagStore {
     documentId: number,
     references: readonly TagReference[],
   ): Promise<Tag[] | TagError>;
-  rename(
-    id: number,
-    name: string,
-    expectedUpdatedAt?: string,
-  ): Promise<TagSummary | TagError>;
 }

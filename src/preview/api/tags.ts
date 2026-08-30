@@ -28,11 +28,3 @@ export const replaceDocumentTags = async (
       body: JSON.stringify({ tags }),
     }),
   );
-export const renameTag = async (id: number, name: string, updatedAt?: string) =>
-  result<TagSummary>(
-    await fetch(`/__sadoku/tags/${id}`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, updatedAt }),
-    }),
-  );

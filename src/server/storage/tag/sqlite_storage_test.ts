@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { openAppDatabase } from "../../db/connection.ts";
 import { createSqliteTagStore } from "./sqlite_storage.ts";
 
-Deno.test("tag storage replaces associations and renames shared tags without changing id", async () => {
+Deno.test("tag storage creates, reuses, and replaces document tag associations", async () => {
   const directory = await Deno.makeTempDir();
   const database = await openAppDatabase({ path: `${directory}/test.sqlite3` });
   try {
@@ -19,17 +19,28 @@ Deno.test("tag storage replaces associations and renames shared tags without cha
     assertEquals(first.map(({ name }) => name), ["API", "api"]);
     const id = first[0].id;
     await store.replaceForDocument(2, [{ id }]);
-    const renamed = await store.rename(id, "Api");
-    if ("type" in renamed) throw new Error(renamed.message);
-    assertEquals(renamed.documentCount, 2);
-    assertEquals((await store.listForDocument(1))[0], {
-      ...first[0],
-      name: "Api",
-      updatedAt: renamed.updatedAt,
-    });
     assertEquals((await store.listForDocument(2))[0].id, id);
-    const conflict = await store.rename(id, "api");
-    assertEquals("type" in conflict && conflict.type, "conflict");
+    assertEquals(
+      (await store.list()).map(({ name, documentCount }) => ({
+        name,
+        documentCount,
+      })),
+      [
+        { name: "API", documentCount: 2 },
+        { name: "api", documentCount: 1 },
+      ],
+    );
+    await store.replaceForDocument(1, [{ id: first[1].id }]);
+    assertEquals(
+      (await store.list()).map(({ name, documentCount }) => ({
+        name,
+        documentCount,
+      })),
+      [
+        { name: "API", documentCount: 1 },
+        { name: "api", documentCount: 1 },
+      ],
+    );
   } finally {
     database.close();
     await Deno.remove(directory, { recursive: true });

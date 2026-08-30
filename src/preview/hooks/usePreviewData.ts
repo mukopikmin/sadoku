@@ -20,12 +20,7 @@ import {
   loadInstructions,
   updateInstruction,
 } from "../api/instructions";
-import {
-  loadTags,
-  renameTag,
-  replaceDocumentTags,
-  type TagReference,
-} from "../api/tags";
+import { loadTags, replaceDocumentTags, type TagReference } from "../api/tags";
 
 export const documentsQueryKey = ["documents"] as const;
 export const directoryStatusQueryKey = ["directory-status"] as const;
@@ -54,19 +49,8 @@ export const useTagActions = (documentId: number) => {
     mutationFn: (tags: TagReference[]) => replaceDocumentTags(documentId, tags),
     onSuccess: refresh,
   });
-  const renameMutation = useMutation({
-    mutationFn: (
-      { id, name, updatedAt }: { id: number; name: string; updatedAt?: string },
-    ) => renameTag(id, name, updatedAt),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: tagsQueryKey });
-      await queryClient.invalidateQueries({ queryKey: documentsQueryKey });
-      await queryClient.invalidateQueries({ queryKey: ["preview-document"] });
-    },
-  });
   return {
-    pending: replaceMutation.isPending || renameMutation.isPending,
-    rename: renameMutation.mutateAsync,
+    pending: replaceMutation.isPending,
     replace: replaceMutation.mutateAsync,
   };
 };
