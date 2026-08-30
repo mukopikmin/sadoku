@@ -167,7 +167,7 @@ export const SettingsDialog = ({
                       fontSize="sm"
                       id="directory-discovery-description"
                     >
-                      Changes apply the next time a directory preview starts.
+                      Changes apply the next time a directory preview starts
                     </Text>
                   </Text>
                   <Flex
