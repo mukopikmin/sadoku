@@ -50,6 +50,9 @@ export const DocumentActionBar = (
             Instructions
           </Button>
           <Button
+            aria-label={showHtmlComments
+              ? "Hide HTML comments"
+              : "Show HTML comments"}
             aria-pressed={!showHtmlComments}
             onClick={onToggleHtmlComments}
             size="sm"
@@ -85,7 +88,7 @@ export const DocumentActionBar = (
                 />
               )}
             </svg>
-            {showHtmlComments ? "Hide HTML comments" : "Show HTML comments"}
+            HTML comments
           </Button>
           {markdown !== undefined && <TableOfContents markdown={markdown} />}
         </ActionBar.Content>
