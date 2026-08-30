@@ -56,6 +56,35 @@ export const DocumentActionBar = (
             type="button"
             variant="outline"
           >
+            <svg
+              aria-hidden="true"
+              fill="none"
+              height="1em"
+              viewBox="0 0 16 16"
+              width="1em"
+            >
+              <path
+                d="M1.75 8s2.25-3.5 6.25-3.5S14.25 8 14.25 8 12 11.5 8 11.5 1.75 8 1.75 8Z"
+                stroke="currentColor"
+                strokeLinejoin="round"
+                strokeWidth="1.3"
+              />
+              <circle
+                cx="8"
+                cy="8"
+                r="1.75"
+                stroke="currentColor"
+                strokeWidth="1.3"
+              />
+              {!showHtmlComments && (
+                <path
+                  d="m2.5 2.5 11 11"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.3"
+                />
+              )}
+            </svg>
             {showHtmlComments ? "Hide HTML comments" : "Show HTML comments"}
           </Button>
           {markdown !== undefined && <TableOfContents markdown={markdown} />}

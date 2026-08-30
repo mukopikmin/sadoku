@@ -118,6 +118,9 @@ describe("MarkdownPreview", () => {
       name: "Hide HTML comments",
     });
     expect(hideButton.getAttribute("aria-pressed")).toBe("false");
+    expect(hideButton.querySelector("svg")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
     fireEvent.click(hideButton);
 
     expect(screen.queryByText("HTML COMMENT")).toBeNull();
@@ -129,6 +132,8 @@ describe("MarkdownPreview", () => {
       name: "Show HTML comments",
     });
     expect(showButton.getAttribute("aria-pressed")).toBe("true");
+    expect(showButton.querySelector("svg path:last-child")?.getAttribute("d"))
+      .toBe("m2.5 2.5 11 11");
     fireEvent.click(showButton);
 
     expect(screen.getByText("HTML COMMENT")).not.toBeNull();
