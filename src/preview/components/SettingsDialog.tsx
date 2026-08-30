@@ -114,6 +114,7 @@ export const SettingsDialog = ({
                     </Text>
                   </Text>
                   <Flex
+                    alignItems="center"
                     aria-label="Text size controls"
                     gap="2"
                     role="group"

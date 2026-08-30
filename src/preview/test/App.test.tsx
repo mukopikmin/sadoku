@@ -553,6 +553,7 @@ describe("App", () => {
     const textSizeControls = screen.getByRole("group", {
       name: "Text size controls",
     });
+    expect(getComputedStyle(textSizeControls).alignItems).toBe("center");
     expect(textSizeControls.contains(decreaseTextSize)).toBe(true);
     expect(textSizeControls.contains(increaseTextSize)).toBe(true);
     expect(screen.queryByRole("button", {
