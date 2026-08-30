@@ -10,6 +10,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
+import { DocumentActionBar } from "../components/DocumentActionBar";
 import { initializeMermaid } from "../markdown/mermaid";
 import { previewThemeCss, sadokuChakraSystem } from "../theme";
 
@@ -47,16 +48,19 @@ const renderMarkdown = (
 ) => {
   ensurePreviewThemeStyle();
   const result = render(
-    <MarkdownPreview
-      actions={createCommentActions({
-        onCreateComment: callbacks.onCreateComment ?? (async () => {}),
-        onResolveComment: callbacks.onResolveComment ?? (async () => {}),
-      })}
-      comments={comments}
-      documentPath={documentPath}
-      markdown={markdown}
-      theme="default"
-    />,
+    <>
+      <DocumentActionBar markdown={markdown} onOpenInstructions={() => {}} />
+      <MarkdownPreview
+        actions={createCommentActions({
+          onCreateComment: callbacks.onCreateComment ?? (async () => {}),
+          onResolveComment: callbacks.onResolveComment ?? (async () => {}),
+        })}
+        comments={comments}
+        documentPath={documentPath}
+        markdown={markdown}
+        theme="default"
+      />
+    </>,
   );
   return { ...result, container: result.container };
 };

@@ -385,6 +385,7 @@ export const App = () => {
           />
         )}
         <DocumentActionBar
+          markdown={view === "preview" ? document.markdown : undefined}
           onOpenInstructions={instructionsDisclosure.onOpen}
         />
         {document.deleted && (

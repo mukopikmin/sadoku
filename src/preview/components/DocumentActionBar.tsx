@@ -1,19 +1,27 @@
 import { Button, Flex } from "@chakra-ui/react";
+import { TableOfContents } from "../pages/markdown/TableOfContents";
 
 type DocumentActionBarProps = {
+  markdown?: string;
   onOpenInstructions: () => void;
 };
 
 export const DocumentActionBar = (
-  { onOpenInstructions }: DocumentActionBarProps,
+  { markdown, onOpenInstructions }: DocumentActionBarProps,
 ) => (
   <Flex
     aria-label="Document actions"
     as="nav"
+    bottom={{ base: "4", md: "6" }}
+    gap="2"
     justifyContent="flex-end"
-    mb="6"
+    position="fixed"
+    right="max(var(--chakra-spacing-8), calc((100vw - 980px) / 2 + var(--chakra-spacing-8)))"
+    zIndex="dropdown"
   >
     <Button
+      bg="canvas"
+      boxShadow="md"
       onClick={onOpenInstructions}
       size="sm"
       type="button"
@@ -21,5 +29,6 @@ export const DocumentActionBar = (
     >
       Instructions
     </Button>
+    {markdown !== undefined && <TableOfContents markdown={markdown} />}
   </Flex>
 );

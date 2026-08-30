@@ -429,6 +429,11 @@ describe("App", () => {
     const firstInstructionsButton = within(firstActionBar).getByRole("button", {
       name: "Instructions",
     });
+    expect(
+      within(firstActionBar).getByRole("button", {
+        name: "Table of contents",
+      }),
+    ).not.toBeNull();
     expect(container.querySelector("header")?.contains(firstInstructionsButton))
       .toBe(false);
     fireEvent.click(firstInstructionsButton);

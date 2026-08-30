@@ -33,7 +33,6 @@ import { CommentableBlock } from "./CommentableBlock";
 import { getCommentableBlockProps } from "./commentableMarkdownComponents";
 import { extractAgentFrontMatter } from "./frontMatter";
 import { RawMarkdownDialog } from "./RawMarkdownDialog";
-import { TableOfContents } from "./TableOfContents";
 
 export type MarkdownPreviewProps = {
   actions: CommentActions;
@@ -391,7 +390,6 @@ export const MarkdownPreview = ({
             ))}
           </DataList.Root>
         )}
-        <TableOfContents markdown={renderedMarkdown} />
         <ReactMarkdown
           components={components}
           rehypePlugins={[
