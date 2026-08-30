@@ -34,6 +34,13 @@ import type { StatisticsReader } from "./usecase/statistics/get_statistics.ts";
 import type { DirectorySessionState } from "./directory_session.ts";
 import { getDirectoryStatus } from "./api/directory_status_api.ts";
 import { logInfo } from "../log.ts";
+import type { InstructionStore } from "./usecase/instruction/ports.ts";
+import {
+  createInstruction,
+  getInstructions,
+  removeInstruction,
+  replaceInstruction,
+} from "./api/instruction_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   log?: (message: string) => void;
@@ -57,6 +64,7 @@ export const createDirectoryPreviewHandler = (
   commentsStore: CommentsStore,
   options: DirectoryPreviewHandlerOptions = {},
   documentStore?: DocumentStore,
+  instructionStore?: InstructionStore,
 ): Deno.ServeHandler => {
   const app = new Hono();
   const log = options.log ?? logInfo;
@@ -178,6 +186,47 @@ export const createDirectoryPreviewHandler = (
     const { source } = resolveDocument(context.req.param("documentId"));
     return getComments(source, commentsStore);
   });
+  if (instructionStore) {
+    app.get("/__sadoku/documents/:documentId/instructions", (context) => {
+      const { document } = resolveDocument(context.req.param("documentId"));
+      return getInstructions(document.id, instructionStore);
+    });
+    app.post("/__sadoku/documents/:documentId/instructions", (context) => {
+      const { document } = resolveDocument(context.req.param("documentId"));
+      return createInstruction(context.req.raw, document.id, instructionStore);
+    });
+    app.put(
+      "/__sadoku/documents/:documentId/instructions/:instructionId",
+      (context) => {
+        const { document } = resolveDocument(context.req.param("documentId"));
+        return replaceInstruction(
+          context.req.raw,
+          document.id,
+          Number(context.req.param("instructionId")),
+          instructionStore,
+        );
+      },
+    );
+    app.delete(
+      "/__sadoku/documents/:documentId/instructions/:instructionId",
+      (context) => {
+        const { document } = resolveDocument(context.req.param("documentId"));
+        return removeInstruction(
+          document.id,
+          Number(context.req.param("instructionId")),
+          instructionStore,
+        );
+      },
+    );
+    app.all(
+      "/__sadoku/documents/:documentId/instructions",
+      methodNotAllowedResponse,
+    );
+    app.all(
+      "/__sadoku/documents/:documentId/instructions/*",
+      methodNotAllowedResponse,
+    );
+  }
   app.post("/__sadoku/documents/:documentId/comments", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
     return createComment(context.req.raw, source, commentsStore);

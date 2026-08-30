@@ -1,6 +1,7 @@
 import {
   Badge,
   Box,
+  Button,
   Container,
   Flex,
   Float,
@@ -49,6 +50,7 @@ type PreviewHeaderProps = {
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
   onOpenSettings: () => void;
+  onOpenInstructions?: () => void;
   onOpenStatistics: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
@@ -65,6 +67,7 @@ export const PreviewHeader = ({
   onChangeView,
   onReloadPreview,
   onOpenSettings,
+  onOpenInstructions,
   onOpenStatistics,
   reloadAvailable,
   reloading,
@@ -111,6 +114,16 @@ export const PreviewHeader = ({
         >
           Connection lost
         </Badge>
+      )}
+      {onOpenInstructions && (
+        <Button
+          onClick={onOpenInstructions}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          Instructions
+        </Button>
       )}
       <IconButton
         aria-label="Open database statistics"

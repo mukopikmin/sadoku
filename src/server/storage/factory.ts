@@ -9,11 +9,14 @@ import { createSqliteDocumentStore } from "./document/sqlite_storage.ts";
 import type { DocumentStore } from "../usecase/document/ports.ts";
 import { createSqliteStatisticsReader } from "./statistics/sqlite_statistics.ts";
 import type { StatisticsReader } from "../usecase/statistics/get_statistics.ts";
+import { createSqliteInstructionStore } from "./instruction/sqlite_storage.ts";
+import type { InstructionStore } from "../usecase/instruction/ports.ts";
 
 export type ConfiguredStores = {
   close: () => void;
   comments: CommentsStore;
   documents: DocumentStore;
+  instructions: InstructionStore;
   statistics: StatisticsReader;
 };
 
@@ -46,6 +49,7 @@ export const createConfiguredStores = async (): Promise<ConfiguredStores> => {
       },
     },
     documents: createSqliteDocumentStore(database),
+    instructions: createSqliteInstructionStore(database),
     statistics: createSqliteStatisticsReader(database),
   };
 };
