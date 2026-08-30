@@ -82,6 +82,26 @@ deno task compile --version 0.1.0
 If `--version` is omitted, the compiled binary reports the development version
 `0.0.0-dev`. Pass the release version explicitly when building release binaries.
 
+### Install the agent skills
+
+Sadoku's agent skills teach compatible coding agents how to work with the
+`sadoku` CLI. Install all available skills with
+[Agent Package Manager (APM)](https://github.com/microsoft/apm):
+
+```sh
+apm install mukopikmin/sadoku
+```
+
+To install only the `sadoku-review` skill, which reads and addresses review
+comments, select it explicitly:
+
+```sh
+apm install mukopikmin/sadoku --skill sadoku-review
+```
+
+The skill requires the `sadoku` executable to be installed and available on
+`PATH`.
+
 ## Usage
 
 ```sh
