@@ -20,6 +20,12 @@ import {
   loadInstructions,
   updateInstruction,
 } from "../api/instructions";
+import {
+  loadTags,
+  renameTag,
+  replaceDocumentTags,
+  type TagReference,
+} from "../api/tags";
 
 export const documentsQueryKey = ["documents"] as const;
 export const directoryStatusQueryKey = ["directory-status"] as const;
@@ -29,6 +35,41 @@ export const commentsQueryKey = (documentId?: number) =>
   ["comments", documentId] as const;
 export const instructionsQueryKey = (documentId?: number) =>
   ["instructions", documentId] as const;
+export const tagsQueryKey = ["tags"] as const;
+
+export const useTagsQuery = () =>
+  useQuery({ queryFn: loadTags, queryKey: tagsQueryKey });
+export const useTagActions = (documentId: number) => {
+  const queryClient = useQueryClient();
+  const refresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: tagsQueryKey }),
+      queryClient.invalidateQueries({ queryKey: documentsQueryKey }),
+      queryClient.invalidateQueries({
+        queryKey: previewDocumentQueryKey(documentId),
+      }),
+    ]);
+  };
+  const replaceMutation = useMutation({
+    mutationFn: (tags: TagReference[]) => replaceDocumentTags(documentId, tags),
+    onSuccess: refresh,
+  });
+  const renameMutation = useMutation({
+    mutationFn: (
+      { id, name, updatedAt }: { id: number; name: string; updatedAt?: string },
+    ) => renameTag(id, name, updatedAt),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: tagsQueryKey });
+      await queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+      await queryClient.invalidateQueries({ queryKey: ["preview-document"] });
+    },
+  });
+  return {
+    pending: replaceMutation.isPending || renameMutation.isPending,
+    rename: renameMutation.mutateAsync,
+    replace: replaceMutation.mutateAsync,
+  };
+};
 
 export const useInstructionsQuery = (documentId?: number, enabled = true) =>
   useQuery({
