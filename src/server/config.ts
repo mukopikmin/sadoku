@@ -10,9 +10,20 @@ export type SadokuConfig = {
   commentsDirectory?: string;
   directoryMaxDepth?: number;
   directoryMaxFiles?: number;
+  excludedDirectories?: string[];
   fontScale?: number;
   themeMode?: "dark" | "light";
 };
+
+export const isValidExcludedDirectory = (value: unknown): value is string =>
+  typeof value === "string" && value.length > 0 && value !== "." &&
+  value !== ".." && !value.includes("/") && !value.includes("\\");
+
+export const isValidExcludedDirectories = (
+  value: unknown,
+): value is string[] =>
+  Array.isArray(value) && value.every(isValidExcludedDirectory) &&
+  new Set(value).size === value.length;
 
 export const fontScaleLimits = { min: 0.75, max: 1.5 } as const;
 
@@ -108,6 +119,15 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     config.directoryMaxFiles = value.directory_max_files as number;
   }
 
+  if ("excluded_directories" in value) {
+    if (!isValidExcludedDirectories(value.excluded_directories)) {
+      throw new Error(
+        "excluded_directories in Sadoku config must be an array of unique directory names.",
+      );
+    }
+    config.excludedDirectories = value.excluded_directories;
+  }
+
   if ("font_scale" in value) {
     if (!isValidFontScale(value.font_scale)) {
       throw new Error(
@@ -168,6 +188,7 @@ export const updatePreviewConfig = (
   directoryMaxDepth?: number,
   directoryMaxFiles?: number,
   fontScale = 1,
+  excludedDirectories?: string[],
 ): Promise<void> =>
   updateConfig({
     code_wrap_mode: codeWrap,
@@ -178,6 +199,9 @@ export const updatePreviewConfig = (
       ? {}
       : { directory_max_files: directoryMaxFiles }),
     font_scale: fontScale,
+    ...(excludedDirectories === undefined
+      ? {}
+      : { excluded_directories: excludedDirectories }),
     theme_mode: theme,
   });
 

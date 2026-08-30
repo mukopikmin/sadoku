@@ -2,6 +2,7 @@ import type { CodeWrapMode, PreviewSettings, ThemeMode } from "../models/theme";
 
 export type SettingsResponse = {
   codeWrap?: unknown;
+  excludedDirectories?: unknown;
   fontScale?: unknown;
   maxDepth?: unknown;
   maxFiles?: unknown;
@@ -10,6 +11,7 @@ export type SettingsResponse = {
 
 export type SettingsUpdate = {
   codeWrap: CodeWrapMode;
+  excludedDirectories: string[];
   fontScale: number;
   maxDepth: number;
   maxFiles: number;
@@ -31,6 +33,10 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
   }
   const maxDepth = response.maxDepth ?? 2;
   const maxFiles = response.maxFiles ?? 20;
+  const excludedDirectories = response.excludedDirectories ?? [
+    ".git",
+    "node_modules",
+  ];
   const fontScale = response.fontScale ?? 1;
   if (
     typeof fontScale !== "number" || !Number.isFinite(fontScale) ||
@@ -46,8 +52,21 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
       "Settings response contained an invalid maximum file count.",
     );
   }
+  if (
+    !Array.isArray(excludedDirectories) ||
+    excludedDirectories.some((directory) =>
+      typeof directory !== "string" || directory.length === 0 ||
+      directory === "." || directory === ".." || directory.includes("/") ||
+      directory.includes("\\")
+    ) || new Set(excludedDirectories).size !== excludedDirectories.length
+  ) {
+    throw new Error(
+      "Settings response contained invalid excluded directories.",
+    );
+  }
   return {
     codeWrap: response.codeWrap,
+    excludedDirectories,
     fontScale,
     maxDepth: maxDepth as number,
     maxFiles: maxFiles as number,

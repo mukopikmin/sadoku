@@ -196,6 +196,7 @@ export const startPreviewServer = async (
       directoryState,
       stores.documents,
       {
+        excludedDirectories: config?.excludedDirectories,
         maxDepth: options.maxDepth ?? config?.directoryMaxDepth,
         maxFiles: options.maxFiles ?? config?.directoryMaxFiles,
       },

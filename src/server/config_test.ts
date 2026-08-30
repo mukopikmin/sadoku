@@ -191,6 +191,32 @@ Deno.test("reads and validates code wrap mode config", async () => {
   });
 });
 
+Deno.test("reads and validates excluded directory config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    await writeConfig(
+      configFilePath,
+      'excluded_directories = [".git", "vendor"]\n',
+    );
+    assertEquals(readConfig(), { excludedDirectories: [".git", "vendor"] });
+
+    for (
+      const invalid of [
+        '"vendor"',
+        '["vendor", "vendor"]',
+        '["nested/vendor"]',
+        '[".."]',
+      ]
+    ) {
+      await writeConfig(configFilePath, `excluded_directories = ${invalid}\n`);
+      assertThrows(
+        () => readConfig(),
+        Error,
+        "excluded_directories in Sadoku config must be an array of unique directory names.",
+      );
+    }
+  });
+});
+
 Deno.test("reads and validates font scale config", async () => {
   await withConfigEnvironment(async ({ configFilePath }) => {
     await writeConfig(configFilePath, "font_scale = 1.2\n");

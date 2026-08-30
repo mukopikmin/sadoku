@@ -116,6 +116,29 @@ Deno.test("uses configured directory depth and file limits", async () => {
   }
 });
 
+Deno.test("uses configured excluded directory names at every level", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    await Deno.mkdir(join(root, ".git"));
+    await Deno.writeTextFile(join(root, ".git", "included.md"), "content");
+    await Deno.mkdir(join(root, "nested", "drafts"), { recursive: true });
+    await Deno.writeTextFile(
+      join(root, "nested", "drafts", "excluded.md"),
+      "content",
+    );
+
+    assertEquals(
+      (await listMarkdownFiles(root, {
+        excludedDirectories: ["drafts"],
+        maxDepth: 3,
+      })).map((document) => document.relativePath),
+      [join(".git", "included.md")],
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("returns an empty list for an empty directory", async () => {
   const root = await Deno.makeTempDir();
   try {

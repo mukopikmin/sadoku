@@ -569,6 +569,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          excludedDirectories: [".git", "node_modules"],
           fontScale: 1.1,
           maxDepth: 2,
           maxFiles: 20,
@@ -610,6 +611,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          excludedDirectories: [".git", "node_modules"],
           fontScale: 1.1,
           maxDepth: 4,
           maxFiles: 20,
@@ -625,6 +627,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
+          excludedDirectories: [".git", "node_modules"],
           fontScale: 1.1,
           maxDepth: 4,
           maxFiles: 100,
@@ -647,6 +650,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        excludedDirectories: [".git", "node_modules"],
         fontScale: 1.1,
         maxDepth: 4,
         maxFiles: 100,
@@ -666,6 +670,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        excludedDirectories: [".git", "node_modules"],
         fontScale: 1.1,
         maxDepth: 4,
         maxFiles: 100,
@@ -674,6 +679,31 @@ describe("App", () => {
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
+
+    const excludedDirectoriesInput = screen.getByRole("textbox", {
+      name: "Excluded directories",
+    });
+    expect((excludedDirectoriesInput as HTMLTextAreaElement).value).toBe(
+      ".git\nnode_modules",
+    );
+    fireEvent.change(excludedDirectoriesInput, {
+      target: { value: ".git\nvendor\nvendor" },
+    });
+    fireEvent.blur(excludedDirectoriesInput);
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
+        body: JSON.stringify({
+          codeWrap: "scroll",
+          excludedDirectories: [".git", "vendor"],
+          fontScale: 1.1,
+          maxDepth: 4,
+          maxFiles: 100,
+          theme: "light",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PUT",
+      })
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
     await waitFor(() =>
@@ -751,8 +781,14 @@ describe("App", () => {
       if (url === "/__sadoku/settings") {
         return Promise.resolve(Response.json(
           init?.method === "PUT"
-            ? { codeWrap: JSON.parse(String(init.body)).codeWrap }
-            : { codeWrap: "wrap" },
+            ? {
+              codeWrap: JSON.parse(String(init.body)).codeWrap,
+              excludedDirectories: [".git", "node_modules"],
+            }
+            : {
+              codeWrap: "wrap",
+              excludedDirectories: [".git", "node_modules"],
+            },
         ));
       }
       if (url === "/__sadoku/documents/1") {
@@ -798,6 +834,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
+        excludedDirectories: [".git", "node_modules"],
         fontScale: 1,
         maxDepth: 2,
         maxFiles: 20,

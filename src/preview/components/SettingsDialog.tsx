@@ -7,17 +7,20 @@ import {
   Portal,
   Switch,
   Text,
+  Textarea,
 } from "@chakra-ui/react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CodeWrapMode, ThemeMode } from "../models/theme";
 
 type SettingsDialogProps = {
   codeWrapMode: CodeWrapMode;
+  excludedDirectories: string[];
   fontScale: number;
   maxDepth: number;
   maxFiles: number;
   onCodeWrapModeChange: (codeWrapMode: CodeWrapMode) => void;
   onDirectoryLimitsChange: (maxDepth: number, maxFiles: number) => void;
+  onExcludedDirectoriesChange: (excludedDirectories: string[]) => void;
   onFontScaleChange: (fontScale: number) => void;
   onOpenChange: (open: boolean) => void;
   onThemeModeChange: (themeMode: ThemeMode) => void;
@@ -27,11 +30,13 @@ type SettingsDialogProps = {
 
 export const SettingsDialog = ({
   codeWrapMode,
+  excludedDirectories,
   fontScale,
   maxDepth,
   maxFiles,
   onCodeWrapModeChange,
   onDirectoryLimitsChange,
+  onExcludedDirectoriesChange,
   onFontScaleChange,
   onOpenChange,
   onThemeModeChange,
@@ -39,6 +44,35 @@ export const SettingsDialog = ({
   themeMode,
 }: SettingsDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [excludedDirectoriesInput, setExcludedDirectoriesInput] = useState(
+    excludedDirectories.join("\n"),
+  );
+  const [excludedDirectoriesError, setExcludedDirectoriesError] = useState<
+    string
+  >();
+  useEffect(() => {
+    setExcludedDirectoriesInput(excludedDirectories.join("\n"));
+  }, [excludedDirectories]);
+
+  const saveExcludedDirectories = () => {
+    const directories = excludedDirectoriesInput.split("\n")
+      .map((directory) => directory.trim()).filter(Boolean);
+    if (
+      directories.some((directory) =>
+        directory === "." || directory === ".." || directory.includes("/") ||
+        directory.includes("\\")
+      )
+    ) {
+      setExcludedDirectoriesError(
+        "Enter one directory name per line without path separators.",
+      );
+      return;
+    }
+    const uniqueDirectories = [...new Set(directories)];
+    setExcludedDirectoriesError(undefined);
+    setExcludedDirectoriesInput(uniqueDirectories.join("\n"));
+    onExcludedDirectoriesChange(uniqueDirectories);
+  };
   const fontScales = [0.75, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5];
   const scaleIndex = fontScales.findIndex((scale) => scale >= fontScale);
   const decreaseScale = fontScales[Math.max(0, scaleIndex - 1)];
@@ -221,6 +255,37 @@ export const SettingsDialog = ({
                         value={maxFiles}
                         width="24"
                       />
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text as="label" htmlFor="excluded-directories">
+                        Excluded directories
+                      </Text>
+                      <Textarea
+                        aria-describedby="excluded-directories-help"
+                        aria-invalid={excludedDirectoriesError !== undefined}
+                        id="excluded-directories"
+                        onBlur={saveExcludedDirectories}
+                        onChange={(event) => {
+                          setExcludedDirectoriesInput(
+                            event.currentTarget.value,
+                          );
+                          setExcludedDirectoriesError(undefined);
+                        }}
+                        placeholder="One directory name per line"
+                        resize="vertical"
+                        rows={3}
+                        value={excludedDirectoriesInput}
+                      />
+                      <Text
+                        color={excludedDirectoriesError
+                          ? "fg.error"
+                          : "fg.muted"}
+                        fontSize="sm"
+                        id="excluded-directories-help"
+                      >
+                        {excludedDirectoriesError ??
+                          "One directory name per line. Names match at every level."}
+                      </Text>
                     </Flex>
                   </Flex>
                 </Flex>
