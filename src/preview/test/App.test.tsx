@@ -550,21 +550,15 @@ describe("App", () => {
     const increaseTextSize = screen.getByRole("button", {
       name: "Increase text size",
     });
-    const resetTextSize = screen.getByRole("button", {
-      name: "Reset text size to 100%",
-    });
     const textSizeControls = screen.getByRole("group", {
       name: "Text size controls",
     });
-    expect(textSizeControls.children).toHaveLength(2);
-    expect(textSizeControls.children[0]?.contains(decreaseTextSize)).toBe(true);
-    expect(textSizeControls.children[0]?.contains(increaseTextSize)).toBe(true);
-    expect(textSizeControls.children[1]).toBe(resetTextSize);
-    expect(globalThis.getComputedStyle(resetTextSize).alignSelf).toBe(
-      "flex-end",
-    );
+    expect(textSizeControls.contains(decreaseTextSize)).toBe(true);
+    expect(textSizeControls.contains(increaseTextSize)).toBe(true);
+    expect(screen.queryByRole("button", {
+      name: "Reset text size to 100%",
+    })).toBeNull();
     expect(screen.getByText("100%")).not.toBeNull();
-    expect((resetTextSize as HTMLButtonElement).disabled).toBe(true);
 
     fireEvent.click(increaseTextSize);
     expect(screen.getByText("110%")).not.toBeNull();
@@ -585,11 +579,6 @@ describe("App", () => {
       })
     );
     expect((decreaseTextSize as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.click(resetTextSize);
-    expect(screen.getByText("100%")).not.toBeNull();
-    expect(document.documentElement.style.getPropertyValue(
-      "--sadoku-font-scale",
-    )).toBe("1");
 
     const maxDepthInput = screen.getByRole("spinbutton", {
       name: "Maximum depth",
@@ -621,7 +610,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
-          fontScale: 1,
+          fontScale: 1.1,
           maxDepth: 4,
           maxFiles: 20,
           theme: "light",
@@ -636,7 +625,7 @@ describe("App", () => {
       expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
         body: JSON.stringify({
           codeWrap: "scroll",
-          fontScale: 1,
+          fontScale: 1.1,
           maxDepth: 4,
           maxFiles: 100,
           theme: "light",
@@ -658,7 +647,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
-        fontScale: 1,
+        fontScale: 1.1,
         maxDepth: 4,
         maxFiles: 100,
         theme: "dark",
@@ -677,7 +666,7 @@ describe("App", () => {
     expect(fetch).toHaveBeenCalledWith("/__sadoku/settings", {
       body: JSON.stringify({
         codeWrap: "scroll",
-        fontScale: 1,
+        fontScale: 1.1,
         maxDepth: 4,
         maxFiles: 100,
         theme: "light",
