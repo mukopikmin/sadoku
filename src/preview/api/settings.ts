@@ -6,6 +6,7 @@ export type SettingsResponse = {
   fontScale?: unknown;
   maxDepth?: unknown;
   maxFiles?: unknown;
+  markdownExtensions?: unknown;
   theme?: unknown;
 };
 
@@ -15,6 +16,7 @@ export type SettingsUpdate = {
   fontScale: number;
   maxDepth: number;
   maxFiles: number;
+  markdownExtensions: string[];
   theme: ThemeMode;
 };
 
@@ -38,6 +40,19 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
     "node_modules",
   ];
   const fontScale = response.fontScale ?? 1;
+  const markdownExtensions = response.markdownExtensions ??
+    [".md", ".markdown"];
+  if (
+    !Array.isArray(markdownExtensions) || markdownExtensions.length === 0 ||
+    markdownExtensions.some((extension) =>
+      typeof extension !== "string" || !/^\.[^.\\/]+$/.test(extension)
+    ) ||
+    new Set(markdownExtensions.map((extension) => extension.toLowerCase()))
+        .size !==
+      markdownExtensions.length
+  ) {
+    throw new Error("Settings response contained invalid Markdown extensions.");
+  }
   if (
     typeof fontScale !== "number" || !Number.isFinite(fontScale) ||
     fontScale < 0.75 || fontScale > 1.5
@@ -70,6 +85,7 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
     fontScale,
     maxDepth: maxDepth as number,
     maxFiles: maxFiles as number,
+    markdownExtensions,
     theme: response.theme,
   };
 };

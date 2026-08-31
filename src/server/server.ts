@@ -198,6 +198,7 @@ export const startPreviewServer = async (
       stores.documents,
       {
         excludedDirectories: config?.excludedDirectories,
+        markdownExtensions: config?.markdownExtensions,
         maxDepth: options.maxDepth ?? config?.directoryMaxDepth,
         maxFiles: options.maxFiles ?? config?.directoryMaxFiles,
       },
