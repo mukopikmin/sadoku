@@ -373,8 +373,9 @@ console.log("<ok>");
       name: "Table of contents",
     });
     expect(getComputedStyle(navigation).fontSize).toBe(
-      "var(--chakra-font-sizes-md)",
+      "var(--chakra-font-sizes-sm)",
     );
+    expect(getComputedStyle(navigation).lineHeight).toBe("1.7");
     expect(
       getComputedStyle(navigation.closest("[data-part=content]")!)
         .getPropertyValue("--popover-size"),
