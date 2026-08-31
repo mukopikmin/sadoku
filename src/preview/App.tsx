@@ -385,13 +385,15 @@ export const App = () => {
             onSelectDocuments={selectDocuments}
           />
         )}
-        <DocumentActionBar
-          markdown={view === "preview" ? document.markdown : undefined}
-          onOpenInstructions={instructionsDisclosure.onOpen}
-          onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
-          showHtmlComments={showHtmlComments}
-          onOpenTags={tagsDisclosure.onOpen}
-        />
+        {view === "preview" && (
+          <DocumentActionBar
+            markdown={document.markdown}
+            onOpenInstructions={instructionsDisclosure.onOpen}
+            onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
+            showHtmlComments={showHtmlComments}
+            onOpenTags={tagsDisclosure.onOpen}
+          />
+        )}
         {document.deleted && (
           <Alert.Root status="warning" mb="6">
             <Alert.Indicator />

@@ -444,7 +444,21 @@ describe("App", () => {
     ).toBe("true");
     expect(container.querySelector("header")?.contains(firstInstructionsButton))
       .toBe(false);
-    fireEvent.click(firstInstructionsButton);
+
+    fireEvent.click(screen.getByRole("tab", {
+      name: "Comments, 0 unresolved",
+    }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Document actions" }))
+        .toBeNull()
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Instructions",
+      }),
+    );
     expect(
       await screen.findByRole("dialog", { name: "Document instructions" }),
     ).not.toBeNull();
