@@ -38,6 +38,7 @@ import { StatisticsDialog } from "./components/StatisticsDialog";
 import { useScrollPosition } from "./hooks/useScrollPosition";
 import { DocumentInstructionsDialog } from "./components/DocumentInstructionsDialog";
 import { DocumentActionBar } from "./components/DocumentActionBar";
+import { DocumentTagsDialog } from "./components/DocumentTagsDialog";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -85,19 +86,16 @@ export const App = () => {
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
+  const tagsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
     changeExcludedDirectories,
     changeFontScale,
+    changeMarkdownExtensions,
     changeThemeMode,
-    codeWrapMode,
-    excludedDirectories,
-    fontScale,
-    maxDepth,
-    maxFiles,
-    themeMode,
+    settings,
   } = usePreviewSettings();
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
     selectedDocumentId,
@@ -219,19 +217,15 @@ export const App = () => {
           open={statisticsDisclosure.open}
         />
         <SettingsDialog
-          codeWrapMode={codeWrapMode}
-          excludedDirectories={excludedDirectories}
-          fontScale={fontScale}
-          maxDepth={maxDepth}
-          maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
           onExcludedDirectoriesChange={changeExcludedDirectories}
           onFontScaleChange={changeFontScale}
+          onMarkdownExtensionsChange={changeMarkdownExtensions}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
-          themeMode={themeMode}
+          settings={settings}
         />
         <Container as="main" maxW="980px" px="8" pb="16">
           <Heading mb="4" size="md">Documents</Heading>
@@ -300,19 +294,15 @@ export const App = () => {
           open={statisticsDisclosure.open}
         />
         <SettingsDialog
-          codeWrapMode={codeWrapMode}
-          excludedDirectories={excludedDirectories}
-          fontScale={fontScale}
-          maxDepth={maxDepth}
-          maxFiles={maxFiles}
           onCodeWrapModeChange={changeCodeWrapMode}
           onDirectoryLimitsChange={changeDirectoryLimits}
           onExcludedDirectoriesChange={changeExcludedDirectories}
           onFontScaleChange={changeFontScale}
+          onMarkdownExtensionsChange={changeMarkdownExtensions}
           onOpenChange={settingsDisclosure.setOpen}
           onThemeModeChange={changeThemeMode}
           open={settingsDisclosure.open}
-          themeMode={themeMode}
+          settings={settings}
         />
         <Container as="main" maxW="980px" px="8" pb="16">
           {directoryMode && selectedDocument && (
@@ -368,20 +358,22 @@ export const App = () => {
         onOpenChange={instructionsDisclosure.setOpen}
         open={instructionsDisclosure.open}
       />
+      <DocumentTagsDialog
+        documentId={selectedDocumentId}
+        onOpenChange={tagsDisclosure.setOpen}
+        open={tagsDisclosure.open}
+        tags={document.tags ?? []}
+      />
       <SettingsDialog
-        codeWrapMode={codeWrapMode}
-        excludedDirectories={excludedDirectories}
-        fontScale={fontScale}
-        maxDepth={maxDepth}
-        maxFiles={maxFiles}
         onCodeWrapModeChange={changeCodeWrapMode}
         onDirectoryLimitsChange={changeDirectoryLimits}
         onExcludedDirectoriesChange={changeExcludedDirectories}
         onFontScaleChange={changeFontScale}
+        onMarkdownExtensionsChange={changeMarkdownExtensions}
         onOpenChange={settingsDisclosure.setOpen}
         onThemeModeChange={changeThemeMode}
         open={settingsDisclosure.open}
-        themeMode={themeMode}
+        settings={settings}
       />
       <Container as="main" maxW="980px" px="8" pt="0" pb="16">
         {directoryMode && selectedDocument && (
@@ -396,6 +388,7 @@ export const App = () => {
           <DocumentActionBar
             markdown={document.markdown}
             onOpenInstructions={instructionsDisclosure.onOpen}
+            onOpenTags={tagsDisclosure.onOpen}
           />
         )}
         {document.deleted && (
@@ -416,9 +409,9 @@ export const App = () => {
               documentId={selectedDocumentId}
               documentPath={selectedDocument?.relativePath ??
                 document.fileUrl ?? document.title}
-              key={`${selectedDocumentId}-${themeMode}-${fontScale}`}
+              key={`${selectedDocumentId}-${settings.theme}-${settings.fontScale}`}
               markdown={document.markdown}
-              theme={themeMode === "dark" ? "dark" : "default"}
+              theme={settings.theme === "dark" ? "dark" : "default"}
             />
           )
           : <CommentListPage documentId={selectedDocumentId} />}

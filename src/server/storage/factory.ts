@@ -11,6 +11,8 @@ import { createSqliteStatisticsReader } from "./statistics/sqlite_statistics.ts"
 import type { StatisticsReader } from "../usecase/statistics/get_statistics.ts";
 import { createSqliteInstructionStore } from "./instruction/sqlite_storage.ts";
 import type { InstructionStore } from "../usecase/instruction/ports.ts";
+import { createSqliteTagStore } from "./tag/sqlite_storage.ts";
+import type { TagStore } from "../usecase/tag/ports.ts";
 
 export type ConfiguredStores = {
   close: () => void;
@@ -18,6 +20,7 @@ export type ConfiguredStores = {
   documents: DocumentStore;
   instructions: InstructionStore;
   statistics: StatisticsReader;
+  tags: TagStore;
 };
 
 export const createConfiguredStores = async (): Promise<ConfiguredStores> => {
@@ -51,5 +54,6 @@ export const createConfiguredStores = async (): Promise<ConfiguredStores> => {
     documents: createSqliteDocumentStore(database),
     instructions: createSqliteInstructionStore(database),
     statistics: createSqliteStatisticsReader(database),
+    tags: createSqliteTagStore(database),
   };
 };
