@@ -41,6 +41,8 @@ import {
   removeInstruction,
   replaceInstruction,
 } from "./api/instruction_api.ts";
+import type { TagStore } from "./usecase/tag/ports.ts";
+import { listTags, putDocumentTags } from "./api/tag_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   log?: (message: string) => void;
@@ -65,6 +67,7 @@ export const createDirectoryPreviewHandler = (
   options: DirectoryPreviewHandlerOptions = {},
   documentStore?: DocumentStore,
   instructionStore?: InstructionStore,
+  tagStore?: TagStore,
 ): Deno.ServeHandler => {
   const app = new Hono();
   const log = options.log ?? logInfo;
@@ -95,15 +98,38 @@ export const createDirectoryPreviewHandler = (
   };
   app.use("/__sadoku/documents/:documentId/comments/*", logCommentRequest);
 
-  app.get("/__sadoku/documents", () =>
-    noStoreJson(session.documents.map(
-      ({ deleted, id, relativePath, title }) => ({
-        deleted,
-        id,
-        relativePath,
-        title,
-      }),
-    )));
+  app.get(
+    "/__sadoku/documents",
+    async () =>
+      noStoreJson(
+        await Promise.all(session.documents.map(
+          async ({ deleted, id, relativePath, title }) => ({
+            deleted,
+            id,
+            relativePath,
+            title,
+            ...(tagStore && {
+              tags: (await tagStore.listForDocument(id)).map((
+                { id, name },
+              ) => ({
+                id,
+                name,
+              })),
+            }),
+          }),
+        )),
+      ),
+  );
+  if (tagStore) {
+    app.get("/__sadoku/tags", () => listTags(tagStore));
+    app.put("/__sadoku/documents/:documentId/tags", (context) => {
+      const { document } = resolveDocument(context.req.param("documentId"));
+      return putDocumentTags(context.req.raw, document.id, tagStore);
+    });
+    app.all("/__sadoku/tags", methodNotAllowedResponse);
+    app.all("/__sadoku/tags/*", methodNotAllowedResponse);
+    app.all("/__sadoku/documents/:documentId/tags", methodNotAllowedResponse);
+  }
   if (options.directoryState) {
     app.get(
       "/__sadoku/directory-status",
@@ -157,6 +183,11 @@ export const createDirectoryPreviewHandler = (
       deleted: document.deleted,
       fileUrl: body.fileUrl,
       markdown: body.markdown,
+      ...(tagStore && {
+        tags: (await tagStore.listForDocument(document.id)).map(
+          ({ id, name }) => ({ id, name }),
+        ),
+      }),
     });
   });
 

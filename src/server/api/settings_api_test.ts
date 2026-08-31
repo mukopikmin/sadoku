@@ -56,6 +56,7 @@ Deno.test("GET reads preview settings", async () => {
       codeWrap: "scroll",
       excludedDirectories: [".git", "node_modules"],
       fontScale: 1,
+      markdownExtensions: [".md", ".markdown"],
       maxDepth: 2,
       maxFiles: 20,
       theme: "light",
@@ -78,6 +79,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
         codeWrap: "wrap",
         excludedDirectories: [".git", "vendor"],
         fontScale: 1.2,
+        markdownExtensions: [".md", ".mdx"],
         maxDepth: 4,
         maxFiles: 100,
         theme: "dark",
@@ -89,6 +91,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
       codeWrap: "wrap",
       excludedDirectories: [".git", "vendor"],
       fontScale: 1.2,
+      markdownExtensions: [".md", ".mdx"],
       maxDepth: 4,
       maxFiles: 100,
       theme: "dark",
@@ -100,6 +103,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
       directoryMaxFiles: 100,
       excludedDirectories: [".git", "vendor"],
       fontScale: 1.2,
+      markdownExtensions: [".md", ".mdx"],
       themeMode: "dark",
     });
   });
@@ -196,6 +200,30 @@ Deno.test("PUT rejects invalid excluded directories", async () => {
         (await updateSettings(request({
           codeWrap: "wrap",
           excludedDirectories,
+          maxDepth: 2,
+          maxFiles: 20,
+          theme: "dark",
+        }))).status,
+        400,
+      );
+    }
+  });
+});
+
+Deno.test("PUT rejects invalid Markdown extensions", async () => {
+  await withSettings(async () => {
+    for (
+      const markdownExtensions of [
+        [],
+        ["md"],
+        [".md", ".MD"],
+        [".nested/md"],
+      ]
+    ) {
+      assertEquals(
+        (await updateSettings(request({
+          codeWrap: "wrap",
+          markdownExtensions,
           maxDepth: 2,
           maxFiles: 20,
           theme: "dark",

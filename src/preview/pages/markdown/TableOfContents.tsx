@@ -80,35 +80,38 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
           <Popover.Content
             css={{ "--popover-size": "sizes.sm" }}
             overflowY="auto"
-            textStyle="md"
+            textStyle="sm"
           >
             <Popover.Arrow>
               <Popover.ArrowTip />
             </Popover.Arrow>
             <Popover.Body>
               <Text fontWeight="semibold">Table of contents</Text>
-              {items.length === 0
-                ? <Text pt="2">No headings</Text>
-                : (
-                  <Box as="nav" aria-label="Table of contents" pt="2">
-                    <List.Root listStyle="none" m="0">
-                      {items.map((item) => (
-                        <List.Item
-                          data-heading-level={item.level}
-                          key={item.id}
-                          ps={`${(item.level - 1) * 4}`}
+              {items.length === 0 ? <Text pt="2">No headings</Text> : (
+                <Box
+                  as="nav"
+                  aria-label="Table of contents"
+                  lineHeight="1.7"
+                  pt="2"
+                >
+                  <List.Root listStyle="none" m="0">
+                    {items.map((item) => (
+                      <List.Item
+                        data-heading-level={item.level}
+                        key={item.id}
+                        ps={`${(item.level - 1) * 4}`}
+                      >
+                        <Link
+                          href={`#${item.id}`}
+                          onClick={() => setOpen(false)}
                         >
-                          <Link
-                            href={`#${item.id}`}
-                            onClick={() => setOpen(false)}
-                          >
-                            {item.text}
-                          </Link>
-                        </List.Item>
-                      ))}
-                    </List.Root>
-                  </Box>
-                )}
+                          {item.text}
+                        </Link>
+                      </List.Item>
+                    ))}
+                  </List.Root>
+                </Box>
+              )}
             </Popover.Body>
           </Popover.Content>
         </Popover.Positioner>

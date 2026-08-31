@@ -6,12 +6,14 @@ type DocumentActionBarProps = {
   onOpenInstructions: () => void;
   onToggleHtmlComments: () => void;
   showHtmlComments: boolean;
+  onOpenTags: () => void;
 };
 
 export const DocumentActionBar = (
   {
     markdown,
     onOpenInstructions,
+    onOpenTags,
     onToggleHtmlComments,
     showHtmlComments,
   }: DocumentActionBarProps,
@@ -20,6 +22,14 @@ export const DocumentActionBar = (
     <Portal>
       <ActionBar.Positioner>
         <ActionBar.Content aria-label="Document actions">
+          <Button
+            onClick={onOpenTags}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Tags
+          </Button>
           <Button
             onClick={onOpenInstructions}
             size="sm"

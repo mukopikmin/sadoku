@@ -139,6 +139,24 @@ Deno.test("uses configured excluded directory names at every level", async () =>
   }
 });
 
+Deno.test("uses configured Markdown extensions case-insensitively", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    for (const name of ["guide.mdx", "notes.MDX", "readme.md"]) {
+      await Deno.writeTextFile(join(root, name), "content");
+    }
+
+    assertEquals(
+      (await listMarkdownFiles(root, { markdownExtensions: [".mdx"] })).map(
+        (document) => document.relativePath,
+      ),
+      ["guide.mdx", "notes.MDX"],
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("returns an empty list for an empty directory", async () => {
   const root = await Deno.makeTempDir();
   try {

@@ -421,8 +421,9 @@ console.log("<ok>");
       name: "Table of contents",
     });
     expect(getComputedStyle(navigation).fontSize).toBe(
-      "var(--chakra-font-sizes-md)",
+      "var(--chakra-font-sizes-sm)",
     );
+    expect(getComputedStyle(navigation).lineHeight).toBe("1.7");
     expect(
       getComputedStyle(navigation.closest("[data-part=content]")!)
         .getPropertyValue("--popover-size"),
@@ -568,9 +569,7 @@ Paragraph
       name: "Update URL with heading link",
     });
     expect(headingLinkButton.closest(".comment-line-gutter")).not.toBeNull();
-    expect(headingLinkButton.getAttribute("title")).toBe(
-      "Update URL with heading link",
-    );
+    expect(headingLinkButton.getAttribute("title")).toBeNull();
 
     fireEvent.click(headingLinkButton);
     await waitFor(() =>
@@ -1031,6 +1030,42 @@ Paragraph with **formatting**.
     );
   });
 
+  it("shows action tooltips on hover and keyboard focus without native titles", async () => {
+    const { container } = renderMarkdown("Paragraph\n");
+
+    fireEvent.click(container.querySelector(".commentable-content p")!);
+    const addCommentButton = screen.getByRole("button", {
+      name: "Add comment on line 1",
+    });
+    const rawMarkdownButton = screen.getByRole("button", {
+      name: "View raw Markdown for line 1",
+    });
+
+    expect(addCommentButton.getAttribute("title")).toBeNull();
+    expect(rawMarkdownButton.getAttribute("title")).toBeNull();
+
+    fireEvent.pointerMove(addCommentButton);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Add comment on line 1",
+    );
+
+    fireEvent.pointerLeave(addCommentButton);
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
+
+    fireEvent.keyDown(document, { key: "Tab" });
+    rawMarkdownButton.focus();
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "View raw Markdown for line 1",
+    );
+
+    fireEvent.click(rawMarkdownButton);
+    expect(
+      await screen.findByRole("dialog", {
+        name: "Raw Markdown — line 1",
+      }),
+    ).not.toBeNull();
+  });
+
   it("creates comments for the full table range", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown(
@@ -1159,6 +1194,7 @@ graph TD
       name: "Zoom Mermaid diagram",
     });
     expect(zoomButton).not.toBeNull();
+    expect(zoomButton.getAttribute("title")).toBeNull();
     expect(previewThemeCss).toContain(".mermaid {");
     expect(previewThemeCss).toContain(
       "background: var(--chakra-colors-canvas-subtle);",
@@ -1177,7 +1213,7 @@ graph TD
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(screen.getByTitle("Select lines 1-4 for comment"));
+    fireEvent.click(document.querySelector(".commentable-content")!);
 
     await waitFor(() =>
       expect(initializeMermaid.mock.calls.length).toBeGreaterThanOrEqual(2)
@@ -1600,7 +1636,7 @@ Body
       "0em",
     );
     expect(content?.tagName).toBe("DIV");
-    expect(content?.title).toBe("Select line 3 for comment");
+    expect(content?.getAttribute("title")).toBeNull();
     expect(markdownBody?.tagName).toBe("DIV");
     expect(markdownBody?.querySelector("p")).toBe(getLine());
     expect(getLine()).not.toBeNull();

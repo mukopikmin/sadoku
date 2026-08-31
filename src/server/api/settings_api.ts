@@ -1,6 +1,7 @@
 import {
   isValidExcludedDirectories,
   isValidFontScale,
+  isValidMarkdownExtensions,
   readConfig,
   updatePreviewConfig,
 } from "../config.ts";
@@ -8,6 +9,7 @@ import { noStoreJson, textResponse } from "../responses.ts";
 import {
   defaultDirectoryScanOptions,
   defaultExcludedDirectories,
+  defaultMarkdownExtensions,
 } from "../storage/document/list_markdown_files.ts";
 
 const invalidRequest = (message: string): Response =>
@@ -25,6 +27,8 @@ const readSettings = () => {
       [...defaultExcludedDirectories],
     maxDepth: config?.directoryMaxDepth ?? defaultDirectoryScanOptions.maxDepth,
     maxFiles: config?.directoryMaxFiles ?? defaultDirectoryScanOptions.maxFiles,
+    markdownExtensions: config?.markdownExtensions ??
+      [...defaultMarkdownExtensions],
   };
 };
 
@@ -57,23 +61,35 @@ export const updateSettings = async (
     fontScale,
     maxDepth,
     maxFiles,
+    markdownExtensions,
     theme,
   } = body as Record<
     string,
     unknown
   >;
+  const allowedKeys = new Set([
+    "codeWrap",
+    "excludedDirectories",
+    "fontScale",
+    "markdownExtensions",
+    "maxDepth",
+    "maxFiles",
+    "theme",
+  ]);
   if (
-    (Object.keys(body).length !== 5 && Object.keys(body).length !== 6) ||
+    Object.keys(body).some((key) => !allowedKeys.has(key)) ||
     (theme !== "dark" && theme !== "light") ||
     (codeWrap !== "scroll" && codeWrap !== "wrap") ||
     !isValidFontScale(fontScale) ||
     (excludedDirectories !== undefined &&
       !isValidExcludedDirectories(excludedDirectories)) ||
+    (markdownExtensions !== undefined &&
+      !isValidMarkdownExtensions(markdownExtensions)) ||
     !Number.isInteger(maxDepth) || (maxDepth as number) < 0 ||
     !Number.isInteger(maxFiles) || (maxFiles as number) < 1
   ) {
     return invalidRequest(
-      "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, and excludedDirectories settings.",
+      "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, and markdownExtensions settings.",
     );
   }
 
@@ -85,6 +101,9 @@ export const updateSettings = async (
     fontScale,
     excludedDirectories ?? readConfig()?.excludedDirectories ?? [
       ...defaultExcludedDirectories,
+    ],
+    markdownExtensions ?? readConfig()?.markdownExtensions ?? [
+      ...defaultMarkdownExtensions,
     ],
   );
   return noStoreJson(readSettings());
