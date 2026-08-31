@@ -39,6 +39,7 @@ export type MarkdownPreviewProps = {
   comments: ActiveComment[];
   documentPath?: string;
   markdown: string;
+  showHtmlComments: boolean;
   theme: "dark" | "default";
 };
 
@@ -130,6 +131,7 @@ export const MarkdownPreview = ({
   comments,
   documentPath,
   markdown,
+  showHtmlComments,
   theme,
 }: MarkdownPreviewProps) => {
   const frontMatter = useMemo(
@@ -227,7 +229,7 @@ export const MarkdownPreview = ({
         ? current
         : lines
     );
-  }, [markdown]);
+  }, [markdown, showHtmlComments]);
 
   useLayoutEffect(() => {
     const scrollToHash = () => {
@@ -270,11 +272,23 @@ export const MarkdownPreview = ({
       observer?.disconnect();
       globalThis.removeEventListener("resize", handleResize);
     };
-  }, [updateRangeHighlightLayouts, activeCommentLine, markdown]);
+  }, [
+    updateRangeHighlightLayouts,
+    activeCommentLine,
+    markdown,
+    showHtmlComments,
+  ]);
 
   useEffect(() => {
     void initializeMermaid({ theme });
-  }, [activeCommentLine, comments, markdown, selectedRange, theme]);
+  }, [
+    activeCommentLine,
+    comments,
+    markdown,
+    selectedRange,
+    showHtmlComments,
+    theme,
+  ]);
 
   const handleSelectCommentRange = (
     clickedRange: CommentRange,
@@ -316,10 +330,13 @@ export const MarkdownPreview = ({
     setLineSelectionAnchor(undefined);
   };
 
-  const components = useMemo<Components>(
-    createCommentableMarkdownComponents,
-    [],
-  );
+  const components = useMemo<Components>(() => {
+    const markdownComponents = createCommentableMarkdownComponents();
+    if (!showHtmlComments) {
+      markdownComponents["html-comment"] = () => null;
+    }
+    return markdownComponents;
+  }, [showHtmlComments]);
   const commentRenderingContext = {
     actions,
     activeCommentLine,
@@ -414,8 +431,11 @@ export const MarkdownPreview = ({
 };
 
 export const MarkdownPreviewPage = (
-  { documentId, documentPath, markdown, theme }:
-    & Pick<MarkdownPreviewProps, "documentPath" | "markdown" | "theme">
+  { documentId, documentPath, markdown, showHtmlComments, theme }:
+    & Pick<
+      MarkdownPreviewProps,
+      "documentPath" | "markdown" | "showHtmlComments" | "theme"
+    >
     & { documentId?: number },
 ) => {
   const commentsQuery = useCommentsQuery(documentId);
@@ -430,6 +450,7 @@ export const MarkdownPreviewPage = (
       comments={activeComments}
       documentPath={documentPath}
       markdown={markdown}
+      showHtmlComments={showHtmlComments}
       theme={theme}
     />
   );

@@ -8,6 +8,7 @@ import {
   within,
 } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { DocumentActionBar } from "../components/DocumentActionBar";
@@ -47,24 +48,32 @@ const renderMarkdown = (
   documentPath?: string,
 ) => {
   ensurePreviewThemeStyle();
+  const PreviewWithActions = () => {
+    const [showHtmlComments, setShowHtmlComments] = useState(true);
+    return (
+      <>
+        <DocumentActionBar
+          markdown={markdown}
+          onOpenInstructions={() => {}}
+          onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
+          showHtmlComments={showHtmlComments}
+        />
+        <MarkdownPreview
+          actions={createCommentActions({
+            onCreateComment: callbacks.onCreateComment ?? (async () => {}),
+            onResolveComment: callbacks.onResolveComment ?? (async () => {}),
+          })}
+          comments={comments}
+          documentPath={documentPath}
+          markdown={markdown}
+          showHtmlComments={showHtmlComments}
+          theme="default"
+        />
+      </>
+    );
+  };
   const result = render(
-    <>
-      <DocumentActionBar
-        markdown={markdown}
-        onOpenInstructions={() => {}}
-        onOpenTags={() => {}}
-      />
-      <MarkdownPreview
-        actions={createCommentActions({
-          onCreateComment: callbacks.onCreateComment ?? (async () => {}),
-          onResolveComment: callbacks.onResolveComment ?? (async () => {}),
-        })}
-        comments={comments}
-        documentPath={documentPath}
-        markdown={markdown}
-        theme="default"
-      />
-    </>,
+    <PreviewWithActions />,
   );
   return { ...result, container: result.container };
 };
@@ -96,6 +105,44 @@ const expectComputedStyleValue = (
 };
 
 describe("MarkdownPreview", () => {
+  it("toggles HTML comments without affecting ordinary Markdown", () => {
+    const { container } = renderMarkdown(
+      "Before\n\n<!-- internal note -->\n\nAfter",
+    );
+
+    expect(screen.getByText("HTML COMMENT")).not.toBeNull();
+    expect(screen.getByText("Before")).not.toBeNull();
+    expect(screen.getByText("After")).not.toBeNull();
+
+    const hideButton = screen.getByRole("button", {
+      name: "Hide HTML comments",
+    });
+    expect(hideButton.getAttribute("aria-pressed")).toBe("false");
+    expect(hideButton.querySelector("svg")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+    expect(hideButton.textContent).toBe("HTML comments");
+    fireEvent.click(hideButton);
+
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    expect(container.querySelector("[data-html-comment]")).toBeNull();
+    expect(screen.getByText("Before")).not.toBeNull();
+    expect(screen.getByText("After")).not.toBeNull();
+
+    const showButton = screen.getByRole("button", {
+      name: "Show HTML comments",
+    });
+    expect(showButton.getAttribute("aria-pressed")).toBe("true");
+    expect(showButton.querySelector("svg path:last-child")?.getAttribute("d"))
+      .toBe("m2.5 2.5 11 11");
+    expect(showButton.textContent).toBe("HTML comments");
+    fireEvent.click(showButton);
+
+    expect(screen.getByText("HTML COMMENT")).not.toBeNull();
+    expect(screen.getByText("Before")).not.toBeNull();
+    expect(screen.getByText("After")).not.toBeNull();
+  });
+
   it("renders complete single-line and empty HTML comments as plain-text cards", () => {
     const { container } = renderMarkdown(
       "<!-- **not bold** <img src=x onerror=alert(1)> -->\n\n<!-- -->",
@@ -105,8 +152,9 @@ describe("MarkdownPreview", () => {
     expect(labels).toHaveLength(2);
     expect(labels.every((label) => label.tagName === "SPAN")).toBe(true);
     const cards = labels.map((label) => label.closest("[data-html-comment]")!);
-    expect(cards[0].textContent).toContain(
-      " **not bold** <img src=x onerror=alert(1)> ",
+    const body = cards[0].querySelector("p");
+    expect(body?.textContent).toBe(
+      "**not bold** <img src=x onerror=alert(1)>",
     );
     expect(cards[0].querySelector("strong, img")).toBeNull();
     expect(cards[1].textContent?.trim()).toBe("HTML COMMENT");
@@ -119,8 +167,8 @@ describe("MarkdownPreview", () => {
     );
 
     const card = screen.getByText("HTML COMMENT").parentElement!;
-    expect(card.textContent).toContain(
-      " first line\n# still plain text\nlast line ",
+    expect(card.querySelector("p")?.textContent).toBe(
+      "first line\n# still plain text\nlast line",
     );
     expect(card.querySelector("h1")).toBeNull();
     const commentable = card.closest(".commentable-block");
@@ -581,6 +629,7 @@ Paragraph
         actions={actions}
         comments={[]}
         markdown="Before"
+        showHtmlComments
         theme="default"
       />,
     );
@@ -591,6 +640,7 @@ Paragraph
         actions={actions}
         comments={[]}
         markdown="# Later"
+        showHtmlComments
         theme="default"
       />,
     );
@@ -1193,6 +1243,7 @@ graph LR
   C --> D
 \`\`\`
 `}
+        showHtmlComments
         theme="default"
       />,
     );

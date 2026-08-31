@@ -41,6 +41,7 @@ Paragraph with [a link](https://example.com) and \`code\`.
             actions={callbacks}
             comments={[]}
             markdown={markdown}
+            showHtmlComments
             theme="default"
           />
         </div>
