@@ -88,6 +88,7 @@ export const App = () => {
   const instructionsDisclosure = useDisclosure();
   const tagsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
+  const [showHtmlComments, setShowHtmlComments] = useState(true);
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
@@ -388,6 +389,8 @@ export const App = () => {
           <DocumentActionBar
             markdown={document.markdown}
             onOpenInstructions={instructionsDisclosure.onOpen}
+            onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
+            showHtmlComments={showHtmlComments}
             onOpenTags={tagsDisclosure.onOpen}
           />
         )}
@@ -411,6 +414,7 @@ export const App = () => {
                 document.fileUrl ?? document.title}
               key={`${selectedDocumentId}-${settings.theme}-${settings.fontScale}`}
               markdown={document.markdown}
+              showHtmlComments={showHtmlComments}
               theme={settings.theme === "dark" ? "dark" : "default"}
             />
           )

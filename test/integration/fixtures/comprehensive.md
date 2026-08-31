@@ -154,6 +154,20 @@ Footnote-looking text should remain plain text.[^note]
 
 Math-looking text should remain plain text: $a^2 + b^2 = c^2$.
 
+## HTML Comments
+
+Paragraph before an HTML comment.
+
+<!-- This HTML comment should appear in the preview when comments are shown. -->
+
+Paragraph between HTML comments.
+
+<!-- This multiline HTML comment
+preserves its source text and line range
+when it appears in the preview. -->
+
+Paragraph after HTML comments.
+
 ## Final Mixed Sequence
 
 Paragraph before final list.
