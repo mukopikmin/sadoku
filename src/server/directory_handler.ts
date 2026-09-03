@@ -42,7 +42,7 @@ import {
   replaceInstruction,
 } from "./api/instruction_api.ts";
 import type { TagStore } from "./usecase/tag/ports.ts";
-import { listTags, putDocumentTags } from "./api/tag_api.ts";
+import { listTags, patchTag, putDocumentTags } from "./api/tag_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   log?: (message: string) => void;
@@ -122,6 +122,11 @@ export const createDirectoryPreviewHandler = (
   );
   if (tagStore) {
     app.get("/__sadoku/tags", () => listTags(tagStore));
+    app.patch(
+      "/__sadoku/tags/:tagId",
+      (context) =>
+        patchTag(context.req.raw, Number(context.req.param("tagId")), tagStore),
+    );
     app.put("/__sadoku/documents/:documentId/tags", (context) => {
       const { document } = resolveDocument(context.req.param("documentId"));
       return putDocumentTags(context.req.raw, document.id, tagStore);

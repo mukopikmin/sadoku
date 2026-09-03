@@ -20,7 +20,12 @@ import {
   loadInstructions,
   updateInstruction,
 } from "../api/instructions";
-import { loadTags, replaceDocumentTags, type TagReference } from "../api/tags";
+import {
+  loadTags,
+  renameTag,
+  replaceDocumentTags,
+  type TagReference,
+} from "../api/tags";
 
 export const documentsQueryKey = ["documents"] as const;
 export const directoryStatusQueryKey = ["directory-status"] as const;
@@ -34,6 +39,20 @@ export const tagsQueryKey = ["tags"] as const;
 
 export const useTagsQuery = (enabled = true) =>
   useQuery({ enabled, queryFn: loadTags, queryKey: tagsQueryKey });
+export const useRenameTag = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: number; name: string }) =>
+      renameTag(id, name),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: tagsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: documentsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: ["preview-document"] }),
+      ]);
+    },
+  });
+};
 export const useTagActions = (documentId: number) => {
   const queryClient = useQueryClient();
   const refresh = async () => {

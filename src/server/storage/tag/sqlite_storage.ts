@@ -46,6 +46,30 @@ export const createSqliteTagStore = (database: AppDatabase): TagStore => {
        GROUP BY t.id ORDER BY t.name`,
       )).rows ?? []).map(summary),
     listForDocument,
+    rename: (id, name) =>
+      withTransaction(database, async () => {
+        const existing = await findById(id);
+        if (!existing) {
+          return {
+            type: "not_found",
+            message: `Tag ${id} not found.`,
+          } satisfies TagError;
+        }
+        const duplicate = await findByName(name);
+        if (duplicate && duplicate.id !== id) {
+          return {
+            type: "conflict",
+            message: "Tag name already exists.",
+          } satisfies TagError;
+        }
+        if (existing.name !== name) {
+          await database.execute(
+            "UPDATE document_tag SET name = ?, updated_at = ? WHERE id = ?",
+            [name, new Date().toISOString(), id],
+          );
+        }
+        return tag((await findById(id))!);
+      }),
     replaceForDocument: (documentId, references) =>
       withTransaction(database, async () => {
         const document = (await database.execute<{ id: number }>(

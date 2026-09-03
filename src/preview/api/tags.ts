@@ -17,6 +17,14 @@ const result = async <T>(response: Response): Promise<T> => {
 };
 export const loadTags = async () =>
   result<TagSummary[]>(await fetch("/__sadoku/tags"));
+export const renameTag = async (id: number, name: string) =>
+  result<DocumentTag>(
+    await fetch(`/__sadoku/tags/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name }),
+    }),
+  );
 export const replaceDocumentTags = async (
   documentId: number,
   tags: TagReference[],
