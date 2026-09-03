@@ -69,7 +69,13 @@ describe("DocumentTagsDialog", () => {
     const label = (await screen.findAllByText("API"))[0];
     expect(label.style.backgroundColor).toBe("var(--tag-background)");
     expect(label.style.getPropertyValue("--tag-background")).toBe("#ffffff");
-    expect(label.style.color).toBe("black");
+    expect(label.style.color).toBe("");
+    expect(label.style.getPropertyValue("--tag-foreground-fallback")).toBe(
+      "black",
+    );
+    expect(document.head.textContent).toContain(
+      "color:var(--tag-foreground-fallback)",
+    );
     expect(document.head.textContent).toContain(
       "contrast-color(var(--tag-background))",
     );

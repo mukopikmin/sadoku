@@ -25,10 +25,11 @@ export const TagLabel = ({ backgroundColor, name, ...props }: Props) => (
     {...props}
     style={{
       "--tag-background": backgroundColor,
+      "--tag-foreground-fallback": fallbackTextColor(backgroundColor),
       backgroundColor: "var(--tag-background)",
-      color: fallbackTextColor(backgroundColor),
     } as CSSProperties}
     css={{
+      color: "var(--tag-foreground-fallback)",
       "@supports (color: contrast-color(red))": {
         color: "contrast-color(var(--tag-background))",
       },
