@@ -14,6 +14,7 @@ describe("TagsDialog", () => {
         {
           id: 1,
           name: "API",
+          backgroundColor: "#123456",
           documentCount: 12,
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-01T00:00:00.000Z",
@@ -59,6 +60,7 @@ describe("TagsDialog", () => {
     const tag = {
       id: 1,
       name: "API",
+      backgroundColor: "#123456",
       documentCount: 12,
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -68,7 +70,7 @@ describe("TagsDialog", () => {
       init?: RequestInit,
     ) =>
       init?.method === "PATCH"
-        ? Response.json({ id: 1, name: "Platform API" })
+        ? Response.json({ id: 1, name: "Backend", backgroundColor: "#abcdef" })
         : Response.json([{ ...tag, name: "Platform API" }])
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -80,6 +82,12 @@ describe("TagsDialog", () => {
     fireEvent.change(screen.getByLabelText("New name for Platform API"), {
       target: { value: "Backend" },
     });
+    fireEvent.change(
+      screen.getByLabelText("Background color for Platform API"),
+      {
+        target: { value: "#abcdef" },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() =>
@@ -87,7 +95,7 @@ describe("TagsDialog", () => {
         "/__sadoku/tags/1",
         expect.objectContaining({
           method: "PATCH",
-          body: JSON.stringify({ name: "Backend" }),
+          body: JSON.stringify({ name: "Backend", backgroundColor: "#abcdef" }),
         }),
       )
     );
@@ -100,7 +108,14 @@ describe("TagsDialog", () => {
     ) =>
       init?.method === "PATCH"
         ? new Response("Tag name already exists.", { status: 409 })
-        : Response.json([{ id: 1, name: "API", documentCount: 1 }])
+        : Response.json([{
+          id: 1,
+          name: "API",
+          backgroundColor: "#123456",
+          documentCount: 1,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        }])
     );
     vi.stubGlobal("fetch", fetchMock);
     render(<TagsDialog onOpenChange={() => {}} open />);

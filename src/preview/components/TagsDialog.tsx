@@ -1,6 +1,7 @@
 import {
   Button,
   Dialog,
+  Field,
   Flex,
   Input,
   Portal,
@@ -9,7 +10,8 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { useRenameTag, useTagsQuery } from "../hooks/usePreviewData";
+import { useTagsQuery, useUpdateTag } from "../hooks/usePreviewData";
+import { TagLabel } from "./ui/TagLabel";
 
 type Props = {
   onOpenChange: (open: boolean) => void;
@@ -18,14 +20,20 @@ type Props = {
 
 export const TagsDialog = ({ onOpenChange, open }: Props) => {
   const tags = useTagsQuery(open);
-  const rename = useRenameTag();
+  const update = useUpdateTag();
   const [editingId, setEditingId] = useState<number>();
   const [name, setName] = useState("");
+  const [backgroundColor, setBackgroundColor] = useState("#718096");
   const [message, setMessage] = useState("");
 
-  const startEditing = (id: number, currentName: string) => {
+  const startEditing = (
+    id: number,
+    currentName: string,
+    currentBackgroundColor: string,
+  ) => {
     setEditingId(id);
     setName(currentName);
+    setBackgroundColor(currentBackgroundColor);
     setMessage("");
   };
   const cancelEditing = () => {
@@ -35,7 +43,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
   const save = async () => {
     if (editingId === undefined) return;
     try {
-      await rename.mutateAsync({ id: editingId, name });
+      await update.mutateAsync({ id: editingId, name, backgroundColor });
       cancelEditing();
     } catch (error) {
       setMessage(
@@ -86,15 +94,42 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                           <Table.Cell>
                             {editingId === tag.id
                               ? (
-                                <Input
-                                  aria-label={`New name for ${tag.name}`}
-                                  onChange={(event) =>
-                                    setName(event.target.value)}
-                                  size="sm"
-                                  value={name}
-                                />
+                                <>
+                                  <Input
+                                    aria-label={`New name for ${tag.name}`}
+                                    onChange={(event) =>
+                                      setName(event.target.value)}
+                                    size="sm"
+                                    value={name}
+                                  />
+
+                                  <Field.Root mt="2">
+                                    <Field.Label>Background color</Field.Label>
+                                    <Flex align="center" gap="2">
+                                      <Input
+                                        aria-label={`Background color for ${tag.name}`}
+                                        type="color"
+                                        value={backgroundColor}
+                                        onChange={(event) =>
+                                          setBackgroundColor(
+                                            event.target.value,
+                                          )}
+                                        size="sm"
+                                      />
+                                      <TagLabel
+                                        backgroundColor={backgroundColor}
+                                        name={name || tag.name}
+                                      />
+                                    </Flex>
+                                  </Field.Root>
+                                </>
                               )
-                              : tag.name}
+                              : (
+                                <TagLabel
+                                  backgroundColor={tag.backgroundColor}
+                                  name={tag.name}
+                                />
+                              )}
                           </Table.Cell>
                           <Table.Cell textAlign="end">
                             {tag.documentCount.toLocaleString()}
@@ -104,7 +139,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                               ? (
                                 <Flex gap="2" justify="flex-end">
                                   <Button
-                                    disabled={rename.isPending}
+                                    disabled={update.isPending}
                                     onClick={cancelEditing}
                                     size="sm"
                                     variant="ghost"
@@ -112,7 +147,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                                     Cancel
                                   </Button>
                                   <Button
-                                    loading={rename.isPending}
+                                    loading={update.isPending}
                                     onClick={save}
                                     size="sm"
                                   >
@@ -123,7 +158,12 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                               : (
                                 <Button
                                   aria-label={`Rename tag ${tag.name}`}
-                                  onClick={() => startEditing(tag.id, tag.name)}
+                                  onClick={() =>
+                                    startEditing(
+                                      tag.id,
+                                      tag.name,
+                                      tag.backgroundColor,
+                                    )}
                                   size="sm"
                                   variant="ghost"
                                 >

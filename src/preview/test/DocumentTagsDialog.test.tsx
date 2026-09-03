@@ -13,6 +13,7 @@ describe("DocumentTagsDialog", () => {
             {
               id: 1,
               name: "API",
+              backgroundColor: "#123456",
               documentCount: 1,
               createdAt: "2026-01-01T00:00:00.000Z",
               updatedAt: "2026-01-01T00:00:00.000Z",
@@ -20,6 +21,7 @@ describe("DocumentTagsDialog", () => {
             {
               id: 2,
               name: "api",
+              backgroundColor: "#abcdef",
               documentCount: 0,
               createdAt: "2026-01-01T00:00:00.000Z",
               updatedAt: "2026-01-01T00:00:00.000Z",
@@ -44,7 +46,7 @@ describe("DocumentTagsDialog", () => {
         documentId={7}
         onOpenChange={() => {}}
         open
-        tags={[{ id: 1, name: "API" }]}
+        tags={[{ id: 1, name: "API", backgroundColor: "#123456" }]}
       />,
     );
     fireEvent.change(screen.getByLabelText("Tag name"), {
@@ -53,6 +55,23 @@ describe("DocumentTagsDialog", () => {
     fireEvent.click(await screen.findByRole("button", { name: "API" }));
     expect(await screen.findByText("This tag has already been added.")).not
       .toBeNull();
+  });
+
+  it("uses the saved background and contrast-color text for tag labels", async () => {
+    render(
+      <DocumentTagsDialog
+        documentId={7}
+        onOpenChange={() => {}}
+        open
+        tags={[{ id: 1, name: "API", backgroundColor: "#123456" }]}
+      />,
+    );
+    const label = (await screen.findAllByText("API"))[0];
+    expect(label.style.backgroundColor).toBe("var(--tag-background)");
+    expect(label.style.getPropertyValue("--tag-background")).toBe("#123456");
+    expect(document.head.textContent).toContain(
+      "contrast-color(var(--tag-background))",
+    );
   });
 
   it("allows a distinct new tag even when a similar tag exists", async () => {

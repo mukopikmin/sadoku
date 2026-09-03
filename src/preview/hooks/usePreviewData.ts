@@ -22,9 +22,9 @@ import {
 } from "../api/instructions";
 import {
   loadTags,
-  renameTag,
   replaceDocumentTags,
   type TagReference,
+  updateTag,
 } from "../api/tags";
 
 export const documentsQueryKey = ["documents"] as const;
@@ -39,11 +39,16 @@ export const tagsQueryKey = ["tags"] as const;
 
 export const useTagsQuery = (enabled = true) =>
   useQuery({ enabled, queryFn: loadTags, queryKey: tagsQueryKey });
-export const useRenameTag = () => {
+export const useUpdateTag = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, name }: { id: number; name: string }) =>
-      renameTag(id, name),
+    mutationFn: (
+      { id, name, backgroundColor }: {
+        id: number;
+        name: string;
+        backgroundColor: string;
+      },
+    ) => updateTag(id, name, backgroundColor),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: tagsQueryKey }),

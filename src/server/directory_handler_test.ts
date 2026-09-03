@@ -7,6 +7,7 @@ import type { DirectorySession } from "./usecase/document/mod.ts";
 import type { DocumentStore } from "./usecase/document/mod.ts";
 import { serveHandlerInfo } from "./test_helpers.ts";
 import { ensureCommentsNotificationDirectory } from "./storage/comment/notifications.ts";
+import type { TagStore } from "./usecase/tag/ports.ts";
 
 const createMemoryStore = (): CommentsStore => {
   const documents = new Map<string, PreviewCommentsDocument>();
@@ -231,4 +232,59 @@ Deno.test("serves database statistics from the configured reader", async () => {
     (await request(handler, "/__sadoku/statistics", { method: "POST" })).status,
     405,
   );
+});
+
+Deno.test("document responses include tag background colors", async () => {
+  const rootPath = await Deno.makeTempDir();
+  try {
+    const filePath = join(rootPath, "tagged.md");
+    await Deno.writeTextFile(filePath, "# Tagged\n");
+    const document = {
+      deleted: false,
+      id: 1,
+      filePath,
+      relativePath: "tagged.md",
+      title: "tagged.md",
+    };
+    const tagStore: TagStore = {
+      list: () => Promise.resolve([]),
+      listForDocument: () =>
+        Promise.resolve([{
+          id: 4,
+          name: "API",
+          backgroundColor: "#123456",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        }]),
+      rename: () => Promise.resolve({ type: "not_found", message: "unused" }),
+      replaceForDocument: () => Promise.resolve([]),
+      update: () => Promise.resolve({ type: "not_found", message: "unused" }),
+    };
+    const handler = createDirectoryPreviewHandler(
+      {
+        rootPath,
+        documents: [document],
+        documentsById: new Map([[1, document]]),
+      },
+      createMemoryStore(),
+      {},
+      undefined,
+      undefined,
+      tagStore,
+    );
+    assertEquals(
+      (await (await request(handler, "/__sadoku/documents")).json())[0].tags,
+      [
+        { id: 4, name: "API", backgroundColor: "#123456" },
+      ],
+    );
+    assertEquals(
+      (await (await request(handler, "/__sadoku/documents/1")).json()).tags,
+      [
+        { id: 4, name: "API", backgroundColor: "#123456" },
+      ],
+    );
+  } finally {
+    await Deno.remove(rootPath, { recursive: true });
+  }
 });
