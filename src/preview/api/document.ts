@@ -12,7 +12,9 @@ export const loadDocuments = async (): Promise<DocumentSummary[]> => {
   const documents = await response.json() as DocumentSummaryResponse[];
   return documents.map((document) => ({
     ...document,
-    tags: document.tags.map(parseDocumentTag),
+    tags: Array.isArray(document.tags)
+      ? document.tags.map(parseDocumentTag)
+      : [],
   }));
 };
 
@@ -24,5 +26,10 @@ export const loadPreviewDocument = async (
     throw new Error(`Failed to load Markdown: ${response.status}`);
   }
   const document = await response.json() as PreviewDocumentResponse;
-  return { ...document, tags: document.tags.map(parseDocumentTag) };
+  return {
+    ...document,
+    tags: Array.isArray(document.tags)
+      ? document.tags.map(parseDocumentTag)
+      : [],
+  };
 };

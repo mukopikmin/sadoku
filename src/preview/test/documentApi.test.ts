@@ -43,4 +43,12 @@ describe("document API tag conversion", () => {
     );
     await expect(loadDocuments()).rejects.toThrow("Invalid tag response.");
   });
+
+  it("keeps responses without tags backward compatible", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json([{ id: 1, title: "Doc" }])),
+    );
+    expect((await loadDocuments())[0].tags).toEqual([]);
+  });
 });
