@@ -48,6 +48,7 @@ type PreviewHeaderProps = {
   fileUrl?: string;
   onChangeView: (view: PreviewView) => void;
   onReloadPreview: () => void;
+  onOpenTags: () => void;
   onOpenSettings: () => void;
   onOpenStatistics: () => void;
   reloadAvailable: boolean;
@@ -66,6 +67,7 @@ export const PreviewHeader = ({
   onReloadPreview,
   onOpenSettings,
   onOpenStatistics,
+  onOpenTags,
   reloadAvailable,
   reloading,
   staleCommentCount,
@@ -112,6 +114,29 @@ export const PreviewHeader = ({
           Connection lost
         </Badge>
       )}
+      <IconButton
+        aria-label="Open tags"
+        onClick={onOpenTags}
+        size="sm"
+        type="button"
+        variant="outline"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="1em"
+          viewBox="0 0 16 16"
+          width="1em"
+        >
+          <path
+            d="M2.5 3.5v3.3l6.7 6.7 4.3-4.3-6.7-6.7H3.5a1 1 0 0 0-1 1Z"
+            stroke="currentColor"
+            strokeLinejoin="round"
+            strokeWidth="1.3"
+          />
+          <circle cx="5.5" cy="5.5" fill="currentColor" r=".8" />
+        </svg>
+      </IconButton>
       <IconButton
         aria-label="Open database statistics"
         onClick={onOpenStatistics}

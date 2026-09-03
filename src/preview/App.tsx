@@ -39,6 +39,7 @@ import { useScrollPosition } from "./hooks/useScrollPosition";
 import { DocumentInstructionsDialog } from "./components/DocumentInstructionsDialog";
 import { DocumentActionBar } from "./components/DocumentActionBar";
 import { DocumentTagsDialog } from "./components/DocumentTagsDialog";
+import { TagsDialog } from "./components/TagsDialog";
 
 export const App = () => {
   const matchRoute = useMatchRoute();
@@ -87,6 +88,7 @@ export const App = () => {
   const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
   const tagsDisclosure = useDisclosure();
+  const documentTagsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
   const [showHtmlComments, setShowHtmlComments] = useState(true);
   const {
@@ -204,6 +206,7 @@ export const App = () => {
           onChangeView={() => {}}
           onOpenSettings={settingsDisclosure.onOpen}
           onOpenStatistics={statisticsDisclosure.onOpen}
+          onOpenTags={tagsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -216,6 +219,10 @@ export const App = () => {
         <StatisticsDialog
           onOpenChange={statisticsDisclosure.setOpen}
           open={statisticsDisclosure.open}
+        />
+        <TagsDialog
+          onOpenChange={tagsDisclosure.setOpen}
+          open={tagsDisclosure.open}
         />
         <SettingsDialog
           onCodeWrapModeChange={changeCodeWrapMode}
@@ -281,6 +288,7 @@ export const App = () => {
           onChangeView={changeView}
           onOpenSettings={settingsDisclosure.onOpen}
           onOpenStatistics={statisticsDisclosure.onOpen}
+          onOpenTags={tagsDisclosure.onOpen}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -293,6 +301,10 @@ export const App = () => {
         <StatisticsDialog
           onOpenChange={statisticsDisclosure.setOpen}
           open={statisticsDisclosure.open}
+        />
+        <TagsDialog
+          onOpenChange={tagsDisclosure.setOpen}
+          open={tagsDisclosure.open}
         />
         <SettingsDialog
           onCodeWrapModeChange={changeCodeWrapMode}
@@ -343,6 +355,7 @@ export const App = () => {
         onReloadPreview={reloadPreview}
         onOpenSettings={settingsDisclosure.onOpen}
         onOpenStatistics={statisticsDisclosure.onOpen}
+        onOpenTags={tagsDisclosure.onOpen}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
         staleCommentCount={staleCommentCount}
@@ -354,6 +367,10 @@ export const App = () => {
         onOpenChange={statisticsDisclosure.setOpen}
         open={statisticsDisclosure.open}
       />
+      <TagsDialog
+        onOpenChange={tagsDisclosure.setOpen}
+        open={tagsDisclosure.open}
+      />
       <DocumentInstructionsDialog
         documentId={selectedDocumentId}
         onOpenChange={instructionsDisclosure.setOpen}
@@ -361,8 +378,8 @@ export const App = () => {
       />
       <DocumentTagsDialog
         documentId={selectedDocumentId}
-        onOpenChange={tagsDisclosure.setOpen}
-        open={tagsDisclosure.open}
+        onOpenChange={documentTagsDisclosure.setOpen}
+        open={documentTagsDisclosure.open}
         tags={document.tags ?? []}
       />
       <SettingsDialog
@@ -391,7 +408,7 @@ export const App = () => {
             onOpenInstructions={instructionsDisclosure.onOpen}
             onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
             showHtmlComments={showHtmlComments}
-            onOpenTags={tagsDisclosure.onOpen}
+            onOpenTags={documentTagsDisclosure.onOpen}
           />
         )}
         {document.deleted && (

@@ -53,6 +53,38 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("opens the tags dialog and restores focus to the header button", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([]));
+        }
+        if (url === "/__sadoku/directory-status") {
+          return Promise.resolve(Response.json({ state: "ready" }));
+        }
+        if (url === "/__sadoku/tags") return Promise.resolve(Response.json([]));
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+
+    render(<App />);
+    const tagsButton = await screen.findByRole("button", { name: "Open tags" });
+    fireEvent.click(tagsButton);
+
+    expect(await screen.findByRole("dialog", { name: "Tags" })).not.toBeNull();
+    fireEvent.keyDown(screen.getByRole("dialog", { name: "Tags" }), {
+      key: "Escape",
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Tags" })).toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(tagsButton));
+  });
+
   it("reruns mermaid rendering when returning to the preview view", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
