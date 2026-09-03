@@ -1,9 +1,10 @@
 import {
   Button,
+  ColorPicker,
   Dialog,
-  Field,
   Flex,
   Input,
+  parseColor,
   Portal,
   Spinner,
   Table,
@@ -103,25 +104,60 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                                     value={name}
                                   />
 
-                                  <Field.Root mt="2">
-                                    <Field.Label>Background color</Field.Label>
-                                    <Flex align="center" gap="2">
-                                      <Input
+                                  <ColorPicker.Root
+                                    format="rgba"
+                                    mt="2"
+                                    onValueChange={({ value }) =>
+                                      setBackgroundColor(
+                                        value.toString("hex").toLowerCase(),
+                                      )}
+                                    size="sm"
+                                    value={parseColor(backgroundColor)}
+                                  >
+                                    <ColorPicker.Label>
+                                      Background color
+                                    </ColorPicker.Label>
+                                    <ColorPicker.Control>
+                                      <ColorPicker.Input
                                         aria-label={`Background color for ${tag.name}`}
-                                        type="color"
-                                        value={backgroundColor}
-                                        onChange={(event) =>
-                                          setBackgroundColor(
-                                            event.target.value,
-                                          )}
-                                        size="sm"
                                       />
-                                      <TagLabel
-                                        backgroundColor={backgroundColor}
-                                        name={name || tag.name}
-                                      />
-                                    </Flex>
-                                  </Field.Root>
+                                      <ColorPicker.Trigger>
+                                        <ColorPicker.ValueSwatch />
+                                      </ColorPicker.Trigger>
+                                    </ColorPicker.Control>
+                                    <ColorPicker.Positioner>
+                                      <ColorPicker.Content>
+                                        <ColorPicker.Area>
+                                          <ColorPicker.AreaBackground />
+                                          <ColorPicker.AreaThumb />
+                                        </ColorPicker.Area>
+                                        <ColorPicker.Sliders>
+                                          <ColorPicker.ChannelSlider channel="hue">
+                                            <ColorPicker.ChannelSliderTrack />
+                                            <ColorPicker.ChannelSliderThumb />
+                                          </ColorPicker.ChannelSlider>
+                                        </ColorPicker.Sliders>
+                                        <ColorPicker.SwatchGroup>
+                                          {["#718096", "#123456", "#abcdef"]
+                                            .map((color) => (
+                                              <ColorPicker.SwatchTrigger
+                                                aria-label={`Select ${color}`}
+                                                key={color}
+                                                value={color}
+                                              >
+                                                <ColorPicker.Swatch
+                                                  value={color}
+                                                />
+                                              </ColorPicker.SwatchTrigger>
+                                            ))}
+                                        </ColorPicker.SwatchGroup>
+                                      </ColorPicker.Content>
+                                    </ColorPicker.Positioner>
+                                  </ColorPicker.Root>
+                                  <TagLabel
+                                    backgroundColor={backgroundColor}
+                                    name={name || tag.name}
+                                  />
                                 </>
                               )
                               : (

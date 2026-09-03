@@ -82,11 +82,16 @@ describe("TagsDialog", () => {
     fireEvent.change(screen.getByLabelText("New name for Platform API"), {
       target: { value: "Backend" },
     });
-    fireEvent.change(
-      screen.getByLabelText("Background color for Platform API"),
-      {
-        target: { value: "#abcdef" },
-      },
+    fireEvent.click(screen.getByRole("button", { name: "Background color" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select #abcdef" }),
+    );
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText(
+          "Background color for Platform API",
+        ) as HTMLInputElement).value.toLowerCase(),
+      ).toBe("#abcdef")
     );
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
