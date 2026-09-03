@@ -19,6 +19,7 @@ export type MermaidOptions = {
   document?: Document;
   importMermaid?: () => Promise<MermaidModule>;
   prefersDark?: () => boolean;
+  root?: ParentNode;
   theme?: "dark" | "default";
 };
 
@@ -135,11 +136,12 @@ export const initializeMermaid = async (
     importMermaid = () => import(/* @vite-ignore */ mermaidAssetPath),
     prefersDark = () =>
       globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
+    root = document,
     theme,
   }: MermaidOptions = {},
 ): Promise<void> => {
   const nodes = Array.from(
-    document.querySelectorAll<HTMLElement>(".mermaid"),
+    root.querySelectorAll<HTMLElement>(".mermaid"),
   ).filter((node) => node.dataset.processed !== "true");
   if (nodes.length === 0) {
     initializeMermaidZoom(document);
