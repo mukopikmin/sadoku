@@ -14,7 +14,10 @@ on:
 
 permissions:
   actions: read
+  artifact-metadata: write
+  attestations: write
   contents: read
+  id-token: write
 
 concurrency:
   group: stable-release-prepare
@@ -65,7 +68,7 @@ jobs:
           cache-dependency-path: src/preview/package-lock.json
 
       - name: Install client dependencies
-        run: npm ci --prefix src/preview
+        run: npm ci --ignore-scripts --prefix src/preview
 
       - name: Build and verify release artifacts
         run: deno task dist --version "${{ inputs.version }}"
@@ -94,6 +97,11 @@ jobs:
           echo "plan-sha256=${plan_sha256}" >> "${GITHUB_OUTPUT}"
           echo "Release plan SHA-256: ${plan_sha256}" >> "${GITHUB_STEP_SUMMARY}"
           cat release-notes.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Attest release archives
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: dist/checksums.txt
 
       - name: Upload release candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

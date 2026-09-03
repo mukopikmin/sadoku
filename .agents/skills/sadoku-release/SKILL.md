@@ -99,7 +99,8 @@ gh run download <prepare-run-id> --name release-candidate --dir <temporary-dir>
 Present the preparation run URL, target SHA, start tag, title, notes, artifact
 names and checksums, and release-plan SHA-256. Confirm that expected merged pull
 requests are present, open pull requests are absent, the changelog is non-empty,
-and no private or unsuitable text appears.
+and no private or unsuitable text appears. Verify each release archive's build
+provenance with `gh attestation verify <archive> --repo <owner/repository>`.
 
 Stop and ask the user to approve the displayed notes, exact target SHA, and plan
 SHA-256. This is a mandatory gate, not a non-blocking question.
@@ -119,7 +120,8 @@ After approval:
 
 2. Do not create or push a tag locally. The workflow revalidates `main`, the
    latest stable release, tag and release absence, the plan digest, and every
-   artifact checksum before it creates the annotated tag and GitHub release.
+   artifact checksum and provenance attestation before it creates the annotated
+   tag and GitHub release.
 3. If revalidation fails, discard approval and return to Inspect. Never change
    workflow inputs to bypass a failed invariant.
 
@@ -131,8 +133,9 @@ After approval:
 3. On success, verify the release is stable and latest, its target SHA matches,
    generated notes use the approved start tag, and all three platform archives,
    per-archive SHA-256 files, and `checksums.txt` are attached.
-4. Use the workflow's deterministic verification as the source of truth. You may
-   download published checksums for an additional independent check.
+4. Use the workflow's deterministic verification as the source of truth. Verify
+   the published archives' provenance with `gh attestation verify` as an
+   additional independent check.
 5. Report the release URL, tag, SHA, notes range, assets, verification results,
    and omitted open pull requests.
 

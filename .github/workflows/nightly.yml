@@ -42,7 +42,7 @@ jobs:
           cache-dependency-path: src/preview/package-lock.json
 
       - name: Install client dependencies
-        run: npm ci --prefix src/preview
+        run: npm ci --ignore-scripts --prefix src/preview
 
       - name: Build nightly artifacts
         run: |
