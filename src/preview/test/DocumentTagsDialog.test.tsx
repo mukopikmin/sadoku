@@ -13,7 +13,7 @@ describe("DocumentTagsDialog", () => {
             {
               id: 1,
               name: "API",
-              backgroundColor: "#123456",
+              backgroundColor: "#ffffff",
               documentCount: 1,
               createdAt: "2026-01-01T00:00:00.000Z",
               updatedAt: "2026-01-01T00:00:00.000Z",
@@ -46,7 +46,7 @@ describe("DocumentTagsDialog", () => {
         documentId={7}
         onOpenChange={() => {}}
         open
-        tags={[{ id: 1, name: "API", backgroundColor: "#123456" }]}
+        tags={[{ id: 1, name: "API", backgroundColor: "#ffffff" }]}
       />,
     );
     fireEvent.change(screen.getByLabelText("Tag name"), {
@@ -63,12 +63,13 @@ describe("DocumentTagsDialog", () => {
         documentId={7}
         onOpenChange={() => {}}
         open
-        tags={[{ id: 1, name: "API", backgroundColor: "#123456" }]}
+        tags={[{ id: 1, name: "API", backgroundColor: "#ffffff" }]}
       />,
     );
     const label = (await screen.findAllByText("API"))[0];
     expect(label.style.backgroundColor).toBe("var(--tag-background)");
-    expect(label.style.getPropertyValue("--tag-background")).toBe("#123456");
+    expect(label.style.getPropertyValue("--tag-background")).toBe("#ffffff");
+    expect(label.style.color).toBe("black");
     expect(document.head.textContent).toContain(
       "contrast-color(var(--tag-background))",
     );
