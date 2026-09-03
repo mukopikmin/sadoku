@@ -14,6 +14,7 @@ on:
 
 permissions:
   actions: read
+  attestations: read
   contents: write
 
 concurrency:
@@ -77,6 +78,9 @@ jobs:
             sha256sum --check --strict
           while read -r checksum name; do
             test "$(cat "candidate/dist/${name}.sha256")" = "${checksum}"
+          done < candidate/dist/checksums.txt
+          while read -r _ name; do
+            gh attestation verify "candidate/dist/${name}" --repo "${GITHUB_REPOSITORY}"
           done < candidate/dist/checksums.txt
 
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
