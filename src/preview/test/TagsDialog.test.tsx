@@ -1,6 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { TagsDialog } from "../components/TagsDialog";
+
+beforeEach(() => {
+  vi.stubGlobal("scrollTo", vi.fn());
+});
 
 afterEach(() => {
   cleanup();
