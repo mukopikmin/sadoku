@@ -37,7 +37,6 @@ jobs:
 
       - name: Verify preparation run
         env:
-          CANDIDATE_DIR: ${{ runner.temp }}/release-candidate
           GH_TOKEN: ${{ github.token }}
           PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
         run: |
@@ -46,6 +45,7 @@ jobs:
 
       - name: Download approved release candidate
         env:
+          CANDIDATE_DIR: ${{ runner.temp }}/release-candidate
           GH_TOKEN: ${{ github.token }}
           PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
         run: gh run download "${PREPARE_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --name release-candidate --dir "${CANDIDATE_DIR}"
