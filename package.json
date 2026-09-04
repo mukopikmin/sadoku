@@ -6,6 +6,7 @@
     "build:client": "npm --prefix src/preview run build",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
     "postinstall": "npm ci --prefix src/preview",
-    "test": "npm --prefix src/preview test"
+    "test": "npm --prefix src/preview test",
+    "test:client": "npm --prefix src/preview test"
   }
 }
