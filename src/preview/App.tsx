@@ -6,7 +6,7 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Link as RouterLink,
   useMatchRoute,
@@ -42,6 +42,7 @@ import { DocumentTagsDialog } from "./components/DocumentTagsDialog";
 import { TagsDialog } from "./components/TagsDialog";
 
 export const App = () => {
+  const tagsTriggerRef = useRef<HTMLButtonElement>(null);
   const matchRoute = useMatchRoute();
   const navigate = useNavigate();
   const pathname = useRouterState({
@@ -207,6 +208,7 @@ export const App = () => {
           onOpenSettings={settingsDisclosure.onOpen}
           onOpenStatistics={statisticsDisclosure.onOpen}
           onOpenTags={tagsDisclosure.onOpen}
+          tagsTriggerRef={tagsTriggerRef}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -221,6 +223,7 @@ export const App = () => {
           open={statisticsDisclosure.open}
         />
         <TagsDialog
+          finalFocusRef={tagsTriggerRef}
           onOpenChange={tagsDisclosure.setOpen}
           open={tagsDisclosure.open}
         />
@@ -289,6 +292,7 @@ export const App = () => {
           onOpenSettings={settingsDisclosure.onOpen}
           onOpenStatistics={statisticsDisclosure.onOpen}
           onOpenTags={tagsDisclosure.onOpen}
+          tagsTriggerRef={tagsTriggerRef}
           onReloadPreview={reloadPreview}
           reloadAvailable={false}
           reloading={false}
@@ -303,6 +307,7 @@ export const App = () => {
           open={statisticsDisclosure.open}
         />
         <TagsDialog
+          finalFocusRef={tagsTriggerRef}
           onOpenChange={tagsDisclosure.setOpen}
           open={tagsDisclosure.open}
         />
@@ -356,6 +361,7 @@ export const App = () => {
         onOpenSettings={settingsDisclosure.onOpen}
         onOpenStatistics={statisticsDisclosure.onOpen}
         onOpenTags={tagsDisclosure.onOpen}
+        tagsTriggerRef={tagsTriggerRef}
         reloadAvailable={reloadAvailable}
         reloading={documentQuery.isFetching || commentsQuery.isFetching}
         staleCommentCount={staleCommentCount}
@@ -368,6 +374,7 @@ export const App = () => {
         open={statisticsDisclosure.open}
       />
       <TagsDialog
+        finalFocusRef={tagsTriggerRef}
         onOpenChange={tagsDisclosure.setOpen}
         open={tagsDisclosure.open}
       />

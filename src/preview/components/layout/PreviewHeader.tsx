@@ -10,7 +10,7 @@ import {
   Tabs,
   Text,
 } from "@chakra-ui/react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 
 export type PreviewView = "comments" | "preview";
 
@@ -54,6 +54,7 @@ type PreviewHeaderProps = {
   reloadAvailable: boolean;
   reloading: boolean;
   staleCommentCount: number;
+  tagsTriggerRef?: RefObject<HTMLButtonElement | null>;
   title: string;
   unresolvedCommentCount: number;
   view: PreviewView;
@@ -71,6 +72,7 @@ export const PreviewHeader = ({
   reloadAvailable,
   reloading,
   staleCommentCount,
+  tagsTriggerRef,
   title,
   unresolvedCommentCount,
   view,
@@ -120,6 +122,7 @@ export const PreviewHeader = ({
         size="sm"
         type="button"
         variant="outline"
+        ref={tagsTriggerRef}
       >
         <svg
           aria-hidden="true"

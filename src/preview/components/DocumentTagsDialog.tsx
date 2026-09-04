@@ -13,6 +13,9 @@ import type { TagReference, TagSummary } from "../api/tags";
 import { useTagActions, useTagsQuery } from "../hooks/usePreviewData";
 import type { DocumentTag } from "../models/document";
 import { findSimilarTags } from "../models/tagSuggestions";
+import { TagLabel } from "./ui/TagLabel";
+
+const DEFAULT_TAG_BACKGROUND_COLOR = "#718096";
 
 type Props = {
   documentId: number;
@@ -44,7 +47,11 @@ export const DocumentTagsDialog = (
     "id" in reference
       ? allTags.find(({ id }) => id === reference.id) ??
         tags.find(({ id }) => id === reference.id)
-      : { id: -1, name: reference.name }
+      : {
+        id: -1,
+        name: reference.name,
+        backgroundColor: DEFAULT_TAG_BACKGROUND_COLOR,
+      }
   ).filter((tag): tag is DocumentTag => tag !== undefined);
   const trimmed = input.trim();
   const exact = allTags.find(({ name }) => name === trimmed);
@@ -124,7 +131,11 @@ export const DocumentTagsDialog = (
                           current.filter((_, itemIndex) => itemIndex !== index)
                         )}
                     >
-                      {tag.name} ×
+                      <TagLabel
+                        backgroundColor={tag.backgroundColor}
+                        name={tag.name}
+                      />{" "}
+                      ×
                     </Button>
                   ))}
                 </Flex>
@@ -163,7 +174,10 @@ export const DocumentTagsDialog = (
                       variant="outline"
                       onClick={() => addExisting(exact)}
                     >
-                      {exact.name}
+                      <TagLabel
+                        backgroundColor={exact.backgroundColor}
+                        name={exact.name}
+                      />
                     </Button>
                   </Flex>
                 )}
@@ -180,7 +194,11 @@ export const DocumentTagsDialog = (
                           variant="ghost"
                           onClick={() => addExisting(tag)}
                         >
-                          {tag.name} <Badge ms="1">{tag.reason}</Badge>
+                          <TagLabel
+                            backgroundColor={tag.backgroundColor}
+                            name={tag.name}
+                          />{" "}
+                          <Badge ms="1">{tag.reason}</Badge>
                         </Button>
                       ))}
                     </Flex>
