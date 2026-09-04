@@ -11,6 +11,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import type { ReactNode } from "react";
+import appIconUrl from "../../assets/icon-512.png";
 
 export type PreviewView = "comments" | "preview";
 
@@ -82,7 +83,7 @@ export const PreviewHeader = ({
         alt="Sadoku"
         flexShrink="0"
         h="8"
-        src="/assets/icon-512.png"
+        src={appIconUrl}
         w="8"
       />
       {fileUrl

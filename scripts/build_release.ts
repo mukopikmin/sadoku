@@ -267,7 +267,8 @@ const verifyNativeBinary = async (binaryPath: string): Promise<void> => {
   try {
     const url = await readLineUntilPreview(child);
     const html = await (await fetch(url)).text();
-    if (!html.includes("/assets/client.js")) {
+    const clientPath = html.match(/<script type="module" src="([^"]+)"/)?.[1];
+    if (!clientPath || !/-[\w-]{8}\.js$/.test(clientPath)) {
       throw new Error("Preview page did not include the preview client.");
     }
 
@@ -276,11 +277,38 @@ const verifyNativeBinary = async (binaryPath: string): Promise<void> => {
       throw new Error("Preview document API did not return the Mermaid block.");
     }
 
-    const asset = await fetch(new URL("/assets/mermaid.esm.min.mjs", url));
-    if (!asset.ok) {
-      throw new Error(`Mermaid asset request failed with ${asset.status}.`);
+    const manifestResponse = await fetch(
+      new URL("/assets/.vite/manifest.json", url),
+    );
+    const manifest = await manifestResponse.json() as Record<
+      string,
+      { dynamicImports?: string[]; file: string; imports?: string[] }
+    >;
+    const pending = ["node_modules/mermaid/dist/mermaid.core.mjs"];
+    const mermaidDependencies = new Set<string>();
+    while (pending.length > 0) {
+      const key = pending.pop()!;
+      if (mermaidDependencies.has(key)) continue;
+      mermaidDependencies.add(key);
+      const entry = manifest[key];
+      if (entry) {
+        pending.push(...entry.imports ?? [], ...entry.dynamicImports ?? []);
+      }
     }
-    console.log("Verified native binary and bundled Mermaid asset.");
+    if (!manifestResponse.ok || mermaidDependencies.size <= 1) {
+      throw new Error("Bundled Mermaid assets were missing from the manifest.");
+    }
+    for (const key of mermaidDependencies) {
+      const file = manifest[key]?.file;
+      if (!file) {
+        throw new Error(`Mermaid dependency was missing: ${key}`);
+      }
+      const asset = await fetch(new URL(`/assets/${file}`, url));
+      if (!asset.ok) {
+        throw new Error(`Mermaid asset request failed with ${asset.status}.`);
+      }
+    }
+    console.log("Verified native binary and bundled Mermaid asset graph.");
   } finally {
     try {
       child.kill("SIGTERM");

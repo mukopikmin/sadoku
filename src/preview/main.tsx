@@ -8,8 +8,11 @@ import { sadokuChakraSystem } from "./theme";
 import { createPreviewQueryClient } from "./queryClient";
 import { Toaster } from "./components/ui/toaster";
 import { createPreviewRouter } from "./router";
+import faviconUrl from "./assets/favicon.ico";
 
 const root = document.getElementById("sadoku-client-root");
+const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+if (favicon) favicon.href = faviconUrl;
 const queryClient = createPreviewQueryClient();
 const router = createPreviewRouter(App);
 

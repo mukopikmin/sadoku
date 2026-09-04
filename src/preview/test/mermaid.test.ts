@@ -1,6 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { initializeMermaid, initializeMermaidZoom } from "../markdown/mermaid";
 import { previewThemeCss } from "../theme";
+
+const bundledMermaid = vi.hoisted(() => ({
+  initialize: vi.fn(),
+  run: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("mermaid", () => ({ default: bundledMermaid }));
 
 const findCssRule = (selector: string): CSSStyleRule | undefined => {
   const style = document.createElement("style");
@@ -14,6 +21,19 @@ const findCssRule = (selector: string): CSSStyleRule | undefined => {
 };
 
 describe("initializeMermaid", () => {
+  it("loads Mermaid through the Vite dependency graph", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
+      "text/html",
+    );
+
+    await initializeMermaid({ document, prefersDark: () => false });
+
+    expect(bundledMermaid.initialize).toHaveBeenCalledOnce();
+    expect(bundledMermaid.run).toHaveBeenCalledWith({
+      nodes: [document.querySelector(".mermaid")],
+    });
+  });
   it("does not load mermaid when the page has no diagrams", async () => {
     const document = new DOMParser().parseFromString(
       "<main><p>No diagrams.</p></main>",
