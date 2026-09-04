@@ -42,10 +42,12 @@ Deno.test("serves preview icons with image content types", async () => {
   const favicon = await handlePreviewAssetRequest(previewAssetPaths.favicon);
   assertEquals(favicon.status, 200);
   assertEquals(favicon.headers.get("content-type"), "image/x-icon");
+  assertEquals(favicon.headers.get("cache-control"), "no-store");
 
   const icon = await handlePreviewAssetRequest(previewAssetPaths.icon);
   assertEquals(icon.status, 200);
   assertEquals(icon.headers.get("content-type"), "image/png");
+  assertEquals(icon.headers.get("cache-control"), "no-store");
 });
 
 Deno.test("does not cache fixed-name mutable assets as immutable", async () => {

@@ -14,7 +14,7 @@ Deno.test("escapes all HTML-sensitive characters in the SPA title", () => {
   assertEquals(html.includes(`<title><&>"' title</title>`), false);
 });
 
-Deno.test("links existing fingerprinted assets in the SPA head", async () => {
+Deno.test("links existing preview assets in the SPA head", async () => {
   const html = renderSpaShell("Preview");
 
   assertStringIncludes(
@@ -29,8 +29,13 @@ Deno.test("links existing fingerprinted assets in the SPA head", async () => {
     html,
     `<script type="module" src="${previewAssetPaths.client}"></script>`,
   );
+  assertEquals(previewAssetPaths.favicon, "/assets/favicon.ico");
+  assertEquals(previewAssetPaths.icon, "/assets/icon-512.png");
+  assertEquals(
+    /^\/assets\/.+-[\w-]{8}\.js$/.test(previewAssetPaths.client),
+    true,
+  );
   for (const path of Object.values(previewAssetPaths)) {
-    assertEquals(/^\/assets\/.+-[\w-]{8}\.(?:ico|js|png)$/.test(path), true);
     const asset = await readPreviewAsset(path);
     assertEquals(asset !== undefined && asset.byteLength > 0, true);
   }

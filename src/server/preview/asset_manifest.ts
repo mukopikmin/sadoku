@@ -25,8 +25,8 @@ const assetPath = (logicalName: string): string => {
 
 export const previewAssetPaths = {
   client: assetPath("main.tsx"),
-  favicon: assetPath("assets/favicon.ico"),
-  icon: assetPath("assets/icon-512.png"),
+  favicon: "/assets/favicon.ico",
+  icon: "/assets/icon-512.png",
 };
 
 export const fingerprintedPreviewFiles = new Set(

@@ -101,6 +101,7 @@ Deno.test("serves the fingerprinted preview client asset", async () => {
     "public, max-age=31536000, immutable",
   );
   const script = await response.text();
+  assertEquals(script.includes(previewAssetPaths.icon), true);
   assertEquals(script.includes("/__sadoku/documents/"), true);
   assertEquals(script.includes('"/__sadoku/comments"'), false);
   assertEquals(script.includes('"/__sadoku/document"'), false);
