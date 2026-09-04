@@ -6,7 +6,7 @@ export type DocumentSummary = {
   tags: DocumentTag[];
 };
 
-export type DocumentTag = { id: number; name: string };
+export type DocumentTag = { backgroundColor: string; id: number; name: string };
 
 export type PreviewDocument = {
   deleted: boolean;

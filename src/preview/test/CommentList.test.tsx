@@ -101,6 +101,77 @@ describe("CommentList", () => {
     );
   });
 
+  it("expands and collapses long source previews independently", () => {
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        comments={[
+          createComment({
+            body: "First comment.",
+            id: 1,
+            sourceText: Array.from(
+              { length: 20 },
+              (_, index) => `First source line ${index + 1}`,
+            ).join("\n\n"),
+          }),
+          createComment({
+            body: "Second comment.",
+            id: 2,
+            sourceText: Array.from(
+              { length: 20 },
+              (_, index) => `Second source line ${index + 1}`,
+            ).join("\n\n"),
+          }),
+        ]}
+      />,
+    );
+
+    const firstComment = screen.getByText("First comment.").closest(
+      "article",
+    )!;
+    const secondComment = screen.getByText("Second comment.").closest(
+      "article",
+    )!;
+    const firstPreview = firstComment.querySelector<HTMLElement>(
+      ".comment-source-markdown",
+    )!;
+    const secondPreview = secondComment.querySelector<HTMLElement>(
+      ".comment-source-markdown",
+    )!;
+    const firstToggle = within(firstComment).getByRole("button", {
+      name: "Show more",
+    });
+    const secondToggle = within(secondComment).getByRole("button", {
+      name: "Show more",
+    });
+
+    expect(getComputedStyle(firstPreview).maxHeight).toBe("160px");
+    expect(getComputedStyle(firstPreview).overflowY).toBe("auto");
+    expect(firstToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(firstToggle.getAttribute("aria-controls")).toBe(firstPreview.id);
+    expect(secondToggle.getAttribute("aria-controls")).toBe(secondPreview.id);
+    expect(firstPreview.id).not.toBe(secondPreview.id);
+
+    fireEvent.click(firstToggle);
+
+    expect(within(firstComment).getByRole("button", { name: "Show less" }))
+      .not.toBeNull();
+    expect(firstToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(getComputedStyle(firstPreview).maxHeight).toBe("none");
+    expect(getComputedStyle(firstPreview).overflowY).toBe("visible");
+    expect(getComputedStyle(secondPreview).maxHeight).toBe("160px");
+    expect(secondToggle.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(firstToggle);
+
+    expect(within(firstComment).getByRole("button", { name: "Show more" }))
+      .not.toBeNull();
+    expect(firstToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(getComputedStyle(firstPreview).maxHeight).toBe("160px");
+    expect(getComputedStyle(firstPreview).overflowY).toBe("auto");
+    expect(secondToggle.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("labels only bot comments and replies", () => {
     render(
       <CommentList

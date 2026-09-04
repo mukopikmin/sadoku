@@ -19,14 +19,30 @@ Deno.test("tag storage creates, reuses, and replaces document tag associations",
     assertEquals(first.map(({ name }) => name), ["API", "api"]);
     const id = first[0].id;
     await store.replaceForDocument(2, [{ id }]);
+    const renamed = await store.update(id, "Platform API", "#123456");
+    if ("type" in renamed) throw new Error(renamed.message);
+    assertEquals(renamed.name, "Platform API");
+    assertEquals(renamed.backgroundColor, "#123456");
+    const unchanged = await store.update(id, "Platform API", "#123456");
+    if ("type" in unchanged) throw new Error(unchanged.message);
+    assertEquals(unchanged.updatedAt, renamed.updatedAt);
+    assertEquals((await store.listForDocument(2))[0].name, "Platform API");
+    assertEquals(await store.update(first[1].id, "Platform API", "#abcdef"), {
+      type: "conflict",
+      message: "Tag name already exists.",
+    });
     assertEquals((await store.listForDocument(2))[0].id, id);
+    assertEquals(
+      (await store.listForDocument(2))[0].backgroundColor,
+      "#123456",
+    );
     assertEquals(
       (await store.list()).map(({ name, documentCount }) => ({
         name,
         documentCount,
       })),
       [
-        { name: "API", documentCount: 2 },
+        { name: "Platform API", documentCount: 2 },
         { name: "api", documentCount: 1 },
       ],
     );
@@ -37,7 +53,7 @@ Deno.test("tag storage creates, reuses, and replaces document tag associations",
         documentCount,
       })),
       [
-        { name: "API", documentCount: 1 },
+        { name: "Platform API", documentCount: 1 },
         { name: "api", documentCount: 1 },
       ],
     );
