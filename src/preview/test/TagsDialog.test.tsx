@@ -60,7 +60,7 @@ describe("TagsDialog", () => {
     );
   });
 
-  it("renames a tag and refreshes the list", async () => {
+  it("edits a tag name and color and refreshes the list", async () => {
     const tag = {
       id: 1,
       name: "API",
@@ -81,7 +81,7 @@ describe("TagsDialog", () => {
     render(<TagsDialog onOpenChange={() => {}} open />);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Rename tag Platform API" }),
+      await screen.findByRole("button", { name: "Edit tag Platform API" }),
     );
     fireEvent.change(screen.getByLabelText("New name for Platform API"), {
       target: { value: "Backend" },
@@ -110,7 +110,7 @@ describe("TagsDialog", () => {
     );
   });
 
-  it("shows a conflict returned while renaming", async () => {
+  it("shows a conflict returned while updating", async () => {
     const fetchMock = vi.fn(async (
       _input: RequestInfo | URL,
       init?: RequestInit,
@@ -129,7 +129,7 @@ describe("TagsDialog", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<TagsDialog onOpenChange={() => {}} open />);
     fireEvent.click(
-      await screen.findByRole("button", { name: "Rename tag API" }),
+      await screen.findByRole("button", { name: "Edit tag API" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Tag name already exists.")).not.toBeNull();

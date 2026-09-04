@@ -48,7 +48,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
       cancelEditing();
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Could not rename tag.",
+        error instanceof Error ? error.message : "Could not update tag.",
       );
     }
   };
@@ -193,7 +193,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                               )
                               : (
                                 <Button
-                                  aria-label={`Rename tag ${tag.name}`}
+                                  aria-label={`Edit tag ${tag.name}`}
                                   onClick={() =>
                                     startEditing(
                                       tag.id,
@@ -203,7 +203,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                                   size="sm"
                                   variant="ghost"
                                 >
-                                  Rename
+                                  Edit
                                 </Button>
                               )}
                           </Table.Cell>
