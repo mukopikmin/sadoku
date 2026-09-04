@@ -15,6 +15,7 @@ import type { Comment } from "../models/comment";
 afterEach(() => {
   cleanup();
   toaster.remove();
+  vi.restoreAllMocks();
 });
 
 const createComment = (
@@ -99,6 +100,55 @@ describe("CommentList", () => {
       getComputedStyle(screen.getByText("Comment body stays separate."))
         .fontSize,
     );
+  });
+
+  it("expands overflowing source previews independently by comment", () => {
+    vi.spyOn(
+      HTMLElement.prototype,
+      "scrollHeight",
+      "get",
+    ).mockImplementation(function () {
+      return this.classList.contains("comment-source-markdown") ? 320 : 0;
+    });
+    vi.spyOn(
+      HTMLElement.prototype,
+      "clientHeight",
+      "get",
+    ).mockImplementation(function () {
+      return this.classList.contains("comment-source-markdown") ? 160 : 0;
+    });
+
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        comments={[
+          createComment({ id: 1, sourceText: "First long source" }),
+          createComment({ id: 2, sourceText: "Second long source" }),
+        ]}
+      />,
+    );
+
+    const expandButtons = screen.getAllByRole("button", {
+      name: "Show full source \u2193",
+    });
+    expect(expandButtons).toHaveLength(2);
+    expect(expandButtons[0].getAttribute("aria-expanded")).toBe("false");
+    expect(expandButtons[1].getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(expandButtons[0]);
+
+    const collapseButton = screen.getByRole("button", {
+      name: "Collapse source \u2191",
+    });
+    expect(collapseButton.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("button", {
+      name: "Show full source \u2193",
+    })).toHaveLength(1);
+
+    fireEvent.click(collapseButton);
+    expect(screen.getAllByRole("button", {
+      name: "Show full source \u2193",
+    })).toHaveLength(2);
   });
 
   it("labels only bot comments and replies", () => {
