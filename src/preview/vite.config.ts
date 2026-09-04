@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => ({
+  base: "/assets/",
   define: command === "build"
     ? {
       "process.env.NODE_ENV": JSON.stringify("production"),
@@ -10,16 +11,16 @@ export default defineConfig(({ command }) => ({
     : undefined,
   plugins: [react()],
   build: {
-    emptyOutDir: false,
-    lib: {
-      entry: resolve(import.meta.dirname, "main.tsx"),
-      formats: ["es"],
-      fileName: () => "client.js",
-    },
+    assetsInlineLimit: 0,
+    emptyOutDir: true,
+    manifest: true,
     outDir: resolve(import.meta.dirname, "dist"),
     rollupOptions: {
+      input: resolve(import.meta.dirname, "main.tsx"),
       output: {
-        entryFileNames: "client.js",
+        assetFileNames: "[name]-[hash][extname]",
+        chunkFileNames: "[name]-[hash].js",
+        entryFileNames: "client-[hash].js",
       },
     },
   },

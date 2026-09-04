@@ -1,6 +1,7 @@
 import { assertEquals } from "@std/assert";
 
 import { handlePreviewAssetRequest } from "./assets.ts";
+import { previewAssetManifest, previewAssetPaths } from "./asset_manifest.ts";
 
 Deno.test("rejects missing and traversing asset paths", async () => {
   for (
@@ -20,7 +21,9 @@ Deno.test("rejects missing and traversing asset paths", async () => {
 
 Deno.test("serves fingerprintable assets with immutable caching", async () => {
   const response = await handlePreviewAssetRequest(
-    "/assets/mermaid.esm.min.mjs",
+    `/assets/${
+      previewAssetManifest["node_modules/mermaid/dist/mermaid.core.mjs"].file
+    }`,
   );
 
   assertEquals(response.status, 200);
@@ -36,11 +39,25 @@ Deno.test("serves fingerprintable assets with immutable caching", async () => {
 });
 
 Deno.test("serves preview icons with image content types", async () => {
-  const favicon = await handlePreviewAssetRequest("/assets/favicon.ico");
+  const favicon = await handlePreviewAssetRequest(previewAssetPaths.favicon);
   assertEquals(favicon.status, 200);
   assertEquals(favicon.headers.get("content-type"), "image/x-icon");
+  assertEquals(favicon.headers.get("cache-control"), "no-store");
 
-  const icon = await handlePreviewAssetRequest("/assets/icon-512.png");
+  const icon = await handlePreviewAssetRequest(previewAssetPaths.icon);
   assertEquals(icon.status, 200);
   assertEquals(icon.headers.get("content-type"), "image/png");
+  assertEquals(icon.headers.get("cache-control"), "no-store");
+});
+
+Deno.test("does not cache fixed-name mutable assets as immutable", async () => {
+  const manifest = await handlePreviewAssetRequest(
+    "/assets/.vite/manifest.json",
+  );
+  assertEquals(manifest.status, 200);
+  assertEquals(manifest.headers.get("cache-control"), "no-store");
+  assertEquals(
+    manifest.headers.get("content-type"),
+    "application/json; charset=utf-8",
+  );
 });

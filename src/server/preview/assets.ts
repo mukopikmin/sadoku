@@ -1,11 +1,13 @@
 import { normalize } from "@std/path";
-import { notFoundResponse } from "../responses.ts";
+import { noStoreCacheControl, notFoundResponse } from "../responses.ts";
+import { fingerprintedPreviewFiles } from "./asset_manifest.ts";
 
 const previewAssetRoot = new URL("../../preview/dist/", import.meta.url);
 
 const contentTypeForPath = (pathname: string): string => {
   if (pathname.endsWith(".ico")) return "image/x-icon";
   if (pathname.endsWith(".png")) return "image/png";
+  if (pathname.endsWith(".json")) return "application/json; charset=utf-8";
   return "text/javascript; charset=utf-8";
 };
 
@@ -45,12 +47,13 @@ export const handlePreviewAssetRequest = async (
     asset.byteOffset,
     asset.byteOffset + asset.byteLength,
   ) as ArrayBuffer;
+  const relativePath = decodeURIComponent(pathname.slice("/assets/".length));
   return new Response(body, {
     headers: {
       "content-type": contentTypeForPath(pathname),
-      "cache-control": pathname === "/assets/client.js"
-        ? "no-store"
-        : "public, max-age=31536000, immutable",
+      "cache-control": fingerprintedPreviewFiles.has(relativePath)
+        ? "public, max-age=31536000, immutable"
+        : noStoreCacheControl,
     },
   });
 };

@@ -13,8 +13,6 @@ type MermaidModule = {
   default: MermaidApi;
 };
 
-const mermaidAssetPath = "/assets/mermaid.esm.min.mjs";
-
 export type MermaidOptions = {
   document?: Document;
   importMermaid?: () => Promise<MermaidModule>;
@@ -132,7 +130,7 @@ export const initializeMermaidZoom = (
 export const initializeMermaid = async (
   {
     document = globalThis.document,
-    importMermaid = () => import(/* @vite-ignore */ mermaidAssetPath),
+    importMermaid = () => import("mermaid"),
     prefersDark = () =>
       globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
     theme,

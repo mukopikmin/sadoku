@@ -1,6 +1,10 @@
 import { assertEquals } from "@std/assert";
 
 import { createTestPreviewHandler } from "../../src/server/test_helpers.ts";
+import {
+  previewAssetManifest,
+  previewAssetPaths,
+} from "../../src/server/preview/asset_manifest.ts";
 
 Deno.test("serves hot reload events as an SSE stream", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
@@ -80,10 +84,10 @@ Deno.test("keeps the session event stream empty and reports cancellation", async
   assertEquals(closed, 1);
 });
 
-Deno.test("serves the preview client asset", async () => {
+Deno.test("serves the fingerprinted preview client asset", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
   const response = await createTestPreviewHandler(filePath)(
-    new Request("http://127.0.0.1:3334/assets/client.js"),
+    new Request(`http://127.0.0.1:3334${previewAssetPaths.client}`),
     {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
   );
 
@@ -92,31 +96,73 @@ Deno.test("serves the preview client asset", async () => {
     response.headers.get("content-type"),
     "text/javascript; charset=utf-8",
   );
-  assertEquals(response.headers.get("cache-control"), "no-store");
+  assertEquals(
+    response.headers.get("cache-control"),
+    "public, max-age=31536000, immutable",
+  );
   const script = await response.text();
+  assertEquals(script.includes(previewAssetPaths.icon), true);
   assertEquals(script.includes("/__sadoku/documents/"), true);
   assertEquals(script.includes('"/__sadoku/comments"'), false);
   assertEquals(script.includes('"/__sadoku/document"'), false);
-  assertEquals(script.includes('"/__sadoku/events"'), true);
+  assertEquals(script.includes("/__sadoku/events"), true);
   assertEquals(script.includes("process.env"), false);
 });
 
-Deno.test("serves the SPA shell", async () => {
+Deno.test("serves the SPA shell without caching at every client route", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";
-  const response = await createTestPreviewHandler(filePath)(
-    new Request("http://127.0.0.1:3334/"),
-    {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
-  );
+  const handler = createTestPreviewHandler(filePath);
+  for (const path of ["/", "/documents/1/comments"]) {
+    const response = await handler(
+      new Request(`http://127.0.0.1:3334${path}`),
+      {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+    );
+    const html = await response.text();
 
-  const html = await response.text();
+    assertEquals(response.status, 200);
+    assertEquals(
+      response.headers.get("content-type"),
+      "text/html; charset=utf-8",
+    );
+    assertEquals(response.headers.get("cache-control"), "no-store");
+    assertEquals(html.includes('<div id="sadoku-client-root"></div>'), true);
+    assertEquals(html.includes(`src="${previewAssetPaths.client}"`), true);
+    for (const assetPath of Object.values(previewAssetPaths)) {
+      assertEquals(html.includes(assetPath), true);
+    }
+  }
+});
 
-  assertEquals(response.status, 200);
-  assertEquals(
-    response.headers.get("content-type"),
-    "text/html; charset=utf-8",
+Deno.test("serves every generated Mermaid module dependency offline", async () => {
+  const handler = createTestPreviewHandler(
+    "test/integration/fixtures/comprehensive.md",
   );
-  assertEquals(html.includes('<div id="sadoku-client-root"></div>'), true);
-  assertEquals(html.includes('src="/assets/client.js"'), true);
+  const pending = ["node_modules/mermaid/dist/mermaid.core.mjs"];
+  const dependencyKeys = new Set<string>();
+  while (pending.length > 0) {
+    const key = pending.pop()!;
+    if (dependencyKeys.has(key)) continue;
+    dependencyKeys.add(key);
+    const entry = previewAssetManifest[key];
+    if (entry) {
+      pending.push(...entry.imports ?? [], ...entry.dynamicImports ?? []);
+    }
+  }
+  assertEquals(dependencyKeys.size > 1, true);
+
+  for (const key of dependencyKeys) {
+    const entry = previewAssetManifest[key];
+    assertEquals(entry !== undefined, true, key);
+    const response = await handler(
+      new Request(`http://127.0.0.1:3334/assets/${entry.file}`),
+      {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+    );
+    assertEquals(response.status, 200, entry.file);
+    assertEquals(
+      response.headers.get("cache-control"),
+      "public, max-age=31536000, immutable",
+    );
+  }
 });
 
 Deno.test("serves the raw preview document for the SPA", async () => {

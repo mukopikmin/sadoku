@@ -45,21 +45,24 @@ jobs:
 
       - name: Download approved release candidate
         env:
+          CANDIDATE_DIR: ${{ runner.temp }}/release-candidate
           GH_TOKEN: ${{ github.token }}
           PREPARE_RUN_ID: ${{ inputs.prepare_run_id }}
-        run: gh run download "${PREPARE_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --name release-candidate --dir candidate
+        run: gh run download "${PREPARE_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --name release-candidate --dir "${CANDIDATE_DIR}"
 
       - name: Verify approved plan and artifacts
         id: plan
         env:
+          CANDIDATE_DIR: ${{ runner.temp }}/release-candidate
           GH_TOKEN: ${{ github.token }}
           PLAN_SHA256: ${{ inputs.plan_sha256 }}
         run: |
-          echo "${PLAN_SHA256}  candidate/release-plan.json" | sha256sum --check --strict
-          version="$(jq -er .version candidate/release-plan.json)"
-          tag="$(jq -er .tag candidate/release-plan.json)"
-          target_sha="$(jq -er .targetSha candidate/release-plan.json)"
-          previous_tag="$(jq -er .previousStableTag candidate/release-plan.json)"
+          echo "${PLAN_SHA256}  ${CANDIDATE_DIR}/release-plan.json" | sha256sum --check --strict
+          version="$(jq -er .version "${CANDIDATE_DIR}/release-plan.json")"
+          tag="$(jq -er .tag "${CANDIDATE_DIR}/release-plan.json")"
+          target_sha="$(jq -er .targetSha "${CANDIDATE_DIR}/release-plan.json")"
+          previous_tag="$(jq -er .previousStableTag "${CANDIDATE_DIR}/release-plan.json")"
+          title="$(jq -er .title "${CANDIDATE_DIR}/release-plan.json")"
           test "${tag}" = "v${version}"
           [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
           [[ "${target_sha}" =~ ^[0-9a-f]{40}$ ]]
@@ -71,22 +74,22 @@ jobs:
           ! gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1
           ! git ls-remote --exit-code --tags "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${tag}" >/dev/null 2>&1
 
-          echo "$(jq -er .notesSha256 candidate/release-plan.json)  candidate/release-notes.md" |
+          echo "$(jq -er .notesSha256 "${CANDIDATE_DIR}/release-plan.json")  ${CANDIDATE_DIR}/release-notes.md" |
             sha256sum --check --strict
-          (cd candidate/dist && sha256sum --check --strict checksums.txt)
-          jq -r '.artifacts[] | "\(.sha256)  candidate/dist/\(.name)"' candidate/release-plan.json |
-            sha256sum --check --strict
+          (cd "${CANDIDATE_DIR}/dist" && sha256sum --check --strict checksums.txt)
+          jq -r --arg candidate_dir "${CANDIDATE_DIR}" '.artifacts[] | "\(.sha256)  \($candidate_dir)/dist/\(.name)"' \
+            "${CANDIDATE_DIR}/release-plan.json" | sha256sum --check --strict
           while read -r checksum name; do
-            test "$(cat "candidate/dist/${name}.sha256")" = "${checksum}"
-          done < candidate/dist/checksums.txt
+            test "$(cat "${CANDIDATE_DIR}/dist/${name}.sha256")" = "${checksum}"
+          done < "${CANDIDATE_DIR}/dist/checksums.txt"
           while read -r _ name; do
-            gh attestation verify "candidate/dist/${name}" --repo "${GITHUB_REPOSITORY}"
-          done < candidate/dist/checksums.txt
+            gh attestation verify "${CANDIDATE_DIR}/dist/${name}" --repo "${GITHUB_REPOSITORY}"
+          done < "${CANDIDATE_DIR}/dist/checksums.txt"
 
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
           echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
           echo "target-sha=${target_sha}" >> "${GITHUB_OUTPUT}"
-          echo "title=$(jq -er .title candidate/release-plan.json)" >> "${GITHUB_OUTPUT}"
+          echo "title=${title}" >> "${GITHUB_OUTPUT}"
 
       - name: Checkout approved commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -106,24 +109,26 @@ jobs:
 
       - name: Publish GitHub release
         env:
+          CANDIDATE_DIR: ${{ runner.temp }}/release-candidate
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.plan.outputs.tag }}
           TITLE: ${{ steps.plan.outputs.title }}
         run: |
-          gh release create "${TAG}" candidate/dist/* \
+          gh release create "${TAG}" "${CANDIDATE_DIR}"/dist/* \
             --repo "${GITHUB_REPOSITORY}" \
             --title "${TITLE}" \
-            --notes-file candidate/release-notes.md \
+            --notes-file "${CANDIDATE_DIR}/release-notes.md" \
             --verify-tag
 
       - name: Verify published release
         env:
+          CANDIDATE_DIR: ${{ runner.temp }}/release-candidate
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.plan.outputs.tag }}
           TARGET_SHA: ${{ steps.plan.outputs.target-sha }}
         run: |
           test "$(git rev-list -n 1 "${TAG}")" = "${TARGET_SHA}"
           test "$(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json isDraft,isPrerelease --jq '[.isDraft,.isPrerelease] | @tsv')" = $'false\tfalse'
-          expected="$(find candidate/dist -maxdepth 1 -type f -printf '%f\n' | sort)"
+          expected="$(find "${CANDIDATE_DIR}/dist" -maxdepth 1 -type f -printf '%f\n' | sort)"
           actual="$(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets[].name' | sort)"
           test "${actual}" = "${expected}"
