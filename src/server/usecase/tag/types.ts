@@ -1,9 +1,11 @@
 export type Tag = {
   id: number;
   name: string;
+  backgroundColor: string;
   createdAt: string;
   updatedAt: string;
 };
+export const DEFAULT_TAG_BACKGROUND_COLOR = "#718096";
 export type TagSummary = Tag & { documentCount: number };
 export type TagReference = { id: number } | { name: string };
 
@@ -31,4 +33,16 @@ export const prepareTagName = (value: unknown): string | TagError => {
     };
   }
   return name;
+};
+
+export const prepareTagBackgroundColor = (
+  value: unknown,
+): string | TagError => {
+  if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) {
+    return {
+      type: "invalid",
+      message: "Tag background color must be a hexadecimal RGB color.",
+    };
+  }
+  return value.toLowerCase();
 };

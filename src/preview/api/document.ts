@@ -1,4 +1,5 @@
 import type { DocumentSummary, PreviewDocument } from "../models/document";
+import { parseDocumentTag } from "./tags";
 
 export type DocumentSummaryResponse = DocumentSummary;
 export type PreviewDocumentResponse = PreviewDocument;
@@ -8,7 +9,13 @@ export const loadDocuments = async (): Promise<DocumentSummary[]> => {
   if (!response.ok) {
     throw new Error(`Failed to load documents: ${response.status}`);
   }
-  return await response.json() as DocumentSummaryResponse[];
+  const documents = await response.json() as DocumentSummaryResponse[];
+  return documents.map((document) => ({
+    ...document,
+    tags: Array.isArray(document.tags)
+      ? document.tags.map(parseDocumentTag)
+      : [],
+  }));
 };
 
 export const loadPreviewDocument = async (
@@ -18,5 +25,11 @@ export const loadPreviewDocument = async (
   if (!response.ok) {
     throw new Error(`Failed to load Markdown: ${response.status}`);
   }
-  return await response.json() as PreviewDocument;
+  const document = await response.json() as PreviewDocumentResponse;
+  return {
+    ...document,
+    tags: Array.isArray(document.tags)
+      ? document.tags.map(parseDocumentTag)
+      : [],
+  };
 };

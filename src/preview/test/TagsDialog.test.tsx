@@ -1,6 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "./testUtils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { TagsDialog } from "../components/TagsDialog";
+
+beforeEach(() => {
+  vi.stubGlobal("scrollTo", vi.fn());
+});
 
 afterEach(() => {
   cleanup();
@@ -14,6 +18,7 @@ describe("TagsDialog", () => {
         {
           id: 1,
           name: "API",
+          backgroundColor: "#123456",
           documentCount: 12,
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-01T00:00:00.000Z",
@@ -53,5 +58,80 @@ describe("TagsDialog", () => {
     await waitFor(() =>
       expect(screen.getByText("Could not load tags.")).not.toBeNull()
     );
+  });
+
+  it("edits a tag name and color and refreshes the list", async () => {
+    const tag = {
+      id: 1,
+      name: "API",
+      backgroundColor: "#123456",
+      documentCount: 12,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    const fetchMock = vi.fn(async (
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ) =>
+      init?.method === "PATCH"
+        ? Response.json({ id: 1, name: "Backend", backgroundColor: "#abcdef" })
+        : Response.json([{ ...tag, name: "Platform API" }])
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<TagsDialog onOpenChange={() => {}} open />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Edit tag Platform API" }),
+    );
+    fireEvent.change(screen.getByLabelText("New name for Platform API"), {
+      target: { value: "Backend" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Background color" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Select #abcdef" }),
+    );
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText(
+          "Background color for Platform API",
+        ) as HTMLInputElement).value.toLowerCase(),
+      ).toBe("#abcdef")
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/__sadoku/tags/1",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ name: "Backend", backgroundColor: "#abcdef" }),
+        }),
+      )
+    );
+  });
+
+  it("shows a conflict returned while updating", async () => {
+    const fetchMock = vi.fn(async (
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ) =>
+      init?.method === "PATCH"
+        ? new Response("Tag name already exists.", { status: 409 })
+        : Response.json([{
+          id: 1,
+          name: "API",
+          backgroundColor: "#123456",
+          documentCount: 1,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        }])
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<TagsDialog onOpenChange={() => {}} open />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Edit tag API" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("Tag name already exists.")).not.toBeNull();
   });
 });
