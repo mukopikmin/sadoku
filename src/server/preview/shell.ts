@@ -1,3 +1,5 @@
+import { previewAssetPaths } from "./asset_manifest.ts";
+
 const escapeHtml = (value: string): string =>
   value
     .replaceAll("&", "&amp;")
@@ -12,12 +14,12 @@ export const renderSpaShell = (title: string): string =>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="/assets/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" href="/assets/icon-512.png">
+    <link rel="icon" href="${previewAssetPaths.favicon}" sizes="any">
+    <link rel="apple-touch-icon" href="${previewAssetPaths.icon}">
     <title>${escapeHtml(title)}</title>
   </head>
   <body>
     <div id="sadoku-client-root"></div>
-    <script type="module" src="/assets/client.js"></script>
+    <script type="module" src="${previewAssetPaths.client}"></script>
   </body>
 </html>`;

@@ -7,6 +7,7 @@ import type { DirectorySession } from "./usecase/document/mod.ts";
 import type { DocumentStore } from "./usecase/document/mod.ts";
 import { serveHandlerInfo } from "./test_helpers.ts";
 import { ensureCommentsNotificationDirectory } from "./storage/comment/notifications.ts";
+import { previewAssetPaths } from "./preview/asset_manifest.ts";
 
 const createMemoryStore = (): CommentsStore => {
   const documents = new Map<string, PreviewCommentsDocument>();
@@ -101,9 +102,10 @@ Deno.test("serves directory documents and keeps comments isolated", async () => 
         shell.headers.get("content-type"),
         "text/html; charset=utf-8",
       );
+      assertEquals(shell.headers.get("cache-control"), "no-store");
       const html = await shell.text();
       assertEquals(html.includes('id="sadoku-client-root"'), true);
-      assertEquals(html.includes('src="/assets/client.js"'), true);
+      assertEquals(html.includes(`src="${previewAssetPaths.client}"`), true);
     }
 
     for (const id of ["0", "-1", "1.5", "missing", "3"]) {

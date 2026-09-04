@@ -24,6 +24,7 @@ import { renderSpaShell } from "./preview/shell.ts";
 import { getCommentsNotificationFilePath } from "./storage/comment/notifications.ts";
 import {
   methodNotAllowedResponse,
+  noStoreHtml,
   noStoreJson,
   notFoundResponse,
   textResponse,
@@ -356,9 +357,6 @@ export const createDirectoryPreviewHandler = (
   app.all("/__sadoku", () => notFoundResponse());
   app.all("/__sadoku/*", () => notFoundResponse());
   app.all("/assets*", () => notFoundResponse("Asset not found."));
-  app.get("*", () =>
-    new Response(renderSpaShell("Sadoku"), {
-      headers: { "content-type": "text/html; charset=utf-8" },
-    }));
+  app.get("*", () => noStoreHtml(renderSpaShell("Sadoku")));
   return (request) => app.fetch(request);
 };
