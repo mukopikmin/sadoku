@@ -110,8 +110,9 @@ export const createDirectoryPreviewHandler = (
             title,
             ...(tagStore && {
               tags: (await tagStore.listForDocument(id)).map((
-                { id, name },
+                { backgroundColor, id, name },
               ) => ({
+                backgroundColor,
                 id,
                 name,
               })),
@@ -190,7 +191,7 @@ export const createDirectoryPreviewHandler = (
       markdown: body.markdown,
       ...(tagStore && {
         tags: (await tagStore.listForDocument(document.id)).map(
-          ({ id, name }) => ({ id, name }),
+          ({ backgroundColor, id, name }) => ({ backgroundColor, id, name }),
         ),
       }),
     });

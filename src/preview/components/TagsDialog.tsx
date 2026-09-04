@@ -1,31 +1,41 @@
 import {
   Button,
+  ColorPicker,
   Dialog,
   Flex,
   Input,
+  parseColor,
   Portal,
   Spinner,
   Table,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
-import { useRenameTag, useTagsQuery } from "../hooks/usePreviewData";
+import { type RefObject, useState } from "react";
+import { useTagsQuery, useUpdateTag } from "../hooks/usePreviewData";
+import { TagLabel } from "./ui/TagLabel";
 
 type Props = {
+  finalFocusRef?: RefObject<HTMLButtonElement | null>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 };
 
-export const TagsDialog = ({ onOpenChange, open }: Props) => {
+export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
   const tags = useTagsQuery(open);
-  const rename = useRenameTag();
+  const update = useUpdateTag();
   const [editingId, setEditingId] = useState<number>();
   const [name, setName] = useState("");
+  const [backgroundColor, setBackgroundColor] = useState("#718096");
   const [message, setMessage] = useState("");
 
-  const startEditing = (id: number, currentName: string) => {
+  const startEditing = (
+    id: number,
+    currentName: string,
+    currentBackgroundColor: string,
+  ) => {
     setEditingId(id);
     setName(currentName);
+    setBackgroundColor(currentBackgroundColor);
     setMessage("");
   };
   const cancelEditing = () => {
@@ -35,21 +45,18 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
   const save = async () => {
     if (editingId === undefined) return;
     try {
-      await rename.mutateAsync({ id: editingId, name });
+      await update.mutateAsync({ id: editingId, name, backgroundColor });
       cancelEditing();
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Could not rename tag.",
+        error instanceof Error ? error.message : "Could not update tag.",
       );
     }
   };
 
   return (
     <Dialog.Root
-      finalFocusEl={() =>
-        document.querySelector<HTMLButtonElement>(
-          'button[aria-label="Open tags"]',
-        )}
+      finalFocusEl={() => finalFocusRef?.current ?? null}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
     >
@@ -86,15 +93,77 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                           <Table.Cell>
                             {editingId === tag.id
                               ? (
-                                <Input
-                                  aria-label={`New name for ${tag.name}`}
-                                  onChange={(event) =>
-                                    setName(event.target.value)}
-                                  size="sm"
-                                  value={name}
-                                />
+                                <>
+                                  <Input
+                                    aria-label={`New name for ${tag.name}`}
+                                    onChange={(event) =>
+                                      setName(event.target.value)}
+                                    size="sm"
+                                    value={name}
+                                  />
+
+                                  <ColorPicker.Root
+                                    format="rgba"
+                                    mt="2"
+                                    onValueChange={({ value }) =>
+                                      setBackgroundColor(
+                                        value.toString("hex").toLowerCase(),
+                                      )}
+                                    size="sm"
+                                    value={parseColor(backgroundColor)}
+                                  >
+                                    <ColorPicker.Label>
+                                      Background color
+                                    </ColorPicker.Label>
+                                    <ColorPicker.Control>
+                                      <ColorPicker.Input
+                                        aria-label={`Background color for ${tag.name}`}
+                                      />
+                                      <ColorPicker.Trigger>
+                                        <ColorPicker.ValueSwatch />
+                                      </ColorPicker.Trigger>
+                                    </ColorPicker.Control>
+                                    <ColorPicker.Positioner>
+                                      <ColorPicker.Content>
+                                        <ColorPicker.Area>
+                                          <ColorPicker.AreaBackground />
+                                          <ColorPicker.AreaThumb />
+                                        </ColorPicker.Area>
+                                        <ColorPicker.Sliders>
+                                          <ColorPicker.ChannelSlider channel="hue">
+                                            <ColorPicker.ChannelSliderTrack />
+                                            <ColorPicker.ChannelSliderThumb />
+                                          </ColorPicker.ChannelSlider>
+                                        </ColorPicker.Sliders>
+                                        <ColorPicker.SwatchGroup>
+                                          {["#718096", "#123456", "#abcdef"]
+                                            .map((color) => (
+                                              <ColorPicker.SwatchTrigger
+                                                aria-label={`Select ${color}`}
+                                                key={color}
+                                                value={color}
+                                              >
+                                                <ColorPicker.Swatch
+                                                  value={color}
+                                                />
+                                              </ColorPicker.SwatchTrigger>
+                                            ))}
+                                        </ColorPicker.SwatchGroup>
+                                      </ColorPicker.Content>
+                                    </ColorPicker.Positioner>
+                                  </ColorPicker.Root>
+                                  <TagLabel
+                                    backgroundColor={backgroundColor}
+                                    name={name || tag.name}
+                                  />
+                                </>
                               )
-                              : tag.name}
+                              : (
+                                <TagLabel
+                                  backgroundColor={tag.backgroundColor}
+                                  name={tag.name}
+                                />
+                              )}
                           </Table.Cell>
                           <Table.Cell textAlign="end">
                             {tag.documentCount.toLocaleString()}
@@ -104,7 +173,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                               ? (
                                 <Flex gap="2" justify="flex-end">
                                   <Button
-                                    disabled={rename.isPending}
+                                    disabled={update.isPending}
                                     onClick={cancelEditing}
                                     size="sm"
                                     variant="ghost"
@@ -112,7 +181,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                                     Cancel
                                   </Button>
                                   <Button
-                                    loading={rename.isPending}
+                                    loading={update.isPending}
                                     onClick={save}
                                     size="sm"
                                   >
@@ -122,12 +191,17 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
                               )
                               : (
                                 <Button
-                                  aria-label={`Rename tag ${tag.name}`}
-                                  onClick={() => startEditing(tag.id, tag.name)}
+                                  aria-label={`Edit tag ${tag.name}`}
+                                  onClick={() =>
+                                    startEditing(
+                                      tag.id,
+                                      tag.name,
+                                      tag.backgroundColor,
+                                    )}
                                   size="sm"
                                   variant="ghost"
                                 >
-                                  Rename
+                                  Edit
                                 </Button>
                               )}
                           </Table.Cell>

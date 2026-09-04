@@ -1,7 +1,7 @@
 import { noStoreJson, textResponse } from "../responses.ts";
 import type { TagStore } from "../usecase/tag/ports.ts";
 import { replaceDocumentTags } from "../usecase/tag/replace_document_tags.ts";
-import { renameTag } from "../usecase/tag/rename_tag.ts";
+import { updateTag } from "../usecase/tag/update_tag.ts";
 import type { TagError } from "../usecase/tag/types.ts";
 
 const errorResponse = (error: TagError) =>
@@ -28,7 +28,13 @@ export const patchTag = async (
 ) => {
   const body = await json(request);
   if (body instanceof Response) return body;
-  const result = await renameTag(store, id, (body as { name?: unknown }).name);
+  const values = body as { name?: unknown; backgroundColor?: unknown };
+  const result = await updateTag(
+    store,
+    id,
+    values.name,
+    values.backgroundColor,
+  );
   return isError(result) ? errorResponse(result) : noStoreJson(result);
 };
 export const putDocumentTags = async (
