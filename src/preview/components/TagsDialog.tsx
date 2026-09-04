@@ -10,16 +10,17 @@ import {
   Table,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { type RefObject, useState } from "react";
 import { useTagsQuery, useUpdateTag } from "../hooks/usePreviewData";
 import { TagLabel } from "./ui/TagLabel";
 
 type Props = {
+  finalFocusRef?: RefObject<HTMLButtonElement | null>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 };
 
-export const TagsDialog = ({ onOpenChange, open }: Props) => {
+export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
   const tags = useTagsQuery(open);
   const update = useUpdateTag();
   const [editingId, setEditingId] = useState<number>();
@@ -55,10 +56,7 @@ export const TagsDialog = ({ onOpenChange, open }: Props) => {
 
   return (
     <Dialog.Root
-      finalFocusEl={() =>
-        document.querySelector<HTMLButtonElement>(
-          'button[aria-label="Open tags"]',
-        )}
+      finalFocusEl={() => finalFocusRef?.current ?? null}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
     >
