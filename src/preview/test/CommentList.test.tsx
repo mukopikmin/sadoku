@@ -16,6 +16,7 @@ afterEach(() => {
   cleanup();
   toaster.remove();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const createComment = (
@@ -100,6 +101,71 @@ describe("CommentList", () => {
       getComputedStyle(screen.getByText("Comment body stays separate."))
         .fontSize,
     );
+  });
+
+  it("expands overflowing source previews independently by comment", async () => {
+    vi.spyOn(
+      HTMLElement.prototype,
+      "scrollHeight",
+      "get",
+    ).mockImplementation(function () {
+      return this.classList.contains("comment-source-markdown") ? 320 : 0;
+    });
+    vi.spyOn(
+      HTMLElement.prototype,
+      "clientHeight",
+      "get",
+    ).mockImplementation(function () {
+      return this.classList.contains("comment-source-markdown") ? 160 : 0;
+    });
+
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        comments={[
+          createComment({ id: 1, sourceText: "First long source" }),
+          createComment({ id: 2, sourceText: "Second long source" }),
+        ]}
+      />,
+    );
+
+    const expandButtons = screen.getAllByRole("button", {
+      name: "Show full source",
+    });
+    expect(expandButtons).toHaveLength(2);
+    expect(within(expandButtons[0].parentElement!).getAllByRole("separator"))
+      .toHaveLength(2);
+    expect(expandButtons[0].getAttribute("aria-expanded")).toBe("false");
+    expect(expandButtons[1].getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.pointerMove(expandButtons[0]);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Show full source",
+    );
+    fireEvent.pointerLeave(expandButtons[0]);
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
+
+    fireEvent.click(expandButtons[0]);
+
+    const collapseButton = screen.getByRole("button", {
+      name: "Collapse source",
+    });
+    expect(collapseButton.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("button", {
+      name: "Show full source",
+    })).toHaveLength(1);
+
+    fireEvent.pointerMove(collapseButton);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Collapse source",
+    );
+    fireEvent.pointerLeave(collapseButton);
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
+
+    fireEvent.click(collapseButton);
+    expect(screen.getAllByRole("button", {
+      name: "Show full source",
+    })).toHaveLength(2);
   });
 
   it("labels only bot comments and replies", () => {
