@@ -27,6 +27,7 @@ import {
   useCommentsQuery,
   useDirectoryStatusQuery,
   useDocumentsQuery,
+  useInstructionsQuery,
   usePreviewDocumentQuery,
 } from "./hooks/usePreviewData";
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
@@ -76,6 +77,10 @@ export const App = () => {
     shouldLoadDocument,
   );
   const commentsQuery = useCommentsQuery(
+    selectedDocumentId,
+    shouldLoadDocument,
+  );
+  const instructionsQuery = useInstructionsQuery(
     selectedDocumentId,
     shouldLoadDocument,
   );
@@ -411,10 +416,12 @@ export const App = () => {
         )}
         {view === "preview" && (
           <DocumentActionBar
+            instructionCount={instructionsQuery.data?.length ?? 0}
             markdown={document.markdown}
             onOpenInstructions={instructionsDisclosure.onOpen}
             onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
             showHtmlComments={showHtmlComments}
+            tagCount={document.tags.length}
             onOpenTags={documentTagsDisclosure.onOpen}
             tags={document.tags ?? []}
           />

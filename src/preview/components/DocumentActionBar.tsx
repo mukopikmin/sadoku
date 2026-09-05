@@ -1,5 +1,6 @@
 import {
   ActionBar,
+  Badge,
   Button,
   Flex,
   HoverCard,
@@ -11,21 +12,25 @@ import type { DocumentTag } from "../models/document";
 import { TagLabel } from "./ui/TagLabel";
 
 type DocumentActionBarProps = {
+  instructionCount: number;
   markdown?: string;
   onOpenInstructions: () => void;
   onToggleHtmlComments: () => void;
   showHtmlComments: boolean;
+  tagCount: number;
   onOpenTags: () => void;
   tags: DocumentTag[];
 };
 
 export const DocumentActionBar = (
   {
+    instructionCount,
     markdown,
     onOpenInstructions,
     onOpenTags,
     onToggleHtmlComments,
     showHtmlComments,
+    tagCount,
     tags,
   }: DocumentActionBarProps,
 ) => (
@@ -62,6 +67,9 @@ export const DocumentActionBar = (
                   <circle cx="5.5" cy="5.5" fill="currentColor" r=".8" />
                 </svg>
                 Tags
+                <Badge aria-hidden="true" size="sm" variant="solid">
+                  {tagCount}
+                </Badge>
               </Button>
             </HoverCard.Trigger>
             <Portal>
@@ -116,6 +124,9 @@ export const DocumentActionBar = (
               />
             </svg>
             Instructions
+            <Badge aria-hidden="true" size="sm" variant="solid">
+              {instructionCount}
+            </Badge>
           </Button>
           <Button
             aria-label={showHtmlComments
