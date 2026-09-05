@@ -1,6 +1,8 @@
-import { Box, Button, HStack, Separator } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Separator } from "@chakra-ui/react";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { ChevronRightIcon } from "../ui/ChevronRightIcon";
+import { Tooltip } from "../ui/tooltip";
 import {
   sharedMarkdownComponents,
   sharedMarkdownRehypePlugins,
@@ -18,6 +20,7 @@ export const CommentSourceMarkdown = (
   const [isOverflowing, setIsOverflowing] = useState(false);
   const contentId = useId();
   const contentRef = useRef<HTMLDivElement>(null);
+  const toggleLabel = isExpanded ? "Collapse source" : "Show full source";
 
   useLayoutEffect(() => {
     const content = contentRef.current;
@@ -59,16 +62,24 @@ export const CommentSourceMarkdown = (
       {isOverflowing && (
         <HStack gap="2">
           <Separator borderColor="border.muted" flex="1" />
-          <Button
-            aria-controls={contentId}
-            aria-expanded={isExpanded}
-            color="fg.muted"
-            onClick={() => setIsExpanded((expanded) => !expanded)}
-            size="xs"
-            variant="ghost"
-          >
-            {isExpanded ? "Collapse source \u2191" : "Show full source \u2193"}
-          </Button>
+          <Tooltip content={toggleLabel}>
+            <IconButton
+              aria-controls={contentId}
+              aria-expanded={isExpanded}
+              aria-label={toggleLabel}
+              color="fg.muted"
+              onClick={() => setIsExpanded((expanded) => !expanded)}
+              size="xs"
+              variant="ghost"
+            >
+              <Box
+                rotate={isExpanded ? "-90deg" : "90deg"}
+                transition="transform 120ms ease"
+              >
+                <ChevronRightIcon />
+              </Box>
+            </IconButton>
+          </Tooltip>
           <Separator borderColor="border.muted" flex="1" />
         </HStack>
       )}

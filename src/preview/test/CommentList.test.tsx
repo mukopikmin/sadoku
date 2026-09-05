@@ -102,7 +102,7 @@ describe("CommentList", () => {
     );
   });
 
-  it("expands overflowing source previews independently by comment", () => {
+  it("expands overflowing source previews independently by comment", async () => {
     vi.spyOn(
       HTMLElement.prototype,
       "scrollHeight",
@@ -129,7 +129,7 @@ describe("CommentList", () => {
     );
 
     const expandButtons = screen.getAllByRole("button", {
-      name: "Show full source \u2193",
+      name: "Show full source",
     });
     expect(expandButtons).toHaveLength(2);
     expect(within(expandButtons[0].parentElement!).getAllByRole("separator"))
@@ -137,19 +137,33 @@ describe("CommentList", () => {
     expect(expandButtons[0].getAttribute("aria-expanded")).toBe("false");
     expect(expandButtons[1].getAttribute("aria-expanded")).toBe("false");
 
+    fireEvent.pointerMove(expandButtons[0]);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Show full source",
+    );
+    fireEvent.pointerLeave(expandButtons[0]);
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
+
     fireEvent.click(expandButtons[0]);
 
     const collapseButton = screen.getByRole("button", {
-      name: "Collapse source \u2191",
+      name: "Collapse source",
     });
     expect(collapseButton.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getAllByRole("button", {
-      name: "Show full source \u2193",
+      name: "Show full source",
     })).toHaveLength(1);
+
+    fireEvent.pointerMove(collapseButton);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Collapse source",
+    );
+    fireEvent.pointerLeave(collapseButton);
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
 
     fireEvent.click(collapseButton);
     expect(screen.getAllByRole("button", {
-      name: "Show full source \u2193",
+      name: "Show full source",
     })).toHaveLength(2);
   });
 
