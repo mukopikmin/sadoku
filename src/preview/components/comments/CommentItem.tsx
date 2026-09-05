@@ -18,6 +18,7 @@ import type { Comment } from "../../models/comment";
 import { ReplyItem } from "./ReplyItem";
 import { MoreActionsIcon } from "./MoreActionsIcon";
 import { toaster } from "../ui/toaster";
+import { CopyIcon } from "./CopyIcon";
 
 export type CommentItemProps = {
   actions: CommentActions;
@@ -154,6 +155,20 @@ export const CommentItem = ({
     );
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(comment.body);
+      toaster.create({
+        closable: true,
+        description: "The comment body was copied to the clipboard.",
+        title: "Comment copied",
+        type: "success",
+      });
+    } catch (error) {
+      handleError(error, "Could not copy comment");
+    }
+  };
+
   return (
     <Box
       as="article"
@@ -185,7 +200,7 @@ export const CommentItem = ({
       >
         {(comment.author.type === "bot" ||
           (showState && comment.state !== "active")) && (
-          <Flex align="center" gap="1.5" mb="0.5" pr="8">
+          <Flex align="center" gap="1.5" mb="0.5" pr="14">
             {comment.author.type === "bot" && (
               <Badge colorPalette="purple" variant="subtle">Bot</Badge>
             )}
@@ -198,48 +213,58 @@ export const CommentItem = ({
           </Flex>
         )}
         {!isEditing && (
-          <Menu.Root>
-            <Menu.Trigger asChild>
-              <IconButton
-                aria-label="More actions"
-                disabled={isSaving}
-                position="absolute"
-                right="0"
-                size="xs"
-                top="0"
-                variant="ghost"
-              >
-                <MoreActionsIcon />
-              </IconButton>
-            </Menu.Trigger>
-            <Portal>
-              <Menu.Positioner>
-                <Menu.Content>
-                  <Box color="fg.muted" fontSize="xs" px="2" py="1">
-                    {lineLabel}
-                  </Box>
-                  <Menu.Separator />
-                  <Menu.Item
-                    value={comment.state === "resolved" ? "reopen" : "resolve"}
-                    onClick={comment.state === "resolved"
-                      ? handleReopen
-                      : handleResolve}
-                  >
-                    {comment.state === "resolved" ? "Reopen" : "Resolve"}
-                  </Menu.Item>
-                  <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
-                    Edit
-                  </Menu.Item>
-                  <Menu.Item
-                    value="delete"
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                  >
-                    Delete
-                  </Menu.Item>
-                </Menu.Content>
-              </Menu.Positioner>
-            </Portal>
-          </Menu.Root>
+          <Flex position="absolute" right="0" top="0">
+            <IconButton
+              aria-label="Copy comment"
+              disabled={isSaving}
+              onClick={handleCopy}
+              size="xs"
+              variant="ghost"
+            >
+              <CopyIcon />
+            </IconButton>
+            <Menu.Root>
+              <Menu.Trigger asChild>
+                <IconButton
+                  aria-label="More actions"
+                  disabled={isSaving}
+                  size="xs"
+                  variant="ghost"
+                >
+                  <MoreActionsIcon />
+                </IconButton>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Box color="fg.muted" fontSize="xs" px="2" py="1">
+                      {lineLabel}
+                    </Box>
+                    <Menu.Separator />
+                    <Menu.Item
+                      value={comment.state === "resolved"
+                        ? "reopen"
+                        : "resolve"}
+                      onClick={comment.state === "resolved"
+                        ? handleReopen
+                        : handleResolve}
+                    >
+                      {comment.state === "resolved" ? "Reopen" : "Resolve"}
+                    </Menu.Item>
+                    <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
+                      Edit
+                    </Menu.Item>
+                    <Menu.Item
+                      value="delete"
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                    >
+                      Delete
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
+          </Flex>
         )}
         <ConfirmDialog
           confirmColorPalette="red"
@@ -267,7 +292,7 @@ export const CommentItem = ({
             />
           )
           : (
-            <Box pr="8">
+            <Box pr="14">
               <CommentMarkdown>{comment.body}</CommentMarkdown>
             </Box>
           )}

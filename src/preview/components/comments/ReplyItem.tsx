@@ -5,6 +5,8 @@ import type { CommentReply } from "../../models/comment";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 import { MoreActionsIcon } from "./MoreActionsIcon";
+import { toaster } from "../ui/toaster";
+import { CopyIcon } from "./CopyIcon";
 
 type ReplyItemProps = {
   commentId: number;
@@ -59,6 +61,20 @@ export const ReplyItem = ({
     }
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(reply.body);
+      toaster.create({
+        closable: true,
+        description: "The reply body was copied to the clipboard.",
+        title: "Reply copied",
+        type: "success",
+      });
+    } catch (error) {
+      onError(error);
+    }
+  };
+
   return (
     <Box
       aria-label="Reply"
@@ -82,7 +98,7 @@ export const ReplyItem = ({
           fontSize="xs"
           fontWeight="semibold"
           mb="0.5"
-          pr="8"
+          pr="14"
         >
           <Badge colorPalette="purple" variant="subtle">Bot</Badge>
           {reply.reviewRequested && (
@@ -93,36 +109,44 @@ export const ReplyItem = ({
         </Flex>
       )}
       {!isEditing && (
-        <Menu.Root>
-          <Menu.Trigger asChild>
-            <IconButton
-              aria-label="More actions for reply"
-              disabled={disabled}
-              position="absolute"
-              right="0"
-              size="xs"
-              top="0"
-              variant="ghost"
-            >
-              <MoreActionsIcon />
-            </IconButton>
-          </Menu.Trigger>
-          <Portal>
-            <Menu.Positioner>
-              <Menu.Content>
-                <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
-                  Edit
-                </Menu.Item>
-                <Menu.Item
-                  value="delete"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
-                  Delete
-                </Menu.Item>
-              </Menu.Content>
-            </Menu.Positioner>
-          </Portal>
-        </Menu.Root>
+        <Flex position="absolute" right="0" top="0">
+          <IconButton
+            aria-label="Copy reply"
+            disabled={disabled}
+            onClick={handleCopy}
+            size="xs"
+            variant="ghost"
+          >
+            <CopyIcon />
+          </IconButton>
+          <Menu.Root>
+            <Menu.Trigger asChild>
+              <IconButton
+                aria-label="More actions for reply"
+                disabled={disabled}
+                size="xs"
+                variant="ghost"
+              >
+                <MoreActionsIcon />
+              </IconButton>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content>
+                  <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
+                    Edit
+                  </Menu.Item>
+                  <Menu.Item
+                    value="delete"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    Delete
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
+        </Flex>
       )}
       <ConfirmDialog
         confirmColorPalette="red"
@@ -153,7 +177,7 @@ export const ReplyItem = ({
           />
         )
         : (
-          <Box pr="8">
+          <Box pr="14">
             <CommentMarkdown>{reply.body}</CommentMarkdown>
           </Box>
         )}

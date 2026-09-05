@@ -15,6 +15,7 @@ import type { Comment } from "../models/comment";
 afterEach(() => {
   cleanup();
   toaster.remove();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -393,6 +394,51 @@ describe("CommentList", () => {
       ).getByRole("button", { name: "Delete" }),
     );
     await waitFor(() => expect(onDeleteComment).toHaveBeenCalledWith(1));
+  });
+
+  it("copies comment and reply bodies to the clipboard", async () => {
+    const writeText = vi.fn(async () => {});
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+    });
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        comments={[createComment({
+          body: "**Comment** body.",
+          replies: [{
+            author: { type: "human" },
+            body: "Reply body.",
+            createdAt: "2026-06-05T01:00:00.000Z",
+            id: 1,
+            updatedAt: "2026-06-05T01:00:00.000Z",
+          }],
+        })]}
+      />,
+    );
+
+    const copyCommentButton = screen.getByRole("button", {
+      name: "Copy comment",
+    });
+    expect(copyCommentButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    expect(copyCommentButton.textContent).toBe("");
+    fireEvent.click(copyCommentButton);
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        "**Comment** body.",
+      )
+    );
+    expect(await screen.findByText("Comment copied")).not.toBeNull();
+
+    const copyReplyButton = screen.getByRole("button", { name: "Copy reply" });
+    expect(copyReplyButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    expect(copyReplyButton.textContent).toBe("");
+    fireEvent.click(copyReplyButton);
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("Reply body."));
+    expect(await screen.findByText("Reply copied")).not.toBeNull();
   });
 
   it("shows accessible reply cards without visual reply labels", async () => {
