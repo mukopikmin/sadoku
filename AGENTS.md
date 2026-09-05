@@ -135,6 +135,12 @@ them when making changes.
   component-local caches. Validate untrusted response fields at the API boundary
   when they affect rendering, routing, configuration, or discriminated model
   state.
+- Extract stateful and behavioral frontend logic into focused custom hooks when
+  practical, keeping components primarily responsible for rendering and wiring
+  user interactions. Model each meaningful hook state as a discriminated union
+  whenever possible so consumers must handle loading, success, empty, and error
+  states explicitly instead of interpreting combinations of booleans and
+  optional values.
 - Build preview UI with Chakra UI components and existing Sadoku semantic
   tokens. Prefer Chakra layout and style props over new ad hoc CSS. Add reusable
   colors to `src/preview/theme.ts` as semantic tokens with both light and dark
@@ -164,6 +170,10 @@ them when making changes.
 - Put cross-module server workflows in `test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
+- Keep component tests to the minimum needed to verify rendering, accessibility,
+  and user-visible integration behavior. Prefer focused hook tests for state
+  transitions, branching logic, side effects, and error handling extracted from
+  components.
 - Prefer behavioral tests through public functions, HTTP requests, or rendered
   UI. Avoid tests coupled to private implementation details.
 - Use temporary files and ephemeral or explicitly reserved loopback ports. Tests
