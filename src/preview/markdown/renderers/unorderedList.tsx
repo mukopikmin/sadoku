@@ -11,7 +11,6 @@ export const MarkdownUnorderedList = ({
   ...props
 }: MarkdownComponentProps<"ul">) => {
   const listDepth = useContext(MarkdownListDepthContext);
-  const isNested = listDepth > 0;
   return (
     <MarkdownListDepthContext.Provider value={listDepth + 1}>
       <List.Root
@@ -19,7 +18,7 @@ export const MarkdownUnorderedList = ({
         className={mergeClassNames("comment-markdown-list", className)}
         listStylePosition="outside"
         m="0"
-        pt={isNested ? "2" : "0"}
+        pt="0"
         ps={`${markdownListIndentEm}em`}
         {...props}
       >

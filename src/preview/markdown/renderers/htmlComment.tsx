@@ -9,29 +9,31 @@ export const renderMarkdownHtmlComment = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
 ) => (
-  <Box
-    bg="canvas.subtle"
-    borderColor="border.muted"
-    borderStyle="dashed"
-    borderWidth="1px"
-    borderLeftStyle="solid"
-    borderLeftWidth="4px"
-    px="4"
-    py="3"
-    {...elementProps}
-    data-html-comment=""
-  >
-    <Badge
-      aria-hidden="true"
-      color="fg.muted"
-      mb="2"
-      variant="outline"
+  <Box py="2">
+    <Box
+      bg="canvas.subtle"
+      borderColor="border.muted"
+      borderStyle="dashed"
+      borderWidth="1px"
+      borderLeftStyle="solid"
+      borderLeftWidth="4px"
+      px="4"
+      py="3"
+      {...elementProps}
+      data-html-comment=""
     >
-      HTML COMMENT
-    </Badge>
-    <Text color="fg.muted" fontFamily="mono" whiteSpace="pre-wrap">
-      {children}
-    </Text>
+      <Badge
+        aria-hidden="true"
+        color="fg.muted"
+        mb="2"
+        variant="outline"
+      >
+        HTML COMMENT
+      </Badge>
+      <Text color="fg.muted" fontFamily="mono" whiteSpace="pre-wrap">
+        {children}
+      </Text>
+    </Box>
   </Box>
 );
 
