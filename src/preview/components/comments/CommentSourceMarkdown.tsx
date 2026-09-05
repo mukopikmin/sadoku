@@ -1,4 +1,4 @@
-import { Box, Button, Flex } from "@chakra-ui/react";
+import { Box, Button, HStack, Separator } from "@chakra-ui/react";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -57,7 +57,8 @@ export const CommentSourceMarkdown = (
         </ReactMarkdown>
       </Box>
       {isOverflowing && (
-        <Flex justify="flex-end">
+        <HStack gap="2">
+          <Separator borderColor="border.muted" flex="1" />
           <Button
             aria-controls={contentId}
             aria-expanded={isExpanded}
@@ -68,7 +69,8 @@ export const CommentSourceMarkdown = (
           >
             {isExpanded ? "Collapse source \u2191" : "Show full source \u2193"}
           </Button>
-        </Flex>
+          <Separator borderColor="border.muted" flex="1" />
+        </HStack>
       )}
     </>
   );

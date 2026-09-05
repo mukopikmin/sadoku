@@ -132,6 +132,8 @@ describe("CommentList", () => {
       name: "Show full source \u2193",
     });
     expect(expandButtons).toHaveLength(2);
+    expect(within(expandButtons[0].parentElement!).getAllByRole("separator"))
+      .toHaveLength(2);
     expect(expandButtons[0].getAttribute("aria-expanded")).toBe("false");
     expect(expandButtons[1].getAttribute("aria-expanded")).toBe("false");
 
