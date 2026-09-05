@@ -168,20 +168,29 @@ describe("DocumentTree", () => {
       />,
     );
 
-    const apiFilter = screen.getByRole("button", { name: "API" });
-    const guideFilter = screen.getByRole("button", { name: "Guide" });
-    fireEvent.click(apiFilter);
+    const search = screen.getByRole("combobox", { name: "Search tags" });
+    fireEvent.change(search, { target: { value: "ap" } });
+    expect(screen.getByRole("option", { name: "API" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Guide" })).toBeNull();
+    fireEvent.keyDown(search, { key: "Enter" });
 
-    expect(apiFilter.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "Remove API filter" }),
+    ).toBeTruthy();
     expect(screen.getByText("Showing 1 of 3 documents")).toBeTruthy();
     expect(screen.getByText("reference.md")).toBeTruthy();
     expect(screen.queryByText("start.md")).toBeNull();
     expect(screen.queryByText("guides")).toBeNull();
 
-    fireEvent.click(guideFilter);
+    fireEvent.change(search, { target: { value: "guide" } });
+    fireEvent.click(screen.getByRole("option", { name: "Guide" }));
     expect(screen.getByText("Showing 2 of 3 documents")).toBeTruthy();
     expect(screen.getByText("reference.md")).toBeTruthy();
     expect(screen.getByText("start.md")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove API filter" }));
+    expect(screen.getByText("Showing 1 of 3 documents")).toBeTruthy();
+    expect(screen.queryByText("reference.md")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(screen.queryByText(/Showing/)).toBeNull();

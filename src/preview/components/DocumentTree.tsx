@@ -4,6 +4,7 @@ import {
   createTreeCollection,
   Flex,
   HStack,
+  Input,
   Text,
   TreeView,
   VStack,
@@ -127,6 +128,7 @@ export const DocumentTree = (
   { documents, onSelectDocument }: DocumentTreeProps,
 ) => {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [tagSearch, setTagSearch] = useState("");
   const tags = useMemo(() => {
     const tagsById = new Map(
       documents.flatMap((document) => document.tags).map((
@@ -144,6 +146,15 @@ export const DocumentTree = (
     () => selectedTagIds.filter((id) => availableTagIds.has(id)),
     [availableTagIds, selectedTagIds],
   );
+  const selectedTags = tags.filter((tag) => activeTagIds.includes(tag.id));
+  const matchingTags = useMemo(() => {
+    const search = tagSearch.trim().toLocaleLowerCase();
+    if (search.length === 0) return [];
+    return tags.filter((tag) =>
+      !activeTagIds.includes(tag.id) &&
+      tag.name.toLocaleLowerCase().includes(search)
+    );
+  }, [activeTagIds, tagSearch, tags]);
   const filteredDocuments = useMemo(
     () =>
       activeTagIds.length === 0
@@ -170,12 +181,12 @@ export const DocumentTree = (
     getDirectoryValues(rootNode)
   );
 
-  const toggleTag = (id: number) => {
-    setSelectedTagIds((current) =>
-      current.includes(id)
-        ? current.filter((selectedId) => selectedId !== id)
-        : [...current, id]
-    );
+  const addTag = (id: number) => {
+    setSelectedTagIds((current) => [...current, id]);
+    setTagSearch("");
+  };
+  const removeTag = (id: number) => {
+    setSelectedTagIds((current) => current.filter((item) => item !== id));
   };
 
   return (
@@ -186,7 +197,10 @@ export const DocumentTree = (
             <Text fontSize="sm" fontWeight="medium">Filter by tag</Text>
             {activeTagIds.length > 0 && (
               <Button
-                onClick={() => setSelectedTagIds([])}
+                onClick={() => {
+                  setSelectedTagIds([]);
+                  setTagSearch("");
+                }}
                 size="xs"
                 variant="ghost"
               >
@@ -194,14 +208,13 @@ export const DocumentTree = (
               </Button>
             )}
           </Flex>
-          <Flex gap="2" wrap="wrap" aria-label="Filter documents by tag">
-            {tags.map((tag) => {
-              const selected = activeTagIds.includes(tag.id);
-              return (
+          {selectedTags.length > 0 && (
+            <Flex gap="2" wrap="wrap" aria-label="Selected tag filters">
+              {selectedTags.map((tag) => (
                 <Button
-                  aria-pressed={selected}
+                  aria-label={`Remove ${tag.name} filter`}
                   key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
+                  onClick={() => removeTag(tag.id)}
                   p="0"
                   size="xs"
                   variant="plain"
@@ -209,15 +222,68 @@ export const DocumentTree = (
                   <TagLabel
                     backgroundColor={tag.backgroundColor}
                     name={tag.name}
-                    opacity={selected ? "1" : "0.65"}
-                    outline={selected ? "2px solid" : "1px solid transparent"}
-                    outlineColor={selected ? "fg" : undefined}
-                    outlineOffset="2px"
                   />
                 </Button>
-              );
-            })}
-          </Flex>
+              ))}
+            </Flex>
+          )}
+          <VStack align="stretch" gap="1">
+            <Input
+              aria-autocomplete="list"
+              aria-controls="tag-filter-options"
+              aria-expanded={tagSearch.trim().length > 0}
+              aria-label="Search tags"
+              onChange={(event) => setTagSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && matchingTags[0]) {
+                  event.preventDefault();
+                  addTag(matchingTags[0].id);
+                } else if (event.key === "Escape") {
+                  setTagSearch("");
+                }
+              }}
+              placeholder="Search tags to add"
+              role="combobox"
+              size="sm"
+              value={tagSearch}
+            />
+            {tagSearch.trim().length > 0 && (
+              <VStack
+                align="stretch"
+                borderColor="border.muted"
+                borderRadius="md"
+                borderWidth="1px"
+                gap="0"
+                maxH="48"
+                overflowY="auto"
+                p="1"
+                id="tag-filter-options"
+                role="listbox"
+              >
+                {matchingTags.length === 0
+                  ? (
+                    <Text color="fg.muted" fontSize="sm" px="2" py="1">
+                      No matching tags.
+                    </Text>
+                  )
+                  : matchingTags.map((tag) => (
+                    <Button
+                      justifyContent="flex-start"
+                      key={tag.id}
+                      onClick={() => addTag(tag.id)}
+                      role="option"
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <TagLabel
+                        backgroundColor={tag.backgroundColor}
+                        name={tag.name}
+                      />
+                    </Button>
+                  ))}
+              </VStack>
+            )}
+          </VStack>
           {activeTagIds.length > 0 && (
             <Text color="fg.muted" fontSize="sm">
               Showing {filteredDocuments.length} of {documents.length} documents
@@ -236,7 +302,10 @@ export const DocumentTree = (
           >
             <Text color="fg.muted">No documents match the selected tags.</Text>
             <Button
-              onClick={() => setSelectedTagIds([])}
+              onClick={() => {
+                setSelectedTagIds([]);
+                setTagSearch("");
+              }}
               size="sm"
               variant="outline"
             >
