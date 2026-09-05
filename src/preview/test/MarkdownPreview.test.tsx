@@ -60,6 +60,7 @@ const renderMarkdown = (
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
           showHtmlComments={showHtmlComments}
           tagCount={2}
+          tags={[]}
         />
         <MarkdownPreview
           actions={createCommentActions({
@@ -162,6 +163,9 @@ describe("MarkdownPreview", () => {
     expect(cards[0].querySelector("strong, img")).toBeNull();
     expect(cards[1].textContent?.trim()).toBe("HTML COMMENT");
     expect(container.querySelectorAll("html-comment")).toHaveLength(0);
+    expect(getComputedStyle(cards[0].parentElement!).paddingBlock).toBe(
+      "var(--chakra-spacing-2)",
+    );
   });
 
   it("preserves multiline HTML comment text and its source range", () => {
@@ -818,14 +822,10 @@ After
     );
     expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedUnorderedList!).paddingTop).toBe(
-      "var(--chakra-spacing-2)",
-    );
+    expect(getComputedStyle(nestedUnorderedList!).paddingTop).toBe("0px");
     expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).paddingTop).toBe(
-      "var(--chakra-spacing-2)",
-    );
+    expect(getComputedStyle(nestedOrderedList!).paddingTop).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",
     );

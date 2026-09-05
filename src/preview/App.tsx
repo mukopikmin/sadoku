@@ -423,6 +423,7 @@ export const App = () => {
             showHtmlComments={showHtmlComments}
             tagCount={document.tags.length}
             onOpenTags={documentTagsDisclosure.onOpen}
+            tags={document.tags ?? []}
           />
         )}
         {document.deleted && (

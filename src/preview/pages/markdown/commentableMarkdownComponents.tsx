@@ -1,9 +1,8 @@
-import { Box, Button, List } from "@chakra-ui/react";
+import { List } from "@chakra-ui/react";
 import { Children, createElement, isValidElement, useContext } from "react";
 import type React from "react";
 import type { Components } from "react-markdown";
 import { CommentableBlock } from "./CommentableBlock";
-import { Tooltip } from "../../components/ui/tooltip";
 import {
   type CommentableComponentProps,
   type CommentRenderingContextValue,
@@ -45,23 +44,6 @@ const splitListItemChildren = (
     else itemChildren.push(child);
   }
   return { itemChildren, nestedLists };
-};
-
-type CodeElementProps = {
-  children?: React.ReactNode;
-  className?: string;
-};
-
-const getMermaidCodeText = (
-  children: React.ReactNode,
-): string | undefined => {
-  const childElements = Children.toArray(children);
-  if (childElements.length !== 1) return undefined;
-  const child = childElements[0];
-  if (!isValidElement<CodeElementProps>(child)) return undefined;
-  if (!child.props.className?.match(/\blanguage-mermaid\b/)) return undefined;
-
-  return String(child.props.children).replace(/\n$/, "");
 };
 
 export const getCommentableBlockProps = (
@@ -180,32 +162,7 @@ const createCommentablePre = () => {
     const context = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
     const sourceRange = getSourceRange({ node });
-    const mermaidCode = getMermaidCodeText(children);
-    const element = mermaidCode === undefined
-      ? renderMarkdownPre(elementProps, children)
-      : (
-        <Box className="mermaid-container" py="2">
-          <Box position="relative">
-            <pre className="mermaid">{mermaidCode}</pre>
-            <Tooltip content="Zoom Mermaid diagram">
-              <Button
-                aria-label="Zoom Mermaid diagram"
-                bg="canvas"
-                className="mermaid-zoom-button"
-                color="fg"
-                position="absolute"
-                right="2"
-                size="xs"
-                top="2"
-                type="button"
-                variant="outline"
-              >
-                Zoom
-              </Button>
-            </Tooltip>
-          </Box>
-        </Box>
-      );
+    const element = renderMarkdownPre(elementProps, children);
     if (!sourceRange || ancestorSourceLines.has(sourceRange.startLine)) {
       return element;
     }
