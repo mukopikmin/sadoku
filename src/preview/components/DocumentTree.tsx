@@ -203,7 +203,10 @@ export const DocumentTree = (
               setSelectedTagIds(value.map(Number).filter(Number.isSafeInteger))}
             positioning={{ sameWidth: true }}
             value={activeTagIds.map(String)}
+            width="320px"
+            maxW="full"
           >
+            <Combobox.Label>Filter by tag</Combobox.Label>
             <Wrap gap="2">
               {selectedTags.map((tag) => (
                 <TagLabel
@@ -213,7 +216,6 @@ export const DocumentTree = (
                 />
               ))}
             </Wrap>
-            <Combobox.Label>Filter by tag</Combobox.Label>
             <Combobox.Control>
               <Combobox.Input
                 aria-label="Search tags"
