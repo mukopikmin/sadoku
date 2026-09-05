@@ -55,8 +55,10 @@ const renderMarkdown = (
         <DocumentActionBar
           markdown={markdown}
           onOpenInstructions={() => {}}
+          onOpenTags={() => {}}
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
           showHtmlComments={showHtmlComments}
+          tags={[]}
         />
         <MarkdownPreview
           actions={createCommentActions({
