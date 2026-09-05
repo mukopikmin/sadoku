@@ -53,10 +53,13 @@ const renderMarkdown = (
     return (
       <>
         <DocumentActionBar
+          instructionCount={3}
           markdown={markdown}
           onOpenInstructions={() => {}}
+          onOpenTags={() => {}}
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
           showHtmlComments={showHtmlComments}
+          tagCount={2}
         />
         <MarkdownPreview
           actions={createCommentActions({
@@ -407,8 +410,12 @@ console.log("<ok>");
       name: "Document actions",
     });
     expect(actionBar.getAttribute("data-part")).toBe("content");
-    expect(within(actionBar).getByRole("button", { name: "Instructions" }))
-      .not.toBeNull();
+    const instructionsButton = within(actionBar).getByRole("button", {
+      name: "Instructions",
+    });
+    const tagsButton = within(actionBar).getByRole("button", { name: "Tags" });
+    expect(within(instructionsButton).getByText("3")).not.toBeNull();
+    expect(within(tagsButton).getByText("2")).not.toBeNull();
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
       .toBeNull();

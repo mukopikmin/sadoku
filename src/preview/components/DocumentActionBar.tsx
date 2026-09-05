@@ -1,21 +1,25 @@
-import { ActionBar, Button, Portal } from "@chakra-ui/react";
+import { ActionBar, Badge, Button, Portal } from "@chakra-ui/react";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
 
 type DocumentActionBarProps = {
+  instructionCount: number;
   markdown?: string;
   onOpenInstructions: () => void;
   onToggleHtmlComments: () => void;
   showHtmlComments: boolean;
+  tagCount: number;
   onOpenTags: () => void;
 };
 
 export const DocumentActionBar = (
   {
+    instructionCount,
     markdown,
     onOpenInstructions,
     onOpenTags,
     onToggleHtmlComments,
     showHtmlComments,
+    tagCount,
   }: DocumentActionBarProps,
 ) => (
   <ActionBar.Root open>
@@ -29,6 +33,9 @@ export const DocumentActionBar = (
             variant="outline"
           >
             Tags
+            <Badge aria-hidden="true" size="sm" variant="solid">
+              {tagCount}
+            </Badge>
           </Button>
           <Button
             onClick={onOpenInstructions}
@@ -58,6 +65,9 @@ export const DocumentActionBar = (
               />
             </svg>
             Instructions
+            <Badge aria-hidden="true" size="sm" variant="solid">
+              {instructionCount}
+            </Badge>
           </Button>
           <Button
             aria-label={showHtmlComments
