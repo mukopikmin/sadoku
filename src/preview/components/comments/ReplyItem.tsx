@@ -1,12 +1,11 @@
 import { Badge, Box, Flex, IconButton, Menu, Portal } from "@chakra-ui/react";
+import { Copy, Ellipsis } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
-import { MoreActionsIcon } from "./MoreActionsIcon";
 import { toaster } from "../ui/toaster";
-import { CopyIcon } from "./CopyIcon";
 
 type ReplyItemProps = {
   commentId: number;
@@ -117,7 +116,7 @@ export const ReplyItem = ({
             size="xs"
             variant="ghost"
           >
-            <CopyIcon />
+            <Copy aria-hidden="true" />
           </IconButton>
           <Menu.Root>
             <Menu.Trigger asChild>
@@ -127,7 +126,7 @@ export const ReplyItem = ({
                 size="xs"
                 variant="ghost"
               >
-                <MoreActionsIcon />
+                <Ellipsis aria-hidden="true" />
               </IconButton>
             </Menu.Trigger>
             <Portal>

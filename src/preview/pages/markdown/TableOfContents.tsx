@@ -7,6 +7,7 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
+import { List as ListIcon } from "lucide-react";
 import GithubSlugger from "github-slugger";
 import type { Heading, Root } from "mdast";
 import { useMemo, useState } from "react";
@@ -55,23 +56,7 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
           type="button"
           variant="outline"
         >
-          <svg
-            aria-hidden="true"
-            fill="none"
-            height="1em"
-            viewBox="0 0 16 16"
-            width="1em"
-          >
-            <path
-              d="M5 4h9M5 8h9M5 12h9"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="1.5"
-            />
-            <circle cx="2" cy="4" fill="currentColor" r="1" />
-            <circle cx="2" cy="8" fill="currentColor" r="1" />
-            <circle cx="2" cy="12" fill="currentColor" r="1" />
-          </svg>
+          <ListIcon aria-hidden="true" />
           Table of contents
         </Button>
       </Popover.Trigger>

@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { Copy, Ellipsis } from "lucide-react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { ConfirmDialog } from "../ConfirmDialog";
@@ -16,9 +17,7 @@ import { CommentMarkdown } from "./CommentMarkdown";
 import { CommentSourceMarkdown } from "./CommentSourceMarkdown";
 import type { Comment } from "../../models/comment";
 import { ReplyItem } from "./ReplyItem";
-import { MoreActionsIcon } from "./MoreActionsIcon";
 import { toaster } from "../ui/toaster";
-import { CopyIcon } from "./CopyIcon";
 
 export type CommentItemProps = {
   actions: CommentActions;
@@ -221,7 +220,7 @@ export const CommentItem = ({
               size="xs"
               variant="ghost"
             >
-              <CopyIcon />
+              <Copy aria-hidden="true" />
             </IconButton>
             <Menu.Root>
               <Menu.Trigger asChild>
@@ -231,7 +230,7 @@ export const CommentItem = ({
                   size="xs"
                   variant="ghost"
                 >
-                  <MoreActionsIcon />
+                  <Ellipsis aria-hidden="true" />
                 </IconButton>
               </Menu.Trigger>
               <Portal>

@@ -125,6 +125,8 @@ describe("MarkdownPreview", () => {
     expect(hideButton.querySelector("svg")?.getAttribute("aria-hidden")).toBe(
       "true",
     );
+    expect(hideButton.querySelector("svg")?.classList.contains("lucide-eye"))
+      .toBe(true);
     expect(hideButton.textContent).toBe("HTML comments");
     fireEvent.click(hideButton);
 
@@ -137,8 +139,9 @@ describe("MarkdownPreview", () => {
       name: "Show HTML comments",
     });
     expect(showButton.getAttribute("aria-pressed")).toBe("true");
-    expect(showButton.querySelector("svg path:last-child")?.getAttribute("d"))
-      .toBe("m2.5 2.5 11 11");
+    expect(
+      showButton.querySelector("svg")?.classList.contains("lucide-eye-off"),
+    ).toBe(true);
     expect(showButton.textContent).toBe("HTML comments");
     fireEvent.click(showButton);
 
