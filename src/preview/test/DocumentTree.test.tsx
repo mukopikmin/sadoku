@@ -168,5 +168,11 @@ describe("DocumentTree", () => {
     expect(listbox.getAttribute("aria-multiselectable")).toBe("true");
     expect(screen.getByRole("option", { name: "API" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "Guide" })).toBeTruthy();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Search tags" }), {
+      target: { value: "ap" },
+    });
+    expect(screen.getByRole("option", { name: "API" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Guide" })).toBeNull();
   });
 });

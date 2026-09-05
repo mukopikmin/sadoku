@@ -244,6 +244,7 @@ export const DocumentTree = (
             <Combobox.Control>
               <Combobox.Input
                 aria-label="Search tags"
+                onChange={(event) => setTagSearch(event.target.value)}
                 placeholder="Search tags to add"
               />
               <Combobox.Trigger aria-label="Show tag options" />
