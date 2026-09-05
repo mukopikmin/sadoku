@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "./testUtils";
+import { cleanup, fireEvent, render, screen, within } from "./testUtils";
 import { DocumentTree } from "../components/DocumentTree";
 
 afterEach(cleanup);
@@ -122,8 +122,8 @@ describe("DocumentTree", () => {
     );
 
     const taggedItem = getByText("tagged.md").closest("[data-part='item']");
-    const apiTag = getByText("API");
-    const guideTag = getByText("Guide");
+    const apiTag = within(taggedItem!).getByText("API");
+    const guideTag = within(taggedItem!).getByText("Guide");
 
     expect(taggedItem?.contains(apiTag)).toBe(true);
     expect(taggedItem?.contains(guideTag)).toBe(true);
@@ -136,5 +136,37 @@ describe("DocumentTree", () => {
         "[style*='--tag-background']",
       ),
     ).toHaveLength(0);
+  });
+
+  it("exposes tag choices through a multi-select combobox", async () => {
+    render(
+      <DocumentTree
+        documents={[
+          {
+            deleted: false,
+            id: 1,
+            relativePath: "api/reference.md",
+            tags: [{ backgroundColor: "#123456", id: 1, name: "API" }],
+            title: "Reference",
+          },
+          {
+            deleted: false,
+            id: 2,
+            relativePath: "guides/start.md",
+            tags: [{ backgroundColor: "#abcdef", id: 2, name: "Guide" }],
+            title: "Start",
+          },
+        ]}
+        onSelectDocument={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("combobox", { name: "Search tags" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
+
+    const listbox = await screen.findByRole("listbox");
+    expect(listbox.getAttribute("aria-multiselectable")).toBe("true");
+    expect(screen.getByRole("option", { name: "API" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Guide" })).toBeTruthy();
   });
 });
