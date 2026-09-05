@@ -1,10 +1,12 @@
 import {
   Badge,
   Button,
+  Combobox,
+  createListCollection,
   createTreeCollection,
   Flex,
   HStack,
-  Input,
+  Portal,
   Text,
   TreeView,
   VStack,
@@ -149,12 +151,18 @@ export const DocumentTree = (
   const selectedTags = tags.filter((tag) => activeTagIds.includes(tag.id));
   const matchingTags = useMemo(() => {
     const search = tagSearch.trim().toLocaleLowerCase();
-    if (search.length === 0) return [];
-    return tags.filter((tag) =>
-      !activeTagIds.includes(tag.id) &&
-      tag.name.toLocaleLowerCase().includes(search)
-    );
-  }, [activeTagIds, tagSearch, tags]);
+    if (search.length === 0) return tags;
+    return tags.filter((tag) => tag.name.toLocaleLowerCase().includes(search));
+  }, [tagSearch, tags]);
+  const tagCollection = useMemo(
+    () =>
+      createListCollection({
+        items: matchingTags,
+        itemToString: (tag) => tag.name,
+        itemToValue: (tag) => String(tag.id),
+      }),
+    [matchingTags],
+  );
   const filteredDocuments = useMemo(
     () =>
       activeTagIds.length === 0
@@ -181,10 +189,6 @@ export const DocumentTree = (
     getDirectoryValues(rootNode)
   );
 
-  const addTag = (id: number) => {
-    setSelectedTagIds((current) => [...current, id]);
-    setTagSearch("");
-  };
   const removeTag = (id: number) => {
     setSelectedTagIds((current) => current.filter((item) => item !== id));
   };
@@ -227,63 +231,42 @@ export const DocumentTree = (
               ))}
             </Flex>
           )}
-          <VStack align="stretch" gap="1">
-            <Input
-              aria-autocomplete="list"
-              aria-controls="tag-filter-options"
-              aria-expanded={tagSearch.trim().length > 0}
-              aria-label="Search tags"
-              onChange={(event) => setTagSearch(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && matchingTags[0]) {
-                  event.preventDefault();
-                  addTag(matchingTags[0].id);
-                } else if (event.key === "Escape") {
-                  setTagSearch("");
-                }
-              }}
-              placeholder="Search tags to add"
-              role="combobox"
-              size="sm"
-              value={tagSearch}
-            />
-            {tagSearch.trim().length > 0 && (
-              <VStack
-                align="stretch"
-                borderColor="border.muted"
-                borderRadius="md"
-                borderWidth="1px"
-                gap="0"
-                maxH="48"
-                overflowY="auto"
-                p="1"
-                id="tag-filter-options"
-                role="listbox"
-              >
-                {matchingTags.length === 0
-                  ? (
-                    <Text color="fg.muted" fontSize="sm" px="2" py="1">
-                      No matching tags.
-                    </Text>
-                  )
-                  : matchingTags.map((tag) => (
-                    <Button
-                      justifyContent="flex-start"
-                      key={tag.id}
-                      onClick={() => addTag(tag.id)}
-                      role="option"
-                      size="sm"
-                      variant="ghost"
-                    >
-                      <TagLabel
-                        backgroundColor={tag.backgroundColor}
-                        name={tag.name}
-                      />
-                    </Button>
+          <Combobox.Root
+            collection={tagCollection}
+            inputValue={tagSearch}
+            multiple
+            onInputValueChange={({ inputValue }) => setTagSearch(inputValue)}
+            onValueChange={({ value }) =>
+              setSelectedTagIds(value.map(Number).filter(Number.isSafeInteger))}
+            positioning={{ sameWidth: true }}
+            value={activeTagIds.map(String)}
+          >
+            <Combobox.Control>
+              <Combobox.Input
+                aria-label="Search tags"
+                placeholder="Search tags to add"
+              />
+              <Combobox.Trigger aria-label="Show tag options" />
+            </Combobox.Control>
+            <Portal>
+              <Combobox.Positioner>
+                <Combobox.Content maxH="48" overflowY="auto">
+                  <Combobox.Empty>No matching tags.</Combobox.Empty>
+                  {matchingTags.map((tag) => (
+                    <Combobox.Item item={tag} key={tag.id}>
+                      <Combobox.ItemText>
+                        <TagLabel
+                          backgroundColor={tag.backgroundColor}
+                          name={tag.name}
+                        />
+                      </Combobox.ItemText>
+                      <Combobox.ItemIndicator>✓</Combobox.ItemIndicator>
+                    </Combobox.Item>
                   ))}
-              </VStack>
-            )}
-          </VStack>
+                </Combobox.Content>
+              </Combobox.Positioner>
+            </Portal>
+          </Combobox.Root>
           {activeTagIds.length > 0 && (
             <Text color="fg.muted" fontSize="sm">
               Showing {filteredDocuments.length} of {documents.length} documents

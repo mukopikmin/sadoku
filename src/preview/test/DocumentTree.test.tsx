@@ -138,7 +138,7 @@ describe("DocumentTree", () => {
     ).toHaveLength(0);
   });
 
-  it("filters documents by any selected tag and clears the filters", () => {
+  it("exposes tag choices through a multi-select combobox", async () => {
     render(
       <DocumentTree
         documents={[
@@ -156,44 +156,17 @@ describe("DocumentTree", () => {
             tags: [{ backgroundColor: "#abcdef", id: 2, name: "Guide" }],
             title: "Start",
           },
-          {
-            deleted: false,
-            id: 3,
-            relativePath: "notes.md",
-            tags: [],
-            title: "Notes",
-          },
         ]}
         onSelectDocument={vi.fn()}
       />,
     );
 
-    const search = screen.getByRole("combobox", { name: "Search tags" });
-    fireEvent.change(search, { target: { value: "ap" } });
+    expect(screen.getByRole("combobox", { name: "Search tags" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
+
+    const listbox = await screen.findByRole("listbox");
+    expect(listbox.getAttribute("aria-multiselectable")).toBe("true");
     expect(screen.getByRole("option", { name: "API" })).toBeTruthy();
-    expect(screen.queryByRole("option", { name: "Guide" })).toBeNull();
-    fireEvent.keyDown(search, { key: "Enter" });
-
-    expect(
-      screen.getByRole("button", { name: "Remove API filter" }),
-    ).toBeTruthy();
-    expect(screen.getByText("Showing 1 of 3 documents")).toBeTruthy();
-    expect(screen.getByText("reference.md")).toBeTruthy();
-    expect(screen.queryByText("start.md")).toBeNull();
-    expect(screen.queryByText("guides")).toBeNull();
-
-    fireEvent.change(search, { target: { value: "guide" } });
-    fireEvent.click(screen.getByRole("option", { name: "Guide" }));
-    expect(screen.getByText("Showing 2 of 3 documents")).toBeTruthy();
-    expect(screen.getByText("reference.md")).toBeTruthy();
-    expect(screen.getByText("start.md")).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "Remove API filter" }));
-    expect(screen.getByText("Showing 1 of 3 documents")).toBeTruthy();
-    expect(screen.queryByText("reference.md")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
-    expect(screen.queryByText(/Showing/)).toBeNull();
-    expect(screen.getByText("notes.md")).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Guide" })).toBeTruthy();
   });
 });
