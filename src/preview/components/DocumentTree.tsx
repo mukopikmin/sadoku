@@ -4,12 +4,12 @@ import {
   Combobox,
   createListCollection,
   createTreeCollection,
-  Flex,
   HStack,
   Portal,
   Text,
   TreeView,
   VStack,
+  Wrap,
 } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
@@ -189,49 +189,12 @@ export const DocumentTree = (
     getDirectoryValues(rootNode)
   );
 
-  const removeTag = (id: number) => {
-    setSelectedTagIds((current) => current.filter((item) => item !== id));
-  };
-
   return (
     <VStack align="stretch" gap="3">
       {tags.length > 0 && (
         <VStack align="stretch" gap="2">
-          <Flex align="center" gap="2" justify="space-between" wrap="wrap">
-            <Text fontSize="sm" fontWeight="medium">Filter by tag</Text>
-            {activeTagIds.length > 0 && (
-              <Button
-                onClick={() => {
-                  setSelectedTagIds([]);
-                  setTagSearch("");
-                }}
-                size="xs"
-                variant="ghost"
-              >
-                Clear filters
-              </Button>
-            )}
-          </Flex>
-          {selectedTags.length > 0 && (
-            <Flex gap="2" wrap="wrap" aria-label="Selected tag filters">
-              {selectedTags.map((tag) => (
-                <Button
-                  aria-label={`Remove ${tag.name} filter`}
-                  key={tag.id}
-                  onClick={() => removeTag(tag.id)}
-                  p="0"
-                  size="xs"
-                  variant="plain"
-                >
-                  <TagLabel
-                    backgroundColor={tag.backgroundColor}
-                    name={tag.name}
-                  />
-                </Button>
-              ))}
-            </Flex>
-          )}
           <Combobox.Root
+            closeOnSelect
             collection={tagCollection}
             inputValue={tagSearch}
             multiple
@@ -241,29 +204,41 @@ export const DocumentTree = (
             positioning={{ sameWidth: true }}
             value={activeTagIds.map(String)}
           >
+            <Wrap gap="2">
+              {selectedTags.map((tag) => (
+                <TagLabel
+                  backgroundColor={tag.backgroundColor}
+                  key={tag.id}
+                  name={tag.name}
+                />
+              ))}
+            </Wrap>
+            <Combobox.Label>Filter by tag</Combobox.Label>
             <Combobox.Control>
               <Combobox.Input
                 aria-label="Search tags"
-                onChange={(event) => setTagSearch(event.target.value)}
                 placeholder="Search tags to add"
               />
-              <Combobox.Trigger aria-label="Show tag options" />
+              <Combobox.IndicatorGroup>
+                <Combobox.Trigger aria-label="Show tag options" />
+              </Combobox.IndicatorGroup>
             </Combobox.Control>
             <Portal>
               <Combobox.Positioner>
                 <Combobox.Content maxH="48" overflowY="auto">
-                  <Combobox.Empty>No matching tags.</Combobox.Empty>
-                  {matchingTags.map((tag) => (
-                    <Combobox.Item item={tag} key={tag.id}>
-                      <Combobox.ItemText>
+                  <Combobox.ItemGroup>
+                    <Combobox.ItemGroupLabel>Tags</Combobox.ItemGroupLabel>
+                    {matchingTags.map((tag) => (
+                      <Combobox.Item item={tag} key={tag.id}>
                         <TagLabel
                           backgroundColor={tag.backgroundColor}
                           name={tag.name}
                         />
-                      </Combobox.ItemText>
-                      <Combobox.ItemIndicator>✓</Combobox.ItemIndicator>
-                    </Combobox.Item>
-                  ))}
+                        <Combobox.ItemIndicator />
+                      </Combobox.Item>
+                    ))}
+                    <Combobox.Empty>No matching tags.</Combobox.Empty>
+                  </Combobox.ItemGroup>
                 </Combobox.Content>
               </Combobox.Positioner>
             </Portal>
