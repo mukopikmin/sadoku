@@ -9,6 +9,7 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
+import { X } from "lucide-react";
 import { Fragment, useState } from "react";
 import type { DocumentSummary } from "../models/document";
 
@@ -139,20 +140,7 @@ export const DocumentBreadcrumb = ({
                   size="sm"
                   variant="ghost"
                 >
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="1em"
-                    viewBox="0 0 16 16"
-                    width="1em"
-                  >
-                    <path
-                      d="m4 4 8 8m0-8-8 8"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
+                  <X aria-hidden="true" />
                 </IconButton>
               </Dialog.CloseTrigger>
             </Dialog.Content>

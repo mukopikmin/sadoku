@@ -1,7 +1,7 @@
 import { Box, HStack, IconButton, Separator } from "@chakra-ui/react";
+import { ChevronRight } from "lucide-react";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ChevronRightIcon } from "../ui/ChevronRightIcon";
 import { Tooltip } from "../ui/tooltip";
 import {
   sharedMarkdownComponents,
@@ -87,7 +87,7 @@ export const CommentSourceMarkdown = (
                 rotate={isExpanded ? "-90deg" : "90deg"}
                 transition="transform 120ms ease"
               >
-                <ChevronRightIcon />
+                <ChevronRight aria-hidden="true" />
               </Box>
             </IconButton>
           </Tooltip>

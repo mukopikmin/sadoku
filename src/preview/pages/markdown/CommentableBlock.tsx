@@ -6,6 +6,7 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
+import { CodeXml, Link, Plus } from "lucide-react";
 import { useContext, useMemo, useState } from "react";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
@@ -174,20 +175,7 @@ export const CommentableBlock = ({
                 _focusVisible={{ borderColor: "accent", color: "accent" }}
                 _hover={{ borderColor: "accent", color: "accent" }}
               >
-                <svg
-                  aria-hidden="true"
-                  fill="none"
-                  height="1em"
-                  viewBox="0 0 16 16"
-                  width="1em"
-                >
-                  <path
-                    d="M8 3.5v9M3.5 8h9"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeWidth="1.5"
-                  />
-                </svg>
+                <Plus aria-hidden="true" />
               </IconButton>
             </Tooltip>
             {headingId && isSelected && (
@@ -205,20 +193,7 @@ export const CommentableBlock = ({
                   type="button"
                   variant="outline"
                 >
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="1em"
-                    viewBox="0 0 16 16"
-                    width="1em"
-                  >
-                    <path
-                      d="M6.5 9.5 9.5 6.5M5.25 11.75l-1 1a2.12 2.12 0 0 1-3-3l2.5-2.5a2.12 2.12 0 0 1 3 0M10.75 4.25l1-1a2.12 2.12 0 1 1 3 3l-2.5 2.5a2.12 2.12 0 0 1-3 0"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
+                  <Link aria-hidden="true" />
                 </IconButton>
               </Tooltip>
             )}
@@ -242,21 +217,7 @@ export const CommentableBlock = ({
                 type="button"
                 variant="outline"
               >
-                <svg
-                  aria-hidden="true"
-                  fill="none"
-                  height="1em"
-                  viewBox="0 0 16 16"
-                  width="1em"
-                >
-                  <path
-                    d="m5.5 4-4 4 4 4M10.5 4l4 4-4 4"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.5"
-                  />
-                </svg>
+                <CodeXml aria-hidden="true" />
               </IconButton>
             </Tooltip>
           </Flex>

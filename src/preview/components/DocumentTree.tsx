@@ -11,9 +11,9 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
+import { ChevronRight, File, Folder } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
-import { ChevronRightIcon } from "./ui/ChevronRightIcon";
 import { TagLabel } from "./ui/TagLabel";
 
 type DocumentTreeNode = {
@@ -85,41 +85,6 @@ const getDirectoryValues = (node: DocumentTreeNode): string[] =>
   (node.children ?? []).flatMap((child) =>
     child.children ? [child.value, ...getDirectoryValues(child)] : []
   );
-
-const FolderIcon = () => (
-  <svg
-    aria-hidden="true"
-    fill="none"
-    height="1em"
-    viewBox="0 0 24 24"
-    width="1em"
-  >
-    <path
-      d="M3 6.75A1.75 1.75 0 0 1 4.75 5h4.1l2 2h8.4A1.75 1.75 0 0 1 21 8.75v8.5A1.75 1.75 0 0 1 19.25 19H4.75A1.75 1.75 0 0 1 3 17.25Z"
-      stroke="currentColor"
-      strokeLinejoin="round"
-      strokeWidth="1.7"
-    />
-  </svg>
-);
-
-const FileIcon = () => (
-  <svg
-    aria-hidden="true"
-    fill="none"
-    height="1em"
-    viewBox="0 0 24 24"
-    width="1em"
-  >
-    <path
-      d="M6 3.75h7l5 5v11.5H6Z"
-      stroke="currentColor"
-      strokeLinejoin="round"
-      strokeWidth="1.7"
-    />
-    <path d="M13 3.75v5h5" stroke="currentColor" strokeWidth="1.7" />
-  </svg>
-);
 
 type DocumentTreeProps = {
   documents: DocumentSummary[];
@@ -311,10 +276,10 @@ export const DocumentTree = (
                           aria-label={`${node.name} folder`}
                         >
                           <TreeView.BranchIndicator>
-                            <ChevronRightIcon />
+                            <ChevronRight aria-hidden="true" />
                           </TreeView.BranchIndicator>
                         </TreeView.BranchTrigger>
-                        <FolderIcon />
+                        <Folder aria-hidden="true" />
                         <TreeView.BranchText fontWeight="medium">
                           {node.name}
                         </TreeView.BranchText>
@@ -332,7 +297,7 @@ export const DocumentTree = (
                           flexShrink="0"
                           width="var(--tree-icon-size)"
                         />
-                        <FileIcon />
+                        <File aria-hidden="true" />
                         <TreeView.ItemText flex="0 1 auto">
                           {node.name}
                         </TreeView.ItemText>

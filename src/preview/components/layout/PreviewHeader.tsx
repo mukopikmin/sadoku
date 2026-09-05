@@ -10,6 +10,7 @@ import {
   Tabs,
   Text,
 } from "@chakra-ui/react";
+import { Database, RefreshCw, Settings, Tag } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 
 export type PreviewView = "comments" | "preview";
@@ -124,21 +125,7 @@ export const PreviewHeader = ({
         variant="outline"
         ref={tagsTriggerRef}
       >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="1em"
-          viewBox="0 0 16 16"
-          width="1em"
-        >
-          <path
-            d="M2.5 3.5v3.3l6.7 6.7 4.3-4.3-6.7-6.7H3.5a1 1 0 0 0-1 1Z"
-            stroke="currentColor"
-            strokeLinejoin="round"
-            strokeWidth="1.3"
-          />
-          <circle cx="5.5" cy="5.5" fill="currentColor" r=".8" />
-        </svg>
+        <Tag aria-hidden="true" />
       </IconButton>
       <IconButton
         aria-label="Open database statistics"
@@ -147,27 +134,7 @@ export const PreviewHeader = ({
         type="button"
         variant="outline"
       >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="1em"
-          viewBox="0 0 16 16"
-          width="1em"
-        >
-          <ellipse
-            cx="8"
-            cy="3.5"
-            rx="5"
-            ry="2"
-            stroke="currentColor"
-            strokeWidth="1.3"
-          />
-          <path
-            d="M3 3.5v4c0 1.1 2.2 2 5 2s5-.9 5-2v-4M3 7.5v4c0 1.1 2.2 2 5 2s5-.9 5-2v-4"
-            stroke="currentColor"
-            strokeWidth="1.3"
-          />
-        </svg>
+        <Database aria-hidden="true" />
       </IconButton>
       <IconButton
         aria-label="Open settings"
@@ -176,21 +143,7 @@ export const PreviewHeader = ({
         type="button"
         variant="outline"
       >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="1em"
-          viewBox="0 0 16 16"
-          width="1em"
-        >
-          <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
-          <path
-            d="M6.7 1.8h2.6l.4 1.5c.3.1.6.3.9.5l1.5-.5 1.3 2.2-1.1 1.1v1l1.1 1.1-1.3 2.2-1.5-.5-.9.5-.4 1.5H6.7l-.4-1.5-.9-.5-1.5.5-1.3-2.2 1.1-1.1v-1L2.6 5.5l1.3-2.2 1.5.5.9-.5.4-1.5Z"
-            stroke="currentColor"
-            strokeLinejoin="round"
-            strokeWidth="1.2"
-          />
-        </svg>
+        <Settings aria-hidden="true" />
       </IconButton>
       {reloadAvailable && (
         <IconButton
@@ -202,21 +155,7 @@ export const PreviewHeader = ({
           type="button"
           variant="outline"
         >
-          <svg
-            aria-hidden="true"
-            fill="none"
-            height="1em"
-            viewBox="0 0 16 16"
-            width="1em"
-          >
-            <path
-              d="M13.5 5.5V2.5m0 0h-3m3 0-2.1 2.1a5 5 0 1 0 1.3 5.1"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-            />
-          </svg>
+          <RefreshCw aria-hidden="true" />
         </IconButton>
       )}
       <Tabs.Root
