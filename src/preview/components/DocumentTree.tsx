@@ -1,13 +1,20 @@
-import { Badge, createTreeCollection, TreeView } from "@chakra-ui/react";
+import {
+  Badge,
+  createTreeCollection,
+  HStack,
+  TreeView,
+} from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
 import { ChevronRightIcon } from "./ui/ChevronRightIcon";
+import { TagLabel } from "./ui/TagLabel";
 
 type DocumentTreeNode = {
   children?: DocumentTreeNode[];
   documentId?: number;
   deleted?: boolean;
   name: string;
+  tags?: DocumentSummary["tags"];
   value: string;
 };
 
@@ -30,6 +37,7 @@ const createDocumentTree = (documents: DocumentSummary[]) => {
           documentId: document.id,
           deleted: document.deleted,
           name: part,
+          tags: document.tags,
           value: `document:${document.id}`,
         });
         return;
@@ -186,7 +194,20 @@ export const DocumentTree = (
                     width="var(--tree-icon-size)"
                   />
                   <FileIcon />
-                  <TreeView.ItemText>{node.name}</TreeView.ItemText>
+                  <TreeView.ItemText flex="0 1 auto">
+                    {node.name}
+                  </TreeView.ItemText>
+                  {node.tags && node.tags.length > 0 && (
+                    <HStack gap="1" flexShrink="0" width="fit-content">
+                      {node.tags.map((tag) => (
+                        <TagLabel
+                          key={tag.id}
+                          backgroundColor={tag.backgroundColor}
+                          name={tag.name}
+                        />
+                      ))}
+                    </HStack>
+                  )}
                   {node.deleted && (
                     <Badge ms="auto" colorPalette="red">Deleted</Badge>
                   )}
