@@ -1,8 +1,12 @@
 import {
   Badge,
+  Button,
   createTreeCollection,
+  Flex,
   HStack,
+  Text,
   TreeView,
+  VStack,
 } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
@@ -122,7 +126,37 @@ type DocumentTreeProps = {
 export const DocumentTree = (
   { documents, onSelectDocument }: DocumentTreeProps,
 ) => {
-  const rootNode = useMemo(() => createDocumentTree(documents), [documents]);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const tags = useMemo(() => {
+    const tagsById = new Map(
+      documents.flatMap((document) => document.tags).map((
+        tag,
+      ) => [tag.id, tag]),
+    );
+    return [...tagsById.values()].sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
+  }, [documents]);
+  const availableTagIds = useMemo(() => new Set(tags.map(({ id }) => id)), [
+    tags,
+  ]);
+  const activeTagIds = useMemo(
+    () => selectedTagIds.filter((id) => availableTagIds.has(id)),
+    [availableTagIds, selectedTagIds],
+  );
+  const filteredDocuments = useMemo(
+    () =>
+      activeTagIds.length === 0
+        ? documents
+        : documents.filter((document) =>
+          document.tags.some((tag) => activeTagIds.includes(tag.id))
+        ),
+    [activeTagIds, documents],
+  );
+  const rootNode = useMemo(
+    () => createDocumentTree(filteredDocuments),
+    [filteredDocuments],
+  );
   const collection = useMemo(
     () =>
       createTreeCollection<DocumentTreeNode>({
@@ -136,85 +170,162 @@ export const DocumentTree = (
     getDirectoryValues(rootNode)
   );
 
+  const toggleTag = (id: number) => {
+    setSelectedTagIds((current) =>
+      current.includes(id)
+        ? current.filter((selectedId) => selectedId !== id)
+        : [...current, id]
+    );
+  };
+
   return (
-    <TreeView.Root
-      collection={collection}
-      expandOnClick={false}
-      expandedValue={expandedValue}
-      onExpandedChange={({ expandedValue }) => setExpandedValue(expandedValue)}
-      onSelectionChange={({ selectedNodes }) => {
-        const selectedDocument = selectedNodes.find((node) =>
-          node.documentId !== undefined
-        );
-        if (selectedDocument?.documentId !== undefined) {
-          onSelectDocument(selectedDocument.documentId);
-        }
-      }}
-      borderColor="border.muted"
-      borderRadius="lg"
-      borderWidth="1px"
-      p="2"
-    >
-      <TreeView.Tree aria-label="Documents">
-        <TreeView.Node<DocumentTreeNode>
-          indentGuide={
-            <TreeView.BranchIndentGuide borderColor="border.muted" />
-          }
-          render={({ node, nodeState }) =>
-            nodeState.isBranch
-              ? (
-                <TreeView.BranchControl
-                  borderRadius="md"
-                  py="1.5"
-                  _hover={{ bg: "bg.muted" }}
+    <VStack align="stretch" gap="3">
+      {tags.length > 0 && (
+        <VStack align="stretch" gap="2">
+          <Flex align="center" gap="2" justify="space-between" wrap="wrap">
+            <Text fontSize="sm" fontWeight="medium">Filter by tag</Text>
+            {activeTagIds.length > 0 && (
+              <Button
+                onClick={() => setSelectedTagIds([])}
+                size="xs"
+                variant="ghost"
+              >
+                Clear filters
+              </Button>
+            )}
+          </Flex>
+          <Flex gap="2" wrap="wrap" aria-label="Filter documents by tag">
+            {tags.map((tag) => {
+              const selected = activeTagIds.includes(tag.id);
+              return (
+                <Button
+                  aria-pressed={selected}
+                  key={tag.id}
+                  onClick={() => toggleTag(tag.id)}
+                  p="0"
+                  size="xs"
+                  variant="plain"
                 >
-                  <TreeView.BranchTrigger
-                    aria-label={`${node.name} folder`}
-                  >
-                    <TreeView.BranchIndicator>
-                      <ChevronRightIcon />
-                    </TreeView.BranchIndicator>
-                  </TreeView.BranchTrigger>
-                  <FolderIcon />
-                  <TreeView.BranchText fontWeight="medium">
-                    {node.name}
-                  </TreeView.BranchText>
-                </TreeView.BranchControl>
-              )
-              : (
-                <TreeView.Item
-                  borderRadius="md"
-                  cursor="pointer"
-                  py="1.5"
-                  _hover={{ bg: "bg.muted" }}
-                >
-                  <TreeView.ItemIndicator
-                    aria-hidden="true"
-                    flexShrink="0"
-                    width="var(--tree-icon-size)"
+                  <TagLabel
+                    backgroundColor={tag.backgroundColor}
+                    name={tag.name}
+                    opacity={selected ? "1" : "0.65"}
+                    outline={selected ? "2px solid" : "1px solid transparent"}
+                    outlineColor={selected ? "fg" : undefined}
+                    outlineOffset="2px"
                   />
-                  <FileIcon />
-                  <TreeView.ItemText flex="0 1 auto">
-                    {node.name}
-                  </TreeView.ItemText>
-                  {node.tags && node.tags.length > 0 && (
-                    <HStack gap="1" flexShrink="0" width="fit-content">
-                      {node.tags.map((tag) => (
-                        <TagLabel
-                          key={tag.id}
-                          backgroundColor={tag.backgroundColor}
-                          name={tag.name}
+                </Button>
+              );
+            })}
+          </Flex>
+          {activeTagIds.length > 0 && (
+            <Text color="fg.muted" fontSize="sm">
+              Showing {filteredDocuments.length} of {documents.length} documents
+            </Text>
+          )}
+        </VStack>
+      )}
+      {filteredDocuments.length === 0
+        ? (
+          <VStack
+            borderColor="border.muted"
+            borderRadius="lg"
+            borderWidth="1px"
+            gap="2"
+            p="6"
+          >
+            <Text color="fg.muted">No documents match the selected tags.</Text>
+            <Button
+              onClick={() => setSelectedTagIds([])}
+              size="sm"
+              variant="outline"
+            >
+              Clear filters
+            </Button>
+          </VStack>
+        )
+        : (
+          <TreeView.Root
+            collection={collection}
+            expandOnClick={false}
+            expandedValue={expandedValue}
+            onExpandedChange={({ expandedValue }) =>
+              setExpandedValue(expandedValue)}
+            onSelectionChange={({ selectedNodes }) => {
+              const selectedDocument = selectedNodes.find((node) =>
+                node.documentId !== undefined
+              );
+              if (selectedDocument?.documentId !== undefined) {
+                onSelectDocument(selectedDocument.documentId);
+              }
+            }}
+            borderColor="border.muted"
+            borderRadius="lg"
+            borderWidth="1px"
+            p="2"
+          >
+            <TreeView.Tree aria-label="Documents">
+              <TreeView.Node<DocumentTreeNode>
+                indentGuide={
+                  <TreeView.BranchIndentGuide borderColor="border.muted" />
+                }
+                render={({ node, nodeState }) =>
+                  nodeState.isBranch
+                    ? (
+                      <TreeView.BranchControl
+                        borderRadius="md"
+                        py="1.5"
+                        _hover={{ bg: "bg.muted" }}
+                      >
+                        <TreeView.BranchTrigger
+                          aria-label={`${node.name} folder`}
+                        >
+                          <TreeView.BranchIndicator>
+                            <ChevronRightIcon />
+                          </TreeView.BranchIndicator>
+                        </TreeView.BranchTrigger>
+                        <FolderIcon />
+                        <TreeView.BranchText fontWeight="medium">
+                          {node.name}
+                        </TreeView.BranchText>
+                      </TreeView.BranchControl>
+                    )
+                    : (
+                      <TreeView.Item
+                        borderRadius="md"
+                        cursor="pointer"
+                        py="1.5"
+                        _hover={{ bg: "bg.muted" }}
+                      >
+                        <TreeView.ItemIndicator
+                          aria-hidden="true"
+                          flexShrink="0"
+                          width="var(--tree-icon-size)"
                         />
-                      ))}
-                    </HStack>
-                  )}
-                  {node.deleted && (
-                    <Badge ms="auto" colorPalette="red">Deleted</Badge>
-                  )}
-                </TreeView.Item>
-              )}
-        />
-      </TreeView.Tree>
-    </TreeView.Root>
+                        <FileIcon />
+                        <TreeView.ItemText flex="0 1 auto">
+                          {node.name}
+                        </TreeView.ItemText>
+                        {node.tags && node.tags.length > 0 && (
+                          <HStack gap="1" flexShrink="0" width="fit-content">
+                            {node.tags.map((tag) => (
+                              <TagLabel
+                                key={tag.id}
+                                backgroundColor={tag.backgroundColor}
+                                name={tag.name}
+                              />
+                            ))}
+                          </HStack>
+                        )}
+                        {node.deleted && (
+                          <Badge ms="auto" colorPalette="red">Deleted</Badge>
+                        )}
+                      </TreeView.Item>
+                    )}
+              />
+            </TreeView.Tree>
+          </TreeView.Root>
+        )}
+    </VStack>
   );
 };

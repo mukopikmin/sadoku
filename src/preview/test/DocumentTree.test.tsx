@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "./testUtils";
+import { cleanup, fireEvent, render, screen, within } from "./testUtils";
 import { DocumentTree } from "../components/DocumentTree";
 
 afterEach(cleanup);
@@ -122,8 +122,8 @@ describe("DocumentTree", () => {
     );
 
     const taggedItem = getByText("tagged.md").closest("[data-part='item']");
-    const apiTag = getByText("API");
-    const guideTag = getByText("Guide");
+    const apiTag = within(taggedItem!).getByText("API");
+    const guideTag = within(taggedItem!).getByText("Guide");
 
     expect(taggedItem?.contains(apiTag)).toBe(true);
     expect(taggedItem?.contains(guideTag)).toBe(true);
@@ -136,5 +136,55 @@ describe("DocumentTree", () => {
         "[style*='--tag-background']",
       ),
     ).toHaveLength(0);
+  });
+
+  it("filters documents by any selected tag and clears the filters", () => {
+    render(
+      <DocumentTree
+        documents={[
+          {
+            deleted: false,
+            id: 1,
+            relativePath: "api/reference.md",
+            tags: [{ backgroundColor: "#123456", id: 1, name: "API" }],
+            title: "Reference",
+          },
+          {
+            deleted: false,
+            id: 2,
+            relativePath: "guides/start.md",
+            tags: [{ backgroundColor: "#abcdef", id: 2, name: "Guide" }],
+            title: "Start",
+          },
+          {
+            deleted: false,
+            id: 3,
+            relativePath: "notes.md",
+            tags: [],
+            title: "Notes",
+          },
+        ]}
+        onSelectDocument={vi.fn()}
+      />,
+    );
+
+    const apiFilter = screen.getByRole("button", { name: "API" });
+    const guideFilter = screen.getByRole("button", { name: "Guide" });
+    fireEvent.click(apiFilter);
+
+    expect(apiFilter.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Showing 1 of 3 documents")).toBeTruthy();
+    expect(screen.getByText("reference.md")).toBeTruthy();
+    expect(screen.queryByText("start.md")).toBeNull();
+    expect(screen.queryByText("guides")).toBeNull();
+
+    fireEvent.click(guideFilter);
+    expect(screen.getByText("Showing 2 of 3 documents")).toBeTruthy();
+    expect(screen.getByText("reference.md")).toBeTruthy();
+    expect(screen.getByText("start.md")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.queryByText(/Showing/)).toBeNull();
+    expect(screen.getByText("notes.md")).toBeTruthy();
   });
 });
