@@ -1759,6 +1759,27 @@ Body
     );
   });
 
+  it("extends a comment range when Shift+click creates a native text selection", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n");
+    const title = container.querySelector('[data-source-line="1"] h1')!;
+    const body = container.querySelector('[data-source-line="3"] p')!;
+
+    fireEvent.click(title);
+
+    const text = body.firstChild!;
+    const nativeRange = document.createRange();
+    nativeRange.selectNodeContents(text);
+    const nativeSelection = globalThis.getSelection();
+    nativeSelection?.removeAllRanges();
+    nativeSelection?.addRange(nativeRange);
+
+    fireEvent.click(body, { shiftKey: true });
+
+    expect(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    })).not.toBeNull();
+  });
+
   it("selects only the clicked line without the shift key", () => {
     const { container } = renderMarkdown("# Title\n\nBody\n");
 
