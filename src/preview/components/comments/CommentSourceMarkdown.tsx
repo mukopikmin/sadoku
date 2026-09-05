@@ -1,5 +1,5 @@
 import { Box, HStack, IconButton, Separator } from "@chakra-ui/react";
-import { useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ChevronRightIcon } from "../ui/ChevronRightIcon";
 import { Tooltip } from "../ui/tooltip";
@@ -8,6 +8,7 @@ import {
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
 } from "../../markdown/markdownRenderers";
+import { initializeMermaid } from "../../markdown/mermaid";
 
 export type CommentSourceMarkdownProps = {
   children: string;
@@ -21,6 +22,16 @@ export const CommentSourceMarkdown = (
   const contentId = useId();
   const contentRef = useRef<HTMLDivElement>(null);
   const toggleLabel = isExpanded ? "Collapse source" : "Show full source";
+
+  useEffect(() => {
+    if (!contentRef.current) return;
+    void initializeMermaid({
+      root: contentRef.current,
+      theme: document.documentElement.dataset.theme === "dark"
+        ? "dark"
+        : "default",
+    });
+  }, [children]);
 
   useLayoutEffect(() => {
     const content = contentRef.current;

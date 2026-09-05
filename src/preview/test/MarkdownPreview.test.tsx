@@ -55,8 +55,10 @@ const renderMarkdown = (
         <DocumentActionBar
           markdown={markdown}
           onOpenInstructions={() => {}}
+          onOpenTags={() => {}}
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
           showHtmlComments={showHtmlComments}
+          tags={[]}
         />
         <MarkdownPreview
           actions={createCommentActions({
@@ -159,6 +161,9 @@ describe("MarkdownPreview", () => {
     expect(cards[0].querySelector("strong, img")).toBeNull();
     expect(cards[1].textContent?.trim()).toBe("HTML COMMENT");
     expect(container.querySelectorAll("html-comment")).toHaveLength(0);
+    expect(getComputedStyle(cards[0].parentElement!).paddingBlock).toBe(
+      "var(--chakra-spacing-2)",
+    );
   });
 
   it("preserves multiline HTML comment text and its source range", () => {
@@ -811,14 +816,10 @@ After
     );
     expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedUnorderedList!).paddingTop).toBe(
-      "var(--chakra-spacing-2)",
-    );
+    expect(getComputedStyle(nestedUnorderedList!).paddingTop).toBe("0px");
     expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0px");
     expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).paddingTop).toBe(
-      "var(--chakra-spacing-2)",
-    );
+    expect(getComputedStyle(nestedOrderedList!).paddingTop).toBe("0px");
     expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
       "outside",
     );
@@ -1757,6 +1758,27 @@ Body
         3,
       )
     );
+  });
+
+  it("extends a comment range when Shift+click creates a native text selection", () => {
+    const { container } = renderMarkdown("# Title\n\nBody\n");
+    const title = container.querySelector('[data-source-line="1"] h1')!;
+    const body = container.querySelector('[data-source-line="3"] p')!;
+
+    fireEvent.click(title);
+
+    const text = body.firstChild!;
+    const nativeRange = document.createRange();
+    nativeRange.selectNodeContents(text);
+    const nativeSelection = globalThis.getSelection();
+    nativeSelection?.removeAllRanges();
+    nativeSelection?.addRange(nativeRange);
+
+    fireEvent.click(body, { shiftKey: true });
+
+    expect(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    })).not.toBeNull();
   });
 
   it("selects only the clicked line without the shift key", () => {

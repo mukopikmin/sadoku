@@ -416,6 +416,7 @@ export const App = () => {
             onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
             showHtmlComments={showHtmlComments}
             onOpenTags={documentTagsDisclosure.onOpen}
+            tags={document.tags ?? []}
           />
         )}
         {document.deleted && (

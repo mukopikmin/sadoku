@@ -96,7 +96,9 @@ export const CommentableBlock = ({
     const target = event.target;
     if (!(target instanceof Element)) return;
     if (target.closest("button, input, label, select, textarea")) return;
-    if (hasTextSelectionWithin(event.currentTarget)) {
+    // On Windows, Shift+click can extend the browser's native text selection
+    // before the click event reaches us. It must still extend the comment range.
+    if (!event.shiftKey && hasTextSelectionWithin(event.currentTarget)) {
       event.stopPropagation();
       return;
     }

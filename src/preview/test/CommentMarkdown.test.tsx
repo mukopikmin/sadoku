@@ -1,9 +1,18 @@
-import { cleanup, render, screen } from "./testUtils";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen, waitFor } from "./testUtils";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommentMarkdown } from "../components/comments/CommentMarkdown";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
+import { initializeMermaid } from "../markdown/mermaid";
 
-afterEach(() => cleanup());
+vi.mock("../markdown/mermaid", () => ({
+  initializeMermaid: vi.fn(async () => {}),
+}));
+
+afterEach(() => {
+  cleanup();
+  vi.mocked(initializeMermaid).mockClear();
+  document.documentElement.removeAttribute("data-theme");
+});
 
 const callbacks = {
   onCreateComment: async () => {},
@@ -72,7 +81,8 @@ Paragraph with [a link](https://example.com) and \`code\`.
       .toContain('+const state = "ready";');
   });
 
-  it("keeps Mermaid as a code block without document controls", () => {
+  it("renders Mermaid diagrams with zoom controls", async () => {
+    document.documentElement.dataset.theme = "dark";
     const { container } = render(
       <CommentMarkdown>
         {`\`\`\`mermaid
@@ -82,10 +92,17 @@ graph TD
       </CommentMarkdown>,
     );
 
-    expect(container.querySelector("pre code.language-mermaid")?.textContent)
-      .toContain("graph TD");
     expect(
-      screen.queryByRole("button", { name: "Zoom Mermaid diagram" }),
-    ).toBeNull();
+      container.querySelector(".mermaid-container pre.mermaid")?.textContent,
+    )
+      .toBe("graph TD\n  A --> B");
+    expect(screen.getByRole("button", { name: "Zoom Mermaid diagram" }))
+      .not.toBeNull();
+    await waitFor(() =>
+      expect(initializeMermaid).toHaveBeenCalledWith({
+        root: container.querySelector(".comment-markdown-body"),
+        theme: "dark",
+      })
+    );
   });
 });
