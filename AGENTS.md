@@ -7,6 +7,16 @@ them when making changes.
 
 - Use `.github/workflows/test.yml` as the source of truth for required checks.
   Run the checks relevant to the changed code before submitting it.
+- Immediately before creating a pull request, re-read
+  `.github/workflows/test.yml` and run every check from its primary test job in
+  the same order, even when a check does not appear related to the files
+  changed. Do not rely on checks run earlier during implementation: the final
+  committed tree is what must be verified. Run any additional platform-specific
+  job that is supported by the current environment.
+- Do not create the pull request until those final checks pass. If a required
+  check cannot run because of an environment limitation, identify the limitation
+  before attempting to create the pull request and clearly report the unverified
+  check; never describe an incomplete or failed check as successful.
 - Prefer the stable project entry points defined in `deno.json` and
   `package.json` instead of duplicating their underlying commands.
 - Use `npm install` to install dependencies. The root `postinstall` installs the
