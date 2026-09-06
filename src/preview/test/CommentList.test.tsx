@@ -215,7 +215,7 @@ describe("CommentList", () => {
     expect(within(humanReply).queryByText("Bot")).toBeNull();
   });
 
-  it("switches between active, stale, and resolved comment tabs", () => {
+  it("groups active and stale comments separately from resolved comments", () => {
     render(
       <CommentList
         actions={createCommentActions()}
@@ -236,51 +236,61 @@ describe("CommentList", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("tab", { name: "Active (1)" }).getAttribute(
-        "aria-selected",
-      ),
-    ).toBe("true");
-    expect(screen.getByRole("heading", { name: "Active comments (1)" }))
+    const unresolvedTab = screen.getByRole("tab", { name: "Unresolved" });
+    const resolvedTab = screen.getByRole("tab", { name: "Resolved" });
+    expect(unresolvedTab.getAttribute("aria-selected")).toBe("true");
+    expect(within(unresolvedTab).getByText("2").classList).toContain(
+      "chakra-badge",
+    );
+    expect(within(resolvedTab).getByText("1").classList).toContain(
+      "chakra-badge",
+    );
+    expect(screen.getByRole("heading", { name: "Unresolved comments" }))
       .not.toBeNull();
-    expect(
-      within(screen.getByRole("tabpanel", { name: "Active (1)" })).getByText(
-        "Active comment.",
-      ),
-    ).not.toBeNull();
-    expect(
-      within(screen.getByRole("tabpanel", { name: "Active (1)" })).getByText(
-        "Target line",
-      ),
-    ).not.toBeNull();
+    const unresolvedPanel = screen.getByRole("tabpanel", {
+      name: "Unresolved",
+    });
+    expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
+    expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
+    expect(within(unresolvedPanel).getByText("Stale")).not.toBeNull();
+    expect(within(unresolvedPanel).getByText("Original line")).not.toBeNull();
+    expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
-    expect(screen.getByRole("heading", { name: "Stale comments (1)" }))
-      .not.toBeNull();
-    const stalePanel = screen.getByRole("tabpanel", { name: "Stale (1)" });
-    expect(within(stalePanel).getByText("Stale comment.")).not.toBeNull();
-    expect(within(stalePanel).getByText("Stale")).not.toBeNull();
-    expect(within(stalePanel).getByText("Original line")).not.toBeNull();
-    expect(within(stalePanel).getByText("Old body")).not.toBeNull();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
-    expect(screen.getByRole("heading", { name: "Resolved comments (1)" }))
+    fireEvent.click(resolvedTab);
+    expect(screen.getByRole("heading", { name: "Resolved comments" }))
       .not.toBeNull();
     const resolvedPanel = screen.getByRole("tabpanel", {
-      name: "Resolved (1)",
+      name: "Resolved",
     });
     expect(within(resolvedPanel).getByText("Resolved comment.")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Resolved")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Target line")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Body")).not.toBeNull();
 
-    fireEvent.keyDown(screen.getByRole("tab", { name: "Resolved (1)" }), {
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Resolved" }), {
       key: "ArrowLeft",
     });
-    expect(screen.getByRole("tabpanel", { name: "Stale (1)" })).not.toBeNull();
+    expect(screen.getByRole("tabpanel", { name: "Unresolved" }))
+      .not.toBeNull();
     expect(document.activeElement).toBe(
-      screen.getByRole("tab", { name: "Stale (1)" }),
+      screen.getByRole("tab", { name: "Unresolved" }),
     );
+
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Unresolved" }), {
+      key: "ArrowLeft",
+    });
+    expect(screen.getByRole("tabpanel", { name: "Resolved" }))
+      .not.toBeNull();
+  });
+
+  it("shows category-specific empty states", () => {
+    render(
+      <CommentList actions={createCommentActions()} comments={[]} />,
+    );
+
+    expect(screen.getByText("No unresolved comments.")).not.toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
+    expect(screen.getByText("No resolved comments.")).not.toBeNull();
   });
 
   it("shows source ranges only in action menus", async () => {
@@ -332,9 +342,8 @@ describe("CommentList", () => {
     expect(await screen.findByText("Lines 7-8 (originally lines 2-3)"))
       .not.toBeNull();
     fireEvent.keyDown(document.activeElement!, { key: "Escape" });
-    fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
     expect(screen.queryByText("Originally lines 4-6")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "More actions" })[2]);
     expect(await screen.findByText("Originally lines 4-6")).not.toBeNull();
   });
 
@@ -623,15 +632,20 @@ describe("CommentList", () => {
   it("resolves and reopens comments", async () => {
     const onReopenComment = vi.fn(async () => {});
     const onResolveComment = vi.fn(async () => {});
-    render(
+    const actions = createCommentActions({
+      onReopenComment,
+      onResolveComment,
+    });
+    const { rerender } = render(
       <CommentList
-        actions={createCommentActions({
-          onReopenComment,
-          onResolveComment,
-        })}
+        actions={actions}
         comments={[
-          createComment({ id: 1 }),
-          createComment({ id: 3, state: "resolved" }),
+          createComment({ body: "Open comment.", id: 1 }),
+          createComment({
+            body: "Resolved comment.",
+            id: 3,
+            state: "resolved",
+          }),
         ]}
       />,
     );
@@ -644,10 +658,44 @@ describe("CommentList", () => {
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
     await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(1));
 
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
-    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    rerender(
+      <CommentList
+        actions={actions}
+        comments={[
+          createComment({ body: "Open comment.", id: 1, state: "resolved" }),
+          createComment({
+            body: "Resolved comment.",
+            id: 3,
+            state: "resolved",
+          }),
+        ]}
+      />,
+    );
+    expect(screen.getByText("No unresolved comments.")).not.toBeNull();
+    expect(screen.getByRole("tab", { name: "Resolved" })).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
+    const resolvedComment = screen.getByText("Resolved comment.").closest(
+      "article",
+    )!;
+    fireEvent.click(
+      within(resolvedComment).getByRole("button", { name: "More actions" }),
+    );
     fireEvent.click(await screen.findByRole("menuitem", { name: "Reopen" }));
     await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(3));
+
+    rerender(
+      <CommentList
+        actions={actions}
+        comments={[
+          createComment({ body: "Open comment.", id: 1, state: "resolved" }),
+          createComment({ body: "Reopened comment.", id: 3 }),
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Unresolved" }));
+    expect(screen.getByText("Reopened comment.")).not.toBeNull();
+    expect(screen.queryByText("Open comment.")).toBeNull();
   });
 
   it("shows an error toast when resolving a comment fails", async () => {

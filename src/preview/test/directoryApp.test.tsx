@@ -238,7 +238,7 @@ describe("directory preview", () => {
     await waitFor(() =>
       expect(location.pathname).toBe("/documents/1/comments")
     );
-    expect(await screen.findByRole("heading", { name: /comments \(0\)/i }))
+    expect(await screen.findByRole("heading", { name: "Unresolved comments" }))
       .not.toBeNull();
 
     history.replaceState(null, "", "/documents/1");
@@ -283,7 +283,7 @@ describe("directory preview", () => {
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
-    await screen.findByRole("heading", { name: /comments \(0\)/i });
+    await screen.findByRole("heading", { name: "Unresolved comments" });
     await waitFor(() => expect(scrollY).toBe(0));
     setScrollY(340);
 
@@ -315,7 +315,7 @@ describe("directory preview", () => {
     installFetch();
     history.replaceState(null, "", "/documents/2/comments");
     const { unmount } = render(<App />);
-    expect(await screen.findByRole("heading", { name: /comments \(0\)/i }))
+    expect(await screen.findByRole("heading", { name: "Unresolved comments" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
 

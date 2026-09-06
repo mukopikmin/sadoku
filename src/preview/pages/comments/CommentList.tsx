@@ -1,13 +1,13 @@
-import { Box, Heading, Stack, Tabs, Text } from "@chakra-ui/react";
+import { Badge, Box, Heading, Stack, Tabs, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import type {
-  ActiveComment,
   Comment,
   ResolvedComment,
-  StaleComment,
+  UnresolvedComment,
 } from "../../models/comment";
+import { isUnresolvedComment } from "../../models/comment";
 import {
   useCommentActions,
   useCommentsQuery,
@@ -17,6 +17,8 @@ export type CommentListProps = {
   actions: CommentActions;
   comments: Comment[];
 };
+
+type CommentDisplayCategory = "unresolved" | "resolved";
 
 const formatRange = (line: number, endLine = line): string =>
   line === endLine ? `Line ${line}` : `Lines ${line}-${endLine}`;
@@ -79,28 +81,27 @@ export const CommentList = ({
   actions,
   comments,
 }: CommentListProps) => {
-  const [selectedState, setSelectedState] = useState<Comment["state"]>(
-    "active",
+  const [selectedCategory, setSelectedCategory] = useState<
+    CommentDisplayCategory
+  >(
+    "unresolved",
   );
-  const activeComments = comments.filter(
-    (comment): comment is ActiveComment => comment.state === "active",
-  );
-  const staleComments = comments.filter(
-    (comment): comment is StaleComment => comment.state === "stale",
-  );
+  const unresolvedComments = comments.filter(isUnresolvedComment);
   const resolvedComments = comments.filter(
     (comment): comment is ResolvedComment => comment.state === "resolved",
   );
-  const sections = {
-    active: {
-      comments: activeComments,
-      emptyText: "No active comments.",
-      label: "Active",
-    },
-    stale: {
-      comments: staleComments,
-      emptyText: "No stale comments.",
-      label: "Stale",
+  const sections: Record<
+    CommentDisplayCategory,
+    {
+      comments: UnresolvedComment[] | ResolvedComment[];
+      emptyText: string;
+      label: string;
+    }
+  > = {
+    unresolved: {
+      comments: unresolvedComments,
+      emptyText: "No unresolved comments.",
+      label: "Unresolved",
     },
     resolved: {
       comments: resolvedComments,
@@ -108,56 +109,62 @@ export const CommentList = ({
       label: "Resolved",
     },
   };
-  const selectedSection = sections[selectedState];
-  const states = Object.keys(sections) as Comment["state"][];
-
-  const selectAdjacentTab = (
-    state: Comment["state"],
+  const categories = Object.keys(sections) as CommentDisplayCategory[];
+  const selectedSection = sections[selectedCategory];
+  const selectCategory = (category: CommentDisplayCategory) =>
+    setSelectedCategory(category);
+  const selectAdjacentCategory = (
+    category: CommentDisplayCategory,
     direction: -1 | 1,
     tabList: HTMLElement,
   ) => {
-    const index = states.indexOf(state);
-    const nextState =
-      states[(index + direction + states.length) % states.length];
-    setSelectedState(nextState);
-    tabList.querySelector<HTMLElement>(`[data-value="${nextState}"]`)
+    const index = categories.indexOf(category);
+    const nextCategory = categories[
+      (index + direction + categories.length) % categories.length
+    ];
+    selectCategory(nextCategory);
+    tabList.querySelector<HTMLElement>(`[data-value="${nextCategory}"]`)
       ?.focus();
   };
 
   return (
     <Tabs.Root
-      onValueChange={({ value }) => setSelectedState(value as Comment["state"])}
-      value={selectedState}
-      variant="enclosed"
+      onValueChange={({ value }) =>
+        selectCategory(value as CommentDisplayCategory)}
+      value={selectedCategory}
+      variant="line"
     >
       <Tabs.List mb="7">
-        {states.map((state) => (
+        {categories.map((category) => (
           <Tabs.Trigger
-            key={state}
-            onClick={() => setSelectedState(state)}
+            key={category}
+            onClick={() => selectCategory(category)}
             onKeyDown={(event) => {
               if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
                 return;
               }
               event.preventDefault();
-              selectAdjacentTab(
-                state,
+              selectAdjacentCategory(
+                category,
                 event.key === "ArrowLeft" ? -1 : 1,
                 event.currentTarget.parentElement!,
               );
             }}
-            value={state}
+            value={category}
           >
-            {sections[state].label} ({sections[state].comments.length})
+            {sections[category].label}
+            <Badge aria-hidden="true" size="sm" variant="solid">
+              {sections[category].comments.length}
+            </Badge>
           </Tabs.Trigger>
         ))}
       </Tabs.List>
-      <Tabs.Content value={selectedState}>
+      <Tabs.Content value={selectedCategory}>
         <CommentSection
           actions={actions}
           comments={selectedSection.comments}
           emptyText={selectedSection.emptyText}
-          title={`${selectedSection.label} comments (${selectedSection.comments.length})`}
+          title={`${selectedSection.label} comments`}
         />
       </Tabs.Content>
     </Tabs.Root>
