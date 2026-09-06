@@ -245,7 +245,7 @@ describe("CommentList", () => {
     expect(within(resolvedTab).getByText("1").classList).toContain(
       "chakra-badge",
     );
-    expect(screen.getByRole("heading", { name: "Unresolved comments (2)" }))
+    expect(screen.getByRole("heading", { name: "Unresolved comments" }))
       .not.toBeNull();
     const unresolvedPanel = screen.getByRole("tabpanel", {
       name: "Unresolved",
@@ -257,7 +257,7 @@ describe("CommentList", () => {
     expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
 
     fireEvent.click(resolvedTab);
-    expect(screen.getByRole("heading", { name: "Resolved comments (1)" }))
+    expect(screen.getByRole("heading", { name: "Resolved comments" }))
       .not.toBeNull();
     const resolvedPanel = screen.getByRole("tabpanel", {
       name: "Resolved",

@@ -164,7 +164,7 @@ export const CommentList = ({
           actions={actions}
           comments={selectedSection.comments}
           emptyText={selectedSection.emptyText}
-          title={`${selectedSection.label} comments (${selectedSection.comments.length})`}
+          title={`${selectedSection.label} comments`}
         />
       </Tabs.Content>
     </Tabs.Root>
