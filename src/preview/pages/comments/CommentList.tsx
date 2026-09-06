@@ -1,4 +1,4 @@
-import { Box, Heading, Stack, Tabs, Text } from "@chakra-ui/react";
+import { Badge, Box, Heading, Stack, Tabs, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -132,7 +132,7 @@ export const CommentList = ({
       onValueChange={({ value }) =>
         selectCategory(value as CommentDisplayCategory)}
       value={selectedCategory}
-      variant="enclosed"
+      variant="line"
     >
       <Tabs.List mb="7">
         {categories.map((category) => (
@@ -152,7 +152,10 @@ export const CommentList = ({
             }}
             value={category}
           >
-            {sections[category].label} ({sections[category].comments.length})
+            {sections[category].label}
+            <Badge aria-hidden="true" size="sm" variant="solid">
+              {sections[category].comments.length}
+            </Badge>
           </Tabs.Trigger>
         ))}
       </Tabs.List>

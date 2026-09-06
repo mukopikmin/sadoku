@@ -236,15 +236,19 @@ describe("CommentList", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("tab", { name: "Unresolved (2)" }).getAttribute(
-        "aria-selected",
-      ),
-    ).toBe("true");
+    const unresolvedTab = screen.getByRole("tab", { name: "Unresolved" });
+    const resolvedTab = screen.getByRole("tab", { name: "Resolved" });
+    expect(unresolvedTab.getAttribute("aria-selected")).toBe("true");
+    expect(within(unresolvedTab).getByText("2").classList).toContain(
+      "chakra-badge",
+    );
+    expect(within(resolvedTab).getByText("1").classList).toContain(
+      "chakra-badge",
+    );
     expect(screen.getByRole("heading", { name: "Unresolved comments (2)" }))
       .not.toBeNull();
     const unresolvedPanel = screen.getByRole("tabpanel", {
-      name: "Unresolved (2)",
+      name: "Unresolved",
     });
     expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
@@ -252,30 +256,30 @@ describe("CommentList", () => {
     expect(within(unresolvedPanel).getByText("Original line")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
+    fireEvent.click(resolvedTab);
     expect(screen.getByRole("heading", { name: "Resolved comments (1)" }))
       .not.toBeNull();
     const resolvedPanel = screen.getByRole("tabpanel", {
-      name: "Resolved (1)",
+      name: "Resolved",
     });
     expect(within(resolvedPanel).getByText("Resolved comment.")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Resolved")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Target line")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Body")).not.toBeNull();
 
-    fireEvent.keyDown(screen.getByRole("tab", { name: "Resolved (1)" }), {
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Resolved" }), {
       key: "ArrowLeft",
     });
-    expect(screen.getByRole("tabpanel", { name: "Unresolved (2)" }))
+    expect(screen.getByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(document.activeElement).toBe(
-      screen.getByRole("tab", { name: "Unresolved (2)" }),
+      screen.getByRole("tab", { name: "Unresolved" }),
     );
 
-    fireEvent.keyDown(screen.getByRole("tab", { name: "Unresolved (2)" }), {
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Unresolved" }), {
       key: "ArrowLeft",
     });
-    expect(screen.getByRole("tabpanel", { name: "Resolved (1)" }))
+    expect(screen.getByRole("tabpanel", { name: "Resolved" }))
       .not.toBeNull();
   });
 
@@ -285,7 +289,7 @@ describe("CommentList", () => {
     );
 
     expect(screen.getByText("No unresolved comments.")).not.toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved (0)" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
     expect(screen.getByText("No resolved comments.")).not.toBeNull();
   });
 
@@ -668,9 +672,9 @@ describe("CommentList", () => {
       />,
     );
     expect(screen.getByText("No unresolved comments.")).not.toBeNull();
-    expect(screen.getByRole("tab", { name: "Resolved (2)" })).not.toBeNull();
+    expect(screen.getByRole("tab", { name: "Resolved" })).not.toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved (2)" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
     const resolvedComment = screen.getByText("Resolved comment.").closest(
       "article",
     )!;
@@ -689,7 +693,7 @@ describe("CommentList", () => {
         ]}
       />,
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Unresolved (1)" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Unresolved" }));
     expect(screen.getByText("Reopened comment.")).not.toBeNull();
     expect(screen.queryByText("Open comment.")).toBeNull();
   });
