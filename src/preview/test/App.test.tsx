@@ -909,7 +909,7 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
-  it("shows stale comments only in the comments view", async () => {
+  it("shows active and stale comments in the unresolved comments view", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -1015,11 +1015,11 @@ describe("App", () => {
     fireEvent.click(commentsButton);
 
     expect(await screen.findByText("Active comment.")).not.toBeNull();
-    expect(screen.queryByText("Stale comment.")).toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Stale (1)" }));
     expect(screen.getByText("Stale comment.")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved (1)" }));
+    const unresolvedTab = screen.getByRole("tab", { name: "Unresolved" });
+    expect(within(unresolvedTab).getByText("2")).not.toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
     expect(screen.getByText("Resolved comment.")).not.toBeNull();
   });
 });
