@@ -1,9 +1,8 @@
 import { createContext, useContext } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { ActiveComment } from "../../models/comment";
-import type { MarkdownElementProps } from "../../markdown/markdownRenderers";
-
-export type CommentRange = { endLine: number; startLine: number };
+import type { MarkdownElementProps } from "../markdownRenderers";
+import type { CommentRange } from "./commentRanges";
 
 export type CommentRangeSelectionOptions = {
   extend: boolean;
@@ -71,9 +70,6 @@ export const getSourceRange = (
     endLine: props.node?.position?.end?.line ?? startLine,
   };
 };
-
-export const isLineInRange = (line: number, range: CommentRange): boolean =>
-  line >= range.startLine && line <= range.endLine;
 
 export const formatRangeLabel = (range: CommentRange): string =>
   range.startLine === range.endLine

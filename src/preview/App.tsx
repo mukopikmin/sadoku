@@ -14,13 +14,13 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { CommentListPage } from "./pages/comments/CommentList";
-import { MarkdownPreviewPage } from "./pages/markdown/MarkdownPreview";
+import { MarkdownPreviewPage } from "./pages/markdown/MarkdownPreviewPage";
 import {
   PreviewHeader,
   PreviewShell,
   type PreviewView,
 } from "./components/layout/PreviewHeader";
-import { previewThemeCss } from "./theme";
+import { markdownStyles } from "./markdown/markdownStyles";
 import { useHotReload } from "./hooks/useHotReload";
 import { connectPreviewKeepAlive } from "./api/hotReload";
 import {
@@ -171,7 +171,7 @@ export const App = () => {
   if (documentsQuery.isPending) {
     return (
       <>
-        <style>{previewThemeCss}</style>
+        <style>{markdownStyles}</style>
         <PreviewShell>Loading preview...</PreviewShell>
       </>
     );
@@ -179,7 +179,7 @@ export const App = () => {
   if (documentsQuery.error) {
     return (
       <>
-        <style>{previewThemeCss}</style>
+        <style>{markdownStyles}</style>
         <PreviewShell>{String(documentsQuery.error)}</PreviewShell>
       </>
     );
@@ -191,7 +191,7 @@ export const App = () => {
     globalThis.document.title = "Not Found — Sadoku";
     return (
       <>
-        <style>{previewThemeCss}</style>
+        <style>{markdownStyles}</style>
         <PreviewShell>
           <Text fontWeight="semibold">Document not found.</Text>
         </PreviewShell>
@@ -206,7 +206,7 @@ export const App = () => {
   if (selectedDocumentId === undefined) {
     return (
       <>
-        <style>{previewThemeCss}</style>
+        <style>{markdownStyles}</style>
         <PreviewHeader
           connectionLost={connectionLost}
           onChangeView={() => {}}
@@ -290,7 +290,7 @@ export const App = () => {
     );
     return (
       <>
-        <style>{previewThemeCss}</style>
+        <style>{markdownStyles}</style>
         <PreviewHeader
           connectionLost={connectionLost}
           onChangeView={changeView}
@@ -357,7 +357,7 @@ export const App = () => {
 
   return (
     <>
-      <style>{previewThemeCss}</style>
+      <style>{markdownStyles}</style>
       <PreviewHeader
         connectionLost={connectionLost}
         fileUrl={document.fileUrl}

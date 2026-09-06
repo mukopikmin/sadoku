@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { initializeMermaid, initializeMermaidZoom } from "../markdown/mermaid";
-import { previewThemeCss } from "../theme";
+import { markdownStyles as previewThemeCss } from "../markdown/markdownStyles";
 
 const bundledMermaid = vi.hoisted(() => ({
   initialize: vi.fn(),
