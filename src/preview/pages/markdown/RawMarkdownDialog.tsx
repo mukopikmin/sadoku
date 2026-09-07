@@ -1,6 +1,6 @@
 import { Box, Button, Dialog, Portal } from "@chakra-ui/react";
-import type { CommentRange } from "./commentRendering";
-import { formatRangeLabel } from "./commentRendering";
+import type { CommentRange } from "../../markdown/commentable/commentRanges";
+import { formatRangeLabel } from "../../markdown/commentable/commentRendering";
 
 export const RawMarkdownDialog = ({
   markdown,

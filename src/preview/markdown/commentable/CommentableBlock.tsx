@@ -10,20 +10,20 @@ import { CodeXml, Link, Plus } from "lucide-react";
 import { useContext, useMemo, useState } from "react";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
+import { CommentItem } from "../../components/comments/CommentItem";
+import { Tooltip } from "../../components/ui/tooltip";
+import type { ActiveComment } from "../../models/comment";
+import {
+  MarkdownListDepthContext,
+  markdownListIndentEm,
+} from "../markdownRenderers";
+import type { CommentRange } from "./commentRanges";
 import {
   type CommentControlProps,
-  type CommentRange,
   formatRangeLabel,
   hasTextSelectionWithin,
   SourceLineContext,
 } from "./commentRendering";
-import { CommentItem } from "../../components/comments/CommentItem";
-import type { ActiveComment } from "../../models/comment";
-import { Tooltip } from "../../components/ui/tooltip";
-import {
-  MarkdownListDepthContext,
-  markdownListIndentEm,
-} from "../../markdown/markdownRenderers";
 
 type CommentableBlockProps = CommentControlProps & {
   children: React.ReactNode;

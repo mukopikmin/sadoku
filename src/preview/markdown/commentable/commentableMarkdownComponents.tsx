@@ -2,15 +2,6 @@ import { List } from "@chakra-ui/react";
 import { Children, createElement, isValidElement, useContext } from "react";
 import type React from "react";
 import type { Components } from "react-markdown";
-import { CommentableBlock } from "./CommentableBlock";
-import {
-  type CommentableComponentProps,
-  type CommentRenderingContextValue,
-  getSourceLine,
-  getSourceRange,
-  SourceLineContext,
-  useCommentRenderingContext,
-} from "./commentRendering";
 import {
   MarkdownListDepthContext,
   renderMarkdownBlockquote,
@@ -21,7 +12,16 @@ import {
   renderMarkdownPre,
   renderMarkdownTable,
   sharedMarkdownComponents,
-} from "../../markdown/markdownRenderers";
+} from "../markdownRenderers";
+import { CommentableBlock } from "./CommentableBlock";
+import {
+  type CommentableComponentProps,
+  type CommentRenderingContextValue,
+  getSourceLine,
+  getSourceRange,
+  SourceLineContext,
+  useCommentRenderingContext,
+} from "./commentRendering";
 
 type ListElementProps = {
   node?: { tagName?: string };
