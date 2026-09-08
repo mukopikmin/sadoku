@@ -1,23 +1,14 @@
-import {
-  Badge,
-  Box,
-  Flex,
-  IconButton,
-  Menu,
-  Portal,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
-import { Copy, Ellipsis } from "lucide-react";
+import { Badge, Box, Flex, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
-import { ConfirmDialog } from "../ConfirmDialog";
-import { CommentActionButton, CommentForm } from "./CommentForm";
+import type { Comment } from "../../models/comment";
+import { CommentActionMenu } from "./CommentActionMenu";
+import { CommentEditor } from "./CommentEditor";
 import { CommentMarkdown } from "./CommentMarkdown";
 import { CommentSourceMarkdown } from "./CommentSourceMarkdown";
-import type { Comment } from "../../models/comment";
+import { ReplyComposer } from "./ReplyComposer";
 import { ReplyItem } from "./ReplyItem";
-import { toaster } from "../ui/toaster";
+import { useCommentActionState } from "./useCommentActionState";
 
 export type CommentItemProps = {
   actions: CommentActions;
@@ -48,125 +39,8 @@ export const CommentItem = ({
     onUpdateComment,
     onUpdateReply,
   } = actions;
-  const [draft, setDraft] = useState(comment.body);
-  const [replyDraft, setReplyDraft] = useState("");
-  const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string>();
-
-  const handleError = (
-    error: unknown,
-    title = "Comment action failed",
-  ) => {
-    const description = error instanceof Error ? error.message : String(error);
-    setError(description);
-    toaster.create({
-      closable: true,
-      description,
-      title,
-      type: "error",
-    });
-  };
-
-  const runCommentAction = async (
-    action: () => Promise<void>,
-    onSuccess?: () => void,
-    errorTitle?: string,
-  ) => {
-    setIsSaving(true);
-    setError(undefined);
-    try {
-      await action();
-      onSuccess?.();
-    } catch (error) {
-      handleError(error, errorTitle);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleUpdate = async () => {
-    const body = draft.trim();
-    if (!body || isSaving) return;
-    await runCommentAction(
-      () => onUpdateComment(comment.id, body),
-      () => setIsEditing(false),
-      "Could not update comment",
-    );
-  };
-
-  const handleConfirmDelete = async () => {
-    setIsSaving(true);
-    setError(undefined);
-    try {
-      await onDeleteComment(comment.id);
-      setIsDeleteDialogOpen(false);
-    } catch (error) {
-      handleError(error, "Could not delete comment");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleReply = async () => {
-    const body = replyDraft.trim();
-    if (!body || isSaving) return;
-    await runCommentAction(
-      () => onReplyComment(comment.id, body),
-      () => {
-        setReplyDraft("");
-        setIsReplying(false);
-      },
-      "Could not add reply",
-    );
-  };
-
-  const handleResolve = async () => {
-    await runCommentAction(
-      () => onResolveComment(comment.id),
-      () => {
-        toaster.create({
-          action: {
-            label: "Undo",
-            onClick: () => {
-              void onReopenComment(comment.id).catch((error) => {
-                handleError(error, "Could not reopen comment");
-              });
-            },
-          },
-          closable: true,
-          description: "The comment was resolved.",
-          title: "Comment resolved",
-          type: "success",
-        });
-      },
-      "Could not resolve comment",
-    );
-  };
-
-  const handleReopen = async () => {
-    await runCommentAction(
-      () => onReopenComment(comment.id),
-      undefined,
-      "Could not reopen comment",
-    );
-  };
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(comment.body);
-      toaster.create({
-        closable: true,
-        description: "The comment body was copied to the clipboard.",
-        title: "Comment copied",
-        type: "success",
-      });
-    } catch (error) {
-      handleError(error, "Could not copy comment");
-    }
-  };
+  const { error, isPending, reportError, runAction } = useCommentActionState();
 
   return (
     <Box
@@ -212,82 +86,27 @@ export const CommentItem = ({
           </Flex>
         )}
         {!isEditing && (
-          <Flex position="absolute" right="0" top="0">
-            <IconButton
-              aria-label="Copy comment"
-              disabled={isSaving}
-              onClick={handleCopy}
-              size="xs"
-              variant="ghost"
-            >
-              <Copy aria-hidden="true" />
-            </IconButton>
-            <Menu.Root>
-              <Menu.Trigger asChild>
-                <IconButton
-                  aria-label="More actions"
-                  disabled={isSaving}
-                  size="xs"
-                  variant="ghost"
-                >
-                  <Ellipsis aria-hidden="true" />
-                </IconButton>
-              </Menu.Trigger>
-              <Portal>
-                <Menu.Positioner>
-                  <Menu.Content>
-                    <Box color="fg.muted" fontSize="xs" px="2" py="1">
-                      {lineLabel}
-                    </Box>
-                    <Menu.Separator />
-                    <Menu.Item
-                      value={comment.state === "resolved"
-                        ? "reopen"
-                        : "resolve"}
-                      onClick={comment.state === "resolved"
-                        ? handleReopen
-                        : handleResolve}
-                    >
-                      {comment.state === "resolved" ? "Reopen" : "Resolve"}
-                    </Menu.Item>
-                    <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
-                      Edit
-                    </Menu.Item>
-                    <Menu.Item
-                      value="delete"
-                      onClick={() => setIsDeleteDialogOpen(true)}
-                    >
-                      Delete
-                    </Menu.Item>
-                  </Menu.Content>
-                </Menu.Positioner>
-              </Portal>
-            </Menu.Root>
-          </Flex>
+          <CommentActionMenu
+            comment={comment}
+            disabled={isPending}
+            lineLabel={lineLabel}
+            onDelete={onDeleteComment}
+            onEdit={() => setIsEditing(true)}
+            onReopen={onReopenComment}
+            onResolve={onResolveComment}
+            reportError={reportError}
+            runAction={runAction}
+          />
         )}
-        <ConfirmDialog
-          confirmColorPalette="red"
-          confirmLabel="Delete"
-          isPending={isSaving}
-          onConfirm={handleConfirmDelete}
-          onOpenChange={setIsDeleteDialogOpen}
-          open={isDeleteDialogOpen}
-          title="Delete comment?"
-        >
-          This action cannot be undone.
-        </ConfirmDialog>
         {isEditing
           ? (
-            <CommentForm
-              disabled={isSaving}
-              onCancel={() => {
-                setDraft(comment.body);
-                setIsEditing(false);
-              }}
-              onChange={setDraft}
-              onSubmit={() => void handleUpdate()}
-              submitLabel="Save"
-              value={draft}
+            <CommentEditor
+              body={comment.body}
+              commentId={comment.id}
+              disabled={isPending}
+              onClose={() => setIsEditing(false)}
+              onUpdate={onUpdateComment}
+              runAction={runAction}
             />
           )
           : (
@@ -300,45 +119,24 @@ export const CommentItem = ({
             {(comment.replies ?? []).map((reply) => (
               <ReplyItem
                 commentId={comment.id}
-                disabled={isSaving}
+                disabled={isPending}
                 key={reply.id}
                 onDelete={onDeleteReply}
-                onError={handleError}
                 onUpdate={onUpdateReply}
+                reportError={reportError}
                 reply={reply}
-                setSaving={setIsSaving}
+                runAction={runAction}
               />
             ))}
           </Stack>
         )}
-        {!isEditing && !isReplying && (
-          <Flex justify="flex-end" mt="1">
-            <CommentActionButton
-              disabled={isSaving}
-              onClick={() => setIsReplying(true)}
-              type="button"
-            >
-              Reply
-            </CommentActionButton>
-          </Flex>
-        )}
-        {isReplying && (
-          <Box mt="2">
-            <CommentForm
-              disabled={isSaving}
-              onCancel={() => {
-                setReplyDraft("");
-                setIsReplying(false);
-              }}
-              onChange={setReplyDraft}
-              onSubmit={() => void handleReply()}
-              placeholder="Write a reply..."
-              submitLabel="Add reply"
-              textareaAriaLabel="Reply body"
-              value={replyDraft}
-            />
-          </Box>
-        )}
+        <ReplyComposer
+          commentId={comment.id}
+          disabled={isPending}
+          onReply={onReplyComment}
+          runAction={runAction}
+          showTrigger={!isEditing}
+        />
         {error && <Text color="red.500" fontSize="sm">{error}</Text>}
       </Box>
     </Box>

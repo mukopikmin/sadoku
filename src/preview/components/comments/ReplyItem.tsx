@@ -6,29 +6,33 @@ import type { CommentReply } from "../../models/comment";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 import { toaster } from "../ui/toaster";
+import type {
+  ReportCommentActionError,
+  RunCommentAction,
+} from "./useCommentActionState";
 
 type ReplyItemProps = {
   commentId: number;
   disabled: boolean;
   onDelete: (commentId: number, replyId: number) => Promise<void>;
-  onError: (error: unknown) => void;
   onUpdate: (
     commentId: number,
     replyId: number,
     body: string,
   ) => Promise<void>;
+  reportError: ReportCommentActionError;
   reply: CommentReply;
-  setSaving: (saving: boolean) => void;
+  runAction: RunCommentAction;
 };
 
 export const ReplyItem = ({
   commentId,
   disabled,
   onDelete,
-  onError,
   onUpdate,
+  reportError,
   reply,
-  setSaving,
+  runAction,
 }: ReplyItemProps) => {
   const [draft, setDraft] = useState(reply.body);
   const [isEditing, setIsEditing] = useState(false);
@@ -37,27 +41,15 @@ export const ReplyItem = ({
   const handleUpdate = async () => {
     const body = draft.trim();
     if (!body || disabled) return;
-    setSaving(true);
-    try {
-      await onUpdate(commentId, reply.id, body);
-      setIsEditing(false);
-    } catch (error) {
-      onError(error);
-    } finally {
-      setSaving(false);
-    }
+    await runAction(() => onUpdate(commentId, reply.id, body), {
+      onSuccess: () => setIsEditing(false),
+    });
   };
 
   const handleConfirmDelete = async () => {
-    setSaving(true);
-    try {
-      await onDelete(commentId, reply.id);
-      setIsDeleteDialogOpen(false);
-    } catch (error) {
-      onError(error);
-    } finally {
-      setSaving(false);
-    }
+    await runAction(() => onDelete(commentId, reply.id), {
+      onSuccess: () => setIsDeleteDialogOpen(false),
+    });
   };
 
   const handleCopy = async () => {
@@ -70,7 +62,7 @@ export const ReplyItem = ({
         type: "success",
       });
     } catch (error) {
-      onError(error);
+      reportError(error);
     }
   };
 
