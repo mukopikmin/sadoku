@@ -10,22 +10,21 @@ import {
   updateComment,
   updateReply,
 } from "./api/comment_api.ts";
+import {
+  getDirectoryDocumentResponse,
+  listDirectoryDocumentsResponse,
+  resolveDirectoryDocumentParameter,
+} from "./api/document_api.ts";
 import type { CommentsStore } from "./storage/comment/storage.ts";
-import type {
-  DirectoryDocument,
-  DirectorySession,
-} from "./usecase/document/mod.ts";
+import type { DirectorySession } from "./usecase/document/mod.ts";
 import type { DocumentStore } from "./usecase/document/mod.ts";
-import { createPreviewSource } from "./source.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
-import { handlePreviewDocumentRequest } from "./preview/document.ts";
 import { createPreviewEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
 import { getCommentsNotificationFilePath } from "./storage/comment/notifications.ts";
 import {
   methodNotAllowedResponse,
   noStoreHtml,
-  noStoreJson,
   notFoundResponse,
   textResponse,
 } from "./responses.ts";
@@ -53,15 +52,6 @@ export type DirectoryPreviewHandlerOptions = {
   directoryState?: DirectorySessionState;
 };
 
-const findDocument = (
-  session: DirectorySession,
-  rawId: string,
-): DirectoryDocument | undefined => {
-  if (!/^[1-9]\d*$/.test(rawId)) return undefined;
-  const id = Number(rawId);
-  return Number.isSafeInteger(id) ? session.documentsById.get(id) : undefined;
-};
-
 export const createDirectoryPreviewHandler = (
   session: DirectorySession,
   commentsStore: CommentsStore,
@@ -72,11 +62,8 @@ export const createDirectoryPreviewHandler = (
 ): Deno.ServeHandler => {
   const app = new Hono();
   const log = options.log ?? logInfo;
-  const resolveDocument = (rawId: string) => {
-    const document = findDocument(session, rawId);
-    if (!document) throw notFoundResponse("Document not found.");
-    return { document, source: createPreviewSource(document.filePath) };
-  };
+  const resolveDocument = (rawId: string) =>
+    resolveDirectoryDocumentParameter(rawId, session);
 
   app.use("*", async (_context, next) => {
     try {
@@ -101,26 +88,7 @@ export const createDirectoryPreviewHandler = (
 
   app.get(
     "/__sadoku/documents",
-    async () =>
-      noStoreJson(
-        await Promise.all(session.documents.map(
-          async ({ deleted, id, relativePath, title }) => ({
-            deleted,
-            id,
-            relativePath,
-            title,
-            ...(tagStore && {
-              tags: (await tagStore.listForDocument(id)).map((
-                { backgroundColor, id, name },
-              ) => ({
-                backgroundColor,
-                id,
-                name,
-              })),
-            }),
-          }),
-        )),
-      ),
+    () => listDirectoryDocumentsResponse(session, tagStore),
   );
   if (tagStore) {
     app.get("/__sadoku/tags", () => listTags(tagStore));
@@ -165,38 +133,16 @@ export const createDirectoryPreviewHandler = (
         },
       },
     ));
-  app.get("/__sadoku/documents/:documentId", async (context) => {
-    const { document, source } = resolveDocument(
-      context.req.param("documentId"),
-    );
-    let body: { fileUrl?: string; markdown: string; title?: string };
-    if (document.deleted) {
-      const markdown = await documentStore?.readSnapshot?.(document.id);
-      if (markdown === undefined) {
-        throw notFoundResponse("Saved Markdown snapshot not found.");
-      }
-      body = { markdown };
-    } else {
-      const response = await handlePreviewDocumentRequest(
-        source.documentSource,
-      );
-      body = await response.json();
-      await documentStore?.initializeSnapshot?.(document.id, body.markdown);
-    }
-    return noStoreJson({
-      id: document.id,
-      relativePath: document.relativePath,
-      title: document.title,
-      deleted: document.deleted,
-      fileUrl: body.fileUrl,
-      markdown: body.markdown,
-      ...(tagStore && {
-        tags: (await tagStore.listForDocument(document.id)).map(
-          ({ backgroundColor, id, name }) => ({ backgroundColor, id, name }),
-        ),
-      }),
-    });
-  });
+  app.get(
+    "/__sadoku/documents/:documentId",
+    (context) =>
+      getDirectoryDocumentResponse(
+        context.req.param("documentId"),
+        session,
+        documentStore,
+        tagStore,
+      ),
+  );
 
   app.get("/__sadoku/documents/:documentId/events", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));

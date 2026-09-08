@@ -19,3 +19,21 @@ export type MarkdownDocumentPath = {
   absolutePath: string;
   relativePath: string;
 };
+
+export type PublicDocumentTag = {
+  backgroundColor: string;
+  id: number;
+  name: string;
+};
+
+export type DirectoryDocumentSummary =
+  & Pick<
+    DirectoryDocument,
+    "deleted" | "id" | "relativePath" | "title"
+  >
+  & { tags?: PublicDocumentTag[] };
+
+export type DirectoryDocumentContent = DirectoryDocumentSummary & {
+  fileUrl?: string;
+  markdown: string;
+};

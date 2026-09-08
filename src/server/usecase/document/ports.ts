@@ -10,6 +10,25 @@ export type DocumentStore = {
   initializeSnapshot?: (id: number, markdown: string) => Promise<void>;
 };
 
+export type DocumentTagReader = {
+  listForDocument: (documentId: number) => Promise<
+    Array<{ id: number; name: string; backgroundColor: string }>
+  >;
+};
+
+export type ReadMarkdownDocument = (
+  source: string,
+) => Promise<{ fileUrl?: string; markdown: string }>;
+
+export type ReadDocumentSnapshot = (
+  documentId: number,
+) => Promise<string | undefined>;
+
+export type InitializeDocumentSnapshot = (
+  documentId: number,
+  markdown: string,
+) => Promise<void>;
+
 export type ListMarkdownFiles = (
   directoryPath: string,
   signal?: AbortSignal,
