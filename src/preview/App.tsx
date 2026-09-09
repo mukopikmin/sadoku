@@ -1,22 +1,7 @@
-import {
-  Alert,
-  Button,
-  Container,
-  Heading,
-  Text,
-  useDisclosure,
-} from "@chakra-ui/react";
+import { Button, Container, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
+import { Link as RouterLink, useNavigate } from "@tanstack/react-router";
 import {
-  Link as RouterLink,
-  useMatchRoute,
-  useNavigate,
-  useRouterState,
-} from "@tanstack/react-router";
-import { CommentListPage } from "./pages/comments/CommentList";
-import { MarkdownPreviewPage } from "./pages/markdown/MarkdownPreviewPage";
-import {
-  PreviewHeader,
   PreviewShell,
   type PreviewView,
 } from "./components/layout/PreviewHeader";
@@ -31,45 +16,29 @@ import {
   usePreviewDocumentQuery,
 } from "./hooks/usePreviewData";
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
-import { isUnresolvedComment } from "./models/comment";
-import { SettingsDialog } from "./components/SettingsDialog";
-import { DocumentTree } from "./components/DocumentTree";
-import { DocumentBreadcrumb } from "./components/DocumentBreadcrumb";
-import { StatisticsDialog } from "./components/StatisticsDialog";
 import { useScrollPosition } from "./hooks/useScrollPosition";
-import { DocumentInstructionsDialog } from "./components/DocumentInstructionsDialog";
-import { DocumentActionBar } from "./components/DocumentActionBar";
-import { DocumentTagsDialog } from "./components/DocumentTagsDialog";
-import { TagsDialog } from "./components/TagsDialog";
+import { DocumentListPage } from "./pages/DocumentListPage";
+import { DocumentLoadingPage } from "./pages/DocumentLoadingPage";
+import { DocumentPreviewPage } from "./pages/DocumentPreviewPage";
+import { PreviewLayout } from "./components/layout/PreviewLayout";
+import { usePreviewRoute } from "./hooks/usePreviewRoute";
+import { isUnresolvedComment } from "./models/comment";
 
 export const App = () => {
   const tagsTriggerRef = useRef<HTMLButtonElement>(null);
-  const matchRoute = useMatchRoute();
+  const {
+    documentId: selectedDocumentId,
+    isDocumentList,
+    pathname,
+    rawDocumentId,
+    view,
+  } = usePreviewRoute();
   const navigate = useNavigate();
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  });
-  const commentsMatch = matchRoute({
-    to: "/documents/$documentId/comments",
-  });
-  const previewMatch = matchRoute({ to: "/documents/$documentId" });
-  const rawDocumentId = commentsMatch
-    ? commentsMatch.documentId
-    : previewMatch
-    ? previewMatch.documentId
-    : undefined;
-  const parsedDocumentId = rawDocumentId && /^[1-9]\d*$/.test(rawDocumentId)
-    ? Number(rawDocumentId)
-    : undefined;
-  const routeDocumentId = Number.isSafeInteger(parsedDocumentId)
-    ? parsedDocumentId
-    : undefined;
   const documentsQuery = useDocumentsQuery();
   const directoryStatusQuery = useDirectoryStatusQuery();
   const directoryStatus = directoryStatusQuery.data;
   const documents = documentsQuery.data;
   const directoryMode = documents !== null && documents !== undefined;
-  const selectedDocumentId = routeDocumentId;
   const shouldLoadDocument = documentsQuery.isSuccess &&
     (!directoryMode || selectedDocumentId !== undefined);
   const documentQuery = usePreviewDocumentQuery(
@@ -84,7 +53,6 @@ export const App = () => {
     selectedDocumentId,
     shouldLoadDocument,
   );
-  const view: PreviewView = commentsMatch ? "comments" : "preview";
   const saveScrollPosition = useScrollPosition(
     selectedDocumentId,
     view,
@@ -96,7 +64,6 @@ export const App = () => {
   const tagsDisclosure = useDisclosure();
   const documentTagsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
-  const [showHtmlComments, setShowHtmlComments] = useState(true);
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
@@ -109,6 +76,14 @@ export const App = () => {
   const { clearReloadAvailable, reloadAvailable } = useHotReload(
     selectedDocumentId,
   );
+  const settingsActions = {
+    onCodeWrapModeChange: changeCodeWrapMode,
+    onDirectoryLimitsChange: changeDirectoryLimits,
+    onExcludedDirectoriesChange: changeExcludedDirectories,
+    onFontScaleChange: changeFontScale,
+    onMarkdownExtensionsChange: changeMarkdownExtensions,
+    onThemeModeChange: changeThemeMode,
+  };
 
   useEffect(() =>
     connectPreviewKeepAlive({
@@ -168,6 +143,25 @@ export const App = () => {
     if (directoryStatus?.state === "ready") void documentsQuery.refetch();
   }, [directoryStatus?.state]);
 
+  const dialogProps = {
+    documentInstructions: instructionsDisclosure,
+    documentTagsDialog: documentTagsDisclosure,
+    settings,
+    settingsActions,
+    settingsDialog: settingsDisclosure,
+    statisticsDialog: statisticsDisclosure,
+    tagsDialog: tagsDisclosure,
+    tagsTriggerRef,
+  };
+  const headerActions = {
+    connectionLost,
+    onOpenSettings: settingsDisclosure.onOpen,
+    onOpenStatistics: statisticsDisclosure.onOpen,
+    onOpenTags: tagsDisclosure.onOpen,
+    onReloadPreview: reloadPreview,
+    tagsTriggerRef,
+  };
+
   if (documentsQuery.isPending) {
     return (
       <>
@@ -184,10 +178,9 @@ export const App = () => {
       </>
     );
   }
-  const routeIsList = pathname === "/";
   const selectedDocumentExists = selectedDocumentId !== undefined &&
     documents?.some((document) => document.id === selectedDocumentId);
-  if (!routeIsList && (!rawDocumentId || !selectedDocumentExists)) {
+  if (!isDocumentList && (!rawDocumentId || !selectedDocumentExists)) {
     globalThis.document.title = "Not Found — Sadoku";
     return (
       <>
@@ -205,81 +198,26 @@ export const App = () => {
   }
   if (selectedDocumentId === undefined) {
     return (
-      <>
-        <style>{markdownStyles}</style>
-        <PreviewHeader
-          connectionLost={connectionLost}
-          onChangeView={() => {}}
-          onOpenSettings={settingsDisclosure.onOpen}
-          onOpenStatistics={statisticsDisclosure.onOpen}
-          onOpenTags={tagsDisclosure.onOpen}
-          tagsTriggerRef={tagsTriggerRef}
-          onReloadPreview={reloadPreview}
-          reloadAvailable={false}
-          reloading={false}
-          staleCommentCount={0}
-          title="Documents"
-          unresolvedCommentCount={0}
-          view="preview"
-          viewsDisabled
+      <PreviewLayout
+        dialogs={dialogProps}
+        header={{
+          ...headerActions,
+          onChangeView: () => {},
+          reloadAvailable: false,
+          reloading: false,
+          staleCommentCount: 0,
+          title: "Documents",
+          unresolvedCommentCount: 0,
+          view: "preview",
+          viewsDisabled: true,
+        }}
+      >
+        <DocumentListPage
+          directoryStatus={directoryStatus}
+          documents={documents!}
+          onSelectDocument={selectDocument}
         />
-        <StatisticsDialog
-          onOpenChange={statisticsDisclosure.setOpen}
-          open={statisticsDisclosure.open}
-        />
-        <TagsDialog
-          finalFocusRef={tagsTriggerRef}
-          onOpenChange={tagsDisclosure.setOpen}
-          open={tagsDisclosure.open}
-        />
-        <SettingsDialog
-          onCodeWrapModeChange={changeCodeWrapMode}
-          onDirectoryLimitsChange={changeDirectoryLimits}
-          onExcludedDirectoriesChange={changeExcludedDirectories}
-          onFontScaleChange={changeFontScale}
-          onMarkdownExtensionsChange={changeMarkdownExtensions}
-          onOpenChange={settingsDisclosure.setOpen}
-          onThemeModeChange={changeThemeMode}
-          open={settingsDisclosure.open}
-          settings={settings}
-        />
-        <Container as="main" maxW="980px" px="8" pb="16">
-          <Heading mb="4" size="md">Documents</Heading>
-          {directoryStatus?.state === "loading"
-            ? (
-              <Alert.Root status="info">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>ドキュメントを検出しています</Alert.Title>
-                  <Alert.Description>
-                    検出 {directoryStatus.detected} 件・登録{" "}
-                    {directoryStatus.registered} 件
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert.Root>
-            )
-            : directoryStatus?.state === "error"
-            ? (
-              <Alert.Root status="error">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>ドキュメントを読み込めませんでした</Alert.Title>
-                  <Alert.Description>
-                    {directoryStatus.error?.message}
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert.Root>
-            )
-            : documents!.length === 0
-            ? <Text color="fg.muted">No Markdown documents found.</Text>
-            : (
-              <DocumentTree
-                documents={documents!}
-                onSelectDocument={selectDocument}
-              />
-            )}
-        </Container>
-      </>
+      </PreviewLayout>
     );
   }
 
@@ -289,60 +227,28 @@ export const App = () => {
       item.id === selectedDocumentId
     );
     return (
-      <>
-        <style>{markdownStyles}</style>
-        <PreviewHeader
-          connectionLost={connectionLost}
-          onChangeView={changeView}
-          onOpenSettings={settingsDisclosure.onOpen}
-          onOpenStatistics={statisticsDisclosure.onOpen}
-          onOpenTags={tagsDisclosure.onOpen}
-          tagsTriggerRef={tagsTriggerRef}
-          onReloadPreview={reloadPreview}
-          reloadAvailable={false}
-          reloading={false}
-          staleCommentCount={0}
-          title={selectedDocument?.relativePath ?? "Preview"}
-          unresolvedCommentCount={0}
-          view="preview"
-          viewsDisabled
+      <PreviewLayout
+        dialogs={dialogProps}
+        header={{
+          ...headerActions,
+          onChangeView: changeView,
+          reloadAvailable: false,
+          reloading: false,
+          staleCommentCount: 0,
+          title: selectedDocument?.relativePath ?? "Preview",
+          unresolvedCommentCount: 0,
+          view: "preview",
+          viewsDisabled: true,
+        }}
+      >
+        <DocumentLoadingPage
+          documents={documents}
+          error={error}
+          onSelectDocument={selectDocument}
+          onSelectDocuments={selectDocuments}
+          selectedDocument={selectedDocument}
         />
-        <StatisticsDialog
-          onOpenChange={statisticsDisclosure.setOpen}
-          open={statisticsDisclosure.open}
-        />
-        <TagsDialog
-          finalFocusRef={tagsTriggerRef}
-          onOpenChange={tagsDisclosure.setOpen}
-          open={tagsDisclosure.open}
-        />
-        <SettingsDialog
-          onCodeWrapModeChange={changeCodeWrapMode}
-          onDirectoryLimitsChange={changeDirectoryLimits}
-          onExcludedDirectoriesChange={changeExcludedDirectories}
-          onFontScaleChange={changeFontScale}
-          onMarkdownExtensionsChange={changeMarkdownExtensions}
-          onOpenChange={settingsDisclosure.setOpen}
-          onThemeModeChange={changeThemeMode}
-          open={settingsDisclosure.open}
-          settings={settings}
-        />
-        <Container as="main" maxW="980px" px="8" pb="16">
-          {directoryMode && selectedDocument && (
-            <DocumentBreadcrumb
-              document={selectedDocument}
-              documents={documents!}
-              onSelectDocument={selectDocument}
-              onSelectDocuments={selectDocuments}
-            />
-          )}
-          <Text color={error ? "fg.error" : "fg.muted"}>
-            {error
-              ? error instanceof Error ? error.message : String(error)
-              : "Loading preview..."}
-          </Text>
-        </Container>
-      </>
+      </PreviewLayout>
     );
   }
 
@@ -356,102 +262,37 @@ export const App = () => {
   const unresolvedCommentCount = comments.filter(isUnresolvedComment).length;
 
   return (
-    <>
-      <style>{markdownStyles}</style>
-      <PreviewHeader
-        connectionLost={connectionLost}
-        fileUrl={document.fileUrl}
-        onChangeView={changeView}
-        onReloadPreview={reloadPreview}
-        onOpenSettings={settingsDisclosure.onOpen}
-        onOpenStatistics={statisticsDisclosure.onOpen}
-        onOpenTags={tagsDisclosure.onOpen}
-        tagsTriggerRef={tagsTriggerRef}
-        reloadAvailable={reloadAvailable}
-        reloading={documentQuery.isFetching || commentsQuery.isFetching}
-        staleCommentCount={staleCommentCount}
-        title={document.title}
-        unresolvedCommentCount={unresolvedCommentCount}
+    <PreviewLayout
+      dialogs={{
+        ...dialogProps,
+        documentId: selectedDocumentId,
+        documentTags: document.tags,
+      }}
+      header={{
+        ...headerActions,
+        fileUrl: document.fileUrl,
+        onChangeView: changeView,
+        reloadAvailable,
+        reloading: documentQuery.isFetching || commentsQuery.isFetching,
+        staleCommentCount,
+        title: document.title,
+        unresolvedCommentCount,
+        view,
+      }}
+    >
+      <DocumentPreviewPage
+        document={document}
+        documentId={selectedDocumentId}
+        documents={documents}
+        instructionCount={instructionsQuery.data?.length ?? 0}
+        onOpenInstructions={instructionsDisclosure.onOpen}
+        onOpenTags={documentTagsDisclosure.onOpen}
+        onSelectDocument={selectDocument}
+        onSelectDocuments={selectDocuments}
+        selectedDocument={selectedDocument}
+        settings={settings}
         view={view}
       />
-      <StatisticsDialog
-        onOpenChange={statisticsDisclosure.setOpen}
-        open={statisticsDisclosure.open}
-      />
-      <TagsDialog
-        finalFocusRef={tagsTriggerRef}
-        onOpenChange={tagsDisclosure.setOpen}
-        open={tagsDisclosure.open}
-      />
-      <DocumentInstructionsDialog
-        documentId={selectedDocumentId}
-        onOpenChange={instructionsDisclosure.setOpen}
-        open={instructionsDisclosure.open}
-      />
-      <DocumentTagsDialog
-        documentId={selectedDocumentId}
-        onOpenChange={documentTagsDisclosure.setOpen}
-        open={documentTagsDisclosure.open}
-        tags={document.tags ?? []}
-      />
-      <SettingsDialog
-        onCodeWrapModeChange={changeCodeWrapMode}
-        onDirectoryLimitsChange={changeDirectoryLimits}
-        onExcludedDirectoriesChange={changeExcludedDirectories}
-        onFontScaleChange={changeFontScale}
-        onMarkdownExtensionsChange={changeMarkdownExtensions}
-        onOpenChange={settingsDisclosure.setOpen}
-        onThemeModeChange={changeThemeMode}
-        open={settingsDisclosure.open}
-        settings={settings}
-      />
-      <Container as="main" maxW="980px" px="8" pt="0" pb="16">
-        {directoryMode && selectedDocument && (
-          <DocumentBreadcrumb
-            document={selectedDocument}
-            documents={documents!}
-            onSelectDocument={selectDocument}
-            onSelectDocuments={selectDocuments}
-          />
-        )}
-        {view === "preview" && (
-          <DocumentActionBar
-            instructionCount={instructionsQuery.data?.length ?? 0}
-            markdown={document.markdown}
-            onOpenInstructions={instructionsDisclosure.onOpen}
-            onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
-            showHtmlComments={showHtmlComments}
-            tagCount={document.tags.length}
-            onOpenTags={documentTagsDisclosure.onOpen}
-            tags={document.tags ?? []}
-          />
-        )}
-        {document.deleted && (
-          <Alert.Root status="warning" mb="6">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>Deleted document</Alert.Title>
-              <Alert.Description>
-                The original file no longer exists. A saved snapshot is being
-                shown instead.
-              </Alert.Description>
-            </Alert.Content>
-          </Alert.Root>
-        )}
-        {view === "preview"
-          ? (
-            <MarkdownPreviewPage
-              documentId={selectedDocumentId}
-              documentPath={selectedDocument?.relativePath ??
-                document.fileUrl ?? document.title}
-              key={`${selectedDocumentId}-${settings.theme}-${settings.fontScale}`}
-              markdown={document.markdown}
-              showHtmlComments={showHtmlComments}
-              theme={settings.theme === "dark" ? "dark" : "default"}
-            />
-          )
-          : <CommentListPage documentId={selectedDocumentId} />}
-      </Container>
-    </>
+    </PreviewLayout>
   );
 };
