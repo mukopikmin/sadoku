@@ -26,6 +26,22 @@ const openCommentMenu = async () => {
 };
 
 describe("CommentItem", () => {
+  it("renders suggested edits without an apply action", () => {
+    render(
+      <CommentItem
+        actions={createCommentActions()}
+        comment={createComment({
+          body: "```suggestion\nRevised **Markdown**\n```",
+        })}
+        lineLabel="Line 3"
+      />,
+    );
+
+    expect(screen.getByText("Suggested change")).not.toBeNull();
+    expect(screen.getByText("Revised **Markdown**")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /apply/i })).toBeNull();
+  });
+
   it("renders comment and source Markdown safely with thread metadata", () => {
     const { container } = render(
       <CommentItem
