@@ -11,7 +11,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { type RefObject, useState } from "react";
-import { useTagsQuery, useUpdateTag } from "../hooks/usePreviewData";
+import { useTagsQuery, useUpdateTag } from "../hooks/useTags";
 import { TagLabel } from "./ui/TagLabel";
 
 type Props = {

@@ -2,11 +2,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Comment } from "../models/comment";
-import {
-  commentsQueryKey,
-  useCommentActions,
-  useCommentsQuery,
-} from "../hooks/usePreviewData";
+import { commentsQueryKey } from "../hooks/previewQueryKeys";
+import { useCommentActions, useCommentsQuery } from "../hooks/useComments";
 import { createPreviewQueryClient } from "../queryClient";
 import { act, cleanup, renderHook, waitFor } from "./testUtils";
 
@@ -31,7 +28,7 @@ const createComment = (
   ...overrides,
 });
 
-describe("preview data queries", () => {
+describe("comment hooks", () => {
   it("shares one comments request across query consumers", async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve(Response.json({

@@ -8,13 +8,13 @@ import {
 import { markdownStyles } from "./markdown/markdownStyles";
 import { useHotReload } from "./hooks/useHotReload";
 import { connectPreviewKeepAlive } from "./api/hotReload";
+import { useCommentsQuery } from "./hooks/useComments";
 import {
-  useCommentsQuery,
   useDirectoryStatusQuery,
   useDocumentsQuery,
-  useInstructionsQuery,
   usePreviewDocumentQuery,
-} from "./hooks/usePreviewData";
+} from "./hooks/useDocuments";
+import { useInstructionsQuery } from "./hooks/useInstructions";
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { useScrollPosition } from "./hooks/useScrollPosition";
 import { DocumentListPage } from "./pages/DocumentListPage";
