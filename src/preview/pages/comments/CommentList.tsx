@@ -8,10 +8,7 @@ import type {
   UnresolvedComment,
 } from "../../models/comment";
 import { isUnresolvedComment } from "../../models/comment";
-import {
-  useCommentActions,
-  useCommentsQuery,
-} from "../../hooks/usePreviewData";
+import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 
 export type CommentListProps = {
   actions: CommentActions;

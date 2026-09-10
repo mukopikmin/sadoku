@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import {
   useInstructionActions,
   useInstructionsQuery,
-} from "../hooks/usePreviewData";
+} from "../hooks/useInstructions";
 
 type Props = {
   documentId: number;
