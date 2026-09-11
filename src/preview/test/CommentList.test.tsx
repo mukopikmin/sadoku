@@ -54,6 +54,9 @@ describe("CommentList", () => {
     expect(within(unresolvedPanel).getByText("Stale")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Original line")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
+    expect(unresolvedPanel.querySelectorAll(".chakra-card__root")).toHaveLength(
+      2,
+    );
 
     fireEvent.click(resolvedTab);
     expect(screen.getByRole("heading", { name: "Resolved comments" }))

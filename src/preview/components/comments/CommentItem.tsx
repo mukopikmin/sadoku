@@ -1,4 +1,4 @@
-import { Badge, Box, Flex, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Card, Flex, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { Comment } from "../../models/comment";
@@ -16,7 +16,7 @@ export type CommentItemProps = {
   lineLabel: string;
   showSource?: boolean;
   showState?: boolean;
-  variant?: "panel";
+  variant?: "card";
 };
 
 const getSourceLabel = (comment: Comment): string =>
@@ -42,11 +42,8 @@ export const CommentItem = ({
   const [isEditing, setIsEditing] = useState(false);
   const { error, isPending, reportError, runAction } = useCommentActionState();
 
-  return (
-    <Box
-      as="article"
-      p={variant === "panel" ? "2" : undefined}
-    >
+  const content = (
+    <>
       {showSource && comment.sourceText && (
         <Box
           as="section"
@@ -65,10 +62,10 @@ export const CommentItem = ({
         </Box>
       )}
       <Box
-        borderLeftColor={variant === "panel" ? "accent" : undefined}
-        borderLeftWidth={variant === "panel" ? "3px" : undefined}
+        borderLeftColor={variant === "card" ? "accent" : undefined}
+        borderLeftWidth={variant === "card" ? "3px" : undefined}
         className="comment-root-thread"
-        pl={variant === "panel" ? "3" : undefined}
+        pl={variant === "card" ? "3" : undefined}
         position="relative"
       >
         {(comment.author.type === "bot" ||
@@ -139,6 +136,16 @@ export const CommentItem = ({
         />
         {error && <Text color="red.500" fontSize="sm">{error}</Text>}
       </Box>
-    </Box>
+    </>
   );
+
+  if (variant === "card") {
+    return (
+      <Card.Root as="article" size="sm">
+        <Card.Body>{content}</Card.Body>
+      </Card.Root>
+    );
+  }
+
+  return <Box as="article">{content}</Box>;
 };

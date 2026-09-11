@@ -61,7 +61,7 @@ const CommentSection = <T extends Comment>({
           {comments.map((comment) => (
             <CommentItem
               actions={actions}
-              variant="panel"
+              variant="card"
               comment={comment}
               key={comment.id}
               lineLabel={formatLineLabel(comment)}
