@@ -4,9 +4,10 @@ Sadoku is a local Markdown review tool. Open a file, directory, or HTTP(S) URL
 in your browser, preview the rendered Markdown, and leave comments without
 changing the source document.
 
-Document instructions and review comments are stored locally. Remote URLs are
-fetched in full, but their query strings and fragments are excluded from the
-stored document identity so credentials and temporary tokens are not persisted.
+Document instructions, agent memories, and review comments are stored locally.
+Remote URLs are fetched in full, but their query strings and fragments are
+excluded from the stored document identity so credentials and temporary tokens
+are not persisted.
 
 ## Install
 
@@ -98,6 +99,22 @@ sadoku comment delete <comment-id> --document <document-id>
 Commands also accept `--source <file.md|url>`. Use `--ensure-document` with
 `comment add` to register that source when needed. Run `sadoku comment --help`
 for reply, reopen, bot attribution, and review-request options.
+
+### Agent memories
+
+Agents can keep reusable background knowledge separately from a document. Memory
+commands use the same document selectors as instruction commands:
+
+```sh
+sadoku memory list --source README.md
+sadoku memory add --source README.md --content "The audience is maintainers."
+sadoku memory update 1 --source README.md --content "The audience is contributors."
+sadoku memory delete 1 --source README.md
+```
+
+The preview UI lets people review and delete memories; additions and updates are
+CLI-only. Memories are context rather than instructions. Do not store
+credentials, access tokens, URL query parameters, or other secrets in them.
 
 ## Configuration and storage
 

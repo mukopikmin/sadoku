@@ -13,7 +13,9 @@ type Props = {
   documentId: number;
   documents?: DocumentSummary[] | null;
   instructionCount: number;
+  memoryCount: number;
   onOpenInstructions: () => void;
+  onOpenMemories: () => void;
   onOpenTags: () => void;
   onSelectDocument: (id: number) => void;
   onSelectDocuments: () => void;
@@ -27,7 +29,9 @@ export const DocumentPreviewPage = (
     documentId,
     documents,
     instructionCount,
+    memoryCount,
     onOpenInstructions,
+    onOpenMemories,
     onOpenTags,
     onSelectDocument,
     onSelectDocuments,
@@ -50,8 +54,10 @@ export const DocumentPreviewPage = (
       {view === "preview" && (
         <DocumentActionBar
           instructionCount={instructionCount}
+          memoryCount={memoryCount}
           markdown={document.markdown}
           onOpenInstructions={onOpenInstructions}
+          onOpenMemories={onOpenMemories}
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
           showHtmlComments={showHtmlComments}
           tagCount={document.tags.length}
