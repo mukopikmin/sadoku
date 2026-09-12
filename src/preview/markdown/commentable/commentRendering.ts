@@ -42,6 +42,7 @@ export type CommentControlProps = {
 export type CommentRenderingContextValue = CommentControlProps & {
   commentsByLine: Map<number, ActiveComment[]>;
   commentHighlightsByLine: Set<number>;
+  markdown: string;
 };
 
 export const SourceLineContext = createContext<ReadonlySet<number>>(new Set());

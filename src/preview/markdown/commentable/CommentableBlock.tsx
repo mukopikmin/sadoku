@@ -23,6 +23,7 @@ import {
   formatRangeLabel,
   hasTextSelectionWithin,
   SourceLineContext,
+  useCommentRenderingContext,
 } from "./commentRendering";
 
 type CommentableBlockProps = CommentControlProps & {
@@ -36,6 +37,15 @@ type CommentableBlockProps = CommentControlProps & {
   isRangeActionLine: boolean;
   isSelected: boolean;
   sourceRange: CommentRange;
+};
+
+const suggestionBody = (replacement: string): string => {
+  const longestBacktickRun = Math.max(
+    0,
+    ...[...replacement.matchAll(/`+/g)].map((match) => match[0].length),
+  );
+  const fence = "`".repeat(Math.max(3, longestBacktickRun + 1));
+  return `${fence}suggestion\n${replacement}\n${fence}`;
 };
 
 export const CommentableBlock = ({
@@ -57,7 +67,9 @@ export const CommentableBlock = ({
   onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState<
+    { body: string; type: "comment" | "suggestion" }
+  >({ body: "", type: "comment" });
   const [isSaving, setIsSaving] = useState(false);
   const pendingRange: CommentRange = activeRange ?? selectedRange ?? {
     ...sourceRange,
@@ -73,9 +85,21 @@ export const CommentableBlock = ({
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
 
+  const { markdown } = useCommentRenderingContext();
+  const selectedSource = useMemo(() =>
+    markdown.split(/\r?\n/).slice(
+      pendingRange.startLine - 1,
+      pendingRange.endLine,
+    ).join("\n"), [markdown, pendingRange.endLine, pendingRange.startLine]);
+
   const handleCreate = async () => {
-    const body = draft.trim();
-    if (!body || isSaving) return;
+    const content = draft.type === "suggestion"
+      ? draft.body
+      : draft.body.trim();
+    const body = draft.type === "suggestion"
+      ? suggestionBody(content)
+      : content;
+    if (!content.trim() || isSaving) return;
     setIsSaving(true);
     setError(undefined);
     try {
@@ -84,7 +108,7 @@ export const CommentableBlock = ({
         body,
         pendingRange.endLine,
       );
-      setDraft("");
+      setDraft({ body: "", type: "comment" });
       onCloseCommentForm();
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
@@ -245,26 +269,58 @@ export const CommentableBlock = ({
               <Text color="fg.muted" fontSize="xs" fontWeight="semibold" mb="1">
                 Commenting on {formatRangeLabel(pendingRange)}.
               </Text>
+              <Flex gap="2" mb="2" role="group" aria-label="Comment type">
+                <Button
+                  aria-pressed={draft.type === "comment"}
+                  onClick={() => setDraft({ body: "", type: "comment" })}
+                  size="xs"
+                  type="button"
+                  variant={draft.type === "comment" ? "solid" : "outline"}
+                >
+                  Comment
+                </Button>
+                <Button
+                  aria-pressed={draft.type === "suggestion"}
+                  onClick={() =>
+                    setDraft({ body: selectedSource, type: "suggestion" })}
+                  size="xs"
+                  type="button"
+                  variant={draft.type === "suggestion" ? "solid" : "outline"}
+                >
+                  Suggest edit
+                </Button>
+              </Flex>
               <Textarea
+                aria-label={draft.type === "suggestion"
+                  ? "Suggested replacement"
+                  : "Comment body"}
                 autoFocus
                 minH="90px"
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    body: event.target.value,
+                  }))}
                 onKeyDown={(event) =>
                   submitCommentOnShortcut(event, () => {
                     void handleCreate();
                   })}
-                placeholder="Write a GitHub PR comment..."
-                value={draft}
+                placeholder={draft.type === "suggestion"
+                  ? "Edit the suggested replacement..."
+                  : "Write a GitHub PR comment..."}
+                value={draft.body}
               />
               <Flex wrap="wrap" gap="2">
                 <Button
                   size="xs"
                   variant="outline"
-                  disabled={isSaving || draft.trim() === ""}
+                  disabled={isSaving || draft.body.trim() === ""}
                   onClick={handleCreate}
                   type="button"
                 >
-                  Add comment
+                  {draft.type === "suggestion"
+                    ? "Add suggestion"
+                    : "Add comment"}
                 </Button>
                 <Button
                   size="xs"

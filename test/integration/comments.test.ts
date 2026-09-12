@@ -129,6 +129,47 @@ Deno.test("stores preview comments in the configured comments directory", async 
   });
 });
 
+Deno.test("preserves suggested edit fences in comment bodies", async () => {
+  await withTempCommentsDirectory(async () => {
+    const filePath = await Deno.makeTempFile({
+      prefix: "sadoku-suggestion-",
+      suffix: ".md",
+    });
+    await Deno.writeTextFile(filePath, "Original text\n");
+    const suggestion = "```suggestion\nReplacement text\n```";
+    try {
+      const handler = createTestPreviewHandler(filePath);
+      const createResponse = await handler(
+        new Request("http://127.0.0.1:3334/__sadoku/documents/1/comments", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            startLine: 1,
+            endLine: 1,
+            body: suggestion,
+          }),
+        }),
+        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+      );
+      assertEquals(createResponse.status, 200);
+      assertEquals((await createResponse.json()).body, suggestion);
+
+      const commentsResponse = await handler(
+        new Request("http://127.0.0.1:3334/__sadoku/documents/1/comments"),
+        {} as Deno.ServeHandlerInfo<Deno.NetAddr>,
+      );
+      assertEquals(commentsResponse.status, 200);
+      assertEquals(
+        (await commentsResponse.json()).comments[0].body,
+        suggestion,
+      );
+    } finally {
+      await Deno.remove(filePath).catch(() => {});
+      await Deno.remove(getCommentsFilePath(filePath)).catch(() => {});
+    }
+  });
+});
+
 Deno.test("preserves preview comment range metadata across reloads", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await Deno.makeTempFile({

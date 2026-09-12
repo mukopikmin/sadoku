@@ -487,6 +487,39 @@ Body
     );
   });
 
+  it("creates a suggested edit from the selected Markdown source", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown("# Title\n\nBody\n", [], {
+      onCreateComment,
+    });
+
+    fireEvent.click(container.querySelector('[data-source-line="1"] h1')!);
+    fireEvent.click(container.querySelector('[data-source-line="3"] p')!, {
+      shiftKey: true,
+    });
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Suggest edit" }));
+
+    const replacement = screen.getByRole("textbox", {
+      name: "Suggested replacement",
+    });
+    expect((replacement as HTMLTextAreaElement).value).toBe("# Title\n\nBody");
+    fireEvent.change(replacement, {
+      target: { value: "# Better title\n\nRevised body" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add suggestion" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        1,
+        "```suggestion\n# Better title\n\nRevised body\n```",
+        3,
+      )
+    );
+  });
+
   it("extends a comment range when Shift+click creates a native text selection", () => {
     const { container } = renderMarkdown("# Title\n\nBody\n");
     const title = container.querySelector('[data-source-line="1"] h1')!;
