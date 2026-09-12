@@ -405,15 +405,10 @@ Body
     expect(container.querySelector('[data-source-line="3"] p')).toBe(body);
   });
 
-  it("preserves text selection within a selected comment line", () => {
+  it("preserves native text selection without changing the selected comment line", () => {
     const { container } = renderMarkdown("# Title\n\nBody text\n");
     const getBody = () => container.querySelector('[data-source-line="3"] p');
     expect(getBody()).not.toBeNull();
-
-    fireEvent.click(getBody()!);
-    expect(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    })).not.toBeNull();
 
     const body = getBody();
     const text = body?.firstChild;
@@ -429,31 +424,24 @@ Body
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
+    expect(screen.queryByRole("button", {
+      name: "Add comment on line 3",
+    })).toBeNull();
+
+    selection?.removeAllRanges();
+    fireEvent.click(body!);
     expect(screen.getByRole("button", {
       name: "Add comment on line 3",
     })).not.toBeNull();
-  });
 
-  it("does not select a comment line when selecting its text", () => {
-    const { container } = renderMarkdown("# Title\n\nBody text\n");
-    const body = container.querySelector('[data-source-line="3"] p');
-    const text = body?.firstChild;
-    expect(body).not.toBeNull();
-    expect(text).not.toBeNull();
-
-    const range = document.createRange();
-    range.setStart(text!, 0);
-    range.setEnd(text!, 4);
-    const selection = globalThis.getSelection();
-    selection?.removeAllRanges();
     selection?.addRange(range);
 
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
-    expect(screen.queryByRole("button", {
+    expect(screen.getByRole("button", {
       name: "Add comment on line 3",
-    })).toBeNull();
+    })).not.toBeNull();
   });
 
   it("creates comments for a selected line range", async () => {

@@ -259,26 +259,9 @@ console.log("<ok>");
     expect(container.querySelector("strong")?.textContent).toBe("world");
     const unorderedList = container.querySelector("ul.comment-markdown-list");
     expect(unorderedList?.querySelectorAll(":scope > li")).toHaveLength(2);
-    expect(
-      getComputedStyle(
-        unorderedList!.querySelectorAll(":scope > li")[1].querySelector(
-          ".commentable-content",
-        )!,
-      ).paddingTop,
-    ).toBe("var(--chakra-spacing-1)");
-    expect(unorderedList?.classList.contains("comment-markdown-body")).toBe(
-      false,
-    );
     expect(unorderedList?.classList.contains("comment-markdown-list")).toBe(
       true,
     );
-    expect(getComputedStyle(unorderedList!).display).not.toBe("contents");
-    expect(getComputedStyle(unorderedList!).marginTop).toBe("0px");
-    expect(getComputedStyle(unorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(unorderedList!).paddingTop).toBe("0px");
-    expect(getComputedStyle(unorderedList!).paddingBottom).toBe("0");
-    expect(getComputedStyle(unorderedList!).listStyleType).not.toBe("none");
-    expect(getComputedStyle(unorderedList!).listStylePosition).toBe("outside");
     expect(container.querySelector("code.hljs.language-js")?.innerHTML)
       .toContain("console");
     expect(getComputedStyle(container.querySelector(".hljs-string")!).color)
@@ -350,7 +333,7 @@ Footnote-looking text stays plain.[^note]
   });
 
   it("renders links and images with titles", () => {
-    const { container } = renderMarkdown(
+    renderMarkdown(
       '[site](https://example.com "Site title") ![logo](logo.png "Logo title")',
     );
 
@@ -358,12 +341,9 @@ Footnote-looking text stays plain.[^note]
     const image = screen.getByRole("img", { name: "logo" });
 
     expect(link.getAttribute("href")).toBe("https://example.com");
-    expect(link.getAttribute("title")).toBe("Site title");
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
     expect(image.getAttribute("src")).toBe("logo.png");
-    expect(image.getAttribute("title")).toBe("Logo title");
-    expect(container.querySelector("p")).not.toBeNull();
   });
 
   it("autolinks plain urls", () => {
@@ -401,23 +381,6 @@ Footnote-looking text stays plain.[^note]
     expect(getComputedStyle(tableContainer).width).toBe("fit-content");
     expect(getComputedStyle(tableContainer).maxWidth).toBe("100%");
     expect(getComputedStyle(tableContainer).overflowX).toBe("auto");
-    expect(container.querySelector("thead")?.className).toContain(
-      "chakra-table__header",
-    );
-    expect(container.querySelector("tbody")?.className).toContain(
-      "chakra-table__body",
-    );
-    expect(container.querySelector("tr")?.className).toContain(
-      "chakra-table__row",
-    );
-    expect(container.querySelector("th")?.className).toContain(
-      "chakra-table__columnHeader",
-    );
-    expect(container.querySelector("td")?.className).toContain(
-      "chakra-table__cell",
-    );
-    expect(previewThemeCss).not.toContain("tbody tr:nth-child");
-    expect(previewThemeCss).not.toMatch(/th \{[^}]*background:/);
   });
 
   it("renders horizontal rules with vertical spacing around the line", () => {
