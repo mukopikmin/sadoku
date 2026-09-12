@@ -5,9 +5,9 @@ import { DocumentActionBar } from "../components/DocumentActionBar";
 afterEach(cleanup);
 
 describe("DocumentActionBar", () => {
-  it("shows the document tags on hover and opens the editor on click", async () => {
+  it("describes document tags and opens the editor", async () => {
     const onOpenTags = vi.fn();
-    render(
+    const { rerender } = render(
       <DocumentActionBar
         onOpenInstructions={() => {}}
         onOpenTags={onOpenTags}
@@ -31,13 +31,12 @@ describe("DocumentActionBar", () => {
 
     fireEvent.click(tagsButton);
     expect(onOpenTags).toHaveBeenCalledOnce();
-  });
 
-  it("describes a document without tags on hover", async () => {
-    render(
+    fireEvent.pointerLeave(tagsButton);
+    rerender(
       <DocumentActionBar
         onOpenInstructions={() => {}}
-        onOpenTags={() => {}}
+        onOpenTags={onOpenTags}
         onToggleHtmlComments={() => {}}
         showHtmlComments
         tags={[]}
