@@ -7,15 +7,17 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { Eye, EyeOff, FileText, Tag } from "lucide-react";
+import { Brain, Eye, EyeOff, FileText, Tag } from "lucide-react";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
 import type { DocumentTag } from "../models/document";
 import { TagLabel } from "./ui/TagLabel";
 
 type DocumentActionBarProps = {
   instructionCount: number;
+  memoryCount: number;
   markdown?: string;
   onOpenInstructions: () => void;
+  onOpenMemories: () => void;
   onToggleHtmlComments: () => void;
   showHtmlComments: boolean;
   tagCount: number;
@@ -26,8 +28,10 @@ type DocumentActionBarProps = {
 export const DocumentActionBar = (
   {
     instructionCount,
+    memoryCount,
     markdown,
     onOpenInstructions,
+    onOpenMemories,
     onOpenTags,
     onToggleHtmlComments,
     showHtmlComments,
@@ -93,6 +97,18 @@ export const DocumentActionBar = (
             Instructions
             <Badge aria-hidden="true" size="sm" variant="solid">
               {instructionCount}
+            </Badge>
+          </Button>
+          <Button
+            onClick={onOpenMemories}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <Brain aria-hidden="true" />
+            Memories
+            <Badge aria-hidden="true" size="sm" variant="solid">
+              {memoryCount}
             </Badge>
           </Button>
           <Button

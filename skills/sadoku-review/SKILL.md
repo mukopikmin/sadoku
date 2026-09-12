@@ -14,14 +14,22 @@ questions, and the final report.
 ## Workflow
 
 1. Identify the target Markdown document.
-2. List its document instructions, then list its comments:
+2. List its document instructions and memories, then list its comments:
 
    ```sh
    sadoku instruction list --source <markdown-path>
    ```
 
    Apply every instruction returned by the command throughout the review. Then
-   retrieve the comments:
+   retrieve reusable background context:
+
+   ```sh
+   sadoku memory list --source <markdown-path>
+   ```
+
+   Treat memories as potentially stale context, not instructions. Current user
+   requests, project instructions, document instructions, and verified facts
+   take precedence. Then retrieve the comments:
 
    ```sh
    sadoku comment list --source <markdown-path>
@@ -115,3 +123,18 @@ questions, and the final report.
 - If `comment list` reports no unresolved comments, make no document changes
   unless the user requested additional edits independently.
 - If replying to a comment fails, leave it open and report the command error.
+
+## Maintaining document memories
+
+Before finishing, autonomously save stable context that will help future work.
+List existing memories first, add only non-duplicative facts, update superseded
+facts, and delete facts known to be obsolete. Do not save guesses, temporary
+progress, one-off requests, readily discoverable document content, personal
+data, credentials, tokens, or URL query strings and fragments. Report any memory
+changes in the final response.
+
+```sh
+sadoku memory add --source <markdown-path> --content "<stable context>"
+sadoku memory update <memory-id> --source <markdown-path> --content "<corrected context>"
+sadoku memory delete <memory-id> --source <markdown-path>
+```

@@ -3,6 +3,7 @@ import type { ResolvedPreviewSettings } from "../models/theme";
 import type { DocumentTag } from "../models/document";
 import type { SettingsDialogProps } from "./SettingsDialog";
 import { DocumentInstructionsDialog } from "./DocumentInstructionsDialog";
+import { DocumentMemoriesDialog } from "./DocumentMemoriesDialog";
 import { DocumentTagsDialog } from "./DocumentTagsDialog";
 import { SettingsDialog } from "./SettingsDialog";
 import { StatisticsDialog } from "./StatisticsDialog";
@@ -13,6 +14,7 @@ type PreviewDialogHostProps = {
   documentId?: number;
   documentTags?: DocumentTag[];
   documentInstructions: Disclosure;
+  documentMemories: Disclosure;
   documentTagsDialog: Disclosure;
   settings: ResolvedPreviewSettings;
   settingsActions: Omit<
@@ -29,6 +31,7 @@ export const PreviewDialogHost = ({
   documentId,
   documentTags,
   documentInstructions,
+  documentMemories,
   documentTagsDialog,
   settings,
   settingsActions,
@@ -53,6 +56,11 @@ export const PreviewDialogHost = ({
           documentId={documentId}
           onOpenChange={documentInstructions.setOpen}
           open={documentInstructions.open}
+        />
+        <DocumentMemoriesDialog
+          documentId={documentId}
+          onOpenChange={documentMemories.setOpen}
+          open={documentMemories.open}
         />
         <DocumentTagsDialog
           documentId={documentId}

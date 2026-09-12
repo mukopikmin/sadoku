@@ -240,18 +240,20 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
       "0006",
       "0007",
       "0008",
+      "0009",
     ]);
     assertEquals(tablesAfterFirstRun, [
       "comment",
       "comment_document",
       "comment_reply",
       "document_instruction",
+      "document_memory",
       "document_tag",
       "document_tag_link",
       "schema_migration",
       "sqlite_sequence",
     ]);
-    assertEquals(rowsAfterFirstRun.length, 8);
+    assertEquals(rowsAfterFirstRun.length, 9);
     assertEquals(rowsAfterFirstRun[0]?.version, "0001");
     assertEquals(rowsAfterFirstRun[0]?.name, "create_comment_tables");
     assertEquals(rowsAfterFirstRun[0]?.state, "applied");
@@ -280,6 +282,8 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
     assertEquals(rowsAfterFirstRun[5]?.version, "0006");
     assertEquals(rowsAfterFirstRun[6]?.version, "0007");
     assertEquals(rowsAfterFirstRun[7]?.version, "0008");
+    assertEquals(rowsAfterFirstRun[8]?.version, "0009");
+    assertEquals(rowsAfterFirstRun[8]?.name, "create_document_memories");
     assertEquals(rowsAfterFirstRun[5]?.name, "create_document_instructions");
     assertEquals(rowsAfterFirstRun[5]?.state, "applied");
     assertExists(rowsAfterFirstRun[5]?.finished_at);

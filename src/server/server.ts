@@ -189,6 +189,7 @@ export const startPreviewServer = async (
       stores.documents,
       stores.instructions,
       stores.tags,
+      stores.memories,
     ),
   );
 

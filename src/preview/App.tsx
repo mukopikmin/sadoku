@@ -15,6 +15,7 @@ import {
   usePreviewDocumentQuery,
 } from "./hooks/useDocuments";
 import { useInstructionsQuery } from "./hooks/useInstructions";
+import { useMemoriesQuery } from "./hooks/useMemories";
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { useScrollPosition } from "./hooks/useScrollPosition";
 import { DocumentListPage } from "./pages/DocumentListPage";
@@ -53,6 +54,10 @@ export const App = () => {
     selectedDocumentId,
     shouldLoadDocument,
   );
+  const memoriesQuery = useMemoriesQuery(
+    selectedDocumentId,
+    shouldLoadDocument,
+  );
   const saveScrollPosition = useScrollPosition(
     selectedDocumentId,
     view,
@@ -61,6 +66,7 @@ export const App = () => {
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
+  const memoriesDisclosure = useDisclosure();
   const tagsDisclosure = useDisclosure();
   const documentTagsDisclosure = useDisclosure();
   const [connectionLost, setConnectionLost] = useState(false);
@@ -145,6 +151,7 @@ export const App = () => {
 
   const dialogProps = {
     documentInstructions: instructionsDisclosure,
+    documentMemories: memoriesDisclosure,
     documentTagsDialog: documentTagsDisclosure,
     settings,
     settingsActions,
@@ -285,7 +292,9 @@ export const App = () => {
         documentId={selectedDocumentId}
         documents={documents}
         instructionCount={instructionsQuery.data?.length ?? 0}
+        memoryCount={memoriesQuery.data?.length ?? 0}
         onOpenInstructions={instructionsDisclosure.onOpen}
+        onOpenMemories={memoriesDisclosure.onOpen}
         onOpenTags={documentTagsDisclosure.onOpen}
         onSelectDocument={selectDocument}
         onSelectDocuments={selectDocuments}

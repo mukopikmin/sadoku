@@ -7,3 +7,5 @@ export const commentsQueryKey = (documentId?: number) =>
 export const instructionsQueryKey = (documentId?: number) =>
   ["instructions", documentId] as const;
 export const tagsQueryKey = ["tags"] as const;
+export const memoriesQueryKey = (documentId?: number) =>
+  ["memories", documentId] as const;

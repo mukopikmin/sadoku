@@ -158,3 +158,60 @@ Deno.test("serves database statistics from the configured reader", async () => {
     405,
   );
 });
+
+Deno.test("memory routes expose read and delete operations only", async () => {
+  const document = {
+    deleted: false,
+    id: 1,
+    filePath: "/tmp/memory.md",
+    relativePath: "memory.md",
+    title: "memory.md",
+  };
+  const session: DirectorySession = {
+    rootPath: "/tmp",
+    documents: [document],
+    documentsById: new Map([[1, document]]),
+  };
+  let deleted = false;
+  const memoryStore = {
+    create: () => Promise.reject(new Error("not exposed")),
+    delete: (documentId: number, memoryId: number) => {
+      deleted = documentId === 1 && memoryId === 2;
+      return Promise.resolve(deleted);
+    },
+    listByDocument: () =>
+      Promise.resolve([{
+        id: 2,
+        documentId: 1,
+        content: "Stable context.",
+        createdAt: "2026-09-11T00:00:00.000Z",
+        updatedAt: "2026-09-11T00:00:00.000Z",
+      }]),
+    update: () => Promise.resolve(undefined),
+  };
+  const handler = createDirectoryPreviewHandler(
+    session,
+    createMemoryStore(),
+    {},
+    undefined,
+    undefined,
+    undefined,
+    memoryStore,
+  );
+  const listed = await request(handler, "/__sadoku/documents/1/memories");
+  assertEquals(listed.status, 200);
+  assertEquals((await listed.json()).memories[0].content, "Stable context.");
+  assertEquals(
+    (await request(handler, "/__sadoku/documents/1/memories", {
+      method: "POST",
+    })).status,
+    405,
+  );
+  assertEquals(
+    (await request(handler, "/__sadoku/documents/1/memories/2", {
+      method: "DELETE",
+    })).status,
+    204,
+  );
+  assertEquals(deleted, true);
+});
