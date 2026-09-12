@@ -46,14 +46,16 @@ describe("CommentItem", () => {
         lineLabel="Originally line 3"
         showSource
         showState
-        variant="panel"
+        variant="card"
       />,
     );
 
     const target = container.querySelector(".comment-source-target")!;
+    const card = container.querySelector(".chakra-card__root")!;
     const sourceMarkdown = target.querySelector(".comment-source-markdown")!;
     const rootThread = container.querySelector(".comment-root-thread")!;
     expect(target.tagName).toBe("SECTION");
+    expect(card.tagName).toBe("ARTICLE");
     expect(within(target).getByText("Original line")).not.toBeNull();
     expect(
       within(sourceMarkdown).getByRole("heading", {
