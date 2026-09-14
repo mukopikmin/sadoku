@@ -9,6 +9,8 @@ import {
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 import { readConfig } from "./config.ts";
 import { initializeSnapshotQueue } from "./preview/snapshot_queue.ts";
+import type { RunGitHubCommand } from "./github_pull.ts";
+import { runGitHubCommand } from "./cli/github_cli.ts";
 
 export type PreviewServerOptions = {
   file: string;
@@ -18,6 +20,7 @@ export type PreviewServerOptions = {
   maxDepth?: number;
   maxFiles?: number;
   port: number;
+  runGitHubCommand?: RunGitHubCommand;
 };
 
 export type StartedPreviewServer = {
@@ -135,6 +138,7 @@ export const startPreviewServer = async (
   const isDirectory = !previewSource.isRemote &&
     (await Deno.stat(previewSource.documentSource).catch(() => undefined))
         ?.isDirectory === true;
+  const isGitHubPull = previewSource.githubPull !== undefined;
   const config = readConfig();
   const log = options.log ?? logInfo;
 
@@ -163,6 +167,13 @@ export const startPreviewServer = async (
     previewSession = directoryState?.session ?? await createPreviewSession(
       previewSource.documentSource,
       stores.documents,
+      {
+        markdownExtensions: config?.markdownExtensions,
+        maxFiles: options.maxFiles ?? config?.directoryMaxFiles,
+      },
+      {
+        run: options.runGitHubCommand ?? runGitHubCommand,
+      },
     );
   } catch (error) {
     stores.close();
@@ -227,12 +238,12 @@ export const startPreviewServer = async (
       initializeSnapshot: (id, markdown) =>
         stores.documents.initializeSnapshot?.(id, markdown) ??
           Promise.resolve(),
-      readMarkdown: readMarkdownSource,
+      readMarkdown: previewSession.readMarkdown ?? readMarkdownSource,
       signal: preparationController.signal,
     }));
   }
 
-  const pathname = isDirectory
+  const pathname = isDirectory || isGitHubPull
     ? "/"
     : `/documents/${previewSession.documents[0].id}`;
   const url = `http://${server.addr.hostname}:${server.addr.port}${pathname}`;

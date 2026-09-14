@@ -144,6 +144,7 @@ export const createDirectoryPreviewHandler = (
         session,
         documentStore,
         tagStore,
+        session.readMarkdown,
       ),
   );
 
@@ -171,7 +172,7 @@ export const createDirectoryPreviewHandler = (
 
   app.get("/__sadoku/documents/:documentId/comments", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
-    return getComments(source, commentsStore);
+    return getComments(source, commentsStore, session.readMarkdown);
   });
   if (instructionStore) {
     app.get("/__sadoku/documents/:documentId/instructions", (context) => {
@@ -241,7 +242,12 @@ export const createDirectoryPreviewHandler = (
   }
   app.post("/__sadoku/documents/:documentId/comments", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
-    return createComment(context.req.raw, source, commentsStore);
+    return createComment(
+      context.req.raw,
+      source,
+      commentsStore,
+      session.readMarkdown,
+    );
   });
   app.put("/__sadoku/documents/:documentId/comments/:commentId", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));

@@ -4,6 +4,39 @@ export type PreviewSource = {
   commentSource: string;
   documentSource: string;
   isRemote: boolean;
+  githubPull?: GitHubPullSource;
+};
+
+export type GitHubPullSource = {
+  owner: string;
+  pullNumber: number;
+  repo: string;
+  url: string;
+};
+
+export const parseGitHubPullUrl = (
+  value: string,
+): GitHubPullSource | undefined => {
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol !== "https:" || url.hostname.toLowerCase() !== "github.com"
+    ) {
+      return undefined;
+    }
+    const match = url.pathname.match(/^\/([^/]+)\/([^/]+)\/pull\/(\d+)\/?$/);
+    if (!match) return undefined;
+    const pullNumber = Number(match[3]);
+    if (!Number.isSafeInteger(pullNumber) || pullNumber < 1) return undefined;
+    return {
+      owner: decodeURIComponent(match[1]),
+      repo: decodeURIComponent(match[2]),
+      pullNumber,
+      url: `https://github.com/${match[1]}/${match[2]}/pull/${pullNumber}`,
+    };
+  } catch {
+    return undefined;
+  }
 };
 
 export const isHttpUrl = (value: string): boolean => {
@@ -22,6 +55,16 @@ export const createPreviewSource = (input: string): PreviewSource => {
       commentSource: filePath,
       documentSource: filePath,
       isRemote: false,
+    };
+  }
+
+  const githubPull = parseGitHubPullUrl(input);
+  if (githubPull) {
+    return {
+      commentSource: githubPull.url,
+      documentSource: githubPull.url,
+      githubPull,
+      isRemote: true,
     };
   }
 

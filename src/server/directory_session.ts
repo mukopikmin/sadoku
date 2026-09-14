@@ -11,14 +11,21 @@ import {
 } from "./storage/document/list_markdown_files.ts";
 import { pathExists } from "./storage/document/path_exists.ts";
 import { createPreviewSource } from "./source.ts";
+import {
+  type GitHubPullClientOptions,
+  listGitHubPullDocuments,
+  readGitHubMarkdownSource,
+} from "./github_pull.ts";
 
 const createSession = (
   rootPath: string,
   documents: DirectorySession["documents"],
+  readMarkdown?: DirectorySession["readMarkdown"],
 ): DirectorySession => ({
   rootPath,
   documents,
   documentsById: new Map(documents.map((document) => [document.id, document])),
+  ...(readMarkdown && { readMarkdown }),
 });
 
 export type DirectorySessionStatus =
@@ -120,8 +127,39 @@ export const createPreviewSession = async (
   input: string,
   documentStore: DocumentStore,
   scanOptions: DirectoryScanOptions = {},
+  githubOptions: Partial<
+    Omit<
+      GitHubPullClientOptions,
+      "markdownExtensions" | "maxFiles"
+    >
+  > = {},
 ): Promise<DirectorySession> => {
   const source = createPreviewSource(input);
+  if (source.githubPull) {
+    if (!githubOptions.run) {
+      throw new Error(
+        "GitHub command runner is required for pull request previews.",
+      );
+    }
+    const run = githubOptions.run;
+    const pullDocuments = await listGitHubPullDocuments(source.githubPull, {
+      run,
+      markdownExtensions: scanOptions.markdownExtensions,
+      maxFiles: scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles,
+    });
+    const documents = await Promise.all(pullDocuments.map(async (item) => ({
+      ...await documentStore.ensure(item.commentSource),
+      deleted: false,
+      filePath: item.filePath,
+      relativePath: item.relativePath,
+      title: basename(item.relativePath),
+    })));
+    return createSession(
+      source.commentSource,
+      documents,
+      (documentSource) => readGitHubMarkdownSource(documentSource, run),
+    );
+  }
   if (source.isRemote) {
     const document = await documentStore.ensure(source.commentSource);
     const title = basename(new URL(source.documentSource).pathname) ||

@@ -76,11 +76,12 @@ const parseCommentRange = (
 const dependencies = (
   commentsStore: CommentsStore,
   source: PreviewSource,
+  readMarkdown = readMarkdownSource,
 ): CommentsDependencies => ({
   commentsStore,
   readMarkdown: async (markdownSource) => {
     try {
-      return await readMarkdownSource(markdownSource);
+      return await readMarkdown(markdownSource);
     } catch (error) {
       if (markdownSource !== source.documentSource) throw error;
       const snapshot = (await commentsStore.read(source.commentSource))
@@ -129,12 +130,16 @@ export const createComment = async (
   request: Request,
   source: PreviewSource,
   store: CommentsStore,
+  readMarkdown?: (source: string) => Promise<string>,
 ): Promise<Response> => {
   const value = await parseJsonBody(request);
   const range = parseCommentRange(value);
   const body = parseCommentBody(value);
   return await respond(() =>
-    addComment(dependencies(store, source), source, { ...range, body })
+    addComment(dependencies(store, source, readMarkdown), source, {
+      ...range,
+      body,
+    })
   );
 };
 export const createReply = async (
@@ -209,13 +214,14 @@ export const deleteComment = (
 export const getComments = async (
   source: PreviewSource,
   commentsStore: CommentsStore = fileCommentsStore,
+  readMarkdown?: (source: string) => Promise<string>,
 ): Promise<Response> => {
   const { previousSourceSnapshot: _, sourceSnapshot: __, ...document } =
     await readResolvedCommentsDocument(
       source.commentSource,
       source.documentSource,
       commentsStore,
-      dependencies(commentsStore, source).readMarkdown,
+      dependencies(commentsStore, source, readMarkdown).readMarkdown,
     );
   return noStoreJson(document);
 };
