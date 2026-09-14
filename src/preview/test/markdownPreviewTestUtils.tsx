@@ -41,6 +41,7 @@ export const renderMarkdown = (
         <DocumentActionBar
           instructionCount={3}
           markdown={markdown}
+          memoryCount={4}
           onOpenInstructions={() => {}}
           onOpenTags={() => {}}
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}

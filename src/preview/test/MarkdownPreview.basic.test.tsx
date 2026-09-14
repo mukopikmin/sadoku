@@ -41,7 +41,7 @@ describe("MarkdownPreview basic rendering", () => {
     );
     expect(hideButton.querySelector("svg")?.classList.contains("lucide-eye"))
       .toBe(true);
-    expect(hideButton.textContent).toBe("HTML comments");
+    expect(hideButton.textContent).toBe("");
     fireEvent.click(hideButton);
 
     expect(screen.queryByText("HTML COMMENT")).toBeNull();
@@ -56,7 +56,7 @@ describe("MarkdownPreview basic rendering", () => {
     expect(
       showButton.querySelector("svg")?.classList.contains("lucide-eye-off"),
     ).toBe(true);
-    expect(showButton.textContent).toBe("HTML comments");
+    expect(showButton.textContent).toBe("");
     fireEvent.click(showButton);
 
     expect(screen.getByText("HTML COMMENT")).not.toBeNull();

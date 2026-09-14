@@ -32,6 +32,13 @@ describe("MarkdownPreview heading navigation", () => {
     const tagsButton = within(actionBar).getByRole("button", { name: "Tags" });
     expect(within(instructionsButton).getByText("3")).not.toBeNull();
     expect(within(tagsButton).getByText("2")).not.toBeNull();
+    expect(trigger.textContent).toBe("");
+    expect(trigger.querySelector(".lucide-list")).not.toBeNull();
+    fireEvent.pointerEnter(trigger);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Table of contents",
+    );
+    fireEvent.pointerLeave(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
       .toBeNull();

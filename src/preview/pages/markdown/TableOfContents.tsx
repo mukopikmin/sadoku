@@ -1,6 +1,6 @@
 import {
   Box,
-  Button,
+  IconButton,
   Link,
   List,
   Popover,
@@ -12,6 +12,7 @@ import GithubSlugger from "github-slugger";
 import type { Heading, Root } from "mdast";
 import { useMemo, useState } from "react";
 import { toString } from "mdast-util-to-string";
+import { Tooltip } from "../../components/ui/tooltip";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 
@@ -50,16 +51,18 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       positioning={{ placement: "top-end" }}
       size="lg"
     >
-      <Popover.Trigger asChild>
-        <Button
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          <ListIcon aria-hidden="true" />
-          Table of contents
-        </Button>
-      </Popover.Trigger>
+      <Tooltip content="Table of contents">
+        <Popover.Trigger asChild>
+          <IconButton
+            aria-label="Table of contents"
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <ListIcon aria-hidden="true" />
+          </IconButton>
+        </Popover.Trigger>
+      </Tooltip>
       <Portal>
         <Popover.Positioner>
           <Popover.Content
