@@ -48,7 +48,7 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
     <Popover.Root
       onOpenChange={({ open }) => setOpen(open)}
       open={open}
-      positioning={{ placement: "top-end" }}
+      positioning={{ placement: "top-end", strategy: "fixed" }}
       size="lg"
     >
       <Tooltip content="Table of contents">

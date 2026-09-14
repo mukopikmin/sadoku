@@ -50,6 +50,8 @@ describe("MarkdownPreview heading navigation", () => {
     const navigation = screen.getByRole("navigation", {
       name: "Table of contents",
     });
+    expect(navigation.closest("[data-part=positioner]")?.getAttribute("style"))
+      .toContain("position: fixed");
     expect(getComputedStyle(navigation).fontSize).toBe(
       "var(--chakra-font-sizes-sm)",
     );
