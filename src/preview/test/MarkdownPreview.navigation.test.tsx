@@ -34,6 +34,8 @@ describe("MarkdownPreview heading navigation", () => {
     expect(within(tagsButton).getByText("2")).not.toBeNull();
     expect(trigger.textContent).toBe("");
     expect(trigger.querySelector(".lucide-list")).not.toBeNull();
+    expect(trigger.getAttribute("data-scope")).toBe("popover");
+    expect(trigger.parentElement?.getAttribute("data-scope")).toBe("tooltip");
     fireEvent.pointerEnter(trigger);
     expect((await screen.findByRole("tooltip")).textContent).toBe(
       "Table of contents",
@@ -51,7 +53,7 @@ describe("MarkdownPreview heading navigation", () => {
       name: "Table of contents",
     });
     expect(navigation.closest("[data-part=positioner]")?.getAttribute("style"))
-      .toContain("position: fixed");
+      .toContain("position: absolute");
     expect(getComputedStyle(navigation).fontSize).toBe(
       "var(--chakra-font-sizes-sm)",
     );

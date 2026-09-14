@@ -48,20 +48,22 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
     <Popover.Root
       onOpenChange={({ open }) => setOpen(open)}
       open={open}
-      positioning={{ placement: "top-end", strategy: "fixed" }}
+      positioning={{ placement: "top-end" }}
       size="lg"
     >
       <Tooltip content="Table of contents">
-        <Popover.Trigger asChild>
-          <IconButton
-            aria-label="Table of contents"
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <ListIcon aria-hidden="true" />
-          </IconButton>
-        </Popover.Trigger>
+        <span style={{ display: "inline-flex" }}>
+          <Popover.Trigger asChild>
+            <IconButton
+              aria-label="Table of contents"
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <ListIcon aria-hidden="true" />
+            </IconButton>
+          </Popover.Trigger>
+        </span>
       </Tooltip>
       <Portal>
         <Popover.Positioner>
