@@ -32,6 +32,15 @@ describe("MarkdownPreview heading navigation", () => {
     const tagsButton = within(actionBar).getByRole("button", { name: "Tags" });
     expect(within(instructionsButton).getByText("3")).not.toBeNull();
     expect(within(tagsButton).getByText("2")).not.toBeNull();
+    expect(trigger.textContent).toBe("");
+    expect(trigger.querySelector(".lucide-list")).not.toBeNull();
+    expect(trigger.getAttribute("data-scope")).toBe("popover");
+    expect(trigger.parentElement?.getAttribute("data-scope")).toBe("tooltip");
+    fireEvent.pointerEnter(trigger);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Table of contents",
+    );
+    fireEvent.pointerLeave(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("navigation", { name: "Table of contents" }))
       .toBeNull();
@@ -43,6 +52,8 @@ describe("MarkdownPreview heading navigation", () => {
     const navigation = screen.getByRole("navigation", {
       name: "Table of contents",
     });
+    expect(navigation.closest("[data-part=positioner]")?.getAttribute("style"))
+      .toContain("position: absolute");
     expect(getComputedStyle(navigation).fontSize).toBe(
       "var(--chakra-font-sizes-sm)",
     );
