@@ -58,6 +58,12 @@ Preview a remote document:
 sadoku start https://example.com/README.md
 ```
 
+Preview the Markdown files changed by a GitHub pull request:
+
+```sh
+sadoku start https://github.com/<owner>/<repo>/pull/<number>
+```
+
 Sadoku binds to `127.0.0.1`, chooses port `3334` or the next available port, and
 opens the preview in your default browser. Common options include:
 
@@ -75,6 +81,16 @@ Directory previews scan two levels and load up to 20 documents by default.
 Change these limits with `--max-depth` and `--max-files`, or under **Settings →
 Directory discovery**. Sadoku does not follow symbolic links and excludes `.git`
 and `node_modules` by default.
+
+GitHub pull request previews use the same configured Markdown extensions and
+`--max-files` limit. They show added and modified Markdown files, omit deleted
+files, and fetch every document at the pull request's current head commit. The
+document identity remains stable when the branch advances. To use this feature,
+install the [GitHub CLI](https://cli.github.com/) and authenticate once with
+`gh auth login --hostname github.com`. All pull request access, including public
+repositories, uses `gh api`; Sadoku never reads or stores a GitHub token. Fetch
+URLs, document identities, logs, and comment storage paths also contain no
+credentials.
 
 ### Comments from the CLI
 

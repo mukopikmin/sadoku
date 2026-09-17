@@ -13,6 +13,7 @@ export type DirectorySession = {
   rootPath: string;
   documents: DirectoryDocument[];
   documentsById: Map<number, DirectoryDocument>;
+  readMarkdown?: (source: string) => Promise<string>;
 };
 
 export type MarkdownDocumentPath = {
