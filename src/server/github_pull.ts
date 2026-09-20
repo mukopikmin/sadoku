@@ -8,6 +8,13 @@ export type GitHubPullDocument = {
   relativePath: string;
 };
 
+export type GitHubPullResult = {
+  description: string;
+  documents: GitHubPullDocument[];
+  headSha: string;
+  title: string;
+};
+
 export type GitHubCommandResult = {
   code: number;
   stderr: Uint8Array;
@@ -93,12 +100,16 @@ export const readGitHubMarkdownSource = async (
 export const listGitHubPullDocuments = async (
   pull: GitHubPullSource,
   options: GitHubPullClientOptions,
-): Promise<GitHubPullDocument[]> => {
+): Promise<GitHubPullResult> => {
   const run = options.run;
   const repoPath = `repos/${encodeURIComponent(pull.owner)}/${
     encodeURIComponent(pull.repo)
   }`;
-  const pullResult = parseJson<{ head?: { sha?: unknown } }>(
+  const pullResult = parseJson<{
+    body?: unknown;
+    head?: { sha?: unknown };
+    title?: unknown;
+  }>(
     await runApi(`${repoPath}/pulls/${pull.pullNumber}`, run),
     "pull request",
   );
@@ -106,6 +117,19 @@ export const listGitHubPullDocuments = async (
   if (typeof headSha !== "string" || !headSha) {
     throw new Error(
       "GitHub API response did not contain the pull request head SHA.",
+    );
+  }
+  if (typeof pullResult.title !== "string") {
+    throw new Error(
+      "GitHub API response did not contain a valid pull request title.",
+    );
+  }
+  if (
+    pullResult.body !== null && pullResult.body !== undefined &&
+    typeof pullResult.body !== "string"
+  ) {
+    throw new Error(
+      "GitHub API response did not contain a valid pull request body.",
     );
   }
 
@@ -157,5 +181,10 @@ export const listGitHubPullDocuments = async (
     }
     if (files.length < 100) break;
   }
-  return documents;
+  return {
+    description: pullResult.body ?? "",
+    documents,
+    headSha,
+    title: pullResult.title,
+  };
 };

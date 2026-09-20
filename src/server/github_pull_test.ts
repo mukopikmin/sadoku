@@ -26,7 +26,13 @@ Deno.test("GitHub pull adapter uses gh for every page and filters files", async 
     calls.push([...args]);
     const endpoint = args.at(-1)!;
     if (endpoint.endsWith("/pulls/7")) {
-      return Promise.resolve(result({ head: { sha: "abc123" } }));
+      return Promise.resolve(
+        result({
+          body: "Pull body",
+          head: { sha: "abc123" },
+          title: "Pull title",
+        }),
+      );
     }
     if (endpoint.includes("&page=1")) {
       return Promise.resolve(result([
@@ -44,7 +50,11 @@ Deno.test("GitHub pull adapter uses gh for every page and filters files", async 
     );
   };
 
-  const documents = await listGitHubPullDocuments(pull, { run, maxFiles: 10 });
+  const pullResult = await listGitHubPullDocuments(pull, { run, maxFiles: 10 });
+  assertEquals(pullResult.title, "Pull title");
+  assertEquals(pullResult.description, "Pull body");
+  assertEquals(pullResult.headSha, "abc123");
+  const documents = pullResult.documents;
   assertEquals(documents.map((document) => document.relativePath), [
     "README.md",
     "guides/setup.markdown",
@@ -69,16 +79,37 @@ Deno.test("GitHub pull adapter applies extensions and max-files", async () => {
     Promise.resolve(
       result(
         args.at(-1)!.endsWith("/pulls/7")
-          ? { head: { sha: "sha" } }
+          ? { body: null, head: { sha: "sha" }, title: "Pull title" }
           : [{ filename: "one.mdx" }, { filename: "two.mdx" }],
       ),
     );
-  const documents = await listGitHubPullDocuments(pull, {
+  const pullResult = await listGitHubPullDocuments(pull, {
     run,
     markdownExtensions: [".mdx"],
     maxFiles: 1,
   });
-  assertEquals(documents.map((document) => document.relativePath), ["one.mdx"]);
+  assertEquals(pullResult.description, "");
+  assertEquals(pullResult.documents.map((document) => document.relativePath), [
+    "one.mdx",
+  ]);
+});
+
+Deno.test("GitHub pull adapter rejects invalid title and body fields", async () => {
+  for (
+    const response of [
+      { body: "Description", head: { sha: "sha" }, title: 42 },
+      { body: false, head: { sha: "sha" }, title: "Title" },
+    ]
+  ) {
+    await assertRejects(
+      () =>
+        listGitHubPullDocuments(pull, {
+          run: () => Promise.resolve(result(response)),
+        }),
+      Error,
+      "valid pull request",
+    );
+  }
 });
 
 Deno.test("GitHub pull adapter maps gh authentication and pagination errors", async () => {
@@ -97,7 +128,9 @@ Deno.test("GitHub pull adapter maps gh authentication and pagination errors", as
         run: () => {
           calls += 1;
           if (calls === 1) {
-            return Promise.resolve(result({ head: { sha: "sha" } }));
+            return Promise.resolve(
+              result({ body: "", head: { sha: "sha" }, title: "Pull title" }),
+            );
           }
           if (calls === 2) {
             return Promise.resolve(

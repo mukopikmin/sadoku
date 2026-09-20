@@ -243,7 +243,11 @@ Deno.test("serves pull request Markdown at the head SHA as a multi-document sess
     const endpoint = args.at(-1)!;
     let output: unknown;
     if (endpoint.endsWith("/pulls/23")) {
-      output = { head: { sha: "fixed-head" } };
+      output = {
+        body: "Line one\nLine two",
+        head: { sha: "fixed-head" },
+        title: "Improve docs",
+      };
     } else if (endpoint.includes("/pulls/23/files")) {
       output = [
         { filename: "README.md", status: "modified" },
@@ -281,6 +285,18 @@ Deno.test("serves pull request Markdown at the head SHA as a multi-document sess
 
   try {
     assertEquals(new URL(preview.url).pathname, "/");
+    const sessionResponse = await fetch(
+      new URL("/__sadoku/session", preview.url),
+    );
+    assertEquals(sessionResponse.status, 200);
+    assertEquals(sessionResponse.headers.get("cache-control"), "no-store");
+    assertEquals(await sessionResponse.json(), {
+      pullRequest: {
+        description: "Line one\nLine two",
+        title: "Improve docs",
+        url: "https://github.com/octo/repo/pull/23",
+      },
+    });
     const documents =
       await (await fetch(new URL("/__sadoku/documents", preview.url))).json();
     assertEquals(

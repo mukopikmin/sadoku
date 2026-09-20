@@ -14,6 +14,11 @@ export type DirectorySession = {
   documents: DirectoryDocument[];
   documentsById: Map<number, DirectoryDocument>;
   readMarkdown?: (source: string) => Promise<string>;
+  pullRequest?: {
+    description: string;
+    title: string;
+    url: string;
+  };
 };
 
 export type MarkdownDocumentPath = {

@@ -21,11 +21,13 @@ const createSession = (
   rootPath: string,
   documents: DirectorySession["documents"],
   readMarkdown?: DirectorySession["readMarkdown"],
+  pullRequest?: DirectorySession["pullRequest"],
 ): DirectorySession => ({
   rootPath,
   documents,
   documentsById: new Map(documents.map((document) => [document.id, document])),
   ...(readMarkdown && { readMarkdown }),
+  ...(pullRequest && { pullRequest }),
 });
 
 export type DirectorySessionStatus =
@@ -142,12 +144,12 @@ export const createPreviewSession = async (
       );
     }
     const run = githubOptions.run;
-    const pullDocuments = await listGitHubPullDocuments(source.githubPull, {
+    const pull = await listGitHubPullDocuments(source.githubPull, {
       run,
       markdownExtensions: scanOptions.markdownExtensions,
       maxFiles: scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles,
     });
-    const documents = await Promise.all(pullDocuments.map(async (item) => ({
+    const documents = await Promise.all(pull.documents.map(async (item) => ({
       ...await documentStore.ensure(item.commentSource),
       deleted: false,
       filePath: item.filePath,
@@ -158,6 +160,11 @@ export const createPreviewSession = async (
       source.commentSource,
       documents,
       (documentSource) => readGitHubMarkdownSource(documentSource, run),
+      {
+        description: pull.description,
+        title: pull.title,
+        url: source.githubPull.url,
+      },
     );
   }
   if (source.isRemote) {
