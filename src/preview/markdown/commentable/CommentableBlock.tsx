@@ -260,24 +260,10 @@ export const CommentableBlock = ({
           ))}
           {isAdding && (
             <Box mb="1.5">
-              <Text color="fg.muted" fontSize="xs" fontWeight="semibold" mb="1">
-                Commenting on {formatRangeLabel(pendingRange)}.
-              </Text>
-              <Box position="relative">
-                <Textarea
-                  aria-label="Comment body"
-                  autoFocus
-                  minH="90px"
-                  onChange={(event) => setDraft(event.target.value)}
-                  onKeyDown={(event) =>
-                    submitCommentOnShortcut(event, () => {
-                      void handleCreate();
-                    })}
-                  placeholder="Write a GitHub PR comment..."
-                  pr="10"
-                  ref={textareaRef}
-                  value={draft}
-                />
+              <Flex align="center" justify="space-between" gap="2" mb="1">
+                <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
+                  Commenting on {formatRangeLabel(pendingRange)}.
+                </Text>
                 <Tooltip content="Suggest edit">
                   <IconButton
                     aria-label="Suggest edit"
@@ -290,17 +276,27 @@ export const CommentableBlock = ({
                       );
                       textareaRef.current?.focus();
                     }}
-                    position="absolute"
-                    right="1"
                     size="xs"
-                    top="1"
                     type="button"
                     variant="ghost"
                   >
                     <FilePenLine aria-hidden="true" />
                   </IconButton>
                 </Tooltip>
-              </Box>
+              </Flex>
+              <Textarea
+                aria-label="Comment body"
+                autoFocus
+                minH="90px"
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) =>
+                  submitCommentOnShortcut(event, () => {
+                    void handleCreate();
+                  })}
+                placeholder="Write a GitHub PR comment..."
+                ref={textareaRef}
+                value={draft}
+              />
               <Flex wrap="wrap" gap="2">
                 <Button
                   size="xs"
