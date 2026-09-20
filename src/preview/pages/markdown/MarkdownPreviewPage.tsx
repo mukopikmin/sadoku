@@ -1,7 +1,4 @@
-import {
-  useCommentActions,
-  useCommentsQuery,
-} from "../../hooks/usePreviewData";
+import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 import type { ActiveComment } from "../../models/comment";
 import { MarkdownPreview, type MarkdownPreviewProps } from "./MarkdownPreview";
 

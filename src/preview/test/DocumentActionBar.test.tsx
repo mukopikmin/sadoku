@@ -5,14 +5,17 @@ import { DocumentActionBar } from "../components/DocumentActionBar";
 afterEach(cleanup);
 
 describe("DocumentActionBar", () => {
-  it("shows the document tags on hover and opens the editor on click", async () => {
+  it("describes document tags and opens the editor", async () => {
     const onOpenTags = vi.fn();
-    render(
+    const { rerender } = render(
       <DocumentActionBar
+        instructionCount={3}
+        memoryCount={4}
         onOpenInstructions={() => {}}
         onOpenTags={onOpenTags}
         onToggleHtmlComments={() => {}}
         showHtmlComments
+        tagCount={2}
         tags={[
           { backgroundColor: "#3182ce", id: 1, name: "reviewed" },
           { backgroundColor: "#38a169", id: 2, name: "documentation" },
@@ -21,25 +24,30 @@ describe("DocumentActionBar", () => {
     );
 
     const tagsButton = screen.getByRole("button", { name: "Tags" });
-    expect(tagsButton.querySelector("svg")).not.toBeNull();
+    expect(tagsButton.querySelector(".lucide-tag")).not.toBeNull();
+    expect(tagsButton.textContent).toBe("2");
+    expect(screen.queryByText("Tags")).toBeNull();
 
     fireEvent.pointerEnter(tagsButton);
     await waitFor(() => {
+      expect(screen.getByRole("tooltip").textContent).toBe("Tags");
       expect(screen.getByText("reviewed")).not.toBeNull();
       expect(screen.getByText("documentation")).not.toBeNull();
     });
 
     fireEvent.click(tagsButton);
     expect(onOpenTags).toHaveBeenCalledOnce();
-  });
 
-  it("describes a document without tags on hover", async () => {
-    render(
+    fireEvent.pointerLeave(tagsButton);
+    rerender(
       <DocumentActionBar
+        instructionCount={0}
+        memoryCount={0}
         onOpenInstructions={() => {}}
-        onOpenTags={() => {}}
+        onOpenTags={onOpenTags}
         onToggleHtmlComments={() => {}}
         showHtmlComments
+        tagCount={0}
         tags={[]}
       />,
     );
@@ -49,5 +57,54 @@ describe("DocumentActionBar", () => {
     await waitFor(() => {
       expect(screen.getByText("No tags added.")).not.toBeNull();
     });
+  });
+
+  it("renders accessible icon actions with stable names, badges, and tooltips", async () => {
+    const onOpenInstructions = vi.fn();
+    const onOpenMemories = vi.fn();
+    const onToggleHtmlComments = vi.fn();
+    render(
+      <DocumentActionBar
+        instructionCount={0}
+        memoryCount={12}
+        onOpenInstructions={onOpenInstructions}
+        onOpenMemories={onOpenMemories}
+        onOpenTags={() => {}}
+        onToggleHtmlComments={onToggleHtmlComments}
+        showHtmlComments={false}
+        tagCount={0}
+        tags={[]}
+      />,
+    );
+
+    const instructions = screen.getByRole("button", { name: "Instructions" });
+    const memories = screen.getByRole("button", { name: "Memories" });
+    const comments = screen.getByRole("button", {
+      name: "Show HTML comments",
+    });
+    expect(instructions.textContent).toBe("0");
+    expect(memories.textContent).toBe("12");
+    expect(instructions.querySelector(".lucide-file-text")).not.toBeNull();
+    expect(memories.querySelector(".lucide-brain")).not.toBeNull();
+    expect(comments.textContent).toBe("");
+    expect(comments.getAttribute("aria-pressed")).toBe("true");
+    expect(comments.querySelector(".lucide-eye-off")).not.toBeNull();
+
+    fireEvent.pointerEnter(memories);
+    expect((await screen.findByRole("tooltip")).textContent).toBe("Memories");
+    fireEvent.pointerLeave(memories);
+    fireEvent.pointerEnter(comments);
+    await waitFor(() =>
+      expect(screen.getByRole("tooltip").textContent).toBe(
+        "Show HTML comments",
+      )
+    );
+
+    fireEvent.click(instructions);
+    fireEvent.click(memories);
+    fireEvent.click(comments);
+    expect(onOpenInstructions).toHaveBeenCalledOnce();
+    expect(onOpenMemories).toHaveBeenCalledOnce();
+    expect(onToggleHtmlComments).toHaveBeenCalledOnce();
   });
 });

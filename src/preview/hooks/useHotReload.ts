@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { connectHotReload } from "../api/hotReload";
 import { useQueryClient } from "@tanstack/react-query";
-import { commentsQueryKey } from "./usePreviewData";
+import { commentsQueryKey } from "./previewQueryKeys";
 
 export const useHotReload = (documentId?: number) => {
   const [reloadAvailable, setReloadAvailable] = useState(false);

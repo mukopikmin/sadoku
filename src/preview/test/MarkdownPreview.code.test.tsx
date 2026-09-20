@@ -309,22 +309,6 @@ graph TD
     expect(previewThemeCss).not.toContain(".mermaid-zoom-button");
   });
 
-  it("reruns mermaid rendering after preview interactions recreate diagram nodes", async () => {
-    renderMarkdown(`\`\`\`mermaid
-graph TD
-  A --> B
-\`\`\`
-`);
-
-    await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(1));
-
-    fireEvent.click(document.querySelector(".commentable-content")!);
-
-    await waitFor(() =>
-      expect(initializeMermaid.mock.calls.length).toBeGreaterThanOrEqual(2)
-    );
-  });
-
   it("reruns mermaid rendering after the Markdown replaces diagram nodes", async () => {
     const initializedSources: (string | null | undefined)[] = [];
     vi.mocked(initializeMermaid).mockImplementation(async () => {

@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import type { TagReference, TagSummary } from "../api/tags";
-import { useTagActions, useTagsQuery } from "../hooks/usePreviewData";
+import { useTagActions, useTagsQuery } from "../hooks/useTags";
 import type { DocumentTag } from "../models/document";
 import { findSimilarTags } from "../models/tagSuggestions";
 import { TagLabel } from "./ui/TagLabel";

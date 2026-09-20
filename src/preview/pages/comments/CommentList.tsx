@@ -8,10 +8,7 @@ import type {
   UnresolvedComment,
 } from "../../models/comment";
 import { isUnresolvedComment } from "../../models/comment";
-import {
-  useCommentActions,
-  useCommentsQuery,
-} from "../../hooks/usePreviewData";
+import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 
 export type CommentListProps = {
   actions: CommentActions;
@@ -64,7 +61,7 @@ const CommentSection = <T extends Comment>({
           {comments.map((comment) => (
             <CommentItem
               actions={actions}
-              variant="panel"
+              variant="card"
               comment={comment}
               key={comment.id}
               lineLabel={formatLineLabel(comment)}

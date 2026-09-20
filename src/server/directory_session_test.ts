@@ -51,6 +51,50 @@ Deno.test("remote preview sessions ignore URL query strings when assigning docum
   );
 });
 
+Deno.test("pull request sessions register multiple documents with stable IDs", async () => {
+  const { documents, store } = createDocumentStore();
+  const encoder = new TextEncoder();
+  const responses = (sha: string) => (args: readonly string[]) => {
+    const value = args.at(-1)!.endsWith("/pulls/9") ? { head: { sha } } : [
+      { filename: "README.md", status: "modified" },
+      { filename: "docs/guide.markdown", status: "added" },
+    ];
+    return Promise.resolve({
+      code: 0,
+      stderr: new Uint8Array(),
+      stdout: encoder.encode(JSON.stringify(value)),
+    });
+  };
+  const input = "https://github.com/octo/repo/pull/9?token=ignored";
+  const first = await createPreviewSession(input, store, {}, {
+    run: responses("first"),
+  });
+  const second = await createPreviewSession(input, store, {}, {
+    run: responses("second"),
+  });
+
+  assertEquals(documents.size, 2);
+  assertEquals(
+    first.documents.map(({ relativePath, title }) => ({ relativePath, title })),
+    [
+      { relativePath: "README.md", title: "README.md" },
+      { relativePath: "docs/guide.markdown", title: "guide.markdown" },
+    ],
+  );
+  assertEquals(
+    first.documents.map((document) => document.id),
+    second.documents.map((document) => document.id),
+  );
+  assertEquals(first.documents[0].filePath.includes("ref=first"), true);
+  assertEquals(second.documents[0].filePath.includes("ref=second"), true);
+  assertEquals(
+    [...documents.keys()].every((key) =>
+      !key.includes("token") && !key.includes("first")
+    ),
+    true,
+  );
+});
+
 Deno.test("directory preparation becomes ready and publishes counts", async () => {
   const directory = await Deno.makeTempDir();
   await Deno.writeTextFile(`${directory}/one.md`, "# One");

@@ -177,6 +177,44 @@ Deno.test("usage documents singular resource commands", () => {
   assertMatch(usage, /instruction add .*--content <text>/);
   assertMatch(usage, /instruction update <instruction-id>/);
   assertMatch(usage, /instruction delete <instruction-id>/);
+  assertMatch(usage, /memory add .*--content <text>/);
+  assertMatch(usage, /memory update <memory-id>/);
+});
+
+Deno.test("parses and validates memory commands", () => {
+  assertEquals(
+    parseArgs(["memory", "list", "--document", "3"]).command,
+    "memory-list",
+  );
+  assertEquals(
+    parseArgs(["memory", "add", "--source", "README.md", "--content", "Fact."])
+      .content,
+    "Fact.",
+  );
+  const update = parseArgs([
+    "memory",
+    "update",
+    "4",
+    "--document",
+    "3",
+    "--content",
+    "Updated.",
+  ]);
+  assertEquals(update.command, "memory-update");
+  assertEquals(update.memoryId, 4);
+  assertEquals(
+    parseArgs(["memory", "delete", "4", "--source", "README.md"]).command,
+    "memory-delete",
+  );
+  for (
+    const args of [
+      ["memory", "list"],
+      ["memory", "list", "--document", "1", "--source", "README.md"],
+      ["memory", "update", "0", "--document", "1", "--content", "x"],
+      ["memory", "add", "--document", "1"],
+      ["memory", "delete", "1", "--document", "1", "--content", "x"],
+    ]
+  ) assertThrows(() => parseArgs(args), CliUsageError);
 });
 
 Deno.test("parses every instruction command", () => {

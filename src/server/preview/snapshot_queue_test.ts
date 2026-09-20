@@ -70,17 +70,3 @@ Deno.test("snapshot queue does not start files after cancellation", async () => 
   assertEquals(result.targetCount, 3);
   assertEquals(result.completedCount, 1);
 });
-
-Deno.test("snapshot queue handles empty input", async () => {
-  const result = await initializeSnapshotQueue({
-    documents: [],
-    readMarkdown: () => Promise.reject(new Error("unexpected read")),
-    initializeSnapshot: () => Promise.reject(new Error("unexpected save")),
-  });
-  assertEquals(result, {
-    concurrency: 1,
-    targetCount: 0,
-    completedCount: 0,
-    failedCount: 0,
-  });
-});

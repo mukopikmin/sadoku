@@ -237,6 +237,83 @@ Deno.test("starts the preview server for a URL source", async () => {
   }
 });
 
+Deno.test("serves pull request Markdown at the head SHA as a multi-document session", async () => {
+  const encoder = new TextEncoder();
+  const runGitHubCommand = (args: readonly string[]) => {
+    const endpoint = args.at(-1)!;
+    let output: unknown;
+    if (endpoint.endsWith("/pulls/23")) {
+      output = { head: { sha: "fixed-head" } };
+    } else if (endpoint.includes("/pulls/23/files")) {
+      output = [
+        { filename: "README.md", status: "modified" },
+        { filename: "docs/guide.markdown", status: "added" },
+        { filename: "deleted.md", status: "removed" },
+      ];
+    } else if (endpoint.includes("/contents/README.md?ref=fixed-head")) {
+      output = "# PR readme\n";
+    } else if (
+      endpoint.includes("/contents/docs/guide.markdown?ref=fixed-head")
+    ) {
+      output = "# PR guide\n";
+    } else {
+      return Promise.resolve({
+        code: 1,
+        stderr: encoder.encode("not found"),
+        stdout: new Uint8Array(),
+      });
+    }
+    return Promise.resolve({
+      code: 0,
+      stderr: new Uint8Array(),
+      stdout: encoder.encode(
+        typeof output === "string" ? output : JSON.stringify(output),
+      ),
+    });
+  };
+  const preview = await startPreviewServer({
+    file: "https://github.com/octo/repo/pull/23?token=must-not-persist",
+    runGitHubCommand,
+    host: "127.0.0.1",
+    keepAlive: true,
+    port: 0,
+  });
+
+  try {
+    assertEquals(new URL(preview.url).pathname, "/");
+    const documents =
+      await (await fetch(new URL("/__sadoku/documents", preview.url))).json();
+    assertEquals(
+      documents.map((document: { relativePath: string }) =>
+        document.relativePath
+      ),
+      ["README.md", "docs/guide.markdown"],
+    );
+    const contents = await Promise.all(
+      documents.map(async (document: { id: number }) =>
+        await (await fetch(
+          new URL(`/__sadoku/documents/${document.id}`, preview.url),
+        )).json()
+      ),
+    );
+    assertEquals(
+      contents.map((document: { markdown: string }) => document.markdown),
+      ["# PR readme\n", "# PR guide\n"],
+    );
+    const commentResponse = await fetch(
+      new URL(`/__sadoku/documents/${documents[0].id}/comments`, preview.url),
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ body: "Review this", endLine: 1, startLine: 1 }),
+      },
+    );
+    assertEquals(commentResponse.status, 200);
+  } finally {
+    await stopServer(preview);
+  }
+});
+
 Deno.test("keeps the root URL for a directory containing one document", async () => {
   const directory = await Deno.makeTempDir({ prefix: "sadoku-server-" });
   await Deno.writeTextFile(`${directory}/only.md`, "# Only document\n");

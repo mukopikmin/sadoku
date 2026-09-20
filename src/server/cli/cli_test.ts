@@ -137,6 +137,58 @@ Deno.test("registers a source on demand before adding a comment", async () => {
   });
 });
 
+Deno.test("dispatches memory CRUD commands", async () => {
+  await withTempCommentsDirectory(async () => {
+    await runCli(
+      ["document", "add", "README.md"],
+      dependencies,
+      captureIo().io,
+    );
+    const added = captureIo();
+    assertEquals(
+      await runCli(
+        ["memory", "add", "--document", "1", "--content", "Stable fact.\r\n"],
+        dependencies,
+        added.io,
+      ),
+      0,
+    );
+    assertEquals(JSON.parse(added.logs[0]).content, "Stable fact.");
+    const updated = captureIo();
+    await runCli(
+      [
+        "memory",
+        "update",
+        "1",
+        "--document",
+        "1",
+        "--content",
+        "Updated fact.",
+      ],
+      dependencies,
+      updated.io,
+    );
+    assertEquals(JSON.parse(updated.logs[0]).content, "Updated fact.");
+    const listed = captureIo();
+    await runCli(
+      ["memory", "list", "--document", "1"],
+      dependencies,
+      listed.io,
+    );
+    assertEquals(
+      JSON.parse(listed.logs[0]).memories[0].content,
+      "Updated fact.",
+    );
+    const deleted = captureIo();
+    await runCli(
+      ["memory", "delete", "1", "--document", "1"],
+      dependencies,
+      deleted.io,
+    );
+    assertEquals(deleted.logs, ["Deleted memory 1."]);
+  });
+});
+
 Deno.test("dispatches instruction commands with canonical sources and JSON output", async () => {
   await withTempCommentsDirectory(async () => {
     const registered = captureIo();

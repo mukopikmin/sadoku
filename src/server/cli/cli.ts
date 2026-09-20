@@ -28,6 +28,12 @@ import {
   listInstructions,
   updateInstruction,
 } from "./instruction_cli.ts";
+import {
+  addMemory,
+  deleteMemory,
+  listMemories,
+  updateMemory,
+} from "./memory_cli.ts";
 import { logInfo } from "../../log.ts";
 import type { PreviewServerOptions } from "../server.ts";
 import { createConfiguredStores } from "../storage/factory.ts";
@@ -101,6 +107,8 @@ const resolveInstructionDocument = async (
   }
   return document;
 };
+
+const resolveMemoryDocument = resolveInstructionDocument;
 
 const runWithStores = async <T>(
   operation: (stores: ConfiguredStores) => Promise<T>,
@@ -278,6 +286,38 @@ const executeCli = async (
             stores.instructions,
           );
           return io.log(`Deleted instruction ${options.instructionId}.`);
+      }
+    });
+    return;
+  }
+
+  if (options.command?.startsWith("memory-")) {
+    await runWithStores(async (stores) => {
+      const document = await resolveMemoryDocument(options, stores);
+      switch (options.command) {
+        case "memory-list":
+          return printJson(io, {
+            document,
+            memories: await listMemories(document.id, stores.memories),
+          });
+        case "memory-add":
+          return printJson(
+            io,
+            await addMemory(document.id, options.content!, stores.memories),
+          );
+        case "memory-update":
+          return printJson(
+            io,
+            await updateMemory(
+              document.id,
+              options.memoryId!,
+              options.content!,
+              stores.memories,
+            ),
+          );
+        case "memory-delete":
+          await deleteMemory(document.id, options.memoryId!, stores.memories);
+          return io.log(`Deleted memory ${options.memoryId}.`);
       }
     });
     return;

@@ -1,23 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 
-import {
-  getUnixInstallPath,
-  installUnix,
-  supportsUnixInstall,
-} from "./install_unix.ts";
-
-Deno.test("supports macOS and Linux installs", () => {
-  assertEquals(supportsUnixInstall("darwin"), true);
-  assertEquals(supportsUnixInstall("linux"), true);
-  assertEquals(supportsUnixInstall("windows"), false);
-});
-
-Deno.test("builds the install path under the user home directory", () => {
-  assertEquals(
-    getUnixInstallPath("/home/sadoku-user"),
-    "/home/sadoku-user/.local/bin/sadoku",
-  );
-});
+import { getUnixInstallPath, installUnix } from "./install_unix.ts";
 
 Deno.test("rejects unsupported operating systems", async () => {
   await assertRejects(

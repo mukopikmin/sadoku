@@ -11,6 +11,10 @@ export type CliCommand =
   | "instruction-delete"
   | "instruction-list"
   | "instruction-update"
+  | "memory-add"
+  | "memory-delete"
+  | "memory-list"
+  | "memory-update"
   | "comment-add"
   | "comment-delete"
   | "comment-list"
@@ -35,6 +39,7 @@ export type CliOptions = {
   file?: string;
   host: string;
   instructionId?: number;
+  memoryId?: number;
   keepAlive: boolean;
   maxDepth?: number;
   maxFiles?: number;
@@ -64,6 +69,10 @@ export const usage = `Usage:
   sadoku instruction add (--document <id> | --source <file.md|url>) --content <text>
   sadoku instruction update <instruction-id> (--document <id> | --source <file.md|url>) --content <text>
   sadoku instruction delete <instruction-id> (--document <id> | --source <file.md|url>)
+  sadoku memory list (--document <id> | --source <file.md|url>)
+  sadoku memory add (--document <id> | --source <file.md|url>) --content <text>
+  sadoku memory update <memory-id> (--document <id> | --source <file.md|url>) --content <text>
+  sadoku memory delete <memory-id> (--document <id> | --source <file.md|url>)
   sadoku comment list (--document <id> | --source <file.md|url>)
   sadoku comment add (--document <id> | --source <file.md|url> [--ensure-document]) --start-line <line> [--end-line <line>] --body <text> [--as-bot]
   sadoku comment update <comment-id> (--document <id> | --source <file.md|url>) --body <text>
@@ -83,7 +92,7 @@ Options:
   --start-line      First commented line.
   --end-line        Last commented line. Defaults to --start-line.
   --body            Comment or reply body.
-  --content         Instruction content.
+  --content         Instruction or memory content.
   --as-bot          Attribute supported comment actions to a bot.
   --request-review  Request review in a bot reply (requires --as-bot).
   -p, --port        Starting preview port. Defaults to 3334.
@@ -306,6 +315,60 @@ export const parseArgs = (argv: string[]): CliOptions => {
       };
     }
     throw new CliUsageError("Invalid instruction command.");
+  }
+
+  if (words[0] === "memory") {
+    if (flags.channel !== undefined) {
+      throw new CliUsageError("--channel is only accepted by update.");
+    }
+    if (
+      flags.body !== undefined || flags.comment !== undefined ||
+      flags["start-line"] !== undefined || flags["end-line"] !== undefined ||
+      flags["as-bot"] || flags["ensure-document"] || flags["request-review"]
+    ) {
+      throw new CliUsageError(
+        "memory commands do not accept comment options or --ensure-document.",
+      );
+    }
+    const documentId = flags.document === undefined
+      ? undefined
+      : positiveInteger(flags.document, "Document ID");
+    const source = flags.source?.toString();
+    if ((documentId === undefined) === (source === undefined)) {
+      throw new CliUsageError("Specify exactly one of --document or --source.");
+    }
+    const target = { documentId, source };
+    const content = flags.content?.toString();
+    if (words[1] === "list" && words.length === 2) {
+      if (content !== undefined) {
+        throw new CliUsageError("memory list does not accept --content.");
+      }
+      return { ...base, ...target, command: "memory-list" };
+    }
+    if (words[1] === "add" && words.length === 2) {
+      if (content === undefined) {
+        throw new CliUsageError("--content is required.");
+      }
+      return { ...base, ...target, command: "memory-add", content };
+    }
+    if (
+      (words[1] === "update" || words[1] === "delete") && words.length === 3
+    ) {
+      if (words[1] === "update" && content === undefined) {
+        throw new CliUsageError("--content is required.");
+      }
+      if (words[1] === "delete" && content !== undefined) {
+        throw new CliUsageError("memory delete does not accept --content.");
+      }
+      return {
+        ...base,
+        ...target,
+        command: `memory-${words[1]}` as CliCommand,
+        ...(content !== undefined ? { content } : {}),
+        memoryId: positiveInteger(words[2], "Memory ID"),
+      };
+    }
+    throw new CliUsageError("Invalid memory command.");
   }
 
   if (words[0] !== "comment") {

@@ -4,9 +4,10 @@ Sadoku is a local Markdown review tool. Open a file, directory, or HTTP(S) URL
 in your browser, preview the rendered Markdown, and leave comments without
 changing the source document.
 
-Document instructions and review comments are stored locally. Remote URLs are
-fetched in full, but their query strings and fragments are excluded from the
-stored document identity so credentials and temporary tokens are not persisted.
+Document instructions, agent memories, and review comments are stored locally.
+Remote URLs are fetched in full, but their query strings and fragments are
+excluded from the stored document identity so credentials and temporary tokens
+are not persisted.
 
 ## Install
 
@@ -57,6 +58,12 @@ Preview a remote document:
 sadoku start https://example.com/README.md
 ```
 
+Preview the Markdown files changed by a GitHub pull request:
+
+```sh
+sadoku start https://github.com/<owner>/<repo>/pull/<number>
+```
+
 Sadoku binds to `127.0.0.1`, chooses port `3334` or the next available port, and
 opens the preview in your default browser. Common options include:
 
@@ -74,6 +81,16 @@ Directory previews scan two levels and load up to 20 documents by default.
 Change these limits with `--max-depth` and `--max-files`, or under **Settings →
 Directory discovery**. Sadoku does not follow symbolic links and excludes `.git`
 and `node_modules` by default.
+
+GitHub pull request previews use the same configured Markdown extensions and
+`--max-files` limit. They show added and modified Markdown files, omit deleted
+files, and fetch every document at the pull request's current head commit. The
+document identity remains stable when the branch advances. To use this feature,
+install the [GitHub CLI](https://cli.github.com/) and authenticate once with
+`gh auth login --hostname github.com`. All pull request access, including public
+repositories, uses `gh api`; Sadoku never reads or stores a GitHub token. Fetch
+URLs, document identities, logs, and comment storage paths also contain no
+credentials.
 
 ### Comments from the CLI
 
@@ -98,6 +115,22 @@ sadoku comment delete <comment-id> --document <document-id>
 Commands also accept `--source <file.md|url>`. Use `--ensure-document` with
 `comment add` to register that source when needed. Run `sadoku comment --help`
 for reply, reopen, bot attribution, and review-request options.
+
+### Agent memories
+
+Agents can keep reusable background knowledge separately from a document. Memory
+commands use the same document selectors as instruction commands:
+
+```sh
+sadoku memory list --source README.md
+sadoku memory add --source README.md --content "The audience is maintainers."
+sadoku memory update 1 --source README.md --content "The audience is contributors."
+sadoku memory delete 1 --source README.md
+```
+
+The preview UI lets people review and delete memories; additions and updates are
+CLI-only. Memories are context rather than instructions. Do not store
+credentials, access tokens, URL query parameters, or other secrets in them.
 
 ## Configuration and storage
 

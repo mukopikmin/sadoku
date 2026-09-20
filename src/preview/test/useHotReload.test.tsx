@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useHotReload } from "../hooks/useHotReload";
-import { useCommentsQuery } from "../hooks/usePreviewData";
+import { useCommentsQuery } from "../hooks/useComments";
 
 class TestEventSource extends EventTarget {
   static instances: TestEventSource[] = [];

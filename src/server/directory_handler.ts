@@ -43,6 +43,8 @@ import {
 } from "./api/instruction_api.ts";
 import type { TagStore } from "./usecase/tag/ports.ts";
 import { listTags, patchTag, putDocumentTags } from "./api/tag_api.ts";
+import type { MemoryStore } from "./usecase/memory/ports.ts";
+import { getMemories, removeMemory } from "./api/memory_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   log?: (message: string) => void;
@@ -59,6 +61,7 @@ export const createDirectoryPreviewHandler = (
   documentStore?: DocumentStore,
   instructionStore?: InstructionStore,
   tagStore?: TagStore,
+  memoryStore?: MemoryStore,
 ): Deno.ServeHandler => {
   const app = new Hono();
   const log = options.log ?? logInfo;
@@ -141,6 +144,7 @@ export const createDirectoryPreviewHandler = (
         session,
         documentStore,
         tagStore,
+        session.readMarkdown,
       ),
   );
 
@@ -168,7 +172,7 @@ export const createDirectoryPreviewHandler = (
 
   app.get("/__sadoku/documents/:documentId/comments", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
-    return getComments(source, commentsStore);
+    return getComments(source, commentsStore, session.readMarkdown);
   });
   if (instructionStore) {
     app.get("/__sadoku/documents/:documentId/instructions", (context) => {
@@ -211,9 +215,39 @@ export const createDirectoryPreviewHandler = (
       methodNotAllowedResponse,
     );
   }
+  if (memoryStore) {
+    app.get("/__sadoku/documents/:documentId/memories", (context) => {
+      const { document } = resolveDocument(context.req.param("documentId"));
+      return getMemories(document.id, memoryStore);
+    });
+    app.delete(
+      "/__sadoku/documents/:documentId/memories/:memoryId",
+      (context) => {
+        const { document } = resolveDocument(context.req.param("documentId"));
+        return removeMemory(
+          document.id,
+          Number(context.req.param("memoryId")),
+          memoryStore,
+        );
+      },
+    );
+    app.all(
+      "/__sadoku/documents/:documentId/memories",
+      methodNotAllowedResponse,
+    );
+    app.all(
+      "/__sadoku/documents/:documentId/memories/*",
+      methodNotAllowedResponse,
+    );
+  }
   app.post("/__sadoku/documents/:documentId/comments", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
-    return createComment(context.req.raw, source, commentsStore);
+    return createComment(
+      context.req.raw,
+      source,
+      commentsStore,
+      session.readMarkdown,
+    );
   });
   app.put("/__sadoku/documents/:documentId/comments/:commentId", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));

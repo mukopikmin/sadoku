@@ -52,6 +52,7 @@ export const getDirectoryDocumentResponse = async (
   session: DirectorySession,
   documentStore?: DocumentStore,
   tagStore?: TagStore,
+  readMarkdown = readMarkdownSource,
 ): Promise<Response> => {
   const id = parseDocumentId(rawId);
   if (id === undefined) return mapError({ type: "document_not_found" });
@@ -66,7 +67,7 @@ export const getDirectoryDocumentResponse = async (
           : undefined,
         readMarkdown: async (source) => ({
           fileUrl: sourceUrl(source),
-          markdown: await readMarkdownSource(source),
+          markdown: await readMarkdown(source),
         }),
         readSnapshot: documentStore?.readSnapshot
           ? (documentId) => documentStore.readSnapshot!(documentId)
