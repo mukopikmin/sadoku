@@ -6,7 +6,7 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import { CodeXml, Link, Plus } from "lucide-react";
+import { CodeXml, FilePenLine, Link, Plus } from "lucide-react";
 import { useContext, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
@@ -263,37 +263,44 @@ export const CommentableBlock = ({
               <Text color="fg.muted" fontSize="xs" fontWeight="semibold" mb="1">
                 Commenting on {formatRangeLabel(pendingRange)}.
               </Text>
-              <Flex gap="2" mb="2">
-                <Button
-                  disabled={isSaving}
-                  onClick={() => {
-                    setDraft((current) =>
-                      `${current}${current ? "\n\n" : ""}${
-                        suggestionBody(selectedSource)
-                      }`
-                    );
-                    textareaRef.current?.focus();
-                  }}
-                  size="xs"
-                  type="button"
-                  variant="outline"
-                >
-                  Suggest edit
-                </Button>
-              </Flex>
-              <Textarea
-                aria-label="Comment body"
-                autoFocus
-                minH="90px"
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={(event) =>
-                  submitCommentOnShortcut(event, () => {
-                    void handleCreate();
-                  })}
-                placeholder="Write a GitHub PR comment..."
-                ref={textareaRef}
-                value={draft}
-              />
+              <Box position="relative">
+                <Textarea
+                  aria-label="Comment body"
+                  autoFocus
+                  minH="90px"
+                  onChange={(event) => setDraft(event.target.value)}
+                  onKeyDown={(event) =>
+                    submitCommentOnShortcut(event, () => {
+                      void handleCreate();
+                    })}
+                  placeholder="Write a GitHub PR comment..."
+                  pr="10"
+                  ref={textareaRef}
+                  value={draft}
+                />
+                <Tooltip content="Suggest edit">
+                  <IconButton
+                    aria-label="Suggest edit"
+                    disabled={isSaving}
+                    onClick={() => {
+                      setDraft((current) =>
+                        `${current}${current ? "\n\n" : ""}${
+                          suggestionBody(selectedSource)
+                        }`
+                      );
+                      textareaRef.current?.focus();
+                    }}
+                    position="absolute"
+                    right="1"
+                    size="xs"
+                    top="1"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <FilePenLine aria-hidden="true" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               <Flex wrap="wrap" gap="2">
                 <Button
                   size="xs"

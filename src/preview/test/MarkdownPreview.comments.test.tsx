@@ -488,7 +488,11 @@ Body
     fireEvent.click(screen.getByRole("button", {
       name: "Add comment on lines 1-3",
     }));
-    fireEvent.click(screen.getByRole("button", { name: "Suggest edit" }));
+    const suggestButton = screen.getByRole("button", { name: "Suggest edit" });
+    expect(suggestButton.textContent).toBe("");
+    expect(suggestButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    fireEvent.click(suggestButton);
 
     const textbox = screen.getByRole("textbox", {
       name: "Comment body",
