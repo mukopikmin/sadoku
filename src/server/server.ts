@@ -11,6 +11,11 @@ import { readConfig } from "./config.ts";
 import { initializeSnapshotQueue } from "./preview/snapshot_queue.ts";
 import type { RunGitHubCommand } from "./github_pull.ts";
 import { runGitHubCommand } from "./cli/github_cli.ts";
+import {
+  createGitHubPullInvalidationHub,
+  githubPullPollIntervalMs,
+  monitorGitHubPull,
+} from "./github_pull_monitor.ts";
 
 export type PreviewServerOptions = {
   file: string;
@@ -21,6 +26,7 @@ export type PreviewServerOptions = {
   maxFiles?: number;
   port: number;
   runGitHubCommand?: RunGitHubCommand;
+  githubPullPollIntervalMs?: number;
 };
 
 export type StartedPreviewServer = {
@@ -159,6 +165,7 @@ export const startPreviewServer = async (
   });
 
   const stores = await createConfiguredStores();
+  const githubInvalidations = createGitHubPullInvalidationHub();
   let previewSession;
   const directoryState = isDirectory
     ? createLoadingDirectorySession(previewSource.documentSource)
@@ -196,6 +203,7 @@ export const startPreviewServer = async (
         log,
         directoryState,
         statistics: stores.statistics,
+        subscribeInvalidation: githubInvalidations.subscribe,
       },
       stores.documents,
       stores.instructions,
@@ -241,6 +249,19 @@ export const startPreviewServer = async (
       readMarkdown: previewSession.readMarkdown ?? readMarkdownSource,
       signal: preparationController.signal,
     }));
+  }
+
+  if (previewSession.githubPull) {
+    trackBackground(monitorGitHubPull({
+      session: previewSession,
+      documentStore: stores.documents,
+      run: options.runGitHubCommand ?? runGitHubCommand,
+      markdownExtensions: config?.markdownExtensions,
+      maxFiles: options.maxFiles ?? config?.directoryMaxFiles,
+      intervalMs: options.githubPullPollIntervalMs ?? githubPullPollIntervalMs,
+      notify: githubInvalidations.notify,
+      logError,
+    }, preparationController.signal));
   }
 
   const pathname = isDirectory || isGitHubPull

@@ -85,8 +85,14 @@ and `node_modules` by default.
 GitHub pull request previews use the same configured Markdown extensions and
 `--max-files` limit. They show added and modified Markdown files, omit deleted
 files, and fetch every document at the pull request's current head commit. The
-document identity remains stable when the branch advances. To use this feature,
-install the [GitHub CLI](https://cli.github.com/) and authenticate once with
+document identity remains stable when the branch advances. While the preview is
+open, Sadoku checks the pull request head every 30 seconds. When it advances,
+Sadoku refreshes the complete changed-Markdown list (including added, removed,
+and renamed files) and shows the existing reload prompt in open documents.
+Documents whose paths are unchanged keep their identity and comment storage when
+the head advances; a renamed path is treated as the canonical identity of the
+renamed document. To use this feature, install the
+[GitHub CLI](https://cli.github.com/) and authenticate once with
 `gh auth login --hostname github.com`. All pull request access, including public
 repositories, uses `gh api`; Sadoku never reads or stores a GitHub token. Fetch
 URLs, document identities, logs, and comment storage paths also contain no

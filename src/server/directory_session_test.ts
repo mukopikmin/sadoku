@@ -87,6 +87,13 @@ Deno.test("pull request sessions register multiple documents with stable IDs", a
   );
   assertEquals(first.documents[0].filePath.includes("ref=first"), true);
   assertEquals(second.documents[0].filePath.includes("ref=second"), true);
+  assertEquals(first.githubPull, {
+    owner: "octo",
+    repo: "repo",
+    pullNumber: 9,
+    initialHeadSha: "first",
+    headSha: "first",
+  });
   assertEquals(
     [...documents.keys()].every((key) =>
       !key.includes("token") && !key.includes("first")

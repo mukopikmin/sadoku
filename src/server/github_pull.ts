@@ -8,6 +8,11 @@ export type GitHubPullDocument = {
   relativePath: string;
 };
 
+export type GitHubPullSnapshot = {
+  headSha: string;
+  documents: GitHubPullDocument[];
+};
+
 export type GitHubCommandResult = {
   code: number;
   stderr: Uint8Array;
@@ -16,6 +21,7 @@ export type GitHubCommandResult = {
 
 export type RunGitHubCommand = (
   args: readonly string[],
+  signal?: AbortSignal,
 ) => Promise<GitHubCommandResult>;
 
 export type GitHubPullClientOptions = {
@@ -57,11 +63,12 @@ const runApi = async (
   endpoint: string,
   run: RunGitHubCommand,
   headers: readonly string[] = [],
+  signal?: AbortSignal,
 ): Promise<Uint8Array> => {
   const args = ["api", "--hostname", "github.com"];
   for (const header of headers) args.push("-H", header);
   args.push(endpoint);
-  const result = await run(args);
+  const result = await run(args, signal);
   if (result.code !== 0) throw commandError(decoder.decode(result.stderr));
   return result.stdout;
 };
@@ -90,16 +97,16 @@ export const readGitHubMarkdownSource = async (
   return decoder.decode(body);
 };
 
-export const listGitHubPullDocuments = async (
+export const readGitHubPullHeadSha = async (
   pull: GitHubPullSource,
-  options: GitHubPullClientOptions,
-): Promise<GitHubPullDocument[]> => {
-  const run = options.run;
+  run: RunGitHubCommand,
+  signal?: AbortSignal,
+): Promise<string> => {
   const repoPath = `repos/${encodeURIComponent(pull.owner)}/${
     encodeURIComponent(pull.repo)
   }`;
   const pullResult = parseJson<{ head?: { sha?: unknown } }>(
-    await runApi(`${repoPath}/pulls/${pull.pullNumber}`, run),
+    await runApi(`${repoPath}/pulls/${pull.pullNumber}`, run, [], signal),
     "pull request",
   );
   const headSha = pullResult.head?.sha;
@@ -108,6 +115,21 @@ export const listGitHubPullDocuments = async (
       "GitHub API response did not contain the pull request head SHA.",
     );
   }
+  return headSha;
+};
+
+export const getGitHubPullSnapshot = async (
+  pull: GitHubPullSource,
+  options: GitHubPullClientOptions,
+  knownHeadSha?: string,
+  signal?: AbortSignal,
+): Promise<GitHubPullSnapshot> => {
+  const run = options.run;
+  const repoPath = `repos/${encodeURIComponent(pull.owner)}/${
+    encodeURIComponent(pull.repo)
+  }`;
+  const headSha = knownHeadSha ??
+    await readGitHubPullHeadSha(pull, run, signal);
 
   const extensions = new Set(
     (options.markdownExtensions ?? defaultMarkdownExtensions).map((value) =>
@@ -123,6 +145,8 @@ export const listGitHubPullDocuments = async (
         await runApi(
           `${repoPath}/pulls/${pull.pullNumber}/files?per_page=100&page=${page}`,
           run,
+          [],
+          signal,
         ),
         "changed-files",
       );
@@ -157,5 +181,12 @@ export const listGitHubPullDocuments = async (
     }
     if (files.length < 100) break;
   }
-  return documents;
+  return { headSha, documents };
+};
+
+export const listGitHubPullDocuments = async (
+  pull: GitHubPullSource,
+  options: GitHubPullClientOptions,
+): Promise<GitHubPullDocument[]> => {
+  return (await getGitHubPullSnapshot(pull, options)).documents;
 };

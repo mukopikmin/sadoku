@@ -52,6 +52,7 @@ export type DirectoryPreviewHandlerOptions = {
   onEventStreamOpen?: () => void;
   statistics?: StatisticsReader;
   directoryState?: DirectorySessionState;
+  subscribeInvalidation?: (listener: () => void) => () => void;
 };
 
 export const createDirectoryPreviewHandler = (
@@ -158,6 +159,7 @@ export const createDirectoryPreviewHandler = (
           commentsNotificationPath: getCommentsNotificationFilePath(
             source.commentSource,
           ),
+          subscribeInvalidation: options.subscribeInvalidation,
         },
       ),
       {
