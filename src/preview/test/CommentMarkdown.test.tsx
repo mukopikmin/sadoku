@@ -26,6 +26,42 @@ const callbacks = {
 };
 
 describe("CommentMarkdown", () => {
+  it("uses ordinary diff code blocks for suggestions and preserves surrounding prose", () => {
+    render(
+      <>
+        <div data-testid="suggested-diff">
+          <CommentMarkdown sourceText={"Original\nUnchanged"}>
+            {"Please revise this.\n\n```suggest\n<script>edited</script>\nUnchanged\n```\n\nThanks."}
+          </CommentMarkdown>
+        </div>
+        <div data-testid="ordinary-diff">
+          <CommentMarkdown>
+            {"```diff\n-Original\n+<script>edited</script>\n Unchanged\n```"}
+          </CommentMarkdown>
+        </div>
+      </>,
+    );
+
+    const suggestion = screen.getByTestId("suggested-diff");
+    const ordinary = screen.getByTestId("ordinary-diff");
+    expect(suggestion.querySelector("pre")?.outerHTML).toBe(
+      ordinary.querySelector("pre")?.outerHTML,
+    );
+    expect(suggestion.querySelector("script")).toBeNull();
+    expect(screen.getByText("Please revise this.")).not.toBeNull();
+    expect(screen.getByText("Thanks.")).not.toBeNull();
+  });
+
+  it("preserves suggestion text when the original source is unavailable", () => {
+    const { container } = render(
+      <CommentMarkdown>{"```suggest\nReplacement\n```"}</CommentMarkdown>,
+    );
+    expect(container.querySelector("pre code.language-diff")?.textContent).toBe(
+      "Replacement\n",
+    );
+    expect(container.querySelector(".hljs-deletion")).toBeNull();
+  });
+
   it("shares MarkdownPreview element styles", () => {
     const markdown = `## Heading
 

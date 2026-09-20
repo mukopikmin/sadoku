@@ -108,7 +108,9 @@ export const CommentItem = ({
           )
           : (
             <Box pr="14">
-              <CommentMarkdown>{comment.body}</CommentMarkdown>
+              <CommentMarkdown sourceText={comment.sourceText}>
+                {comment.body}
+              </CommentMarkdown>
             </Box>
           )}
         {(comment.replies ?? []).length > 0 && (
@@ -122,6 +124,7 @@ export const CommentItem = ({
                 onUpdate={onUpdateReply}
                 reportError={reportError}
                 reply={reply}
+                sourceText={comment.sourceText}
                 runAction={runAction}
               />
             ))}
