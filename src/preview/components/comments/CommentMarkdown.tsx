@@ -17,7 +17,11 @@ const getSuggestion = (children: React.ReactNode): string | undefined => {
   ) {
     return undefined;
   }
-  if (!child.props.className?.split(/\s+/).includes("language-suggestion")) {
+  if (
+    !child.props.className?.split(/\s+/).some((name) =>
+      name === "language-suggest" || name === "language-suggestion"
+    )
+  ) {
     return undefined;
   }
   return String(child.props.children ?? "").replace(/\n$/, "");

@@ -7,7 +7,7 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 import { CodeXml, Link, Plus } from "lucide-react";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -45,7 +45,7 @@ const suggestionBody = (replacement: string): string => {
     ...[...replacement.matchAll(/`+/g)].map((match) => match[0].length),
   );
   const fence = "`".repeat(Math.max(3, longestBacktickRun + 1));
-  return `${fence}suggestion\n${replacement}\n${fence}`;
+  return `${fence}suggest\n${replacement}\n${fence}`;
 };
 
 export const CommentableBlock = ({
@@ -67,9 +67,8 @@ export const CommentableBlock = ({
   onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
-  const [draft, setDraft] = useState<
-    { body: string; type: "comment" | "suggestion" }
-  >({ body: "", type: "comment" });
+  const [draft, setDraft] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const pendingRange: CommentRange = activeRange ?? selectedRange ?? {
     ...sourceRange,
@@ -93,13 +92,8 @@ export const CommentableBlock = ({
     ).join("\n"), [markdown, pendingRange.endLine, pendingRange.startLine]);
 
   const handleCreate = async () => {
-    const content = draft.type === "suggestion"
-      ? draft.body
-      : draft.body.trim();
-    const body = draft.type === "suggestion"
-      ? suggestionBody(content)
-      : content;
-    if (!content.trim() || isSaving) return;
+    const body = draft.trim();
+    if (!body || isSaving) return;
     setIsSaving(true);
     setError(undefined);
     try {
@@ -108,7 +102,7 @@ export const CommentableBlock = ({
         body,
         pendingRange.endLine,
       );
-      setDraft({ body: "", type: "comment" });
+      setDraft("");
       onCloseCommentForm();
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
@@ -269,58 +263,46 @@ export const CommentableBlock = ({
               <Text color="fg.muted" fontSize="xs" fontWeight="semibold" mb="1">
                 Commenting on {formatRangeLabel(pendingRange)}.
               </Text>
-              <Flex gap="2" mb="2" role="group" aria-label="Comment type">
+              <Flex gap="2" mb="2">
                 <Button
-                  aria-pressed={draft.type === "comment"}
-                  onClick={() => setDraft({ body: "", type: "comment" })}
+                  disabled={isSaving}
+                  onClick={() => {
+                    setDraft((current) =>
+                      `${current}${current ? "\n\n" : ""}${
+                        suggestionBody(selectedSource)
+                      }`
+                    );
+                    textareaRef.current?.focus();
+                  }}
                   size="xs"
                   type="button"
-                  variant={draft.type === "comment" ? "solid" : "outline"}
-                >
-                  Comment
-                </Button>
-                <Button
-                  aria-pressed={draft.type === "suggestion"}
-                  onClick={() =>
-                    setDraft({ body: selectedSource, type: "suggestion" })}
-                  size="xs"
-                  type="button"
-                  variant={draft.type === "suggestion" ? "solid" : "outline"}
+                  variant="outline"
                 >
                   Suggest edit
                 </Button>
               </Flex>
               <Textarea
-                aria-label={draft.type === "suggestion"
-                  ? "Suggested replacement"
-                  : "Comment body"}
+                aria-label="Comment body"
                 autoFocus
                 minH="90px"
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    body: event.target.value,
-                  }))}
+                onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) =>
                   submitCommentOnShortcut(event, () => {
                     void handleCreate();
                   })}
-                placeholder={draft.type === "suggestion"
-                  ? "Edit the suggested replacement..."
-                  : "Write a GitHub PR comment..."}
-                value={draft.body}
+                placeholder="Write a GitHub PR comment..."
+                ref={textareaRef}
+                value={draft}
               />
               <Flex wrap="wrap" gap="2">
                 <Button
                   size="xs"
                   variant="outline"
-                  disabled={isSaving || draft.body.trim() === ""}
+                  disabled={isSaving || draft.trim() === ""}
                   onClick={handleCreate}
                   type="button"
                 >
-                  {draft.type === "suggestion"
-                    ? "Add suggestion"
-                    : "Add comment"}
+                  Add comment
                 </Button>
                 <Button
                   size="xs"
