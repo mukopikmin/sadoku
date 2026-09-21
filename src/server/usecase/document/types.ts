@@ -16,6 +16,7 @@ export type DirectorySession = {
   readMarkdown?: (source: string) => Promise<string>;
   pullRequest?: {
     description: string;
+    number: number;
     title: string;
     url: string;
   };

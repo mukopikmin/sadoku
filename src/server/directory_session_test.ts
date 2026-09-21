@@ -97,6 +97,7 @@ Deno.test("pull request sessions register multiple documents with stable IDs", a
   );
   assertEquals(first.pullRequest, {
     description: "PR description",
+    number: 9,
     title: "PR title",
     url: "https://github.com/octo/repo/pull/9",
   });

@@ -1,4 +1,4 @@
-import { Alert, Container, Heading, Text } from "@chakra-ui/react";
+import { Alert, Container, Heading, Link, Text } from "@chakra-ui/react";
 import type { DirectoryStatus } from "../api/directoryStatus";
 import { DocumentTree } from "../components/DocumentTree";
 import type { DocumentSummary } from "../models/document";
@@ -17,7 +17,23 @@ export const DocumentListPage = (
   <Container as="main" maxW="980px" px="8" pb="16">
     {pullRequest && (
       <>
-        <Heading size="lg">{pullRequest.title}</Heading>
+        <Heading
+          as="h1"
+          fontSize="calc(2rem * var(--sadoku-font-scale, 1))"
+          lineHeight="1.2"
+        >
+          {pullRequest.title}{" "}
+          <Link
+            color="fg.muted"
+            href={pullRequest.url}
+            rel="noopener noreferrer"
+            target="_blank"
+            textDecoration="none"
+            _hover={{ textDecoration: "underline" }}
+          >
+            #{pullRequest.number}
+          </Link>
+        </Heading>
         {pullRequest.description && (
           <PullRequestDescription>
             {pullRequest.description}

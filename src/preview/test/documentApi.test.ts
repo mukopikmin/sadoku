@@ -60,6 +60,7 @@ describe("session API conversion", () => {
       .mockResolvedValueOnce(Response.json({
         pullRequest: {
           description: "First line\nSecond line",
+          number: 23,
           title: "Improve docs",
           url: "https://github.com/octo/repo/pull/23",
         },
@@ -70,6 +71,7 @@ describe("session API conversion", () => {
     expect(await loadSession()).toEqual({
       pullRequest: {
         description: "First line\nSecond line",
+        number: 23,
         title: "Improve docs",
         url: "https://github.com/octo/repo/pull/23",
       },
@@ -78,9 +80,30 @@ describe("session API conversion", () => {
   });
 
   it.each([
-    { description: "Body", title: 1, url: "https://github.com/o/r/pull/1" },
-    { description: null, title: "Title", url: "https://github.com/o/r/pull/1" },
-    { description: "Body", title: "Title", url: "javascript:alert(1)" },
+    {
+      description: "Body",
+      number: 1,
+      title: 1,
+      url: "https://github.com/o/r/pull/1",
+    },
+    {
+      description: null,
+      number: 1,
+      title: "Title",
+      url: "https://github.com/o/r/pull/1",
+    },
+    {
+      description: "Body",
+      number: 0,
+      title: "Title",
+      url: "https://github.com/o/r/pull/1",
+    },
+    {
+      description: "Body",
+      number: 1,
+      title: "Title",
+      url: "javascript:alert(1)",
+    },
   ])("rejects invalid pull request metadata: %j", async (pullRequest) => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ pullRequest })));
     await expect(loadSession()).rejects.toThrow("Invalid session response.");

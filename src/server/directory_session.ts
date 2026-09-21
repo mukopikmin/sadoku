@@ -162,6 +162,7 @@ export const createPreviewSession = async (
       (documentSource) => readGitHubMarkdownSource(documentSource, run),
       {
         description: pull.description,
+        number: source.githubPull.pullNumber,
         title: pull.title,
         url: source.githubPull.url,
       },

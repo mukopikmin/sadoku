@@ -61,6 +61,7 @@ const installFetch = (
             pullRequest: {
               description:
                 "First paragraph\n\n**Important** details with [a link](https://example.com).",
+              number: 23,
               title: "Improve documentation",
               url: "https://github.com/octo/repo/pull/23",
             },
@@ -123,8 +124,14 @@ describe("directory preview", () => {
     render(<App />);
 
     expect(
-      await screen.findByRole("heading", { name: "Improve documentation" }),
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Improve documentation #23",
+      }),
     ).not.toBeNull();
+    const pullRequestLink = screen.getByRole("link", { name: "#23" });
+    expect(pullRequestLink.getAttribute("href"))
+      .toBe("https://github.com/octo/repo/pull/23");
     expect(screen.getByText("First paragraph").tagName).toBe("P");
     expect(screen.getByText("Important").tagName).toBe("STRONG");
     expect(screen.getByRole("link", { name: "a link" }).getAttribute("href"))

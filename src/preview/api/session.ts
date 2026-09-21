@@ -12,6 +12,8 @@ const parsePullRequest = (value: unknown): PullRequestMetadata => {
   if (
     typeof metadata.title !== "string" ||
     typeof metadata.description !== "string" ||
+    !Number.isSafeInteger(metadata.number) ||
+    (metadata.number as number) <= 0 ||
     typeof metadata.url !== "string"
   ) {
     throw new Error("Invalid session response.");
@@ -26,6 +28,7 @@ const parsePullRequest = (value: unknown): PullRequestMetadata => {
   }
   return {
     description: metadata.description,
+    number: metadata.number as number,
     title: metadata.title,
     url: metadata.url,
   };

@@ -293,6 +293,7 @@ Deno.test("serves pull request Markdown at the head SHA as a multi-document sess
     assertEquals(await sessionResponse.json(), {
       pullRequest: {
         description: "Line one\nLine two",
+        number: 23,
         title: "Improve docs",
         url: "https://github.com/octo/repo/pull/23",
       },
