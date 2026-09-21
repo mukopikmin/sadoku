@@ -60,7 +60,7 @@ const openReplyMenu = async () => {
 };
 
 describe("ReplyItem", () => {
-  it("renders an accessible reply card with safe Markdown and bot badges", () => {
+  it("renders an accessible reply card with safe Markdown and bot badges", async () => {
     const { container } = render(
       <ReplyItemHarness
         reply={createCommentReply({
@@ -81,8 +81,11 @@ describe("ReplyItem", () => {
       within(card).getByRole("link", { name: "documentation" })
         .getAttribute("href"),
     ).toBe("https://example.com");
-    expect(container.querySelector("code.hljs.language-ts")?.textContent)
-      .toContain("const answer = 42;");
+    const code = container.querySelector("code.language-ts")!;
+    await waitFor(() =>
+      expect(code.querySelector("span[style]")).not.toBeNull()
+    );
+    expect(code.textContent).toContain("const answer = 42;");
     expect(container.querySelector("script")).toBeNull();
     expect(container.textContent).toContain("<script>alert(1)</script>");
     expect(getComputedStyle(card).marginLeft).toBe("var(--chakra-spacing-4)");

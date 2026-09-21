@@ -28,7 +28,7 @@ const openCommentMenu = async () => {
 describe("CommentItem", () => {
   it.each(["suggest", "suggestion"])(
     "renders %s blocks as diffs against the comment source",
-    (language) => {
+    async (language) => {
       const { container } = render(
         <CommentItem
           actions={createCommentActions()}
@@ -44,16 +44,15 @@ describe("CommentItem", () => {
 
       expect(screen.queryByText("Suggested change")).toBeNull();
       const code = container.querySelector("pre code.language-diff");
-      expect(code?.textContent).toBe("-Body\n+Revised **Markdown**\n");
-      expect(code?.querySelector(".hljs-deletion")?.textContent).toBe("-Body");
-      expect(code?.querySelector(".hljs-addition")?.textContent).toBe(
-        "+Revised **Markdown**",
+      expect(code?.textContent).toBe("-Body\n+Revised **Markdown**");
+      await waitFor(() =>
+        expect(code?.querySelector("span[style]")).not.toBeNull()
       );
       expect(
         screen.getByRole("article", { name: "Reply" }).querySelector(
           "pre code.language-diff",
         )?.textContent,
-      ).toBe("-Body\n+Alternative\n");
+      ).toBe("-Body\n+Alternative");
       expect(screen.queryByRole("button", { name: /apply/i })).toBeNull();
     },
   );

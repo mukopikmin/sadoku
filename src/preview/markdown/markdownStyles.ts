@@ -11,77 +11,14 @@ export const markdownStyles = `
     padding-top: var(--chakra-spacing-1);
   }
 
-  .hljs {
-    color: var(--chakra-colors-code-fg);
-  }
-
   .markdown-code-block {
+    color: var(--chakra-colors-code-fg);
     white-space: pre;
   }
 
   :root[data-code-wrap="wrap"] .markdown-code-block {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-  }
-
-  .hljs-comment,
-  .hljs-quote {
-    color: var(--chakra-colors-syntax-comment);
-  }
-
-  .hljs-keyword,
-  .hljs-selector-tag,
-  .hljs-subst {
-    color: var(--chakra-colors-syntax-keyword);
-  }
-
-  .hljs-literal,
-  .hljs-number,
-  .hljs-tag .hljs-attr,
-  .hljs-template-variable,
-  .hljs-variable {
-    color: var(--chakra-colors-syntax-literal);
-  }
-
-  .hljs-doctag,
-  .hljs-string,
-  .hljs-title,
-  .hljs-section,
-  .hljs-selector-id {
-    color: var(--chakra-colors-syntax-string);
-  }
-
-  .hljs-type,
-  .hljs-class .hljs-title,
-  .hljs-built_in,
-  .hljs-builtin-name {
-    color: var(--chakra-colors-syntax-type);
-  }
-
-  .hljs-attr,
-  .hljs-attribute,
-  .hljs-name,
-  .hljs-selector-class,
-  .hljs-selector-attr,
-  .hljs-selector-pseudo {
-    color: var(--chakra-colors-syntax-attribute);
-  }
-
-  .hljs-symbol,
-  .hljs-bullet,
-  .hljs-link,
-  .hljs-meta {
-    color: var(--chakra-colors-syntax-meta);
-  }
-
-  .hljs-deletion {
-    color: var(--chakra-colors-syntax-deletion-fg);
-    background: var(--chakra-colors-syntax-deletion-bg);
-  }
-
-  .hljs-addition {
-    color: var(--chakra-colors-syntax-addition-fg);
-    background: var(--chakra-colors-syntax-addition-bg);
   }
 
   .comment-body-markdown {
