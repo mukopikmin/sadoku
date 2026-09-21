@@ -18,10 +18,10 @@ export const DocumentListPage = (
         <Alert.Root status="info">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>ドキュメントを検出しています</Alert.Title>
+            <Alert.Title>Detecting documents</Alert.Title>
             <Alert.Description>
-              検出 {directoryStatus.detected} 件・登録{" "}
-              {directoryStatus.registered} 件
+              Detected {directoryStatus.detected} · Registered{" "}
+              {directoryStatus.registered}
             </Alert.Description>
           </Alert.Content>
         </Alert.Root>
@@ -31,7 +31,7 @@ export const DocumentListPage = (
         <Alert.Root status="error">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>ドキュメントを読み込めませんでした</Alert.Title>
+            <Alert.Title>Could not load documents</Alert.Title>
             <Alert.Description>
               {directoryStatus.error?.message}
             </Alert.Description>
