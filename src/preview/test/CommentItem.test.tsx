@@ -26,6 +26,38 @@ const openCommentMenu = async () => {
 };
 
 describe("CommentItem", () => {
+  it.each(["suggest", "suggestion"])(
+    "renders %s blocks as diffs against the comment source",
+    (language) => {
+      const { container } = render(
+        <CommentItem
+          actions={createCommentActions()}
+          comment={createComment({
+            body: `\`\`\`${language}\nRevised **Markdown**\n\`\`\``,
+            replies: [createCommentReply({
+              body: "```suggest\nAlternative\n```",
+            })],
+          })}
+          lineLabel="Line 3"
+        />,
+      );
+
+      expect(screen.queryByText("Suggested change")).toBeNull();
+      const code = container.querySelector("pre code.language-diff");
+      expect(code?.textContent).toBe("-Body\n+Revised **Markdown**\n");
+      expect(code?.querySelector(".hljs-deletion")?.textContent).toBe("-Body");
+      expect(code?.querySelector(".hljs-addition")?.textContent).toBe(
+        "+Revised **Markdown**",
+      );
+      expect(
+        screen.getByRole("article", { name: "Reply" }).querySelector(
+          "pre code.language-diff",
+        )?.textContent,
+      ).toBe("-Body\n+Alternative\n");
+      expect(screen.queryByRole("button", { name: /apply/i })).toBeNull();
+    },
+  );
+
   it("renders comment and source Markdown safely with thread metadata", () => {
     const { container } = render(
       <CommentItem

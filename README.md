@@ -189,6 +189,7 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Blockquotes                                          | Supported     |                                                                |
 | Links and images                                     | Supported     | Inline, reference-style, and plain URL links are supported.    |
 | Inline, indented, and fenced code                    | Supported     | Common languages receive syntax highlighting.                  |
+| Suggested edits in comments                          | Supported     | `suggest` and `suggestion` blocks render source diffs.         |
 | Tables and strikethrough                             | Supported     | GitHub Flavored Markdown syntax is supported.                  |
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
 | Mermaid diagrams                                     | Supported     | Rendered from local assets without a CDN.                      |
