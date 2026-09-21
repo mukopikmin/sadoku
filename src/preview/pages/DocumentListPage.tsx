@@ -19,8 +19,9 @@ export const DocumentListPage = (
       <>
         <Heading
           as="h1"
-          fontSize="calc(2rem * var(--sadoku-font-scale, 1))"
-          lineHeight="1.2"
+          fontSize="calc(1.8rem * var(--sadoku-font-scale, 1))"
+          fontWeight="semibold"
+          lineHeight="1.25"
         >
           {pullRequest.title}{" "}
           <Link
