@@ -59,7 +59,8 @@ const installFetch = (
         if (url === "/__sadoku/session") {
           return Promise.resolve(Response.json({
             pullRequest: {
-              description: "First line\nSecond line",
+              description:
+                "First paragraph\n\n**Important** details with [a link](https://example.com).",
               title: "Improve documentation",
               url: "https://github.com/octo/repo/pull/23",
             },
@@ -124,8 +125,10 @@ describe("directory preview", () => {
     expect(
       await screen.findByRole("heading", { name: "Improve documentation" }),
     ).not.toBeNull();
-    const description = screen.getByText(/First line/);
-    expect(description.textContent).toBe("First line\nSecond line");
+    expect(screen.getByText("First paragraph").tagName).toBe("P");
+    expect(screen.getByText("Important").tagName).toBe("STRONG");
+    expect(screen.getByRole("link", { name: "a link" }).getAttribute("href"))
+      .toBe("https://example.com");
     expect(screen.getByRole("treeitem", { name: "alpha.md" })).not.toBeNull();
   });
   it("shows preparation progress and switches to the list when ready", async () => {

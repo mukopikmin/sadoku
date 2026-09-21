@@ -3,6 +3,7 @@ import type { DirectoryStatus } from "../api/directoryStatus";
 import { DocumentTree } from "../components/DocumentTree";
 import type { DocumentSummary } from "../models/document";
 import type { PullRequestMetadata } from "../models/session";
+import { PullRequestDescription } from "../components/PullRequestDescription";
 
 type Props = {
   directoryStatus?: DirectoryStatus | null;
@@ -18,9 +19,9 @@ export const DocumentListPage = (
       <>
         <Heading size="lg">{pullRequest.title}</Heading>
         {pullRequest.description && (
-          <Text mt="2" mb="6" whiteSpace="pre-wrap">
+          <PullRequestDescription>
             {pullRequest.description}
-          </Text>
+          </PullRequestDescription>
         )}
       </>
     )}
