@@ -1,4 +1,4 @@
-import { ChakraProvider } from "@chakra-ui/react";
+import { ChakraProvider, CodeBlock } from "@chakra-ui/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   cleanup as testingLibraryCleanup,
@@ -14,6 +14,7 @@ import { createPreviewQueryClient } from "../queryClient";
 import { sadokuChakraSystem } from "../theme";
 import { Toaster } from "../components/ui/toaster";
 import { createPreviewRouter } from "../router";
+import { shikiAdapter } from "../markdown/shikiAdapter";
 
 class TestResizeObserver implements ResizeObserver {
   disconnect() {}
@@ -27,10 +28,12 @@ const TestProvider = ({ children }: { children: ReactNode }) => {
   const [queryClient] = useState(createPreviewQueryClient);
   return (
     <ChakraProvider value={sadokuChakraSystem}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster />
-      </QueryClientProvider>
+      <CodeBlock.AdapterProvider value={shikiAdapter}>
+        <QueryClientProvider client={queryClient}>
+          {children}
+          <Toaster />
+        </QueryClientProvider>
+      </CodeBlock.AdapterProvider>
     </ChakraProvider>
   );
 };

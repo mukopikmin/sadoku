@@ -2,7 +2,6 @@ import { Box, Button, CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
 import { Children, isValidElement } from "react";
 import type React from "react";
 import { Tooltip } from "../../components/ui/tooltip";
-import { CodeBlockContext } from "../codeBlockContext";
 import type {
   MarkdownComponentProps,
   MarkdownElementProps,
@@ -92,8 +91,11 @@ export const renderMarkdownPre = (
   return (
     <Box py="2">
       <ChakraCodeBlock.Root
-        code={getCodeBlockText(children)}
-        language={getCodeBlockLanguage(children)}
+        code={getCodeBlockText(children).replace(/\n$/, "")}
+        language={getCodeBlockLanguage(children) ?? "plaintext"}
+        defaultColorScheme={document.documentElement.dataset.theme === "dark"
+          ? "dark"
+          : "light"}
         borderColor="border.muted"
         borderRadius="sm"
         bg="canvas.subtle"
@@ -101,14 +103,14 @@ export const renderMarkdownPre = (
         m="0"
       >
         <ChakraCodeBlock.Content>
-          <ChakraCodeBlock.Code
-            overflow="auto"
-            p="4"
-            {...elementProps}
-          >
-            <CodeBlockContext.Provider value={true}>
-              {children}
-            </CodeBlockContext.Provider>
+          <ChakraCodeBlock.Code overflow="auto" {...elementProps}>
+            <ChakraCodeBlock.CodeText
+              className={`markdown-code-block language-${
+                getCodeBlockLanguage(children) ?? "plaintext"
+              }`}
+              display="block"
+              lineHeight="1.5"
+            />
           </ChakraCodeBlock.Code>
         </ChakraCodeBlock.Content>
       </ChakraCodeBlock.Root>

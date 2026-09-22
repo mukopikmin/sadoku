@@ -1,4 +1,3 @@
-import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 
 type MarkdownAstNode = {
@@ -77,7 +76,7 @@ const preserveUnsupportedSyntax = () => (tree: MarkdownAstNode) => {
   transformChildren(tree);
 };
 
-export const sharedMarkdownRehypePlugins = [rehypeHighlight];
+export const sharedMarkdownRehypePlugins = [];
 
 export const sharedMarkdownRemarkPlugins = [
   remarkGfm,

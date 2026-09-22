@@ -52,17 +52,20 @@ describe("CommentMarkdown", () => {
     expect(screen.getByText("Thanks.")).not.toBeNull();
   });
 
-  it("preserves suggestion text when the original source is unavailable", () => {
+  it("preserves suggestion text when the original source is unavailable", async () => {
     const { container } = render(
       <CommentMarkdown>{"```suggest\nReplacement\n```"}</CommentMarkdown>,
     );
     expect(container.querySelector("pre code.language-diff")?.textContent).toBe(
-      "Replacement\n",
+      "Replacement",
     );
-    expect(container.querySelector(".hljs-deletion")).toBeNull();
+    await waitFor(() => {
+      expect(container.querySelector("code.language-diff span[style]")).not
+        .toBeNull();
+    });
   });
 
-  it("shares MarkdownPreview element styles", () => {
+  it("shares MarkdownPreview element styles", async () => {
     const markdown = `## Heading
 
 Paragraph with [a link](https://example.com) and \`code\`.
@@ -111,10 +114,12 @@ Paragraph with [a link](https://example.com) and \`code\`.
       );
     }
 
-    expect(commentMarkdown.querySelector(".hljs-deletion")?.textContent)
-      .toContain('-const state = "loading";');
-    expect(commentMarkdown.querySelector(".hljs-addition")?.textContent)
-      .toContain('+const state = "ready";');
+    const diff = commentMarkdown.querySelector("code.language-diff")!;
+    await waitFor(() =>
+      expect(diff.querySelector("span[style]")).not.toBeNull()
+    );
+    expect(diff.textContent).toContain('-const state = "loading";');
+    expect(diff.textContent).toContain('+const state = "ready";');
   });
 
   it("renders Mermaid diagrams with zoom controls", async () => {
