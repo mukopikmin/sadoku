@@ -47,17 +47,57 @@ const getCodeBlockLanguage = (
     ?.slice("language-".length);
 };
 
+const LANGUAGE_LABELS: Readonly<Record<string, string>> = {
+  bash: "Bash",
+  c: "C",
+  cpp: "C++",
+  csharp: "C#",
+  css: "CSS",
+  diff: "Diff",
+  go: "Go",
+  html: "HTML",
+  java: "Java",
+  javascript: "JavaScript",
+  js: "JavaScript",
+  json: "JSON",
+  jsx: "JSX",
+  kotlin: "Kotlin",
+  markdown: "Markdown",
+  md: "Markdown",
+  php: "PHP",
+  plaintext: "Plain Text",
+  python: "Python",
+  py: "Python",
+  ruby: "Ruby",
+  rb: "Ruby",
+  rust: "Rust",
+  rs: "Rust",
+  shell: "Shell",
+  sh: "Shell",
+  sql: "SQL",
+  swift: "Swift",
+  ts: "TypeScript",
+  tsx: "TSX",
+  typescript: "TypeScript",
+  xml: "XML",
+  yaml: "YAML",
+  yml: "YAML",
+};
+
+const formatCodeBlockLanguage = (language: string): string =>
+  LANGUAGE_LABELS[language.toLowerCase()] ?? language;
+
 const getCodeBlockLabel = (
   children: React.ReactNode,
   language: string | undefined,
 ): string | undefined => {
-  if (!children || Array.isArray(children) || typeof children !== "object") {
-    return language;
-  }
-  if (!("props" in children)) return language;
-  return (children as React.ReactElement<{
-    "data-code-language-label"?: string;
-  }>).props["data-code-language-label"] ?? language;
+  const label = children && !Array.isArray(children) &&
+      typeof children === "object" && "props" in children
+    ? (children as React.ReactElement<{
+      "data-code-language-label"?: string;
+    }>).props["data-code-language-label"] ?? language
+    : language;
+  return label ? formatCodeBlockLanguage(label) : undefined;
 };
 
 const getMermaidCodeText = (

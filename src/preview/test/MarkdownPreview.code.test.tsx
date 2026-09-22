@@ -40,7 +40,7 @@ plain text
       [...container.querySelectorAll("[data-code-language-label]")].map(
         (label) => label.textContent,
       ),
-    ).toEqual(["typescript", "ts"]);
+    ).toEqual(["TypeScript", "TypeScript"]);
     expect(container.querySelector("code.language-plaintext")).not.toBeNull();
   });
 

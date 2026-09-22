@@ -47,7 +47,7 @@ describe("CommentMarkdown", () => {
     expect(suggestion.querySelector("[data-code-language-label]")?.textContent)
       .toBe("suggest");
     expect(ordinary.querySelector("[data-code-language-label]")?.textContent)
-      .toBe("diff");
+      .toBe("Diff");
     expect(suggestion.querySelector("code.language-diff")).not.toBeNull();
     expect(ordinary.querySelector("code.language-diff")).not.toBeNull();
     await waitFor(() => {
