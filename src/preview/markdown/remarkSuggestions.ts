@@ -10,6 +10,9 @@ export const remarkSuggestions = (
       node.type === "code" &&
       (node.lang === "suggest" || node.lang === "suggestion")
     ) {
+      node.data ??= {};
+      node.data.hProperties ??= {};
+      node.data.hProperties["data-code-language-label"] = "suggest";
       node.lang = "diff";
       if (sourceText !== undefined) {
         node.value = suggestionDiff(sourceText, node.value);

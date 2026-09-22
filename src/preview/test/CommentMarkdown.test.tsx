@@ -26,7 +26,7 @@ const callbacks = {
 };
 
 describe("CommentMarkdown", () => {
-  it("uses ordinary diff code blocks for suggestions and preserves surrounding prose", () => {
+  it("labels ordinary and suggested code while highlighting suggestions as diffs", async () => {
     render(
       <>
         <div data-testid="suggested-diff">
@@ -44,12 +44,29 @@ describe("CommentMarkdown", () => {
 
     const suggestion = screen.getByTestId("suggested-diff");
     const ordinary = screen.getByTestId("ordinary-diff");
-    expect(suggestion.querySelector("pre")?.outerHTML).toBe(
-      ordinary.querySelector("pre")?.outerHTML,
-    );
+    expect(suggestion.querySelector("[data-code-language-label]")?.textContent)
+      .toBe("suggest");
+    expect(ordinary.querySelector("[data-code-language-label]")?.textContent)
+      .toBe("diff");
+    expect(suggestion.querySelector("code.language-diff")).not.toBeNull();
+    expect(ordinary.querySelector("code.language-diff")).not.toBeNull();
+    await waitFor(() => {
+      expect(suggestion.querySelector("code.language-diff span[style]")).not
+        .toBeNull();
+    });
     expect(suggestion.querySelector("script")).toBeNull();
     expect(screen.getByText("Please revise this.")).not.toBeNull();
     expect(screen.getByText("Thanks.")).not.toBeNull();
+  });
+
+  it("uses the same suggestion label for the suggestion alias", () => {
+    const { container } = render(
+      <CommentMarkdown>{"```suggestion\nReplacement\n```"}</CommentMarkdown>,
+    );
+
+    expect(container.querySelector("[data-code-language-label]")?.textContent)
+      .toBe("suggest");
+    expect(container.querySelector("code.language-diff")).not.toBeNull();
   });
 
   it("preserves suggestion text when the original source is unavailable", async () => {
