@@ -67,6 +67,7 @@ const value = 1;
       .toBe("var(--chakra-spacing-2)");
     expect(getComputedStyle(code).display).toBe("block");
     expect(getComputedStyle(code).lineHeight).toBe("1.5");
+    expect(getComputedStyle(pre).overflow).toBe("auto");
     expect(pre.style.padding).toBe("");
     expect(code.style.padding).toBe("");
     expect(getComputedStyle(code).whiteSpace).toBe("pre");

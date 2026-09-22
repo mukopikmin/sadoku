@@ -103,7 +103,7 @@ export const renderMarkdownPre = (
         m="0"
       >
         <ChakraCodeBlock.Content>
-          <ChakraCodeBlock.Code {...elementProps}>
+          <ChakraCodeBlock.Code overflow="auto" {...elementProps}>
             <ChakraCodeBlock.CodeText
               className={`markdown-code-block language-${
                 getCodeBlockLanguage(children) ?? "plaintext"
