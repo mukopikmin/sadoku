@@ -103,18 +103,12 @@ export const renderMarkdownPre = (
         m="0"
       >
         <ChakraCodeBlock.Content>
-          <ChakraCodeBlock.Code
-            overflow="auto"
-            p="4"
-            {...elementProps}
-          >
+          <ChakraCodeBlock.Code {...elementProps}>
             <ChakraCodeBlock.CodeText
               className={`markdown-code-block language-${
                 getCodeBlockLanguage(children) ?? "plaintext"
               }`}
               display="block"
-              fontFamily="mono"
-              fontSize="calc(0.8rem * var(--sadoku-font-scale, 1))"
               lineHeight="1.5"
             />
           </ChakraCodeBlock.Code>
