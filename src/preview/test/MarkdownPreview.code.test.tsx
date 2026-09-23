@@ -22,6 +22,28 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview code and Mermaid", () => {
+  it("shows the declared language above fenced code", () => {
+    const { container } = renderMarkdown(`\`\`\`typescript
+const longName = true;
+\`\`\`
+
+\`\`\`ts
+const shortName = true;
+\`\`\`
+
+\`\`\`
+plain text
+\`\`\`
+`);
+
+    expect(
+      [...container.querySelectorAll("[data-code-language-label]")].map(
+        (label) => label.textContent,
+      ),
+    ).toEqual(["TypeScript", "TypeScript"]);
+    expect(container.querySelector("code.language-plaintext")).not.toBeNull();
+  });
+
   it("highlights Kotlin code fences", async () => {
     const { container } = renderMarkdown(`\`\`\`kotlin
 fun main() {
@@ -302,6 +324,7 @@ graph TD
     const mermaid = container.querySelector(".mermaid-container pre.mermaid");
     expect(mermaid).not.toBeNull();
     expect(mermaid?.textContent).toBe("graph TD\n  A --> B");
+    expect(container.querySelector("[data-code-language-label]")).toBeNull();
     const zoomButton = screen.getByRole("button", {
       name: "Zoom Mermaid diagram",
     });

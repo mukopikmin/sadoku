@@ -1,4 +1,9 @@
-import { Box, Button, CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  CodeBlock as ChakraCodeBlock,
+  Text,
+} from "@chakra-ui/react";
 import { Children, isValidElement } from "react";
 import type React from "react";
 import { Tooltip } from "../../components/ui/tooltip";
@@ -40,6 +45,59 @@ const getCodeBlockLanguage = (
       .className;
   return className?.split(/\s+/).find((name) => name.startsWith("language-"))
     ?.slice("language-".length);
+};
+
+const LANGUAGE_LABELS: Readonly<Record<string, string>> = {
+  bash: "Bash",
+  c: "C",
+  cpp: "C++",
+  csharp: "C#",
+  css: "CSS",
+  diff: "Diff",
+  go: "Go",
+  html: "HTML",
+  java: "Java",
+  javascript: "JavaScript",
+  js: "JavaScript",
+  json: "JSON",
+  jsx: "JSX",
+  kotlin: "Kotlin",
+  markdown: "Markdown",
+  md: "Markdown",
+  php: "PHP",
+  plaintext: "Plain Text",
+  python: "Python",
+  py: "Python",
+  ruby: "Ruby",
+  rb: "Ruby",
+  rust: "Rust",
+  rs: "Rust",
+  shell: "Shell",
+  sh: "Shell",
+  sql: "SQL",
+  swift: "Swift",
+  ts: "TypeScript",
+  tsx: "TSX",
+  typescript: "TypeScript",
+  xml: "XML",
+  yaml: "YAML",
+  yml: "YAML",
+};
+
+const formatCodeBlockLanguage = (language: string): string =>
+  LANGUAGE_LABELS[language.toLowerCase()] ?? language;
+
+const getCodeBlockLabel = (
+  children: React.ReactNode,
+  language: string | undefined,
+): string | undefined => {
+  const label = children && !Array.isArray(children) &&
+      typeof children === "object" && "props" in children
+    ? (children as React.ReactElement<{
+      "data-code-language-label"?: string;
+    }>).props["data-code-language-label"] ?? language
+    : language;
+  return label ? formatCodeBlockLanguage(label) : undefined;
 };
 
 const getMermaidCodeText = (
@@ -88,11 +146,14 @@ export const renderMarkdownPre = (
   const mermaidCode = getMermaidCodeText(children);
   if (mermaidCode !== undefined) return renderMermaidPre(mermaidCode);
 
+  const language = getCodeBlockLanguage(children);
+  const label = getCodeBlockLabel(children, language);
+
   return (
     <Box py="2">
       <ChakraCodeBlock.Root
         code={getCodeBlockText(children).replace(/\n$/, "")}
-        language={getCodeBlockLanguage(children) ?? "plaintext"}
+        language={language ?? "plaintext"}
         defaultColorScheme={document.documentElement.dataset.theme === "dark"
           ? "dark"
           : "light"}
@@ -102,11 +163,24 @@ export const renderMarkdownPre = (
         color="code.fg"
         m="0"
       >
+        {label && (
+          <Text
+            color="fg.muted"
+            data-code-language-label=""
+            fontFamily="mono"
+            fontSize="xs"
+            fontWeight="semibold"
+            px="3"
+            pt="2"
+          >
+            {label}
+          </Text>
+        )}
         <ChakraCodeBlock.Content>
           <ChakraCodeBlock.Code overflow="auto" {...elementProps}>
             <ChakraCodeBlock.CodeText
               className={`markdown-code-block language-${
-                getCodeBlockLanguage(children) ?? "plaintext"
+                language ?? "plaintext"
               }`}
               display="block"
               lineHeight="1.5"
