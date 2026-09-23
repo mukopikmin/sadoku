@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe("TagsDialog", () => {
-  it("loads and displays tag names and document counts when opened", async () => {
+  it("loads and displays tag names, colors, and document counts when opened", async () => {
     const fetchMock = vi.fn(async () =>
       Response.json([
         {
@@ -34,7 +34,13 @@ describe("TagsDialog", () => {
     rerender(<TagsDialog onOpenChange={() => {}} open />);
 
     expect(await screen.findByText("API")).not.toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Color" })).not.toBeNull();
+    expect(screen.getByText("#123456")).not.toBeNull();
     expect(screen.getByText("12")).not.toBeNull();
+    expect(screen.getAllByRole("columnheader")[3].textContent).toBe("");
+    const editButton = screen.getByRole("button", { name: "Edit tag API" });
+    expect(editButton.textContent).toBe("");
+    expect(editButton.querySelector("svg")).not.toBeNull();
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledWith("/__sadoku/tags");
   });
@@ -83,6 +89,14 @@ describe("TagsDialog", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Edit tag Platform API" }),
     );
+    const nameInput = screen.getByLabelText("New name for Platform API");
+    const colorInput = screen.getByLabelText(
+      "Background color for Platform API",
+    );
+    const cells = nameInput.closest("tr")!.querySelectorAll("td");
+    expect(cells[0].contains(nameInput)).toBe(true);
+    expect(cells[1].contains(colorInput)).toBe(true);
+    expect(cells[0].contains(colorInput)).toBe(false);
     fireEvent.change(screen.getByLabelText("New name for Platform API"), {
       target: { value: "Backend" },
     });
