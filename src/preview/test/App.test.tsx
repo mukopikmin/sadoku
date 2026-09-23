@@ -874,7 +874,8 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
-    const code = await screen.findByText("日本語の長いコードブロック");
+    const code = (await screen.findByText("日本語の長いコードブロック"))
+      .closest("code")!;
     expect(document.documentElement.dataset.codeWrap).toBe("wrap");
     expect(getComputedStyle(code).whiteSpace).toBe("pre-wrap");
     expect(getComputedStyle(code).overflowWrap).toBe("anywhere");

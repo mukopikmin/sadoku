@@ -144,29 +144,39 @@ export const createPreviewSession = async (
       );
     }
     const run = githubOptions.run;
-    const pull = await listGitHubPullDocuments(source.githubPull, {
+    const snapshot = await listGitHubPullDocuments(source.githubPull, {
       run,
       markdownExtensions: scanOptions.markdownExtensions,
       maxFiles: scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles,
     });
-    const documents = await Promise.all(pull.documents.map(async (item) => ({
-      ...await documentStore.ensure(item.commentSource),
-      deleted: false,
-      filePath: item.filePath,
-      relativePath: item.relativePath,
-      title: basename(item.relativePath),
-    })));
-    return createSession(
+    const documents = await Promise.all(
+      snapshot.documents.map(async (item) => ({
+        ...await documentStore.ensure(item.commentSource),
+        deleted: false,
+        filePath: item.filePath,
+        relativePath: item.relativePath,
+        title: basename(item.relativePath),
+      })),
+    );
+    const session = createSession(
       source.commentSource,
       documents,
       (documentSource) => readGitHubMarkdownSource(documentSource, run),
       {
-        description: pull.description,
+        description: snapshot.description!,
         number: source.githubPull.pullNumber,
-        title: pull.title,
+        title: snapshot.title!,
         url: source.githubPull.url,
       },
     );
+    session.githubPull = {
+      owner: source.githubPull.owner,
+      repo: source.githubPull.repo,
+      pullNumber: source.githubPull.pullNumber,
+      initialHeadSha: snapshot.headSha,
+      headSha: snapshot.headSha,
+    };
+    return session;
   }
   if (source.isRemote) {
     const document = await documentStore.ensure(source.commentSource);

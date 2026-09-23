@@ -22,7 +22,29 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview code and Mermaid", () => {
-  it("highlights Kotlin code fences", () => {
+  it("shows the declared language above fenced code", () => {
+    const { container } = renderMarkdown(`\`\`\`typescript
+const longName = true;
+\`\`\`
+
+\`\`\`ts
+const shortName = true;
+\`\`\`
+
+\`\`\`
+plain text
+\`\`\`
+`);
+
+    expect(
+      [...container.querySelectorAll("[data-code-language-label]")].map(
+        (label) => label.textContent,
+      ),
+    ).toEqual(["TypeScript", "TypeScript"]);
+    expect(container.querySelector("code.language-plaintext")).not.toBeNull();
+  });
+
+  it("highlights Kotlin code fences", async () => {
     const { container } = renderMarkdown(`\`\`\`kotlin
 fun main() {
     println("Hello")
@@ -30,13 +52,19 @@ fun main() {
 \`\`\`
 `);
 
-    expect(container.querySelector("code.hljs.language-kotlin")).not.toBeNull();
-    expect(container.querySelector(".hljs-keyword")?.textContent).toBe("fun");
-    expect(getComputedStyle(container.querySelector(".hljs-keyword")!).color)
-      .toBe("var(--chakra-colors-syntax-keyword)");
+    const code = container.querySelector("code.language-kotlin")!;
+    expect(code.parentElement?.tagName).toBe("PRE");
+    expect(code.parentElement?.parentElement?.parentElement?.classList)
+      .toContain(
+        "chakra-theme",
+      );
+    await waitFor(() => {
+      expect(code.querySelector("span[style]")?.textContent).toContain("fun");
+    });
+    expect(code.textContent).toContain('println("Hello")');
   });
 
-  it("adds source line controls to code fences", () => {
+  it("adds source line controls to code fences", async () => {
     const { container } = renderMarkdown(`\`\`\`ts
 const value = 1;
 \`\`\`
@@ -45,10 +73,10 @@ const value = 1;
     expect(
       container.querySelector('[data-source-line="1"] pre code.language-ts'),
     ).not.toBeNull();
-    expect(
-      getComputedStyle(container.querySelector(".language-ts span")!).color,
-    )
-      .not.toBe("var(--chakra-colors-code-fg)");
+    await waitFor(() => {
+      expect(container.querySelector(".language-ts span[style]")).not
+        .toBeNull();
+    });
     const pre = container.querySelector("pre")!;
     expect(pre.closest(".chakra-theme")).not.toBeNull();
     expect(getComputedStyle(pre).color).toBe(
@@ -61,10 +89,11 @@ const value = 1;
       .toBe("var(--chakra-spacing-2)");
     expect(getComputedStyle(code).display).toBe("block");
     expect(getComputedStyle(code).lineHeight).toBe("1.5");
+    expect(getComputedStyle(pre).overflow).toBe("auto");
+    expect(pre.style.padding).toBe("");
+    expect(code.style.padding).toBe("");
     expect(getComputedStyle(code).whiteSpace).toBe("pre");
-    expect(previewThemeCss).toContain(
-      ".hljs {\n    color: var(--chakra-colors-code-fg);",
-    );
+    expect(previewThemeCss).not.toContain(".hljs");
   });
 
   it("creates comments for the full fenced code block range", async () => {
@@ -295,6 +324,7 @@ graph TD
     const mermaid = container.querySelector(".mermaid-container pre.mermaid");
     expect(mermaid).not.toBeNull();
     expect(mermaid?.textContent).toBe("graph TD\n  A --> B");
+    expect(container.querySelector("[data-code-language-label]")).toBeNull();
     const zoomButton = screen.getByRole("button", {
       name: "Zoom Mermaid diagram",
     });
@@ -358,7 +388,7 @@ const value = 1;
     ).toBeNull();
   });
 
-  it("renders longer code fences without treating nested shorter fences as blocks", () => {
+  it("renders longer code fences without treating nested shorter fences as blocks", async () => {
     const { container } = renderMarkdown(`\`\`\`\`md
 \`\`\`mermaid
 graph TD
@@ -367,7 +397,10 @@ graph TD
 \`\`\`\`
 `);
 
-    expect(container.querySelector("code.hljs.language-md")).not.toBeNull();
+    await waitFor(() => {
+      expect(container.querySelector("code.language-md span[style]")).not
+        .toBeNull();
+    });
     expect(container.textContent).toContain("```mermaid");
     expect(container.textContent).toContain("A --> B");
   });

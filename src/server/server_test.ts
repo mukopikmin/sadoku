@@ -237,6 +237,90 @@ Deno.test("starts the preview server for a URL source", async () => {
   }
 });
 
+Deno.test("GitHub pull head changes invalidate SSE and replace the document list", async () => {
+  const encoder = new TextEncoder();
+  let headReads = 0;
+  const runGitHubCommand = (args: readonly string[]) => {
+    const endpoint = args.at(-1)!;
+    let value: unknown;
+    if (endpoint.endsWith("/pulls/7")) {
+      headReads++;
+      value = {
+        body: "Pull request description",
+        head: { sha: headReads === 1 ? "old-sha" : "new-sha" },
+        title: "Pull request title",
+      };
+    } else if (endpoint.includes("/files?")) {
+      value = headReads === 1
+        ? [{ filename: "old.md", status: "modified" }]
+        : [{ filename: "new.md", status: "added" }];
+    } else {
+      return Promise.resolve({
+        code: 0,
+        stderr: new Uint8Array(),
+        stdout: encoder.encode("# New document\n"),
+      });
+    }
+    return Promise.resolve({
+      code: 0,
+      stderr: new Uint8Array(),
+      stdout: encoder.encode(JSON.stringify(value)),
+    });
+  };
+  const preview = await startPreviewServer({
+    file: "https://github.com/octo/repo/pull/7",
+    host: "127.0.0.1",
+    keepAlive: true,
+    port: 0,
+    githubPullPollIntervalMs: 100,
+    runGitHubCommand,
+  });
+
+  try {
+    const initial = await (
+      await fetch(new URL("/__sadoku/documents", preview.url))
+    ).json();
+    assertEquals(
+      initial.map((item: { relativePath: string }) => item.relativePath),
+      [
+        "old.md",
+      ],
+    );
+    const events = await fetch(
+      new URL(`/__sadoku/documents/${initial[0].id}/events`, preview.url),
+    );
+    const reader = events.body!.getReader();
+    const event = await Promise.race([
+      reader.read(),
+      wait(2_000).then(() => ({ done: true, value: undefined })),
+    ]);
+    assertEquals(event.done, false);
+    assertEquals(
+      new TextDecoder().decode(event.value),
+      'event: invalidate\ndata: {"resources":["document","comments"]}\n\n',
+    );
+    await reader.cancel();
+
+    const refreshed = await (
+      await fetch(new URL("/__sadoku/documents", preview.url))
+    ).json();
+    assertEquals(
+      refreshed.map((item: { relativePath: string }) => item.relativePath),
+      [
+        "new.md",
+      ],
+    );
+    const document = await (
+      await fetch(
+        new URL(`/__sadoku/documents/${refreshed[0].id}`, preview.url),
+      )
+    ).json();
+    assertEquals(document.markdown, "# New document\n");
+  } finally {
+    await stopServer(preview);
+  }
+});
+
 Deno.test("serves pull request Markdown at the head SHA as a multi-document session", async () => {
   const encoder = new TextEncoder();
   const runGitHubCommand = (args: readonly string[]) => {

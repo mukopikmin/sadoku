@@ -20,6 +20,13 @@ export type DirectorySession = {
     title: string;
     url: string;
   };
+  githubPull?: {
+    owner: string;
+    repo: string;
+    pullNumber: number;
+    initialHeadSha: string;
+    headSha: string;
+  };
 };
 
 export type MarkdownDocumentPath = {

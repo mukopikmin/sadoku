@@ -6,8 +6,8 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import { CodeXml, Link, Plus } from "lucide-react";
-import { useContext, useMemo, useState } from "react";
+import { CodeXml, FilePenLine, Link, Plus } from "lucide-react";
+import { useContext, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -23,6 +23,7 @@ import {
   formatRangeLabel,
   hasTextSelectionWithin,
   SourceLineContext,
+  useCommentRenderingContext,
 } from "./commentRendering";
 
 type CommentableBlockProps = CommentControlProps & {
@@ -36,6 +37,15 @@ type CommentableBlockProps = CommentControlProps & {
   isRangeActionLine: boolean;
   isSelected: boolean;
   sourceRange: CommentRange;
+};
+
+const suggestionBody = (replacement: string): string => {
+  const longestBacktickRun = Math.max(
+    0,
+    ...[...replacement.matchAll(/`+/g)].map((match) => match[0].length),
+  );
+  const fence = "`".repeat(Math.max(3, longestBacktickRun + 1));
+  return `${fence}suggest\n${replacement}\n${fence}`;
 };
 
 export const CommentableBlock = ({
@@ -58,6 +68,7 @@ export const CommentableBlock = ({
   selectedRange,
 }: CommentableBlockProps) => {
   const [draft, setDraft] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const pendingRange: CommentRange = activeRange ?? selectedRange ?? {
     ...sourceRange,
@@ -72,6 +83,13 @@ export const CommentableBlock = ({
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
+
+  const { markdown } = useCommentRenderingContext();
+  const selectedSource = useMemo(() =>
+    markdown.split(/\r?\n/).slice(
+      pendingRange.startLine - 1,
+      pendingRange.endLine,
+    ).join("\n"), [markdown, pendingRange.endLine, pendingRange.startLine]);
 
   const handleCreate = async () => {
     const body = draft.trim();
@@ -242,10 +260,32 @@ export const CommentableBlock = ({
           ))}
           {isAdding && (
             <Box mb="1.5">
-              <Text color="fg.muted" fontSize="xs" fontWeight="semibold" mb="1">
-                Commenting on {formatRangeLabel(pendingRange)}.
-              </Text>
+              <Flex align="center" justify="space-between" gap="2" mb="1">
+                <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
+                  Commenting on {formatRangeLabel(pendingRange)}.
+                </Text>
+                <Tooltip content="Suggest edit">
+                  <IconButton
+                    aria-label="Suggest edit"
+                    disabled={isSaving}
+                    onClick={() => {
+                      setDraft((current) =>
+                        `${current}${current ? "\n\n" : ""}${
+                          suggestionBody(selectedSource)
+                        }`
+                      );
+                      textareaRef.current?.focus();
+                    }}
+                    size="xs"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <FilePenLine aria-hidden="true" />
+                  </IconButton>
+                </Tooltip>
+              </Flex>
               <Textarea
+                aria-label="Comment body"
                 autoFocus
                 minH="90px"
                 onChange={(event) => setDraft(event.target.value)}
@@ -254,6 +294,7 @@ export const CommentableBlock = ({
                     void handleCreate();
                   })}
                 placeholder="Write a GitHub PR comment..."
+                ref={textareaRef}
                 value={draft}
               />
               <Flex wrap="wrap" gap="2">

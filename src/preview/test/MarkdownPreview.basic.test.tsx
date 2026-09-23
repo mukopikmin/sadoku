@@ -219,7 +219,7 @@ Review carefully.
     expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
     expect(previewThemeCss).not.toMatch(/\brgba?\(/);
     expect(previewThemeCss).toContain("var(--chakra-spacing-2)");
-    expect(previewThemeCss).toContain("var(--chakra-colors-syntax-keyword)");
+    expect(previewThemeCss).toContain("var(--chakra-colors-code-fg)");
   });
 
   it("gets semantic preview colors from the Chakra theme", () => {
@@ -241,7 +241,7 @@ Review carefully.
     }
   });
 
-  it("renders common Markdown blocks", () => {
+  it("renders common Markdown blocks", async () => {
     const { container } = renderMarkdown(`# Title
 
 Hello **world** and *friends*.
@@ -262,10 +262,11 @@ console.log("<ok>");
     expect(unorderedList?.classList.contains("comment-markdown-list")).toBe(
       true,
     );
-    expect(container.querySelector("code.hljs.language-js")?.innerHTML)
-      .toContain("console");
-    expect(getComputedStyle(container.querySelector(".hljs-string")!).color)
-      .toBe("var(--chakra-colors-syntax-string)");
+    const code = container.querySelector("code.language-js")!;
+    await waitFor(() =>
+      expect(code.querySelector("span[style]")).not.toBeNull()
+    );
+    expect(code.textContent).toContain('console.log("<ok>")');
     expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
   });
 

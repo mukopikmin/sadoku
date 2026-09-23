@@ -26,7 +26,63 @@ const callbacks = {
 };
 
 describe("CommentMarkdown", () => {
-  it("shares MarkdownPreview element styles", () => {
+  it("labels ordinary and suggested code while highlighting suggestions as diffs", async () => {
+    render(
+      <>
+        <div data-testid="suggested-diff">
+          <CommentMarkdown sourceText={"Original\nUnchanged"}>
+            {"Please revise this.\n\n```suggest\n<script>edited</script>\nUnchanged\n```\n\nThanks."}
+          </CommentMarkdown>
+        </div>
+        <div data-testid="ordinary-diff">
+          <CommentMarkdown>
+            {"```diff\n-Original\n+<script>edited</script>\n Unchanged\n```"}
+          </CommentMarkdown>
+        </div>
+      </>,
+    );
+
+    const suggestion = screen.getByTestId("suggested-diff");
+    const ordinary = screen.getByTestId("ordinary-diff");
+    expect(suggestion.querySelector("[data-code-language-label]")?.textContent)
+      .toBe("suggest");
+    expect(ordinary.querySelector("[data-code-language-label]")?.textContent)
+      .toBe("Diff");
+    expect(suggestion.querySelector("code.language-diff")).not.toBeNull();
+    expect(ordinary.querySelector("code.language-diff")).not.toBeNull();
+    await waitFor(() => {
+      expect(suggestion.querySelector("code.language-diff span[style]")).not
+        .toBeNull();
+    });
+    expect(suggestion.querySelector("script")).toBeNull();
+    expect(screen.getByText("Please revise this.")).not.toBeNull();
+    expect(screen.getByText("Thanks.")).not.toBeNull();
+  });
+
+  it("uses the same suggestion label for the suggestion alias", () => {
+    const { container } = render(
+      <CommentMarkdown>{"```suggestion\nReplacement\n```"}</CommentMarkdown>,
+    );
+
+    expect(container.querySelector("[data-code-language-label]")?.textContent)
+      .toBe("suggest");
+    expect(container.querySelector("code.language-diff")).not.toBeNull();
+  });
+
+  it("preserves suggestion text when the original source is unavailable", async () => {
+    const { container } = render(
+      <CommentMarkdown>{"```suggest\nReplacement\n```"}</CommentMarkdown>,
+    );
+    expect(container.querySelector("pre code.language-diff")?.textContent).toBe(
+      "Replacement",
+    );
+    await waitFor(() => {
+      expect(container.querySelector("code.language-diff span[style]")).not
+        .toBeNull();
+    });
+  });
+
+  it("shares MarkdownPreview element styles", async () => {
     const markdown = `## Heading
 
 Paragraph with [a link](https://example.com) and \`code\`.
@@ -75,10 +131,12 @@ Paragraph with [a link](https://example.com) and \`code\`.
       );
     }
 
-    expect(commentMarkdown.querySelector(".hljs-deletion")?.textContent)
-      .toContain('-const state = "loading";');
-    expect(commentMarkdown.querySelector(".hljs-addition")?.textContent)
-      .toContain('+const state = "ready";');
+    const diff = commentMarkdown.querySelector("code.language-diff")!;
+    await waitFor(() =>
+      expect(diff.querySelector("span[style]")).not.toBeNull()
+    );
+    expect(diff.textContent).toContain('-const state = "loading";');
+    expect(diff.textContent).toContain('+const state = "ready";');
   });
 
   it("renders Mermaid diagrams with zoom controls", async () => {

@@ -53,6 +53,7 @@ export const getCommentableBlockProps = (
   const {
     commentsByLine,
     commentHighlightsByLine,
+    markdown: _,
     ...props
   } = context;
   const { endLine, startLine } = sourceRange;

@@ -146,9 +146,9 @@ describe("directory preview", () => {
     ]);
     render(<App />);
 
-    expect(await screen.findByText("ドキュメントを検出しています")).not
+    expect(await screen.findByText("Detecting documents")).not
       .toBeNull();
-    expect(screen.getByText("検出 3 件・登録 1 件")).not.toBeNull();
+    expect(screen.getByText("Detected 3 · Registered 1")).not.toBeNull();
     expect(
       await screen.findByRole("treeitem", { name: "alpha.md" }, {
         timeout: 1500,
@@ -166,7 +166,7 @@ describe("directory preview", () => {
     }]);
     render(<App />);
 
-    expect(await screen.findByText("ドキュメントを読み込めませんでした"))
+    expect(await screen.findByText("Could not load documents"))
       .not.toBeNull();
     expect(screen.getByText("scan failed")).not.toBeNull();
   });

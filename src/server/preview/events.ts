@@ -5,6 +5,7 @@ export type EventStreamOptions = {
   commentsNotificationPath?: string;
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
+  subscribeInvalidation?: (listener: () => void) => () => void;
 };
 
 const encoder = new TextEncoder();
@@ -34,11 +35,13 @@ export const createPreviewEventStream = (
   const watchers: Deno.FsWatcher[] = [];
   let close: (() => void) | undefined;
   let closed = false;
+  let unsubscribeInvalidation: (() => void) | undefined;
 
   const closeOnce = (controller?: ReadableStreamDefaultController) => {
     if (closed) return;
     closed = true;
     for (const watcher of watchers) watcher.close();
+    unsubscribeInvalidation?.();
     if (close) signal.removeEventListener("abort", close);
     options.onEventStreamClose?.();
     if (!controller) return;
@@ -54,6 +57,9 @@ export const createPreviewEventStream = (
       options.onEventStreamOpen?.();
       close = () => closeOnce(controller);
       signal.addEventListener("abort", close, { once: true });
+      unsubscribeInvalidation = options.subscribeInvalidation?.(() => {
+        controller.enqueue(invalidationEvent(["document", "comments"]));
+      });
 
       const watch = (
         targetPath: string,

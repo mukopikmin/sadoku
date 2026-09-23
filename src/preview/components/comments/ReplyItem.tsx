@@ -22,6 +22,7 @@ type ReplyItemProps = {
   ) => Promise<void>;
   reportError: ReportCommentActionError;
   reply: CommentReply;
+  sourceText?: string;
   runAction: RunCommentAction;
 };
 
@@ -32,6 +33,7 @@ export const ReplyItem = ({
   onUpdate,
   reportError,
   reply,
+  sourceText,
   runAction,
 }: ReplyItemProps) => {
   const [draft, setDraft] = useState(reply.body);
@@ -169,7 +171,9 @@ export const ReplyItem = ({
         )
         : (
           <Box pr="14">
-            <CommentMarkdown>{reply.body}</CommentMarkdown>
+            <CommentMarkdown sourceText={sourceText}>
+              {reply.body}
+            </CommentMarkdown>
           </Box>
         )}
     </Box>

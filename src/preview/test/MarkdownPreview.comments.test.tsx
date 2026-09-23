@@ -475,6 +475,77 @@ Body
     );
   });
 
+  it("inserts a suggest block with the selected Markdown source into the comment", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown("# Title\n\nBody\n", [], {
+      onCreateComment,
+    });
+
+    fireEvent.click(container.querySelector('[data-source-line="1"] h1')!);
+    fireEvent.click(container.querySelector('[data-source-line="3"] p')!, {
+      shiftKey: true,
+    });
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    }));
+    const suggestButton = screen.getByRole("button", { name: "Suggest edit" });
+    expect(suggestButton.textContent).toBe("");
+    expect(suggestButton.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    fireEvent.click(suggestButton);
+
+    const textbox = screen.getByRole("textbox", {
+      name: "Comment body",
+    });
+    expect((textbox as HTMLTextAreaElement).value).toBe(
+      "```suggest\n# Title\n\nBody\n```",
+    );
+    expect(document.activeElement).toBe(textbox);
+    const body =
+      "Please update this.\n\n```suggest\n# Better title\n\nRevised body\n```\n\nThanks!";
+    fireEvent.change(textbox, {
+      target: { value: body },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(
+        1,
+        body,
+        3,
+      )
+    );
+  });
+
+  it("preserves the draft when inserting suggestions containing code fences", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown("```ts\nconst value = 1;\n```\n", [], {
+      onCreateComment,
+    });
+    fireEvent.click(container.querySelector('[data-source-line="1"] pre')!);
+    fireEvent.click(screen.getByRole("button", {
+      name: "Add comment on lines 1-3",
+    }));
+    const textbox = screen.getByRole("textbox", { name: "Comment body" });
+    fireEvent.change(textbox, {
+      target: { value: "Please revise this example." },
+    });
+
+    const suggestion = "````suggest\n```ts\nconst value = 1;\n```\n````";
+    fireEvent.click(screen.getByRole("button", { name: "Suggest edit" }));
+    expect((textbox as HTMLTextAreaElement).value).toBe(
+      `Please revise this example.\n\n${suggestion}`,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Suggest edit" }));
+    const body =
+      `Please revise this example.\n\n${suggestion}\n\n${suggestion}`;
+    expect((textbox as HTMLTextAreaElement).value).toBe(body);
+    fireEvent.keyDown(textbox, { key: "Enter", ctrlKey: true });
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(1, body, 3)
+    );
+  });
+
   it("extends a comment range when Shift+click creates a native text selection", () => {
     const { container } = renderMarkdown("# Title\n\nBody\n");
     const title = container.querySelector('[data-source-line="1"] h1')!;

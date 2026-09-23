@@ -7,12 +7,16 @@ import {
   sharedMarkdownRemarkPlugins,
 } from "../../markdown/markdownRenderers";
 import { initializeMermaid } from "../../markdown/mermaid";
+import { remarkSuggestions } from "../../markdown/remarkSuggestions";
 
 export type CommentMarkdownProps = {
   children: string;
+  sourceText?: string;
 };
 
-export const CommentMarkdown = ({ children }: CommentMarkdownProps) => {
+export const CommentMarkdown = (
+  { children, sourceText }: CommentMarkdownProps,
+) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +37,10 @@ export const CommentMarkdown = ({ children }: CommentMarkdownProps) => {
       <ReactMarkdown
         components={sharedMarkdownComponents}
         rehypePlugins={sharedMarkdownRehypePlugins}
-        remarkPlugins={sharedMarkdownRemarkPlugins}
+        remarkPlugins={[
+          ...sharedMarkdownRemarkPlugins,
+          [remarkSuggestions, { sourceText }],
+        ]}
       >
         {children}
       </ReactMarkdown>
