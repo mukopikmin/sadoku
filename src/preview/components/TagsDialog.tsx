@@ -1,8 +1,10 @@
 import {
   Button,
   ColorPicker,
+  ColorSwatch,
   Dialog,
   Flex,
+  IconButton,
   Input,
   parseColor,
   Portal,
@@ -10,6 +12,7 @@ import {
   Table,
   Text,
 } from "@chakra-ui/react";
+import { Pencil } from "lucide-react";
 import { type RefObject, useState } from "react";
 import { useTagsQuery, useUpdateTag } from "../hooks/useTags";
 import { TagLabel } from "./ui/TagLabel";
@@ -59,6 +62,7 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
       finalFocusEl={() => finalFocusRef?.current ?? null}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
+      size="lg"
     >
       <Portal>
         <Dialog.Backdrop />
@@ -79,12 +83,11 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                     <Table.Header>
                       <Table.Row>
                         <Table.ColumnHeader>Tag</Table.ColumnHeader>
+                        <Table.ColumnHeader>Color</Table.ColumnHeader>
                         <Table.ColumnHeader textAlign="end">
                           Documents
                         </Table.ColumnHeader>
-                        <Table.ColumnHeader textAlign="end">
-                          Actions
-                        </Table.ColumnHeader>
+                        <Table.ColumnHeader />
                       </Table.Row>
                     </Table.Header>
                     <Table.Body>
@@ -93,76 +96,84 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                           <Table.Cell>
                             {editingId === tag.id
                               ? (
-                                <>
-                                  <Input
-                                    aria-label={`New name for ${tag.name}`}
-                                    onChange={(event) =>
-                                      setName(event.target.value)}
-                                    size="sm"
-                                    value={name}
-                                  />
-
-                                  <ColorPicker.Root
-                                    format="rgba"
-                                    mt="2"
-                                    onValueChange={({ value }) =>
-                                      setBackgroundColor(
-                                        value.toString("hex").toLowerCase(),
-                                      )}
-                                    size="sm"
-                                    value={parseColor(backgroundColor)}
-                                  >
-                                    <ColorPicker.Label>
-                                      Background color
-                                    </ColorPicker.Label>
-                                    <ColorPicker.Control>
-                                      <ColorPicker.Input
-                                        aria-label={`Background color for ${tag.name}`}
-                                      />
-                                      <ColorPicker.Trigger>
-                                        <ColorPicker.ValueSwatch />
-                                      </ColorPicker.Trigger>
-                                    </ColorPicker.Control>
-                                    <ColorPicker.Positioner>
-                                      <ColorPicker.Content>
-                                        <ColorPicker.Area>
-                                          <ColorPicker.AreaBackground />
-                                          <ColorPicker.AreaThumb />
-                                        </ColorPicker.Area>
-                                        <ColorPicker.Sliders>
-                                          <ColorPicker.ChannelSlider channel="hue">
-                                            <ColorPicker.ChannelSliderTrack />
-                                            <ColorPicker.ChannelSliderThumb />
-                                          </ColorPicker.ChannelSlider>
-                                        </ColorPicker.Sliders>
-                                        <ColorPicker.SwatchGroup>
-                                          {["#718096", "#123456", "#abcdef"]
-                                            .map((color) => (
-                                              <ColorPicker.SwatchTrigger
-                                                aria-label={`Select ${color}`}
-                                                key={color}
-                                                value={color}
-                                              >
-                                                <ColorPicker.Swatch
-                                                  value={color}
-                                                />
-                                              </ColorPicker.SwatchTrigger>
-                                            ))}
-                                        </ColorPicker.SwatchGroup>
-                                      </ColorPicker.Content>
-                                    </ColorPicker.Positioner>
-                                  </ColorPicker.Root>
-                                  <TagLabel
-                                    backgroundColor={backgroundColor}
-                                    name={name || tag.name}
-                                  />
-                                </>
+                                <Input
+                                  aria-label={`New name for ${tag.name}`}
+                                  onChange={(event) =>
+                                    setName(event.target.value)}
+                                  size="sm"
+                                  value={name}
+                                />
                               )
                               : (
                                 <TagLabel
                                   backgroundColor={tag.backgroundColor}
                                   name={tag.name}
                                 />
+                              )}
+                          </Table.Cell>
+                          <Table.Cell>
+                            {editingId === tag.id
+                              ? (
+                                <ColorPicker.Root
+                                  format="rgba"
+                                  onValueChange={({ value }) =>
+                                    setBackgroundColor(
+                                      value.toString("hex").toLowerCase(),
+                                    )}
+                                  size="sm"
+                                  value={parseColor(backgroundColor)}
+                                >
+                                  <ColorPicker.Label srOnly>
+                                    Background color
+                                  </ColorPicker.Label>
+                                  <ColorPicker.Control>
+                                    <ColorPicker.Input
+                                      aria-label={`Background color for ${tag.name}`}
+                                    />
+                                    <ColorPicker.Trigger>
+                                      <ColorPicker.ValueSwatch />
+                                    </ColorPicker.Trigger>
+                                  </ColorPicker.Control>
+                                  <ColorPicker.Positioner>
+                                    <ColorPicker.Content>
+                                      <ColorPicker.Area>
+                                        <ColorPicker.AreaBackground />
+                                        <ColorPicker.AreaThumb />
+                                      </ColorPicker.Area>
+                                      <ColorPicker.Sliders>
+                                        <ColorPicker.ChannelSlider channel="hue">
+                                          <ColorPicker.ChannelSliderTrack />
+                                          <ColorPicker.ChannelSliderThumb />
+                                        </ColorPicker.ChannelSlider>
+                                      </ColorPicker.Sliders>
+                                      <ColorPicker.SwatchGroup>
+                                        {["#718096", "#123456", "#abcdef"]
+                                          .map((color) => (
+                                            <ColorPicker.SwatchTrigger
+                                              aria-label={`Select ${color}`}
+                                              key={color}
+                                              value={color}
+                                            >
+                                              <ColorPicker.Swatch
+                                                value={color}
+                                              />
+                                            </ColorPicker.SwatchTrigger>
+                                          ))}
+                                      </ColorPicker.SwatchGroup>
+                                    </ColorPicker.Content>
+                                  </ColorPicker.Positioner>
+                                </ColorPicker.Root>
+                              )
+                              : (
+                                <Flex align="center" gap="2">
+                                  <ColorSwatch
+                                    value={tag.backgroundColor}
+                                    size="sm"
+                                  />
+                                  <Text fontSize="sm">
+                                    {tag.backgroundColor}
+                                  </Text>
+                                </Flex>
                               )}
                           </Table.Cell>
                           <Table.Cell textAlign="end">
@@ -190,7 +201,7 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                                 </Flex>
                               )
                               : (
-                                <Button
+                                <IconButton
                                   aria-label={`Edit tag ${tag.name}`}
                                   onClick={() =>
                                     startEditing(
@@ -201,8 +212,8 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                                   size="sm"
                                   variant="ghost"
                                 >
-                                  Edit
-                                </Button>
+                                  <Pencil aria-hidden="true" />
+                                </IconButton>
                               )}
                           </Table.Cell>
                         </Table.Row>
