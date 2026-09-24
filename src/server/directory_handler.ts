@@ -45,6 +45,7 @@ import type { TagStore } from "./usecase/tag/ports.ts";
 import { listTags, patchTag, putDocumentTags } from "./api/tag_api.ts";
 import type { MemoryStore } from "./usecase/memory/ports.ts";
 import { getMemories, removeMemory } from "./api/memory_api.ts";
+import { getSession } from "./api/session_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   log?: (message: string) => void;
@@ -94,6 +95,8 @@ export const createDirectoryPreviewHandler = (
     "/__sadoku/documents",
     () => listDirectoryDocumentsResponse(session, tagStore),
   );
+  app.get("/__sadoku/session", () => getSession(session));
+  app.all("/__sadoku/session", methodNotAllowedResponse);
   if (tagStore) {
     app.get("/__sadoku/tags", () => listTags(tagStore));
     app.patch(

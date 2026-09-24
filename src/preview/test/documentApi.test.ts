@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadDocuments, loadPreviewDocument } from "../api/document";
+import { loadSession } from "../api/session";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -50,5 +51,61 @@ describe("document API tag conversion", () => {
       vi.fn(async () => Response.json([{ id: 1, title: "Doc" }])),
     );
     expect((await loadDocuments())[0].tags).toEqual([]);
+  });
+});
+
+describe("session API conversion", () => {
+  it("converts pull request metadata and supports sessions without it", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({
+        pullRequest: {
+          description: "First line\nSecond line",
+          number: 23,
+          title: "Improve docs",
+          url: "https://github.com/octo/repo/pull/23",
+        },
+      }))
+      .mockResolvedValueOnce(Response.json({}));
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await loadSession()).toEqual({
+      pullRequest: {
+        description: "First line\nSecond line",
+        number: 23,
+        title: "Improve docs",
+        url: "https://github.com/octo/repo/pull/23",
+      },
+    });
+    expect(await loadSession()).toEqual({});
+  });
+
+  it.each([
+    {
+      description: "Body",
+      number: 1,
+      title: 1,
+      url: "https://github.com/o/r/pull/1",
+    },
+    {
+      description: null,
+      number: 1,
+      title: "Title",
+      url: "https://github.com/o/r/pull/1",
+    },
+    {
+      description: "Body",
+      number: 0,
+      title: "Title",
+      url: "https://github.com/o/r/pull/1",
+    },
+    {
+      description: "Body",
+      number: 1,
+      title: "Title",
+      url: "javascript:alert(1)",
+    },
+  ])("rejects invalid pull request metadata: %j", async (pullRequest) => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ pullRequest })));
+    await expect(loadSession()).rejects.toThrow("Invalid session response.");
   });
 });

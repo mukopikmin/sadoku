@@ -14,6 +14,12 @@ export type DirectorySession = {
   documents: DirectoryDocument[];
   documentsById: Map<number, DirectoryDocument>;
   readMarkdown?: (source: string) => Promise<string>;
+  pullRequest?: {
+    description: string;
+    number: number;
+    title: string;
+    url: string;
+  };
   githubPull?: {
     owner: string;
     repo: string;

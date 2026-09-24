@@ -12,8 +12,8 @@ import {
 import { pathExists } from "./storage/document/path_exists.ts";
 import { createPreviewSource } from "./source.ts";
 import {
-  getGitHubPullSnapshot,
   type GitHubPullClientOptions,
+  listGitHubPullDocuments,
   readGitHubMarkdownSource,
 } from "./github_pull.ts";
 
@@ -21,11 +21,13 @@ const createSession = (
   rootPath: string,
   documents: DirectorySession["documents"],
   readMarkdown?: DirectorySession["readMarkdown"],
+  pullRequest?: DirectorySession["pullRequest"],
 ): DirectorySession => ({
   rootPath,
   documents,
   documentsById: new Map(documents.map((document) => [document.id, document])),
   ...(readMarkdown && { readMarkdown }),
+  ...(pullRequest && { pullRequest }),
 });
 
 export type DirectorySessionStatus =
@@ -142,7 +144,7 @@ export const createPreviewSession = async (
       );
     }
     const run = githubOptions.run;
-    const snapshot = await getGitHubPullSnapshot(source.githubPull, {
+    const snapshot = await listGitHubPullDocuments(source.githubPull, {
       run,
       markdownExtensions: scanOptions.markdownExtensions,
       maxFiles: scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles,
@@ -160,6 +162,12 @@ export const createPreviewSession = async (
       source.commentSource,
       documents,
       (documentSource) => readGitHubMarkdownSource(documentSource, run),
+      {
+        description: snapshot.description!,
+        number: source.githubPull.pullNumber,
+        title: snapshot.title!,
+        url: source.githubPull.url,
+      },
     );
     session.githubPull = {
       owner: source.githubPull.owner,
