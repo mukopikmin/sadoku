@@ -45,6 +45,8 @@ import type { TagStore } from "./usecase/tag/ports.ts";
 import { listTags, patchTag, putDocumentTags } from "./api/tag_api.ts";
 import type { MemoryStore } from "./usecase/memory/ports.ts";
 import { getMemories, removeMemory } from "./api/memory_api.ts";
+import { getGitHubAccountResponse } from "./api/github_account_api.ts";
+import type { RunGitHubAccountCommand } from "./usecase/account/get_github_account.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   log?: (message: string) => void;
@@ -53,6 +55,7 @@ export type DirectoryPreviewHandlerOptions = {
   statistics?: StatisticsReader;
   directoryState?: DirectorySessionState;
   subscribeInvalidation?: (listener: () => void) => () => void;
+  runGitHubCommand?: RunGitHubAccountCommand;
 };
 
 export const createDirectoryPreviewHandler = (
@@ -119,6 +122,13 @@ export const createDirectoryPreviewHandler = (
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
   app.all("/__sadoku/settings", methodNotAllowedResponse);
+  if (options.runGitHubCommand) {
+    app.get(
+      "/__sadoku/github-account",
+      () => getGitHubAccountResponse(options.runGitHubCommand!),
+    );
+    app.all("/__sadoku/github-account", methodNotAllowedResponse);
+  }
   if (options.statistics) {
     app.get(
       "/__sadoku/statistics",
