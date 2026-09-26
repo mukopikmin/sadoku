@@ -2,7 +2,9 @@ import {
   type Comment,
   type CommentReply,
   type CommentsDocument,
+  type GitHubCommentExport,
 } from "../models/comment";
+import { parseGitHubHeadSha } from "./document";
 
 export type CommentReplyResponse = {
   author: CommentAuthorResponse;
@@ -37,6 +39,7 @@ type CommentAuthorResponse = {
 };
 
 export type CommentsDocumentResponse = {
+  githubHeadSha?: string;
   comments: CommentResponse[];
   filePath: string;
 };
@@ -80,12 +83,53 @@ export const toComment = (response: CommentResponse): Comment => {
 export const toCommentsDocument = (
   response: CommentsDocumentResponse,
 ): CommentsDocument => ({
+  ...(response.githubHeadSha === undefined
+    ? {}
+    : { githubHeadSha: parseGitHubHeadSha(response.githubHeadSha) }),
   comments: response.comments.map(toComment),
   filePath: response.filePath,
 });
 
 const commentsPath = (documentId: number): string =>
   `/__sadoku/documents/${documentId}/comments`;
+
+export const exportCommentToGitHub = async (
+  documentId: number,
+  headSha: string,
+  comment: Comment,
+  displayedMarkdown: string,
+): Promise<GitHubCommentExport> => {
+  const response = await fetch(
+    `${commentsPath(documentId)}/${comment.id}/github`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        headSha,
+        displayedMarkdown,
+        createdAt: comment.createdAt,
+        body: comment.body,
+        startLine: comment.startLine,
+        endLine: comment.endLine,
+      }),
+    },
+  );
+  if (!response.ok) throw new Error(await response.text());
+  const value = await response.json();
+  if (
+    typeof value?.url !== "string" ||
+    !/^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+(?:\/files|#discussion_r\d+)$/
+      .test(
+        value.url,
+      ) ||
+    (value.state !== "pending" && value.state !== "submitted")
+  ) {
+    throw new Error(
+      "Invalid GitHub review response. Check the PR before retrying.",
+    );
+  }
+  return { url: value.url, state: value.state };
+};
 
 export const loadComments = async (
   documentId: number,

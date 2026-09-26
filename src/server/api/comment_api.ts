@@ -1,4 +1,11 @@
 import type { PreviewSource } from "../source.ts";
+import type { DirectorySession } from "../usecase/document/types.ts";
+import type { RunGitHubCommand } from "../github_pull.ts";
+import { createGitHubCommentExporter } from "../github_comment.ts";
+import {
+  type CommentExportError,
+  exportComment,
+} from "../usecase/comment/export_comment.ts";
 import { readMarkdownSource } from "../source.ts";
 import { readResolvedCommentsDocument } from "../usecase/comment/position.ts";
 import {
@@ -215,6 +222,7 @@ export const getComments = async (
   source: PreviewSource,
   commentsStore: CommentsStore = fileCommentsStore,
   readMarkdown?: (source: string) => Promise<string>,
+  githubHeadSha?: string,
 ): Promise<Response> => {
   const { previousSourceSnapshot: _, sourceSnapshot: __, ...document } =
     await readResolvedCommentsDocument(
@@ -223,5 +231,136 @@ export const getComments = async (
       commentsStore,
       dependencies(commentsStore, source, readMarkdown).readMarkdown,
     );
-  return noStoreJson(document);
+  return noStoreJson({
+    ...document,
+    ...(githubHeadSha ? { githubHeadSha } : {}),
+  });
+};
+
+const exportErrors: Record<CommentExportError["type"], [string, number]> = {
+  export_review_out_of_sync: [
+    "The GitHub pending review or comment changed, or targets an older revision or different lines. Check the review on GitHub before retrying.",
+    409,
+  ],
+  export_markdown_changed: [
+    "The displayed Markdown differs from the remote document. Refresh and review it before saving.",
+    409,
+  ],
+  export_unavailable: ["Only an open GitHub PR can receive comments.", 409],
+  export_out_of_sync: [
+    "The preview or comment is out of sync. Refresh and review it before saving.",
+    409,
+  ],
+  export_comment_not_found: ["Comment not found.", 404],
+  export_comment_ineligible: [
+    "Only active human parent comments can be saved to a GitHub review. Replies are excluded.",
+    409,
+  ],
+  export_outside_diff: [
+    "The selected lines are outside a single available PR diff hunk.",
+    409,
+  ],
+};
+
+export const exportCommentToGitHub = async (
+  request: Request,
+  session: DirectorySession,
+  documentId: number,
+  commentId: number,
+  source: PreviewSource,
+  store: CommentsStore,
+  run: RunGitHubCommand,
+): Promise<Response> => {
+  // JSON-only requests also prevent cross-origin HTML forms from posting.
+  if (!request.headers.get("content-type")?.startsWith("application/json")) {
+    return textResponse("JSON body required.", 415);
+  }
+  const value = await parseJsonBody(request);
+  const range = parseCommentRange(value);
+  const body = parseCommentBody(value);
+  const headSha = (value as { headSha?: unknown }).headSha;
+  const displayedMarkdown =
+    (value as { displayedMarkdown?: unknown }).displayedMarkdown;
+  if (typeof displayedMarkdown !== "string") {
+    return textResponse("Displayed Markdown is required.", 400);
+  }
+  const createdAt = (value as { createdAt?: unknown }).createdAt;
+  if (typeof createdAt !== "string" || !createdAt) {
+    return textResponse("Comment creation timestamp required.", 400);
+  }
+  if (typeof headSha !== "string" || !/^[a-f0-9]{40,64}$/.test(headSha)) {
+    return textResponse("Invalid PR head SHA.", 400);
+  }
+  const pull = session.githubPull;
+  if (!pull) return textResponse(...exportErrors.export_unavailable);
+  const document = session.documentsById.get(documentId);
+  if (!document) return textResponse("Document not found.", 404);
+  const pullUrl =
+    `https://github.com/${pull.owner}/${pull.repo}/pull/${pull.pullNumber}`;
+  // Read the immutable head document remotely once for this operation. Never
+  // substitute a saved snapshot when checking what the user is viewing.
+  let remoteMarkdown: Promise<string> | undefined;
+  const readMarkdown = () =>
+    remoteMarkdown ??= (session.readMarkdown ?? readMarkdownSource)(
+      source.documentSource,
+    );
+  try {
+    return noStoreJson(
+      await exportComment({
+        readMarkdown,
+        readTarget: () => {
+          const current = session.documentsById.get(documentId);
+          return current && !current.deleted
+            ? {
+              path: current.relativePath,
+              headSha: new URL(current.filePath).searchParams.get("ref") ?? "",
+            }
+            : undefined;
+        },
+        readComment: async () => {
+          const comments = await readResolvedCommentsDocument(
+            source.commentSource,
+            source.documentSource,
+            store,
+            readMarkdown,
+          );
+          return comments.comments.find((comment) => comment.id === commentId);
+        },
+        exporter: createGitHubCommentExporter({ ...pull, url: pullUrl }, run),
+        key: async (comment) => {
+          const bytes = new TextEncoder().encode(JSON.stringify([
+            pullUrl,
+            document.relativePath,
+            comment.id,
+            comment.createdAt,
+          ]));
+          return [
+            ...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+          ]
+            .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+        },
+      }, {
+        ...range,
+        body,
+        displayedMarkdown,
+        headSha,
+        commentId,
+        createdAt,
+        path: document.relativePath,
+      }),
+    );
+  } catch (error) {
+    if (
+      typeof error === "object" && error !== null && "type" in error &&
+      Object.hasOwn(exportErrors, String(error.type))
+    ) {
+      return textResponse(
+        ...exportErrors[error.type as CommentExportError["type"]],
+      );
+    }
+    return textResponse(
+      error instanceof Error ? error.message : "GitHub export failed.",
+      502,
+    );
+  }
 };

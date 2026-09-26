@@ -181,3 +181,57 @@ describe("comment hooks", () => {
       .toBe("Document B");
   });
 });
+
+it("enables GitHub export only when preview and comments share a revision and never retries failures", async () => {
+  const { previewDocumentQueryKey } = await import("../hooks/previewQueryKeys");
+  const queryClient = createPreviewQueryClient();
+  const sha = "a".repeat(40);
+  queryClient.setQueryData(previewDocumentQueryKey(42), {
+    githubHeadSha: sha,
+    markdown: "line",
+  });
+  queryClient.setQueryData(commentsQueryKey(42), {
+    githubHeadSha: "b".repeat(40),
+    comments: [createComment()],
+    filePath: "source",
+  });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  const fetchMock = vi.fn(async () =>
+    new Response("The PR changed. Refresh before posting.", { status: 409 })
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  const hook = renderHook(() => useCommentActions(42), { wrapper });
+  expect(hook.result.current.onExportComment).toBeUndefined();
+  act(() =>
+    queryClient.setQueryData(commentsQueryKey(42), {
+      githubHeadSha: sha,
+      comments: [createComment()],
+      filePath: "source",
+    })
+  );
+  await waitFor(() =>
+    expect(hook.result.current.onExportComment).toBeTypeOf("function")
+  );
+  await act(async () => {
+    await expect(hook.result.current.onExportComment!(1)).rejects.toThrow(
+      "The PR changed",
+    );
+  });
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  expect(fetchMock).toHaveBeenCalledWith(
+    "/__sadoku/documents/42/comments/1/github",
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({
+        headSha: sha,
+        displayedMarkdown: "line",
+        createdAt: "2026-06-05T00:00:00.000Z",
+        body: "Original comment.",
+        startLine: 3,
+        endLine: 3,
+      }),
+    }),
+  );
+});
