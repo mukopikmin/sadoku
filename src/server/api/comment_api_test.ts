@@ -3,6 +3,10 @@ import type { CommentsStore } from "../storage/comment/storage.ts";
 import { getCommentsFilePath } from "../storage/comment/storage.ts";
 import type { PreviewCommentsDocument } from "../usecase/comment/types.ts";
 import { createTestPreviewHandler } from "../test_helpers.ts";
+import { createDirectoryPreviewHandler } from "../directory_handler.ts";
+import type { DirectorySession } from "../usecase/document/types.ts";
+import type { RunGitHubCommand } from "../github_pull.ts";
+import { createPreviewSource } from "../source.ts";
 import {
   createTempMarkdown,
   removeTempMarkdown,
@@ -507,3 +511,232 @@ testWithTempComments(
     }
   },
 );
+
+Deno.test("PR comment export validates synchronization, excludes replies and serializes all saves", async () => {
+  const sha = "a".repeat(40);
+  const document = {
+    id: 1,
+    filePath: `https://api.github.com/repos/o/r/contents/README.md?ref=${sha}`,
+    deleted: false,
+    relativePath: "README.md",
+    title: "README.md",
+  };
+  const source = createPreviewSource(document.filePath);
+  const session: DirectorySession = {
+    rootPath: "https://github.com/o/r/pull/1",
+    documents: [document],
+    documentsById: new Map([[1, document]]),
+    githubPull: {
+      owner: "o",
+      repo: "r",
+      pullNumber: 1,
+      headSha: sha,
+      initialHeadSha: sha,
+    },
+    readMarkdown: () => Promise.resolve("line"),
+  };
+  const memory = createMemoryCommentsStore();
+  memory.documents.set(source.commentSource, {
+    filePath: source.commentSource,
+    sourceSnapshot: "line",
+    comments: [{
+      id: 1,
+      author: { type: "human" },
+      body: "Parent",
+      startLine: 1,
+      endLine: 1,
+      originalStartLine: 1,
+      originalEndLine: 1,
+      createdAt: "created",
+      updatedAt: "updated",
+      stale: false,
+      resolved: false,
+      replies: [{
+        id: 2,
+        author: { type: "human" },
+        body: "Reply",
+        createdAt: "created",
+        updatedAt: "updated",
+      }],
+    }],
+  });
+  let currentSha = sha;
+  const stored = memory.documents.get(source.commentSource)!;
+  stored.comments.push({ ...stored.comments[0], id: 3, replies: [] });
+  let posts = 0;
+  let releasePost: (() => void) | undefined;
+  let postedBody = "";
+  const run: RunGitHubCommand = async (args) => {
+    const endpoint = args.at(-1)!;
+    let value: unknown;
+    if (
+      args.some((arg) => arg.startsWith("query=mutation CreatePendingReview"))
+    ) {
+      posts++;
+      postedBody = args.find((arg) => arg.startsWith("body="))!;
+      await new Promise<void>((resolve) => {
+        releasePost = resolve;
+      });
+      value = {
+        data: {
+          addPullRequestReview: {
+            pullRequestReview: { id: "R1", state: "PENDING" },
+          },
+        },
+      };
+    } else if (endpoint.includes("/files?")) {
+      value = [{ filename: "README.md", patch: "@@ -1 +1 @@\n+line" }];
+    } else if (endpoint === "user") value = { login: "viewer" };
+    else if (
+      endpoint.includes("/comments?") || endpoint.includes("/reviews?")
+    ) value = [];
+    else value = { node_id: "PR", state: "open", head: { sha: currentSha } };
+    return {
+      code: 0,
+      stderr: new Uint8Array(),
+      stdout: new TextEncoder().encode(JSON.stringify(value)),
+    };
+  };
+  const handler = createDirectoryPreviewHandler(session, memory.store, {
+    runGitHubCommand: run,
+    log: () => {},
+  });
+  const path = "/__sadoku/documents/1/comments/1/github";
+  const init = {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      headSha: sha,
+      displayedMarkdown: "line",
+      createdAt: "created",
+      body: "Parent",
+      startLine: 1,
+      endLine: 1,
+    }),
+  };
+  const assertExportError = async (
+    response: Response,
+    status: number,
+    code: string,
+  ) => {
+    assertEquals(response.status, status);
+    assertEquals(response.headers.get("cache-control"), "no-store");
+    assertEquals(response.headers.get("content-type"), "application/json");
+    assertEquals(await response.json(), { error: { code } });
+  };
+  const comments = await requestComments(
+    handler,
+    "/__sadoku/documents/1/comments",
+  );
+  assertEquals((await comments.json()).githubHeadSha, sha);
+  const preview = await requestComments(handler, "/__sadoku/documents/1");
+  assertEquals((await preview.json()).githubHeadSha, sha);
+  await assertExportError(
+    await requestComments(handler, path, { ...init, headers: {} }),
+    415,
+    "export_json_required",
+  );
+  for (const body of ["{", "null", "[]", '{"body":""}']) {
+    await assertExportError(
+      await requestComments(handler, path, { ...init, body }),
+      400,
+      "export_invalid_request",
+    );
+  }
+  await assertExportError(
+    await requestComments(
+      handler,
+      "/__sadoku/documents/999/comments/1/github",
+      init,
+    ),
+    404,
+    "export_document_not_found",
+  );
+  await assertExportError(
+    await requestComments(
+      handler,
+      "/__sadoku/documents/1/comments/999/github",
+      init,
+    ),
+    404,
+    "export_comment_not_found",
+  );
+  currentSha = "b".repeat(40);
+  await assertExportError(
+    await requestComments(handler, path, init),
+    409,
+    "export_out_of_sync",
+  );
+  assertEquals(posts, 0);
+  assertEquals(
+    (await requestComments(
+      handler,
+      "/__sadoku/documents/1/comments/1/replies/2/github",
+      init,
+    )).status,
+    405,
+  );
+  currentSha = sha;
+  const mismatched = await requestComments(handler, path, {
+    ...init,
+    body: JSON.stringify({
+      ...JSON.parse(init.body),
+      displayedMarkdown: "line\nUnseen change",
+    }),
+  });
+  await assertExportError(mismatched, 409, "export_markdown_changed");
+  assertEquals(posts, 0);
+  await assertExportError(
+    await requestComments(handler, path, {
+      ...init,
+      body: JSON.stringify({
+        ...JSON.parse(init.body),
+        displayedMarkdown: undefined,
+      }),
+    }),
+    400,
+    "export_invalid_request",
+  );
+  const readMarkdown = session.readMarkdown;
+  session.readMarkdown = () => Promise.reject(new Error("Remote unavailable"));
+  // A stored sourceSnapshot exists, but cannot authorize publication.
+  await assertExportError(
+    await requestComments(handler, path, init),
+    502,
+    "export_failed",
+  );
+  assertEquals(posts, 0);
+  session.readMarkdown = readMarkdown;
+  const first = requestComments(handler, path, init);
+  while (!releasePost) await new Promise((resolve) => setTimeout(resolve, 0));
+  await assertExportError(
+    await requestComments(handler, path, init),
+    409,
+    "export_busy",
+  );
+  await assertExportError(
+    await requestComments(
+      handler,
+      "/__sadoku/documents/1/comments/3/github",
+      init,
+    ),
+    409,
+    "export_busy",
+  );
+  releasePost();
+  const result = await first;
+  assertEquals(result.status, 200);
+  assertEquals(result.headers.get("cache-control"), "no-store");
+  assertEquals(await result.json(), {
+    url: "https://github.com/o/r/pull/1/files",
+    state: "pending",
+  });
+  assertEquals(postedBody.includes("Reply"), false);
+  assertEquals(posts, 1);
+  delete session.githubPull;
+  await assertExportError(
+    await requestComments(handler, path, init),
+    404,
+    "export_unavailable",
+  );
+});

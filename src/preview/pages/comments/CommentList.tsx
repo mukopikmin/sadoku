@@ -173,6 +173,10 @@ export const CommentListPage = ({ documentId }: { documentId?: number }) => {
   const actions = useCommentActions(documentId);
   if (!commentsQuery.data) return null;
   return (
-    <CommentList actions={actions} comments={commentsQuery.data.comments} />
+    <CommentList
+      key={documentId}
+      actions={actions}
+      comments={commentsQuery.data.comments}
+    />
   );
 };

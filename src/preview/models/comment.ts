@@ -2,6 +2,11 @@ export type CommentAuthor = {
   type: "human" | "bot";
 };
 
+export type GitHubCommentExport = {
+  url: string;
+  state: "pending" | "submitted";
+};
+
 export type CommentReply = {
   author: CommentAuthor;
   body: string;
@@ -49,6 +54,7 @@ export const isUnresolvedComment = (
 ): comment is UnresolvedComment => comment.state !== "resolved";
 
 export type CommentsDocument = {
+  githubHeadSha?: string;
   comments: Comment[];
   filePath: string;
 };

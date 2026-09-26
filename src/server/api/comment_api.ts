@@ -1,4 +1,11 @@
 import type { PreviewSource } from "../source.ts";
+import type { DirectorySession } from "../usecase/document/types.ts";
+import type { RunGitHubCommand } from "../github_pull.ts";
+import { createGitHubCommentExporter } from "../github_comment.ts";
+import {
+  type CommentExportError,
+  exportComment,
+} from "../usecase/comment/export_comment.ts";
 import { readMarkdownSource } from "../source.ts";
 import { readResolvedCommentsDocument } from "../usecase/comment/position.ts";
 import {
@@ -215,6 +222,7 @@ export const getComments = async (
   source: PreviewSource,
   commentsStore: CommentsStore = fileCommentsStore,
   readMarkdown?: (source: string) => Promise<string>,
+  githubHeadSha?: string,
 ): Promise<Response> => {
   const { previousSourceSnapshot: _, sourceSnapshot: __, ...document } =
     await readResolvedCommentsDocument(
@@ -223,5 +231,138 @@ export const getComments = async (
       commentsStore,
       dependencies(commentsStore, source, readMarkdown).readMarkdown,
     );
-  return noStoreJson(document);
+  return noStoreJson({
+    ...document,
+    ...(githubHeadSha ? { githubHeadSha } : {}),
+  });
+};
+
+const exportErrors = {
+  export_review_out_of_sync: 409,
+  export_markdown_changed: 409,
+  export_unavailable: 409,
+  export_out_of_sync: 409,
+  export_comment_not_found: 404,
+  export_comment_ineligible: 409,
+  export_outside_diff: 409,
+  export_busy: 409,
+  export_json_required: 415,
+  export_invalid_request: 400,
+  export_document_not_found: 404,
+  export_failed: 502,
+} satisfies Record<CommentExportError["type"], number> & Record<string, number>;
+
+export const githubExportErrorResponse = (
+  code: keyof typeof exportErrors,
+  status = exportErrors[code],
+): Response => noStoreJson({ error: { code } }, status);
+
+const parseExportRequest = async (request: Request) => {
+  const value: unknown = await request.json();
+  const range = parseCommentRange(value);
+  const body = parseCommentBody(value);
+  return { ...value as Record<string, unknown>, ...range, body };
+};
+
+export const exportCommentToGitHub = async (
+  request: Request,
+  session: DirectorySession,
+  documentId: number,
+  commentId: number,
+  source: PreviewSource,
+  store: CommentsStore,
+  run: RunGitHubCommand,
+): Promise<Response> => {
+  // JSON-only requests also prevent cross-origin HTML forms from posting.
+  if (!request.headers.get("content-type")?.startsWith("application/json")) {
+    return githubExportErrorResponse("export_json_required");
+  }
+  let value;
+  try {
+    value = await parseExportRequest(request);
+  } catch {
+    return githubExportErrorResponse("export_invalid_request");
+  }
+  const { startLine, endLine, body } = value;
+  const headSha = (value as { headSha?: unknown }).headSha;
+  const displayedMarkdown =
+    (value as { displayedMarkdown?: unknown }).displayedMarkdown;
+  if (typeof displayedMarkdown !== "string") {
+    return githubExportErrorResponse("export_invalid_request");
+  }
+  const createdAt = (value as { createdAt?: unknown }).createdAt;
+  if (typeof createdAt !== "string" || !createdAt) {
+    return githubExportErrorResponse("export_invalid_request");
+  }
+  if (typeof headSha !== "string" || !/^[a-f0-9]{40,64}$/.test(headSha)) {
+    return githubExportErrorResponse("export_invalid_request");
+  }
+  const pull = session.githubPull;
+  if (!pull) return githubExportErrorResponse("export_unavailable");
+  const document = session.documentsById.get(documentId);
+  if (!document) return githubExportErrorResponse("export_document_not_found");
+  const pullUrl =
+    `https://github.com/${pull.owner}/${pull.repo}/pull/${pull.pullNumber}`;
+  // Read the immutable head document remotely once for this operation. Never
+  // substitute a saved snapshot when checking what the user is viewing.
+  let remoteMarkdown: Promise<string> | undefined;
+  const readMarkdown = () =>
+    remoteMarkdown ??= (session.readMarkdown ?? readMarkdownSource)(
+      source.documentSource,
+    );
+  try {
+    return noStoreJson(
+      await exportComment({
+        readMarkdown,
+        readTarget: () => {
+          const current = session.documentsById.get(documentId);
+          return current && !current.deleted
+            ? {
+              path: current.relativePath,
+              headSha: new URL(current.filePath).searchParams.get("ref") ?? "",
+            }
+            : undefined;
+        },
+        readComment: async () => {
+          const comments = await readResolvedCommentsDocument(
+            source.commentSource,
+            source.documentSource,
+            store,
+            readMarkdown,
+          );
+          return comments.comments.find((comment) => comment.id === commentId);
+        },
+        exporter: createGitHubCommentExporter({ ...pull, url: pullUrl }, run),
+        key: async (comment) => {
+          const bytes = new TextEncoder().encode(JSON.stringify([
+            pullUrl,
+            document.relativePath,
+            comment.id,
+            comment.createdAt,
+          ]));
+          return [
+            ...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+          ]
+            .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+        },
+      }, {
+        startLine,
+        endLine,
+        body,
+        displayedMarkdown,
+        headSha,
+        commentId,
+        createdAt,
+        path: document.relativePath,
+      }),
+    );
+  } catch (error) {
+    if (
+      typeof error === "object" && error !== null && "type" in error &&
+      Object.hasOwn(exportErrors, String(error.type))
+    ) {
+      return githubExportErrorResponse(error.type as keyof typeof exportErrors);
+    }
+    return githubExportErrorResponse("export_failed");
+  }
 };

@@ -5,7 +5,9 @@ import {
   createReply,
   deleteComment,
   deleteReply,
+  exportCommentToGitHub,
   getComments,
+  githubExportErrorResponse,
   setCommentResolution,
   updateComment,
   updateReply,
@@ -46,8 +48,10 @@ import { listTags, patchTag, putDocumentTags } from "./api/tag_api.ts";
 import type { MemoryStore } from "./usecase/memory/ports.ts";
 import { getMemories, removeMemory } from "./api/memory_api.ts";
 import { getSession } from "./api/session_api.ts";
+import type { RunGitHubCommand } from "./github_pull.ts";
 
 export type DirectoryPreviewHandlerOptions = {
+  runGitHubCommand?: RunGitHubCommand;
   log?: (message: string) => void;
   onEventStreamClose?: () => void;
   onEventStreamOpen?: () => void;
@@ -66,6 +70,7 @@ export const createDirectoryPreviewHandler = (
   memoryStore?: MemoryStore,
 ): Deno.ServeHandler => {
   const app = new Hono();
+  let exporting = false;
   const log = options.log ?? logInfo;
   const resolveDocument = (rawId: string) =>
     resolveDirectoryDocumentParameter(rawId, session);
@@ -177,8 +182,53 @@ export const createDirectoryPreviewHandler = (
 
   app.get("/__sadoku/documents/:documentId/comments", (context) => {
     const { source } = resolveDocument(context.req.param("documentId"));
-    return getComments(source, commentsStore, session.readMarkdown);
+    return getComments(
+      source,
+      commentsStore,
+      session.readMarkdown,
+      session.githubPull
+        ? new URL(source.documentSource).searchParams.get("ref") ?? undefined
+        : undefined,
+    );
   });
+  app.post(
+    "/__sadoku/documents/:documentId/comments/:commentId/github",
+    async (context) => {
+      let resolved;
+      try {
+        resolved = resolveDocument(context.req.param("documentId"));
+      } catch {
+        return githubExportErrorResponse("export_document_not_found");
+      }
+      const { document, source } = resolved;
+      if (
+        !session.githubPull || !options.runGitHubCommand
+      ) return githubExportErrorResponse("export_unavailable", 404);
+      const commentId = Number(context.req.param("commentId"));
+      if (
+        !Number.isSafeInteger(commentId) || commentId < 1
+      ) return githubExportErrorResponse("export_comment_not_found");
+      // Serialize all comments in this PR session so two different comments
+      // cannot race to create its first pending review.
+      if (exporting) {
+        return githubExportErrorResponse("export_busy");
+      }
+      exporting = true;
+      try {
+        return await exportCommentToGitHub(
+          context.req.raw,
+          session,
+          document.id,
+          commentId,
+          source,
+          commentsStore,
+          options.runGitHubCommand,
+        );
+      } finally {
+        exporting = false;
+      }
+    },
+  );
   if (instructionStore) {
     app.get("/__sadoku/documents/:documentId/instructions", (context) => {
       const { document } = resolveDocument(context.req.param("documentId"));

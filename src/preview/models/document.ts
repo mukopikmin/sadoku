@@ -9,6 +9,7 @@ export type DocumentSummary = {
 export type DocumentTag = { backgroundColor: string; id: number; name: string };
 
 export type PreviewDocument = {
+  githubHeadSha?: string;
   deleted: boolean;
   fileUrl: string;
   markdown: string;

@@ -59,22 +59,28 @@ export const getDirectoryDocumentResponse = async (
 
   try {
     const document = getDirectoryDocument(session, id);
-    return noStoreJson(
-      await loadDirectoryDocument(document, {
-        initializeSnapshot: documentStore?.initializeSnapshot
-          ? (documentId, markdown) =>
-            documentStore.initializeSnapshot!(documentId, markdown)
-          : undefined,
-        readMarkdown: async (source) => ({
-          fileUrl: sourceUrl(source),
-          markdown: await readMarkdown(source),
-        }),
-        readSnapshot: documentStore?.readSnapshot
-          ? (documentId) => documentStore.readSnapshot!(documentId)
-          : undefined,
-        tagReader: tagStore,
+    const content = await loadDirectoryDocument(document, {
+      initializeSnapshot: documentStore?.initializeSnapshot
+        ? (documentId, markdown) =>
+          documentStore.initializeSnapshot!(documentId, markdown)
+        : undefined,
+      readMarkdown: async (source) => ({
+        fileUrl: sourceUrl(source),
+        markdown: await readMarkdown(source),
       }),
-    );
+      readSnapshot: documentStore?.readSnapshot
+        ? (documentId) => documentStore.readSnapshot!(documentId)
+        : undefined,
+      tagReader: tagStore,
+    });
+    return noStoreJson({
+      ...content,
+      ...(session.githubPull
+        ? {
+          githubHeadSha: new URL(document.filePath).searchParams.get("ref"),
+        }
+        : {}),
+    });
   } catch (error) {
     return mapError(error);
   }

@@ -1,7 +1,7 @@
-import { Box, Flex, IconButton, Menu, Portal } from "@chakra-ui/react";
+import { Box, Flex, IconButton, Link, Menu, Portal } from "@chakra-ui/react";
 import { Copy, Ellipsis } from "lucide-react";
 import { useState } from "react";
-import type { Comment } from "../../models/comment";
+import type { Comment, GitHubCommentExport } from "../../models/comment";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { toaster } from "../ui/toaster";
 import type {
@@ -14,6 +14,7 @@ type CommentActionMenuProps = {
   disabled: boolean;
   lineLabel: string;
   onDelete: (id: number) => Promise<void>;
+  onExport?: (id: number) => Promise<GitHubCommentExport>;
   onEdit: () => void;
   onReopen: (id: number) => Promise<void>;
   onResolve: (id: number) => Promise<void>;
@@ -26,6 +27,7 @@ export const CommentActionMenu = ({
   disabled,
   lineLabel,
   onDelete,
+  onExport,
   onEdit,
   onReopen,
   onResolve,
@@ -33,6 +35,7 @@ export const CommentActionMenu = ({
   runAction,
 }: CommentActionMenuProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [exportResult, setExportResult] = useState<GitHubCommentExport>();
 
   const handleCopy = async () => {
     try {
@@ -108,6 +111,20 @@ export const CommentActionMenu = ({
                   {lineLabel}
                 </Box>
                 <Menu.Separator />
+                {onExport && comment.author.type === "human" &&
+                  comment.state === "active" && (
+                  <Menu.Item
+                    value="github"
+                    disabled={disabled}
+                    onClick={() => {
+                      void runAction(async () => {
+                        setExportResult(await onExport(comment.id));
+                      }, { errorTitle: "Could not save to GitHub review" });
+                    }}
+                  >
+                    Save to GitHub review
+                  </Menu.Item>
+                )}
                 <Menu.Item
                   value={comment.state === "resolved" ? "reopen" : "resolve"}
                   onClick={() => {
@@ -132,6 +149,18 @@ export const CommentActionMenu = ({
           </Portal>
         </Menu.Root>
       </Flex>
+      {exportResult && (
+        <Link
+          href={exportResult.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          fontSize="sm"
+        >
+          {exportResult.state === "pending"
+            ? "View pending GitHub review"
+            : "Already submitted — view on GitHub"}
+        </Link>
+      )}
       <ConfirmDialog
         confirmColorPalette="red"
         confirmLabel="Delete"
