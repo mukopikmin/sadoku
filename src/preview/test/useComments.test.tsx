@@ -199,7 +199,7 @@ it("enables GitHub export only when preview and comments share a revision and ne
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
   const fetchMock = vi.fn(async () =>
-    new Response("The PR changed. Refresh before posting.", { status: 409 })
+    Response.json({ error: { code: "export_out_of_sync" } }, { status: 409 })
   );
   vi.stubGlobal("fetch", fetchMock);
   const hook = renderHook(() => useCommentActions(42), { wrapper });
@@ -216,7 +216,7 @@ it("enables GitHub export only when preview and comments share a revision and ne
   );
   await act(async () => {
     await expect(hook.result.current.onExportComment!(1)).rejects.toThrow(
-      "The PR changed",
+      "The preview or comment is out of sync",
     );
   });
   expect(fetchMock).toHaveBeenCalledTimes(1);

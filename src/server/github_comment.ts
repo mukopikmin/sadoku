@@ -54,7 +54,7 @@ export const createGitHubCommentExporter = (
     ]);
     if (result.code !== 0) {
       throw new Error(
-        "GitHub request failed. Check authentication, permissions and the pending review on GitHub before retrying. Nothing is submitted automatically.",
+        "GitHub request failed.",
       );
     }
     return JSON.parse(new TextDecoder().decode(result.stdout));
@@ -73,7 +73,7 @@ export const createGitHubCommentExporter = (
     const result = await api<{ data?: T; errors?: unknown[] }>("graphql", args);
     if (result.errors?.length || !result.data) {
       throw new Error(
-        "GitHub could not save the pending review. Check the review on GitHub before retrying.",
+        "GitHub GraphQL request failed.",
       );
     }
     return result.data;

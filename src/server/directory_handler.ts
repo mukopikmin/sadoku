@@ -7,6 +7,7 @@ import {
   deleteReply,
   exportCommentToGitHub,
   getComments,
+  githubExportErrorResponse,
   setCommentResolution,
   updateComment,
   updateReply,
@@ -193,23 +194,24 @@ export const createDirectoryPreviewHandler = (
   app.post(
     "/__sadoku/documents/:documentId/comments/:commentId/github",
     async (context) => {
-      const { document, source } = resolveDocument(
-        context.req.param("documentId"),
-      );
+      let resolved;
+      try {
+        resolved = resolveDocument(context.req.param("documentId"));
+      } catch {
+        return githubExportErrorResponse("export_document_not_found");
+      }
+      const { document, source } = resolved;
       if (
         !session.githubPull || !options.runGitHubCommand
-      ) return notFoundResponse();
+      ) return githubExportErrorResponse("export_unavailable", 404);
       const commentId = Number(context.req.param("commentId"));
       if (
         !Number.isSafeInteger(commentId) || commentId < 1
-      ) return notFoundResponse();
+      ) return githubExportErrorResponse("export_comment_not_found");
       // Serialize all comments in this PR session so two different comments
       // cannot race to create its first pending review.
       if (exporting) {
-        return textResponse(
-          "A comment is already being saved to the GitHub review. Try again after it finishes.",
-          409,
-        );
+        return githubExportErrorResponse("export_busy");
       }
       exporting = true;
       try {

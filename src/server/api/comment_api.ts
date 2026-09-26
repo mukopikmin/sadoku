@@ -237,29 +237,31 @@ export const getComments = async (
   });
 };
 
-const exportErrors: Record<CommentExportError["type"], [string, number]> = {
-  export_review_out_of_sync: [
-    "The GitHub pending review or comment changed, or targets an older revision or different lines. Check the review on GitHub before retrying.",
-    409,
-  ],
-  export_markdown_changed: [
-    "The displayed Markdown differs from the remote document. Refresh and review it before saving.",
-    409,
-  ],
-  export_unavailable: ["Only an open GitHub PR can receive comments.", 409],
-  export_out_of_sync: [
-    "The preview or comment is out of sync. Refresh and review it before saving.",
-    409,
-  ],
-  export_comment_not_found: ["Comment not found.", 404],
-  export_comment_ineligible: [
-    "Only active human parent comments can be saved to a GitHub review. Replies are excluded.",
-    409,
-  ],
-  export_outside_diff: [
-    "The selected lines are outside a single available PR diff hunk.",
-    409,
-  ],
+const exportErrors = {
+  export_review_out_of_sync: 409,
+  export_markdown_changed: 409,
+  export_unavailable: 409,
+  export_out_of_sync: 409,
+  export_comment_not_found: 404,
+  export_comment_ineligible: 409,
+  export_outside_diff: 409,
+  export_busy: 409,
+  export_json_required: 415,
+  export_invalid_request: 400,
+  export_document_not_found: 404,
+  export_failed: 502,
+} satisfies Record<CommentExportError["type"], number> & Record<string, number>;
+
+export const githubExportErrorResponse = (
+  code: keyof typeof exportErrors,
+  status = exportErrors[code],
+): Response => noStoreJson({ error: { code } }, status);
+
+const parseExportRequest = async (request: Request) => {
+  const value: unknown = await request.json();
+  const range = parseCommentRange(value);
+  const body = parseCommentBody(value);
+  return { ...value as Record<string, unknown>, ...range, body };
 };
 
 export const exportCommentToGitHub = async (
@@ -273,28 +275,32 @@ export const exportCommentToGitHub = async (
 ): Promise<Response> => {
   // JSON-only requests also prevent cross-origin HTML forms from posting.
   if (!request.headers.get("content-type")?.startsWith("application/json")) {
-    return textResponse("JSON body required.", 415);
+    return githubExportErrorResponse("export_json_required");
   }
-  const value = await parseJsonBody(request);
-  const range = parseCommentRange(value);
-  const body = parseCommentBody(value);
+  let value;
+  try {
+    value = await parseExportRequest(request);
+  } catch {
+    return githubExportErrorResponse("export_invalid_request");
+  }
+  const { startLine, endLine, body } = value;
   const headSha = (value as { headSha?: unknown }).headSha;
   const displayedMarkdown =
     (value as { displayedMarkdown?: unknown }).displayedMarkdown;
   if (typeof displayedMarkdown !== "string") {
-    return textResponse("Displayed Markdown is required.", 400);
+    return githubExportErrorResponse("export_invalid_request");
   }
   const createdAt = (value as { createdAt?: unknown }).createdAt;
   if (typeof createdAt !== "string" || !createdAt) {
-    return textResponse("Comment creation timestamp required.", 400);
+    return githubExportErrorResponse("export_invalid_request");
   }
   if (typeof headSha !== "string" || !/^[a-f0-9]{40,64}$/.test(headSha)) {
-    return textResponse("Invalid PR head SHA.", 400);
+    return githubExportErrorResponse("export_invalid_request");
   }
   const pull = session.githubPull;
-  if (!pull) return textResponse(...exportErrors.export_unavailable);
+  if (!pull) return githubExportErrorResponse("export_unavailable");
   const document = session.documentsById.get(documentId);
-  if (!document) return textResponse("Document not found.", 404);
+  if (!document) return githubExportErrorResponse("export_document_not_found");
   const pullUrl =
     `https://github.com/${pull.owner}/${pull.repo}/pull/${pull.pullNumber}`;
   // Read the immutable head document remotely once for this operation. Never
@@ -340,7 +346,8 @@ export const exportCommentToGitHub = async (
             .map((byte) => byte.toString(16).padStart(2, "0")).join("");
         },
       }, {
-        ...range,
+        startLine,
+        endLine,
         body,
         displayedMarkdown,
         headSha,
@@ -354,13 +361,8 @@ export const exportCommentToGitHub = async (
       typeof error === "object" && error !== null && "type" in error &&
       Object.hasOwn(exportErrors, String(error.type))
     ) {
-      return textResponse(
-        ...exportErrors[error.type as CommentExportError["type"]],
-      );
+      return githubExportErrorResponse(error.type as keyof typeof exportErrors);
     }
-    return textResponse(
-      error instanceof Error ? error.message : "GitHub export failed.",
-      502,
-    );
+    return githubExportErrorResponse("export_failed");
   }
 };

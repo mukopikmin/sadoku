@@ -388,7 +388,7 @@ for (const action of ["add", "update"] as const) {
 Deno.test("GraphQL errors are failures even with data, and mutations are not retried", async () => {
   const f = fixture();
   f.fail("CreatePendingReview");
-  await assertRejects(() => f.save(), Error, "could not save");
+  await assertRejects(() => f.save(), Error, "GraphQL request failed");
   assertEquals(
     f.calls.filter((args) =>
       args.some((arg) => arg.startsWith("query=mutation CreatePendingReview"))

@@ -37,6 +37,12 @@ included in the GitHub comment. Before a mutation, Sadoku rechecks the PR head
 and local parent. Existing pending review state is also checked immediately
 before adding or updating.
 
+The export API returns failures as `{ "error": { "code": "export_..." } }` with
+an HTTP status and `Cache-Control: no-store`. The frontend owns the display
+messages for these codes and uses its own fallback for unknown codes, malformed
+responses and network failures. Backend exception messages are not returned to
+the browser by this API.
+
 Duplicate detection hashes the PR URL, relative file path, local parent ID and
 creation timestamp, and appends `<!-- sadoku-comment:HASH -->` to the comment
 body. Both pending review comments and submitted review comments are searched,

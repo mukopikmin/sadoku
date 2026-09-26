@@ -614,6 +614,16 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
       endLine: 1,
     }),
   };
+  const assertExportError = async (
+    response: Response,
+    status: number,
+    code: string,
+  ) => {
+    assertEquals(response.status, status);
+    assertEquals(response.headers.get("cache-control"), "no-store");
+    assertEquals(response.headers.get("content-type"), "application/json");
+    assertEquals(await response.json(), { error: { code } });
+  };
   const comments = await requestComments(
     handler,
     "/__sadoku/documents/1/comments",
@@ -621,12 +631,42 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
   assertEquals((await comments.json()).githubHeadSha, sha);
   const preview = await requestComments(handler, "/__sadoku/documents/1");
   assertEquals((await preview.json()).githubHeadSha, sha);
-  assertEquals(
-    (await requestComments(handler, path, { ...init, headers: {} })).status,
+  await assertExportError(
+    await requestComments(handler, path, { ...init, headers: {} }),
     415,
+    "export_json_required",
+  );
+  for (const body of ["{", "null", "[]", '{"body":""}']) {
+    await assertExportError(
+      await requestComments(handler, path, { ...init, body }),
+      400,
+      "export_invalid_request",
+    );
+  }
+  await assertExportError(
+    await requestComments(
+      handler,
+      "/__sadoku/documents/999/comments/1/github",
+      init,
+    ),
+    404,
+    "export_document_not_found",
+  );
+  await assertExportError(
+    await requestComments(
+      handler,
+      "/__sadoku/documents/1/comments/999/github",
+      init,
+    ),
+    404,
+    "export_comment_not_found",
   );
   currentSha = "b".repeat(40);
-  assertEquals((await requestComments(handler, path, init)).status, 409);
+  await assertExportError(
+    await requestComments(handler, path, init),
+    409,
+    "export_out_of_sync",
+  );
   assertEquals(posts, 0);
   assertEquals(
     (await requestComments(
@@ -644,35 +684,44 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
       displayedMarkdown: "line\nUnseen change",
     }),
   });
-  assertEquals(mismatched.status, 409);
-  assertMatch(await mismatched.text(), /displayed Markdown differs/);
+  await assertExportError(mismatched, 409, "export_markdown_changed");
   assertEquals(posts, 0);
-  assertEquals(
-    (await requestComments(handler, path, {
+  await assertExportError(
+    await requestComments(handler, path, {
       ...init,
       body: JSON.stringify({
         ...JSON.parse(init.body),
         displayedMarkdown: undefined,
       }),
-    })).status,
+    }),
     400,
+    "export_invalid_request",
   );
   const readMarkdown = session.readMarkdown;
   session.readMarkdown = () => Promise.reject(new Error("Remote unavailable"));
   // A stored sourceSnapshot exists, but cannot authorize publication.
-  assertEquals((await requestComments(handler, path, init)).status, 502);
+  await assertExportError(
+    await requestComments(handler, path, init),
+    502,
+    "export_failed",
+  );
   assertEquals(posts, 0);
   session.readMarkdown = readMarkdown;
   const first = requestComments(handler, path, init);
   while (!releasePost) await new Promise((resolve) => setTimeout(resolve, 0));
-  assertEquals((await requestComments(handler, path, init)).status, 409);
-  assertEquals(
-    (await requestComments(
+  await assertExportError(
+    await requestComments(handler, path, init),
+    409,
+    "export_busy",
+  );
+  await assertExportError(
+    await requestComments(
       handler,
       "/__sadoku/documents/1/comments/3/github",
       init,
-    )).status,
+    ),
     409,
+    "export_busy",
   );
   releasePost();
   const result = await first;
@@ -685,5 +734,9 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
   assertEquals(postedBody.includes("Reply"), false);
   assertEquals(posts, 1);
   delete session.githubPull;
-  assertEquals((await requestComments(handler, path, init)).status, 404);
+  await assertExportError(
+    await requestComments(handler, path, init),
+    404,
+    "export_unavailable",
+  );
 });
