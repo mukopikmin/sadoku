@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { loadSession } from "../api/session";
-import { sessionQueryKey } from "./previewQueryKeys";
+import { useQuery } from "@connectrpc/connect-query";
+import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb";
+import { toPreviewSession } from "../api/session";
 
 export const useSessionQuery = () =>
-  useQuery({ queryFn: loadSession, queryKey: sessionQueryKey });
+  useQuery(PreviewService.method.getSession, {}, { select: toPreviewSession });

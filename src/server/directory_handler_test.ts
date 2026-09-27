@@ -7,6 +7,9 @@ import type { DirectorySession } from "./usecase/document/mod.ts";
 import { serveHandlerInfo } from "./test_helpers.ts";
 import { ensureCommentsNotificationDirectory } from "./storage/comment/notifications.ts";
 import { previewAssetPaths } from "./preview/asset_manifest.ts";
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb.ts";
 
 const createMemoryStore = (): CommentsStore => {
   const documents = new Map<string, PreviewCommentsDocument>();
@@ -149,14 +152,99 @@ Deno.test("serves database statistics from the configured reader", async () => {
     },
   );
 
-  const response = await request(handler, "/__sadoku/statistics");
+  const path = "/sadoku.preview.v1.PreviewService/GetStatistics";
+  const response = await request(handler, path, {
+    method: "POST",
+    headers: {
+      "connect-protocol-version": "1",
+      "content-type": "application/json",
+    },
+    body: "{}",
+  });
   assertEquals(response.status, 200);
   assertEquals(response.headers.get("cache-control"), "no-store");
-  assertEquals(await response.json(), expected);
+  assertEquals(await response.json(), {
+    commentCount: { bot: "2", human: "5" },
+    databaseSize: "4096",
+    documentCount: "3",
+  });
   assertEquals(
-    (await request(handler, "/__sadoku/statistics", { method: "POST" })).status,
+    (await request(handler, path)).status,
     405,
   );
+  assertEquals((await request(handler, "/__sadoku/statistics")).status, 404);
+});
+
+Deno.test("official Connect client interoperates with preview RPCs", async () => {
+  const handler = createDirectoryPreviewHandler(
+    {
+      rootPath: "/tmp/empty",
+      documents: [],
+      documentsById: new Map(),
+      pullRequest: {
+        description: "Description",
+        number: 23,
+        title: "Improve docs",
+        url: "https://github.com/octo/repo/pull/23",
+      },
+    },
+    createMemoryStore(),
+    {
+      statistics: {
+        read: () =>
+          Promise.resolve({
+            commentCount: { bot: 2, human: 5 },
+            databaseSize: 4096,
+            documentCount: 3,
+          }),
+      },
+    },
+  );
+  const transport = createConnectTransport({
+    baseUrl: "http://127.0.0.1:3334",
+    fetch: async (input, init) =>
+      await handler(new Request(input, init), serveHandlerInfo),
+    useBinaryFormat: false,
+  });
+  const client = createClient(PreviewService, transport);
+
+  const session = await client.getSession({});
+  assertEquals(session.pullRequest?.number, 23);
+  assertEquals(session.pullRequest?.title, "Improve docs");
+  const statistics = await client.getStatistics({});
+  assertEquals(statistics.commentCount?.bot, 2n);
+  assertEquals(statistics.commentCount?.human, 5n);
+  assertEquals(statistics.databaseSize, 4096n);
+  assertEquals(statistics.documentCount, 3n);
+  assertEquals((await request(handler, "/__sadoku/session")).status, 404);
+});
+
+Deno.test("statistics RPC reports an unavailable server capability", async () => {
+  const handler = createDirectoryPreviewHandler(
+    {
+      rootPath: "/tmp/empty",
+      documents: [],
+      documentsById: new Map(),
+    },
+    createMemoryStore(),
+  );
+  const response = await request(
+    handler,
+    "/sadoku.preview.v1.PreviewService/GetStatistics",
+    {
+      body: "{}",
+      headers: {
+        "connect-protocol-version": "1",
+        "content-type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+  assertEquals(response.status, 501);
+  assertEquals(await response.json(), {
+    code: "unimplemented",
+    message: "Database statistics are not available.",
+  });
 });
 
 Deno.test("memory routes expose read and delete operations only", async () => {

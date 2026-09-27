@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { create } from "@bufbuild/protobuf";
 import { loadDocuments, loadPreviewDocument } from "../api/document";
-import { loadSession } from "../api/session";
+import { toPreviewSession } from "../api/session";
+import { toDatabaseStatistics } from "../api/statistics";
+import {
+  GetSessionResponseSchema,
+  GetStatisticsResponseSchema,
+} from "../../../gen/ts/sadoku/preview/v1/preview_pb";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -55,20 +61,17 @@ describe("document API tag conversion", () => {
 });
 
 describe("session API conversion", () => {
-  it("converts pull request metadata and supports sessions without it", async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(Response.json({
+  it("converts pull request metadata and supports sessions without it", () => {
+    expect(
+      toPreviewSession(create(GetSessionResponseSchema, {
         pullRequest: {
           description: "First line\nSecond line",
           number: 23,
           title: "Improve docs",
           url: "https://github.com/octo/repo/pull/23",
         },
-      }))
-      .mockResolvedValueOnce(Response.json({}));
-    vi.stubGlobal("fetch", fetchMock);
-
-    expect(await loadSession()).toEqual({
+      })),
+    ).toEqual({
       pullRequest: {
         description: "First line\nSecond line",
         number: 23,
@@ -76,22 +79,10 @@ describe("session API conversion", () => {
         url: "https://github.com/octo/repo/pull/23",
       },
     });
-    expect(await loadSession()).toEqual({});
+    expect(toPreviewSession(create(GetSessionResponseSchema))).toEqual({});
   });
 
   it.each([
-    {
-      description: "Body",
-      number: 1,
-      title: 1,
-      url: "https://github.com/o/r/pull/1",
-    },
-    {
-      description: null,
-      number: 1,
-      title: "Title",
-      url: "https://github.com/o/r/pull/1",
-    },
     {
       description: "Body",
       number: 0,
@@ -104,8 +95,34 @@ describe("session API conversion", () => {
       title: "Title",
       url: "javascript:alert(1)",
     },
-  ])("rejects invalid pull request metadata: %j", async (pullRequest) => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ pullRequest })));
-    await expect(loadSession()).rejects.toThrow("Invalid session response.");
+  ])("rejects invalid pull request metadata: %j", (pullRequest) => {
+    expect(() =>
+      toPreviewSession(create(GetSessionResponseSchema, { pullRequest }))
+    ).toThrow("Invalid session response.");
+  });
+});
+
+describe("statistics API conversion", () => {
+  it("converts uint64 fields to the existing number model", () => {
+    expect(toDatabaseStatistics(create(GetStatisticsResponseSchema, {
+      commentCount: { bot: 4n, human: 12n },
+      databaseSize: 1536n,
+      documentCount: 3n,
+    }))).toEqual({
+      commentCount: { bot: 4, human: 12 },
+      databaseSize: 1536,
+      documentCount: 3,
+    });
+  });
+
+  it("rejects missing counts and integers outside the safe range", () => {
+    expect(() => toDatabaseStatistics(create(GetStatisticsResponseSchema)))
+      .toThrow("Invalid statistics response.");
+    expect(() =>
+      toDatabaseStatistics(create(GetStatisticsResponseSchema, {
+        commentCount: { bot: 0n, human: 0n },
+        databaseSize: BigInt(Number.MAX_SAFE_INTEGER) + 1n,
+      }))
+    ).toThrow("Invalid statistics response.");
   });
 });

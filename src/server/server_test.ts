@@ -370,7 +370,18 @@ Deno.test("serves pull request Markdown at the head SHA as a multi-document sess
   try {
     assertEquals(new URL(preview.url).pathname, "/");
     const sessionResponse = await fetch(
-      new URL("/__sadoku/session", preview.url),
+      new URL(
+        "/sadoku.preview.v1.PreviewService/GetSession",
+        preview.url,
+      ),
+      {
+        body: "{}",
+        headers: {
+          "connect-protocol-version": "1",
+          "content-type": "application/json",
+        },
+        method: "POST",
+      },
     );
     assertEquals(sessionResponse.status, 200);
     assertEquals(sessionResponse.headers.get("cache-control"), "no-store");

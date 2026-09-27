@@ -41,7 +41,9 @@ const installFetch = (
     "fetch",
     vi.fn(
       (input: RequestInfo | URL) => {
-        const url = String(input);
+        const url = input instanceof Request
+          ? new URL(input.url).pathname
+          : new URL(String(input), globalThis.location.origin).pathname;
         if (url === "/__sadoku/directory-status") {
           if (!directoryStatuses) {
             return Promise.resolve(new Response("Not found", { status: 404 }));
@@ -56,7 +58,7 @@ const installFetch = (
             Response.json(documents),
           );
         }
-        if (url === "/__sadoku/session") {
+        if (url === "/sadoku.preview.v1.PreviewService/GetSession") {
           return Promise.resolve(Response.json({
             pullRequest: {
               description:

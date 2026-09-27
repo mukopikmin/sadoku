@@ -12,9 +12,9 @@ it("loads and displays database statistics when opened", async () => {
     "fetch",
     vi.fn(() =>
       Promise.resolve(Response.json({
-        commentCount: { bot: 4, human: 12 },
-        databaseSize: 1536,
-        documentCount: 3,
+        commentCount: { bot: "4", human: "12" },
+        databaseSize: "1536",
+        documentCount: "3",
       }))
     ),
   );
