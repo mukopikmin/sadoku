@@ -384,3 +384,70 @@ describe("CommentItem", () => {
     expect(screen.getAllByText("Reopen rejected.").length).toBeGreaterThan(0);
   });
 });
+
+it("saves only eligible parent comments to a pending GitHub review and links it", async () => {
+  const url = "https://github.com/o/r/pull/1/files";
+  const onExportComment = vi.fn(async () => ({
+    url,
+    state: "pending" as const,
+  }));
+  const actions = createCommentActions({ onExportComment });
+  const { rerender } = render(
+    <CommentItem
+      actions={actions}
+      comment={createComment({ replies: [createCommentReply()] })}
+      lineLabel="Line 3"
+    />,
+  );
+  // The reply has its own menu, so select the parent menu explicitly.
+  fireEvent.click(screen.getAllByRole("button", { name: "More actions" })[0]);
+  fireEvent.click(
+    await screen.findByRole("menuitem", { name: "Save to GitHub review" }),
+  );
+  await waitFor(() =>
+    expect(onExportComment).toHaveBeenCalledExactlyOnceWith(1)
+  );
+  expect(
+    (await screen.findByRole("link", { name: "View pending GitHub review" }))
+      .getAttribute("href"),
+  ).toBe(url);
+  for (
+    const comment of [
+      createComment({ author: { type: "bot" } }),
+      createComment({ state: "stale" }),
+      createComment({ state: "resolved" }),
+    ]
+  ) {
+    rerender(
+      <CommentItem actions={actions} comment={comment} lineLabel="Line 3" />,
+    );
+    await openCommentMenu();
+    expect(screen.queryByRole("menuitem", { name: "Save to GitHub review" }))
+      .toBeNull();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+  }
+});
+
+it("identifies an already submitted export without presenting it as pending", async () => {
+  const url = "https://github.com/o/r/pull/1#discussion_r10";
+  render(
+    <CommentItem
+      actions={createCommentActions({
+        onExportComment: async () => ({ url, state: "submitted" }),
+      })}
+      comment={createComment()}
+      lineLabel="Line 3"
+    />,
+  );
+  await openCommentMenu();
+  fireEvent.click(
+    screen.getByRole("menuitem", { name: "Save to GitHub review" }),
+  );
+  expect(
+    (await screen.findByRole("link", {
+      name: "Already submitted — view on GitHub",
+    })).getAttribute("href"),
+  ).toBe(url);
+  expect(screen.queryByRole("link", { name: "View pending GitHub review" }))
+    .toBeNull();
+});

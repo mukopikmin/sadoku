@@ -88,6 +88,7 @@ export const CommentItem = ({
             disabled={isPending}
             lineLabel={lineLabel}
             onDelete={onDeleteComment}
+            onExport={actions.onExportComment}
             onEdit={() => setIsEditing(true)}
             onReopen={onReopenComment}
             onResolve={onResolveComment}

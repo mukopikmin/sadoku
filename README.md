@@ -98,6 +98,25 @@ repositories, uses `gh api`; Sadoku never reads or stores a GitHub token. Fetch
 URLs, document identities, logs, and comment storage paths also contain no
 credentials.
 
+In a PR preview, choose **Save to GitHub review** from an active human comment's
+menu to add it to your pending review. Sadoku discovers your existing review on
+GitHub, including one started in a browser, or creates a pending review with the
+first comment. Nothing is submitted automatically; use **View pending GitHub
+review** to finish or discard the review on GitHub. Review IDs are not stored
+locally. Replies are excluded.
+
+The displayed Markdown must exactly match the remote document, and the preview
+must use the current PR head. Remote read failures or differences block saving.
+The PR must be open and the selected lines must fit within one diff hunk. A
+pending review must also target the current head; finish or discard an older
+review on GitHub before adding comments for a newer revision.
+
+Saving the same parent again updates its pending body when the revision and
+lines still match. The explicit save uses the current local body. Already
+submitted comments return their existing link and are left unchanged. Local
+edits, resolution and deletion do not automatically change GitHub. See
+[export behavior and edge cases](docs/github-comment-export.md) for details.
+
 ### Comments from the CLI
 
 Register and inspect documents:

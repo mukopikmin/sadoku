@@ -1,4 +1,7 @@
+import type { GitHubCommentExport } from "../models/comment";
+
 export type CommentThreadActions = {
+  onExportComment?: (id: number) => Promise<GitHubCommentExport>;
   onDeleteComment: (id: number) => Promise<void>;
   onDeleteReply: (commentId: number, replyId: number) => Promise<void>;
   onReplyComment: (id: number, body: string) => Promise<void>;

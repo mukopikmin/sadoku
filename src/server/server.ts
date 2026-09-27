@@ -204,6 +204,7 @@ export const startPreviewServer = async (
         directoryState,
         statistics: stores.statistics,
         subscribeInvalidation: githubInvalidations.subscribe,
+        runGitHubCommand: options.runGitHubCommand ?? runGitHubCommand,
       },
       stores.documents,
       stores.instructions,

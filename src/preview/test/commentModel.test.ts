@@ -90,3 +90,18 @@ describe("comment model", () => {
     expect(document.comments[0]).not.toHaveProperty("stale");
   });
 });
+
+it("validates optional GitHub revision metadata", () => {
+  const githubHeadSha = "a".repeat(40);
+  expect(
+    toCommentsDocument({ comments: [], filePath: "source", githubHeadSha })
+      .githubHeadSha,
+  ).toBe(githubHeadSha);
+  expect(() =>
+    toCommentsDocument({
+      comments: [],
+      filePath: "source",
+      githubHeadSha: "invalid",
+    })
+  ).toThrow("Invalid GitHub PR revision");
+});

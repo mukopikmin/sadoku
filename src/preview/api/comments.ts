@@ -2,7 +2,9 @@ import {
   type Comment,
   type CommentReply,
   type CommentsDocument,
+  type GitHubCommentExport,
 } from "../models/comment";
+import { parseGitHubHeadSha } from "./document";
 
 export type CommentReplyResponse = {
   author: CommentAuthorResponse;
@@ -37,6 +39,7 @@ type CommentAuthorResponse = {
 };
 
 export type CommentsDocumentResponse = {
+  githubHeadSha?: string;
   comments: CommentResponse[];
   filePath: string;
 };
@@ -80,12 +83,89 @@ export const toComment = (response: CommentResponse): Comment => {
 export const toCommentsDocument = (
   response: CommentsDocumentResponse,
 ): CommentsDocument => ({
+  ...(response.githubHeadSha === undefined
+    ? {}
+    : { githubHeadSha: parseGitHubHeadSha(response.githubHeadSha) }),
   comments: response.comments.map(toComment),
   filePath: response.filePath,
 });
 
 const commentsPath = (documentId: number): string =>
   `/__sadoku/documents/${documentId}/comments`;
+
+const githubExportMessages = {
+  export_review_out_of_sync:
+    "The GitHub pending review or comment changed, or targets an older revision or different lines. Check the review on GitHub before retrying.",
+  export_markdown_changed:
+    "The displayed Markdown differs from the remote document. Refresh and review it before saving.",
+  export_unavailable: "Only an open GitHub PR can receive comments.",
+  export_out_of_sync:
+    "The preview or comment is out of sync. Refresh and review it before saving.",
+  export_comment_not_found: "Comment not found. Refresh the preview.",
+  export_comment_ineligible:
+    "Only active human parent comments can be saved to a GitHub review. Replies are excluded.",
+  export_outside_diff:
+    "The selected lines are outside a single available PR diff hunk.",
+  export_busy:
+    "A comment is already being saved to the GitHub review. Try again after it finishes.",
+  export_json_required:
+    "The save request could not be read. Refresh the preview and try again.",
+  export_invalid_request:
+    "The save request is invalid. Refresh the preview and try again.",
+  export_document_not_found: "Document not found. Refresh the preview.",
+  export_failed:
+    "Could not save to the GitHub review. Check your connection, GitHub authentication and the review on GitHub before retrying.",
+};
+
+const githubExportErrorMessage = (value: unknown): string => {
+  const code = (value as { error?: { code?: unknown } } | null)?.error?.code;
+  return typeof code === "string" && Object.hasOwn(githubExportMessages, code)
+    ? githubExportMessages[code as keyof typeof githubExportMessages]
+    : githubExportMessages.export_failed;
+};
+
+export const exportCommentToGitHub = async (
+  documentId: number,
+  headSha: string,
+  comment: Comment,
+  displayedMarkdown: string,
+): Promise<GitHubCommentExport> => {
+  const response = await fetch(
+    `${commentsPath(documentId)}/${comment.id}/github`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        headSha,
+        displayedMarkdown,
+        createdAt: comment.createdAt,
+        body: comment.body,
+        startLine: comment.startLine,
+        endLine: comment.endLine,
+      }),
+    },
+  ).catch(() => {
+    throw new Error(githubExportMessages.export_failed);
+  });
+  if (!response.ok) {
+    const error: unknown = await response.json().catch(() => undefined);
+    throw new Error(githubExportErrorMessage(error));
+  }
+  const value = await response.json();
+  if (
+    typeof value?.url !== "string" ||
+    !/^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+(?:\/files|#discussion_r\d+)$/
+      .test(
+        value.url,
+      ) ||
+    (value.state !== "pending" && value.state !== "submitted")
+  ) {
+    throw new Error(
+      "Invalid GitHub review response. Check the PR before retrying.",
+    );
+  }
+  return { url: value.url, state: value.state };
+};
 
 export const loadComments = async (
   documentId: number,

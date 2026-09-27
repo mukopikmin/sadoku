@@ -5,6 +5,7 @@ import {
   createReply,
   deleteComment,
   deleteReply,
+  exportCommentToGitHub,
   loadComments,
   reopenComment,
   resolveComment,
@@ -13,6 +14,7 @@ import {
 } from "../api/comments";
 import type { Comment, CommentsDocument } from "../models/comment";
 import { commentsQueryKey } from "./previewQueryKeys";
+import { usePreviewDocumentQuery } from "./useDocuments";
 
 export const useCommentsQuery = (documentId?: number, enabled = true) =>
   useQuery({
@@ -23,6 +25,23 @@ export const useCommentsQuery = (documentId?: number, enabled = true) =>
 
 export const useCommentActions = (documentId?: number): CommentActions => {
   const queryClient = useQueryClient();
+  const preview = usePreviewDocumentQuery(documentId, documentId !== undefined);
+  const comments = useCommentsQuery(documentId, documentId !== undefined);
+  const exportMutation = useMutation({
+    mutationFn: ({ targetDocumentId, headSha, comment, displayedMarkdown }: {
+      targetDocumentId: number;
+      headSha: string;
+      comment: Comment;
+      displayedMarkdown: string;
+    }) =>
+      exportCommentToGitHub(
+        targetDocumentId,
+        headSha,
+        comment,
+        displayedMarkdown,
+      ),
+    retry: false,
+  });
 
   const updateComments = (
     updater: (current: Comment[]) => Comment[],
@@ -154,6 +173,21 @@ export const useCommentActions = (documentId?: number): CommentActions => {
   });
 
   return {
+    onExportComment: preview.data?.githubHeadSha &&
+        preview.data.githubHeadSha === comments.data?.githubHeadSha
+      ? async (id) => {
+        const comment = comments.data?.comments.find((item) => item.id === id);
+        if (!comment || documentId === undefined) {
+          throw new Error("Comment not found.");
+        }
+        return await exportMutation.mutateAsync({
+          targetDocumentId: documentId,
+          headSha: preview.data!.githubHeadSha!,
+          displayedMarkdown: preview.data!.markdown,
+          comment,
+        });
+      }
+      : undefined,
     onCreateComment: async (startLine, body, endLine) => {
       await createCommentMutation.mutateAsync({
         body,
