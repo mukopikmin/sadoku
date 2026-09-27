@@ -49,6 +49,7 @@ import type { MemoryStore } from "./usecase/memory/ports.ts";
 import { getMemories, removeMemory } from "./api/memory_api.ts";
 import { getSession } from "./api/session_api.ts";
 import type { RunGitHubCommand } from "./github_pull.ts";
+import { getGitHubAccountResponse } from "./api/github_account_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   runGitHubCommand?: RunGitHubCommand;
@@ -127,6 +128,13 @@ export const createDirectoryPreviewHandler = (
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
   app.all("/__sadoku/settings", methodNotAllowedResponse);
+  if (options.runGitHubCommand) {
+    app.get(
+      "/__sadoku/github-account",
+      () => getGitHubAccountResponse(options.runGitHubCommand!),
+    );
+    app.all("/__sadoku/github-account", methodNotAllowedResponse);
+  }
   if (options.statistics) {
     app.get(
       "/__sadoku/statistics",
