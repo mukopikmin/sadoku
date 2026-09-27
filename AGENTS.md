@@ -184,6 +184,11 @@ them when making changes.
   and user-visible integration behavior. Prefer focused hook tests for state
   transitions, branching logic, side effects, and error handling extracted from
   components.
+- Focus preview component tests on semantic DOM structure, accessible names and
+  roles, content, and user interactions. Do not assert cosmetic details such as
+  exact colors, spacing, border widths, typography, CSS tokens, generated class
+  names, or stylesheet text. Keep checks for user-selected settings and
+  functional layout calculations in the appropriate behavioral or hook tests.
 - Prefer behavioral tests through public functions, HTTP requests, or rendered
   UI. Avoid tests coupled to private implementation details.
 - Use temporary files and ephemeral or explicitly reserved loopback ports. Tests

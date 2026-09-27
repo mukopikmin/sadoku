@@ -82,7 +82,7 @@ describe("CommentMarkdown", () => {
     });
   });
 
-  it("shares MarkdownPreview element styles", async () => {
+  it("preserves the same Markdown structure and content as the document preview", async () => {
     const markdown = `## Heading
 
 Paragraph with [a link](https://example.com) and \`code\`.
@@ -125,10 +125,7 @@ Paragraph with [a link](https://example.com) and \`code\`.
         .find((element) => !element.closest("[data-scope=collapsible]"))!;
       const commentElement = commentMarkdown.querySelector(selector)!;
       expect(documentElement.tagName).toBe(commentElement.tagName);
-      expect(documentElement.className).toBe(commentElement.className);
-      expect(documentElement.getAttribute("style")).toBe(
-        commentElement.getAttribute("style"),
-      );
+      expect(documentElement.textContent).toBe(commentElement.textContent);
     }
 
     const diff = commentMarkdown.querySelector("code.language-diff")!;
