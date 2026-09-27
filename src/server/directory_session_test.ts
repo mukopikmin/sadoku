@@ -55,10 +55,12 @@ Deno.test("pull request sessions register multiple documents with stable IDs", a
   const { documents, store } = createDocumentStore();
   const encoder = new TextEncoder();
   const responses = (sha: string) => (args: readonly string[]) => {
-    const value = args.at(-1)!.endsWith("/pulls/9") ? { head: { sha } } : [
-      { filename: "README.md", status: "modified" },
-      { filename: "docs/guide.markdown", status: "added" },
-    ];
+    const value = args.at(-1)!.endsWith("/pulls/9")
+      ? { body: "PR description", head: { sha }, title: "PR title" }
+      : [
+        { filename: "README.md", status: "modified" },
+        { filename: "docs/guide.markdown", status: "added" },
+      ];
     return Promise.resolve({
       code: 0,
       stderr: new Uint8Array(),
@@ -100,6 +102,12 @@ Deno.test("pull request sessions register multiple documents with stable IDs", a
     ),
     true,
   );
+  assertEquals(first.pullRequest, {
+    description: "PR description",
+    number: 9,
+    title: "PR title",
+    url: "https://github.com/octo/repo/pull/9",
+  });
 });
 
 Deno.test("directory preparation becomes ready and publishes counts", async () => {

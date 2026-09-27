@@ -24,6 +24,7 @@ import { DocumentPreviewPage } from "./pages/DocumentPreviewPage";
 import { PreviewLayout } from "./components/layout/PreviewLayout";
 import { usePreviewRoute } from "./hooks/usePreviewRoute";
 import { isUnresolvedComment } from "./models/comment";
+import { useSessionQuery } from "./hooks/useSession";
 
 export const App = () => {
   const tagsTriggerRef = useRef<HTMLButtonElement>(null);
@@ -36,6 +37,7 @@ export const App = () => {
   } = usePreviewRoute();
   const navigate = useNavigate();
   const documentsQuery = useDocumentsQuery();
+  const sessionQuery = useSessionQuery();
   const directoryStatusQuery = useDirectoryStatusQuery();
   const directoryStatus = directoryStatusQuery.data;
   const documents = documentsQuery.data;
@@ -223,6 +225,7 @@ export const App = () => {
           directoryStatus={directoryStatus}
           documents={documents!}
           onSelectDocument={selectDocument}
+          pullRequest={sessionQuery.data?.pullRequest}
         />
       </PreviewLayout>
     );

@@ -1,6 +1,14 @@
 import type { DocumentSummary, PreviewDocument } from "../models/document";
 import { parseDocumentTag } from "./tags";
 
+export const parseGitHubHeadSha = (value: unknown): string | undefined => {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !/^[a-f0-9]{40,64}$/.test(value)) {
+    throw new Error("Invalid GitHub PR revision.");
+  }
+  return value;
+};
+
 export type DocumentSummaryResponse = DocumentSummary;
 export type PreviewDocumentResponse = PreviewDocument;
 
@@ -28,6 +36,7 @@ export const loadPreviewDocument = async (
   const document = await response.json() as PreviewDocumentResponse;
   return {
     ...document,
+    githubHeadSha: parseGitHubHeadSha(document.githubHeadSha),
     tags: Array.isArray(document.tags)
       ? document.tags.map(parseDocumentTag)
       : [],

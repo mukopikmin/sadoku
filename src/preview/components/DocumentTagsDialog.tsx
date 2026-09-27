@@ -1,5 +1,4 @@
 import {
-  Badge,
   Button,
   Dialog,
   Flex,
@@ -8,14 +7,12 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState } from "react";
-import type { TagReference, TagSummary } from "../api/tags";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { TagReference } from "../api/tags";
 import { useTagActions, useTagsQuery } from "../hooks/useTags";
 import type { DocumentTag } from "../models/document";
 import { findSimilarTags } from "../models/tagSuggestions";
 import { TagLabel } from "./ui/TagLabel";
-
-const DEFAULT_TAG_BACKGROUND_COLOR = "#718096";
 
 type Props = {
   documentId: number;
@@ -29,50 +26,60 @@ export const DocumentTagsDialog = (
 ) => {
   const query = useTagsQuery(open);
   const actions = useTagActions(documentId);
-  const [selected, setSelected] = useState<TagReference[]>(
-    tags.map(({ id }) => ({ id })),
-  );
+  const [selectedTags, setSelectedTags] = useState<DocumentTag[]>(tags);
+  const saving = useRef(false);
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
   useEffect(() => {
     if (open) {
-      setSelected(tags.map(({ id }) => ({ id })));
+      setSelectedTags(tags);
       setInput("");
       setMessage("");
     }
   }, [open, tags]);
 
   const allTags = query.data ?? [];
-  const selectedTags = selected.map((reference) =>
-    "id" in reference
-      ? allTags.find(({ id }) => id === reference.id) ??
-        tags.find(({ id }) => id === reference.id)
-      : {
-        id: -1,
-        name: reference.name,
-        backgroundColor: DEFAULT_TAG_BACKGROUND_COLOR,
-      }
-  ).filter((tag): tag is DocumentTag => tag !== undefined);
   const trimmed = input.trim();
   const exact = allTags.find(({ name }) => name === trimmed);
-  const similar = useMemo(() => findSimilarTags(input, allTags), [
-    input,
-    allTags,
-  ]);
+  const similar = useMemo(() => {
+    const selectedIds = new Set(selectedTags.map(({ id }) => id));
+    return findSimilarTags(
+      input,
+      allTags.filter(({ id }) => !selectedIds.has(id)),
+    );
+  }, [input, allTags, selectedTags]);
   const hasSelected = (tag: DocumentTag) =>
-    selected.some((item) => "id" in item && item.id === tag.id);
+    selectedTags.some((item) => item.id === tag.id);
 
+  const persist = async (next: TagReference[]) => {
+    if (saving.current) return;
+    saving.current = true;
+    setMessage("");
+    try {
+      setSelectedTags(await actions.replace(next));
+      setInput("");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Failed to save tags.",
+      );
+    } finally {
+      saving.current = false;
+    }
+  };
   const addExisting = (tag: DocumentTag) => {
+    if (saving.current) return;
     if (hasSelected(tag)) {
       setMessage("This tag has already been added.");
       return;
     }
-    setSelected((current) => [...current, { id: tag.id }]);
-    setInput("");
-    setMessage("");
+    if (selectedTags.length >= 20) {
+      setMessage("A document can have at most 20 tags.");
+      return;
+    }
+    void persist([...selectedTags.map(({ id }) => ({ id })), { id: tag.id }]);
   };
   const addInput = () => {
-    if (!trimmed) return;
+    if (!trimmed || saving.current) return;
     if (/\p{Cc}/u.test(trimmed)) {
       setMessage("Tag names cannot contain line breaks or control characters.");
       return;
@@ -82,21 +89,17 @@ export const DocumentTagsDialog = (
       return;
     }
     if (exact) return addExisting(exact);
-    if (selected.some((item) => "name" in item && item.name === trimmed)) {
+    if (selectedTags.some((item) => item.name === trimmed)) {
       setMessage("This tag has already been added.");
       return;
     }
-    if (selected.length >= 20) {
+    if (selectedTags.length >= 20) {
       setMessage("A document can have at most 20 tags.");
       return;
     }
-    setSelected((current) => [...current, { name: trimmed }]);
-    setInput("");
-    setMessage("");
-  };
-  const save = async () => {
-    await actions.replace(selected);
-    onOpenChange(false);
+    void persist([...selectedTags.map(({ id }) => ({ id })), {
+      name: trimmed,
+    }]);
   };
 
   return (
@@ -126,9 +129,13 @@ export const DocumentTagsDialog = (
                       key={`${tag.id}-${tag.name}-${index}`}
                       size="sm"
                       variant="outline"
+                      disabled={actions.pending}
                       onClick={() =>
-                        setSelected((current) =>
-                          current.filter((_, itemIndex) => itemIndex !== index)
+                        void persist(
+                          selectedTags.filter((_, itemIndex) =>
+                            itemIndex !== index
+                          )
+                            .map(({ id }) => ({ id })),
                         )}
                     >
                       <TagLabel
@@ -142,6 +149,7 @@ export const DocumentTagsDialog = (
                 <Flex gap="2">
                   <Input
                     aria-label="Tag name"
+                    disabled={actions.pending}
                     value={input}
                     onChange={(event) => {
                       setInput(event.currentTarget.value);
@@ -156,7 +164,8 @@ export const DocumentTagsDialog = (
                     placeholder="Enter a tag name"
                   />
                   <Button
-                    disabled={!trimmed || selected.length >= 20}
+                    disabled={actions.pending || query.isPending || !trimmed ||
+                      selectedTags.length >= 20}
                     onClick={addInput}
                   >
                     Add
@@ -165,14 +174,16 @@ export const DocumentTagsDialog = (
                 {message && (
                   <Text color="fg.error" role="status">{message}</Text>
                 )}
-                {trimmed && exact && (
+                {trimmed && exact && !hasSelected(exact) && (
                   <Flex direction="column" gap="2">
                     <Text fontSize="sm" fontWeight="semibold">Exact match</Text>
                     <Button
                       alignSelf="flex-start"
                       size="sm"
                       variant="outline"
-                      onClick={() => addExisting(exact)}
+                      disabled={actions.pending || selectedTags.length >= 20}
+                      onClick={() =>
+                        addExisting(exact)}
                     >
                       <TagLabel
                         backgroundColor={exact.backgroundColor}
@@ -192,13 +203,14 @@ export const DocumentTagsDialog = (
                           key={tag.id}
                           size="sm"
                           variant="ghost"
+                          disabled={actions.pending ||
+                            selectedTags.length >= 20}
                           onClick={() => addExisting(tag)}
                         >
                           <TagLabel
                             backgroundColor={tag.backgroundColor}
                             name={tag.name}
-                          />{" "}
-                          <Badge ms="1">{tag.reason}</Badge>
+                          />
                         </Button>
                       ))}
                     </Flex>
@@ -212,14 +224,6 @@ export const DocumentTagsDialog = (
                 {query.error && (
                   <Text color="fg.error">{String(query.error)}</Text>
                 )}
-                <Flex justifyContent="flex-end">
-                  <Button
-                    disabled={actions.pending || query.isPending}
-                    onClick={() => void save()}
-                  >
-                    Save tags
-                  </Button>
-                </Flex>
               </Flex>
             </Dialog.Body>
             <Dialog.CloseTrigger asChild>

@@ -1,6 +1,7 @@
 import {
   ActionBar,
   Badge,
+  Button,
   Flex,
   HoverCard,
   IconButton,
@@ -52,18 +53,21 @@ export const DocumentActionBar = (
           >
             <Tooltip content="Tags">
               <HoverCard.Trigger asChild>
-                <IconButton
+                <Button
                   aria-label="Tags"
                   onClick={onOpenTags}
+                  px={tagCount === 0 ? "0" : undefined}
                   size="sm"
                   type="button"
                   variant="outline"
                 >
                   <Tag aria-hidden="true" />
-                  <Badge aria-hidden="true" size="sm" variant="solid">
-                    {tagCount}
-                  </Badge>
-                </IconButton>
+                  {tagCount > 0 && (
+                    <Badge aria-hidden="true" size="sm" variant="solid">
+                      {tagCount}
+                    </Badge>
+                  )}
+                </Button>
               </HoverCard.Trigger>
             </Tooltip>
             <Portal>
@@ -91,32 +95,38 @@ export const DocumentActionBar = (
             </Portal>
           </HoverCard.Root>
           <Tooltip content="Instructions">
-            <IconButton
+            <Button
               aria-label="Instructions"
               onClick={onOpenInstructions}
+              px={instructionCount === 0 ? "0" : undefined}
               size="sm"
               type="button"
               variant="outline"
             >
               <FileText aria-hidden="true" />
-              <Badge aria-hidden="true" size="sm" variant="solid">
-                {instructionCount}
-              </Badge>
-            </IconButton>
+              {instructionCount > 0 && (
+                <Badge aria-hidden="true" size="sm" variant="solid">
+                  {instructionCount}
+                </Badge>
+              )}
+            </Button>
           </Tooltip>
           <Tooltip content="Memories">
-            <IconButton
+            <Button
               aria-label="Memories"
               onClick={onOpenMemories}
+              px={memoryCount === 0 ? "0" : undefined}
               size="sm"
               type="button"
               variant="outline"
             >
               <Brain aria-hidden="true" />
-              <Badge aria-hidden="true" size="sm" variant="solid">
-                {memoryCount}
-              </Badge>
-            </IconButton>
+              {memoryCount > 0 && (
+                <Badge aria-hidden="true" size="sm" variant="solid">
+                  {memoryCount}
+                </Badge>
+              )}
+            </Button>
           </Tooltip>
           <Tooltip
             content={showHtmlComments

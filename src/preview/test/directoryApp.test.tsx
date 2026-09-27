@@ -56,6 +56,17 @@ const installFetch = (
             Response.json(documents),
           );
         }
+        if (url === "/__sadoku/session") {
+          return Promise.resolve(Response.json({
+            pullRequest: {
+              description:
+                "First paragraph\n\n**Important** details with [a link](https://example.com).",
+              number: 23,
+              title: "Improve documentation",
+              url: "https://github.com/octo/repo/pull/23",
+            },
+          }));
+        }
         const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
         if (documentMatch) {
           const id = Number(documentMatch[1]);
@@ -107,6 +118,26 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
+  it("shows pull request metadata above the document tree", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Improve documentation #23",
+      }),
+    ).not.toBeNull();
+    const pullRequestLink = screen.getByRole("link", { name: "#23" });
+    expect(pullRequestLink.getAttribute("href"))
+      .toBe("https://github.com/octo/repo/pull/23");
+    expect(screen.getByText("First paragraph").tagName).toBe("P");
+    expect(screen.getByText("Important").tagName).toBe("STRONG");
+    expect(screen.getByRole("link", { name: "a link" }).getAttribute("href"))
+      .toBe("https://example.com");
+    expect(screen.getByRole("treeitem", { name: "alpha.md" })).not.toBeNull();
+  });
   it("shows preparation progress and switches to the list when ready", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch(undefined, undefined, [

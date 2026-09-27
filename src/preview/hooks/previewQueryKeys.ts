@@ -1,4 +1,5 @@
 export const documentsQueryKey = ["documents"] as const;
+export const sessionQueryKey = ["session"] as const;
 export const directoryStatusQueryKey = ["directory-status"] as const;
 export const previewDocumentQueryKey = (documentId?: number) =>
   ["preview-document", documentId] as const;

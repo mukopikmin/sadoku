@@ -12,6 +12,7 @@ describe("DocumentActionBar", () => {
         instructionCount={3}
         memoryCount={4}
         onOpenInstructions={() => {}}
+        onOpenMemories={() => {}}
         onOpenTags={onOpenTags}
         onToggleHtmlComments={() => {}}
         showHtmlComments
@@ -26,6 +27,11 @@ describe("DocumentActionBar", () => {
     const tagsButton = screen.getByRole("button", { name: "Tags" });
     expect(tagsButton.querySelector(".lucide-tag")).not.toBeNull();
     expect(tagsButton.textContent).toBe("2");
+    expect(screen.getByRole("button", { name: "Instructions" }).textContent)
+      .toBe("3");
+    expect(screen.getByRole("button", { name: "Memories" }).textContent).toBe(
+      "4",
+    );
     expect(screen.queryByText("Tags")).toBeNull();
 
     fireEvent.pointerEnter(tagsButton);
@@ -44,6 +50,7 @@ describe("DocumentActionBar", () => {
         instructionCount={0}
         memoryCount={0}
         onOpenInstructions={() => {}}
+        onOpenMemories={() => {}}
         onOpenTags={onOpenTags}
         onToggleHtmlComments={() => {}}
         showHtmlComments
@@ -51,6 +58,13 @@ describe("DocumentActionBar", () => {
         tags={[]}
       />,
     );
+
+    for (const name of ["Tags", "Instructions", "Memories"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button.textContent).toBe("");
+      expect(button.querySelector("svg")).not.toBeNull();
+      expect(button.children).toHaveLength(1);
+    }
 
     fireEvent.pointerEnter(screen.getByRole("button", { name: "Tags" }));
 
@@ -82,7 +96,7 @@ describe("DocumentActionBar", () => {
     const comments = screen.getByRole("button", {
       name: "Show HTML comments",
     });
-    expect(instructions.textContent).toBe("0");
+    expect(instructions.textContent).toBe("");
     expect(memories.textContent).toBe("12");
     expect(instructions.querySelector(".lucide-file-text")).not.toBeNull();
     expect(memories.querySelector(".lucide-brain")).not.toBeNull();
