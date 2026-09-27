@@ -8,6 +8,7 @@ import type {
 } from "../models/theme";
 import { AppearanceSettings } from "./settings/AppearanceSettings";
 import { DirectoryDiscoverySettings } from "./settings/DirectoryDiscoverySettings";
+import { GitHubAccountSettings } from "./settings/GitHubAccountSettings";
 
 export type SettingsDialogProps = {
   onCodeWrapModeChange: (value: CodeWrapMode) => void;
@@ -45,6 +46,7 @@ export const SettingsDialog = (
             </Dialog.Header>
             <Dialog.Body>
               <Flex direction="column" gap="4">
+                <GitHubAccountSettings enabled={open} />
                 <AppearanceSettings
                   codeWrapMode={settings.codeWrap}
                   fontScale={settings.fontScale}

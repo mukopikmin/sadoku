@@ -57,6 +57,7 @@ import {
   getSessionResponse,
   getStatisticsResponse,
 } from "./api/preview_api.ts";
+import { getGitHubAccountResponse } from "./api/github_account_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   runGitHubCommand?: RunGitHubCommand;
@@ -158,6 +159,13 @@ export const createDirectoryPreviewHandler = (
   app.get("/__sadoku/settings", getSettings);
   app.put("/__sadoku/settings", (context) => updateSettings(context.req.raw));
   app.all("/__sadoku/settings", methodNotAllowedResponse);
+  if (options.runGitHubCommand) {
+    app.get(
+      "/__sadoku/github-account",
+      () => getGitHubAccountResponse(options.runGitHubCommand!),
+    );
+    app.all("/__sadoku/github-account", methodNotAllowedResponse);
+  }
   app.get("/__sadoku/events", (context) =>
     new Response(
       createPreviewEventStream(undefined, context.req.raw.signal, options),
