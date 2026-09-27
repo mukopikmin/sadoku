@@ -17,7 +17,7 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview code and Mermaid", () => {
-  it("shows the declared language above fenced code", () => {
+  it("shows the declared language in each fenced code header", () => {
     const { container } = renderMarkdown(`\`\`\`typescript
 const longName = true;
 \`\`\`
@@ -31,11 +31,17 @@ plain text
 \`\`\`
 `);
 
-    expect(
-      [...container.querySelectorAll("[data-code-language-label]")].map(
-        (label) => label.textContent,
-      ),
-    ).toEqual(["TypeScript", "TypeScript"]);
+    const labels = [
+      ...container.querySelectorAll("[data-code-language-label]"),
+    ];
+    expect(labels.map((label) => label.textContent)).toEqual([
+      "TypeScript",
+      "TypeScript",
+    ]);
+    expect(labels.map((label) => label.parentElement?.tagName)).toEqual([
+      "HEADER",
+      "HEADER",
+    ]);
     expect(container.querySelector("code.language-plaintext")).not.toBeNull();
   });
 

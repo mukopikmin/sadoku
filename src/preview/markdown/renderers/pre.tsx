@@ -1,9 +1,4 @@
-import {
-  Box,
-  Button,
-  CodeBlock as ChakraCodeBlock,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
 import { Children, isValidElement } from "react";
 import type React from "react";
 import { Tooltip } from "../../components/ui/tooltip";
@@ -164,17 +159,11 @@ export const renderMarkdownPre = (
         m="0"
       >
         {label && (
-          <Text
-            color="fg.muted"
-            data-code-language-label=""
-            fontFamily="mono"
-            fontSize="xs"
-            fontWeight="semibold"
-            px="3"
-            pt="2"
-          >
-            {label}
-          </Text>
+          <ChakraCodeBlock.Header>
+            <ChakraCodeBlock.Title data-code-language-label="">
+              {label}
+            </ChakraCodeBlock.Title>
+          </ChakraCodeBlock.Header>
         )}
         <ChakraCodeBlock.Content>
           <ChakraCodeBlock.Code overflow="auto" {...elementProps}>
