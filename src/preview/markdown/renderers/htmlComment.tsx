@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, CodeBlock as ChakraCodeBlock, Text } from "@chakra-ui/react";
 import { MessageSquareText } from "lucide-react";
 import type React from "react";
 import type {
@@ -11,38 +11,46 @@ export const renderMarkdownHtmlComment = (
   children: React.ReactNode,
 ) => (
   <Box py="2">
-    <Box
+    <ChakraCodeBlock.Root
       bg="canvas.subtle"
       borderColor="border.muted"
+      borderRadius="sm"
       borderStyle="dashed"
-      borderWidth="1px"
+      borderLeftColor="warning.fg"
       borderLeftStyle="solid"
       borderLeftWidth="4px"
-      borderRadius="sm"
+      code={typeof children === "string" ? children : ""}
+      defaultColorScheme={document.documentElement.dataset.theme === "dark"
+        ? "dark"
+        : "light"}
+      language="plaintext"
+      m="0"
       overflow="hidden"
       {...elementProps}
       data-html-comment=""
     >
-      <Flex
-        align="center"
-        as="header"
+      <ChakraCodeBlock.Header
         borderBottomColor="border.muted"
         borderBottomStyle="dashed"
         borderBottomWidth="1px"
-        color="warning.fg"
-        gap="1.5"
-        minH="8"
-        px="4"
       >
-        <MessageSquareText aria-hidden="true" size="1em" />
-        <Text as="span" fontSize="xs" fontWeight="medium">
+        <ChakraCodeBlock.Title color="warning.fg">
+          <MessageSquareText aria-hidden="true" size="1em" />
           HTML COMMENT
+        </ChakraCodeBlock.Title>
+      </ChakraCodeBlock.Header>
+      <ChakraCodeBlock.Content maxH="unset">
+        <Text
+          color="fg.muted"
+          fontSize="sm"
+          px="4"
+          py="3"
+          whiteSpace="pre-wrap"
+        >
+          {children}
         </Text>
-      </Flex>
-      <Text color="fg.muted" fontSize="sm" px="4" py="3" whiteSpace="pre-wrap">
-        {children}
-      </Text>
-    </Box>
+      </ChakraCodeBlock.Content>
+    </ChakraCodeBlock.Root>
   </Box>
 );
 

@@ -54,7 +54,7 @@ describe("MarkdownPreview basic rendering", () => {
 
     const labels = screen.getAllByText("HTML COMMENT");
     expect(labels).toHaveLength(2);
-    expect(labels.every((label) => label.tagName === "SPAN")).toBe(true);
+    expect(labels.every((label) => label.tagName === "DIV")).toBe(true);
     expect(labels.every((label) => label.parentElement?.tagName === "HEADER"))
       .toBe(true);
     expect(
