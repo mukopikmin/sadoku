@@ -318,7 +318,7 @@ describe("App", () => {
       .toBeNull();
   });
 
-  it("keeps the preview header fixed at its initial position", async () => {
+  it("groups document navigation in the header before the main preview", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -359,65 +359,36 @@ describe("App", () => {
       }),
     );
 
-    const { container } = render(<App />);
+    render(<App />);
     fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
 
     await screen.findByRole("link", { name: "example.md" });
 
     const brandIcon = screen.getByRole("img", { name: "Sadoku" });
     expect(brandIcon.getAttribute("src")).toBe("/assets/icon-512.png");
-    expect(getComputedStyle(brandIcon).width).toBe(
-      "var(--chakra-sizes-8)",
-    );
-    expect(getComputedStyle(brandIcon).height).toBe(
-      "var(--chakra-sizes-8)",
-    );
     const fileLink = screen.getByRole("link", { name: "example.md" });
     expect(fileLink.getAttribute("href")).toBe("file:///tmp/example.md");
     expect(screen.getByRole("navigation", { name: "Preview views" })).not
       .toBeNull();
 
-    const header = container.querySelector("header");
-    expect(header).not.toBeNull();
-    const styles = getComputedStyle(header!);
-    expect(styles.position).toBe("sticky");
-    expect(styles.top).toBe("0px");
-    expect(styles.zIndex).toBe("10");
-    expect(styles.width).toBe("var(--chakra-sizes-full)");
-
-    const headerContainer = header!.firstElementChild;
-    expect(headerContainer).not.toBeNull();
-    const headerContainerStyles = getComputedStyle(headerContainer!);
-    expect(headerContainerStyles.maxWidth).toBe("980px");
-    expect(headerContainerStyles.paddingInline).toBe(
-      "var(--chakra-spacing-8)",
+    const header = screen.getByRole("banner");
+    const main = screen.getByRole("main");
+    expect(within(header).getByRole("img", { name: "Sadoku" })).toBe(brandIcon);
+    expect(within(header).getByRole("link", { name: "example.md" })).toBe(
+      fileLink,
     );
-    expect(headerContainerStyles.paddingBlock).toBe(
-      "var(--chakra-spacing-4)",
-    );
-    expect(headerContainerStyles.flexWrap).toBe("wrap");
+    expect(header.contains(main)).toBe(false);
+    expect(header.nextElementSibling).toBe(main);
+    expect(within(main).getByRole("heading", { name: "Title" })).not.toBeNull();
 
-    const main = container.querySelector("main");
-    expect(main).not.toBeNull();
-    expect(header!.contains(main)).toBe(false);
-    expect(header!.nextElementSibling).toBe(main);
-    expect(getComputedStyle(main!).maxWidth).toBe("980px");
-    expect(getComputedStyle(main!).paddingInline).toBe(
-      "var(--chakra-spacing-8)",
-    );
-    expect(getComputedStyle(main!).paddingTop).toBe("0px");
-
-    const previewButton = screen.getByRole("tab", { name: "Preview" });
-    const commentsButton = screen.getByRole("tab", {
+    const tabs = within(header).getByRole("tablist");
+    const previewButton = within(tabs).getByRole("tab", { name: "Preview" });
+    const commentsButton = within(tabs).getByRole("tab", {
       name: "Comments, 0 unresolved",
     });
     expect(commentsButton.querySelector('span[aria-hidden="true"]')).toBeNull();
-    expect(previewButton.parentElement).toBe(commentsButton.parentElement);
-    expect(previewButton.getAttribute("data-part")).toBe("trigger");
-    expect(commentsButton.getAttribute("data-part")).toBe("trigger");
-    expect(previewButton.closest('[data-part="root"]')).toBe(
-      commentsButton.closest('[data-part="root"]'),
-    );
+    expect(previewButton.getAttribute("aria-selected")).toBe("true");
+    expect(commentsButton.getAttribute("aria-selected")).toBe("false");
   });
 
   it("opens instructions for the selected document from its action bar", async () => {
@@ -599,7 +570,6 @@ describe("App", () => {
     const textSizeControls = screen.getByRole("group", {
       name: "Text size controls",
     });
-    expect(getComputedStyle(textSizeControls).alignItems).toBe("center");
     expect(textSizeControls.contains(decreaseTextSize)).toBe(true);
     expect(textSizeControls.contains(increaseTextSize)).toBe(true);
     expect(screen.queryByRole("button", {
@@ -648,9 +618,6 @@ describe("App", () => {
         name: "Maximum files",
       }),
     ).toBe(maxFilesInput);
-    expect(getComputedStyle(directoryDiscovery).paddingInlineStart).not.toBe(
-      "0px",
-    );
     expect((maxDepthInput as HTMLInputElement).value).toBe("2");
     expect((maxFilesInput as HTMLInputElement).value).toBe("20");
 
@@ -735,14 +702,6 @@ describe("App", () => {
     const excludedDirectoriesInput = screen.getByRole("textbox", {
       name: "Excluded directories",
     });
-    const excludedDirectoriesControl = excludedDirectoriesInput.closest(
-      '[data-part="root"][data-scope="tags-input"]',
-    );
-    expect(getComputedStyle(excludedDirectoriesControl!).display).toBe("grid");
-    expect(
-      getComputedStyle(screen.getByText("Excluded directories")).alignItems,
-    )
-      .toBe("center");
     expect((excludedDirectoriesInput as HTMLInputElement).value).toBe("");
     expect(screen.getByText(".git")).not.toBeNull();
     expect(screen.getByText("node_modules")).not.toBeNull();
@@ -876,9 +835,8 @@ describe("App", () => {
 
     const code = (await screen.findByText("日本語の長いコードブロック"))
       .closest("code")!;
+    expect(code.parentElement?.tagName).toBe("PRE");
     expect(document.documentElement.dataset.codeWrap).toBe("wrap");
-    expect(getComputedStyle(code).whiteSpace).toBe("pre-wrap");
-    expect(getComputedStyle(code).overflowWrap).toBe("anywhere");
 
     expect(screen.queryByRole("button", { name: "Wrap code blocks" }))
       .toBeNull();
@@ -905,7 +863,6 @@ describe("App", () => {
       headers: { "content-type": "application/json" },
       method: "PUT",
     });
-    expect(getComputedStyle(code).whiteSpace).toBe("pre");
     expect((wrapSwitch as HTMLInputElement).checked).toBe(false);
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });

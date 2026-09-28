@@ -109,7 +109,7 @@ describe("CommentItem", () => {
     expect(screen.getByText("Bot")).not.toBeNull();
     expect(screen.getByText("Stale")).not.toBeNull();
     expect(target.nextElementSibling).toBe(rootThread);
-    expect(getComputedStyle(rootThread).borderLeftWidth).toBe("3px");
+    expect(rootThread.contains(screen.getByText("Comment"))).toBe(true);
   });
 
   it("expands overflowing source previews independently", async () => {

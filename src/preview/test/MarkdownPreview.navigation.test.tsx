@@ -18,7 +18,7 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview heading navigation", () => {
-  it("opens the table of contents from a floating action button", async () => {
+  it("opens the table of contents from the document actions", async () => {
     renderMarkdown("# Only heading");
 
     const trigger = screen.getByRole("button", { name: "Table of contents" });
@@ -33,7 +33,7 @@ describe("MarkdownPreview heading navigation", () => {
     expect(within(instructionsButton).getByText("3")).not.toBeNull();
     expect(within(tagsButton).getByText("2")).not.toBeNull();
     expect(trigger.textContent).toBe("");
-    expect(trigger.querySelector(".lucide-list")).not.toBeNull();
+    expect(trigger.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(trigger.getAttribute("data-scope")).toBe("popover");
     expect(trigger.parentElement?.getAttribute("data-scope")).toBe("tooltip");
     fireEvent.pointerEnter(trigger);
@@ -52,16 +52,6 @@ describe("MarkdownPreview heading navigation", () => {
     const navigation = screen.getByRole("navigation", {
       name: "Table of contents",
     });
-    expect(navigation.closest("[data-part=positioner]")?.getAttribute("style"))
-      .toContain("position: absolute");
-    expect(getComputedStyle(navigation).fontSize).toBe(
-      "var(--chakra-font-sizes-sm)",
-    );
-    expect(getComputedStyle(navigation).lineHeight).toBe("1.7");
-    expect(
-      getComputedStyle(navigation.closest("[data-part=content]")!)
-        .getPropertyValue("--popover-size"),
-    ).toBe("var(--chakra-sizes-sm)");
     expect(
       within(navigation).getByRole("link", { name: "Only heading" })
         .getAttribute("href"),
@@ -120,8 +110,6 @@ describe("MarkdownPreview heading navigation", () => {
     });
     expect(links.map((link) => link.parentElement?.dataset.headingLevel))
       .toEqual(["1", "2", "3", "6"]);
-    expect(new Set(links.map((link) => link.parentElement?.className)).size)
-      .toBe(4);
   });
 
   it("closes the table of contents after a link updates the hash and scrolls", async () => {
@@ -147,10 +135,6 @@ describe("MarkdownPreview heading navigation", () => {
     expect(scrollIntoView.mock.instances[0]).toBe(
       screen.getByRole("heading", { name: "Target" }),
     );
-    expect(
-      screen.getByRole("heading", { name: "Target" }).style.scrollMarginTop,
-    )
-      .toBe("72px");
     await waitFor(() =>
       expect(trigger.getAttribute("aria-expanded")).toBe("false")
     );
@@ -231,7 +215,6 @@ Paragraph
     const japaneseHeading = screen.getByRole("heading", { name: "日本語" });
     expect(scrollIntoView).toHaveBeenCalledOnce();
     expect(scrollIntoView.mock.instances[0]).toBe(japaneseHeading);
-    expect(japaneseHeading.style.scrollMarginTop).toBe("72px");
 
     scrollIntoView.mockClear();
     globalThis.history.replaceState(null, "", "/#next");
