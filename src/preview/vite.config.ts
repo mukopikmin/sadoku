@@ -28,6 +28,7 @@ export default defineConfig(({ command }) => ({
     environment: "jsdom",
     include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
     maxWorkers: 1,
+    setupFiles: [resolve(import.meta.dirname, "test/connectFetch.ts")],
     testTimeout: 10_000,
   },
 }));

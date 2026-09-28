@@ -10,7 +10,7 @@
     "jsr:@std/path@1.1.6": "1.1.6",
     "jsr:@std/toml@1.0.11": "1.0.11",
     "npm:@bufbuild/protobuf@2.15.0": "2.15.0",
-    "npm:@connectrpc/connect-web@2.2.0": "2.2.0_@bufbuild+protobuf@2.15.0_@connectrpc+connect@2.2.0__@bufbuild+protobuf@2.15.0",
+    "npm:@connectrpc/connect-web@2.2.0": "2.2.0_@bufbuild+protobuf@2.15.0_@connectrpc+connect@2.2.0",
     "npm:@connectrpc/connect@2.2.0": "2.2.0_@bufbuild+protobuf@2.15.0"
   },
   "jsr": {
@@ -49,7 +49,7 @@
     "@bufbuild/protobuf@2.15.0": {
       "integrity": "sha512-DAheWUkVr/SJTWCc+lg9dhY0eN4SaWlf4+bG1KzHeXbnqt0AfB/NX0Z+VunGlM1ki1B4zVvye27MpKh/svySUA=="
     },
-    "@connectrpc/connect-web@2.2.0_@bufbuild+protobuf@2.15.0_@connectrpc+connect@2.2.0__@bufbuild+protobuf@2.15.0": {
+    "@connectrpc/connect-web@2.2.0_@bufbuild+protobuf@2.15.0_@connectrpc+connect@2.2.0": {
       "integrity": "sha512-uuBUcBTYfb/r1o98LzCCZk1H90yx0vmZ5m21dpw/q4EUwsKwkCDGI8H0aEdjcZld+Q2jJ5A5ADvPqfb6lzQ/sg==",
       "dependencies": [
         "@bufbuild/protobuf",
@@ -73,15 +73,6 @@
       "npm:@bufbuild/protobuf@2.15.0",
       "npm:@connectrpc/connect-web@2.2.0",
       "npm:@connectrpc/connect@2.2.0"
-    ],
-    "packageJson": {
-      "dependencies": [
-        "npm:@bufbuild/buf@1.73.0",
-        "npm:@bufbuild/protobuf@2.15.0",
-        "npm:@bufbuild/protoc-gen-es@2.15.0",
-        "npm:@connectrpc/connect-web@2.2.0",
-        "npm:@connectrpc/connect@2.2.0"
-      ]
-    }
+    ]
   }
 }

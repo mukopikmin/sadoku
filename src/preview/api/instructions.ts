@@ -1,4 +1,5 @@
 import type { DocumentInstruction } from "../models/instruction";
+import { previewClient } from "./connect";
 
 type InstructionResponse = {
   content: unknown;
@@ -15,31 +16,28 @@ const toInstruction = (value: unknown): DocumentInstruction => {
   }
   const response = value as InstructionResponse;
   if (
-    typeof response.id !== "number" || typeof response.content !== "string" ||
+    (typeof response.id !== "number" && typeof response.id !== "bigint") ||
+    Number(response.id) < 1 || typeof response.content !== "string" ||
     typeof response.createdAt !== "string" ||
-    typeof response.updatedAt !== "string"
+    response.createdAt.length === 0 || typeof response.updatedAt !== "string" ||
+    response.updatedAt.length === 0
   ) {
     throw new Error("Invalid instruction response.");
   }
   return {
-    id: response.id,
+    id: Number(response.id),
     content: response.content,
     createdAt: response.createdAt,
     updatedAt: response.updatedAt,
   };
 };
 
-const path = (documentId: number) =>
-  `/__sadoku/documents/${documentId}/instructions`;
-
 export const loadInstructions = async (
   documentId: number,
 ): Promise<DocumentInstruction[]> => {
-  const response = await fetch(path(documentId));
-  if (!response.ok) {
-    throw new Error(`Failed to load instructions: ${response.status}`);
-  }
-  const body = await response.json() as InstructionsResponse;
+  const body = await previewClient.listInstructions({
+    documentId: BigInt(documentId),
+  });
   if (!Array.isArray(body.instructions)) {
     throw new Error("Invalid instructions response.");
   }
@@ -50,15 +48,12 @@ export const createInstruction = async (
   documentId: number,
   content: string,
 ) => {
-  const response = await fetch(path(documentId), {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ content }),
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to create instruction: ${response.status}`);
-  }
-  return toInstruction(await response.json());
+  return toInstruction(
+    await previewClient.createInstruction({
+      documentId: BigInt(documentId),
+      content,
+    }),
+  );
 };
 
 export const updateInstruction = async (
@@ -66,25 +61,21 @@ export const updateInstruction = async (
   instructionId: number,
   content: string,
 ) => {
-  const response = await fetch(`${path(documentId)}/${instructionId}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ content }),
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to update instruction: ${response.status}`);
-  }
-  return toInstruction(await response.json());
+  return toInstruction(
+    await previewClient.updateInstruction({
+      documentId: BigInt(documentId),
+      instructionId: BigInt(instructionId),
+      content,
+    }),
+  );
 };
 
 export const deleteInstruction = async (
   documentId: number,
   instructionId: number,
 ): Promise<void> => {
-  const response = await fetch(`${path(documentId)}/${instructionId}`, {
-    method: "DELETE",
+  await previewClient.deleteInstruction({
+    documentId: BigInt(documentId),
+    instructionId: BigInt(instructionId),
   });
-  if (!response.ok) {
-    throw new Error(`Failed to delete instruction: ${response.status}`);
-  }
 };

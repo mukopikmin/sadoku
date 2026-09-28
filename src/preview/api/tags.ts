@@ -1,4 +1,5 @@
 import type { DocumentTag } from "../models/document";
+import { previewClient } from "./connect";
 
 export type TagSummary = DocumentTag & {
   documentCount: number;
@@ -16,7 +17,7 @@ export const parseDocumentTag = (value: unknown): DocumentTag => {
   }
   const tag = value as Record<string, unknown>;
   if (
-    !Number.isSafeInteger(tag.id) || typeof tag.name !== "string" ||
+    !Number.isSafeInteger(Number(tag.id)) || typeof tag.name !== "string" ||
     !isTagBackgroundColor(tag.backgroundColor)
   ) throw new Error("Invalid tag response.");
   return {
@@ -26,27 +27,19 @@ export const parseDocumentTag = (value: unknown): DocumentTag => {
   };
 };
 
-const result = async <T>(response: Response): Promise<T> => {
-  if (!response.ok) {
-    throw new Error(
-      (await response.text()) || `Tag request failed: ${response.status}`,
-    );
-  }
-  return await response.json() as T;
-};
 export const loadTags = async () => {
-  const values = await result<unknown[]>(await fetch("/__sadoku/tags"));
+  const values: unknown[] = (await previewClient.listTags({})).tags;
   return values.map((value) => {
     const tag = parseDocumentTag(value);
     const summary = value as Record<string, unknown>;
     if (
-      typeof summary.documentCount !== "number" ||
+      !Number.isSafeInteger(Number(summary.documentCount)) ||
       typeof summary.createdAt !== "string" ||
       typeof summary.updatedAt !== "string"
     ) throw new Error("Invalid tag response.");
     return {
       ...tag,
-      documentCount: summary.documentCount,
+      documentCount: Number(summary.documentCount),
       createdAt: summary.createdAt,
       updatedAt: summary.updatedAt,
     };
@@ -57,21 +50,18 @@ export const updateTag = async (
   name: string,
   backgroundColor: string,
 ) =>
-  result<unknown>(
-    await fetch(`/__sadoku/tags/${id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, backgroundColor }),
-    }),
-  ).then(parseDocumentTag);
+  previewClient.updateTag({ id: BigInt(id), name, backgroundColor }).then(
+    parseDocumentTag,
+  );
 export const replaceDocumentTags = async (
   documentId: number,
   tags: TagReference[],
 ) =>
-  result<unknown[]>(
-    await fetch(`/__sadoku/documents/${documentId}/tags`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ tags }),
-    }),
-  ).then((values) => values.map(parseDocumentTag));
+  previewClient.replaceDocumentTags({
+    documentId: BigInt(documentId),
+    tags: tags.map((tag) =>
+      "id" in tag
+        ? { reference: { case: "id", value: BigInt(tag.id) } }
+        : { reference: { case: "name", value: tag.name } }
+    ),
+  }).then(({ tags }) => tags.map(parseDocumentTag));

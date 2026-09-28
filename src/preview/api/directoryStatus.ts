@@ -8,12 +8,18 @@ export type DirectoryStatus = {
 export const loadDirectoryStatus = async (): Promise<
   DirectoryStatus | null
 > => {
-  const response = await fetch("/__sadoku/directory-status");
-  if (response.status === 404) return null;
-  if (!response.ok) {
-    throw new Error(`Failed to load directory status: ${response.status}`);
+  let response;
+  try {
+    response = await previewClient.getDirectoryStatus({});
+  } catch (error) {
+    if (ConnectError.from(error).code === Code.Unimplemented) return null;
+    throw error;
   }
-  const value = await response.json() as Partial<DirectoryStatus>;
+  const value: Partial<DirectoryStatus> = {
+    ...response,
+    detected: Number(response.detected),
+    registered: Number(response.registered),
+  } as Partial<DirectoryStatus>;
   if (
     !["loading", "ready", "error"].includes(value.state ?? "") ||
     !Number.isSafeInteger(value.detected) || Number(value.detected) < 0 ||
@@ -24,5 +30,12 @@ export const loadDirectoryStatus = async (): Promise<
   ) {
     throw new Error("Invalid directory status response.");
   }
-  return value as DirectoryStatus;
+  return {
+    state: value.state,
+    detected: value.detected,
+    registered: value.registered,
+    ...(value.error ? { error: value.error } : {}),
+  } as DirectoryStatus;
 };
+import { Code, ConnectError } from "@connectrpc/connect";
+import { previewClient } from "./connect";

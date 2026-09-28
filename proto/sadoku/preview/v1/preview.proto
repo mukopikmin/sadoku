@@ -5,6 +5,30 @@ package sadoku.preview.v1;
 service PreviewService {
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
   rpc GetStatistics(GetStatisticsRequest) returns (GetStatisticsResponse);
+  rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse);
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+  rpc GetDirectoryStatus(GetDirectoryStatusRequest) returns (GetDirectoryStatusResponse);
+  rpc GetSettings(GetSettingsRequest) returns (Settings);
+  rpc UpdateSettings(UpdateSettingsRequest) returns (Settings);
+  rpc GetGitHubAccount(GetGitHubAccountRequest) returns (GetGitHubAccountResponse);
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
+  rpc UpdateTag(UpdateTagRequest) returns (Tag);
+  rpc ReplaceDocumentTags(ReplaceDocumentTagsRequest) returns (ReplaceDocumentTagsResponse);
+  rpc ListInstructions(ListInstructionsRequest) returns (ListInstructionsResponse);
+  rpc CreateInstruction(CreateInstructionRequest) returns (Instruction);
+  rpc UpdateInstruction(UpdateInstructionRequest) returns (Instruction);
+  rpc DeleteInstruction(DeleteInstructionRequest) returns (DeleteInstructionResponse);
+  rpc ListMemories(ListMemoriesRequest) returns (ListMemoriesResponse);
+  rpc DeleteMemory(DeleteMemoryRequest) returns (DeleteMemoryResponse);
+  rpc ListComments(ListCommentsRequest) returns (CommentsDocument);
+  rpc CreateComment(CreateCommentRequest) returns (Comment);
+  rpc UpdateComment(UpdateCommentRequest) returns (Comment);
+  rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentResponse);
+  rpc SetCommentResolution(SetCommentResolutionRequest) returns (Comment);
+  rpc CreateReply(CreateReplyRequest) returns (Comment);
+  rpc UpdateReply(UpdateReplyRequest) returns (Comment);
+  rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse);
+  rpc ExportCommentToGitHub(ExportCommentToGitHubRequest) returns (ExportCommentToGitHubResponse);
 }
 
 message GetSessionRequest {}
@@ -32,3 +56,162 @@ message CommentCount {
   uint64 bot = 1;
   uint64 human = 2;
 }
+
+message Tag {
+  uint64 id = 1;
+  string name = 2;
+  string background_color = 3;
+}
+
+message TagSummary {
+  uint64 id = 1;
+  string name = 2;
+  string background_color = 3;
+  uint64 document_count = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message ListDocumentsRequest {}
+message ListDocumentsResponse { repeated DocumentSummary documents = 1; }
+message DocumentSummary {
+  uint64 id = 1;
+  string relative_path = 2;
+  string title = 3;
+  bool deleted = 4;
+  repeated Tag tags = 5;
+}
+
+message GetDocumentRequest { uint64 document_id = 1; }
+message GetDocumentResponse {
+  string file_url = 1;
+  string markdown = 2;
+  string title = 3;
+  bool deleted = 4;
+  repeated Tag tags = 5;
+  optional string github_head_sha = 6;
+}
+
+message GetDirectoryStatusRequest {}
+message GetDirectoryStatusResponse {
+  string state = 1;
+  uint64 detected = 2;
+  uint64 registered = 3;
+  optional DirectoryError error = 4;
+}
+message DirectoryError { string name = 1; string message = 2; }
+
+message GetSettingsRequest {}
+message Settings {
+  optional string theme = 1;
+  optional string code_wrap = 2;
+  double font_scale = 3;
+  repeated string excluded_directories = 4;
+  uint32 max_depth = 5;
+  uint32 max_files = 6;
+  repeated string markdown_extensions = 7;
+}
+message UpdateSettingsRequest {
+  string theme = 1;
+  string code_wrap = 2;
+  double font_scale = 3;
+  repeated string excluded_directories = 4;
+  uint32 max_depth = 5;
+  uint32 max_files = 6;
+  repeated string markdown_extensions = 7;
+}
+
+message GetGitHubAccountRequest {}
+message GetGitHubAccountResponse {
+  bool ok = 1;
+  optional GitHubAccount account = 2;
+  optional string message = 3;
+}
+message GitHubAccount { string login = 1; optional string name = 2; }
+
+message ListTagsRequest {}
+message ListTagsResponse { repeated TagSummary tags = 1; }
+message UpdateTagRequest { uint64 id = 1; string name = 2; string background_color = 3; }
+message TagReference { oneof reference { uint64 id = 1; string name = 2; } }
+message ReplaceDocumentTagsRequest { uint64 document_id = 1; repeated TagReference tags = 2; }
+message ReplaceDocumentTagsResponse { repeated Tag tags = 1; }
+
+message Instruction {
+  uint64 id = 1;
+  string content = 2;
+  string created_at = 3;
+  string updated_at = 4;
+}
+message ListInstructionsRequest { uint64 document_id = 1; }
+message ListInstructionsResponse { repeated Instruction instructions = 1; }
+message CreateInstructionRequest { uint64 document_id = 1; string content = 2; }
+message UpdateInstructionRequest { uint64 document_id = 1; uint64 instruction_id = 2; string content = 3; }
+message DeleteInstructionRequest { uint64 document_id = 1; uint64 instruction_id = 2; }
+message DeleteInstructionResponse {}
+
+message Memory {
+  uint64 id = 1;
+  uint64 document_id = 2;
+  string content = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+message ListMemoriesRequest { uint64 document_id = 1; }
+message ListMemoriesResponse { repeated Memory memories = 1; }
+message DeleteMemoryRequest { uint64 document_id = 1; uint64 memory_id = 2; }
+message DeleteMemoryResponse {}
+
+message CommentAuthor { string type = 1; }
+message CommentReply {
+  uint64 id = 1;
+  CommentAuthor author = 2;
+  string body = 3;
+  string created_at = 4;
+  string updated_at = 5;
+  optional bool review_requested = 6;
+}
+message Comment {
+  uint64 id = 1;
+  CommentAuthor author = 2;
+  string body = 3;
+  uint32 start_line = 4;
+  uint32 end_line = 5;
+  uint32 original_start_line = 6;
+  uint32 original_end_line = 7;
+  string created_at = 8;
+  string updated_at = 9;
+  bool resolved = 10;
+  bool stale = 11;
+  optional string resolved_at = 12;
+  optional CommentAuthor resolved_by = 13;
+  optional string source_hash = 14;
+  optional string source_text = 15;
+  repeated CommentReply replies = 16;
+  optional uint32 display_line = 17;
+}
+message ListCommentsRequest { uint64 document_id = 1; }
+message CommentsDocument {
+  string file_path = 1;
+  repeated Comment comments = 2;
+  optional string github_head_sha = 3;
+}
+message CreateCommentRequest { uint64 document_id = 1; uint32 start_line = 2; uint32 end_line = 3; string body = 4; }
+message UpdateCommentRequest { uint64 document_id = 1; uint64 comment_id = 2; string body = 3; }
+message DeleteCommentRequest { uint64 document_id = 1; uint64 comment_id = 2; }
+message DeleteCommentResponse {}
+message SetCommentResolutionRequest { uint64 document_id = 1; uint64 comment_id = 2; bool resolved = 3; }
+message CreateReplyRequest { uint64 document_id = 1; uint64 comment_id = 2; string body = 3; }
+message UpdateReplyRequest { uint64 document_id = 1; uint64 comment_id = 2; uint64 reply_id = 3; string body = 4; }
+message DeleteReplyRequest { uint64 document_id = 1; uint64 comment_id = 2; uint64 reply_id = 3; }
+message DeleteReplyResponse {}
+message ExportCommentToGitHubRequest {
+  uint64 document_id = 1;
+  uint64 comment_id = 2;
+  string head_sha = 3;
+  string displayed_markdown = 4;
+  string created_at = 5;
+  string body = 6;
+  uint32 start_line = 7;
+  uint32 end_line = 8;
+}
+message ExportCommentToGitHubResponse { string url = 1; string state = 2; }

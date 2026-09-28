@@ -1,4 +1,5 @@
 import type { DocumentMemory } from "../models/memory";
+import { previewClient } from "./connect";
 
 type MemoryResponse = {
   content: unknown;
@@ -15,34 +16,32 @@ const toMemory = (value: unknown): DocumentMemory => {
   }
   const response = value as MemoryResponse;
   if (
-    typeof response.id !== "number" ||
-    typeof response.documentId !== "number" ||
+    (typeof response.id !== "number" && typeof response.id !== "bigint") ||
+    (typeof response.documentId !== "number" &&
+      typeof response.documentId !== "bigint") ||
+    Number(response.id) < 1 || Number(response.documentId) < 1 ||
     typeof response.content !== "string" ||
     typeof response.createdAt !== "string" ||
-    typeof response.updatedAt !== "string"
+    response.createdAt.length === 0 || typeof response.updatedAt !== "string" ||
+    response.updatedAt.length === 0
   ) {
     throw new Error("Invalid memory response.");
   }
   return {
-    id: response.id,
-    documentId: response.documentId,
+    id: Number(response.id),
+    documentId: Number(response.documentId),
     content: response.content,
     createdAt: response.createdAt,
     updatedAt: response.updatedAt,
   };
 };
 
-const path = (documentId: number) =>
-  `/__sadoku/documents/${documentId}/memories`;
-
 export const loadMemories = async (
   documentId: number,
 ): Promise<DocumentMemory[]> => {
-  const response = await fetch(path(documentId));
-  if (!response.ok) {
-    throw new Error(`Failed to load memories: ${response.status}`);
-  }
-  const body = (await response.json()) as MemoriesResponse;
+  const body = await previewClient.listMemories({
+    documentId: BigInt(documentId),
+  });
   if (!Array.isArray(body.memories)) {
     throw new Error("Invalid memories response.");
   }
@@ -53,10 +52,8 @@ export const deleteMemory = async (
   documentId: number,
   memoryId: number,
 ): Promise<void> => {
-  const response = await fetch(`${path(documentId)}/${memoryId}`, {
-    method: "DELETE",
+  await previewClient.deleteMemory({
+    documentId: BigInt(documentId),
+    memoryId: BigInt(memoryId),
   });
-  if (!response.ok) {
-    throw new Error(`Failed to delete memory: ${response.status}`);
-  }
 };
