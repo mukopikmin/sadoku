@@ -6,7 +6,6 @@
     "build:client": "npm --prefix src/preview run build",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
     "postinstall": "npm ci --prefix src/preview",
-    "proto:check": "npm run proto:lint && npm run proto:generate && deno run --quiet --no-config --allow-run=git scripts/check_generated_proto.ts",
     "proto:generate": "buf generate && deno fmt gen/ts",
     "proto:lint": "buf lint",
     "test": "npm --prefix src/preview test"

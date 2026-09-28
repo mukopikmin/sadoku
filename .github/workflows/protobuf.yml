@@ -11,7 +11,6 @@ on:
       - package-lock.json
       - proto/**
       - gen/ts/**
-      - scripts/check_generated_proto.ts
   push:
     branches:
       - main
@@ -24,7 +23,6 @@ on:
       - package-lock.json
       - proto/**
       - gen/ts/**
-      - scripts/check_generated_proto.ts
 
 permissions:
   contents: read
@@ -54,4 +52,12 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Check schema and generated code
-        run: npm run proto:check
+        run: |
+          npm run proto:lint
+          npm run proto:generate
+          generated_changes="$(git status --porcelain=v1 --untracked-files=all -- gen/ts)"
+          if [ -n "$generated_changes" ]; then
+            printf '%s\n' "$generated_changes"
+            echo "Run 'npm run proto:generate' and commit the result."
+            exit 1
+          fi
