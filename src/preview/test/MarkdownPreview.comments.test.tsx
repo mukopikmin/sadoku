@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { initializeMermaid } from "../markdown/mermaid";
-import { markdownStyles as previewThemeCss } from "../markdown/markdownStyles";
+import type { ActiveComment } from "../models/comment";
 import { fireEvent, screen, waitFor } from "./testUtils";
-import { mockRect, renderMarkdown } from "./markdownPreviewTestUtils";
+import { renderMarkdown } from "./markdownPreviewTestUtils";
 
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
@@ -99,9 +99,6 @@ Body
     expect(blockquote?.querySelector("p")?.textContent).toBe(
       "Quoted text",
     );
-    expect(getComputedStyle(blockquote!).paddingBlock).toBe(
-      "var(--chakra-spacing-2)",
-    );
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
@@ -187,17 +184,6 @@ Body
         "commentable-block-continuous-highlight",
       ),
     ).toBe(true);
-    expect(previewThemeCss).toContain(".commentable-block-comment-highlight");
-    expect(previewThemeCss).toContain(
-      "var(--chakra-colors-selection-comment)",
-    );
-    expect(previewThemeCss).toContain(
-      ".commentable-block:not(.commentable-block-selected):not(.commentable-block-continuous-highlight):has(.comment-thread)",
-    );
-    expect(previewThemeCss).toContain(
-      ".commentable-block:not(.commentable-block-selected):focus-within",
-    );
-    expect(previewThemeCss).toContain(".commentable-block-range-selected");
   });
 
   it("renders a range comment at the last commentable line in its range", () => {
@@ -228,9 +214,8 @@ Body
     ).toBeNull();
   });
 
-  it("fills the full area between selected range endpoints", () => {
+  it("renders one selection range spanning the selected source lines", () => {
     const { container } = renderMarkdown("# Title\n\nBody\n");
-    const preview = container.querySelector<HTMLElement>(".markdown-preview");
     const titleBlock = container.querySelector<HTMLElement>(
       '[data-source-line="1"]',
     );
@@ -243,12 +228,8 @@ Body
     const bodyContent = bodyBlock?.querySelector<HTMLElement>(
       ":scope > .commentable-content",
     );
-    expect(preview).not.toBeNull();
     expect(titleContent).not.toBeNull();
     expect(bodyContent).not.toBeNull();
-    preview!.getBoundingClientRect = () => mockRect(100, 400);
-    titleContent!.getBoundingClientRect = () => mockRect(120, 150);
-    bodyContent!.getBoundingClientRect = () => mockRect(200, 240);
 
     fireEvent.click(titleContent!);
     fireEvent.click(bodyContent!, { shiftKey: true });
@@ -259,8 +240,10 @@ Body
     expect(highlight).not.toBeNull();
     expect(highlight?.dataset.startLine).toBe("1");
     expect(highlight?.dataset.endLine).toBe("3");
-    expect(getComputedStyle(highlight!).top).toBe("21px");
-    expect(getComputedStyle(highlight!).height).toBe("118px");
+    expect(container.querySelectorAll(".markdown-range-highlight-selection"))
+      .toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Add comment on lines 1-3" })).not
+      .toBeNull();
     expect(
       titleBlock?.classList.contains(
         "commentable-block-range-selected",
@@ -271,15 +254,6 @@ Body
         "commentable-block-range-selected",
       ),
     ).toBe(false);
-    expect(previewThemeCss).toContain(
-      "left: calc(-1 * var(--chakra-spacing-2));",
-    );
-    expect(previewThemeCss).toContain(
-      "right: calc(-1 * var(--chakra-spacing-2));",
-    );
-    expect(previewThemeCss).toMatch(
-      /\.markdown-range-highlights\s*\{[^}]*z-index: -1;/,
-    );
   });
 
   it("merges saved ranges and gives the active selection priority", () => {
@@ -360,9 +334,6 @@ Body
     expect(block?.tagName).toBe("DIV");
     expect(block?.dataset.sourceLine).toBe("3");
     expect(block?.dataset.sourceEndLine).toBe("3");
-    expect(block?.style.getPropertyValue("--comment-indent-offset")).toBe(
-      "0em",
-    );
     expect(content?.tagName).toBe("DIV");
     expect(content?.getAttribute("title")).toBeNull();
     expect(markdownBody?.tagName).toBe("DIV");

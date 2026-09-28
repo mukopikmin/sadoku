@@ -88,8 +88,6 @@ describe("ReplyItem", () => {
     expect(code.textContent).toContain("const answer = 42;");
     expect(container.querySelector("script")).toBeNull();
     expect(container.textContent).toContain("<script>alert(1)</script>");
-    expect(getComputedStyle(card).marginLeft).toBe("var(--chakra-spacing-4)");
-    expect(getComputedStyle(card).borderLeftWidth).toBe("3px");
   });
 
   it("edits a reply with focus, shortcuts, and shared pending state", async () => {

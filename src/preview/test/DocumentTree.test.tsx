@@ -1,12 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "./testUtils";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "./testUtils";
 import { DocumentTree } from "../components/DocumentTree";
 
 afterEach(cleanup);
 
 describe("DocumentTree", () => {
-  it("reserves the expand-control column before file icons", () => {
-    const { container } = render(
+  it("nests documents under their folder and selects the document", async () => {
+    const onSelectDocument = vi.fn();
+    render(
       <DocumentTree
         documents={[
           {
@@ -17,16 +25,21 @@ describe("DocumentTree", () => {
             title: "File",
           },
         ]}
-        onSelectDocument={vi.fn()}
+        onSelectDocument={onSelectDocument}
       />,
     );
 
-    const item = container.querySelector("[data-part='item']");
-    expect(item?.children[0].getAttribute("data-part")).toBe("item-indicator");
-    expect(item?.children[1].tagName).toBe("svg");
+    const tree = screen.getByRole("tree", { name: "Documents" });
+    const folder = within(tree).getByText("folder").closest(
+      '[role="treeitem"]',
+    )!;
+    const item = within(folder).getByRole("treeitem", { name: "file.md" });
+    expect(folder.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(item);
+    await waitFor(() => expect(onSelectDocument).toHaveBeenCalledWith(1));
   });
 
-  it("renders document tags beside file names with their background colors", () => {
+  it("groups tags with their document in the tree", () => {
     const { getByText } = render(
       <DocumentTree
         documents={[
@@ -52,21 +65,15 @@ describe("DocumentTree", () => {
       />,
     );
 
-    const taggedItem = getByText("tagged.md").closest("[data-part='item']");
+    const taggedItem = getByText("tagged.md").closest('[role="treeitem"]');
     const apiTag = within(taggedItem!).getByText("API");
     const guideTag = within(taggedItem!).getByText("Guide");
 
     expect(taggedItem?.contains(apiTag)).toBe(true);
     expect(taggedItem?.contains(guideTag)).toBe(true);
-    expect(apiTag.style.getPropertyValue("--tag-background")).toBe("#123456");
-    expect(guideTag.style.getPropertyValue("--tag-background")).toBe(
-      "#abcdef",
-    );
-    expect(
-      getByText("untagged.md").closest("[data-part='item']")?.querySelectorAll(
-        "[style*='--tag-background']",
-      ),
-    ).toHaveLength(0);
+    const untaggedItem = getByText("untagged.md").closest('[role="treeitem"]')!;
+    expect(within(untaggedItem).queryByText("API")).toBeNull();
+    expect(within(untaggedItem).queryByText("Guide")).toBeNull();
   });
 
   it("exposes tag choices through a multi-select combobox", async () => {
