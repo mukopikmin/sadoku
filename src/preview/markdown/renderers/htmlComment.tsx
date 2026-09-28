@@ -1,4 +1,5 @@
-import { Badge, Box, Text } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
+import { MessageSquareText } from "lucide-react";
 import type React from "react";
 import type {
   MarkdownComponentProps,
@@ -17,20 +18,28 @@ export const renderMarkdownHtmlComment = (
       borderWidth="1px"
       borderLeftStyle="solid"
       borderLeftWidth="4px"
-      px="4"
-      py="3"
+      borderRadius="sm"
+      overflow="hidden"
       {...elementProps}
       data-html-comment=""
     >
-      <Badge
-        aria-hidden="true"
-        color="fg.muted"
-        mb="2"
-        variant="outline"
+      <Flex
+        align="center"
+        as="header"
+        borderBottomColor="border.muted"
+        borderBottomStyle="dashed"
+        borderBottomWidth="1px"
+        color="warning.fg"
+        gap="1.5"
+        minH="8"
+        px="4"
       >
-        HTML COMMENT
-      </Badge>
-      <Text color="fg.muted" fontFamily="mono" whiteSpace="pre-wrap">
+        <MessageSquareText aria-hidden="true" size="1em" />
+        <Text as="span" fontSize="xs" fontWeight="medium">
+          HTML COMMENT
+        </Text>
+      </Flex>
+      <Text color="fg.muted" fontSize="sm" px="4" py="3" whiteSpace="pre-wrap">
         {children}
       </Text>
     </Box>
