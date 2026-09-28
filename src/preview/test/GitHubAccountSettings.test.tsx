@@ -23,7 +23,11 @@ it("shows the GitHub CLI authenticated account in settings", async () => {
     vi.fn().mockResolvedValue({
       json: () =>
         Promise.resolve({
-          account: { login: "octocat", name: "The Octocat" },
+          account: {
+            avatarUrl: "https://avatars.githubusercontent.com/u/583231",
+            login: "octocat",
+            name: "The Octocat",
+          },
           ok: true,
         }),
       ok: true,
@@ -46,6 +50,9 @@ it("shows the GitHub CLI authenticated account in settings", async () => {
 
   expect(await screen.findByText("The Octocat")).toBeTruthy();
   expect(screen.getByText("@octocat")).toBeTruthy();
+  expect(
+    screen.getByAltText("octocat's GitHub avatar").getAttribute("src"),
+  ).toBe("https://avatars.githubusercontent.com/u/583231");
   expect(fetch).toHaveBeenCalledWith("/__sadoku/github-account");
 
   fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
