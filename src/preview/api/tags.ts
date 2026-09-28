@@ -1,5 +1,5 @@
 import type { DocumentTag } from "../models/document";
-import { previewClient } from "./connect";
+import { connectRawMessage, previewClient } from "./connect";
 
 export type TagSummary = DocumentTag & {
   documentCount: number;
@@ -28,7 +28,9 @@ export const parseDocumentTag = (value: unknown): DocumentTag => {
 };
 
 export const loadTags = async () => {
-  const values: unknown[] = (await previewClient.listTags({})).tags;
+  const values: unknown[] = (await previewClient.listTags({}).catch((error) => {
+    throw new Error(connectRawMessage(error));
+  })).tags;
   return values.map((value) => {
     const tag = parseDocumentTag(value);
     const summary = value as Record<string, unknown>;
@@ -52,6 +54,9 @@ export const updateTag = async (
 ) =>
   previewClient.updateTag({ id: BigInt(id), name, backgroundColor }).then(
     parseDocumentTag,
+    (error) => {
+      throw new Error(connectRawMessage(error));
+    },
   );
 export const replaceDocumentTags = async (
   documentId: number,
@@ -64,4 +69,9 @@ export const replaceDocumentTags = async (
         ? { reference: { case: "id", value: BigInt(tag.id) } }
         : { reference: { case: "name", value: tag.name } }
     ),
-  }).then(({ tags }) => tags.map(parseDocumentTag));
+  }).then(
+    ({ tags }) => tags.map(parseDocumentTag),
+    (error) => {
+      throw new Error(connectRawMessage(error));
+    },
+  );

@@ -1,5 +1,5 @@
 import type { DocumentInstruction } from "../models/instruction";
-import { previewClient } from "./connect";
+import { connectHttpStatus, previewClient } from "./connect";
 
 type InstructionResponse = {
   content: unknown;
@@ -9,6 +9,17 @@ type InstructionResponse = {
 };
 
 type InstructionsResponse = { instructions: unknown };
+
+const instructionRequest = async <T>(
+  promise: Promise<T>,
+  operation: string,
+): Promise<T> => {
+  try {
+    return await promise;
+  } catch (error) {
+    throw new Error(`Failed to ${operation}: ${connectHttpStatus(error)}`);
+  }
+};
 
 const toInstruction = (value: unknown): DocumentInstruction => {
   if (typeof value !== "object" || value === null) {
@@ -35,9 +46,10 @@ const toInstruction = (value: unknown): DocumentInstruction => {
 export const loadInstructions = async (
   documentId: number,
 ): Promise<DocumentInstruction[]> => {
-  const body = await previewClient.listInstructions({
-    documentId: BigInt(documentId),
-  });
+  const body = await instructionRequest(
+    previewClient.listInstructions({ documentId: BigInt(documentId) }),
+    "load instructions",
+  );
   if (!Array.isArray(body.instructions)) {
     throw new Error("Invalid instructions response.");
   }
@@ -49,10 +61,13 @@ export const createInstruction = async (
   content: string,
 ) => {
   return toInstruction(
-    await previewClient.createInstruction({
-      documentId: BigInt(documentId),
-      content,
-    }),
+    await instructionRequest(
+      previewClient.createInstruction({
+        documentId: BigInt(documentId),
+        content,
+      }),
+      "create instruction",
+    ),
   );
 };
 
@@ -62,11 +77,14 @@ export const updateInstruction = async (
   content: string,
 ) => {
   return toInstruction(
-    await previewClient.updateInstruction({
-      documentId: BigInt(documentId),
-      instructionId: BigInt(instructionId),
-      content,
-    }),
+    await instructionRequest(
+      previewClient.updateInstruction({
+        documentId: BigInt(documentId),
+        instructionId: BigInt(instructionId),
+        content,
+      }),
+      "update instruction",
+    ),
   );
 };
 
@@ -74,8 +92,11 @@ export const deleteInstruction = async (
   documentId: number,
   instructionId: number,
 ): Promise<void> => {
-  await previewClient.deleteInstruction({
-    documentId: BigInt(documentId),
-    instructionId: BigInt(instructionId),
-  });
+  await instructionRequest(
+    previewClient.deleteInstruction({
+      documentId: BigInt(documentId),
+      instructionId: BigInt(instructionId),
+    }),
+    "delete instruction",
+  );
 };

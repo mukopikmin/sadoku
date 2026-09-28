@@ -1,6 +1,6 @@
 import type { DocumentSummary, PreviewDocument } from "../models/document";
 import { parseDocumentTag } from "./tags";
-import { previewClient } from "./connect";
+import { connectHttpStatus, previewClient } from "./connect";
 
 export const parseGitHubHeadSha = (value: unknown): string | undefined => {
   if (value === undefined) return undefined;
@@ -14,7 +14,9 @@ export type DocumentSummaryResponse = DocumentSummary;
 export type PreviewDocumentResponse = PreviewDocument;
 
 export const loadDocuments = async (): Promise<DocumentSummary[]> => {
-  const { documents } = await previewClient.listDocuments({});
+  const { documents } = await previewClient.listDocuments({}).catch((error) => {
+    throw new Error(`Failed to load documents: ${connectHttpStatus(error)}`);
+  });
   return documents.map((document) => ({
     ...document,
     id: Number(document.id),
@@ -29,6 +31,8 @@ export const loadPreviewDocument = async (
 ): Promise<PreviewDocument> => {
   const document = await previewClient.getDocument({
     documentId: BigInt(documentId),
+  }).catch((error) => {
+    throw new Error(`Failed to load Markdown: ${connectHttpStatus(error)}`);
   });
   return {
     ...document,

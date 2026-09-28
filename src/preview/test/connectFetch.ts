@@ -1,5 +1,30 @@
 const servicePath = "/sadoku.preview.v1.PreviewService/";
 
+const settings = (value: unknown) => ({
+  excludedDirectories: [".git", "node_modules"],
+  fontScale: 1,
+  maxDepth: 2,
+  maxFiles: 20,
+  markdownExtensions: [".md", ".markdown"],
+  ...(value as Record<string, unknown>),
+});
+
+const comments = (value: unknown) => {
+  const document = value as { comments?: Array<Record<string, unknown>> };
+  return {
+    ...document,
+    comments: (document.comments ?? []).map((comment) => ({
+      ...comment,
+      ...(typeof comment.sourceHash === "string"
+        ? { sourceHash: comment.sourceHash }
+        : { sourceHash: undefined }),
+      ...(typeof comment.sourceText === "string"
+        ? { sourceText: comment.sourceText }
+        : { sourceText: undefined }),
+    })),
+  };
+};
+
 const route = (
   method: string,
   body: Record<string, unknown>,
@@ -17,7 +42,7 @@ const route = (
     case "GetDirectoryStatus":
       return ["/__sadoku/directory-status", undefined];
     case "GetSettings":
-      return ["/__sadoku/settings", undefined];
+      return ["/__sadoku/settings", undefined, settings];
     case "UpdateSettings":
       return [
         "/__sadoku/settings",
@@ -30,6 +55,7 @@ const route = (
           maxFiles: body.maxFiles,
           theme: body.theme,
         }),
+        settings,
       ];
     case "GetGitHubAccount":
       return ["/__sadoku/github-account", undefined];
@@ -80,7 +106,11 @@ const route = (
         { method: "DELETE" },
       ];
     case "ListComments":
-      return [`/__sadoku/documents/${documentId}/comments`, undefined];
+      return [
+        `/__sadoku/documents/${documentId}/comments`,
+        undefined,
+        comments,
+      ];
     case "CreateComment":
       return [
         `/__sadoku/documents/${documentId}/comments`,
@@ -166,7 +196,16 @@ const json = (method: string, body: unknown): RequestInit => ({
     : await globalThis.fetch(path, legacyInit);
   if (!response.ok) {
     const message = await response.text();
-    return Response.json({ code: "internal", message }, {
+    const code = response.status === 400
+      ? "invalid_argument"
+      : response.status === 404
+      ? "not_found"
+      : response.status === 409
+      ? "already_exists"
+      : response.status === 501
+      ? "unimplemented"
+      : "internal";
+    return Response.json({ code, message }, {
       status: response.status,
     });
   }

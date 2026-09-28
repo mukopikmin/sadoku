@@ -6,7 +6,7 @@ import {
 } from "../models/comment";
 import { parseGitHubHeadSha } from "./document";
 import { ConnectError } from "@connectrpc/connect";
-import { previewClient } from "./connect";
+import { connectHttpStatus, previewClient } from "./connect";
 
 export type CommentReplyResponse = {
   author: CommentAuthorResponse;
@@ -123,6 +123,17 @@ const githubExportErrorMessage = (value: unknown): string => {
     : githubExportMessages.export_failed;
 };
 
+const commentRequest = async <T>(
+  promise: Promise<T>,
+  operation: string,
+): Promise<T> => {
+  try {
+    return await promise;
+  } catch (error) {
+    throw new Error(`Failed to ${operation}: ${connectHttpStatus(error)}`);
+  }
+};
+
 export const exportCommentToGitHub = async (
   documentId: number,
   headSha: string,
@@ -170,9 +181,10 @@ export const loadComments = async (
   documentId: number,
 ): Promise<CommentsDocument> => {
   return toCommentsDocument(
-    await previewClient.listComments({
-      documentId: BigInt(documentId),
-    }) as unknown as CommentsDocumentResponse,
+    await commentRequest(
+      previewClient.listComments({ documentId: BigInt(documentId) }),
+      "load comments",
+    ) as unknown as CommentsDocumentResponse,
   );
 };
 
@@ -183,12 +195,15 @@ export const createComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await previewClient.createComment({
-      documentId: BigInt(documentId),
-      startLine,
-      endLine,
-      body,
-    }) as unknown as CommentResponse,
+    await commentRequest(
+      previewClient.createComment({
+        documentId: BigInt(documentId),
+        startLine,
+        endLine,
+        body,
+      }),
+      "create comment",
+    ) as unknown as CommentResponse,
   );
 };
 
@@ -198,11 +213,14 @@ export const createReply = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await previewClient.createReply({
-      documentId: BigInt(documentId),
-      commentId: BigInt(commentId),
-      body,
-    }) as unknown as CommentResponse,
+    await commentRequest(
+      previewClient.createReply({
+        documentId: BigInt(documentId),
+        commentId: BigInt(commentId),
+        body,
+      }),
+      "create reply",
+    ) as unknown as CommentResponse,
   );
 };
 
@@ -213,12 +231,15 @@ export const updateReply = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await previewClient.updateReply({
-      documentId: BigInt(documentId),
-      commentId: BigInt(commentId),
-      replyId: BigInt(replyId),
-      body,
-    }) as unknown as CommentResponse,
+    await commentRequest(
+      previewClient.updateReply({
+        documentId: BigInt(documentId),
+        commentId: BigInt(commentId),
+        replyId: BigInt(replyId),
+        body,
+      }),
+      "update reply",
+    ) as unknown as CommentResponse,
   );
 };
 
@@ -227,11 +248,14 @@ export const deleteReply = async (
   replyId: number,
   documentId: number,
 ): Promise<void> => {
-  await previewClient.deleteReply({
-    documentId: BigInt(documentId),
-    commentId: BigInt(commentId),
-    replyId: BigInt(replyId),
-  });
+  await commentRequest(
+    previewClient.deleteReply({
+      documentId: BigInt(documentId),
+      commentId: BigInt(commentId),
+      replyId: BigInt(replyId),
+    }),
+    "delete reply",
+  );
 };
 
 export const updateComment = async (
@@ -240,11 +264,14 @@ export const updateComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await previewClient.updateComment({
-      documentId: BigInt(documentId),
-      commentId: BigInt(id),
-      body,
-    }) as unknown as CommentResponse,
+    await commentRequest(
+      previewClient.updateComment({
+        documentId: BigInt(documentId),
+        commentId: BigInt(id),
+        body,
+      }),
+      "update comment",
+    ) as unknown as CommentResponse,
   );
 };
 
@@ -253,11 +280,14 @@ export const resolveComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await previewClient.setCommentResolution({
-      documentId: BigInt(documentId),
-      commentId: BigInt(id),
-      resolved: true,
-    }) as unknown as CommentResponse,
+    await commentRequest(
+      previewClient.setCommentResolution({
+        documentId: BigInt(documentId),
+        commentId: BigInt(id),
+        resolved: true,
+      }),
+      "resolve comment",
+    ) as unknown as CommentResponse,
   );
 };
 
@@ -266,11 +296,14 @@ export const reopenComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await previewClient.setCommentResolution({
-      documentId: BigInt(documentId),
-      commentId: BigInt(id),
-      resolved: false,
-    }) as unknown as CommentResponse,
+    await commentRequest(
+      previewClient.setCommentResolution({
+        documentId: BigInt(documentId),
+        commentId: BigInt(id),
+        resolved: false,
+      }),
+      "reopen comment",
+    ) as unknown as CommentResponse,
   );
 };
 
@@ -278,8 +311,11 @@ export const deleteComment = async (
   id: number,
   documentId: number,
 ): Promise<void> => {
-  await previewClient.deleteComment({
-    documentId: BigInt(documentId),
-    commentId: BigInt(id),
-  });
+  await commentRequest(
+    previewClient.deleteComment({
+      documentId: BigInt(documentId),
+      commentId: BigInt(id),
+    }),
+    "delete comment",
+  );
 };
