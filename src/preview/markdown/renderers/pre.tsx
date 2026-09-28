@@ -1,4 +1,5 @@
 import { Box, Button, CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
+import { FileCode } from "lucide-react";
 import { Children, isValidElement } from "react";
 import type React from "react";
 import { Tooltip } from "../../components/ui/tooltip";
@@ -161,6 +162,7 @@ export const renderMarkdownPre = (
         {label && (
           <ChakraCodeBlock.Header>
             <ChakraCodeBlock.Title data-code-language-label="">
+              <FileCode aria-hidden="true" size="1em" />
               {label}
             </ChakraCodeBlock.Title>
           </ChakraCodeBlock.Header>

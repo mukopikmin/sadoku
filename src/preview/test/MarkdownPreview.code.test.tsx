@@ -42,6 +42,11 @@ plain text
       "HEADER",
       "HEADER",
     ]);
+    expect(
+      labels.map((label) =>
+        label.querySelector('svg[aria-hidden="true"]') !== null
+      ),
+    ).toEqual([true, true]);
     expect(container.querySelector("code.language-plaintext")).not.toBeNull();
   });
 
