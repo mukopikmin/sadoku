@@ -424,7 +424,7 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
     await openCommentMenu();
     expect(screen.queryByRole("menuitem", { name: "Save to GitHub review" }))
       .toBeNull();
-    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
   }
 });
 
