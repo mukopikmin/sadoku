@@ -39,10 +39,12 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: src/preview/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
 
-      - name: Install client dependencies
-        run: npm ci --ignore-scripts --prefix src/preview
+      - name: Install dependencies
+        run: npm run install:deps
 
       - name: Build nightly artifacts
         run: |
