@@ -392,7 +392,7 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
     state: "pending" as const,
   }));
   const actions = createCommentActions({ onExportComment });
-  const { rerender } = render(
+  render(
     <CommentItem
       actions={actions}
       comment={createComment({ replies: [createCommentReply()] })}
@@ -411,6 +411,7 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
     (await screen.findByRole("link", { name: "View pending GitHub review" }))
       .getAttribute("href"),
   ).toBe(url);
+  cleanup();
   for (
     const comment of [
       createComment({ author: { type: "bot" } }),
@@ -418,13 +419,17 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
       createComment({ state: "resolved" }),
     ]
   ) {
-    rerender(
+    render(
       <CommentItem actions={actions} comment={comment} lineLabel="Line 3" />,
     );
-    await openCommentMenu();
-    expect(screen.queryByRole("menuitem", { name: "Save to GitHub review" }))
+    const menu = await openCommentMenu();
+    expect(
+      within(menu).queryByRole("menuitem", {
+        name: "Save to GitHub review",
+      }),
+    )
       .toBeNull();
-    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    cleanup();
   }
 });
 
