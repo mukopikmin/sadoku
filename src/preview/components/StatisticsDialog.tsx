@@ -1,6 +1,5 @@
 import { Dialog, Flex, Portal, Spinner, Text } from "@chakra-ui/react";
-import { useQuery } from "@tanstack/react-query";
-import { loadDatabaseStatistics } from "../api/statistics";
+import { useStatisticsQuery } from "../hooks/useStatistics";
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -21,12 +20,7 @@ export const StatisticsDialog = ({
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) => {
-  const statistics = useQuery({
-    enabled: open,
-    queryFn: loadDatabaseStatistics,
-    queryKey: ["database-statistics"],
-    staleTime: 0,
-  });
+  const statistics = useStatisticsQuery(open);
   return (
     <Dialog.Root
       finalFocusEl={() =>

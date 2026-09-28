@@ -31,7 +31,6 @@ import {
   textResponse,
 } from "./responses.ts";
 import { getSettings, updateSettings } from "./api/settings_api.ts";
-import { getDatabaseStatistics } from "./api/statistics_api.ts";
 import type { StatisticsReader } from "./usecase/statistics/get_statistics.ts";
 import type { DirectorySessionState } from "./directory_session.ts";
 import { getDirectoryStatus } from "./api/directory_status_api.ts";
@@ -47,8 +46,17 @@ import type { TagStore } from "./usecase/tag/ports.ts";
 import { listTags, patchTag, putDocumentTags } from "./api/tag_api.ts";
 import type { MemoryStore } from "./usecase/memory/ports.ts";
 import { getMemories, removeMemory } from "./api/memory_api.ts";
-import { getSession } from "./api/session_api.ts";
 import type { RunGitHubCommand } from "./github_pull.ts";
+import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb.ts";
+import {
+  connectMethodNotAllowedResponse,
+  connectMethodPath,
+  handleConnectUnary,
+} from "./connect/unary.ts";
+import {
+  getSessionResponse,
+  getStatisticsResponse,
+} from "./api/preview_api.ts";
 import { getGitHubAccountResponse } from "./api/github_account_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
@@ -101,8 +109,31 @@ export const createDirectoryPreviewHandler = (
     "/__sadoku/documents",
     () => listDirectoryDocumentsResponse(session, tagStore),
   );
-  app.get("/__sadoku/session", () => getSession(session));
-  app.all("/__sadoku/session", methodNotAllowedResponse);
+  const getSessionPath = connectMethodPath(PreviewService.method.getSession);
+  app.post(
+    getSessionPath,
+    (context) =>
+      handleConnectUnary(
+        context.req.raw,
+        PreviewService.method.getSession,
+        () => getSessionResponse(session),
+      ),
+  );
+  app.all(getSessionPath, connectMethodNotAllowedResponse);
+
+  const getStatisticsPath = connectMethodPath(
+    PreviewService.method.getStatistics,
+  );
+  app.post(
+    getStatisticsPath,
+    (context) =>
+      handleConnectUnary(
+        context.req.raw,
+        PreviewService.method.getStatistics,
+        () => getStatisticsResponse(options.statistics),
+      ),
+  );
+  app.all(getStatisticsPath, connectMethodNotAllowedResponse);
   if (tagStore) {
     app.get("/__sadoku/tags", () => listTags(tagStore));
     app.patch(
@@ -134,13 +165,6 @@ export const createDirectoryPreviewHandler = (
       () => getGitHubAccountResponse(options.runGitHubCommand!),
     );
     app.all("/__sadoku/github-account", methodNotAllowedResponse);
-  }
-  if (options.statistics) {
-    app.get(
-      "/__sadoku/statistics",
-      () => getDatabaseStatistics(options.statistics!),
-    );
-    app.all("/__sadoku/statistics", methodNotAllowedResponse);
   }
   app.get("/__sadoku/events", (context) =>
     new Response(

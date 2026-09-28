@@ -1,5 +1,6 @@
 import { ChakraProvider, CodeBlock } from "@chakra-ui/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { TransportProvider } from "@connectrpc/connect-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
@@ -9,6 +10,7 @@ import { createPreviewQueryClient } from "./queryClient";
 import { Toaster } from "./components/ui/toaster";
 import { createPreviewRouter } from "./router";
 import { shikiAdapter } from "./markdown/shikiAdapter";
+import { previewTransport } from "./api/connect";
 
 const root = document.getElementById("sadoku-client-root");
 const queryClient = createPreviewQueryClient();
@@ -19,10 +21,12 @@ if (root) {
     <StrictMode>
       <ChakraProvider value={sadokuChakraSystem}>
         <CodeBlock.AdapterProvider value={shikiAdapter}>
-          <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
-            <Toaster />
-          </QueryClientProvider>
+          <TransportProvider transport={previewTransport}>
+            <QueryClientProvider client={queryClient}>
+              <RouterProvider router={router} />
+              <Toaster />
+            </QueryClientProvider>
+          </TransportProvider>
         </CodeBlock.AdapterProvider>
       </ChakraProvider>
     </StrictMode>,
