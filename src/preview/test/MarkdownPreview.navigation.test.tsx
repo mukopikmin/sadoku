@@ -149,6 +149,8 @@ describe("MarkdownPreview heading navigation", () => {
 ## Title!
 
 ### **Rich** \`Heading\`
+
+#### Before ~~removed~~ after
 `);
 
     expect(container.querySelector("h1#title a.heading-anchor")?.textContent)
@@ -163,6 +165,11 @@ describe("MarkdownPreview heading navigation", () => {
     expect(
       container.querySelector("h3#rich-heading a.heading-anchor")?.textContent,
     ).toBe("Rich Heading");
+    const decoratedAnchor = container.querySelector(
+      "h4#before-removed-after a.heading-anchor",
+    );
+    expect(decoratedAnchor?.textContent).toBe("Before removed after");
+    expect(decoratedAnchor?.querySelector("del")?.textContent).toBe("removed");
   });
 
   it("updates the URL for the selected unique heading without offering links for regular blocks", async () => {
