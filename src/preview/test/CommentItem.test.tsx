@@ -421,10 +421,13 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
     rerender(
       <CommentItem actions={actions} comment={comment} lineLabel="Line 3" />,
     );
-    await openCommentMenu();
-    expect(screen.queryByRole("menuitem", { name: "Save to GitHub review" }))
-      .toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    const menu = await openCommentMenu();
+    expect(
+      within(menu).queryByRole("menuitem", {
+        name: "Save to GitHub review",
+      }),
+    ).toBeNull();
+    fireEvent.keyDown(menu, { key: "Escape" });
   }
 });
 

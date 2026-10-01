@@ -48,6 +48,8 @@ describe("CommentMarkdown", () => {
       .toBe("suggest");
     expect(ordinary.querySelector("[data-code-language-label]")?.textContent)
       .toBe("Diff");
+    expect(suggestion.querySelector(".lucide-file-pen-line")).not.toBeNull();
+    expect(ordinary.querySelector(".lucide-code")).not.toBeNull();
     expect(suggestion.querySelector("code.language-diff")).not.toBeNull();
     expect(ordinary.querySelector("code.language-diff")).not.toBeNull();
     await waitFor(() => {

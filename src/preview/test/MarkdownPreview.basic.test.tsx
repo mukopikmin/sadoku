@@ -54,7 +54,15 @@ describe("MarkdownPreview basic rendering", () => {
 
     const labels = screen.getAllByText("HTML COMMENT");
     expect(labels).toHaveLength(2);
-    expect(labels.every((label) => label.tagName === "SPAN")).toBe(true);
+    expect(labels.every((label) => label.tagName === "DIV")).toBe(true);
+    expect(labels.every((label) => label.parentElement?.tagName === "HEADER"))
+      .toBe(true);
+    expect(
+      labels.every((label) =>
+        label.parentElement?.querySelector(".lucide-message-square-text") !==
+          null
+      ),
+    ).toBe(true);
     const cards = labels.map((label) => label.closest("[data-html-comment]")!);
     const body = cards[0].querySelector("p");
     expect(body?.textContent).toBe(
@@ -70,7 +78,9 @@ describe("MarkdownPreview basic rendering", () => {
       "Before\n\n<!-- first line\n# still plain text\nlast line -->\n\nAfter",
     );
 
-    const card = screen.getByText("HTML COMMENT").parentElement!;
+    const card = screen.getByText("HTML COMMENT").closest(
+      "[data-html-comment]",
+    )!;
     expect(card.querySelector("p")?.textContent).toBe(
       "first line\n# still plain text\nlast line",
     );
