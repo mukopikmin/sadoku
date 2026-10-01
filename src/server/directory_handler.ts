@@ -49,6 +49,13 @@ import { getMemories, removeMemory } from "./api/memory_api.ts";
 import type { RunGitHubCommand } from "./github_pull.ts";
 import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb.ts";
 import {
+  type DescMessage,
+  type DescMethodUnary,
+  fromJson,
+  type JsonValue,
+} from "@bufbuild/protobuf";
+import {
+  connectFailure,
   connectMethodNotAllowedResponse,
   connectMethodPath,
   handleConnectUnary,
@@ -83,6 +90,48 @@ export const createDirectoryPreviewHandler = (
   const log = options.log ?? logInfo;
   const resolveDocument = (rawId: string) =>
     resolveDirectoryDocumentParameter(rawId, session);
+
+  const responseMessage = async <O extends DescMessage>(
+    response: Response,
+    schema: O,
+    transform: (value: unknown) => unknown = (value) => value,
+  ) => {
+    if (!response.ok) {
+      const message = await response.text();
+      throw connectFailure(
+        response.status === 400
+          ? "invalid_argument"
+          : response.status === 404
+          ? "not_found"
+          : response.status === 409
+          ? "already_exists"
+          : response.status === 501
+          ? "unimplemented"
+          : "internal",
+        message || response.statusText,
+        response.status,
+      );
+    }
+    const value = response.status === 204 ? {} : await response.json();
+    return fromJson(schema, transform(value) as JsonValue);
+  };
+  const jsonRequest = (value: unknown) =>
+    new Request("http://127.0.0.1", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(value),
+    });
+  const register = <I extends DescMessage, O extends DescMessage>(
+    method: DescMethodUnary<I, O>,
+    handler: Parameters<typeof handleConnectUnary<I, O>>[2],
+  ) => {
+    const path = connectMethodPath(method);
+    app.post(
+      path,
+      (context) => handleConnectUnary(context.req.raw, method, handler),
+    );
+    app.all(path, connectMethodNotAllowedResponse);
+  };
 
   app.use("*", async (_context, next) => {
     try {
@@ -134,6 +183,423 @@ export const createDirectoryPreviewHandler = (
       ),
   );
   app.all(getStatisticsPath, connectMethodNotAllowedResponse);
+
+  register(PreviewService.method.listDocuments, async () =>
+    responseMessage(
+      await listDirectoryDocumentsResponse(session, tagStore),
+      PreviewService.method.listDocuments.output,
+      (documents) => ({ documents }),
+    ));
+  register(
+    PreviewService.method.getDocument,
+    async ({ documentId }) =>
+      responseMessage(
+        await getDirectoryDocumentResponse(
+          String(documentId),
+          session,
+          documentStore,
+          tagStore,
+          session.readMarkdown,
+        ),
+        PreviewService.method.getDocument.output,
+        (value) => {
+          const { id: _, relativePath: __, ...document } = value as Record<
+            string,
+            unknown
+          >;
+          return document;
+        },
+      ),
+  );
+  register(PreviewService.method.getDirectoryStatus, async () => {
+    if (!options.directoryState) {
+      throw connectFailure(
+        "unimplemented",
+        "Directory status is unavailable.",
+        501,
+      );
+    }
+    return responseMessage(
+      getDirectoryStatus(options.directoryState),
+      PreviewService.method.getDirectoryStatus.output,
+    );
+  });
+  register(
+    PreviewService.method.getSettings,
+    () =>
+      responseMessage(getSettings(), PreviewService.method.getSettings.output),
+  );
+  register(PreviewService.method.updateSettings, async ({
+    theme,
+    codeWrap,
+    fontScale,
+    excludedDirectories,
+    maxDepth,
+    maxFiles,
+    markdownExtensions,
+  }) =>
+    responseMessage(
+      await updateSettings(jsonRequest({
+        theme,
+        codeWrap,
+        fontScale,
+        excludedDirectories,
+        maxDepth,
+        maxFiles,
+        markdownExtensions,
+      })),
+      PreviewService.method.updateSettings.output,
+    ));
+  register(PreviewService.method.getGitHubAccount, async () => {
+    if (!options.runGitHubCommand) {
+      throw connectFailure(
+        "unimplemented",
+        "GitHub account is unavailable.",
+        501,
+      );
+    }
+    return responseMessage(
+      await getGitHubAccountResponse(options.runGitHubCommand),
+      PreviewService.method.getGitHubAccount.output,
+    );
+  });
+  register(PreviewService.method.listTags, async () => {
+    if (!tagStore) {
+      throw connectFailure("unimplemented", "Tags are unavailable.", 501);
+    }
+    return responseMessage(
+      await listTags(tagStore),
+      PreviewService.method.listTags.output,
+      (tags) => ({ tags }),
+    );
+  });
+  register(
+    PreviewService.method.updateTag,
+    async ({ id, name, backgroundColor }) => {
+      if (!tagStore) {
+        throw connectFailure(
+          "unimplemented",
+          "Tags are unavailable.",
+          501,
+        );
+      }
+      return responseMessage(
+        await patchTag(
+          jsonRequest({ name, backgroundColor }),
+          Number(id),
+          tagStore,
+        ),
+        PreviewService.method.updateTag.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.replaceDocumentTags,
+    async ({ documentId, tags }) => {
+      if (!tagStore) {
+        throw connectFailure(
+          "unimplemented",
+          "Tags are unavailable.",
+          501,
+        );
+      }
+      const { document } = resolveDocument(String(documentId));
+      return responseMessage(
+        await putDocumentTags(
+          jsonRequest({
+            tags: tags.map(({ reference }) =>
+              reference.case === "id"
+                ? { id: Number(reference.value) }
+                : { name: reference.value }
+            ),
+          }),
+          document.id,
+          tagStore,
+        ),
+        PreviewService.method.replaceDocumentTags.output,
+        (tags) => ({ tags }),
+      );
+    },
+  );
+  register(PreviewService.method.listInstructions, async ({ documentId }) => {
+    if (!instructionStore) {
+      throw connectFailure(
+        "unimplemented",
+        "Instructions are unavailable.",
+        501,
+      );
+    }
+    const { document } = resolveDocument(String(documentId));
+    return responseMessage(
+      await getInstructions(document.id, instructionStore),
+      PreviewService.method.listInstructions.output,
+    );
+  });
+  register(
+    PreviewService.method.createInstruction,
+    async ({ documentId, content }) => {
+      if (!instructionStore) {
+        throw connectFailure(
+          "unimplemented",
+          "Instructions are unavailable.",
+          501,
+        );
+      }
+      const { document } = resolveDocument(String(documentId));
+      return responseMessage(
+        await createInstruction(
+          jsonRequest({ content }),
+          document.id,
+          instructionStore,
+        ),
+        PreviewService.method.createInstruction.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.updateInstruction,
+    async ({ documentId, instructionId, content }) => {
+      if (!instructionStore) {
+        throw connectFailure(
+          "unimplemented",
+          "Instructions are unavailable.",
+          501,
+        );
+      }
+      const { document } = resolveDocument(String(documentId));
+      return responseMessage(
+        await replaceInstruction(
+          jsonRequest({ content }),
+          document.id,
+          Number(instructionId),
+          instructionStore,
+        ),
+        PreviewService.method.updateInstruction.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.deleteInstruction,
+    async ({ documentId, instructionId }) => {
+      if (!instructionStore) {
+        throw connectFailure(
+          "unimplemented",
+          "Instructions are unavailable.",
+          501,
+        );
+      }
+      const { document } = resolveDocument(String(documentId));
+      return responseMessage(
+        await removeInstruction(
+          document.id,
+          Number(instructionId),
+          instructionStore,
+        ),
+        PreviewService.method.deleteInstruction.output,
+      );
+    },
+  );
+  register(PreviewService.method.listMemories, async ({ documentId }) => {
+    if (!memoryStore) {
+      throw connectFailure("unimplemented", "Memories are unavailable.", 501);
+    }
+    const { document } = resolveDocument(String(documentId));
+    return responseMessage(
+      await getMemories(document.id, memoryStore),
+      PreviewService.method.listMemories.output,
+    );
+  });
+  register(
+    PreviewService.method.deleteMemory,
+    async ({ documentId, memoryId }) => {
+      if (!memoryStore) {
+        throw connectFailure(
+          "unimplemented",
+          "Memories are unavailable.",
+          501,
+        );
+      }
+      const { document } = resolveDocument(String(documentId));
+      return responseMessage(
+        await removeMemory(document.id, Number(memoryId), memoryStore),
+        PreviewService.method.deleteMemory.output,
+      );
+    },
+  );
+  register(PreviewService.method.listComments, async ({ documentId }) => {
+    const { source } = resolveDocument(String(documentId));
+    return responseMessage(
+      await getComments(
+        source,
+        commentsStore,
+        session.readMarkdown,
+        session.githubPull
+          ? new URL(source.documentSource).searchParams.get("ref") ?? undefined
+          : undefined,
+      ),
+      PreviewService.method.listComments.output,
+    );
+  });
+  register(
+    PreviewService.method.createComment,
+    async ({ documentId, startLine, endLine, body }) => {
+      const { source } = resolveDocument(String(documentId));
+      return responseMessage(
+        await createComment(
+          jsonRequest({ startLine, endLine, body }),
+          source,
+          commentsStore,
+          session.readMarkdown,
+        ),
+        PreviewService.method.createComment.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.updateComment,
+    async ({ documentId, commentId, body }) => {
+      const { source } = resolveDocument(String(documentId));
+      return responseMessage(
+        await updateComment(
+          jsonRequest({ body }),
+          source,
+          commentsStore,
+          Number(commentId),
+        ),
+        PreviewService.method.updateComment.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.deleteComment,
+    async ({ documentId, commentId }) => {
+      const { source } = resolveDocument(String(documentId));
+      return responseMessage(
+        await deleteComment(source, commentsStore, Number(commentId)),
+        PreviewService.method.deleteComment.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.setCommentResolution,
+    async ({ documentId, commentId, resolved }) => {
+      const { source } = resolveDocument(String(documentId));
+      return responseMessage(
+        await setCommentResolution(
+          source,
+          commentsStore,
+          Number(commentId),
+          resolved,
+        ),
+        PreviewService.method.setCommentResolution.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.createReply,
+    async ({ documentId, commentId, body }) => {
+      const { source } = resolveDocument(String(documentId));
+      return responseMessage(
+        await createReply(
+          jsonRequest({ body }),
+          source,
+          commentsStore,
+          Number(commentId),
+        ),
+        PreviewService.method.createReply.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.updateReply,
+    async ({ documentId, commentId, replyId, body }) => {
+      const { source } = resolveDocument(String(documentId));
+      return responseMessage(
+        await updateReply(
+          jsonRequest({ body }),
+          source,
+          commentsStore,
+          Number(commentId),
+          Number(replyId),
+        ),
+        PreviewService.method.updateReply.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.deleteReply,
+    async ({ documentId, commentId, replyId }) => {
+      const { source } = resolveDocument(String(documentId));
+      return responseMessage(
+        await deleteReply(
+          source,
+          commentsStore,
+          Number(commentId),
+          Number(replyId),
+        ),
+        PreviewService.method.deleteReply.output,
+      );
+    },
+  );
+  register(
+    PreviewService.method.exportCommentToGitHub,
+    async ({
+      documentId,
+      commentId,
+      headSha,
+      displayedMarkdown,
+      createdAt,
+      body,
+      startLine,
+      endLine,
+    }) => {
+      let resolved;
+      try {
+        resolved = resolveDocument(String(documentId));
+      } catch {
+        return responseMessage(
+          githubExportErrorResponse("export_document_not_found"),
+          PreviewService.method.exportCommentToGitHub.output,
+        );
+      }
+      if (!session.githubPull || !options.runGitHubCommand) {
+        return responseMessage(
+          githubExportErrorResponse("export_unavailable", 404),
+          PreviewService.method.exportCommentToGitHub.output,
+        );
+      }
+      if (exporting) {
+        return responseMessage(
+          githubExportErrorResponse("export_busy"),
+          PreviewService.method.exportCommentToGitHub.output,
+        );
+      }
+      exporting = true;
+      try {
+        return responseMessage(
+          await exportCommentToGitHub(
+            jsonRequest({
+              headSha,
+              displayedMarkdown,
+              createdAt,
+              body,
+              startLine,
+              endLine,
+            }),
+            session,
+            resolved.document.id,
+            Number(commentId),
+            resolved.source,
+            commentsStore,
+            options.runGitHubCommand,
+          ),
+          PreviewService.method.exportCommentToGitHub.output,
+        );
+      } finally {
+        exporting = false;
+      }
+    },
+  );
   if (tagStore) {
     app.get("/__sadoku/tags", () => listTags(tagStore));
     app.patch(

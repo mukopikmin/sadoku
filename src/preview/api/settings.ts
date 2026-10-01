@@ -1,4 +1,5 @@
 import type { CodeWrapMode, PreviewSettings, ThemeMode } from "../models/theme";
+import { previewClient } from "./connect";
 
 export type SettingsResponse = {
   codeWrap?: unknown;
@@ -91,25 +92,13 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
 };
 
 export const loadSettings = async (): Promise<PreviewSettings> => {
-  const response = await fetch("/__sadoku/settings");
-  if (!response.ok) {
-    throw new Error(`Failed to load settings: ${response.status}`);
-  }
-  return toPreviewSettings(await response.json() as SettingsResponse);
+  return toPreviewSettings(await previewClient.getSettings({}));
 };
 
 const saveSetting = async (
   update: SettingsUpdate,
 ): Promise<PreviewSettings> => {
-  const response = await fetch("/__sadoku/settings", {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(update),
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to save settings: ${response.status}`);
-  }
-  return toPreviewSettings(await response.json() as SettingsResponse);
+  return toPreviewSettings(await previewClient.updateSettings(update));
 };
 
 export const saveSettings = saveSetting;
