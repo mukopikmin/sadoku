@@ -1,4 +1,5 @@
 export type GitHubAccount = {
+  avatarUrl?: string;
   login: string;
   name?: string;
 };
@@ -44,7 +45,11 @@ export const getGitHubAccount = async (
         value.name.length > 0
       ? value.name
       : undefined;
-    return { account: { login: value.login, name }, ok: true };
+    const avatarUrl = "avatar_url" in value &&
+        typeof value.avatar_url === "string" && value.avatar_url.length > 0
+      ? value.avatar_url
+      : undefined;
+    return { account: { avatarUrl, login: value.login, name }, ok: true };
   } catch {
     return { message: "GitHub returned an invalid account.", ok: false };
   }

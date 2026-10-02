@@ -9,7 +9,12 @@ it("converts an authenticated GitHub account response", async () => {
     vi.fn().mockResolvedValue({
       json: () =>
         Promise.resolve({
-          account: { login: "octocat", name: "The Octocat", ignored: true },
+          account: {
+            avatarUrl: "https://avatars.githubusercontent.com/u/583231",
+            login: "octocat",
+            name: "The Octocat",
+            ignored: true,
+          },
           ok: true,
         }),
       ok: true,
@@ -17,7 +22,11 @@ it("converts an authenticated GitHub account response", async () => {
   );
 
   await expect(loadGitHubAccount()).resolves.toEqual({
-    account: { login: "octocat", name: "The Octocat" },
+    account: {
+      avatarUrl: "https://avatars.githubusercontent.com/u/583231",
+      login: "octocat",
+      name: "The Octocat",
+    },
     ok: true,
   });
 });

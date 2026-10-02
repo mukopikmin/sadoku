@@ -1,5 +1,8 @@
 export type GitHubAccountResult =
-  | { account: { login: string; name?: string }; ok: true }
+  | {
+    account: { avatarUrl?: string; login: string; name?: string };
+    ok: true;
+  }
   | { message: string; ok: false };
 
 export const loadGitHubAccount = async (): Promise<GitHubAccountResult> => {
@@ -17,7 +20,14 @@ export const loadGitHubAccount = async (): Promise<GitHubAccountResult> => {
       "name" in value.account && typeof value.account.name === "string"
         ? value.account.name
         : undefined;
-    return { account: { login: value.account.login, name }, ok: true };
+    const avatarUrl = "avatarUrl" in value.account &&
+        typeof value.account.avatarUrl === "string"
+      ? value.account.avatarUrl
+      : undefined;
+    return {
+      account: { avatarUrl, login: value.account.login, name },
+      ok: true,
+    };
   }
   if (
     value.ok === false && "message" in value &&
