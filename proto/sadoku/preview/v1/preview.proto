@@ -127,7 +127,11 @@ message GetGitHubAccountResponse {
   optional GitHubAccount account = 2;
   optional string message = 3;
 }
-message GitHubAccount { string login = 1; optional string name = 2; }
+message GitHubAccount {
+  string login = 1;
+  optional string name = 2;
+  optional string avatar_url = 3;
+}
 
 message ListTagsRequest {}
 message ListTagsResponse { repeated TagSummary tags = 1; }
