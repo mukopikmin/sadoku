@@ -1,4 +1,6 @@
-FROM node:24-bookworm-slim AS client-builder
+FROM node:24-bookworm-slim AS builder
+
+COPY --from=denoland/deno:bin-2.8.0 /deno /usr/local/bin/deno
 
 WORKDIR /workspace
 
@@ -7,21 +9,7 @@ COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
 RUN npm run install:deps
 
 COPY . .
-RUN npm run build:client
-
-FROM denoland/deno:2.8.0 AS binary-builder
-
-WORKDIR /workspace
-COPY --from=client-builder /workspace .
-
-RUN DENO_NO_PACKAGE_JSON=1 deno compile \
-    --quiet \
-    --node-modules-dir=none \
-    --no-check \
-    -P=app \
-    --include src/preview/dist \
-    --output /sadoku \
-    src/main.ts
+RUN deno task compile --output /sadoku
 
 FROM debian:bookworm-slim
 
@@ -30,7 +18,7 @@ ENV HOME=/tmp/sadoku-home \
 
 WORKDIR /app
 
-COPY --from=binary-builder /sadoku /usr/local/bin/sadoku
+COPY --from=builder /sadoku /usr/local/bin/sadoku
 COPY README.md /app/README.md
 COPY scripts/cloud_run_entrypoint.sh /usr/local/bin/cloud-run-entrypoint
 
