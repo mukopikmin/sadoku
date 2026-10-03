@@ -1,5 +1,6 @@
 import {
   Button,
+  CloseButton,
   ColorPicker,
   ColorSwatch,
   Dialog,
@@ -71,6 +72,9 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
             <Dialog.Header>
               <Dialog.Title>Tags</Dialog.Title>
             </Dialog.Header>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton aria-label="Close tags" size="sm" />
+            </Dialog.CloseTrigger>
             <Dialog.Body pb="6">
               {tags.isPending
                 ? <Spinner aria-label="Loading tags" />

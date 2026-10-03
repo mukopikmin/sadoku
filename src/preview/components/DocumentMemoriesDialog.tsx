@@ -1,8 +1,8 @@
 import {
   Button,
+  CloseButton,
   Dialog,
   Flex,
-  IconButton,
   Portal,
   Text,
 } from "@chakra-ui/react";
@@ -108,13 +108,10 @@ export const DocumentMemoriesDialog = ({
                 </Flex>
               </Dialog.Body>
               <Dialog.CloseTrigger asChild>
-                <IconButton
+                <CloseButton
                   aria-label="Close document memories"
                   size="sm"
-                  variant="ghost"
-                >
-                  ×
-                </IconButton>
+                />
               </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>

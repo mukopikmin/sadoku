@@ -2,14 +2,13 @@ import {
   Badge,
   Breadcrumb,
   Button,
+  CloseButton,
   Dialog,
   Flex,
-  IconButton,
   Link,
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { X } from "lucide-react";
 import { Fragment, useState } from "react";
 import type { DocumentSummary } from "../models/document";
 
@@ -135,13 +134,7 @@ export const DocumentBreadcrumb = ({
                   )}
               </Dialog.Body>
               <Dialog.CloseTrigger asChild>
-                <IconButton
-                  aria-label="Close directory"
-                  size="sm"
-                  variant="ghost"
-                >
-                  <X aria-hidden="true" />
-                </IconButton>
+                <CloseButton aria-label="Close directory" size="sm" />
               </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>

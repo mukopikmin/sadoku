@@ -53,6 +53,18 @@ describe("TagsDialog", () => {
     expect(await screen.findByText("No tags yet.")).not.toBeNull();
   });
 
+  it("closes from its dedicated close control", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json([])));
+    const onOpenChange = vi.fn();
+    render(<TagsDialog onOpenChange={onOpenChange} open />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Close tags" }),
+    );
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+
   it("displays an error state", async () => {
     vi.stubGlobal(
       "fetch",

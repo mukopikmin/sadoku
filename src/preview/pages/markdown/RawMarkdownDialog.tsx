@@ -1,4 +1,4 @@
-import { Box, Button, Dialog, Portal } from "@chakra-ui/react";
+import { Box, CloseButton, Dialog, Portal } from "@chakra-ui/react";
 import type { CommentRange } from "../../markdown/commentable/commentRanges";
 import { formatRangeLabel } from "../../markdown/commentable/commentRendering";
 
@@ -34,6 +34,9 @@ export const RawMarkdownDialog = ({
                 Raw Markdown{range ? ` — ${formatRangeLabel(range)}` : ""}
               </Dialog.Title>
             </Dialog.Header>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton aria-label="Close" size="sm" />
+            </Dialog.CloseTrigger>
             <Dialog.Body>
               <Box
                 as="pre"
@@ -48,11 +51,6 @@ export const RawMarkdownDialog = ({
                 <code>{source}</code>
               </Box>
             </Dialog.Body>
-            <Dialog.Footer>
-              <Button onClick={() => onOpenChange(false)} variant="outline">
-                Close
-              </Button>
-            </Dialog.Footer>
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>
