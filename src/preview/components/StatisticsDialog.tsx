@@ -1,4 +1,11 @@
-import { Dialog, Flex, Portal, Spinner, Text } from "@chakra-ui/react";
+import {
+  CloseButton,
+  Dialog,
+  Flex,
+  Portal,
+  Spinner,
+  Text,
+} from "@chakra-ui/react";
 import { useStatisticsQuery } from "../hooks/useStatistics";
 
 const formatSize = (bytes: number): string => {
@@ -37,6 +44,9 @@ export const StatisticsDialog = ({
             <Dialog.Header>
               <Dialog.Title>Database statistics</Dialog.Title>
             </Dialog.Header>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton aria-label="Close database statistics" size="sm" />
+            </Dialog.CloseTrigger>
             <Dialog.Body pb="6">
               {statistics.isPending
                 ? <Spinner aria-label="Loading database statistics" />

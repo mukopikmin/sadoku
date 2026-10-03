@@ -1,8 +1,8 @@
 import {
   Button,
+  CloseButton,
   Dialog,
   Flex,
-  IconButton,
   Input,
   Portal,
   Text,
@@ -227,13 +227,7 @@ export const DocumentTagsDialog = (
               </Flex>
             </Dialog.Body>
             <Dialog.CloseTrigger asChild>
-              <IconButton
-                aria-label="Close document tags"
-                size="sm"
-                variant="ghost"
-              >
-                ×
-              </IconButton>
+              <CloseButton aria-label="Close document tags" size="sm" />
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>

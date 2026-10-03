@@ -48,16 +48,17 @@ export const ConfirmDialog = ({
               <Dialog.Description>{children}</Dialog.Description>
             </Dialog.Body>
             <Dialog.Footer>
-              <Button
-                autoFocus
-                disabled={isPending}
-                onClick={() => onOpenChange(false)}
-                ref={cancelButtonRef}
-                type="button"
-                variant="outline"
-              >
-                {cancelLabel}
-              </Button>
+              <Dialog.CloseTrigger asChild>
+                <Button
+                  autoFocus
+                  disabled={isPending}
+                  ref={cancelButtonRef}
+                  type="button"
+                  variant="outline"
+                >
+                  {cancelLabel}
+                </Button>
+              </Dialog.CloseTrigger>
               <Button
                 colorPalette={confirmColorPalette}
                 disabled={isPending}
