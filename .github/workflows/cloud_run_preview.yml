@@ -75,8 +75,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
@@ -84,9 +84,9 @@ jobs:
       - name: Push immutable image
         id: image
         env:
-          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ vars.GCP_REGION }}
-          REPOSITORY: ${{ vars.ARTIFACT_REGISTRY_REPOSITORY }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          REPOSITORY: ${{ secrets.ARTIFACT_REGISTRY_REPOSITORY }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
@@ -107,9 +107,9 @@ jobs:
 
       - name: Deploy tagged revision without traffic
         env:
-          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ vars.GCP_REGION }}
-          SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
           IMAGE: ${{ steps.image.outputs.digest-image }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
@@ -128,9 +128,9 @@ jobs:
       - name: Resolve and verify preview URL
         id: preview
         env:
-          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ vars.GCP_REGION }}
-          SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
@@ -166,17 +166,17 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
       - name: Remove only this PR's revision tag
         env:
-          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ vars.GCP_REGION }}
-          SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail

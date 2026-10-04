@@ -1,7 +1,7 @@
 # Cloud Run pull request previews
 
 The `cloud_run_preview.yml` workflow expects these GitHub repository or
-`cloud-run-preview` environment variables:
+`cloud-run-preview` environment secrets:
 
 - `GCP_PROJECT_ID`
 - `GCP_REGION`
@@ -12,9 +12,17 @@ The `cloud_run_preview.yml` workflow expects these GitHub repository or
 
 No service-account key is stored in GitHub. The workflow exchanges GitHub's OIDC
 token through Workload Identity Federation. Project IDs, resource names, and
-service account email addresses are identifiers rather than credentials, so they
-are configuration variables and are not masked. Store any future passwords,
-keys, or tokens as GitHub secrets instead.
+service account email addresses are identifiers rather than credentials, but
+store them as GitHub secrets so that GitHub Actions masks their values in public
+workflow logs. Store any future passwords, keys, or tokens as GitHub secrets
+too.
+
+If these values were previously stored as configuration variables, register them
+as secrets with the same names and remove the old variables. The workflow does
+not fall back to variables. Masking does not remove values from earlier workflow
+logs or guarantee that transformed or partial values are hidden. The preview URL
+is still published as the deployment environment URL and may reveal resource
+identifiers; log masking is not access control for that endpoint.
 
 The workflow builds pull request code in a separate job that has no
 `id-token: write` permission and no Google Cloud credentials. Only the saved
