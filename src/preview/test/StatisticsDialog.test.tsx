@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "./testUtils";
+import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, expect, it, vi } from "vitest";
 import { StatisticsDialog } from "../components/StatisticsDialog";
 
@@ -34,4 +34,25 @@ it("loads and displays database statistics when opened", async () => {
     "textContent",
     "4",
   );
+});
+
+it("offers a close button", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() =>
+      Promise.resolve(Response.json({
+        commentCount: { bot: "0", human: "0" },
+        databaseSize: "0",
+        documentCount: "0",
+      }))
+    ),
+  );
+  const onOpenChange = vi.fn();
+
+  render(<StatisticsDialog onOpenChange={onOpenChange} open />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Close database statistics" }),
+  );
+
+  await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
 });

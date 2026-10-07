@@ -1,5 +1,4 @@
-import { Dialog, Flex, IconButton, Portal } from "@chakra-ui/react";
-import { X } from "lucide-react";
+import { CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
 import { useRef } from "react";
 import type {
   CodeWrapMode,
@@ -69,9 +68,7 @@ export const SettingsDialog = (
               </Flex>
             </Dialog.Body>
             <Dialog.CloseTrigger asChild>
-              <IconButton aria-label="Close settings" size="sm" variant="ghost">
-                <X aria-hidden="true" />
-              </IconButton>
+              <CloseButton aria-label="Close settings" size="sm" />
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>
