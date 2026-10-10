@@ -65,80 +65,83 @@ export const CommentItem = ({
         borderLeftColor={variant === "card" ? "accent" : undefined}
         borderLeftWidth={variant === "card" ? "3px" : undefined}
         className="comment-root-thread"
+        pb={variant === "card" ? "1px" : undefined}
         pl={variant === "card" ? "3" : undefined}
-        position="relative"
+        pt={variant === "card" ? "2" : undefined}
       >
-        {(comment.author.type === "bot" ||
-          (showState && comment.state !== "active")) && (
-          <Flex align="center" gap="1.5" mb="0.5" pr="14">
-            {comment.author.type === "bot" && (
-              <Badge colorPalette="purple" variant="subtle">Bot</Badge>
-            )}
-            {showState && comment.state === "resolved" && (
-              <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
-            )}
-            {showState && comment.state === "stale" && (
-              <Badge colorPalette="yellow" variant="outline">Stale</Badge>
-            )}
-          </Flex>
-        )}
-        {!isEditing && (
-          <CommentActionMenu
-            comment={comment}
-            disabled={isPending}
-            lineLabel={lineLabel}
-            onDelete={onDeleteComment}
-            onExport={actions.onExportComment}
-            onEdit={() => setIsEditing(true)}
-            onReopen={onReopenComment}
-            onResolve={onResolveComment}
-            reportError={reportError}
-            runAction={runAction}
-          />
-        )}
-        {isEditing
-          ? (
-            <CommentEditor
-              body={comment.body}
-              commentId={comment.id}
+        <Box position="relative">
+          {(comment.author.type === "bot" ||
+            (showState && comment.state !== "active")) && (
+            <Flex align="center" gap="1.5" mb="0.5" pr="8">
+              {comment.author.type === "bot" && (
+                <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+              )}
+              {showState && comment.state === "resolved" && (
+                <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
+              )}
+              {showState && comment.state === "stale" && (
+                <Badge colorPalette="yellow" variant="outline">Stale</Badge>
+              )}
+            </Flex>
+          )}
+          {!isEditing && (
+            <CommentActionMenu
+              comment={comment}
               disabled={isPending}
-              onClose={() => setIsEditing(false)}
-              onUpdate={onUpdateComment}
+              lineLabel={lineLabel}
+              onDelete={onDeleteComment}
+              onExport={actions.onExportComment}
+              onEdit={() => setIsEditing(true)}
+              onReopen={onReopenComment}
+              onResolve={onResolveComment}
+              reportError={reportError}
               runAction={runAction}
             />
-          )
-          : (
-            <Box pr="14">
-              <CommentMarkdown sourceText={comment.sourceText}>
-                {comment.body}
-              </CommentMarkdown>
-            </Box>
           )}
-        {(comment.replies ?? []).length > 0 && (
-          <Stack gap="1" mt="1.5">
-            {(comment.replies ?? []).map((reply) => (
-              <ReplyItem
+          {isEditing
+            ? (
+              <CommentEditor
+                body={comment.body}
                 commentId={comment.id}
                 disabled={isPending}
-                key={reply.id}
-                onDelete={onDeleteReply}
-                onUpdate={onUpdateReply}
-                reportError={reportError}
-                reply={reply}
-                sourceText={comment.sourceText}
+                onClose={() => setIsEditing(false)}
+                onUpdate={onUpdateComment}
                 runAction={runAction}
               />
-            ))}
-          </Stack>
-        )}
-        <ReplyComposer
-          commentId={comment.id}
-          disabled={isPending}
-          onReply={onReplyComment}
-          runAction={runAction}
-          showTrigger={!isEditing}
-        />
-        {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+            )
+            : (
+              <Box pr="8">
+                <CommentMarkdown sourceText={comment.sourceText}>
+                  {comment.body}
+                </CommentMarkdown>
+              </Box>
+            )}
+          {(comment.replies ?? []).length > 0 && (
+            <Stack gap="1" mt="1.5">
+              {(comment.replies ?? []).map((reply) => (
+                <ReplyItem
+                  commentId={comment.id}
+                  disabled={isPending}
+                  key={reply.id}
+                  onDelete={onDeleteReply}
+                  onUpdate={onUpdateReply}
+                  reportError={reportError}
+                  reply={reply}
+                  sourceText={comment.sourceText}
+                  runAction={runAction}
+                />
+              ))}
+            </Stack>
+          )}
+          <ReplyComposer
+            commentId={comment.id}
+            disabled={isPending}
+            onReply={onReplyComment}
+            runAction={runAction}
+            showTrigger={!isEditing}
+          />
+          {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+        </Box>
       </Box>
     </>
   );

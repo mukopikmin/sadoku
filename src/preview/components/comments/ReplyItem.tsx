@@ -1,5 +1,5 @@
 import { Badge, Box, Flex, IconButton, Menu, Portal } from "@chakra-ui/react";
-import { Copy, Ellipsis } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
@@ -91,7 +91,7 @@ export const ReplyItem = ({
           fontSize="xs"
           fontWeight="semibold"
           mb="0.5"
-          pr="14"
+          pr="8"
         >
           <Badge colorPalette="purple" variant="subtle">Bot</Badge>
           {reply.reviewRequested && (
@@ -103,15 +103,6 @@ export const ReplyItem = ({
       )}
       {!isEditing && (
         <Flex position="absolute" right="0" top="0">
-          <IconButton
-            aria-label="Copy reply"
-            disabled={disabled}
-            onClick={handleCopy}
-            size="xs"
-            variant="ghost"
-          >
-            <Copy aria-hidden="true" />
-          </IconButton>
           <Menu.Root>
             <Menu.Trigger asChild>
               <IconButton
@@ -126,6 +117,13 @@ export const ReplyItem = ({
             <Portal>
               <Menu.Positioner>
                 <Menu.Content>
+                  <Menu.Item
+                    value="copy"
+                    disabled={disabled}
+                    onClick={() => void handleCopy()}
+                  >
+                    Copy reply
+                  </Menu.Item>
                   <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
                     Edit
                   </Menu.Item>
@@ -170,7 +168,7 @@ export const ReplyItem = ({
           />
         )
         : (
-          <Box pr="14">
+          <Box pr="8">
             <CommentMarkdown sourceText={sourceText}>
               {reply.body}
             </CommentMarkdown>

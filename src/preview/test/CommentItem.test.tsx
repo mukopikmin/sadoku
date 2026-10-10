@@ -245,7 +245,7 @@ describe("CommentItem", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Copy comment" }).hasAttribute(
+      screen.getByRole("button", { name: "More actions" }).hasAttribute(
         "disabled",
       ),
     ).toBe(true);
@@ -282,14 +282,16 @@ describe("CommentItem", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy comment" }));
+    await openCommentMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy comment" }));
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith("**Comment** body.")
     );
     expect(await screen.findByText("Comment copied")).not.toBeNull();
 
     writeText.mockRejectedValueOnce(new Error("Clipboard unavailable."));
-    fireEvent.click(screen.getByRole("button", { name: "Copy comment" }));
+    await openCommentMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy comment" }));
     expect(await screen.findByText("Could not copy comment")).not.toBeNull();
     expect(screen.getAllByText("Clipboard unavailable.").length)
       .toBeGreaterThan(0);
