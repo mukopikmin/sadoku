@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  */
 export const file_sadoku_preview_v1_preview: GenFile = /*@__PURE__*/
   fileDesc(
-    "Ch9zYWRva3UvcHJldmlldy92MS9wcmV2aWV3LnByb3RvEhFzYWRva3UucHJldmlldy52MSITChFHZXRTZXNzaW9uUmVxdWVzdCJgChJHZXRTZXNzaW9uUmVzcG9uc2USOQoMcHVsbF9yZXF1ZXN0GAEgASgLMh4uc2Fkb2t1LnByZXZpZXcudjEuUHVsbFJlcXVlc3RIAIgBAUIPCg1fcHVsbF9yZXF1ZXN0Ik4KC1B1bGxSZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEg4KBm51bWJlchgCIAEoDRINCgV0aXRsZRgDIAEoCRILCgN1cmwYBCABKAkiFgoUR2V0U3RhdGlzdGljc1JlcXVlc3QifgoVR2V0U3RhdGlzdGljc1Jlc3BvbnNlEjYKDWNvbW1lbnRfY291bnQYASABKAsyHy5zYWRva3UucHJldmlldy52MS5Db21tZW50Q291bnQSFQoNZGF0YWJhc2Vfc2l6ZRgCIAEoBBIWCg5kb2N1bWVudF9jb3VudBgDIAEoBCIqCgxDb21tZW50Q291bnQSCwoDYm90GAEgASgEEg0KBWh1bWFuGAIgASgEMs8BCg5QcmV2aWV3U2VydmljZRJZCgpHZXRTZXNzaW9uEiQuc2Fkb2t1LnByZXZpZXcudjEuR2V0U2Vzc2lvblJlcXVlc3QaJS5zYWRva3UucHJldmlldy52MS5HZXRTZXNzaW9uUmVzcG9uc2USYgoNR2V0U3RhdGlzdGljcxInLnNhZG9rdS5wcmV2aWV3LnYxLkdldFN0YXRpc3RpY3NSZXF1ZXN0Giguc2Fkb2t1LnByZXZpZXcudjEuR2V0U3RhdGlzdGljc1Jlc3BvbnNlYgZwcm90bzM",
+    "Ch9zYWRva3UvcHJldmlldy92MS9wcmV2aWV3LnByb3RvEhFzYWRva3UucHJldmlldy52MSITChFHZXRTZXNzaW9uUmVxdWVzdCJgChJHZXRTZXNzaW9uUmVzcG9uc2USOQoMcHVsbF9yZXF1ZXN0GAEgASgLMh4uc2Fkb2t1LnByZXZpZXcudjEuUHVsbFJlcXVlc3RIAIgBAUIPCg1fcHVsbF9yZXF1ZXN0Ik4KC1B1bGxSZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEg4KBm51bWJlchgCIAEoDRINCgV0aXRsZRgDIAEoCRILCgN1cmwYBCABKAkiFgoUR2V0U3RhdGlzdGljc1JlcXVlc3QifgoVR2V0U3RhdGlzdGljc1Jlc3BvbnNlEjYKDWNvbW1lbnRfY291bnQYASABKAsyHy5zYWRva3UucHJldmlldy52MS5Db21tZW50Q291bnQSFQoNZGF0YWJhc2Vfc2l6ZRgCIAEoBBIWCg5kb2N1bWVudF9jb3VudBgDIAEoBCIqCgxDb21tZW50Q291bnQSCwoDYm90GAEgASgEEg0KBWh1bWFuGAIgASgEIjkKA1RhZxIKCgJpZBgBIAEoBBIMCgRuYW1lGAIgASgJEhgKEGJhY2tncm91bmRfY29sb3IYAyABKAkigAEKClRhZ1N1bW1hcnkSCgoCaWQYASABKAQSDAoEbmFtZRgCIAEoCRIYChBiYWNrZ3JvdW5kX2NvbG9yGAMgASgJEhYKDmRvY3VtZW50X2NvdW50GAQgASgEEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCSIWChRMaXN0RG9jdW1lbnRzUmVxdWVzdCJOChVMaXN0RG9jdW1lbnRzUmVzcG9uc2USNQoJZG9jdW1lbnRzGAEgAygLMiIuc2Fkb2t1LnByZXZpZXcudjEuRG9jdW1lbnRTdW1tYXJ5InoKD0RvY3VtZW50U3VtbWFyeRIKCgJpZBgBIAEoBBIVCg1yZWxhdGl2ZV9wYXRoGAIgASgJEg0KBXRpdGxlGAMgASgJEg8KB2RlbGV0ZWQYBCABKAgSJAoEdGFncxgFIAMoCzIWLnNhZG9rdS5wcmV2aWV3LnYxLlRhZyIpChJHZXREb2N1bWVudFJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQisQEKE0dldERvY3VtZW50UmVzcG9uc2USEAoIZmlsZV91cmwYASABKAkSEAoIbWFya2Rvd24YAiABKAkSDQoFdGl0bGUYAyABKAkSDwoHZGVsZXRlZBgEIAEoCBIkCgR0YWdzGAUgAygLMhYuc2Fkb2t1LnByZXZpZXcudjEuVGFnEhwKD2dpdGh1Yl9oZWFkX3NoYRgGIAEoCUgAiAEBQhIKEF9naXRodWJfaGVhZF9zaGEiGwoZR2V0RGlyZWN0b3J5U3RhdHVzUmVxdWVzdCKSAQoaR2V0RGlyZWN0b3J5U3RhdHVzUmVzcG9uc2USDQoFc3RhdGUYASABKAkSEAoIZGV0ZWN0ZWQYAiABKAQSEgoKcmVnaXN0ZXJlZBgDIAEoBBI1CgVlcnJvchgEIAEoCzIhLnNhZG9rdS5wcmV2aWV3LnYxLkRpcmVjdG9yeUVycm9ySACIAQFCCAoGX2Vycm9yIi8KDkRpcmVjdG9yeUVycm9yEgwKBG5hbWUYASABKAkSDwoHbWVzc2FnZRgCIAEoCSIUChJHZXRTZXR0aW5nc1JlcXVlc3QiwwEKCFNldHRpbmdzEhIKBXRoZW1lGAEgASgJSACIAQESFgoJY29kZV93cmFwGAIgASgJSAGIAQESEgoKZm9udF9zY2FsZRgDIAEoARIcChRleGNsdWRlZF9kaXJlY3RvcmllcxgEIAMoCRIRCgltYXhfZGVwdGgYBSABKA0SEQoJbWF4X2ZpbGVzGAYgASgNEhsKE21hcmtkb3duX2V4dGVuc2lvbnMYByADKAlCCAoGX3RoZW1lQgwKCl9jb2RlX3dyYXAirgEKFVVwZGF0ZVNldHRpbmdzUmVxdWVzdBINCgV0aGVtZRgBIAEoCRIRCgljb2RlX3dyYXAYAiABKAkSEgoKZm9udF9zY2FsZRgDIAEoARIcChRleGNsdWRlZF9kaXJlY3RvcmllcxgEIAMoCRIRCgltYXhfZGVwdGgYBSABKA0SEQoJbWF4X2ZpbGVzGAYgASgNEhsKE21hcmtkb3duX2V4dGVuc2lvbnMYByADKAkiGQoXR2V0R2l0SHViQWNjb3VudFJlcXVlc3QijAEKGEdldEdpdEh1YkFjY291bnRSZXNwb25zZRIKCgJvaxgBIAEoCBI2CgdhY2NvdW50GAIgASgLMiAuc2Fkb2t1LnByZXZpZXcudjEuR2l0SHViQWNjb3VudEgAiAEBEhQKB21lc3NhZ2UYAyABKAlIAYgBAUIKCghfYWNjb3VudEIKCghfbWVzc2FnZSJiCg1HaXRIdWJBY2NvdW50Eg0KBWxvZ2luGAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIXCgphdmF0YXJfdXJsGAMgASgJSAGIAQFCBwoFX25hbWVCDQoLX2F2YXRhcl91cmwiEQoPTGlzdFRhZ3NSZXF1ZXN0Ij8KEExpc3RUYWdzUmVzcG9uc2USKwoEdGFncxgBIAMoCzIdLnNhZG9rdS5wcmV2aWV3LnYxLlRhZ1N1bW1hcnkiRgoQVXBkYXRlVGFnUmVxdWVzdBIKCgJpZBgBIAEoBBIMCgRuYW1lGAIgASgJEhgKEGJhY2tncm91bmRfY29sb3IYAyABKAkiOQoMVGFnUmVmZXJlbmNlEgwKAmlkGAEgASgESAASDgoEbmFtZRgCIAEoCUgAQgsKCXJlZmVyZW5jZSJgChpSZXBsYWNlRG9jdW1lbnRUYWdzUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBItCgR0YWdzGAIgAygLMh8uc2Fkb2t1LnByZXZpZXcudjEuVGFnUmVmZXJlbmNlIkMKG1JlcGxhY2VEb2N1bWVudFRhZ3NSZXNwb25zZRIkCgR0YWdzGAEgAygLMhYuc2Fkb2t1LnByZXZpZXcudjEuVGFnIlIKC0luc3RydWN0aW9uEgoKAmlkGAEgASgEEg8KB2NvbnRlbnQYAiABKAkSEgoKY3JlYXRlZF9hdBgDIAEoCRISCgp1cGRhdGVkX2F0GAQgASgJIi4KF0xpc3RJbnN0cnVjdGlvbnNSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEIlAKGExpc3RJbnN0cnVjdGlvbnNSZXNwb25zZRI0CgxpbnN0cnVjdGlvbnMYASADKAsyHi5zYWRva3UucHJldmlldy52MS5JbnN0cnVjdGlvbiJAChhDcmVhdGVJbnN0cnVjdGlvblJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSDwoHY29udGVudBgCIAEoCSJYChhVcGRhdGVJbnN0cnVjdGlvblJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSFgoOaW5zdHJ1Y3Rpb25faWQYAiABKAQSDwoHY29udGVudBgDIAEoCSJHChhEZWxldGVJbnN0cnVjdGlvblJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSFgoOaW5zdHJ1Y3Rpb25faWQYAiABKAQiGwoZRGVsZXRlSW5zdHJ1Y3Rpb25SZXNwb25zZSJiCgZNZW1vcnkSCgoCaWQYASABKAQSEwoLZG9jdW1lbnRfaWQYAiABKAQSDwoHY29udGVudBgDIAEoCRISCgpjcmVhdGVkX2F0GAQgASgJEhIKCnVwZGF0ZWRfYXQYBSABKAkiKgoTTGlzdE1lbW9yaWVzUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBCJDChRMaXN0TWVtb3JpZXNSZXNwb25zZRIrCghtZW1vcmllcxgBIAMoCzIZLnNhZG9rdS5wcmV2aWV3LnYxLk1lbW9yeSI9ChNEZWxldGVNZW1vcnlSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhEKCW1lbW9yeV9pZBgCIAEoBCIWChREZWxldGVNZW1vcnlSZXNwb25zZSIdCg1Db21tZW50QXV0aG9yEgwKBHR5cGUYASABKAkitgEKDENvbW1lbnRSZXBseRIKCgJpZBgBIAEoBBIwCgZhdXRob3IYAiABKAsyIC5zYWRva3UucHJldmlldy52MS5Db21tZW50QXV0aG9yEgwKBGJvZHkYAyABKAkSEgoKY3JlYXRlZF9hdBgEIAEoCRISCgp1cGRhdGVkX2F0GAUgASgJEh0KEHJldmlld19yZXF1ZXN0ZWQYBiABKAhIAIgBAUITChFfcmV2aWV3X3JlcXVlc3RlZCKkBAoHQ29tbWVudBIKCgJpZBgBIAEoBBIwCgZhdXRob3IYAiABKAsyIC5zYWRva3UucHJldmlldy52MS5Db21tZW50QXV0aG9yEgwKBGJvZHkYAyABKAkSEgoKc3RhcnRfbGluZRgEIAEoDRIQCghlbmRfbGluZRgFIAEoDRIbChNvcmlnaW5hbF9zdGFydF9saW5lGAYgASgNEhkKEW9yaWdpbmFsX2VuZF9saW5lGAcgASgNEhIKCmNyZWF0ZWRfYXQYCCABKAkSEgoKdXBkYXRlZF9hdBgJIAEoCRIQCghyZXNvbHZlZBgKIAEoCBINCgVzdGFsZRgLIAEoCBIYCgtyZXNvbHZlZF9hdBgMIAEoCUgAiAEBEjoKC3Jlc29sdmVkX2J5GA0gASgLMiAuc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudEF1dGhvckgBiAEBEhgKC3NvdXJjZV9oYXNoGA4gASgJSAKIAQESGAoLc291cmNlX3RleHQYDyABKAlIA4gBARIwCgdyZXBsaWVzGBAgAygLMh8uc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudFJlcGx5EhkKDGRpc3BsYXlfbGluZRgRIAEoDUgEiAEBQg4KDF9yZXNvbHZlZF9hdEIOCgxfcmVzb2x2ZWRfYnlCDgoMX3NvdXJjZV9oYXNoQg4KDF9zb3VyY2VfdGV4dEIPCg1fZGlzcGxheV9saW5lIioKE0xpc3RDb21tZW50c1JlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQihQEKEENvbW1lbnRzRG9jdW1lbnQSEQoJZmlsZV9wYXRoGAEgASgJEiwKCGNvbW1lbnRzGAIgAygLMhouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBIcCg9naXRodWJfaGVhZF9zaGEYAyABKAlIAIgBAUISChBfZ2l0aHViX2hlYWRfc2hhIl8KFENyZWF0ZUNvbW1lbnRSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCnN0YXJ0X2xpbmUYAiABKA0SEAoIZW5kX2xpbmUYAyABKA0SDAoEYm9keRgEIAEoCSJNChRVcGRhdGVDb21tZW50UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEgwKBGJvZHkYAyABKAkiPwoURGVsZXRlQ29tbWVudFJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBCIXChVEZWxldGVDb21tZW50UmVzcG9uc2UiWAobU2V0Q29tbWVudFJlc29sdXRpb25SZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSEAoIcmVzb2x2ZWQYAyABKAgiSwoSQ3JlYXRlUmVwbHlSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSDAoEYm9keRgDIAEoCSJdChJVcGRhdGVSZXBseVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIQCghyZXBseV9pZBgDIAEoBBIMCgRib2R5GAQgASgJIk8KEkRlbGV0ZVJlcGx5UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEhAKCHJlcGx5X2lkGAMgASgEIhUKE0RlbGV0ZVJlcGx5UmVzcG9uc2UivQEKHEV4cG9ydENvbW1lbnRUb0dpdEh1YlJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIQCghoZWFkX3NoYRgDIAEoCRIaChJkaXNwbGF5ZWRfbWFya2Rvd24YBCABKAkSEgoKY3JlYXRlZF9hdBgFIAEoCRIMCgRib2R5GAYgASgJEhIKCnN0YXJ0X2xpbmUYByABKA0SEAoIZW5kX2xpbmUYCCABKA0iOwodRXhwb3J0Q29tbWVudFRvR2l0SHViUmVzcG9uc2USCwoDdXJsGAEgASgJEg0KBXN0YXRlGAIgASgJMuQTCg5QcmV2aWV3U2VydmljZRJZCgpHZXRTZXNzaW9uEiQuc2Fkb2t1LnByZXZpZXcudjEuR2V0U2Vzc2lvblJlcXVlc3QaJS5zYWRva3UucHJldmlldy52MS5HZXRTZXNzaW9uUmVzcG9uc2USYgoNR2V0U3RhdGlzdGljcxInLnNhZG9rdS5wcmV2aWV3LnYxLkdldFN0YXRpc3RpY3NSZXF1ZXN0Giguc2Fkb2t1LnByZXZpZXcudjEuR2V0U3RhdGlzdGljc1Jlc3BvbnNlEmIKDUxpc3REb2N1bWVudHMSJy5zYWRva3UucHJldmlldy52MS5MaXN0RG9jdW1lbnRzUmVxdWVzdBooLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3REb2N1bWVudHNSZXNwb25zZRJcCgtHZXREb2N1bWVudBIlLnNhZG9rdS5wcmV2aWV3LnYxLkdldERvY3VtZW50UmVxdWVzdBomLnNhZG9rdS5wcmV2aWV3LnYxLkdldERvY3VtZW50UmVzcG9uc2UScQoSR2V0RGlyZWN0b3J5U3RhdHVzEiwuc2Fkb2t1LnByZXZpZXcudjEuR2V0RGlyZWN0b3J5U3RhdHVzUmVxdWVzdBotLnNhZG9rdS5wcmV2aWV3LnYxLkdldERpcmVjdG9yeVN0YXR1c1Jlc3BvbnNlElEKC0dldFNldHRpbmdzEiUuc2Fkb2t1LnByZXZpZXcudjEuR2V0U2V0dGluZ3NSZXF1ZXN0Ghsuc2Fkb2t1LnByZXZpZXcudjEuU2V0dGluZ3MSVwoOVXBkYXRlU2V0dGluZ3MSKC5zYWRva3UucHJldmlldy52MS5VcGRhdGVTZXR0aW5nc1JlcXVlc3QaGy5zYWRva3UucHJldmlldy52MS5TZXR0aW5ncxJrChBHZXRHaXRIdWJBY2NvdW50Eiouc2Fkb2t1LnByZXZpZXcudjEuR2V0R2l0SHViQWNjb3VudFJlcXVlc3QaKy5zYWRva3UucHJldmlldy52MS5HZXRHaXRIdWJBY2NvdW50UmVzcG9uc2USUwoITGlzdFRhZ3MSIi5zYWRva3UucHJldmlldy52MS5MaXN0VGFnc1JlcXVlc3QaIy5zYWRva3UucHJldmlldy52MS5MaXN0VGFnc1Jlc3BvbnNlEkgKCVVwZGF0ZVRhZxIjLnNhZG9rdS5wcmV2aWV3LnYxLlVwZGF0ZVRhZ1JlcXVlc3QaFi5zYWRva3UucHJldmlldy52MS5UYWcSdAoTUmVwbGFjZURvY3VtZW50VGFncxItLnNhZG9rdS5wcmV2aWV3LnYxLlJlcGxhY2VEb2N1bWVudFRhZ3NSZXF1ZXN0Gi4uc2Fkb2t1LnByZXZpZXcudjEuUmVwbGFjZURvY3VtZW50VGFnc1Jlc3BvbnNlEmsKEExpc3RJbnN0cnVjdGlvbnMSKi5zYWRva3UucHJldmlldy52MS5MaXN0SW5zdHJ1Y3Rpb25zUmVxdWVzdBorLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3RJbnN0cnVjdGlvbnNSZXNwb25zZRJgChFDcmVhdGVJbnN0cnVjdGlvbhIrLnNhZG9rdS5wcmV2aWV3LnYxLkNyZWF0ZUluc3RydWN0aW9uUmVxdWVzdBoeLnNhZG9rdS5wcmV2aWV3LnYxLkluc3RydWN0aW9uEmAKEVVwZGF0ZUluc3RydWN0aW9uEisuc2Fkb2t1LnByZXZpZXcudjEuVXBkYXRlSW5zdHJ1Y3Rpb25SZXF1ZXN0Gh4uc2Fkb2t1LnByZXZpZXcudjEuSW5zdHJ1Y3Rpb24SbgoRRGVsZXRlSW5zdHJ1Y3Rpb24SKy5zYWRva3UucHJldmlldy52MS5EZWxldGVJbnN0cnVjdGlvblJlcXVlc3QaLC5zYWRva3UucHJldmlldy52MS5EZWxldGVJbnN0cnVjdGlvblJlc3BvbnNlEl8KDExpc3RNZW1vcmllcxImLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3RNZW1vcmllc1JlcXVlc3QaJy5zYWRva3UucHJldmlldy52MS5MaXN0TWVtb3JpZXNSZXNwb25zZRJfCgxEZWxldGVNZW1vcnkSJi5zYWRva3UucHJldmlldy52MS5EZWxldGVNZW1vcnlSZXF1ZXN0Gicuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlTWVtb3J5UmVzcG9uc2USWwoMTGlzdENvbW1lbnRzEiYuc2Fkb2t1LnByZXZpZXcudjEuTGlzdENvbW1lbnRzUmVxdWVzdBojLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnRzRG9jdW1lbnQSVAoNQ3JlYXRlQ29tbWVudBInLnNhZG9rdS5wcmV2aWV3LnYxLkNyZWF0ZUNvbW1lbnRSZXF1ZXN0Ghouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBJUCg1VcGRhdGVDb21tZW50Eicuc2Fkb2t1LnByZXZpZXcudjEuVXBkYXRlQ29tbWVudFJlcXVlc3QaGi5zYWRva3UucHJldmlldy52MS5Db21tZW50EmIKDURlbGV0ZUNvbW1lbnQSJy5zYWRva3UucHJldmlldy52MS5EZWxldGVDb21tZW50UmVxdWVzdBooLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZUNvbW1lbnRSZXNwb25zZRJiChRTZXRDb21tZW50UmVzb2x1dGlvbhIuLnNhZG9rdS5wcmV2aWV3LnYxLlNldENvbW1lbnRSZXNvbHV0aW9uUmVxdWVzdBoaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSUAoLQ3JlYXRlUmVwbHkSJS5zYWRva3UucHJldmlldy52MS5DcmVhdGVSZXBseVJlcXVlc3QaGi5zYWRva3UucHJldmlldy52MS5Db21tZW50ElAKC1VwZGF0ZVJlcGx5EiUuc2Fkb2t1LnByZXZpZXcudjEuVXBkYXRlUmVwbHlSZXF1ZXN0Ghouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBJcCgtEZWxldGVSZXBseRIlLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZVJlcGx5UmVxdWVzdBomLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZVJlcGx5UmVzcG9uc2USegoVRXhwb3J0Q29tbWVudFRvR2l0SHViEi8uc2Fkb2t1LnByZXZpZXcudjEuRXhwb3J0Q29tbWVudFRvR2l0SHViUmVxdWVzdBowLnNhZG9rdS5wcmV2aWV3LnYxLkV4cG9ydENvbW1lbnRUb0dpdEh1YlJlc3BvbnNlYgZwcm90bzM",
   );
 
 /**
@@ -161,6 +161,1450 @@ export const CommentCountSchema: GenMessage<CommentCount> = /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 5);
 
 /**
+ * @generated from message sadoku.preview.v1.Tag
+ */
+export type Tag = Message<"sadoku.preview.v1.Tag"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string background_color = 3;
+   */
+  backgroundColor: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.Tag.
+ * Use `create(TagSchema)` to create a new message.
+ */
+export const TagSchema: GenMessage<Tag> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 6);
+
+/**
+ * @generated from message sadoku.preview.v1.TagSummary
+ */
+export type TagSummary = Message<"sadoku.preview.v1.TagSummary"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string background_color = 3;
+   */
+  backgroundColor: string;
+
+  /**
+   * @generated from field: uint64 document_count = 4;
+   */
+  documentCount: bigint;
+
+  /**
+   * @generated from field: string created_at = 5;
+   */
+  createdAt: string;
+
+  /**
+   * @generated from field: string updated_at = 6;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.TagSummary.
+ * Use `create(TagSummarySchema)` to create a new message.
+ */
+export const TagSummarySchema: GenMessage<TagSummary> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 7);
+
+/**
+ * @generated from message sadoku.preview.v1.ListDocumentsRequest
+ */
+export type ListDocumentsRequest =
+  & Message<"sadoku.preview.v1.ListDocumentsRequest">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.ListDocumentsRequest.
+ * Use `create(ListDocumentsRequestSchema)` to create a new message.
+ */
+export const ListDocumentsRequestSchema: GenMessage<
+  ListDocumentsRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 8);
+
+/**
+ * @generated from message sadoku.preview.v1.ListDocumentsResponse
+ */
+export type ListDocumentsResponse =
+  & Message<"sadoku.preview.v1.ListDocumentsResponse">
+  & {
+    /**
+     * @generated from field: repeated sadoku.preview.v1.DocumentSummary documents = 1;
+     */
+    documents: DocumentSummary[];
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListDocumentsResponse.
+ * Use `create(ListDocumentsResponseSchema)` to create a new message.
+ */
+export const ListDocumentsResponseSchema: GenMessage<
+  ListDocumentsResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 9);
+
+/**
+ * @generated from message sadoku.preview.v1.DocumentSummary
+ */
+export type DocumentSummary = Message<"sadoku.preview.v1.DocumentSummary"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string relative_path = 2;
+   */
+  relativePath: string;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * @generated from field: bool deleted = 4;
+   */
+  deleted: boolean;
+
+  /**
+   * @generated from field: repeated sadoku.preview.v1.Tag tags = 5;
+   */
+  tags: Tag[];
+};
+
+/**
+ * Describes the message sadoku.preview.v1.DocumentSummary.
+ * Use `create(DocumentSummarySchema)` to create a new message.
+ */
+export const DocumentSummarySchema: GenMessage<DocumentSummary> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 10);
+
+/**
+ * @generated from message sadoku.preview.v1.GetDocumentRequest
+ */
+export type GetDocumentRequest =
+  & Message<"sadoku.preview.v1.GetDocumentRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.GetDocumentRequest.
+ * Use `create(GetDocumentRequestSchema)` to create a new message.
+ */
+export const GetDocumentRequestSchema: GenMessage<
+  GetDocumentRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 11);
+
+/**
+ * @generated from message sadoku.preview.v1.GetDocumentResponse
+ */
+export type GetDocumentResponse =
+  & Message<"sadoku.preview.v1.GetDocumentResponse">
+  & {
+    /**
+     * @generated from field: string file_url = 1;
+     */
+    fileUrl: string;
+
+    /**
+     * @generated from field: string markdown = 2;
+     */
+    markdown: string;
+
+    /**
+     * @generated from field: string title = 3;
+     */
+    title: string;
+
+    /**
+     * @generated from field: bool deleted = 4;
+     */
+    deleted: boolean;
+
+    /**
+     * @generated from field: repeated sadoku.preview.v1.Tag tags = 5;
+     */
+    tags: Tag[];
+
+    /**
+     * @generated from field: optional string github_head_sha = 6;
+     */
+    githubHeadSha?: string | undefined;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.GetDocumentResponse.
+ * Use `create(GetDocumentResponseSchema)` to create a new message.
+ */
+export const GetDocumentResponseSchema: GenMessage<
+  GetDocumentResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 12);
+
+/**
+ * @generated from message sadoku.preview.v1.GetDirectoryStatusRequest
+ */
+export type GetDirectoryStatusRequest =
+  & Message<"sadoku.preview.v1.GetDirectoryStatusRequest">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.GetDirectoryStatusRequest.
+ * Use `create(GetDirectoryStatusRequestSchema)` to create a new message.
+ */
+export const GetDirectoryStatusRequestSchema: GenMessage<
+  GetDirectoryStatusRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 13);
+
+/**
+ * @generated from message sadoku.preview.v1.GetDirectoryStatusResponse
+ */
+export type GetDirectoryStatusResponse =
+  & Message<"sadoku.preview.v1.GetDirectoryStatusResponse">
+  & {
+    /**
+     * @generated from field: string state = 1;
+     */
+    state: string;
+
+    /**
+     * @generated from field: uint64 detected = 2;
+     */
+    detected: bigint;
+
+    /**
+     * @generated from field: uint64 registered = 3;
+     */
+    registered: bigint;
+
+    /**
+     * @generated from field: optional sadoku.preview.v1.DirectoryError error = 4;
+     */
+    error?: DirectoryError | undefined;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.GetDirectoryStatusResponse.
+ * Use `create(GetDirectoryStatusResponseSchema)` to create a new message.
+ */
+export const GetDirectoryStatusResponseSchema: GenMessage<
+  GetDirectoryStatusResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 14);
+
+/**
+ * @generated from message sadoku.preview.v1.DirectoryError
+ */
+export type DirectoryError = Message<"sadoku.preview.v1.DirectoryError"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.DirectoryError.
+ * Use `create(DirectoryErrorSchema)` to create a new message.
+ */
+export const DirectoryErrorSchema: GenMessage<DirectoryError> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 15);
+
+/**
+ * @generated from message sadoku.preview.v1.GetSettingsRequest
+ */
+export type GetSettingsRequest =
+  & Message<"sadoku.preview.v1.GetSettingsRequest">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.GetSettingsRequest.
+ * Use `create(GetSettingsRequestSchema)` to create a new message.
+ */
+export const GetSettingsRequestSchema: GenMessage<
+  GetSettingsRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 16);
+
+/**
+ * @generated from message sadoku.preview.v1.Settings
+ */
+export type Settings = Message<"sadoku.preview.v1.Settings"> & {
+  /**
+   * @generated from field: optional string theme = 1;
+   */
+  theme?: string | undefined;
+
+  /**
+   * @generated from field: optional string code_wrap = 2;
+   */
+  codeWrap?: string | undefined;
+
+  /**
+   * @generated from field: double font_scale = 3;
+   */
+  fontScale: number;
+
+  /**
+   * @generated from field: repeated string excluded_directories = 4;
+   */
+  excludedDirectories: string[];
+
+  /**
+   * @generated from field: uint32 max_depth = 5;
+   */
+  maxDepth: number;
+
+  /**
+   * @generated from field: uint32 max_files = 6;
+   */
+  maxFiles: number;
+
+  /**
+   * @generated from field: repeated string markdown_extensions = 7;
+   */
+  markdownExtensions: string[];
+};
+
+/**
+ * Describes the message sadoku.preview.v1.Settings.
+ * Use `create(SettingsSchema)` to create a new message.
+ */
+export const SettingsSchema: GenMessage<Settings> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 17);
+
+/**
+ * @generated from message sadoku.preview.v1.UpdateSettingsRequest
+ */
+export type UpdateSettingsRequest =
+  & Message<"sadoku.preview.v1.UpdateSettingsRequest">
+  & {
+    /**
+     * @generated from field: string theme = 1;
+     */
+    theme: string;
+
+    /**
+     * @generated from field: string code_wrap = 2;
+     */
+    codeWrap: string;
+
+    /**
+     * @generated from field: double font_scale = 3;
+     */
+    fontScale: number;
+
+    /**
+     * @generated from field: repeated string excluded_directories = 4;
+     */
+    excludedDirectories: string[];
+
+    /**
+     * @generated from field: uint32 max_depth = 5;
+     */
+    maxDepth: number;
+
+    /**
+     * @generated from field: uint32 max_files = 6;
+     */
+    maxFiles: number;
+
+    /**
+     * @generated from field: repeated string markdown_extensions = 7;
+     */
+    markdownExtensions: string[];
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.UpdateSettingsRequest.
+ * Use `create(UpdateSettingsRequestSchema)` to create a new message.
+ */
+export const UpdateSettingsRequestSchema: GenMessage<
+  UpdateSettingsRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 18);
+
+/**
+ * @generated from message sadoku.preview.v1.GetGitHubAccountRequest
+ */
+export type GetGitHubAccountRequest =
+  & Message<"sadoku.preview.v1.GetGitHubAccountRequest">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.GetGitHubAccountRequest.
+ * Use `create(GetGitHubAccountRequestSchema)` to create a new message.
+ */
+export const GetGitHubAccountRequestSchema: GenMessage<
+  GetGitHubAccountRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 19);
+
+/**
+ * @generated from message sadoku.preview.v1.GetGitHubAccountResponse
+ */
+export type GetGitHubAccountResponse =
+  & Message<"sadoku.preview.v1.GetGitHubAccountResponse">
+  & {
+    /**
+     * @generated from field: bool ok = 1;
+     */
+    ok: boolean;
+
+    /**
+     * @generated from field: optional sadoku.preview.v1.GitHubAccount account = 2;
+     */
+    account?: GitHubAccount | undefined;
+
+    /**
+     * @generated from field: optional string message = 3;
+     */
+    message?: string | undefined;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.GetGitHubAccountResponse.
+ * Use `create(GetGitHubAccountResponseSchema)` to create a new message.
+ */
+export const GetGitHubAccountResponseSchema: GenMessage<
+  GetGitHubAccountResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 20);
+
+/**
+ * @generated from message sadoku.preview.v1.GitHubAccount
+ */
+export type GitHubAccount = Message<"sadoku.preview.v1.GitHubAccount"> & {
+  /**
+   * @generated from field: string login = 1;
+   */
+  login: string;
+
+  /**
+   * @generated from field: optional string name = 2;
+   */
+  name?: string | undefined;
+
+  /**
+   * @generated from field: optional string avatar_url = 3;
+   */
+  avatarUrl?: string | undefined;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.GitHubAccount.
+ * Use `create(GitHubAccountSchema)` to create a new message.
+ */
+export const GitHubAccountSchema: GenMessage<GitHubAccount> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 21);
+
+/**
+ * @generated from message sadoku.preview.v1.ListTagsRequest
+ */
+export type ListTagsRequest = Message<"sadoku.preview.v1.ListTagsRequest"> & {};
+
+/**
+ * Describes the message sadoku.preview.v1.ListTagsRequest.
+ * Use `create(ListTagsRequestSchema)` to create a new message.
+ */
+export const ListTagsRequestSchema: GenMessage<ListTagsRequest> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 22);
+
+/**
+ * @generated from message sadoku.preview.v1.ListTagsResponse
+ */
+export type ListTagsResponse = Message<"sadoku.preview.v1.ListTagsResponse"> & {
+  /**
+   * @generated from field: repeated sadoku.preview.v1.TagSummary tags = 1;
+   */
+  tags: TagSummary[];
+};
+
+/**
+ * Describes the message sadoku.preview.v1.ListTagsResponse.
+ * Use `create(ListTagsResponseSchema)` to create a new message.
+ */
+export const ListTagsResponseSchema: GenMessage<
+  ListTagsResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 23);
+
+/**
+ * @generated from message sadoku.preview.v1.UpdateTagRequest
+ */
+export type UpdateTagRequest = Message<"sadoku.preview.v1.UpdateTagRequest"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string background_color = 3;
+   */
+  backgroundColor: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.UpdateTagRequest.
+ * Use `create(UpdateTagRequestSchema)` to create a new message.
+ */
+export const UpdateTagRequestSchema: GenMessage<
+  UpdateTagRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 24);
+
+/**
+ * @generated from message sadoku.preview.v1.TagReference
+ */
+export type TagReference = Message<"sadoku.preview.v1.TagReference"> & {
+  /**
+   * @generated from oneof sadoku.preview.v1.TagReference.reference
+   */
+  reference: {
+    /**
+     * @generated from field: uint64 id = 1;
+     */
+    value: bigint;
+    case: "id";
+  } | {
+    /**
+     * @generated from field: string name = 2;
+     */
+    value: string;
+    case: "name";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message sadoku.preview.v1.TagReference.
+ * Use `create(TagReferenceSchema)` to create a new message.
+ */
+export const TagReferenceSchema: GenMessage<TagReference> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 25);
+
+/**
+ * @generated from message sadoku.preview.v1.ReplaceDocumentTagsRequest
+ */
+export type ReplaceDocumentTagsRequest =
+  & Message<"sadoku.preview.v1.ReplaceDocumentTagsRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: repeated sadoku.preview.v1.TagReference tags = 2;
+     */
+    tags: TagReference[];
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ReplaceDocumentTagsRequest.
+ * Use `create(ReplaceDocumentTagsRequestSchema)` to create a new message.
+ */
+export const ReplaceDocumentTagsRequestSchema: GenMessage<
+  ReplaceDocumentTagsRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 26);
+
+/**
+ * @generated from message sadoku.preview.v1.ReplaceDocumentTagsResponse
+ */
+export type ReplaceDocumentTagsResponse =
+  & Message<"sadoku.preview.v1.ReplaceDocumentTagsResponse">
+  & {
+    /**
+     * @generated from field: repeated sadoku.preview.v1.Tag tags = 1;
+     */
+    tags: Tag[];
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ReplaceDocumentTagsResponse.
+ * Use `create(ReplaceDocumentTagsResponseSchema)` to create a new message.
+ */
+export const ReplaceDocumentTagsResponseSchema: GenMessage<
+  ReplaceDocumentTagsResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 27);
+
+/**
+ * @generated from message sadoku.preview.v1.Instruction
+ */
+export type Instruction = Message<"sadoku.preview.v1.Instruction"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string content = 2;
+   */
+  content: string;
+
+  /**
+   * @generated from field: string created_at = 3;
+   */
+  createdAt: string;
+
+  /**
+   * @generated from field: string updated_at = 4;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.Instruction.
+ * Use `create(InstructionSchema)` to create a new message.
+ */
+export const InstructionSchema: GenMessage<Instruction> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 28);
+
+/**
+ * @generated from message sadoku.preview.v1.ListInstructionsRequest
+ */
+export type ListInstructionsRequest =
+  & Message<"sadoku.preview.v1.ListInstructionsRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListInstructionsRequest.
+ * Use `create(ListInstructionsRequestSchema)` to create a new message.
+ */
+export const ListInstructionsRequestSchema: GenMessage<
+  ListInstructionsRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 29);
+
+/**
+ * @generated from message sadoku.preview.v1.ListInstructionsResponse
+ */
+export type ListInstructionsResponse =
+  & Message<"sadoku.preview.v1.ListInstructionsResponse">
+  & {
+    /**
+     * @generated from field: repeated sadoku.preview.v1.Instruction instructions = 1;
+     */
+    instructions: Instruction[];
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListInstructionsResponse.
+ * Use `create(ListInstructionsResponseSchema)` to create a new message.
+ */
+export const ListInstructionsResponseSchema: GenMessage<
+  ListInstructionsResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 30);
+
+/**
+ * @generated from message sadoku.preview.v1.CreateInstructionRequest
+ */
+export type CreateInstructionRequest =
+  & Message<"sadoku.preview.v1.CreateInstructionRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: string content = 2;
+     */
+    content: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.CreateInstructionRequest.
+ * Use `create(CreateInstructionRequestSchema)` to create a new message.
+ */
+export const CreateInstructionRequestSchema: GenMessage<
+  CreateInstructionRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 31);
+
+/**
+ * @generated from message sadoku.preview.v1.UpdateInstructionRequest
+ */
+export type UpdateInstructionRequest =
+  & Message<"sadoku.preview.v1.UpdateInstructionRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 instruction_id = 2;
+     */
+    instructionId: bigint;
+
+    /**
+     * @generated from field: string content = 3;
+     */
+    content: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.UpdateInstructionRequest.
+ * Use `create(UpdateInstructionRequestSchema)` to create a new message.
+ */
+export const UpdateInstructionRequestSchema: GenMessage<
+  UpdateInstructionRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 32);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteInstructionRequest
+ */
+export type DeleteInstructionRequest =
+  & Message<"sadoku.preview.v1.DeleteInstructionRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 instruction_id = 2;
+     */
+    instructionId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteInstructionRequest.
+ * Use `create(DeleteInstructionRequestSchema)` to create a new message.
+ */
+export const DeleteInstructionRequestSchema: GenMessage<
+  DeleteInstructionRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 33);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteInstructionResponse
+ */
+export type DeleteInstructionResponse =
+  & Message<"sadoku.preview.v1.DeleteInstructionResponse">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteInstructionResponse.
+ * Use `create(DeleteInstructionResponseSchema)` to create a new message.
+ */
+export const DeleteInstructionResponseSchema: GenMessage<
+  DeleteInstructionResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 34);
+
+/**
+ * @generated from message sadoku.preview.v1.Memory
+ */
+export type Memory = Message<"sadoku.preview.v1.Memory"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: uint64 document_id = 2;
+   */
+  documentId: bigint;
+
+  /**
+   * @generated from field: string content = 3;
+   */
+  content: string;
+
+  /**
+   * @generated from field: string created_at = 4;
+   */
+  createdAt: string;
+
+  /**
+   * @generated from field: string updated_at = 5;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.Memory.
+ * Use `create(MemorySchema)` to create a new message.
+ */
+export const MemorySchema: GenMessage<Memory> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 35);
+
+/**
+ * @generated from message sadoku.preview.v1.ListMemoriesRequest
+ */
+export type ListMemoriesRequest =
+  & Message<"sadoku.preview.v1.ListMemoriesRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListMemoriesRequest.
+ * Use `create(ListMemoriesRequestSchema)` to create a new message.
+ */
+export const ListMemoriesRequestSchema: GenMessage<
+  ListMemoriesRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 36);
+
+/**
+ * @generated from message sadoku.preview.v1.ListMemoriesResponse
+ */
+export type ListMemoriesResponse =
+  & Message<"sadoku.preview.v1.ListMemoriesResponse">
+  & {
+    /**
+     * @generated from field: repeated sadoku.preview.v1.Memory memories = 1;
+     */
+    memories: Memory[];
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListMemoriesResponse.
+ * Use `create(ListMemoriesResponseSchema)` to create a new message.
+ */
+export const ListMemoriesResponseSchema: GenMessage<
+  ListMemoriesResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 37);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteMemoryRequest
+ */
+export type DeleteMemoryRequest =
+  & Message<"sadoku.preview.v1.DeleteMemoryRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 memory_id = 2;
+     */
+    memoryId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteMemoryRequest.
+ * Use `create(DeleteMemoryRequestSchema)` to create a new message.
+ */
+export const DeleteMemoryRequestSchema: GenMessage<
+  DeleteMemoryRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 38);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteMemoryResponse
+ */
+export type DeleteMemoryResponse =
+  & Message<"sadoku.preview.v1.DeleteMemoryResponse">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteMemoryResponse.
+ * Use `create(DeleteMemoryResponseSchema)` to create a new message.
+ */
+export const DeleteMemoryResponseSchema: GenMessage<
+  DeleteMemoryResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 39);
+
+/**
+ * @generated from message sadoku.preview.v1.CommentAuthor
+ */
+export type CommentAuthor = Message<"sadoku.preview.v1.CommentAuthor"> & {
+  /**
+   * @generated from field: string type = 1;
+   */
+  type: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.CommentAuthor.
+ * Use `create(CommentAuthorSchema)` to create a new message.
+ */
+export const CommentAuthorSchema: GenMessage<CommentAuthor> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 40);
+
+/**
+ * @generated from message sadoku.preview.v1.CommentReply
+ */
+export type CommentReply = Message<"sadoku.preview.v1.CommentReply"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: sadoku.preview.v1.CommentAuthor author = 2;
+   */
+  author?: CommentAuthor | undefined;
+
+  /**
+   * @generated from field: string body = 3;
+   */
+  body: string;
+
+  /**
+   * @generated from field: string created_at = 4;
+   */
+  createdAt: string;
+
+  /**
+   * @generated from field: string updated_at = 5;
+   */
+  updatedAt: string;
+
+  /**
+   * @generated from field: optional bool review_requested = 6;
+   */
+  reviewRequested?: boolean | undefined;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.CommentReply.
+ * Use `create(CommentReplySchema)` to create a new message.
+ */
+export const CommentReplySchema: GenMessage<CommentReply> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 41);
+
+/**
+ * @generated from message sadoku.preview.v1.Comment
+ */
+export type Comment = Message<"sadoku.preview.v1.Comment"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: sadoku.preview.v1.CommentAuthor author = 2;
+   */
+  author?: CommentAuthor | undefined;
+
+  /**
+   * @generated from field: string body = 3;
+   */
+  body: string;
+
+  /**
+   * @generated from field: uint32 start_line = 4;
+   */
+  startLine: number;
+
+  /**
+   * @generated from field: uint32 end_line = 5;
+   */
+  endLine: number;
+
+  /**
+   * @generated from field: uint32 original_start_line = 6;
+   */
+  originalStartLine: number;
+
+  /**
+   * @generated from field: uint32 original_end_line = 7;
+   */
+  originalEndLine: number;
+
+  /**
+   * @generated from field: string created_at = 8;
+   */
+  createdAt: string;
+
+  /**
+   * @generated from field: string updated_at = 9;
+   */
+  updatedAt: string;
+
+  /**
+   * @generated from field: bool resolved = 10;
+   */
+  resolved: boolean;
+
+  /**
+   * @generated from field: bool stale = 11;
+   */
+  stale: boolean;
+
+  /**
+   * @generated from field: optional string resolved_at = 12;
+   */
+  resolvedAt?: string | undefined;
+
+  /**
+   * @generated from field: optional sadoku.preview.v1.CommentAuthor resolved_by = 13;
+   */
+  resolvedBy?: CommentAuthor | undefined;
+
+  /**
+   * @generated from field: optional string source_hash = 14;
+   */
+  sourceHash?: string | undefined;
+
+  /**
+   * @generated from field: optional string source_text = 15;
+   */
+  sourceText?: string | undefined;
+
+  /**
+   * @generated from field: repeated sadoku.preview.v1.CommentReply replies = 16;
+   */
+  replies: CommentReply[];
+
+  /**
+   * @generated from field: optional uint32 display_line = 17;
+   */
+  displayLine?: number | undefined;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.Comment.
+ * Use `create(CommentSchema)` to create a new message.
+ */
+export const CommentSchema: GenMessage<Comment> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 42);
+
+/**
+ * @generated from message sadoku.preview.v1.ListCommentsRequest
+ */
+export type ListCommentsRequest =
+  & Message<"sadoku.preview.v1.ListCommentsRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListCommentsRequest.
+ * Use `create(ListCommentsRequestSchema)` to create a new message.
+ */
+export const ListCommentsRequestSchema: GenMessage<
+  ListCommentsRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 43);
+
+/**
+ * @generated from message sadoku.preview.v1.CommentsDocument
+ */
+export type CommentsDocument = Message<"sadoku.preview.v1.CommentsDocument"> & {
+  /**
+   * @generated from field: string file_path = 1;
+   */
+  filePath: string;
+
+  /**
+   * @generated from field: repeated sadoku.preview.v1.Comment comments = 2;
+   */
+  comments: Comment[];
+
+  /**
+   * @generated from field: optional string github_head_sha = 3;
+   */
+  githubHeadSha?: string | undefined;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.CommentsDocument.
+ * Use `create(CommentsDocumentSchema)` to create a new message.
+ */
+export const CommentsDocumentSchema: GenMessage<
+  CommentsDocument
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 44);
+
+/**
+ * @generated from message sadoku.preview.v1.CreateCommentRequest
+ */
+export type CreateCommentRequest =
+  & Message<"sadoku.preview.v1.CreateCommentRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint32 start_line = 2;
+     */
+    startLine: number;
+
+    /**
+     * @generated from field: uint32 end_line = 3;
+     */
+    endLine: number;
+
+    /**
+     * @generated from field: string body = 4;
+     */
+    body: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.CreateCommentRequest.
+ * Use `create(CreateCommentRequestSchema)` to create a new message.
+ */
+export const CreateCommentRequestSchema: GenMessage<
+  CreateCommentRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 45);
+
+/**
+ * @generated from message sadoku.preview.v1.UpdateCommentRequest
+ */
+export type UpdateCommentRequest =
+  & Message<"sadoku.preview.v1.UpdateCommentRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 comment_id = 2;
+     */
+    commentId: bigint;
+
+    /**
+     * @generated from field: string body = 3;
+     */
+    body: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.UpdateCommentRequest.
+ * Use `create(UpdateCommentRequestSchema)` to create a new message.
+ */
+export const UpdateCommentRequestSchema: GenMessage<
+  UpdateCommentRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 46);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteCommentRequest
+ */
+export type DeleteCommentRequest =
+  & Message<"sadoku.preview.v1.DeleteCommentRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 comment_id = 2;
+     */
+    commentId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteCommentRequest.
+ * Use `create(DeleteCommentRequestSchema)` to create a new message.
+ */
+export const DeleteCommentRequestSchema: GenMessage<
+  DeleteCommentRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 47);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteCommentResponse
+ */
+export type DeleteCommentResponse =
+  & Message<"sadoku.preview.v1.DeleteCommentResponse">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteCommentResponse.
+ * Use `create(DeleteCommentResponseSchema)` to create a new message.
+ */
+export const DeleteCommentResponseSchema: GenMessage<
+  DeleteCommentResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 48);
+
+/**
+ * @generated from message sadoku.preview.v1.SetCommentResolutionRequest
+ */
+export type SetCommentResolutionRequest =
+  & Message<"sadoku.preview.v1.SetCommentResolutionRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 comment_id = 2;
+     */
+    commentId: bigint;
+
+    /**
+     * @generated from field: bool resolved = 3;
+     */
+    resolved: boolean;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.SetCommentResolutionRequest.
+ * Use `create(SetCommentResolutionRequestSchema)` to create a new message.
+ */
+export const SetCommentResolutionRequestSchema: GenMessage<
+  SetCommentResolutionRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 49);
+
+/**
+ * @generated from message sadoku.preview.v1.CreateReplyRequest
+ */
+export type CreateReplyRequest =
+  & Message<"sadoku.preview.v1.CreateReplyRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 comment_id = 2;
+     */
+    commentId: bigint;
+
+    /**
+     * @generated from field: string body = 3;
+     */
+    body: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.CreateReplyRequest.
+ * Use `create(CreateReplyRequestSchema)` to create a new message.
+ */
+export const CreateReplyRequestSchema: GenMessage<
+  CreateReplyRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 50);
+
+/**
+ * @generated from message sadoku.preview.v1.UpdateReplyRequest
+ */
+export type UpdateReplyRequest =
+  & Message<"sadoku.preview.v1.UpdateReplyRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 comment_id = 2;
+     */
+    commentId: bigint;
+
+    /**
+     * @generated from field: uint64 reply_id = 3;
+     */
+    replyId: bigint;
+
+    /**
+     * @generated from field: string body = 4;
+     */
+    body: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.UpdateReplyRequest.
+ * Use `create(UpdateReplyRequestSchema)` to create a new message.
+ */
+export const UpdateReplyRequestSchema: GenMessage<
+  UpdateReplyRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 51);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteReplyRequest
+ */
+export type DeleteReplyRequest =
+  & Message<"sadoku.preview.v1.DeleteReplyRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 comment_id = 2;
+     */
+    commentId: bigint;
+
+    /**
+     * @generated from field: uint64 reply_id = 3;
+     */
+    replyId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteReplyRequest.
+ * Use `create(DeleteReplyRequestSchema)` to create a new message.
+ */
+export const DeleteReplyRequestSchema: GenMessage<
+  DeleteReplyRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 52);
+
+/**
+ * @generated from message sadoku.preview.v1.DeleteReplyResponse
+ */
+export type DeleteReplyResponse =
+  & Message<"sadoku.preview.v1.DeleteReplyResponse">
+  & {};
+
+/**
+ * Describes the message sadoku.preview.v1.DeleteReplyResponse.
+ * Use `create(DeleteReplyResponseSchema)` to create a new message.
+ */
+export const DeleteReplyResponseSchema: GenMessage<
+  DeleteReplyResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 53);
+
+/**
+ * @generated from message sadoku.preview.v1.ExportCommentToGitHubRequest
+ */
+export type ExportCommentToGitHubRequest =
+  & Message<"sadoku.preview.v1.ExportCommentToGitHubRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 comment_id = 2;
+     */
+    commentId: bigint;
+
+    /**
+     * @generated from field: string head_sha = 3;
+     */
+    headSha: string;
+
+    /**
+     * @generated from field: string displayed_markdown = 4;
+     */
+    displayedMarkdown: string;
+
+    /**
+     * @generated from field: string created_at = 5;
+     */
+    createdAt: string;
+
+    /**
+     * @generated from field: string body = 6;
+     */
+    body: string;
+
+    /**
+     * @generated from field: uint32 start_line = 7;
+     */
+    startLine: number;
+
+    /**
+     * @generated from field: uint32 end_line = 8;
+     */
+    endLine: number;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ExportCommentToGitHubRequest.
+ * Use `create(ExportCommentToGitHubRequestSchema)` to create a new message.
+ */
+export const ExportCommentToGitHubRequestSchema: GenMessage<
+  ExportCommentToGitHubRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 54);
+
+/**
+ * @generated from message sadoku.preview.v1.ExportCommentToGitHubResponse
+ */
+export type ExportCommentToGitHubResponse =
+  & Message<"sadoku.preview.v1.ExportCommentToGitHubResponse">
+  & {
+    /**
+     * @generated from field: string url = 1;
+     */
+    url: string;
+
+    /**
+     * @generated from field: string state = 2;
+     */
+    state: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ExportCommentToGitHubResponse.
+ * Use `create(ExportCommentToGitHubResponseSchema)` to create a new message.
+ */
+export const ExportCommentToGitHubResponseSchema: GenMessage<
+  ExportCommentToGitHubResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 55);
+
+/**
  * @generated from service sadoku.preview.v1.PreviewService
  */
 export const PreviewService: GenService<{
@@ -179,6 +1623,198 @@ export const PreviewService: GenService<{
     methodKind: "unary";
     input: typeof GetStatisticsRequestSchema;
     output: typeof GetStatisticsResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ListDocuments
+   */
+  listDocuments: {
+    methodKind: "unary";
+    input: typeof ListDocumentsRequestSchema;
+    output: typeof ListDocumentsResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.GetDocument
+   */
+  getDocument: {
+    methodKind: "unary";
+    input: typeof GetDocumentRequestSchema;
+    output: typeof GetDocumentResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.GetDirectoryStatus
+   */
+  getDirectoryStatus: {
+    methodKind: "unary";
+    input: typeof GetDirectoryStatusRequestSchema;
+    output: typeof GetDirectoryStatusResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.GetSettings
+   */
+  getSettings: {
+    methodKind: "unary";
+    input: typeof GetSettingsRequestSchema;
+    output: typeof SettingsSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.UpdateSettings
+   */
+  updateSettings: {
+    methodKind: "unary";
+    input: typeof UpdateSettingsRequestSchema;
+    output: typeof SettingsSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.GetGitHubAccount
+   */
+  getGitHubAccount: {
+    methodKind: "unary";
+    input: typeof GetGitHubAccountRequestSchema;
+    output: typeof GetGitHubAccountResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ListTags
+   */
+  listTags: {
+    methodKind: "unary";
+    input: typeof ListTagsRequestSchema;
+    output: typeof ListTagsResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.UpdateTag
+   */
+  updateTag: {
+    methodKind: "unary";
+    input: typeof UpdateTagRequestSchema;
+    output: typeof TagSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ReplaceDocumentTags
+   */
+  replaceDocumentTags: {
+    methodKind: "unary";
+    input: typeof ReplaceDocumentTagsRequestSchema;
+    output: typeof ReplaceDocumentTagsResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ListInstructions
+   */
+  listInstructions: {
+    methodKind: "unary";
+    input: typeof ListInstructionsRequestSchema;
+    output: typeof ListInstructionsResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.CreateInstruction
+   */
+  createInstruction: {
+    methodKind: "unary";
+    input: typeof CreateInstructionRequestSchema;
+    output: typeof InstructionSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.UpdateInstruction
+   */
+  updateInstruction: {
+    methodKind: "unary";
+    input: typeof UpdateInstructionRequestSchema;
+    output: typeof InstructionSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.DeleteInstruction
+   */
+  deleteInstruction: {
+    methodKind: "unary";
+    input: typeof DeleteInstructionRequestSchema;
+    output: typeof DeleteInstructionResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ListMemories
+   */
+  listMemories: {
+    methodKind: "unary";
+    input: typeof ListMemoriesRequestSchema;
+    output: typeof ListMemoriesResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.DeleteMemory
+   */
+  deleteMemory: {
+    methodKind: "unary";
+    input: typeof DeleteMemoryRequestSchema;
+    output: typeof DeleteMemoryResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ListComments
+   */
+  listComments: {
+    methodKind: "unary";
+    input: typeof ListCommentsRequestSchema;
+    output: typeof CommentsDocumentSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.CreateComment
+   */
+  createComment: {
+    methodKind: "unary";
+    input: typeof CreateCommentRequestSchema;
+    output: typeof CommentSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.UpdateComment
+   */
+  updateComment: {
+    methodKind: "unary";
+    input: typeof UpdateCommentRequestSchema;
+    output: typeof CommentSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.DeleteComment
+   */
+  deleteComment: {
+    methodKind: "unary";
+    input: typeof DeleteCommentRequestSchema;
+    output: typeof DeleteCommentResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.SetCommentResolution
+   */
+  setCommentResolution: {
+    methodKind: "unary";
+    input: typeof SetCommentResolutionRequestSchema;
+    output: typeof CommentSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.CreateReply
+   */
+  createReply: {
+    methodKind: "unary";
+    input: typeof CreateReplyRequestSchema;
+    output: typeof CommentSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.UpdateReply
+   */
+  updateReply: {
+    methodKind: "unary";
+    input: typeof UpdateReplyRequestSchema;
+    output: typeof CommentSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.DeleteReply
+   */
+  deleteReply: {
+    methodKind: "unary";
+    input: typeof DeleteReplyRequestSchema;
+    output: typeof DeleteReplyResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ExportCommentToGitHub
+   */
+  exportCommentToGitHub: {
+    methodKind: "unary";
+    input: typeof ExportCommentToGitHubRequestSchema;
+    output: typeof ExportCommentToGitHubResponseSchema;
   };
 }> = /*@__PURE__*/
   serviceDesc(file_sadoku_preview_v1_preview, 0);

@@ -25,7 +25,7 @@ describe("DocumentActionBar", () => {
     );
 
     const tagsButton = screen.getByRole("button", { name: "Tags" });
-    expect(tagsButton.querySelector(".lucide-tag")).not.toBeNull();
+    expect(tagsButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(tagsButton.textContent).toBe("2");
     expect(screen.getByRole("button", { name: "Instructions" }).textContent)
       .toBe("3");
@@ -98,11 +98,12 @@ describe("DocumentActionBar", () => {
     });
     expect(instructions.textContent).toBe("");
     expect(memories.textContent).toBe("12");
-    expect(instructions.querySelector(".lucide-file-text")).not.toBeNull();
-    expect(memories.querySelector(".lucide-brain")).not.toBeNull();
+    expect(instructions.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    expect(memories.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(comments.textContent).toBe("");
     expect(comments.getAttribute("aria-pressed")).toBe("true");
-    expect(comments.querySelector(".lucide-eye-off")).not.toBeNull();
+    expect(comments.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
 
     fireEvent.pointerEnter(memories);
     expect((await screen.findByRole("tooltip")).textContent).toBe("Memories");

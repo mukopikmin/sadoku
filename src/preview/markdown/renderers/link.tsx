@@ -14,6 +14,7 @@ export const MarkdownLink = ({
     <Link
       className={className}
       color={isHeadingAnchor ? "inherit" : "link"}
+      display={isHeadingAnchor ? "inline" : undefined}
       rel={isHeadingAnchor ? undefined : "noopener noreferrer"}
       target={isHeadingAnchor ? undefined : "_blank"}
       textDecoration="none"

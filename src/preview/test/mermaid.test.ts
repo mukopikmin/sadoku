@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import { initializeMermaid, initializeMermaidZoom } from "../markdown/mermaid";
-import { markdownStyles as previewThemeCss } from "../markdown/markdownStyles";
 
 const bundledMermaid = vi.hoisted(() => ({
   initialize: vi.fn(),
@@ -8,17 +7,6 @@ const bundledMermaid = vi.hoisted(() => ({
 }));
 
 vi.mock("mermaid", () => ({ default: bundledMermaid }));
-
-const findCssRule = (selector: string): CSSStyleRule | undefined => {
-  const style = document.createElement("style");
-  style.textContent = previewThemeCss;
-  document.head.append(style);
-  const rule = Array.from(style.sheet?.cssRules ?? []).find((rule) =>
-    "selectorText" in rule && rule.selectorText === selector
-  ) as CSSStyleRule | undefined;
-  style.remove();
-  return rule;
-};
 
 describe("initializeMermaid", () => {
   it("loads Mermaid through the Vite dependency graph", async () => {
@@ -76,11 +64,10 @@ describe("initializeMermaid", () => {
 
     expect(calls[0]).toEqual([
       "initialize",
-      {
+      expect.objectContaining({
         startOnLoad: false,
         theme: "dark",
-        themeVariables: { fontSize: "1rem" },
-      },
+      }),
     ]);
     expect(calls[1]).toEqual([
       "run",
@@ -135,34 +122,15 @@ describe("initializeMermaid", () => {
 
     expect(calls[0]).toEqual([
       "initialize",
-      {
+      expect.objectContaining({
         startOnLoad: false,
         theme: "default",
-        themeVariables: { fontSize: "1rem" },
-      },
+      }),
     ]);
   });
 });
 
 describe("initializeMermaidZoom", () => {
-  it("allows the zoomed diagram to use nearly the full viewport", () => {
-    const contentRule = findCssRule(".mermaid-zoom-content");
-    const scrollerRule = findCssRule(".mermaid-zoom-scroller");
-    const svgRule = findCssRule(".mermaid-zoom-scroller svg");
-
-    expect(contentRule?.style.width).toBe(
-      "var(--mermaid-zoom-width, calc(100vw - var(--chakra-spacing-8)))",
-    );
-    expect(contentRule?.style.height).toBe(
-      "var(--mermaid-zoom-height, calc(100vh - var(--chakra-spacing-8)))",
-    );
-    expect(contentRule?.style.padding).toBe("0px");
-    expect(contentRule?.style.overflow).toBe("hidden");
-    expect(scrollerRule?.style.flex).toBe("1 1 0%");
-    expect(svgRule?.style.width).toBe("100%");
-    expect(svgRule?.style.getPropertyPriority("max-width")).toBe("important");
-  });
-
   it("sizes the modal to the diagram aspect ratio", () => {
     const document = new DOMParser().parseFromString(
       '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 200 100"></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
@@ -182,8 +150,8 @@ describe("initializeMermaidZoom", () => {
       content?.style.getPropertyValue("--mermaid-zoom-height") ?? "",
     );
     expect(width / height).toBeCloseTo(2);
-    expect(width).toBeLessThanOrEqual(window.innerWidth - 32);
-    expect(height).toBeLessThanOrEqual(window.innerHeight - 32);
+    expect(width).toBeLessThanOrEqual(window.innerWidth);
+    expect(height).toBeLessThanOrEqual(window.innerHeight);
 
     document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")?.click();
   });

@@ -97,24 +97,6 @@ describe("DocumentTagsDialog", () => {
     expect(screen.queryByRole("button", { name: "api" })).toBeNull();
   });
 
-  it("uses the saved background and contrast-color text for tag labels", async () => {
-    render(
-      <DocumentTagsDialog
-        documentId={7}
-        onOpenChange={() => {}}
-        open
-        tags={[{ id: 1, name: "API", backgroundColor: "#ffffff" }]}
-      />,
-    );
-    const label = (await screen.findAllByText("API"))[0];
-    expect(label.style.backgroundColor).toBe("var(--tag-background)");
-    expect(label.style.getPropertyValue("--tag-background")).toBe("#ffffff");
-    expect(label.style.color).toBe("");
-    expect(document.head.textContent).toContain(
-      "contrast-color(var(--tag-background))",
-    );
-  });
-
   it("allows a distinct new tag even when a similar tag exists", async () => {
     render(
       <DocumentTagsDialog

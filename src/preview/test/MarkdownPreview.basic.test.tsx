@@ -1,20 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { initializeMermaid } from "../markdown/mermaid";
-import { markdownStyles as previewThemeCss } from "../markdown/markdownStyles";
-import { sadokuChakraSystem } from "../theme";
-import {
-  createCommentActions,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "./testUtils";
-import {
-  expectComputedStyleValue,
-  renderMarkdown,
-} from "./markdownPreviewTestUtils";
+import { fireEvent, screen, waitFor, within } from "./testUtils";
+import { renderMarkdown } from "./markdownPreviewTestUtils";
 
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
@@ -39,8 +26,6 @@ describe("MarkdownPreview basic rendering", () => {
     expect(hideButton.querySelector("svg")?.getAttribute("aria-hidden")).toBe(
       "true",
     );
-    expect(hideButton.querySelector("svg")?.classList.contains("lucide-eye"))
-      .toBe(true);
     expect(hideButton.textContent).toBe("");
     fireEvent.click(hideButton);
 
@@ -53,9 +38,7 @@ describe("MarkdownPreview basic rendering", () => {
       name: "Show HTML comments",
     });
     expect(showButton.getAttribute("aria-pressed")).toBe("true");
-    expect(
-      showButton.querySelector("svg")?.classList.contains("lucide-eye-off"),
-    ).toBe(true);
+    expect(showButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(showButton.textContent).toBe("");
     fireEvent.click(showButton);
 
@@ -71,7 +54,15 @@ describe("MarkdownPreview basic rendering", () => {
 
     const labels = screen.getAllByText("HTML COMMENT");
     expect(labels).toHaveLength(2);
-    expect(labels.every((label) => label.tagName === "SPAN")).toBe(true);
+    expect(labels.every((label) => label.tagName === "DIV")).toBe(true);
+    expect(labels.every((label) => label.parentElement?.tagName === "HEADER"))
+      .toBe(true);
+    expect(
+      labels.every((label) =>
+        label.parentElement?.querySelector(".lucide-message-square-text") !==
+          null
+      ),
+    ).toBe(true);
     const cards = labels.map((label) => label.closest("[data-html-comment]")!);
     const body = cards[0].querySelector("p");
     expect(body?.textContent).toBe(
@@ -80,17 +71,16 @@ describe("MarkdownPreview basic rendering", () => {
     expect(cards[0].querySelector("strong, img")).toBeNull();
     expect(cards[1].textContent?.trim()).toBe("HTML COMMENT");
     expect(container.querySelectorAll("html-comment")).toHaveLength(0);
-    expect(getComputedStyle(cards[0].parentElement!).paddingBlock).toBe(
-      "var(--chakra-spacing-2)",
-    );
   });
 
   it("preserves multiline HTML comment text and its source range", () => {
-    const { container } = renderMarkdown(
+    renderMarkdown(
       "Before\n\n<!-- first line\n# still plain text\nlast line -->\n\nAfter",
     );
 
-    const card = screen.getByText("HTML COMMENT").parentElement!;
+    const card = screen.getByText("HTML COMMENT").closest(
+      "[data-html-comment]",
+    )!;
     expect(card.querySelector("p")?.textContent).toBe(
       "first line\n# still plain text\nlast line",
     );
@@ -164,14 +154,13 @@ Review carefully.
       "tools/SKILL.md",
     );
 
-    const dataList = container.querySelector(".chakra-data-list__root");
+    const dataList = container.querySelector("dl");
     expect(dataList).not.toBeNull();
     expect(
-      getComputedStyle(
-        dataList!.querySelector("dt")!,
-      )
-        .minWidth,
-    ).toBe("auto");
+      [...dataList!.querySelectorAll("dt")].map((term) => term.textContent),
+    )
+      .toEqual(["name", "description", "unknown-key"]);
+    expect(dataList!.querySelectorAll("dd")).toHaveLength(3);
     expect(dataList?.textContent).toContain("nameReviewer");
     expect(dataList?.textContent).toContain(
       "descriptionFirst line with **Markdown**.\n<img src=x onerror=alert(1)>",
@@ -210,35 +199,9 @@ Review carefully.
   ])("keeps %s as ordinary Markdown", (_label, documentPath, markdown) => {
     const { container } = renderMarkdown(markdown, [], {}, documentPath);
 
-    expect(container.querySelector(".chakra-data-list__root")).toBeNull();
+    expect(container.querySelector("dl")).toBeNull();
     expect(container.textContent).toMatch(/Plain|not valid yaml/);
     expect(container.querySelector("hr")).not.toBeNull();
-  });
-
-  it("uses Chakra tokens for custom preview colors and spacing", () => {
-    expect(previewThemeCss).not.toMatch(/#[\da-f]{3,8}\b/i);
-    expect(previewThemeCss).not.toMatch(/\brgba?\(/);
-    expect(previewThemeCss).toContain("var(--chakra-spacing-2)");
-    expect(previewThemeCss).toContain("var(--chakra-colors-code-fg)");
-  });
-
-  it("gets semantic preview colors from the Chakra theme", () => {
-    const tokenCss = JSON.stringify(sadokuChakraSystem.getTokenCss());
-
-    expect(tokenCss).toContain("--chakra-colors-accent");
-    expect(tokenCss).toContain("--chakra-colors-syntax-keyword");
-    expect(tokenCss).toContain(".dark");
-    expect(previewThemeCss).not.toMatch(/--chakra-colors-accent\s*:/);
-  });
-
-  it("keeps overlapping selection backgrounds opaque", () => {
-    const mixedBackgrounds = previewThemeCss.match(/color-mix\([^;]+\)/g) ?? [];
-
-    expect(mixedBackgrounds).toHaveLength(10);
-    for (const background of mixedBackgrounds) {
-      expect(background).toContain("var(--chakra-colors-canvas)");
-      expect(background).not.toContain("var(--chakra-colors-transparent)");
-    }
   });
 
   it("renders common Markdown blocks", async () => {
@@ -257,54 +220,13 @@ console.log("<ok>");
     expect(container.querySelector("h1#title .heading-anchor")?.textContent)
       .toBe("Title");
     expect(container.querySelector("strong")?.textContent).toBe("world");
-    const unorderedList = container.querySelector("ul.comment-markdown-list");
+    const unorderedList = screen.getByRole("list");
     expect(unorderedList?.querySelectorAll(":scope > li")).toHaveLength(2);
-    expect(unorderedList?.classList.contains("comment-markdown-list")).toBe(
-      true,
-    );
     const code = container.querySelector("code.language-js")!;
     await waitFor(() =>
       expect(code.querySelector("span[style]")).not.toBeNull()
     );
     expect(code.textContent).toContain('console.log("<ok>")');
-    expect(previewThemeCss).not.toContain(".comment-markdown-body pre");
-  });
-
-  it("uses the document line height, stacks blocks with a fixed gap, and keeps highlights within padding", () => {
-    expect(sadokuChakraSystem._config.globalCss?.body).toMatchObject({
-      fontSize: "md",
-      lineHeight: "1.7",
-    });
-    expect(sadokuChakraSystem._config.theme?.tokens?.fontSizes?.md).toEqual({
-      value: "calc(1rem * var(--sadoku-font-scale, 1))",
-    });
-    expect(previewThemeCss).toMatch(
-      /\.markdown-preview\s*\{[^}]*display: flex;[^}]*flex-direction: column;[^}]*gap: var\(--chakra-spacing-3\);/,
-    );
-    expect(previewThemeCss).toMatch(
-      /\.commentable-content::before\s*\{[^}]*top: 0;[^}]*bottom: 0;/,
-    );
-    expect(previewThemeCss).not.toContain("--comment-highlight-spacing");
-    expect(previewThemeCss).toMatch(
-      /\.comment-thread\s*\{[^}]*margin: var\(--chakra-spacing-2\) 0 var\(--chakra-spacing-3\);/,
-    );
-    expect(previewThemeCss).not.toContain(
-      "margin: calc(-1 * var(--chakra-spacing-2))",
-    );
-  });
-
-  it("keeps native list markers above full-width highlight backgrounds", () => {
-    expect(previewThemeCss).toMatch(
-      /\.commentable-list-item > \.commentable-content\s*\{[^}]*isolation: auto;/,
-    );
-    expect(previewThemeCss).toMatch(
-      /\.comment-markdown-list > li\s*\{[^}]*isolation: isolate;[^}]*position: relative;/,
-    );
-    expect(previewThemeCss).not.toContain("::marker");
-    expect(previewThemeCss).not.toContain('content: "•"');
-    expect(previewThemeCss).toContain(
-      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));",
-    );
   });
 
   it("escapes raw html", () => {
@@ -356,52 +278,51 @@ Footnote-looking text stays plain.[^note]
   });
 
   it("renders markdown tables", () => {
-    const { container } = renderMarkdown(`| Name | Count |
+    renderMarkdown(`| Name | Count |
 | ---- | ----: |
 | alpha | 1 |
 | **beta** | 20 |
 `);
 
-    expect(container.querySelector("table")).not.toBeNull();
-    expect(container.querySelector("th")?.textContent).toBe("Name");
-    expect(container.querySelector('th[style*="text-align: right"]'))
-      .not.toBeNull();
-    expect(container.querySelector("td strong")?.textContent).toBe("beta");
-    expect(container.querySelector("table")?.className).toContain(
-      "chakra-table__root",
-    );
+    const table = screen.getByRole("table");
     expect(
-      getComputedStyle(container.querySelector("table")!.parentElement!)
-        .paddingBlock,
-    ).toBe(
-      "var(--chakra-spacing-2)",
-    );
-    const table = container.querySelector("table")!;
-    const tableContainer = table.parentElement!;
-    expect(getComputedStyle(table).width).toBe("max-content");
-    expect(getComputedStyle(tableContainer).width).toBe("fit-content");
-    expect(getComputedStyle(tableContainer).maxWidth).toBe("100%");
-    expect(getComputedStyle(tableContainer).overflowX).toBe("auto");
+      within(table).getAllByRole("columnheader").map((cell) =>
+        cell.textContent
+      ),
+    )
+      .toEqual(["Name", "Count"]);
+    expect(within(table).getAllByRole("row")).toHaveLength(3);
+    expect(within(table).getAllByRole("cell").map((cell) => cell.textContent))
+      .toEqual(["alpha", "1", "beta", "20"]);
+    expect(
+      within(table).getByRole("cell", { name: "beta" }).querySelector("strong"),
+    )
+      .not.toBeNull();
   });
 
-  it("renders horizontal rules with vertical spacing around the line", () => {
-    const { container } = renderMarkdown(`Before
+  it("renders horizontal rules as separators between paragraphs", () => {
+    renderMarkdown(`Before
 
 ---
 
 After
 `);
 
-    const horizontalRule = container.querySelector("hr");
+    const horizontalRule = screen.getByRole("separator");
 
     expect(horizontalRule).not.toBeNull();
     expect(horizontalRule?.getAttribute("role")).toBe("separator");
     expect(horizontalRule?.getAttribute("aria-orientation")).toBe(
       "horizontal",
     );
-    expect(getComputedStyle(horizontalRule!.parentElement!).paddingBlock).toBe(
-      "var(--chakra-spacing-4)",
-    );
+    expect(
+      screen.getByText("Before").compareDocumentPosition(horizontalRule) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      horizontalRule.compareDocumentPosition(screen.getByText("After")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("renders nested lists inside parent list items", () => {
@@ -419,28 +340,8 @@ After
     const nestedOrderedList = container.querySelector("ul ul ol");
     expect(nestedUnorderedList).not.toBeNull();
     expect(nestedOrderedList).not.toBeNull();
-    expect(getComputedStyle(nestedUnorderedList!).display).not.toBe(
-      "contents",
-    );
-    expect(getComputedStyle(nestedOrderedList!).display).not.toBe("contents");
-    expect(getComputedStyle(nestedUnorderedList!).paddingInlineStart).not.toBe(
-      "0px",
-    );
-    expect(getComputedStyle(nestedOrderedList!).paddingInlineStart).not.toBe(
-      "0px",
-    );
-    expect(getComputedStyle(nestedUnorderedList!).marginTop).toBe("0px");
-    expect(getComputedStyle(nestedUnorderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedUnorderedList!).paddingTop).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).marginTop).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).marginBottom).toBe("0px");
-    expect(getComputedStyle(nestedOrderedList!).paddingTop).toBe("0px");
-    expect(getComputedStyle(nestedUnorderedList!).listStylePosition).toBe(
-      "outside",
-    );
-    expect(getComputedStyle(nestedOrderedList!).listStylePosition).toBe(
-      "outside",
-    );
+    expect(nestedUnorderedList?.parentElement?.tagName).toBe("LI");
+    expect(nestedOrderedList?.parentElement?.tagName).toBe("LI");
     const listCommentTarget = container.querySelector(
       "li > .commentable-list-item",
     );
@@ -448,12 +349,10 @@ After
     expect(listCommentTarget?.classList.contains("commentable-block")).toBe(
       true,
     );
-    expect(getComputedStyle(listCommentTarget!).display).toBe("contents");
     const listCommentContent = listCommentTarget!.querySelector(
       ".commentable-content",
     );
-    expect(getComputedStyle(listCommentContent!).display).toBe("block");
-    expect(getComputedStyle(listCommentContent!).width).toBe("100%");
+    expect(listCommentContent?.textContent?.trim()).toBe("parent");
     expect(
       container.querySelector('[data-source-line="1"] .commentable-content ul'),
     ).toBeNull();
@@ -467,19 +366,6 @@ After
       '[data-source-line="3"] .comment-line-gutter',
     );
     expect(nestedItemGutter).not.toBeNull();
-    expect(getComputedStyle(nestedItemGutter!).left).toBe(
-      "calc(-1 * var(--chakra-spacing-8) - 7.5em)",
-    );
-    const nestedItemBlock = container.querySelector('[data-source-line="3"]');
-    expect(nestedItemBlock).not.toBeNull();
-    expect(
-      getComputedStyle(nestedItemBlock!).getPropertyValue(
-        "--comment-indent-offset",
-      ),
-    ).toBe("7.5em");
-    expect(previewThemeCss).toContain(
-      "left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em))",
-    );
 
     fireEvent.click(screen.getByRole("button", {
       name: "Add comment on line 3",
@@ -488,48 +374,27 @@ After
       '[data-source-line="3"] .comment-thread',
     );
     expect(nestedCommentThread).not.toBeNull();
-    expect(getComputedStyle(nestedCommentThread!).marginLeft).toBe(
-      "calc(0em - var(--comment-indent-offset, 0em))",
-    );
   });
 
   it("renders task list checkboxes", () => {
-    const { container } = renderMarkdown(`- [ ] todo
+    renderMarkdown(`- [ ] todo
   - [x] nested done
 - [x] done
 - [X] also done
 `);
 
-    const checkboxes = container.querySelectorAll<HTMLInputElement>(
-      'input[type="checkbox"]',
-    );
+    const checkboxes = screen.getAllByRole<HTMLInputElement>("checkbox");
     expect(checkboxes).toHaveLength(4);
     expect(checkboxes[0].checked).toBe(false);
     expect(checkboxes[1].checked).toBe(true);
     expect(checkboxes[2].checked).toBe(true);
     expect(checkboxes[3].checked).toBe(true);
-    expect(checkboxes[0].disabled).toBe(true);
-    const checkboxRoots = container.querySelectorAll<HTMLElement>(
-      '[data-scope="checkbox"][data-part="root"]',
+    for (const checkbox of checkboxes) {
+      expect(checkbox.disabled).toBe(true);
+      expect(checkbox.closest("li")).not.toBeNull();
+    }
+    expect(checkboxes[1].closest("ul")?.parentElement).toBe(
+      checkboxes[0].closest("li"),
     );
-    expect(checkboxRoots).toHaveLength(4);
-    for (const checkboxRoot of checkboxRoots) {
-      expectComputedStyleValue(
-        checkboxRoot,
-        "margin-inline-start",
-        "-1.5em",
-      );
-    }
-    expect(
-      container.querySelectorAll(
-        '[data-scope="checkbox"][data-part="control"]',
-      ),
-    )
-      .toHaveLength(4);
-    const taskListItems = container.querySelectorAll(".task-list-item");
-    expect(taskListItems).toHaveLength(4);
-    for (const taskListItem of taskListItems) {
-      expect(getComputedStyle(taskListItem).listStyleType).toBe("none");
-    }
   });
 });

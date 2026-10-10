@@ -5,6 +5,8 @@ import {
   type GitHubCommentExport,
 } from "../models/comment";
 import { parseGitHubHeadSha } from "./document";
+import { ConnectError } from "@connectrpc/connect";
+import { connectHttpStatus, previewClient } from "./connect";
 
 export type CommentReplyResponse = {
   author: CommentAuthorResponse;
@@ -48,7 +50,7 @@ const toCommentReply = (response: CommentReplyResponse): CommentReply => ({
   author: { type: response.author.type },
   body: response.body,
   createdAt: response.createdAt,
-  id: response.id,
+  id: Number(response.id),
   ...(response.reviewRequested === true ? { reviewRequested: true } : {}),
   updatedAt: response.updatedAt,
 });
@@ -59,7 +61,7 @@ export const toComment = (response: CommentResponse): Comment => {
     body: response.body,
     createdAt: response.createdAt,
     endLine: response.endLine,
-    id: response.id,
+    id: Number(response.id),
     originalEndLine: response.originalEndLine,
     originalStartLine: response.originalStartLine,
     replies: (response.replies ?? []).map(toCommentReply),
@@ -89,9 +91,6 @@ export const toCommentsDocument = (
   comments: response.comments.map(toComment),
   filePath: response.filePath,
 });
-
-const commentsPath = (documentId: number): string =>
-  `/__sadoku/documents/${documentId}/comments`;
 
 const githubExportMessages = {
   export_review_out_of_sync:
@@ -124,34 +123,45 @@ const githubExportErrorMessage = (value: unknown): string => {
     : githubExportMessages.export_failed;
 };
 
+const commentRequest = async <T>(
+  promise: Promise<T>,
+  operation: string,
+): Promise<T> => {
+  try {
+    return await promise;
+  } catch (error) {
+    throw new Error(`Failed to ${operation}: ${connectHttpStatus(error)}`);
+  }
+};
+
 export const exportCommentToGitHub = async (
   documentId: number,
   headSha: string,
   comment: Comment,
   displayedMarkdown: string,
 ): Promise<GitHubCommentExport> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${comment.id}/github`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        headSha,
-        displayedMarkdown,
-        createdAt: comment.createdAt,
-        body: comment.body,
-        startLine: comment.startLine,
-        endLine: comment.endLine,
-      }),
-    },
-  ).catch(() => {
-    throw new Error(githubExportMessages.export_failed);
-  });
-  if (!response.ok) {
-    const error: unknown = await response.json().catch(() => undefined);
-    throw new Error(githubExportErrorMessage(error));
+  let value;
+  try {
+    value = await previewClient.exportCommentToGitHub({
+      documentId: BigInt(documentId),
+      commentId: BigInt(comment.id),
+      headSha,
+      displayedMarkdown,
+      createdAt: comment.createdAt,
+      body: comment.body,
+      startLine: comment.startLine,
+      endLine: comment.endLine,
+    });
+  } catch (error) {
+    const message = ConnectError.from(error).rawMessage;
+    let detail: unknown;
+    try {
+      detail = JSON.parse(message);
+    } catch {
+      detail = undefined;
+    }
+    throw new Error(githubExportErrorMessage(detail));
   }
-  const value = await response.json();
   if (
     typeof value?.url !== "string" ||
     !/^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+(?:\/files|#discussion_r\d+)$/
@@ -170,11 +180,12 @@ export const exportCommentToGitHub = async (
 export const loadComments = async (
   documentId: number,
 ): Promise<CommentsDocument> => {
-  const response = await fetch(commentsPath(documentId));
-  if (!response.ok) {
-    throw new Error(`Failed to load comments: ${response.status}`);
-  }
-  return toCommentsDocument(await response.json() as CommentsDocumentResponse);
+  return toCommentsDocument(
+    await commentRequest(
+      previewClient.listComments({ documentId: BigInt(documentId) }),
+      "load comments",
+    ) as unknown as CommentsDocumentResponse,
+  );
 };
 
 export const createComment = async (
@@ -183,15 +194,17 @@ export const createComment = async (
   endLine: number,
   documentId: number,
 ): Promise<Comment> => {
-  const response = await fetch(commentsPath(documentId), {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ startLine, endLine, body }),
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to create comment: ${response.status}`);
-  }
-  return toComment(await response.json() as CommentResponse);
+  return toComment(
+    await commentRequest(
+      previewClient.createComment({
+        documentId: BigInt(documentId),
+        startLine,
+        endLine,
+        body,
+      }),
+      "create comment",
+    ) as unknown as CommentResponse,
+  );
 };
 
 export const createReply = async (
@@ -199,18 +212,16 @@ export const createReply = async (
   body: string,
   documentId: number,
 ): Promise<Comment> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ body }),
-    },
+  return toComment(
+    await commentRequest(
+      previewClient.createReply({
+        documentId: BigInt(documentId),
+        commentId: BigInt(commentId),
+        body,
+      }),
+      "create reply",
+    ) as unknown as CommentResponse,
   );
-  if (!response.ok) {
-    throw new Error(`Failed to create reply: ${response.status}`);
-  }
-  return toComment(await response.json() as CommentResponse);
 };
 
 export const updateReply = async (
@@ -219,20 +230,17 @@ export const updateReply = async (
   body: string,
   documentId: number,
 ): Promise<Comment> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies/${
-      encodeURIComponent(replyId)
-    }`,
-    {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ body }),
-    },
+  return toComment(
+    await commentRequest(
+      previewClient.updateReply({
+        documentId: BigInt(documentId),
+        commentId: BigInt(commentId),
+        replyId: BigInt(replyId),
+        body,
+      }),
+      "update reply",
+    ) as unknown as CommentResponse,
   );
-  if (!response.ok) {
-    throw new Error(`Failed to update reply: ${response.status}`);
-  }
-  return toComment(await response.json() as CommentResponse);
 };
 
 export const deleteReply = async (
@@ -240,15 +248,14 @@ export const deleteReply = async (
   replyId: number,
   documentId: number,
 ): Promise<void> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${encodeURIComponent(commentId)}/replies/${
-      encodeURIComponent(replyId)
-    }`,
-    { method: "DELETE" },
+  await commentRequest(
+    previewClient.deleteReply({
+      documentId: BigInt(documentId),
+      commentId: BigInt(commentId),
+      replyId: BigInt(replyId),
+    }),
+    "delete reply",
   );
-  if (!response.ok) {
-    throw new Error(`Failed to delete reply: ${response.status}`);
-  }
 };
 
 export const updateComment = async (
@@ -256,63 +263,59 @@ export const updateComment = async (
   body: string,
   documentId: number,
 ): Promise<Comment> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${encodeURIComponent(id)}`,
-    {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ body }),
-    },
+  return toComment(
+    await commentRequest(
+      previewClient.updateComment({
+        documentId: BigInt(documentId),
+        commentId: BigInt(id),
+        body,
+      }),
+      "update comment",
+    ) as unknown as CommentResponse,
   );
-  if (!response.ok) {
-    throw new Error(`Failed to update comment: ${response.status}`);
-  }
-  return toComment(await response.json() as CommentResponse);
 };
 
 export const resolveComment = async (
   id: number,
   documentId: number,
 ): Promise<Comment> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${encodeURIComponent(id)}/resolve`,
-    {
-      method: "POST",
-    },
+  return toComment(
+    await commentRequest(
+      previewClient.setCommentResolution({
+        documentId: BigInt(documentId),
+        commentId: BigInt(id),
+        resolved: true,
+      }),
+      "resolve comment",
+    ) as unknown as CommentResponse,
   );
-  if (!response.ok) {
-    throw new Error(`Failed to resolve comment: ${response.status}`);
-  }
-  return toComment(await response.json() as CommentResponse);
 };
 
 export const reopenComment = async (
   id: number,
   documentId: number,
 ): Promise<Comment> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${encodeURIComponent(id)}/reopen`,
-    {
-      method: "POST",
-    },
+  return toComment(
+    await commentRequest(
+      previewClient.setCommentResolution({
+        documentId: BigInt(documentId),
+        commentId: BigInt(id),
+        resolved: false,
+      }),
+      "reopen comment",
+    ) as unknown as CommentResponse,
   );
-  if (!response.ok) {
-    throw new Error(`Failed to reopen comment: ${response.status}`);
-  }
-  return toComment(await response.json() as CommentResponse);
 };
 
 export const deleteComment = async (
   id: number,
   documentId: number,
 ): Promise<void> => {
-  const response = await fetch(
-    `${commentsPath(documentId)}/${encodeURIComponent(id)}`,
-    {
-      method: "DELETE",
-    },
+  await commentRequest(
+    previewClient.deleteComment({
+      documentId: BigInt(documentId),
+      commentId: BigInt(id),
+    }),
+    "delete comment",
   );
-  if (!response.ok) {
-    throw new Error(`Failed to delete comment: ${response.status}`);
-  }
 };

@@ -1,5 +1,5 @@
 import { cleanup, createCommentActions, render } from "./testUtils";
-import { afterEach, expect } from "vitest";
+import { afterEach } from "vitest";
 import { useState } from "react";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
@@ -80,17 +80,3 @@ export const mockRect = (top: number, bottom: number): DOMRect => ({
   y: top,
   toJSON: () => ({}),
 });
-
-export const expectComputedStyleValue = (
-  element: Element,
-  property: string,
-  expectedValue: string,
-) => {
-  const reference = document.createElement("div");
-  reference.style.setProperty(property, expectedValue);
-  document.body.append(reference);
-  expect(getComputedStyle(element).getPropertyValue(property)).toBe(
-    getComputedStyle(reference).getPropertyValue(property),
-  );
-  reference.remove();
-};

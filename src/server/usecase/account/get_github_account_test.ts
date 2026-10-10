@@ -10,13 +10,19 @@ Deno.test("getGitHubAccount returns the authenticated account", async () => {
     return Promise.resolve({
       code: 0,
       stderr: encoder.encode(""),
-      stdout: encoder.encode('{"login":"octocat","name":"The Octocat"}'),
+      stdout: encoder.encode(
+        '{"avatar_url":"https://avatars.githubusercontent.com/u/583231","login":"octocat","name":"The Octocat"}',
+      ),
     });
   });
 
   assertEquals(received, ["api", "--hostname", "github.com", "user"]);
   assertEquals(result, {
-    account: { login: "octocat", name: "The Octocat" },
+    account: {
+      avatarUrl: "https://avatars.githubusercontent.com/u/583231",
+      login: "octocat",
+      name: "The Octocat",
+    },
     ok: true,
   });
 });

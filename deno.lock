@@ -1,7 +1,7 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@hono/hono@4.13.7": "4.13.7",
+    "jsr:@hono/hono@4.13.12": "4.13.12",
     "jsr:@std/assert@1.0.19": "1.0.19",
     "jsr:@std/cli@1.0.32": "1.0.32",
     "jsr:@std/collections@^1.1.3": "1.2.0",
@@ -9,13 +9,13 @@
     "jsr:@std/internal@^1.0.14": "1.0.14",
     "jsr:@std/path@1.1.6": "1.1.6",
     "jsr:@std/toml@1.0.11": "1.0.11",
-    "npm:@bufbuild/protobuf@2.15.0": "2.15.0",
-    "npm:@connectrpc/connect-web@2.2.0": "2.2.0_@bufbuild+protobuf@2.15.0_@connectrpc+connect@2.2.0__@bufbuild+protobuf@2.15.0",
-    "npm:@connectrpc/connect@2.2.0": "2.2.0_@bufbuild+protobuf@2.15.0"
+    "npm:@bufbuild/protobuf@2.16.0": "2.16.0",
+    "npm:@connectrpc/connect-web@2.2.0": "2.2.0_@bufbuild+protobuf@2.16.0_@connectrpc+connect@2.2.0__@bufbuild+protobuf@2.16.0",
+    "npm:@connectrpc/connect@2.2.0": "2.2.0_@bufbuild+protobuf@2.16.0"
   },
   "jsr": {
-    "@hono/hono@4.13.7": {
-      "integrity": "90f83307462b2dd47c9a8028cf5e4827abedc74a53fd291a49130f1579fdcd79"
+    "@hono/hono@4.13.12": {
+      "integrity": "ed4bff8999f8d472866e47ad29ff879388f7f401b2d6e2e656ff3083afc13a13"
     },
     "@std/assert@1.0.19": {
       "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
@@ -46,17 +46,17 @@
     }
   },
   "npm": {
-    "@bufbuild/protobuf@2.15.0": {
-      "integrity": "sha512-DAheWUkVr/SJTWCc+lg9dhY0eN4SaWlf4+bG1KzHeXbnqt0AfB/NX0Z+VunGlM1ki1B4zVvye27MpKh/svySUA=="
+    "@bufbuild/protobuf@2.16.0": {
+      "integrity": "sha512-FWa0sPlqYGJgpTs6OxBRcL/AW4JT0OIO+W1ajerluoTVh8CV0B7XM1qsNCRgnkSCkRCgOICKHRQlY17jrsm0+Q=="
     },
-    "@connectrpc/connect-web@2.2.0_@bufbuild+protobuf@2.15.0_@connectrpc+connect@2.2.0__@bufbuild+protobuf@2.15.0": {
+    "@connectrpc/connect-web@2.2.0_@bufbuild+protobuf@2.16.0_@connectrpc+connect@2.2.0__@bufbuild+protobuf@2.16.0": {
       "integrity": "sha512-uuBUcBTYfb/r1o98LzCCZk1H90yx0vmZ5m21dpw/q4EUwsKwkCDGI8H0aEdjcZld+Q2jJ5A5ADvPqfb6lzQ/sg==",
       "dependencies": [
         "@bufbuild/protobuf",
         "@connectrpc/connect"
       ]
     },
-    "@connectrpc/connect@2.2.0_@bufbuild+protobuf@2.15.0": {
+    "@connectrpc/connect@2.2.0_@bufbuild+protobuf@2.16.0": {
       "integrity": "sha512-M63OQ1ZFcPUm85CuewJ9G9CMV8LjzGR9935xOnXNQGSazAbwMb3x2W7vXBYM1zqrP7XFD8uxp/dUAhirclgwnQ==",
       "dependencies": [
         "@bufbuild/protobuf"
@@ -65,23 +65,14 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@hono/hono@4.13.7",
+      "jsr:@hono/hono@4.13.12",
       "jsr:@std/assert@1.0.19",
       "jsr:@std/cli@1.0.32",
       "jsr:@std/path@1.1.6",
       "jsr:@std/toml@1.0.11",
-      "npm:@bufbuild/protobuf@2.15.0",
+      "npm:@bufbuild/protobuf@2.16.0",
       "npm:@connectrpc/connect-web@2.2.0",
       "npm:@connectrpc/connect@2.2.0"
-    ],
-    "packageJson": {
-      "dependencies": [
-        "npm:@bufbuild/buf@1.73.0",
-        "npm:@bufbuild/protobuf@2.15.0",
-        "npm:@bufbuild/protoc-gen-es@2.15.0",
-        "npm:@connectrpc/connect-web@2.2.0",
-        "npm:@connectrpc/connect@2.2.0"
-      ]
-    }
+    ]
   }
 }

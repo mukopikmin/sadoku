@@ -1,4 +1,4 @@
-import { Flex, Spinner, Text } from "@chakra-ui/react";
+import { Avatar, Flex, Spinner, Text } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { loadGitHubAccount } from "../../api/githubAccount";
 
@@ -24,14 +24,23 @@ export const GitHubAccountSettings = ({ enabled }: { enabled: boolean }) => {
         ? <Text color="fg.error">Unavailable</Text>
         : query.data.ok
         ? (
-          <Text as="div" textAlign="end">
-            {query.data.account.name && (
-              <Text fontWeight="medium">{query.data.account.name}</Text>
-            )}
-            <Text color="fg.muted" fontSize="sm">
-              @{query.data.account.login}
+          <Flex alignItems="center" gap="3">
+            <Avatar.Root size="sm">
+              <Avatar.Fallback name={query.data.account.login} />
+              <Avatar.Image
+                alt={`${query.data.account.login}'s GitHub avatar`}
+                src={query.data.account.avatarUrl}
+              />
+            </Avatar.Root>
+            <Text as="div" textAlign="end">
+              {query.data.account.name && (
+                <Text fontWeight="medium">{query.data.account.name}</Text>
+              )}
+              <Text color="fg.muted" fontSize="sm">
+                @{query.data.account.login}
+              </Text>
             </Text>
-          </Text>
+          </Flex>
         )
         : <Text color="fg.muted">Not authenticated</Text>}
     </Flex>

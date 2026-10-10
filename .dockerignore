@@ -1,0 +1,15 @@
+.git
+.github
+.codex
+node_modules
+src/preview/node_modules
+src/preview/dist
+dist
+dist-test
+sadoku
+mdview
+THIRD_PARTY_NOTICES.md
+*.mdview-comments.json
+*.sadoku-comments.json
+npm-debug.log*
+.DS_Store

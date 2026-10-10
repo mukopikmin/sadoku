@@ -79,6 +79,33 @@ Deno.test("serves directory documents and keeps comments isolated", async () => 
         onEventStreamOpen: () => opened++,
       },
     );
+    const client = createClient(
+      PreviewService,
+      createConnectTransport({
+        baseUrl: "http://127.0.0.1:3334",
+        fetch: async (input, init) =>
+          await handler(new Request(input, init), serveHandlerInfo),
+        useBinaryFormat: false,
+      }),
+    );
+    const listedDocuments = await client.listDocuments({});
+    assertEquals(listedDocuments.documents.map(({ id }) => id), [2n, 7n]);
+    assertEquals(
+      (await client.getDocument({ documentId: 2n })).markdown,
+      "# First\n",
+    );
+    const rpcComment = await client.createComment({
+      documentId: 2n,
+      startLine: 1,
+      endLine: 1,
+      body: "RPC review",
+    });
+    assertEquals(rpcComment.body, "RPC review");
+    assertEquals(
+      (await client.listComments({ documentId: 2n })).comments.length,
+      1,
+    );
+    await client.deleteComment({ documentId: 2n, commentId: rpcComment.id });
 
     assertEquals(
       (await request(handler, "/__sadoku/documents")).status,

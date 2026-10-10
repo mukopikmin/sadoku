@@ -11,6 +11,10 @@ import { noStoreCacheControl } from "../responses.ts";
 
 export type ConnectCode =
   | "invalid_argument"
+  | "not_found"
+  | "already_exists"
+  | "failed_precondition"
+  | "unavailable"
   | "internal"
   | "unimplemented";
 
@@ -37,6 +41,8 @@ const isConnectFailure = (value: unknown): value is ConnectFailure =>
   "message" in value &&
   "status" in value &&
   (value.code === "invalid_argument" ||
+    value.code === "not_found" || value.code === "already_exists" ||
+    value.code === "failed_precondition" || value.code === "unavailable" ||
     value.code === "internal" ||
     value.code === "unimplemented") &&
   typeof value.message === "string" &&
