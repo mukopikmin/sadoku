@@ -12,11 +12,11 @@
     "test": "npm --prefix src/preview test"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "2.15.0"
+    "@bufbuild/protobuf": "2.16.0"
   },
   "devDependencies": {
     "@bufbuild/buf": "1.73.0",
-    "@bufbuild/protoc-gen-es": "2.15.0",
+    "@bufbuild/protoc-gen-es": "2.16.0",
     "@connectrpc/connect": "2.2.0",
     "@connectrpc/connect-web": "2.2.0"
   }
