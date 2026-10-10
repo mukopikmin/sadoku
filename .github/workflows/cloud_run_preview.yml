@@ -140,10 +140,16 @@ jobs:
             url="$(gcloud run services describe "${SERVICE}" \
               --project "${PROJECT_ID}" \
               --region "${REGION}" \
-              --format="value(status.traffic.filter(tag=${tag}).url)" 2>/dev/null || true)"
+              --format=json |
+              jq -r --arg tag "${tag}" \
+                '.status.traffic[]? | select(.tag == $tag) | .url // empty')"
             [[ -n "${url}" ]] && break
             sleep 5
           done
+          if [[ -z "${url}" ]]; then
+            echo "::error::Preview URL for tag ${tag} was not found after 12 attempts."
+            exit 1
+          fi
           [[ "${url}" =~ ^https://[a-z0-9-]+(\.[a-z0-9-]+)*\.run\.app$ ]]
           curl --fail --show-error --location \
             --retry 5 --retry-all-errors --retry-delay 2 \
