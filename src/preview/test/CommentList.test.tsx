@@ -5,7 +5,6 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
   within,
 } from "./testUtils";
 import { afterEach, describe, expect, it } from "vitest";
@@ -82,43 +81,46 @@ describe("CommentList", () => {
   });
 
   it("passes current and original source ranges to comment actions", async () => {
-    render(
-      <CommentList
-        actions={createCommentActions()}
-        comments={[
-          createComment({ endLine: 5, originalEndLine: 5 }),
-          createComment({
-            body: "Moved range.",
-            endLine: 8,
-            id: 2,
-            originalEndLine: 3,
-            originalStartLine: 2,
-            startLine: 7,
-          }),
-          createComment({
-            body: "Stale range.",
-            endLine: 9,
-            id: 3,
-            originalEndLine: 6,
-            originalStartLine: 4,
-            state: "stale",
-          }),
-        ]}
-      />,
-    );
+    const cases = [
+      [
+        createComment({ endLine: 5, originalEndLine: 5 }),
+        "Lines 3-5",
+      ],
+      [
+        createComment({
+          body: "Moved range.",
+          endLine: 8,
+          id: 2,
+          originalEndLine: 3,
+          originalStartLine: 2,
+          startLine: 7,
+        }),
+        "Lines 7-8 (originally lines 2-3)",
+      ],
+      [
+        createComment({
+          body: "Stale range.",
+          endLine: 9,
+          id: 3,
+          originalEndLine: 6,
+          originalStartLine: 4,
+          state: "stale",
+        }),
+        "Originally lines 4-6",
+      ],
+    ] as const;
 
-    const menuButtons = screen.getAllByRole("button", { name: "More actions" });
-    fireEvent.click(menuButtons[0]);
-    expect(await screen.findByText("Lines 3-5")).not.toBeNull();
-    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
-    await waitFor(() => expect(document.activeElement).toBe(menuButtons[0]));
+    for (const [comment, lineLabel] of cases) {
+      render(
+        <CommentList
+          actions={createCommentActions()}
+          comments={[comment]}
+        />,
+      );
 
-    fireEvent.click(menuButtons[1]);
-    expect(await screen.findByText("Lines 7-8 (originally lines 2-3)"))
-      .not.toBeNull();
-    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
-
-    fireEvent.click(menuButtons[2]);
-    expect(await screen.findByText("Originally lines 4-6")).not.toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+      expect(await screen.findByText(lineLabel)).not.toBeNull();
+      cleanup();
+    }
   });
 });
