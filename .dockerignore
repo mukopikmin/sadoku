@@ -13,3 +13,4 @@ THIRD_PARTY_NOTICES.md
 *.sadoku-comments.json
 npm-debug.log*
 .DS_Store
+gha-creds-*.json
