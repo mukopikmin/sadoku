@@ -188,11 +188,8 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
-Cloud Run Revision Tags can be accessed through a Cloudflare Workers wildcard
-proxy. See
-[setup, authentication, DNS/TLS, and deployment](workers/cloud_run_proxy/README.md).
-The proxy preserves Cloud Run IAM and is deployed separately from the existing
-Cloud Run PR preview workflow.
+See the [Cloud Run tag proxy](workers/cloud_run_proxy/README.md) for optional
+Cloudflare Worker setup and manual deployment.
 
 ```sh
 npm install
