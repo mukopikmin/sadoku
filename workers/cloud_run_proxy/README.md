@@ -31,7 +31,7 @@ Run URL を使用するため、この Worker の IAM 保護とは独立して�
 
 | 対象                                                         | 管理元                                    |
 | ------------------------------------------------------------ | ----------------------------------------- |
-| Worker コード、環境変数、単一ワイルドカード Route            | Wrangler / 新しい GitHub Actions          |
+| Worker コード、環境変数、単一ワイルドカード Route            | Wrangler による手動デプロイ               |
 | ワイルドカード DNS、Proxy、Edge TLS 証明書、Route の競合確認 | 初期設定時に Cloudflare 管理画面で管理    |
 | Cloud Run サービス、Revision Tag、IAM、ingress               | 既存の GCP 管理方法 / PR preview workflow |
 
@@ -160,7 +160,8 @@ Cloud Run の request timeout に従います。本文をストリーミング�
 プラットフォームのアップロード制限は解除されません。本番の負荷に合わせて
 プランを選び、深いサブドメイン用の ACM またはカスタム証明書を別途用意します。
 
-CI 用 API Token は対象 account / zone だけに限定し、次の権限を付与します。
+手動デプロイ用 API Token は対象 account / zone
+だけに限定し、次の権限を付与します。
 
 - Account / Workers Scripts / Edit
 - Zone / Workers Routes / Edit
@@ -170,8 +171,8 @@ CI 用 API Token は対象 account / zone だけに限定し、次の権限を�
 DNS / 証明書の初期設定は別の管理者権限で行います。GCP の呼び出し元は対象サービス
 に必要な `roles/run.invoker` のみを持ち、Worker デプロイには GCP
 権限を与えません。
-[Cloudflare の CI 認証手順](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/)
-に従い、API Token をソースや設定ファイルに保存しないでください。
+[Wrangler の認証手順](https://developers.cloudflare.com/workers/wrangler/commands/#login)
+を参照し、API Token をソースや設定ファイルに保存しないでください。
 
 ## Wrangler とローカル開発
 
@@ -225,7 +226,12 @@ curl --insecure --noproxy '*' \
 
 ## 環境設定とデプロイ
 
-次を環境変数に設定し、前述の実際の Cloud Run URL も渡します。
+初回と Worker のコード・環境設定変更時に、CI が通った main のコミットを
+チェックアウトして、Wrangler で手動デプロイします。Revision Tag
+の追加・削除時には Worker の再デプロイは不要です。
+
+必要なツールをインストールして検証した後、次を環境変数に設定し、前述の実際の
+Cloud Run URL も渡します。
 
 ```sh
 export BASE_DOMAIN=api.example.com
@@ -248,43 +254,33 @@ npm run deploy
 `workers.dev` と preview URL は無効です。別環境には別の domain / Worker 名を
 指定し、configure から同じ手順で配置してください。
 
-## CI/CD と GitHub Secrets / Variables
+## CI と手動デプロイの設定
 
 `.github/workflows/cloudflare_worker.yml` は PR と main で lint、型チェック、
-自動テスト、Wrangler dry-run、Workers runtime テストを行います。 既存の
-`.github/workflows/test.yml` と Cloud Run preview は独立して継続します。 Actions
-の参照は既存と同じ commit SHA に固定し、GitHub 権限は contents:read だけです。PR
-の検証ジョブにはクラウドの Secret を渡しません。
+自動テスト、Wrangler dry-run、Workers runtime テストを行います。
+`workflow_dispatch` でも検証だけを実行します。既存の
+`.github/workflows/test.yml` と Cloud Run preview は独立して継続します。Actions
+の参照は既存と同じ commit SHA に固定し、GitHub 権限は contents:read だけです。
 
-main へのマージ後、検証が通り、以下の Variables が両方 `true` の場合に
-デプロイします。既定では無効です。手動の workflow_dispatch も main のみです。
+Worker の自動デプロイは行いません。このワークフロー用の GitHub Secrets /
+Variables や GitHub Environment の登録は不要です。Cloudflare の認証情報も CI
+に渡しません。 手動デプロイ時には、次をローカルの環境変数で渡します。
 
-| GitHub Variable                    | 内容                                  |
-| ---------------------------------- | ------------------------------------- |
-| `CLOUDFLARE_WORKER_DEPLOY_ENABLED` | 初期設定・変更レビュー完了後に `true` |
-| `CLOUDFLARE_TLS_READY`             | 実際の SAN と TLS 検証完了後に `true` |
+| 環境変数                   | 内容                                                  |
+| -------------------------- | ----------------------------------------------------- |
+| `BASE_DOMAIN`              | `api.example.com` に相当する許可ドメイン              |
+| `WORKER_NAME`              | 対象の Worker 名                                      |
+| `CLOUDFLARE_ACCOUNT_ID`    | 対象 account ID                                       |
+| `CLOUDFLARE_ZONE_ID`       | 対象 zone ID                                          |
+| `CLOUD_RUN_SERVICE_URL`    | 実際のサービス URL、IAM audience の確認用             |
+| `CLOUD_RUN_SAMPLE_TAG`     | 初期確認に使用したタグ                                |
+| `CLOUD_RUN_SAMPLE_TAG_URL` | Cloud Run が返したそのタグの URL                      |
+| `CLOUDFLARE_API_TOKEN`     | 限定権限を持つ API Token（Wrangler 認証済みなら不要） |
 
-これらは repository Variables に登録します。GitHub Environment
-`cloudflare-worker` を作成し、main
-に限定して、必要なデプロイ承認者を設定します。 以下は同 Environment の Secrets
-に登録します。識別子も既存 GCP workflow の 方針に合わせて Secret
-に置き、ログでマスクします。
-
-| GitHub Secret                    | 内容                                      |
-| -------------------------------- | ----------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`           | 上記の限定権限を持つ API Token            |
-| `CLOUDFLARE_ACCOUNT_ID`          | 対象 account ID                           |
-| `CLOUDFLARE_ZONE_ID`             | 対象 zone ID                              |
-| `CLOUDFLARE_WORKER_NAME`         | 本番の Worker 名                          |
-| `PROXY_BASE_DOMAIN`              | `api.example.com` に相当する許可ドメイン  |
-| `PROXY_CLOUD_RUN_SERVICE_URL`    | 実際のサービス URL、IAM audience の確認用 |
-| `PROXY_CLOUD_RUN_SAMPLE_TAG`     | 初期確認に使用したタグ                    |
-| `PROXY_CLOUD_RUN_SAMPLE_TAG_URL` | Cloud Run が返したそのタグの URL          |
-
-API Token はツールのインストール完了後、deploy ステップだけに渡します。 生成した
-origin ホストも `add-mask` でマスクします。生成設定や Wrangler の ログを公開
-artifact にアップロードしません。マスクはアクセス制御の代わりには
-なりません。Worker 本体はリクエストの URL、ヘッダー、本文をログ出力しません。
+API Token
+はデプロイする端末の安全な認証管理から取得し、必要な実行時だけ渡します。
+生成設定や Wrangler のログを公開 artifact にアップロードしません。Worker 本体は
+リクエストの URL、ヘッダー、本文をログ出力しません。
 
 ## Revision Tag の追加と受け入れ確認
 
@@ -363,7 +359,7 @@ revision 応答ヘッダーで区別してください。 Cloud Run の Session 
 | SSE の遅延・切断                 | アプリの flush、Cloud Run timeout、クライアント側バッファ、両サービスの制限 |
 | WebSocket が開けない             | 認証ヘッダーを付けられるクライアントか、GET Upgrade、アプリの対応と timeout |
 | タグ間で URL / Cookie が合わない | アプリの公開 URL、Domain 共有依存、CORS / OAuth の設定                      |
-| CI がデプロイしない              | main、検証結果、repository Variables、Environment、Secrets、承認            |
+| 手動デプロイに失敗する           | Wrangler 認証、API Token の権限、生成設定の account / zone / Route          |
 
 単体テストはタグ抽出、拒否、GET/POST/PUT/DELETE 等、バイナリ本文、クエリ、
 ストリームの逐次配送とキャンセル、SSE、リダイレクト、Cookie、欠損タグを含む
@@ -374,4 +370,4 @@ Cloud Run への到達性を証明するものではありません。
 
 本番接続情報がない環境では、実際のサービス URL、IAM、ingress、Session Affinity、
 証明書 SAN、タグ追加後の疎通は未検証です。上記の初期設定・受け入れ確認を
-実環境で完了してからデプロイを有効にしてください。
+実環境で完了してから手動デプロイしてください。
