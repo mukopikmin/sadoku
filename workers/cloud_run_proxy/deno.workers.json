@@ -1,0 +1,8 @@
+{
+  "nodeModulesDir": "none",
+  "lock": false,
+  "compilerOptions": {
+    "lib": ["esnext"],
+    "types": ["./worker_types.d.ts"]
+  }
+}

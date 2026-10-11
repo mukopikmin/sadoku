@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+dist/
+wrangler.deploy.json
+.wrangler.deploy-*.tmp
+worker_types.d.ts
+.dev.vars*
+.env*

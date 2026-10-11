@@ -1,0 +1,103 @@
+name: Cloud Run revision proxy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Worker checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/cloud_run_proxy
+    env:
+      CLOUDFLARE_SEND_METRICS: "false"
+      WRANGLER_LOG_PATH: ${{ runner.temp }}/wrangler-proxy.log
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.8.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Install Worker tools
+        run: npm install --no-audit --no-fund
+
+      - name: Lint and formatting
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Type check against generated Workers runtime types
+        run: npm run typecheck:workers
+
+      - name: Test proxy and deployment configuration
+        run: npm test
+
+      - name: Bundle Worker without deployment
+        run: npm run build
+
+      - name: Test Workers runtime and WebSocket
+        run: npm run test:runtime
+
+  deploy:
+    name: Deploy Worker
+    needs: check
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' &&
+      vars.CLOUDFLARE_WORKER_DEPLOY_ENABLED == 'true' &&
+      vars.CLOUDFLARE_TLS_READY == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: cloudflare-worker
+    concurrency:
+      group: cloudflare-cloud-run-proxy-production
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: workers/cloud_run_proxy
+    env:
+      CLOUDFLARE_SEND_METRICS: "false"
+      WRANGLER_LOG_PATH: ${{ runner.temp }}/wrangler-proxy.log
+    steps:
+      - name: Checkout verified main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Install Worker tools before exposing credentials
+        run: npm install --no-audit --no-fund
+
+      - name: Generate reviewed deployment configuration
+        env:
+          BASE_DOMAIN: ${{ secrets.PROXY_BASE_DOMAIN }}
+          WORKER_NAME: ${{ secrets.CLOUDFLARE_WORKER_NAME }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUD_RUN_SERVICE_URL: ${{ secrets.PROXY_CLOUD_RUN_SERVICE_URL }}
+          CLOUD_RUN_SAMPLE_TAG: ${{ secrets.PROXY_CLOUD_RUN_SAMPLE_TAG }}
+          CLOUD_RUN_SAMPLE_TAG_URL: ${{ secrets.PROXY_CLOUD_RUN_SAMPLE_TAG_URL }}
+        run: npm run configure
+
+      - name: Deploy code, variables and the single wildcard route
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npm run deploy
