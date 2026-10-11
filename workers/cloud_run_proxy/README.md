@@ -226,9 +226,10 @@ curl --insecure --noproxy '*' \
 
 ## 環境設定とデプロイ
 
-初回と Worker のコード・環境設定変更時に、CI が通った main のコミットを
-チェックアウトして、Wrangler で手動デプロイします。Revision Tag
-の追加・削除時には Worker の再デプロイは不要です。
+初回と Worker のコード・環境設定変更時に、対象の main のコミットを
+チェックアウトし、前述のローカル検証コマンドをすべて実行してから Wrangler で
+手動デプロイします。Revision Tag の追加・削除時には Worker
+の再デプロイは不要です。
 
 必要なツールをインストールして検証した後、次を環境変数に設定し、前述の実際の
 Cloud Run URL も渡します。
@@ -254,17 +255,15 @@ npm run deploy
 `workers.dev` と preview URL は無効です。別環境には別の domain / Worker 名を
 指定し、configure から同じ手順で配置してください。
 
-## CI と手動デプロイの設定
+## 手動検証・デプロイの運用
 
-`.github/workflows/cloudflare_worker.yml` は PR と main で lint、型チェック、
-自動テスト、Wrangler dry-run、Workers runtime テストを行います。
-`workflow_dispatch` でも検証だけを実行します。既存の
-`.github/workflows/test.yml` と Cloud Run preview は独立して継続します。Actions
-の参照は既存と同じ commit SHA に固定し、GitHub 権限は contents:read だけです。
+Worker 専用の CI/CD ワークフローは設けません。変更時には、前述の
+lint、型チェック、 単体テスト、Wrangler dry-run、Workers runtime
+テストをローカルで実行します。 既存の `.github/workflows/test.yml` と Cloud Run
+preview はそのまま継続します。
 
-Worker の自動デプロイは行いません。このワークフロー用の GitHub Secrets /
-Variables や GitHub Environment の登録は不要です。Cloudflare の認証情報も CI
-に渡しません。 手動デプロイ時には、次をローカルの環境変数で渡します。
+Worker 用の GitHub Secrets / Variables や GitHub Environment の登録は不要です。
+手動デプロイ時には、次をローカルの環境変数で渡します。
 
 | 環境変数                   | 内容                                                  |
 | -------------------------- | ----------------------------------------------------- |
