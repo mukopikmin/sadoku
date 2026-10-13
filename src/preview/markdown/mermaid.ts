@@ -1,3 +1,5 @@
+import { initializeMermaidPinchZoom } from "./mermaidPinchZoom";
+
 type MermaidApi = {
   initialize: (
     options: {
@@ -25,23 +27,10 @@ const closeMermaidZoomDialog = (dialog: HTMLElement) => {
   dialog.remove();
 };
 
-const getSvgAspectRatio = (svg: SVGElement): number | undefined => {
-  const viewBox = svg.getAttribute("viewBox")?.trim().split(/[\s,]+/).map(
-    Number,
-  );
-  if (
-    viewBox?.length !== 4 ||
-    !viewBox.every(Number.isFinite) ||
-    viewBox[2] <= 0 ||
-    viewBox[3] <= 0
-  ) return undefined;
-  return viewBox[2] / viewBox[3];
-};
-
-const createMermaidZoomDialog = (
+const openMermaidZoomDialog = (
   document: Document,
   sourceSvg: SVGElement,
-): HTMLElement => {
+): void => {
   const dialog = document.createElement("div");
   dialog.className = "mermaid-zoom-dialog";
   dialog.setAttribute("role", "dialog");
@@ -55,21 +44,13 @@ const createMermaidZoomDialog = (
   const content = document.createElement("div");
   content.className = "mermaid-zoom-content";
 
-  const view = document.defaultView ?? globalThis.window;
-  const aspectRatio = getSvgAspectRatio(sourceSvg);
-  const resize = () => {
-    if (!aspectRatio) return;
-    const maxWidth = Math.max(0, view.innerWidth - 32);
-    const maxHeight = Math.max(0, view.innerHeight - 32);
-    const width = Math.min(maxWidth, maxHeight * aspectRatio);
-    content.style.setProperty("--mermaid-zoom-width", `${width}px`);
-    content.style.setProperty(
-      "--mermaid-zoom-height",
-      `${width / aspectRatio}px`,
-    );
-  };
-  resize();
-  view.addEventListener("resize", resize);
+  const toolbar = document.createElement("div");
+  toolbar.className = "mermaid-zoom-toolbar";
+  const fitButton = document.createElement("button");
+  fitButton.className = "mermaid-zoom-fit";
+  fitButton.type = "button";
+  fitButton.setAttribute("aria-label", "Fit Mermaid diagram to view");
+  fitButton.textContent = "Fit to view";
 
   const closeButton = document.createElement("button");
   closeButton.className = "mermaid-zoom-close";
@@ -81,20 +62,24 @@ const createMermaidZoomDialog = (
   scroller.className = "mermaid-zoom-scroller";
   scroller.append(sourceSvg.cloneNode(true));
 
-  content.append(closeButton, scroller);
+  toolbar.append(fitButton, closeButton);
+  content.append(toolbar, scroller);
   dialog.append(backdrop, content);
+  document.body.append(dialog);
+  const zoom = initializeMermaidPinchZoom(scroller);
 
   const close = () => {
-    view.removeEventListener("resize", resize);
+    zoom.destroy();
     closeMermaidZoomDialog(dialog);
   };
+  fitButton.addEventListener("click", zoom.fit);
   closeButton.addEventListener("click", close);
   backdrop.addEventListener("click", close);
   dialog.addEventListener("keydown", (event) => {
     if (event.key === "Escape") close();
   });
 
-  return dialog;
+  dialog.focus();
 };
 
 export const initializeMermaidZoom = (
@@ -115,9 +100,7 @@ export const initializeMermaidZoom = (
     const open = () => {
       const svg = mermaid.querySelector<SVGElement>("svg");
       if (!svg) return;
-      const dialog = createMermaidZoomDialog(document, svg);
-      document.body.append(dialog);
-      dialog.focus();
+      openMermaidZoomDialog(document, svg);
     };
 
     button.addEventListener("click", (event) => {

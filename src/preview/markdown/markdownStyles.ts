@@ -175,6 +175,8 @@ export const markdownStyles = `
     color: var(--chakra-colors-fg);
   }
 
+  .mermaid-zoom-fit:hover,
+  .mermaid-zoom-fit:focus-visible,
   .mermaid-zoom-close:hover,
   .mermaid-zoom-close:focus-visible {
     border-color: var(--chakra-colors-accent);
@@ -201,8 +203,8 @@ export const markdownStyles = `
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    width: var(--mermaid-zoom-width, calc(100vw - var(--chakra-spacing-8)));
-    height: var(--mermaid-zoom-height, calc(100vh - var(--chakra-spacing-8)));
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     border: 0;
     border-radius: var(--chakra-radii-md);
@@ -213,11 +215,18 @@ export const markdownStyles = `
       0 var(--chakra-spacing-4) var(--chakra-spacing-12) var(--chakra-colors-overlay-shadow);
   }
 
+  .mermaid-zoom-toolbar {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--chakra-spacing-2);
+    padding: var(--chakra-spacing-2);
+    border-bottom: 1px solid var(--chakra-colors-border-muted);
+  }
+
+  .mermaid-zoom-fit,
   .mermaid-zoom-close {
-    position: absolute;
-    z-index: 1;
-    top: var(--chakra-spacing-2);
-    right: var(--chakra-spacing-2);
     border: 1px solid var(--chakra-colors-border-default);
     border-radius: var(--chakra-radii-sm);
     background: var(--chakra-colors-canvas);
@@ -225,7 +234,7 @@ export const markdownStyles = `
     cursor: pointer;
     font: inherit;
     font-size: 1rem;
-    line-height: 1;
+    padding: var(--chakra-spacing-1) var(--chakra-spacing-2);
   }
 
   .mermaid-zoom-scroller {
@@ -233,12 +242,19 @@ export const markdownStyles = `
     min-width: 0;
     min-height: 0;
     overflow: auto;
+    overflow-anchor: none;
+    scrollbar-gutter: stable;
   }
 
-  .mermaid-zoom-scroller svg {
+  .mermaid-zoom-stage {
+    display: grid;
+    place-items: center;
+  }
+
+  .mermaid-zoom-stage > svg {
     display: block;
-    width: 100%;
-    height: auto;
+    width: var(--mermaid-pinch-width, 100%) !important;
+    height: var(--mermaid-pinch-height, auto) !important;
     max-width: none !important;
     max-height: none !important;
   }

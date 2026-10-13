@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { initializeMermaid, initializeMermaidZoom } from "../markdown/mermaid";
 
 const bundledMermaid = vi.hoisted(() => ({
@@ -7,6 +7,8 @@ const bundledMermaid = vi.hoisted(() => ({
 }));
 
 vi.mock("mermaid", () => ({ default: bundledMermaid }));
+
+afterEach(() => vi.restoreAllMocks());
 
 describe("initializeMermaid", () => {
   it("loads Mermaid through the Vite dependency graph", async () => {
@@ -131,7 +133,87 @@ describe("initializeMermaid", () => {
 });
 
 describe("initializeMermaidZoom", () => {
-  it("sizes the modal to the diagram aspect ratio", () => {
+  it("enables pinch zoom only inside the zoom dialog", () => {
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(600);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(300);
+    const document = new DOMParser().parseFromString(
+      '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 200 100"></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
+      "text/html",
+    );
+    const diagram = document.querySelector<HTMLElement>(".mermaid")!;
+    const svg = diagram.querySelector<SVGSVGElement>("svg")!;
+    vi.spyOn(svg, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 0, 200, 100),
+    );
+
+    initializeMermaidZoom(document);
+    initializeMermaidZoom(document);
+    const pinch = () =>
+      new WheelEvent("wheel", {
+        ctrlKey: true,
+        deltaY: -Math.log(2) / 0.01,
+        cancelable: true,
+      });
+    const inlinePinch = pinch();
+    diagram.dispatchEvent(inlinePinch);
+    expect(inlinePinch.defaultPrevented).toBe(false);
+    expect(diagram.style.getPropertyValue("--mermaid-pinch-width")).toBe("");
+    for (const type of ["gesturestart", "gesturechange", "gestureend"]) {
+      const event = new Event(type, { cancelable: true });
+      Object.assign(event, { scale: 2, clientX: 100, clientY: 50 });
+      diagram.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(false);
+    }
+
+    document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")!.click();
+    const scroller = document.querySelector<HTMLElement>(
+      ".mermaid-zoom-scroller",
+    )!;
+    expect(scroller.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "600px",
+    );
+    const modalPinch = pinch();
+    scroller.dispatchEvent(modalPinch);
+    expect(modalPinch.defaultPrevented).toBe(true);
+    expect(scroller.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "1200px",
+    );
+    const modalPinchOut = new WheelEvent("wheel", {
+      ctrlKey: true,
+      deltaY: Math.log(2) / 0.01,
+      cancelable: true,
+    });
+    scroller.dispatchEvent(modalPinchOut);
+    expect(modalPinchOut.defaultPrevented).toBe(true);
+    expect(scroller.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "600px",
+    );
+    scroller.dispatchEvent(pinch());
+    document.querySelector<HTMLButtonElement>(".mermaid-zoom-fit")!.click();
+    expect(scroller.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "600px",
+    );
+    expect(scroller.scrollLeft).toBe(0);
+    expect(scroller.scrollTop).toBe(0);
+    expect(diagram.style.getPropertyValue("--mermaid-pinch-width")).toBe("");
+
+    document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")!.click();
+    expect(document.querySelector(".mermaid-zoom-dialog")).toBeNull();
+
+    document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")!.click();
+    const reopened = document.querySelector<HTMLElement>(
+      ".mermaid-zoom-scroller",
+    )!;
+    expect(reopened.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "600px",
+    );
+    expect(reopened.querySelector("svg")!.getAttribute("viewBox")).toBe(
+      "0 0 200 100",
+    );
+    document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")!.click();
+  });
+
+  it("provides fit and close controls above the diagram viewport", () => {
     const document = new DOMParser().parseFromString(
       '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 200 100"></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
       "text/html",
@@ -140,18 +222,16 @@ describe("initializeMermaidZoom", () => {
     initializeMermaidZoom(document);
     document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")?.click();
 
-    const content = document.querySelector<HTMLElement>(
-      ".mermaid-zoom-content",
+    const toolbar = document.querySelector(".mermaid-zoom-toolbar")!;
+    const fitButton = toolbar.querySelector<HTMLButtonElement>(
+      ".mermaid-zoom-fit",
+    )!;
+    expect(fitButton.getAttribute("aria-label")).toBe(
+      "Fit Mermaid diagram to view",
     );
-    const width = parseFloat(
-      content?.style.getPropertyValue("--mermaid-zoom-width") ?? "",
-    );
-    const height = parseFloat(
-      content?.style.getPropertyValue("--mermaid-zoom-height") ?? "",
-    );
-    expect(width / height).toBeCloseTo(2);
-    expect(width).toBeLessThanOrEqual(window.innerWidth);
-    expect(height).toBeLessThanOrEqual(window.innerHeight);
+    expect(toolbar.querySelector(".mermaid-zoom-close")).not.toBeNull();
+    expect(toolbar.querySelector("svg")).toBeNull();
+    expect(document.querySelector(".mermaid-zoom-scroller svg")).not.toBeNull();
 
     document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")?.click();
   });
