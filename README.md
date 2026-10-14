@@ -226,6 +226,7 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Suggested edits in comments                          | Supported     | `suggest` and `suggestion` blocks render source diffs.         |
 | Tables and strikethrough                             | Supported     | GitHub Flavored Markdown syntax is supported.                  |
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
+| Single-newline line breaks in comments and replies   | Supported     | GitHub-style line breaks in comments and replies only.         |
 | Mermaid diagrams                                     | Supported     | Rendered from local assets without a CDN.                      |
 | HTML comments                                        | Supported     | Displayed as commentable plain-text cards.                     |
 | Agent-file front matter                              | Supported     | Displayed as a safe data list in recognized instruction files. |
@@ -234,4 +235,5 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Footnotes, definition lists, and math/LaTeX          | Not supported |                                                                |
 
 Comments and replies support standard Markdown and GitHub Flavored Markdown.
+Single newlines in comments and replies render as line breaks, like on GitHub.
 Mermaid diagrams render only in document previews.

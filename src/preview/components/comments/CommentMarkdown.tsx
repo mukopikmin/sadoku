@@ -8,6 +8,7 @@ import {
 } from "../../markdown/markdownRenderers";
 import { initializeMermaid } from "../../markdown/mermaid";
 import { remarkSuggestions } from "../../markdown/remarkSuggestions";
+import { remarkCommentBreaks } from "../../markdown/remarkCommentBreaks";
 
 export type CommentMarkdownProps = {
   children: string;
@@ -39,6 +40,7 @@ export const CommentMarkdown = (
         rehypePlugins={sharedMarkdownRehypePlugins}
         remarkPlugins={[
           ...sharedMarkdownRemarkPlugins,
+          remarkCommentBreaks,
           [remarkSuggestions, { sourceText }],
         ]}
       >
