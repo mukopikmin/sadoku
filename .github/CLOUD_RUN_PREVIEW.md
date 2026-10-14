@@ -1,5 +1,10 @@
 # Cloud Run pull request previews
 
+The preview image includes the pull request's repository contents under `/app`,
+subject to `.dockerignore`. Sadoku opens `/app` as a directory so the preview
+lists the repository's Markdown documents. Set `SADOKU_SOURCE` to override the
+source; for example, `/app/README.md` opens only the README.
+
 The `cloud_run_preview.yml` workflow expects these GitHub repository or
 `cloud-run-preview` environment secrets:
 
