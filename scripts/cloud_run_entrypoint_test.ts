@@ -4,15 +4,15 @@ import { fromFileUrl, join } from "@std/path";
 for (
   const { name, env, source, port } of [
     {
-      name: "opens the repository directory by default",
+      name: "opens the integration fixtures directory by default",
       env: {},
-      source: "/app",
+      source: "/app/test/integration/fixtures",
       port: "8080",
     },
     {
       name: "uses defaults for empty environment values",
       env: { SADOKU_SOURCE: "", PORT: "" },
-      source: "/app",
+      source: "/app/test/integration/fixtures",
       port: "8080",
     },
     {
