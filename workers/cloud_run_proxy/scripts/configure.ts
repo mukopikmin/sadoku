@@ -27,7 +27,7 @@ export function deploymentConfig(values: Record<string, string | undefined>) {
   const name = required("WORKER_NAME");
   const tag = required("CLOUD_RUN_SAMPLE_TAG");
   const taggedURL = originURL("CLOUD_RUN_SAMPLE_TAG_URL");
-  originURL("CLOUD_RUN_SERVICE_URL"); // Required for the documented IAM audience.
+  originURL("CLOUD_RUN_SERVICE_URL"); // Confirm the observed service URL too.
   if (!validDomain(domain)) throw new Error("Invalid BASE_DOMAIN");
   if (!/^[a-f0-9]{32}$/.test(zone) || !/^[a-f0-9]{32}$/.test(account)) {
     throw new Error("Invalid Cloudflare account or zone ID");

@@ -12,9 +12,6 @@ function incoming(
   host = "v1.api.example.com",
 ) {
   const headers = new Headers(init.headers);
-  if (!headers.has("Authorization")) {
-    headers.set("Authorization", "Bearer test-token");
-  }
   return new Request(`https://${host}${path}`, { ...init, headers });
 }
 
@@ -151,6 +148,7 @@ Deno.test("removes spoofed forwarding/identity and hop headers", async () => {
   await proxy.fetch(
     incoming("/", {
       headers: {
+        "Authorization": "Bearer test-token",
         "X-Forwarded-Host": "evil.test",
         "X-Forwarded-For": "127.0.0.1",
         "X-Forwarded-Proto": "http",
@@ -160,6 +158,10 @@ Deno.test("removes spoofed forwarding/identity and hop headers", async () => {
         "X-Real-IP": "127.0.0.1",
         "CF-Connecting-IP": "127.0.0.1",
         "CF-Access-Jwt-Assertion": "fake-access-token",
+        "X-Goog-IAP-JWT-Assertion": "forged-iap-assertion",
+        "X-Goog-Authenticated-User-Email":
+          "accounts.google.com:admin@example.com",
+        "X-Goog-Authenticated-User-ID": "accounts.google.com:123",
         "X-Serverless-Authorization": "Bearer forged",
         "X-Original-URL": "https://evil.test",
         "X-Rewrite-URL": "/admin",
@@ -185,6 +187,9 @@ Deno.test("removes spoofed forwarding/identity and hop headers", async () => {
       "X-Real-IP",
       "CF-Connecting-IP",
       "CF-Access-Jwt-Assertion",
+      "X-Goog-IAP-JWT-Assertion",
+      "X-Goog-Authenticated-User-Email",
+      "X-Goog-Authenticated-User-ID",
       "X-Serverless-Authorization",
       "X-Original-URL",
       "X-Rewrite-URL",
@@ -194,18 +199,66 @@ Deno.test("removes spoofed forwarding/identity and hop headers", async () => {
   ) equal(headers.get(header), null);
 });
 
-Deno.test("missing authentication fails closed without calling origin", async () => {
-  const { proxy, calls } = stub(() => new Response());
-  for (const authorization of ["", "Basic secret", "Bearer", "Bearer a b"]) {
-    equal(
-      (await proxy.fetch(
-        incoming("/", { headers: { Authorization: authorization } }),
-        env,
-      )).status,
-      401,
-    );
+Deno.test("browser navigation without Authorization reaches IAP login", async () => {
+  const location =
+    "https://accounts.google.com/o/oauth2/v2/auth?state=opaque%2Bstate&client_id=example";
+  const { proxy, calls } = stub(() =>
+    new Response(null, { status: 302, headers: { Location: location } })
+  );
+  const response = await proxy.fetch(incoming(), env);
+  equal(response.status, 302);
+  equal(response.headers.get("Location"), location);
+  equal(calls[0].headers.get("Authorization"), null);
+  equal(calls[0].redirect, "manual");
+  equal(calls.length, 1);
+});
+
+Deno.test("IAP callback query, session cookie and redirect survive the proxy", async () => {
+  const cookie = "GCP_IAP_AUTH_TOKEN_example=opaque-session";
+  const { proxy, calls } = stub(() =>
+    new Response(null, {
+      status: 302,
+      headers: {
+        Location: `https://v1---${env.CLOUD_RUN_TAG_HOST}/private`,
+        "Set-Cookie":
+          `${cookie}; Domain=${env.CLOUD_RUN_TAG_HOST}; Path=/; Secure; HttpOnly; SameSite=Lax`,
+      },
+    })
+  );
+  const response = await proxy.fetch(
+    incoming("/?gcp-iap-mode=AUTHENTICATING&state=opaque%2Bstate", {
+      headers: { Cookie: cookie },
+    }),
+    env,
+  );
+  equal(calls[0].headers.get("Cookie"), cookie);
+  equal(calls[0].headers.get("Authorization"), null);
+  equal(
+    new URL(calls[0].url).search,
+    "?gcp-iap-mode=AUTHENTICATING&state=opaque%2Bstate",
+  );
+  equal(response.headers.get("Location"), "https://v1.api.example.com/private");
+  equal(
+    response.headers.get("Set-Cookie"),
+    `${cookie}; Path=/; Secure; HttpOnly; SameSite=Lax`,
+  );
+});
+
+Deno.test("IAP decides access for missing or invalid credentials", async () => {
+  const { proxy, calls } = stub(() =>
+    new Response("denied by IAP", { status: 403 })
+  );
+  for (
+    const authorization of [null, "Basic secret", "Bearer", "Bearer invalid"]
+  ) {
+    const headers = new Headers();
+    if (authorization !== null) headers.set("Authorization", authorization);
+    const response = await proxy.fetch(incoming("/", { headers }), env);
+    equal(response.status, 403);
+    equal(await response.text(), "denied by IAP");
+    equal(calls.at(-1)!.headers.get("Authorization"), authorization);
   }
-  equal(calls.length, 0);
+  equal(calls.length, 4);
 });
 
 for (
@@ -396,7 +449,7 @@ Deno.test("cookies remain separate, retain Expires and become host-only", async 
   equal(response.headers.get("Surrogate-Control"), null);
 });
 
-Deno.test("WebSocket upgrade is forwarded without consuming the response", async () => {
+Deno.test("browser WebSocket cookie reaches IAP without a Bearer token", async () => {
   const { proxy, calls } = stub(() => new Response(null, { status: 403 }));
   equal(
     (await proxy.fetch(
@@ -405,6 +458,7 @@ Deno.test("WebSocket upgrade is forwarded without consuming the response", async
           Upgrade: "websocket",
           Connection: "upgrade",
           "Sec-WebSocket-Protocol": "chat",
+          Cookie: "GCP_IAP_AUTH_TOKEN_example=opaque-session",
         },
       }),
       env,
@@ -414,6 +468,11 @@ Deno.test("WebSocket upgrade is forwarded without consuming the response", async
   equal(calls[0].headers.get("Upgrade"), "websocket");
   equal(calls[0].headers.get("Connection"), "Upgrade");
   equal(calls[0].headers.get("Sec-WebSocket-Protocol"), "chat");
+  equal(calls[0].headers.get("Authorization"), null);
+  equal(
+    calls[0].headers.get("Cookie"),
+    "GCP_IAP_AUTH_TOKEN_example=opaque-session",
+  );
   equal(
     (await proxy.fetch(incoming("/ws", { headers: { Upgrade: "h2c" } }), env))
       .status,

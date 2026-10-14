@@ -44,9 +44,18 @@ test("workerd preserves upload, authority, query and no-store subrequest", async
   equal(response.headers.get("Cache-Control"), "no-store");
 });
 
+test("workerd forwards browser navigation and IAP session cookies", async () => {
+  const response = await worker.fetch("https://v1.api.example.com/session", {
+    headers: { Cookie: "GCP_IAP_AUTH_TOKEN_example=opaque-session" },
+  });
+  const data = await response.json();
+  equal(data.headers.authorization, undefined);
+  equal(data.headers.cookie, "GCP_IAP_AUTH_TOKEN_example=opaque-session");
+});
+
 test("workerd streams SSE events and keeps multiple cookies", async () => {
   const response = await worker.fetch("https://v1.api.example.com/events", {
-    headers: { Authorization: "Bearer test-token" },
+    headers: { Cookie: "GCP_IAP_AUTH_TOKEN_example=opaque-session" },
   });
   equal(response.headers.get("Content-Type"), "text/event-stream");
   const reader = response.body.getReader();
@@ -60,7 +69,7 @@ test("workerd streams SSE events and keeps multiple cookies", async () => {
   );
   equal((await reader.read()).done, true);
   const cookies = await worker.fetch("https://v1.api.example.com/cookies", {
-    headers: { Authorization: "Bearer test-token" },
+    headers: { Cookie: "GCP_IAP_AUTH_TOKEN_example=opaque-session" },
   });
   deepStrictEqual(cookies.headers.getSetCookie(), [
     "a=1; Expires=Wed, 21 Oct 2030 07:28:00 GMT",
@@ -70,7 +79,10 @@ test("workerd streams SSE events and keeps multiple cookies", async () => {
 
 test("workerd retains WebSocket upgrade and relays frames", async () => {
   const response = await worker.fetch("https://v1.api.example.com/ws", {
-    headers: { Authorization: "Bearer test-token", Upgrade: "websocket" },
+    headers: {
+      Cookie: "GCP_IAP_AUTH_TOKEN_example=opaque-session",
+      Upgrade: "websocket",
+    },
   });
   equal(response.status, 101);
   equal(response.headers.get("Set-Cookie"), "ws=1; Secure; Path=/");

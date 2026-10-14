@@ -66,7 +66,8 @@ function requestHeaders(
   removeHopHeaders(headers, websocket);
   for (const name of [...headers.keys()]) {
     if (
-      /^(?:x-forwarded-|cf-|x-original-|x-envoy-)/i.test(name) ||
+      /^(?:x-forwarded-|cf-|x-original-|x-envoy-|x-goog-iap-|x-goog-authenticated-user-)/i
+        .test(name) ||
       [
         "host",
         "forwarded",
@@ -79,8 +80,8 @@ function requestHeaders(
       headers.delete(name);
     }
   }
-  // Do not trust any client-supplied forwarding or identity headers. Google
-  // verifies the original Authorization token and its service-level audience.
+  // IAP authenticates the caller using its session cookie or Authorization.
+  // Client-supplied identity assertions must never impersonate IAP.
   headers.set("Host", upstreamHost);
   headers.set("X-Forwarded-Host", publicHost);
   headers.set("X-Forwarded-Proto", "https");
@@ -151,11 +152,6 @@ export function createProxy(fetchOrigin: typeof fetch = fetch) {
       }
       if (incoming.protocol !== "https:") {
         return failure(400, "HTTPS required");
-      }
-      if (
-        !/^Bearer [^\s]+$/i.test(request.headers.get("Authorization") ?? "")
-      ) {
-        return failure(401, "A Google ID token is required");
       }
       const upgrade = request.headers.get("Upgrade");
       const websocket = upgrade?.toLowerCase() === "websocket";

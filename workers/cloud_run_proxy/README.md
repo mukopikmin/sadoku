@@ -6,9 +6,12 @@ Google load balancer, Domain Mapping, or Session Affinity is used.
 
 ## Setup
 
-- Keep Cloud Run IAM enabled. Callers need `roles/run.invoker` and must send a
-  Google ID token in `Authorization: Bearer ...`, with the service URL as
-  audience. The service's `run.app` endpoint must be reachable from Cloudflare.
+- Keep
+  [IAP enabled directly on Cloud Run](https://docs.cloud.google.com/run/docs/securing/identity-aware-proxy-cloud-run).
+  Users need `roles/iap.httpsResourceAccessor`; the IAP service agent needs
+  `roles/run.invoker`. The `run.app` endpoint must be reachable from Cloudflare.
+  IAP handles browser login and authorization; the Worker forwards cookies and
+  login redirects without requiring a Bearer token or issuing credentials.
 - Create one proxied wildcard DNS A record: `*.api.example.com` → `192.0.2.1`
   (dummy origin). Check for conflicting DNS records and Worker routes.
 - Activate a certificate covering `*.api.example.com`. Universal SSL for
@@ -68,7 +71,7 @@ connecting to the local HTTPS server:
 ```sh
 curl --insecure --noproxy '*' \
   --connect-to v1.api.example.com:443:127.0.0.1:8787 \
-  -H "Authorization: Bearer $GOOGLE_ID_TOKEN" https://v1.api.example.com/
+  --header 'Accept: text/html' https://v1.api.example.com/
 ```
 
 Use `--insecure` only for the local certificate. Local requests reach real Cloud
@@ -83,19 +86,21 @@ gcloud run services update-traffic "$SERVICE" \
   --project "$PROJECT_ID" --region "$REGION" --update-tags "v2=$REVISION"
 ```
 
-Verify `https://v2.api.example.com` returns the expected revision using a valid
-ID token. Tags must start with a lowercase letter, contain lowercase letters,
-digits or hyphens, end with a letter/digit, and contain no `---`. The upstream
-`TAG---SERVICE_IDENTIFIER` DNS label must fit within 63 characters.
+Open `https://v2.api.example.com` in a browser, sign in through IAP, and verify
+the expected revision. Tags must start with a lowercase letter, contain
+lowercase letters, digits or hyphens, end with a letter/digit, and contain no
+`---`. The upstream `TAG---SERVICE_IDENTIFIER` DNS label must fit within 63
+characters.
 
 ## Limitations
 
-Browser navigation, native EventSource, and browser WebSocket cannot attach the
-required Authorization header. SSE and WebSocket work with clients that can.
-Cookies become host-only; internal redirects are rewritten, but absolute URLs in
+Browser SSE and WebSocket can use an established IAP session cookie. Cookies
+become host-only; internal redirects are rewritten, but absolute URLs in
 response bodies are the application's responsibility. Caching is disabled.
 
-For 401/403, check the token, audience, and IAM; for 404, check the tag; for
-502, check the configured origin and connectivity. Live IAM, DNS/TLS, and
-new-tag verification must be completed in your environment before production
-use.
+Before production use, verify the full IAP login/logout flow, callback domain,
+cookie persistence, denied users, and a new tag on the public domain. Mock tests
+do not prove this flow works through an alternate hostname; OAuth state and
+embedded login return URLs are not rewritten. For 401/403, check IAP access and
+session validity; for 404, check the tag; for 502, check the origin and
+connectivity.
