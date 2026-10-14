@@ -19,10 +19,10 @@ ENV HOME=/tmp/sadoku-home \
 WORKDIR /app
 
 COPY --from=builder /sadoku /usr/local/bin/sadoku
-COPY README.md /app/README.md
+COPY . /app/
 COPY scripts/cloud_run_entrypoint.sh /usr/local/bin/cloud-run-entrypoint
 
-RUN chmod +x /usr/local/bin/cloud-run-entrypoint \
+RUN chmod 755 /usr/local/bin/cloud-run-entrypoint \
     && chown -R nobody:nogroup /app
 
 USER nobody:nogroup

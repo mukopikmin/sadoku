@@ -175,70 +175,15 @@ export const markdownStyles = `
     color: var(--chakra-colors-fg);
   }
 
-  .mermaid-zoom-close:hover,
-  .mermaid-zoom-close:focus-visible {
-    border-color: var(--chakra-colors-accent);
-    color: var(--chakra-colors-accent);
-  }
-
-  .mermaid-zoom-dialog {
-    position: fixed;
-    z-index: 1000;
-    inset: 0;
+  .mermaid-zoom-stage {
     display: grid;
     place-items: center;
-    padding: var(--chakra-spacing-4);
   }
 
-  .mermaid-zoom-backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--chakra-colors-overlay-backdrop);
-  }
-
-  .mermaid-zoom-content {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    width: var(--mermaid-zoom-width, calc(100vw - var(--chakra-spacing-8)));
-    height: var(--mermaid-zoom-height, calc(100vh - var(--chakra-spacing-8)));
-    overflow: hidden;
-    border: 0;
-    border-radius: var(--chakra-radii-md);
-    padding: 0;
-    background: var(--chakra-colors-canvas);
-    box-shadow:
-      0 0 0 1px var(--chakra-colors-border-default),
-      0 var(--chakra-spacing-4) var(--chakra-spacing-12) var(--chakra-colors-overlay-shadow);
-  }
-
-  .mermaid-zoom-close {
-    position: absolute;
-    z-index: 1;
-    top: var(--chakra-spacing-2);
-    right: var(--chakra-spacing-2);
-    border: 1px solid var(--chakra-colors-border-default);
-    border-radius: var(--chakra-radii-sm);
-    background: var(--chakra-colors-canvas);
-    color: var(--chakra-colors-fg);
-    cursor: pointer;
-    font: inherit;
-    font-size: 1rem;
-    line-height: 1;
-  }
-
-  .mermaid-zoom-scroller {
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-    overflow: auto;
-  }
-
-  .mermaid-zoom-scroller svg {
+  .mermaid-zoom-stage > svg {
     display: block;
-    width: 100%;
-    height: auto;
+    width: var(--mermaid-pinch-width, 100%) !important;
+    height: var(--mermaid-pinch-height, auto) !important;
     max-width: none !important;
     max-height: none !important;
   }

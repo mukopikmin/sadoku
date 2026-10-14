@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { initializeMermaid, initializeMermaidZoom } from "../markdown/mermaid";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { initializeMermaid } from "../markdown/mermaid";
 
 const bundledMermaid = vi.hoisted(() => ({
   initialize: vi.fn(),
@@ -7,6 +7,8 @@ const bundledMermaid = vi.hoisted(() => ({
 }));
 
 vi.mock("mermaid", () => ({ default: bundledMermaid }));
+
+afterEach(() => vi.restoreAllMocks());
 
 describe("initializeMermaid", () => {
   it("loads Mermaid through the Vite dependency graph", async () => {
@@ -73,10 +75,7 @@ describe("initializeMermaid", () => {
       "run",
       { nodes: [document.querySelector(".mermaid")] },
     ]);
-    expect(
-      document.querySelector<HTMLElement>(".mermaid-container")?.dataset
-        .mermaidZoomInitialized,
-    ).toBe("true");
+    expect(document.querySelector(".mermaid svg")).not.toBeNull();
   });
 
   it("skips diagrams that mermaid has already processed", async () => {
@@ -95,10 +94,7 @@ describe("initializeMermaid", () => {
     });
 
     expect(loaded).toBe(false);
-    expect(
-      document.querySelector<HTMLElement>(".mermaid-container")?.dataset
-        .mermaidZoomInitialized,
-    ).toBe("true");
+    expect(document.querySelector(".mermaid svg")).not.toBeNull();
   });
 
   it("uses an explicit mermaid theme when provided", async () => {
@@ -127,79 +123,5 @@ describe("initializeMermaid", () => {
         theme: "default",
       }),
     ]);
-  });
-});
-
-describe("initializeMermaidZoom", () => {
-  it("sizes the modal to the diagram aspect ratio", () => {
-    const document = new DOMParser().parseFromString(
-      '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 200 100"></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
-      "text/html",
-    );
-
-    initializeMermaidZoom(document);
-    document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")?.click();
-
-    const content = document.querySelector<HTMLElement>(
-      ".mermaid-zoom-content",
-    );
-    const width = parseFloat(
-      content?.style.getPropertyValue("--mermaid-zoom-width") ?? "",
-    );
-    const height = parseFloat(
-      content?.style.getPropertyValue("--mermaid-zoom-height") ?? "",
-    );
-    expect(width / height).toBeCloseTo(2);
-    expect(width).toBeLessThanOrEqual(window.innerWidth);
-    expect(height).toBeLessThanOrEqual(window.innerHeight);
-
-    document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")?.click();
-  });
-
-  it("opens a zoom dialog only from the button and removes it from close controls", () => {
-    const document = new DOMParser().parseFromString(
-      '<main><div class="mermaid-container"><pre class="mermaid"><svg viewBox="0 0 10 10"><title>Diagram</title></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
-      "text/html",
-    );
-
-    initializeMermaidZoom(document);
-
-    expect(
-      document.querySelector<HTMLElement>(".mermaid-container")?.dataset
-        .mermaidZoomInitialized,
-    ).toBe("true");
-
-    document.querySelector<HTMLElement>(".mermaid")?.click();
-
-    expect(document.querySelector(".mermaid-zoom-dialog")).toBeNull();
-
-    document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")?.click();
-
-    expect(document.querySelector(".mermaid-zoom-dialog")).not.toBeNull();
-    expect(document.querySelectorAll(".mermaid-zoom-dialog svg")).toHaveLength(
-      1,
-    );
-
-    document.querySelector<HTMLButtonElement>(".mermaid-zoom-close")?.click();
-
-    expect(document.querySelector(".mermaid-zoom-dialog")).toBeNull();
-  });
-
-  it("closes the zoom dialog with Escape and backdrop clicks", () => {
-    const document = new DOMParser().parseFromString(
-      '<main><div class="mermaid-container"><pre class="mermaid"><svg></svg></pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
-      "text/html",
-    );
-
-    initializeMermaidZoom(document);
-    document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")?.click();
-    document.querySelector<HTMLElement>(".mermaid-zoom-dialog")?.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Escape" }),
-    );
-    expect(document.querySelector(".mermaid-zoom-dialog")).toBeNull();
-
-    document.querySelector<HTMLButtonElement>(".mermaid-zoom-button")?.click();
-    document.querySelector<HTMLElement>(".mermaid-zoom-backdrop")?.click();
-    expect(document.querySelector(".mermaid-zoom-dialog")).toBeNull();
   });
 });
