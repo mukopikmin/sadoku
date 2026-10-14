@@ -302,3 +302,24 @@ Deno.test("does not register an unknown instruction source implicitly", async ()
     assertEquals(JSON.parse(documents.logs[0]), []);
   });
 });
+
+Deno.test("passes explicit proxy trust to preview startup", async () => {
+  const output = captureIo();
+  let trustForwardedPrefix: boolean | undefined;
+  const result = await runCli([
+    "start",
+    "README.md",
+    "--no-open",
+    "--trust-forwarded-prefix",
+  ], {
+    startPreviewServer: (options) => {
+      trustForwardedPrefix = options.trustForwardedPrefix;
+      return Promise.resolve({
+        filePath: "README.md",
+        url: "http://127.0.0.1:3334/",
+      });
+    },
+  }, output.io);
+  assertEquals(result, 0);
+  assertEquals(trustForwardedPrefix, true);
+});

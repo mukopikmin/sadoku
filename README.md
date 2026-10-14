@@ -188,6 +188,14 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
+Behind a trusted reverse proxy, start with `--trust-forwarded-prefix` (or set
+`SADOKU_TRUST_FORWARDED_PREFIX=true` in the Cloud Run container). The proxy must
+strip a public prefix such as `/revisions/v1` and set `X-Forwarded-Prefix` to
+it. Sadoku uses that prefix for browser routes, assets, API calls, and SSE;
+internal routes stay unchanged. Enable this only when direct access is
+restricted to the trusted proxy. Prefixes are ignored by default; no per-tag
+build is needed.
+
 ```sh
 npm install
 deno task start README.md

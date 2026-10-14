@@ -125,7 +125,10 @@ Deno.test("serves the SPA shell without caching at every client route", async ()
       "text/html; charset=utf-8",
     );
     assertEquals(response.headers.get("cache-control"), "no-store");
-    assertEquals(html.includes('<div id="sadoku-client-root"></div>'), true);
+    assertEquals(
+      html.includes('<div id="sadoku-client-root" data-base-path=""></div>'),
+      true,
+    );
     assertEquals(html.includes(`src="${previewAssetPaths.client}"`), true);
     for (const assetPath of Object.values(previewAssetPaths)) {
       assertEquals(html.includes(assetPath), true);
