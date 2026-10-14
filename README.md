@@ -227,7 +227,7 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Tables and strikethrough                             | Supported     | GitHub Flavored Markdown syntax is supported.                  |
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
 | Single-newline line breaks in comments and replies   | Supported     | GitHub-style line breaks in comments and replies only.         |
-| Mermaid diagrams                                     | Supported     | Rendered from local assets without a CDN.                      |
+| Mermaid diagrams                                     | Supported     | Local rendering; trackpad pinch zoom in the zoom dialog.       |
 | HTML comments                                        | Supported     | Displayed as commentable plain-text cards.                     |
 | Agent-file front matter                              | Supported     | Displayed as a safe data list in recognized instruction files. |
 | Generated table of contents                          | Supported     | Available from the document action menu.                       |
@@ -237,3 +237,7 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 Comments and replies support standard Markdown and GitHub Flavored Markdown.
 Single newlines in comments and replies render as line breaks, like on GitHub.
 Mermaid diagrams render only in document previews.
+
+Use **Zoom** to open a diagram in a large dialog. Trackpad pinches zoom inside
+the dialog; two-finger scrolling moves around the enlarged diagram. **Fit to
+view** restores the centered view of the whole diagram.

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-exec /usr/local/bin/sadoku start "${SADOKU_SOURCE:-/app/README.md}" \
+exec sadoku start "${SADOKU_SOURCE:-/app/test/integration/fixtures}" \
   --host 0.0.0.0 \
   --port "${PORT:-8080}" \
   --no-open \

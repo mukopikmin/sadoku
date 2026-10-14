@@ -1,8 +1,8 @@
-import { Box, Button, CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
+import { Box, CodeBlock as ChakraCodeBlock } from "@chakra-ui/react";
 import { Code, FilePenLine } from "lucide-react";
 import { Children, isValidElement } from "react";
 import type React from "react";
-import { Tooltip } from "../../components/ui/tooltip";
+import { MermaidDiagram } from "../MermaidDiagram";
 import type {
   MarkdownComponentProps,
   MarkdownElementProps,
@@ -111,36 +111,14 @@ const getMermaidCodeText = (
   return String(child.props.children).replace(/\n$/, "");
 };
 
-const renderMermaidPre = (source: string) => (
-  <Box className="mermaid-container" py="2">
-    <Box position="relative">
-      <pre className="mermaid">{source}</pre>
-      <Tooltip content="Zoom Mermaid diagram">
-        <Button
-          aria-label="Zoom Mermaid diagram"
-          bg="canvas"
-          className="mermaid-zoom-button"
-          color="fg"
-          position="absolute"
-          right="2"
-          size="xs"
-          top="2"
-          type="button"
-          variant="outline"
-        >
-          Zoom
-        </Button>
-      </Tooltip>
-    </Box>
-  </Box>
-);
-
 export const renderMarkdownPre = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
 ) => {
   const mermaidCode = getMermaidCodeText(children);
-  if (mermaidCode !== undefined) return renderMermaidPre(mermaidCode);
+  if (mermaidCode !== undefined) {
+    return <MermaidDiagram key={mermaidCode} source={mermaidCode} />;
+  }
 
   const language = getCodeBlockLanguage(children);
   const label = getCodeBlockLabel(children, language);
