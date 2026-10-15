@@ -37,7 +37,7 @@ func parseOrigin(value string) (*url.URL, error) {
 	return u, nil
 }
 
-// New builds the routing handler. IAM, response URL/cookie rewriting and the
+// New builds the routing handler. IAM, response URL rewriting and the
 // executable/container remain separate from this routing core.
 func New(options Options) (http.Handler, error) {
 	backend, err := parseOrigin(options.BackendServiceURL)

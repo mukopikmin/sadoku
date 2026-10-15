@@ -193,8 +193,8 @@ Set `Options.BackendServiceURL` to an untagged Cloud Run origin verified against
 its tagged URLs and `Options.PublicOrigin` to the browser-facing HTTPS origin.
 `/revisions/TAG/...` forwards to `TAG---<service-host>/...` with
 `X-Forwarded-Prefix: /revisions/TAG`. Test with `go -C proxy test -race ./...`.
-IAM authentication, response redirect/cookie rewriting, and container deployment
-are pending.
+IAM authentication, response redirect rewriting, and container deployment are
+pending.
 
 ```sh
 npm install
