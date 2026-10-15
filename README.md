@@ -188,6 +188,13 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
+`src/server/proxy/revision_proxy.ts` provides the revision proxy routing core.
+Set `backendServiceUrl` to the untagged Cloud Run service URL and `publicOrigin`
+to the browser-facing HTTPS origin. `/revisions/TAG/...` forwards to
+`TAG---<service-host>/...` with `X-Forwarded-Prefix: /revisions/TAG`. IAM
+authentication, response redirect/cookie rewriting, and container deployment are
+pending; this module is not yet a deployable proxy service.
+
 ```sh
 npm install
 deno task start README.md
