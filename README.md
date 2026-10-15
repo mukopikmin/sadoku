@@ -188,13 +188,13 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
-`src/server/proxy` is a standalone Go module (Go 1.26+) using only the standard
-library. Set `Options.BackendServiceURL` to an untagged Cloud Run origin
-verified against its tagged URLs and `Options.PublicOrigin` to the
-browser-facing HTTPS origin. `/revisions/TAG/...` forwards to
-`TAG---<service-host>/...` with `X-Forwarded-Prefix: /revisions/TAG`. Test with
-`go -C src/server/proxy test -race ./...`. IAM authentication, response
-redirect/cookie rewriting, and container deployment are pending.
+`proxy/` is a standalone Go module (Go 1.26+) using only the standard library.
+Set `Options.BackendServiceURL` to an untagged Cloud Run origin verified against
+its tagged URLs and `Options.PublicOrigin` to the browser-facing HTTPS origin.
+`/revisions/TAG/...` forwards to `TAG---<service-host>/...` with
+`X-Forwarded-Prefix: /revisions/TAG`. Test with `go -C proxy test -race ./...`.
+IAM authentication, response redirect/cookie rewriting, and container deployment
+are pending.
 
 ```sh
 npm install
