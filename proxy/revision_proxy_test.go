@@ -17,7 +17,14 @@ import (
 const (
 	publicOrigin = "https://preview.example.com"
 	backendURL   = "https://sadoku-opaque-id.a.run.app"
+	testIDToken  = "test.payload.signature"
 )
+
+type tokenSourceFunc func(context.Context) (string, error)
+
+func (f tokenSourceFunc) Token(ctx context.Context) (string, error) { return f(ctx) }
+
+func fixedIDToken(context.Context) (string, error) { return testIDToken, nil }
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
@@ -38,7 +45,8 @@ func newProxy(t *testing.T, transport http.RoundTripper) http.Handler {
 			return nil, errors.New("unexpected upstream request")
 		})
 	}
-	handler, err := New(Options{BackendServiceURL: backendURL, PublicOrigin: publicOrigin, Transport: transport})
+	handler, err := New(Options{BackendServiceURL: backendURL, PublicOrigin: publicOrigin,
+		Transport: transport, IDTokenSource: tokenSourceFunc(fixedIDToken)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,6 +86,7 @@ func TestDynamicTagsPathsAndQuery(t *testing.T) {
 func TestDeterministicCloudRunURL(t *testing.T) {
 	handler, err := New(Options{
 		BackendServiceURL: "https://api-123456789.asia-northeast1.run.app/", PublicOrigin: publicOrigin,
+		IDTokenSource: tokenSourceFunc(fixedIDToken),
 		Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 			if want := "https://v1---api-123456789.asia-northeast1.run.app/"; r.URL.String() != want {
 				t.Errorf("URL = %q, want %q", r.URL, want)
@@ -238,7 +247,7 @@ func TestForwardingHeaders(t *testing.T) {
 		for _, name := range []string{
 			"Host", "Connection", "X-Private", "Keep-Alive", "Transfer-Encoding", "Content-Length",
 			"Forwarded", "X-Forwarded-For", "X-Forwarded-Port", "X-Goog-Iap-Jwt-Assertion",
-			"X-Serverless-Authorization", "X-Original-URL", "X-Rewrite-URL",
+			"X-Original-URL", "X-Rewrite-URL",
 		} {
 			if got := r.Header.Get(name); got != "" {
 				t.Errorf("forwarded %s: %s", name, got)
@@ -247,6 +256,7 @@ func TestForwardingHeaders(t *testing.T) {
 		for name, want := range map[string]string{
 			"X-Forwarded-Prefix": "/revisions/staging", "X-Forwarded-Host": "preview.example.com",
 			"X-Forwarded-Proto": "https", "Authorization": "Bearer application-token", "Cookie": "session=app-cookie",
+			"X-Serverless-Authorization": "Bearer " + testIDToken,
 		} {
 			if got := r.Header.Get(name); got != want {
 				t.Errorf("%s = %q, want %q", name, got, want)

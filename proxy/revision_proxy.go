@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // Options configures the routing core, independently of serving and IAM setup.
@@ -18,7 +19,13 @@ type Options struct {
 	// PublicOrigin is the browser-facing HTTPS origin, even when Cloud Run
 	// terminates TLS before the container receives the request.
 	PublicOrigin string
-	// Transport can wrap an HTTP transport with service-to-service IAM later.
+	// IAMAudience is the backend's untagged service URL. It defaults to
+	// BackendServiceURL; set it separately if tagged routing uses another alias.
+	IAMAudience string
+	// IDTokenSource defaults to the Cloud Run metadata identity endpoint.
+	// A custom source is useful for tests or local development credentials.
+	IDTokenSource IDTokenSource
+	// Transport carries requests after IAM credentials have been attached.
 	// A nil value uses http.DefaultTransport.
 	Transport http.RoundTripper
 }
@@ -37,14 +44,8 @@ func parseOrigin(value string) (*url.URL, error) {
 	return u, nil
 }
 
-// New builds the routing handler. IAM, response URL rewriting and the
-// executable/container remain separate from this routing core.
-func New(options Options) (http.Handler, error) {
-	backend, err := parseOrigin(options.BackendServiceURL)
-	if err != nil {
-		return nil, err
-	}
-	public, err := parseOrigin(options.PublicOrigin)
+func parseCloudRunOrigin(value string) (*url.URL, error) {
+	backend, err := parseOrigin(value)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +59,38 @@ func New(options Options) (http.Handler, error) {
 			return nil, errors.New("invalid Cloud Run hostname label")
 		}
 	}
+	return backend, nil
+}
+
+// New builds a routing handler authenticated as the calling Cloud Run service.
+// Response URL rewriting and the executable/container remain separate.
+func New(options Options) (http.Handler, error) {
+	backend, err := parseCloudRunOrigin(options.BackendServiceURL)
+	if err != nil {
+		return nil, err
+	}
+	public, err := parseOrigin(options.PublicOrigin)
+	if err != nil {
+		return nil, err
+	}
+	audience := backend.Scheme + "://" + backend.Host
+	if options.IAMAudience != "" {
+		origin, err := parseCloudRunOrigin(options.IAMAudience)
+		if err != nil {
+			return nil, err
+		}
+		audience = origin.Scheme + "://" + origin.Host
+	}
+	source := options.IDTokenSource
+	if source == nil {
+		source = newMetadataTokenSource(audience, newMetadataClient(), time.Now)
+	}
+	base := options.Transport
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	transport := &iamTransport{source: source, base: base}
+	firstLabel, _, _ := strings.Cut(backend.Host, ".")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.EqualFold(r.Host, public.Host) ||
@@ -71,7 +104,7 @@ func New(options Options) (http.Handler, error) {
 			return
 		}
 		tag, rest, hasSlash := strings.Cut(tail, "/")
-		if !revisionTag.MatchString(tag) || len(tag)+3+len(labels[0]) > 63 ||
+		if !revisionTag.MatchString(tag) || len(tag)+3+len(firstLabel) > 63 ||
 			len(tag)+3+len(backend.Host) > 253 {
 			writeError(w, "Invalid revision tag.", http.StatusBadRequest)
 			return
@@ -100,7 +133,7 @@ func New(options Options) (http.Handler, error) {
 		target.Path, target.RawPath = path, rawPath
 		target.RawQuery, target.ForceQuery = r.URL.RawQuery, r.URL.ForceQuery
 		reverse := &httputil.ReverseProxy{
-			Transport:     options.Transport,
+			Transport:     transport,
 			FlushInterval: -1, // Flush each write, including large responses and SSE.
 			Rewrite: func(request *httputil.ProxyRequest) {
 				request.Out.URL = &target
