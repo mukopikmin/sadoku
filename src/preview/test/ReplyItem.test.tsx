@@ -175,17 +175,17 @@ describe("ReplyItem", () => {
       />,
     );
 
-    const copyButton = screen.getByRole("button", { name: "Copy reply" });
-    expect(copyButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-    expect(copyButton.textContent).toBe("");
-    fireEvent.click(copyButton);
+    expect(screen.queryByRole("button", { name: "Copy reply" })).toBeNull();
+    await openReplyMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy reply" }));
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith("**Reply** body.")
     );
     expect(await screen.findByText("Reply copied")).not.toBeNull();
 
     writeText.mockRejectedValueOnce(new Error("Clipboard unavailable."));
-    fireEvent.click(copyButton);
+    await openReplyMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy reply" }));
     expect(await screen.findByText("Comment action failed")).not.toBeNull();
     expect(screen.getAllByText("Clipboard unavailable.").length)
       .toBeGreaterThan(0);
