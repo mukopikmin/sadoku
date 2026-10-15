@@ -293,8 +293,16 @@ func TestRequestStreamAndCancellation(t *testing.T) {
 	defer cancel()
 	proxy := newProxy(t, roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		// No bytes have been supplied: reaching RoundTrip proves no pre-buffering.
-		if r.Body != reader {
-			t.Error("request body stream was replaced")
+		if r.Body == nil {
+			t.Error("request body stream was lost")
+			return nil, errors.New("missing body")
+		}
+		go func() {
+			defer writer.Close()
+			_, _ = writer.Write([]byte("streamed body"))
+		}()
+		if got, err := io.ReadAll(r.Body); err != nil || string(got) != "streamed body" {
+			t.Errorf("streamed body = %q, err %v", got, err)
 		}
 		cancel()
 		if !errors.Is(r.Context().Err(), context.Canceled) {
