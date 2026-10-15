@@ -144,7 +144,13 @@ func immutableAssetAge(response *http.Response, method string, target *url.URL) 
 	var age uint64
 	for _, part := range strings.Split(strings.Join(response.Header.Values("Cache-Control"), ","), ",") {
 		name, value, hasValue := strings.Cut(strings.TrimSpace(part), "=")
-		switch strings.ToLower(strings.TrimSpace(name)) {
+		name = strings.ToLower(strings.TrimSpace(name))
+		// A quoted extension can contain commas that look like cache directives.
+		// Only quoted numeric max-age is needed here; otherwise keep no-store.
+		if strings.Contains(part, `"`) && name != "max-age" {
+			return 0
+		}
+		switch name {
 		case "no-store", "no-cache":
 			return 0
 		case "immutable":

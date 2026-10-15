@@ -165,6 +165,8 @@ func TestResponseCachePolicy(t *testing.T) {
 		{"invalid age", func(c *cacheCase) { c.control = "public, max-age=oops, immutable" }, "no-store"},
 		{"duplicate age", func(c *cacheCase) { c.control += ", max-age=3600" }, "no-store"},
 		{"invalid immutable", func(c *cacheCase) { c.control = "public, max-age=86400, immutable=1" }, "no-store"},
+		{"quoted extension", func(c *cacheCase) { c.control = `custom="ignored,max-age=86400,immutable,ignored"` }, "no-store"},
+		{"quoted no-cache fields", func(c *cacheCase) { c.control += `, no-cache="Set-Cookie"` }, "no-store"},
 		{"missing type", func(c *cacheCase) { c.contentType = "" }, "no-store"},
 		{"vary wildcard", func(c *cacheCase) { c.extra.Set("Vary", "*") }, "no-store"},
 		{"cookie", func(c *cacheCase) { c.extra.Set("Set-Cookie", "session=test; Path=/; Secure") }, "no-store"},
