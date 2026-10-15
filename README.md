@@ -196,9 +196,12 @@ its tagged URLs and `Options.PublicOrigin` to the browser-facing HTTPS origin.
 On Cloud Run, IAM ID tokens come from the attached service account's metadata
 endpoint and refresh before expiry. `Options.IAMAudience` defaults to the
 untagged backend origin; set it to the service URL if routing uses another
-alias. Grant the proxy service account `roles/run.invoker` on the backend.
-Authentication failures return 502. Response redirect rewriting and container
-deployment are pending.
+alias. Grant the proxy service account `roles/run.invoker` on the backend. Token
+acquisition failures return 502. Internal `Location`/`Content-Location` headers
+use the public revision prefix; external URLs are preserved. Responses use
+`no-store`; fingerprinted assets explicitly marked immutable upstream may use
+private browser caching. Shared caching is disabled. Container deployment is
+pending.
 
 ```sh
 npm install

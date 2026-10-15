@@ -370,6 +370,9 @@ func TestLargeResponseAndSSEStreamOverHTTP(t *testing.T) {
 			if res.Header.Get("Content-Type") != contentType {
 				t.Fatal("content type was lost")
 			}
+			if res.Header.Get("Cache-Control") != "no-store" || res.Header.Get("CDN-Cache-Control") != "no-store" {
+				t.Fatal("streamed responses must not be cached")
+			}
 		})
 	}
 }
