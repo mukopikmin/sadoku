@@ -188,12 +188,13 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
-`src/server/proxy/revision_proxy.ts` provides the revision proxy routing core.
-Set `backendServiceUrl` to the untagged Cloud Run service URL and `publicOrigin`
-to the browser-facing HTTPS origin. `/revisions/TAG/...` forwards to
-`TAG---<service-host>/...` with `X-Forwarded-Prefix: /revisions/TAG`. IAM
-authentication, response redirect/cookie rewriting, and container deployment are
-pending; this module is not yet a deployable proxy service.
+`src/server/proxy` is a standalone Go module (Go 1.26+) using only the standard
+library. Set `Options.BackendServiceURL` to an untagged Cloud Run origin
+verified against its tagged URLs and `Options.PublicOrigin` to the
+browser-facing HTTPS origin. `/revisions/TAG/...` forwards to
+`TAG---<service-host>/...` with `X-Forwarded-Prefix: /revisions/TAG`. Test with
+`go -C src/server/proxy test -race ./...`. IAM authentication, response
+redirect/cookie rewriting, and container deployment are pending.
 
 ```sh
 npm install
