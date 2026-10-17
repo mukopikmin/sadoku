@@ -1,0 +1,6 @@
+*
+!go.mod
+!*.go
+!cmd/
+!cmd/**
+**/*_test.go
