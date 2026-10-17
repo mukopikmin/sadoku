@@ -1,7 +1,7 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@hono/hono@4.13.12": "4.13.12",
+    "jsr:@hono/hono@4.13.13": "4.13.13",
     "jsr:@std/assert@1.0.19": "1.0.19",
     "jsr:@std/cli@1.0.32": "1.0.32",
     "jsr:@std/collections@^1.1.3": "1.2.0",
@@ -14,8 +14,8 @@
     "npm:@connectrpc/connect@2.2.0": "2.2.0_@bufbuild+protobuf@2.16.0"
   },
   "jsr": {
-    "@hono/hono@4.13.12": {
-      "integrity": "ed4bff8999f8d472866e47ad29ff879388f7f401b2d6e2e656ff3083afc13a13"
+    "@hono/hono@4.13.13": {
+      "integrity": "dec817b8600fc2835c259d875a69e849a706f6d25e8d0643d75c97f7d0afcdf8"
     },
     "@std/assert@1.0.19": {
       "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
@@ -65,7 +65,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@hono/hono@4.13.12",
+      "jsr:@hono/hono@4.13.13",
       "jsr:@std/assert@1.0.19",
       "jsr:@std/cli@1.0.32",
       "jsr:@std/path@1.1.6",
