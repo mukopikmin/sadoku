@@ -1,5 +1,9 @@
 # Cloud Run previews
 
+Pull requests authored by `dependabot[bot]` skip all preview jobs, including
+image builds, deployments, and tag cleanup, even when a person reruns the
+workflow.
+
 The `cloud_run_preview.yml` workflow deploys same-repository pull requests with
 a `pr-<number>` revision tag and every push to `main`, including merged pull
 requests, with a stable `main` revision tag. Main deployments build the pushed
