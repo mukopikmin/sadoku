@@ -193,8 +193,12 @@ Set `Options.BackendServiceURL` to an untagged Cloud Run origin verified against
 its tagged URLs and `Options.PublicOrigin` to the browser-facing HTTPS origin.
 `/revisions/TAG/...` forwards to `TAG---<service-host>/...` with
 `X-Forwarded-Prefix: /revisions/TAG`. Test with `go -C proxy test -race ./...`.
-IAM authentication, response redirect rewriting, and container deployment are
-pending.
+On Cloud Run, IAM ID tokens come from the attached service account's metadata
+endpoint and refresh before expiry. `Options.IAMAudience` defaults to the
+untagged backend origin; set it to the service URL if routing uses another
+alias. Grant the proxy service account `roles/run.invoker` on the backend.
+Authentication failures return 502. Response redirect rewriting and container
+deployment are pending.
 
 ```sh
 npm install
