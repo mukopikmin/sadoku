@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { join, resolve } from "@std/path";
 import { createDirectoryPreviewHandler } from "./directory_handler.ts";
 import type { CommentsStore } from "./storage/comment/storage.ts";
@@ -329,4 +329,78 @@ Deno.test("memory routes expose read and delete operations only", async () => {
     204,
   );
   assertEquals(deleted, true);
+});
+
+Deno.test("keeps forwarded prefixes request-local while internal routes stay unchanged", async () => {
+  const handler = createDirectoryPreviewHandler(
+    { rootPath: "/unused", documents: [], documentsById: new Map() },
+    createMemoryStore(),
+    { trustForwardedPrefix: true },
+  );
+  await Promise.all(["v1", "staging"].map(async (tag) => {
+    const prefix = `/revisions/${tag}`;
+    const response = await request(handler, "/documents/7", {
+      headers: { "X-Forwarded-Prefix": prefix },
+    });
+    assertEquals(response.status, 200);
+    assertEquals(response.headers.get("Cache-Control"), "no-store");
+    const html = await response.text();
+    assertStringIncludes(html, `data-base-path="${prefix}"`);
+    assertStringIncludes(html, `src="${prefix}${previewAssetPaths.client}"`);
+    const asset = await request(handler, previewAssetPaths.client, {
+      headers: { "X-Forwarded-Prefix": prefix },
+    });
+    assertEquals(asset.status, 200);
+    assertStringIncludes(asset.headers.get("Content-Type")!, "javascript");
+    await asset.body?.cancel();
+    const client = createClient(
+      PreviewService,
+      createConnectTransport({
+        baseUrl: "http://127.0.0.1:3334",
+        fetch: async (input, init) => {
+          const outgoing = new Request(input, init);
+          outgoing.headers.set("X-Forwarded-Prefix", prefix);
+          return await handler(outgoing, serveHandlerInfo);
+        },
+        useBinaryFormat: false,
+      }),
+    );
+    await client.getSession({});
+  }));
+});
+
+Deno.test("ignores untrusted prefixes and rejects malformed trusted prefixes", async () => {
+  for (const trustForwardedPrefix of [false, true]) {
+    const handler = createDirectoryPreviewHandler(
+      { rootPath: "/unused", documents: [], documentsById: new Map() },
+      createMemoryStore(),
+      { trustForwardedPrefix },
+    );
+    const response = await request(handler, "/", {
+      headers: { "X-Forwarded-Prefix": "//evil.test" },
+    });
+    assertEquals(response.status, trustForwardedPrefix ? 400 : 200);
+    const body = await response.text();
+    assertEquals(body.includes("evil.test"), false);
+    if (!trustForwardedPrefix) assertStringIncludes(body, 'data-base-path=""');
+    if (trustForwardedPrefix) {
+      const api = await request(
+        handler,
+        "/sadoku.preview.v1.PreviewService/GetSession",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Forwarded-Prefix": "/a/../b",
+          },
+          body: "{}",
+        },
+      );
+      assertEquals(api.status, 400);
+      await api.body?.cancel();
+    }
+    const root = await request(handler, "/");
+    assertEquals(root.status, 200);
+    assertStringIncludes(await root.text(), 'data-base-path=""');
+  }
 });

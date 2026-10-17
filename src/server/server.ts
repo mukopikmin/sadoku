@@ -18,6 +18,7 @@ import {
 } from "./github_pull_monitor.ts";
 
 export type PreviewServerOptions = {
+  trustForwardedPrefix?: boolean;
   file: string;
   host: string;
   keepAlive?: boolean;
@@ -200,6 +201,7 @@ export const startPreviewServer = async (
       stores.comments,
       {
         ...shutdownScheduler,
+        trustForwardedPrefix: options.trustForwardedPrefix,
         log,
         directoryState,
         statistics: stores.statistics,
