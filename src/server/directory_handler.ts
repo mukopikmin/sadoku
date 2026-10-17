@@ -65,6 +65,8 @@ import {
   getStatisticsResponse,
 } from "./api/preview_api.ts";
 import { getGitHubAccountResponse } from "./api/github_account_api.ts";
+import { createDocumentResponse } from "./api/create_document_api.ts";
+import { readConfig } from "./config.ts";
 
 export type DirectoryPreviewHandlerOptions = {
   runGitHubCommand?: RunGitHubCommand;
@@ -165,7 +167,13 @@ export const createDirectoryPreviewHandler = (
       handleConnectUnary(
         context.req.raw,
         PreviewService.method.getSession,
-        () => getSessionResponse(session),
+        () =>
+          getSessionResponse({
+            ...session,
+            canCreateDocuments: Boolean(
+              documentStore && session.canCreateDocuments,
+            ),
+          }),
       ),
   );
   app.all(getSessionPath, connectMethodNotAllowedResponse);
@@ -190,6 +198,18 @@ export const createDirectoryPreviewHandler = (
       PreviewService.method.listDocuments.output,
       (documents) => ({ documents }),
     ));
+  register(
+    PreviewService.method.createDocument,
+    (input) =>
+      createDocumentResponse(
+        input,
+        session,
+        documentStore,
+        !options.directoryState ||
+          options.directoryState.status.state === "ready",
+        readConfig()?.markdownExtensions,
+      ),
+  );
   register(
     PreviewService.method.getDocument,
     async ({ documentId }) =>

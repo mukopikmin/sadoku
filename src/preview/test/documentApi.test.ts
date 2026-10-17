@@ -61,6 +61,14 @@ describe("document API tag conversion", () => {
 });
 
 describe("session API conversion", () => {
+  it("preserves explicit file creation capability", () => {
+    expect(
+      toPreviewSession(
+        create(GetSessionResponseSchema, { canCreateDocuments: true }),
+      ),
+    )
+      .toEqual({ canCreateDocuments: true });
+  });
   it("converts pull request metadata and supports sessions without it", () => {
     expect(
       toPreviewSession(create(GetSessionResponseSchema, {

@@ -185,7 +185,10 @@ const json = (method: string, body: unknown): RequestInit => ({
     ? url.pathname.slice(servicePath.length)
     : undefined;
   if (!method) return globalThis.fetch(input, init);
-  if (method === "GetSession" || method === "GetStatistics") {
+  if (
+    method === "GetSession" || method === "GetStatistics" ||
+    method === "CreateDocument"
+  ) {
     return globalThis.fetch(input, init);
   }
   const text = await new Request(input, init).text() || "{}";
