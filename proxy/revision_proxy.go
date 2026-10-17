@@ -63,7 +63,7 @@ func parseCloudRunOrigin(value string) (*url.URL, error) {
 }
 
 // New builds a routing handler authenticated as the calling Cloud Run service.
-// Response URL rewriting and the executable/container remain separate.
+// The executable/container remains separate.
 func New(options Options) (http.Handler, error) {
 	backend, err := parseCloudRunOrigin(options.BackendServiceURL)
 	if err != nil {
@@ -91,6 +91,10 @@ func New(options Options) (http.Handler, error) {
 	}
 	transport := &iamTransport{source: source, base: base}
 	firstLabel, _, _ := strings.Cut(backend.Host, ".")
+	serviceHosts := []string{backend.Host}
+	if audienceHost := strings.TrimPrefix(audience, "https://"); audienceHost != backend.Host {
+		serviceHosts = append(serviceHosts, audienceHost)
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.EqualFold(r.Host, public.Host) ||
@@ -115,7 +119,7 @@ func New(options Options) (http.Handler, error) {
 			location.Path = basePath + "/"
 			location.RawQuery, location.ForceQuery = r.URL.RawQuery, r.URL.ForceQuery
 			w.Header().Set("Location", location.String())
-			w.Header().Set("Cache-Control", "no-store")
+			setCacheHeaders(w.Header(), "no-store")
 			w.WriteHeader(http.StatusPermanentRedirect)
 			return
 		}
@@ -140,6 +144,9 @@ func New(options Options) (http.Handler, error) {
 				request.Out.Host = target.Host
 				request.Out.RequestURI = ""
 				setForwardedHeaders(request.Out.Header, public, basePath)
+			},
+			ModifyResponse: func(response *http.Response) error {
+				return rewriteResponse(response, r.Method, &target, public, basePath, serviceHosts)
 			},
 			ErrorHandler: func(w http.ResponseWriter, _ *http.Request, _ error) {
 				writeError(w, "Upstream request failed.", http.StatusBadGateway)
@@ -177,6 +184,6 @@ func setForwardedHeaders(headers http.Header, public *url.URL, basePath string) 
 }
 
 func writeError(w http.ResponseWriter, message string, status int) {
-	w.Header().Set("Cache-Control", "no-store")
+	setCacheHeaders(w.Header(), "no-store")
 	http.Error(w, message, status)
 }
