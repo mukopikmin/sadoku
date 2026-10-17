@@ -1,5 +1,9 @@
 # Cloud Run pull request previews
 
+Pull requests authored by `dependabot[bot]` skip all preview jobs, including
+image builds, deployments, and tag cleanup, even when a person reruns the
+workflow.
+
 The preview image includes the pull request's repository contents under `/app`,
 subject to `.dockerignore`. Sadoku opens `/app/test/integration/fixtures` as a
 directory so the preview lists the integration test's Markdown fixtures. Set
