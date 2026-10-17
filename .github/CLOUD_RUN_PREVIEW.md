@@ -1,14 +1,25 @@
-# Cloud Run pull request previews
+# Cloud Run previews
 
 Pull requests authored by `dependabot[bot]` skip all preview jobs, including
 image builds, deployments, and tag cleanup, even when a person reruns the
 workflow.
 
-The preview image includes the pull request's repository contents under `/app`,
-subject to `.dockerignore`. Sadoku opens `/app/test/integration/fixtures` as a
-directory so the preview lists the integration test's Markdown fixtures. Set
-`SADOKU_SOURCE` to override the source; for example, `/app/README.md` opens only
-the README.
+The `cloud_run_preview.yml` workflow deploys same-repository pull requests with
+a `pr-<number>` revision tag and every push to `main`, including merged pull
+requests, with a stable `main` revision tag. Main deployments build the pushed
+commit, including the merge result. Closing a pull request removes only its PR
+tag; the `main` tag remains available. Each PR and `main` have separate
+concurrency groups so their runs do not cancel each other.
+
+Both types of deployment use `--no-traffic` and publish their tagged preview URL
+in the workflow summary and the `cloud-run-preview` deployment environment.
+Existing service traffic is preserved.
+
+The preview image includes the selected commit's repository contents under
+`/app`, subject to `.dockerignore`. Sadoku opens
+`/app/test/integration/fixtures` as a directory so the preview lists the
+integration test's Markdown fixtures. Set `SADOKU_SOURCE` to override the
+source; for example, `/app/README.md` opens only the README.
 
 The `cloud_run_preview.yml` workflow expects these GitHub repository or
 `cloud-run-preview` environment secrets:
@@ -34,7 +45,7 @@ logs or guarantee that transformed or partial values are hidden. The preview URL
 is still published as the deployment environment URL and may reveal resource
 identifiers; log masking is not access control for that endpoint.
 
-The workflow builds pull request code in a separate job that has no
+The workflow builds the selected commit in a separate job that has no
 `id-token: write` permission and no Google Cloud credentials. Only the saved
 image artifact crosses into the deployment job, and it is loaded before OIDC
 authentication. The deployment job does not check out or execute pull request
@@ -56,8 +67,14 @@ repository ID remains stable if the repository is renamed:
 ```text
 assertion.repository == 'OWNER/REPOSITORY' &&
 assertion.repository_id == 'REPOSITORY_ID' &&
-assertion.event_name == 'pull_request'
+(assertion.event_name == 'pull_request' ||
+ (assertion.event_name == 'push' && assertion.ref == 'refs/heads/main'))
 ```
+
+If the provider currently permits only `pull_request` events, update its
+attribute condition before the first main deployment. The GitHub Environment's
+deployment branch rules must also permit `main` in addition to pull request
+refs. Required reviewers, if configured, still need to approve each deployment.
 
 Apply the same repository restriction to the service account's
 `roles/iam.workloadIdentityUser` binding. Configure required reviewers on the
