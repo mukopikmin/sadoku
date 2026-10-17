@@ -1,0 +1,55 @@
+name: Protobuf
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/protobuf.yml
+      - buf.gen.yaml
+      - buf.yaml
+      - deno.json
+      - package.json
+      - package-lock.json
+      - proto/**
+      - gen/ts/**
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/protobuf.yml
+      - buf.gen.yaml
+      - buf.yaml
+      - deno.json
+      - package.json
+      - package-lock.json
+      - proto/**
+      - gen/ts/**
+
+permissions:
+  contents: read
+
+jobs:
+  generated-code:
+    name: Generated code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.8.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install protobuf tools
+        run: npm ci --ignore-scripts
+
+      - name: Check schema and generated code
+        run: npm run proto:check
