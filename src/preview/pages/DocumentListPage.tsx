@@ -1,4 +1,13 @@
-import { Alert, Container, Heading, Link, Text } from "@chakra-ui/react";
+import {
+  Alert,
+  Button,
+  Container,
+  Heading,
+  HStack,
+  Link,
+  Text,
+} from "@chakra-ui/react";
+import { Plus } from "lucide-react";
 import type { DirectoryStatus } from "../api/directoryStatus";
 import { DocumentTree } from "../components/DocumentTree";
 import type { DocumentSummary } from "../models/document";
@@ -10,9 +19,16 @@ type Props = {
   documents: DocumentSummary[];
   onSelectDocument: (id: number) => void;
   pullRequest?: PullRequestMetadata;
+  onCreateDocument?: (directory: string) => void;
 };
 export const DocumentListPage = (
-  { directoryStatus, documents, onSelectDocument, pullRequest }: Props,
+  {
+    directoryStatus,
+    documents,
+    onSelectDocument,
+    pullRequest,
+    onCreateDocument,
+  }: Props,
 ) => (
   <Container as="main" maxW="980px" px="8" pb="16">
     {pullRequest && (
@@ -42,7 +58,19 @@ export const DocumentListPage = (
         )}
       </>
     )}
-    <Heading mb="4" size="md">Documents</Heading>
+    <HStack mb="4" justify="space-between">
+      <Heading size="md">Documents</Heading>
+      {onCreateDocument && (
+        <Button
+          size="sm"
+          variant="ghost"
+          color="fg.muted"
+          onClick={() => onCreateDocument("")}
+        >
+          <Plus aria-hidden="true" /> New file
+        </Button>
+      )}
+    </HStack>
     {directoryStatus?.state === "loading"
       ? (
         <Alert.Root status="info">
@@ -74,6 +102,7 @@ export const DocumentListPage = (
         <DocumentTree
           documents={documents}
           onSelectDocument={onSelectDocument}
+          onCreateDocument={onCreateDocument}
         />
       )}
   </Container>

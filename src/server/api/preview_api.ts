@@ -20,6 +20,7 @@ const toUint64 = (value: number): bigint => {
 export const getSessionResponse = (
   session: DirectorySession,
 ): MessageInitShape<typeof GetSessionResponseSchema> => ({
+  canCreateDocuments: session.canCreateDocuments === true,
   ...(session.pullRequest && { pullRequest: session.pullRequest }),
 });
 

@@ -2,23 +2,26 @@ import {
   Badge,
   createTreeCollection,
   HStack,
+  IconButton,
   TreeView,
 } from "@chakra-ui/react";
-import { ChevronRight, File, Folder } from "lucide-react";
+import { ChevronRight, File, Folder, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   type DocumentTreeNode,
   getDirectoryValues,
 } from "../models/documentTree";
 import { TagLabel } from "./ui/TagLabel";
+import { Tooltip } from "./ui/tooltip";
 
 type DocumentTreeViewProps = {
   onSelectDocument: (id: number) => void;
   rootNode: DocumentTreeNode;
+  onCreateDocument?: (directory: string) => void;
 };
 
 export const DocumentTreeView = (
-  { onSelectDocument, rootNode }: DocumentTreeViewProps,
+  { onSelectDocument, rootNode, onCreateDocument }: DocumentTreeViewProps,
 ) => {
   const collection = useMemo(
     () =>
@@ -74,6 +77,29 @@ export const DocumentTreeView = (
                   <TreeView.BranchText fontWeight="medium">
                     {node.name}
                   </TreeView.BranchText>
+                  {onCreateDocument && (
+                    <Tooltip content="Create a file in this folder">
+                      <IconButton
+                        aria-label={`Create file in ${
+                          node.value.slice("directory:".length)
+                        }`}
+                        color="fg.muted"
+                        marginStart="auto"
+                        size="xs"
+                        variant="ghost"
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onCreateDocument(
+                            node.value.slice("directory:".length),
+                          );
+                        }}
+                      >
+                        <Plus aria-hidden="true" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </TreeView.BranchControl>
               )
               : (

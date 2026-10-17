@@ -39,6 +39,7 @@ Deno.test("remote preview sessions ignore URL query strings when assigning docum
   );
 
   assertEquals(documents.size, 1);
+  assertEquals(first.canCreateDocuments, undefined);
   assertEquals([...documents.keys()], ["https://example.com/docs/readme.md"]);
   assertEquals(first.documents[0].id, second.documents[0].id);
   assertEquals(
@@ -76,6 +77,7 @@ Deno.test("pull request sessions register multiple documents with stable IDs", a
   });
 
   assertEquals(documents.size, 2);
+  assertEquals(first.canCreateDocuments, undefined);
   assertEquals(
     first.documents.map(({ relativePath, title }) => ({ relativePath, title })),
     [
@@ -120,7 +122,23 @@ Deno.test("directory preparation becomes ready and publishes counts", async () =
   try {
     await prepareDirectorySession(state, store);
     assertEquals(state.status, { state: "ready", detected: 1, registered: 1 });
+    assertEquals(state.session.canCreateDocuments, true);
     assertEquals(state.session.documents.length, 1);
+  } finally {
+    await Deno.remove(directory, { recursive: true });
+  }
+});
+
+Deno.test("single-file previews do not grant directory file creation", async () => {
+  const directory = await Deno.makeTempDir();
+  try {
+    const filePath = `${directory}/one.md`;
+    await Deno.writeTextFile(filePath, "# One");
+    const session = await createPreviewSession(
+      filePath,
+      createDocumentStore().store,
+    );
+    assertEquals(session.canCreateDocuments, undefined);
   } finally {
     await Deno.remove(directory, { recursive: true });
   }
