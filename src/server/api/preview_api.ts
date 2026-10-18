@@ -1,3 +1,4 @@
+import { toUint32 } from "./preview_messages.ts";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import {
   GetSessionResponseSchema,
@@ -21,7 +22,14 @@ export const getSessionResponse = (
   session: DirectorySession,
 ): MessageInitShape<typeof GetSessionResponseSchema> => ({
   canCreateDocuments: session.canCreateDocuments === true,
-  ...(session.pullRequest && { pullRequest: session.pullRequest }),
+  pullRequest: session.pullRequest
+    ? {
+      description: session.pullRequest.description,
+      number: toUint32(session.pullRequest.number),
+      title: session.pullRequest.title,
+      url: session.pullRequest.url,
+    }
+    : undefined,
 });
 
 export const getStatisticsResponse = async (

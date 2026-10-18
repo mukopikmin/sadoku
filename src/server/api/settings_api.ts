@@ -1,21 +1,18 @@
-import {
-  isValidExcludedDirectories,
-  isValidFontScale,
-  isValidMarkdownExtensions,
-  readConfig,
-  updatePreviewConfig,
-} from "../config.ts";
+import { readConfig, updatePreviewConfig } from "../config.ts";
 import { noStoreJson, textResponse } from "../responses.ts";
 import {
   defaultDirectoryScanOptions,
   defaultExcludedDirectories,
   defaultMarkdownExtensions,
 } from "../storage/document/list_markdown_files.ts";
-
-const invalidRequest = (message: string): Response =>
-  textResponse(message, 400);
-
-const readSettings = () => {
+import type { SettingsStore } from "../usecase/settings/ports.ts";
+import {
+  isSettingsError,
+  type PreviewSettings,
+  type SettingsError,
+} from "../usecase/settings/types.ts";
+import { updateSettings as saveSettings } from "../usecase/settings/update_settings.ts";
+const readSettings = (): PreviewSettings => {
   const config = readConfig();
   return {
     ...(config?.themeMode === undefined ? {} : { theme: config.themeMode }),
@@ -32,79 +29,43 @@ const readSettings = () => {
   };
 };
 
+export const previewSettingsStore: SettingsStore = {
+  read: readSettings,
+  write: (settings) =>
+    updatePreviewConfig(
+      settings.theme,
+      settings.codeWrap,
+      settings.maxDepth,
+      settings.maxFiles,
+      settings.fontScale,
+      settings.excludedDirectories,
+      settings.markdownExtensions,
+    ),
+};
 export const getSettings = (): Response => noStoreJson(readSettings());
-
-export const updateSettings = async (
-  request: Request,
-): Promise<Response> => {
+export const updateSettings = async (request: Request): Promise<Response> => {
   const contentType = request.headers.get("content-type")?.split(";", 1)[0]
     .trim().toLowerCase();
   if (contentType !== "application/json") {
-    return invalidRequest("Content-Type must be application/json.");
+    return textResponse("Content-Type must be application/json.", 400);
   }
-
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return invalidRequest("Request body must be valid JSON.");
+    return textResponse("Request body must be valid JSON.", 400);
   }
-  if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return invalidRequest(
-      "Request body must contain the complete preview settings.",
-    );
+  try {
+    return noStoreJson(await saveSettings(previewSettingsStore, body));
+  } catch (error) {
+    if (isSettingsError(error)) {
+      return textResponse(settingsErrorMessage(error), 400);
+    }
+    throw error;
   }
-
-  const {
-    codeWrap,
-    excludedDirectories,
-    fontScale,
-    maxDepth,
-    maxFiles,
-    markdownExtensions,
-    theme,
-  } = body as Record<
-    string,
-    unknown
-  >;
-  const allowedKeys = new Set([
-    "codeWrap",
-    "excludedDirectories",
-    "fontScale",
-    "markdownExtensions",
-    "maxDepth",
-    "maxFiles",
-    "theme",
-  ]);
-  if (
-    Object.keys(body).some((key) => !allowedKeys.has(key)) ||
-    (theme !== "dark" && theme !== "light") ||
-    (codeWrap !== "scroll" && codeWrap !== "wrap") ||
-    !isValidFontScale(fontScale) ||
-    (excludedDirectories !== undefined &&
-      !isValidExcludedDirectories(excludedDirectories)) ||
-    (markdownExtensions !== undefined &&
-      !isValidMarkdownExtensions(markdownExtensions)) ||
-    !Number.isInteger(maxDepth) || (maxDepth as number) < 0 ||
-    !Number.isInteger(maxFiles) || (maxFiles as number) < 1
-  ) {
-    return invalidRequest(
-      "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, and markdownExtensions settings.",
-    );
-  }
-
-  await updatePreviewConfig(
-    theme,
-    codeWrap,
-    maxDepth as number,
-    maxFiles as number,
-    fontScale,
-    excludedDirectories ?? readConfig()?.excludedDirectories ?? [
-      ...defaultExcludedDirectories,
-    ],
-    markdownExtensions ?? readConfig()?.markdownExtensions ?? [
-      ...defaultMarkdownExtensions,
-    ],
-  );
-  return noStoreJson(readSettings());
 };
+
+export const settingsErrorMessage = (error: SettingsError): string =>
+  error.reason === "object_required"
+    ? "Request body must contain the complete preview settings."
+    : "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, and markdownExtensions settings.";

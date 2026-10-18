@@ -1,19 +1,15 @@
+import { exportPreviewComment } from "../preview/export_comment.ts";
+import { readPreviewComments } from "../usecase/comment/read_preview_comments.ts";
 import type { PreviewSource } from "../source.ts";
 import type { DirectorySession } from "../usecase/document/types.ts";
 import type { RunGitHubCommand } from "../github_pull.ts";
-import { createGitHubCommentExporter } from "../github_comment.ts";
-import {
-  type CommentExportError,
-  exportComment,
-} from "../usecase/comment/export_comment.ts";
-import { readMarkdownSource } from "../source.ts";
-import { readResolvedCommentsDocument } from "../usecase/comment/position.ts";
+import type { CommentExportError } from "../usecase/comment/export_comment.ts";
 import {
   type CommentsStore,
   fileCommentsStore,
 } from "../storage/comment/storage.ts";
 import { noStoreJson, textResponse } from "../responses.ts";
-import type { CommentsDependencies } from "../usecase/comment/ports.ts";
+import { createCommentsDependencies as dependencies } from "../comment_dependencies.ts";
 import {
   commentsErrorMessage,
   isCommentsUseCaseError,
@@ -79,26 +75,6 @@ const parseCommentRange = (
   }
   return { endLine, startLine };
 };
-
-const dependencies = (
-  commentsStore: CommentsStore,
-  source: PreviewSource,
-  readMarkdown = readMarkdownSource,
-): CommentsDependencies => ({
-  commentsStore,
-  readMarkdown: async (markdownSource) => {
-    try {
-      return await readMarkdown(markdownSource);
-    } catch (error) {
-      if (markdownSource !== source.documentSource) throw error;
-      const snapshot = (await commentsStore.read(source.commentSource))
-        .sourceSnapshot;
-      if (snapshot === undefined) throw error;
-      return snapshot;
-    }
-  },
-  now: () => new Date().toISOString(),
-});
 
 const mapUseCaseError = (error: unknown): Response => {
   if (!isCommentsUseCaseError(error)) throw error;
@@ -224,20 +200,16 @@ export const getComments = async (
   readMarkdown?: (source: string) => Promise<string>,
   githubHeadSha?: string,
 ): Promise<Response> => {
-  const { previousSourceSnapshot: _, sourceSnapshot: __, ...document } =
-    await readResolvedCommentsDocument(
-      source.commentSource,
-      source.documentSource,
-      commentsStore,
-      dependencies(commentsStore, source, readMarkdown).readMarkdown,
-    );
-  return noStoreJson({
-    ...document,
-    ...(githubHeadSha ? { githubHeadSha } : {}),
-  });
+  return noStoreJson(
+    await readPreviewComments(
+      dependencies(commentsStore, source, readMarkdown),
+      source,
+      githubHeadSha,
+    ),
+  );
 };
 
-const exportErrors = {
+export const githubExportErrors = {
   export_review_out_of_sync: 409,
   export_markdown_changed: 409,
   export_unavailable: 409,
@@ -253,8 +225,8 @@ const exportErrors = {
 } satisfies Record<CommentExportError["type"], number> & Record<string, number>;
 
 export const githubExportErrorResponse = (
-  code: keyof typeof exportErrors,
-  status = exportErrors[code],
+  code: keyof typeof githubExportErrors,
+  status = githubExportErrors[code],
 ): Response => noStoreJson({ error: { code } }, status);
 
 const parseExportRequest = async (request: Request) => {
@@ -297,71 +269,26 @@ export const exportCommentToGitHub = async (
   if (typeof headSha !== "string" || !/^[a-f0-9]{40,64}$/.test(headSha)) {
     return githubExportErrorResponse("export_invalid_request");
   }
-  const pull = session.githubPull;
-  if (!pull) return githubExportErrorResponse("export_unavailable");
-  const document = session.documentsById.get(documentId);
-  if (!document) return githubExportErrorResponse("export_document_not_found");
-  const pullUrl =
-    `https://github.com/${pull.owner}/${pull.repo}/pull/${pull.pullNumber}`;
-  // Read the immutable head document remotely once for this operation. Never
-  // substitute a saved snapshot when checking what the user is viewing.
-  let remoteMarkdown: Promise<string> | undefined;
-  const readMarkdown = () =>
-    remoteMarkdown ??= (session.readMarkdown ?? readMarkdownSource)(
-      source.documentSource,
-    );
   try {
     return noStoreJson(
-      await exportComment({
-        readMarkdown,
-        readTarget: () => {
-          const current = session.documentsById.get(documentId);
-          return current && !current.deleted
-            ? {
-              path: current.relativePath,
-              headSha: new URL(current.filePath).searchParams.get("ref") ?? "",
-            }
-            : undefined;
-        },
-        readComment: async () => {
-          const comments = await readResolvedCommentsDocument(
-            source.commentSource,
-            source.documentSource,
-            store,
-            readMarkdown,
-          );
-          return comments.comments.find((comment) => comment.id === commentId);
-        },
-        exporter: createGitHubCommentExporter({ ...pull, url: pullUrl }, run),
-        key: async (comment) => {
-          const bytes = new TextEncoder().encode(JSON.stringify([
-            pullUrl,
-            document.relativePath,
-            comment.id,
-            comment.createdAt,
-          ]));
-          return [
-            ...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
-          ]
-            .map((byte) => byte.toString(16).padStart(2, "0")).join("");
-        },
-      }, {
-        startLine,
-        endLine,
-        body,
-        displayedMarkdown,
-        headSha,
+      await exportPreviewComment(
+        { startLine, endLine, body, displayedMarkdown, headSha, createdAt },
+        session,
+        documentId,
         commentId,
-        createdAt,
-        path: document.relativePath,
-      }),
+        source,
+        store,
+        run,
+      ),
     );
   } catch (error) {
     if (
       typeof error === "object" && error !== null && "type" in error &&
-      Object.hasOwn(exportErrors, String(error.type))
+      Object.hasOwn(githubExportErrors, String(error.type))
     ) {
-      return githubExportErrorResponse(error.type as keyof typeof exportErrors);
+      return githubExportErrorResponse(
+        error.type as keyof typeof githubExportErrors,
+      );
     }
     return githubExportErrorResponse("export_failed");
   }

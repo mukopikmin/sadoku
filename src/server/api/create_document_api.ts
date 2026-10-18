@@ -1,3 +1,6 @@
+import type { MessageInitShape } from "@bufbuild/protobuf";
+import type { DocumentSummarySchema } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
+import { documentSummaryMessage } from "./preview_messages.ts";
 import { connectFailure } from "../connect/unary.ts";
 import { createLocalDocumentCreator } from "../storage/document/create_local_document.ts";
 import { defaultMarkdownExtensions } from "../storage/document/list_markdown_files.ts";
@@ -17,7 +20,7 @@ export const createDocumentResponse = async (
   documentStore: DocumentStore | undefined,
   ready: boolean,
   markdownExtensions: readonly string[] = defaultMarkdownExtensions,
-) => {
+): Promise<MessageInitShape<typeof DocumentSummarySchema>> => {
   if (!documentStore || !ready || !session.canCreateDocuments) {
     throw connectFailure(
       "failed_precondition",
@@ -26,12 +29,12 @@ export const createDocumentResponse = async (
     );
   }
   try {
-    const { filePath: _, ...document } = await createDocument(session, input, {
+    const document = await createDocument(session, input, {
       documentStore,
       creator: createLocalDocumentCreator(session.rootPath),
       markdownExtensions,
     });
-    return { ...document, id: BigInt(document.id) };
+    return documentSummaryMessage(document);
   } catch (error) {
     if (typeof error === "object" && error !== null && "type" in error) {
       const failure = error as CreateDocumentError;

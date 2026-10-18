@@ -1,6 +1,11 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
-import { type Client, createClient } from "@connectrpc/connect";
+import {
+  type Client,
+  Code,
+  ConnectError,
+  createClient,
+} from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb.ts";
 import { openAppDatabase } from "../../src/server/db/connection.ts";
@@ -17,6 +22,7 @@ const withMetadataPreview = async (
     documentId: bigint;
     otherDocumentId: bigint;
     handler: Deno.ServeHandler;
+    reopenClient: () => Client<typeof PreviewService>;
   }) => Promise<void>,
 ) => {
   const rootPath = await Deno.makeTempDir();
@@ -30,37 +36,44 @@ const withMetadataPreview = async (
         join(rootPath, "review.md"),
         join(rootPath, "other.md"),
       ]);
+      for (const entry of entries) {
+        await Deno.writeTextFile(entry.filePath, "# Review\n");
+      }
       const sessionDocuments = entries.map((entry) => ({
         ...entry,
         deleted: false,
         relativePath: entry.filePath.slice(rootPath.length + 1),
         title: "Review",
       }));
-      const handler = createDirectoryPreviewHandler(
-        {
-          rootPath,
-          documents: sessionDocuments,
-          documentsById: new Map(
-            sessionDocuments.map((document) => [document.id, document]),
-          ),
-        },
-        createSqliteCommentsStore(database),
-        {},
-        documents,
-        createSqliteInstructionStore(database),
-        createSqliteTagStore(database),
-      );
-      const client = createClient(
-        PreviewService,
-        createConnectTransport({
-          baseUrl: "http://127.0.0.1:3334",
-          useBinaryFormat: false,
-          fetch: async (input, init) =>
-            await handler(new Request(input, init), serveHandlerInfo),
-        }),
-      );
+      const createHandler = () =>
+        createDirectoryPreviewHandler(
+          {
+            rootPath,
+            documents: sessionDocuments,
+            documentsById: new Map(
+              sessionDocuments.map((document) => [document.id, document]),
+            ),
+          },
+          createSqliteCommentsStore(database),
+          {},
+          documents,
+          createSqliteInstructionStore(database),
+          createSqliteTagStore(database),
+        );
+      const handler = createHandler();
+      const makeClient = (handler: Deno.ServeHandler) =>
+        createClient(
+          PreviewService,
+          createConnectTransport({
+            baseUrl: "http://127.0.0.1:3334",
+            useBinaryFormat: false,
+            fetch: async (input, init) =>
+              await handler(new Request(input, init), serveHandlerInfo),
+          }),
+        );
       await run({
-        client,
+        client: makeClient(handler),
+        reopenClient: () => makeClient(createHandler()),
         documentId: BigInt(entries[0].id),
         otherDocumentId: BigInt(entries[1].id),
         handler,
@@ -81,6 +94,11 @@ Deno.test("Connect tags can be added, updated, and read back from SQLite", async
     });
     assertEquals(tags.length, 1);
     assertEquals(tags[0].name, "Review");
+    const defaults = await assertRejects(
+      () => client.updateTag({ id: tags[0].id }),
+      ConnectError,
+    );
+    assertEquals(defaults.code, Code.InvalidArgument);
     const updated = await client.updateTag({
       id: tags[0].id,
       name: "Reviewed",
@@ -93,6 +111,7 @@ Deno.test("Connect tags can be added, updated, and read back from SQLite", async
       listed.documents.find(({ id }) => id === documentId)?.tags,
       [updated],
     );
+    assertEquals((await client.getDocument({ documentId })).tags, [updated]);
     const summary = (await client.listTags({})).tags[0];
     assertEquals(summary.documentCount, 1n);
     assertEquals(summary.createdAt.length > 0, true);
@@ -112,10 +131,19 @@ Deno.test("Connect tags can be added, updated, and read back from SQLite", async
 
 Deno.test("Connect instructions remain readable after creation and update", async () => {
   await withMetadataPreview(
-    async ({ client, documentId, otherDocumentId, handler }) => {
+    async ({ client, documentId, otherDocumentId, handler, reopenClient }) => {
       assertEquals(
         (await client.listInstructions({ documentId })).instructions,
         [],
+      );
+      const defaults = await assertRejects(
+        () => client.createInstruction({ documentId }),
+        ConnectError,
+      );
+      assertEquals(defaults.code, Code.InvalidArgument);
+      assertEquals(
+        defaults.rawMessage,
+        "Instruction content must not be empty.",
       );
       const created = await client.createInstruction({
         documentId,
@@ -136,6 +164,29 @@ Deno.test("Connect instructions remain readable after creation and update", asyn
       assertEquals(updated.id, created.id);
       assertEquals(updated.content, "Keep public APIs stable.");
       assertEquals(updated.createdAt, created.createdAt);
+      assertEquals(
+        (await reopenClient().listInstructions({ documentId })).instructions,
+        [updated],
+      );
+      for (
+        const operation of [
+          () =>
+            client.updateInstruction({
+              documentId: otherDocumentId,
+              instructionId: created.id,
+              content: "Wrong document",
+            }),
+          () =>
+            client.deleteInstruction({
+              documentId: otherDocumentId,
+              instructionId: created.id,
+            }),
+        ]
+      ) {
+        const failure = await assertRejects(operation, ConnectError);
+        assertEquals(failure.code, Code.NotFound);
+      }
+
       assertEquals(
         (await client.listInstructions({ documentId })).instructions,
         [updated],
