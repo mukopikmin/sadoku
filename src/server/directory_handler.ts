@@ -115,7 +115,10 @@ export const createDirectoryPreviewHandler = (
       );
     }
     const value = response.status === 204 ? {} : await response.json();
-    return fromJson(schema, transform(value) as JsonValue);
+    // REST responses can include storage metadata outside the RPC schema.
+    return fromJson(schema, transform(value) as JsonValue, {
+      ignoreUnknownFields: true,
+    });
   };
   const jsonRequest = (value: unknown) =>
     new Request("http://127.0.0.1", {
