@@ -201,7 +201,7 @@ acquisition failures return 502. Internal `Location`/`Content-Location` headers
 use the public revision prefix; external URLs are preserved. Responses use
 `no-store`; fingerprinted assets explicitly marked immutable upstream may use
 private browser caching. Shared caching is disabled. See
-[proxy setup and deployment](proxy/README.md).
+[proxy setup and manual deployment](proxy/README.md).
 
 ```sh
 npm install
