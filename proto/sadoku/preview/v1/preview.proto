@@ -6,6 +6,7 @@ service PreviewService {
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
   rpc GetStatistics(GetStatisticsRequest) returns (GetStatisticsResponse);
   rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse);
+  rpc CreateDocument(CreateDocumentRequest) returns (DocumentSummary);
   rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
   rpc GetDirectoryStatus(GetDirectoryStatusRequest) returns (GetDirectoryStatusResponse);
   rpc GetSettings(GetSettingsRequest) returns (Settings);
@@ -35,6 +36,7 @@ message GetSessionRequest {}
 
 message GetSessionResponse {
   optional PullRequest pull_request = 1;
+  bool can_create_documents = 2;
 }
 
 message PullRequest {
@@ -74,6 +76,11 @@ message TagSummary {
 
 message ListDocumentsRequest {}
 message ListDocumentsResponse { repeated DocumentSummary documents = 1; }
+message CreateDocumentRequest {
+  string directory = 1;
+  string filename = 2;
+  string title = 3;
+}
 message DocumentSummary {
   uint64 id = 1;
   string relative_path = 2;

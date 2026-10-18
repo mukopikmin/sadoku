@@ -10,6 +10,7 @@ export type DirectoryDocument = Document & {
 };
 
 export type DirectorySession = {
+  canCreateDocuments?: boolean;
   rootPath: string;
   documents: DirectoryDocument[];
   documentsById: Map<number, DirectoryDocument>;

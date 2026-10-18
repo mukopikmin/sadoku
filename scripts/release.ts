@@ -1,5 +1,8 @@
 export const BASELINE_TAG = "release-notes-baseline";
 
+const stableVersion = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+const stableTag = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+
 export type ReleaseArguments = {
   command: "check" | "notes";
   version: string;
@@ -12,11 +15,22 @@ type CommandResult = {
   stderr: string;
 };
 
+export type ReleaseRunner = (
+  command: string,
+  args: string[],
+) => Promise<CommandResult>;
+
 type Check = {
   name: string;
   ok: boolean;
   actual: string;
   expected: string;
+};
+
+type Release = {
+  tagName: string;
+  isDraft: boolean;
+  isPrerelease: boolean;
 };
 
 const decoder = new TextDecoder();
@@ -30,9 +44,7 @@ export const parseArguments = (args: string[]): ReleaseArguments => {
   const versionIndex = args.indexOf("--version");
   const version = versionIndex === -1 ? undefined : args[versionIndex + 1];
   if (!version) throw new Error("Missing --version <version>.");
-  if (
-    !/^\d+\.\d+\.\d+$/.test(version)
-  ) {
+  if (!stableVersion.test(version)) {
     throw new Error(`Invalid semantic version: ${version}`);
   }
 
@@ -46,7 +58,7 @@ export const parseArguments = (args: string[]): ReleaseArguments => {
   return { command, version, output };
 };
 
-const run = async (command: string, args: string[]): Promise<CommandResult> => {
+const run: ReleaseRunner = async (command, args) => {
   try {
     const result = await new Deno.Command(command, {
       args,
@@ -66,14 +78,10 @@ const run = async (command: string, args: string[]): Promise<CommandResult> => {
   }
 };
 
-export const selectPreviousStableTag = (
-  releases: Array<{ tagName: string; isDraft: boolean; isPrerelease: boolean }>,
-): string =>
-  releases.find((release) => !release.isDraft && !release.isPrerelease)
-    ?.tagName ?? BASELINE_TAG;
-
-const git = (...args: string[]) => run("git", args);
-const gh = (...args: string[]) => run("gh", args);
+export const selectPreviousStableTag = (releases: Release[]): string =>
+  releases.find((release) =>
+    !release.isDraft && !release.isPrerelease && stableTag.test(release.tagName)
+  )?.tagName ?? BASELINE_TAG;
 
 const requireResult = (result: CommandResult, description: string): string => {
   if (!result.success) {
@@ -82,180 +90,205 @@ const requireResult = (result: CommandResult, description: string): string => {
   return result.stdout;
 };
 
-const releaseContext = async () => {
-  const headSha = requireResult(await git("rev-parse", "HEAD"), "Read HEAD");
-  const releasesOutput = requireResult(
-    await gh(
-      "release",
-      "list",
-      "--exclude-drafts",
-      "--exclude-pre-releases",
-      "--limit",
-      "1",
-      "--json",
-      "tagName,isDraft,isPrerelease",
-    ),
-    "List GitHub releases",
+const releaseContext = async (execute: ReleaseRunner) => {
+  const headSha = requireResult(
+    await execute("git", ["rev-parse", "HEAD"]),
+    "Read HEAD",
   );
-  const releases = JSON.parse(releasesOutput) as Array<{
-    tagName: string;
-    isDraft: boolean;
-    isPrerelease: boolean;
-  }>;
   const repository = requireResult(
-    await gh(
+    await execute("gh", [
       "repo",
       "view",
       "--json",
       "nameWithOwner",
       "--jq",
       ".nameWithOwner",
-    ),
+    ]),
     "Resolve GitHub repository",
   );
+  // Include drafts and every page so API failures cannot masquerade as absence.
+  const releasesOutput = requireResult(
+    await execute("gh", [
+      "api",
+      "--paginate",
+      `repos/${repository}/releases?per_page=100`,
+      "--jq",
+      ".[] | {tagName: .tag_name, isDraft: .draft, isPrerelease: .prerelease}",
+    ]),
+    "List GitHub releases",
+  );
+  const releases: Release[] = releasesOutput
+    ? releasesOutput.split("\n").map((line) => JSON.parse(line))
+    : [];
   return {
     headSha,
     repository,
+    releases,
     previousStableTag: selectPreviousStableTag(releases),
   };
 };
 
-const checkRelease = async (version: string): Promise<void> => {
-  const tag = `v${version}`;
-  const branch = await git("branch", "--show-current");
-  const status = await git("status", "--porcelain");
-  const head = await git("rev-parse", "HEAD");
-  const remote = await git("rev-parse", "origin/main");
-  const divergence = await git(
-    "rev-list",
-    "--left-right",
-    "--count",
-    "main...origin/main",
-  );
-  const rootCommit = await git("rev-list", "--max-parents=0", "HEAD");
-  const baseline = await git(
-    "rev-parse",
-    "--verify",
-    `refs/tags/${BASELINE_TAG}^{commit}`,
-  );
-  const remoteBaseline = await git(
-    "ls-remote",
-    "--exit-code",
-    "--tags",
-    "origin",
-    `refs/tags/${BASELINE_TAG}`,
-  );
-  const releaseTag = await git("rev-parse", "--verify", `refs/tags/${tag}`);
-  const remoteReleaseTag = await git(
-    "ls-remote",
-    "--exit-code",
-    "--tags",
-    "origin",
-    `refs/tags/${tag}`,
-  );
-  const ci = await gh(
-    "run",
-    "list",
-    "--workflow",
-    "Test",
-    "--branch",
-    "main",
-    "--commit",
-    head.stdout,
-    "--limit",
-    "1",
-    "--json",
-    "conclusion,headSha,url",
-  );
-  const ciRuns = ci.success
-    ? JSON.parse(ci.stdout) as Array<
-      { conclusion: string; headSha: string; url: string }
-    >
-    : [];
-  const successfulRun = ciRuns.find((run) =>
-    run.conclusion === "success" && run.headSha === head.stdout
-  );
-  const remoteBaselineSha = remoteBaseline.stdout.split(/\s+/)[0] ?? "";
+const isNewerVersion = (version: string, previousTag: string): boolean => {
+  if (previousTag === BASELINE_TAG) return true;
+  const previous = previousTag.slice(1).split(".").map(BigInt);
+  const next = version.split(".").map(BigInt);
+  for (let index = 0; index < next.length; index++) {
+    if (next[index] !== previous[index]) return next[index] > previous[index];
+  }
+  return false;
+};
 
+export const inspectRelease = async (
+  version: string,
+  execute: ReleaseRunner = run,
+) => {
+  // Also validate callers that do not enter through the CLI argument parser.
+  parseArguments(["check", "--version", version]);
+  const tag = `v${version}`;
+  const context = await releaseContext(execute);
+  const git = (...args: string[]) => execute("git", args);
+  requireResult(
+    await git("fetch", "--no-tags", "origin", "main"),
+    "Fetch main",
+  );
+  const remoteMain = requireResult(
+    await git("rev-parse", "origin/main"),
+    "Read origin/main",
+  );
+  const tagRef = `refs/tags/${tag}`;
+  const tagObject = requireResult(
+    await git("rev-parse", "--verify", tagRef),
+    "Read release tag",
+  );
+  const tagCommit = requireResult(
+    await git("rev-parse", "--verify", `${tagRef}^{commit}`),
+    "Resolve release tag commit",
+  );
+  const remoteTag = requireResult(
+    await git("ls-remote", "--exit-code", "--tags", "origin", tagRef),
+    "Read remote release tag",
+  );
+  const remoteTagObject = remoteTag.split("\n").find((line) =>
+    line.split(/\s+/)[1] === tagRef
+  )?.split(/\s+/)[0];
+  const previousCommit = requireResult(
+    await git(
+      "rev-parse",
+      "--verify",
+      `refs/tags/${context.previousStableTag}^{commit}`,
+    ),
+    "Read notes start tag",
+  );
+  const ancestor = await git(
+    "merge-base",
+    "--is-ancestor",
+    previousCommit,
+    context.headSha,
+  );
+  const root = context.previousStableTag === BASELINE_TAG
+    ? requireResult(
+      await git("rev-list", "--max-parents=0", "HEAD"),
+      "Read repository root",
+    )
+    : undefined;
+  const ciOutput = requireResult(
+    await execute("gh", [
+      "run",
+      "list",
+      "--repo",
+      context.repository,
+      "--workflow",
+      "test.yml",
+      "--branch",
+      "main",
+      "--event",
+      "push",
+      "--commit",
+      context.headSha,
+      "--limit",
+      "1",
+      "--json",
+      "conclusion,headSha,url",
+    ]),
+    "Read Test run",
+  );
+  const ciRuns = JSON.parse(ciOutput) as Array<{
+    conclusion: string;
+    headSha: string;
+    url: string;
+  }>;
+  const successfulRun = ciRuns.find((run) =>
+    run.conclusion === "success" && run.headSha === context.headSha
+  );
   const checks: Check[] = [
     {
-      name: "branch",
-      ok: branch.success && branch.stdout === "main",
-      actual: branch.stdout,
-      expected: "main",
-    },
-    {
-      name: "cleanTree",
-      ok: status.success && status.stdout === "",
-      actual: status.stdout || "clean",
-      expected: "clean",
-    },
-    {
       name: "remoteMain",
-      ok: head.success && remote.success && head.stdout === remote.stdout,
-      actual: `${head.stdout} / ${remote.stdout}`,
-      expected: "matching SHAs",
+      ok: context.headSha === remoteMain,
+      actual: context.headSha,
+      expected: remoteMain,
     },
     {
-      name: "divergence",
-      ok: divergence.success && divergence.stdout === "0\t0",
-      actual: divergence.stdout,
-      expected: "0\\t0",
+      name: "releaseTag",
+      ok: tagCommit === context.headSha && remoteTagObject === tagObject,
+      actual:
+        `${tagCommit} / ${tagObject} locally / ${remoteTagObject} on origin`,
+      expected: `unchanged ${tag} at ${context.headSha}`,
     },
     {
-      name: "baselineTag",
-      ok: baseline.success && remoteBaseline.success && rootCommit.success &&
-        baseline.stdout === rootCommit.stdout &&
-        remoteBaselineSha === rootCommit.stdout,
-      actual: baseline.success && remoteBaseline.success
-        ? `${baseline.stdout} locally / ${remoteBaselineSha} on origin`
-        : "missing locally or on origin",
-      expected:
-        `${BASELINE_TAG} at root ${rootCommit.stdout} locally and on origin`,
-    },
-    {
-      name: "releaseTagAbsent",
-      ok: !releaseTag.success && !remoteReleaseTag.success,
-      actual: releaseTag.success || remoteReleaseTag.success
-        ? releaseTag.stdout || remoteReleaseTag.stdout
+      name: "releaseAbsent",
+      ok: !context.releases.some((release) => release.tagName === tag),
+      actual: context.releases.some((release) => release.tagName === tag)
+        ? "already exists"
         : "absent",
-      expected: "absent locally and on origin",
+      expected: "absent, including drafts",
+    },
+    {
+      name: "notesBaseline",
+      ok: ancestor.success && previousCommit !== context.headSha &&
+        (root === undefined || root === previousCommit),
+      actual: `${context.previousStableTag} at ${previousCommit}`,
+      expected: "an earlier ancestor; the root commit for the first release",
+    },
+    {
+      name: "newerVersion",
+      ok: isNewerVersion(version, context.previousStableTag),
+      actual: version,
+      expected: `newer than ${context.previousStableTag}`,
     },
     {
       name: "ci",
       ok: Boolean(successfulRun),
-      actual: successfulRun?.url ?? (ci.stderr || "no successful run"),
-      expected: `successful Test run for ${head.stdout}`,
+      actual: successfulRun?.url ?? "no successful Test push run on main",
+      expected: `successful Test run for ${context.headSha}`,
     },
   ];
-  const result = {
+  return {
     ok: checks.every((check) => check.ok),
     version,
     tag,
-    headSha: head.stdout,
+    tagObject,
+    headSha: context.headSha,
+    previousStableTag: context.previousStableTag,
     checks,
   };
-  console.log(JSON.stringify(result, null, 2));
-  if (!result.ok) Deno.exit(1);
 };
 
-const generateNotes = async (
+export const generateNotes = async (
   version: string,
   output: string,
+  execute: ReleaseRunner = run,
 ): Promise<void> => {
   const tag = `v${version}`;
-  const context = await releaseContext();
-  const baseline = await git(
-    "rev-parse",
-    "--verify",
-    `refs/tags/${context.previousStableTag}`,
-  );
+  const context = await releaseContext(execute);
   requireResult(
-    baseline,
+    await execute("git", [
+      "rev-parse",
+      "--verify",
+      `refs/tags/${context.previousStableTag}^{commit}`,
+    ]),
     `Verify notes start tag ${context.previousStableTag}`,
   );
-
-  const notes = await gh(
+  const notes = await execute("gh", [
     "api",
     "--method",
     "POST",
@@ -266,18 +299,21 @@ const generateNotes = async (
     `target_commitish=${context.headSha}`,
     "-f",
     `previous_tag_name=${context.previousStableTag}`,
-  );
+  ]);
   const parsed = JSON.parse(requireResult(notes, "Generate release notes")) as {
     name?: string;
     body?: string;
   };
+  if (!parsed.body?.trim()) {
+    throw new Error("Generated release notes are empty.");
+  }
   const result = {
     version,
     tag,
     headSha: context.headSha,
     previousStableTag: context.previousStableTag,
-    title: parsed.name ?? tag,
-    body: parsed.body ?? "",
+    title: parsed.name || tag,
+    body: parsed.body,
   };
   await Deno.writeTextFile(output, `${JSON.stringify(result, null, 2)}\n`);
   console.log(JSON.stringify({ ok: true, output, ...result }, null, 2));
@@ -286,8 +322,13 @@ const generateNotes = async (
 if (import.meta.main) {
   try {
     const args = parseArguments(Deno.args);
-    if (args.command === "check") await checkRelease(args.version);
-    else await generateNotes(args.version, args.output!);
+    if (args.command === "check") {
+      const result = await inspectRelease(args.version);
+      console.log(JSON.stringify(result, null, 2));
+      if (!result.ok) Deno.exit(1);
+    } else {
+      await generateNotes(args.version, args.output!);
+    }
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     Deno.exit(1);

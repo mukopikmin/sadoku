@@ -13,10 +13,11 @@ import { DocumentTreeView } from "./DocumentTreeView";
 type DocumentTreeProps = {
   documents: DocumentSummary[];
   onSelectDocument: (id: number) => void;
+  onCreateDocument?: (directory: string) => void;
 };
 
 export const DocumentTree = (
-  { documents, onSelectDocument }: DocumentTreeProps,
+  { documents, onSelectDocument, onCreateDocument }: DocumentTreeProps,
 ) => {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [tagSearch, setTagSearch] = useState("");
@@ -71,6 +72,7 @@ export const DocumentTree = (
         )
         : (
           <DocumentTreeView
+            onCreateDocument={onCreateDocument}
             onSelectDocument={onSelectDocument}
             rootNode={rootNode}
           />

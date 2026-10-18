@@ -12,6 +12,31 @@ import { DocumentTree } from "../components/DocumentTree";
 afterEach(cleanup);
 
 describe("DocumentTree", () => {
+  it("creates in the clicked folder without selecting a document or toggling the folder", async () => {
+    const onCreateDocument = vi.fn();
+    const onSelectDocument = vi.fn();
+    render(
+      <DocumentTree
+        documents={[{
+          id: 1,
+          deleted: false,
+          relativePath: "docs/guides/setup.md",
+          title: "setup.md",
+          tags: [],
+        }]}
+        onSelectDocument={onSelectDocument}
+        onCreateDocument={onCreateDocument}
+      />,
+    );
+    const folder = screen.getByText("guides").closest('[role="treeitem"]')!;
+    const expanded = folder.getAttribute("aria-expanded");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create file in docs/guides" }),
+    );
+    expect(onCreateDocument).toHaveBeenCalledWith("docs/guides");
+    expect(onSelectDocument).not.toHaveBeenCalled();
+    expect(folder.getAttribute("aria-expanded")).toBe(expanded);
+  });
   it("nests documents under their folder and selects the document", async () => {
     const onSelectDocument = vi.fn();
     render(

@@ -48,7 +48,10 @@ export type DirectorySessionState = {
 export const createLoadingDirectorySession = (
   rootPath: string,
 ): DirectorySessionState => ({
-  session: createSession(resolve(rootPath), []),
+  session: {
+    ...createSession(resolve(rootPath), []),
+    canCreateDocuments: true,
+  },
   status: { state: "loading", detected: 0, registered: 0 },
 });
 
@@ -117,7 +120,10 @@ export const createDirectorySession = async (
       listMarkdownFiles(directoryPath, scanOptions, signal),
     pathExists,
   }, scanOptions.maxFiles ?? defaultDirectoryScanOptions.maxFiles);
-  return createSession(resolvedRootPath, documents);
+  return {
+    ...createSession(resolvedRootPath, documents),
+    canCreateDocuments: true,
+  };
 };
 
 /**

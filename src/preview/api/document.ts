@@ -1,6 +1,6 @@
 import type { DocumentSummary, PreviewDocument } from "../models/document";
 import { parseDocumentTag } from "./tags";
-import { connectHttpStatus, previewClient } from "./connect";
+import { connectHttpStatus, connectRawMessage, previewClient } from "./connect";
 
 export const parseGitHubHeadSha = (value: unknown): string | undefined => {
   if (value === undefined) return undefined;
@@ -12,6 +12,25 @@ export const parseGitHubHeadSha = (value: unknown): string | undefined => {
 
 export type DocumentSummaryResponse = DocumentSummary;
 export type PreviewDocumentResponse = PreviewDocument;
+
+export type CreateDocumentInput = {
+  directory: string;
+  filename: string;
+  title: string;
+};
+
+export const createDocument = async (
+  input: CreateDocumentInput,
+): Promise<DocumentSummary> => {
+  const document = await previewClient.createDocument(input).catch((error) => {
+    throw new Error(connectRawMessage(error) || "Failed to create file.");
+  });
+  const id = Number(document.id);
+  if (!Number.isSafeInteger(id) || id <= 0 || !document.relativePath) {
+    throw new Error("Invalid created document response.");
+  }
+  return { ...document, id, tags: document.tags.map(parseDocumentTag) };
+};
 
 export const loadDocuments = async (): Promise<DocumentSummary[]> => {
   const { documents } = await previewClient.listDocuments({}).catch((error) => {

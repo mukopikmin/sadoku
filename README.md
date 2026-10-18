@@ -82,6 +82,16 @@ Change these limits with `--max-depth` and `--max-files`, or under **Settings â†
 Directory discovery**. Sadoku does not follow symbolic links and excludes `.git`
 and `node_modules` by default.
 
+In a local directory preview, choose **New file** above the document list to
+create a Markdown file at the root, or use the **+** button on a folder row to
+create one in that folder. Enter a filename and, optionally, a document title.
+Omitting the extension adds `.md`; explicit extensions must match the configured
+Markdown extensions. A title adds `# Title` as the first line; leaving it blank
+creates an empty file. The list continues to display the filename. Existing
+files are never overwritten, and the new file opens in the preview immediately.
+File creation is unavailable for single-file, remote URL, and pull request
+previews.
+
 GitHub pull request previews use the same configured Markdown extensions and
 `--max-files` limit. They show added and modified Markdown files, omit deleted
 files, and fetch every document at the pull request's current head commit. The
@@ -188,13 +198,20 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
-Behind a trusted reverse proxy, start with `--trust-forwarded-prefix` (or set
-`SADOKU_TRUST_FORWARDED_PREFIX=true` in the Cloud Run container). The proxy must
-strip a public prefix such as `/revisions/v1` and set `X-Forwarded-Prefix` to
-it. Sadoku uses that prefix for browser routes, assets, API calls, and SSE;
-internal routes stay unchanged. Enable this only when direct access is
-restricted to the trusted proxy. Prefixes are ignored by default; no per-tag
-build is needed.
+`proxy/` is a standalone Go module (Go 1.26+) using only the standard library.
+Set `Options.BackendServiceURL` to an untagged Cloud Run origin verified against
+its tagged URLs and `Options.PublicOrigin` to the browser-facing HTTPS origin.
+`/revisions/TAG/...` forwards to `TAG---<service-host>/...` with
+`X-Forwarded-Prefix: /revisions/TAG`. Test with `go -C proxy test -race ./...`.
+On Cloud Run, IAM ID tokens come from the attached service account's metadata
+endpoint and refresh before expiry. `Options.IAMAudience` defaults to the
+untagged backend origin; set it to the service URL if routing uses another
+alias. Grant the proxy service account `roles/run.invoker` on the backend. Token
+acquisition failures return 502. Internal `Location`/`Content-Location` headers
+use the public revision prefix; external URLs are preserved. Responses use
+`no-store`; fingerprinted assets explicitly marked immutable upstream may use
+private browser caching. Shared caching is disabled. See
+[proxy setup and manual deployment](proxy/README.md).
 
 ```sh
 npm install
@@ -222,6 +239,35 @@ existing Connect RPC paths unchanged.
 Pass `--version <version>` to `deno task compile` or `deno task install` when
 building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 
+### Stable releases
+
+Pushing a tag such as `v0.10.0` starts the `Release` workflow and automatically
+publishes a stable GitHub release. The tag must point to the current tip of
+`main` with a successful `Test` push run, and its version must be newer than the
+previous stable release. Prerelease suffixes and leading zeroes are rejected.
+
+Use the repository's
+[`sadoku-release` skill](.agents/skills/sadoku-release/SKILL.md) to review
+changes, propose a version, and approve the exact commit and notes range before
+pushing the annotated tag. The tag push authorizes publication; there is no
+later approval of generated notes. For example, after approval:
+
+```sh
+git tag --annotate v0.10.0 <approved-full-main-sha> --message "Release v0.10.0"
+git push origin refs/tags/v0.10.0
+```
+
+Actions builds and attests the three platform archives, verifies their checksums
+and provenance, generates notes from the previous stable release (or the root
+`release-notes-baseline` tag for the first release), and rechecks the target
+immediately before publishing. Candidate downloads to the agent's environment
+are unnecessary. Push with authorized user or GitHub App credentials; pushes
+made with `GITHUB_TOKEN` do not trigger the release workflow.
+
+Never move or recreate a stable tag. If a run fails, inspect it before approving
+a rerun; an existing release is never overwritten. A fix on a new commit needs a
+new version/tag. The rolling `nightly` release remains separate.
+
 ## Supported Markdown
 
 | Feature                                              | Status        | Notes                                                          |
@@ -234,6 +280,7 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Suggested edits in comments                          | Supported     | `suggest` and `suggestion` blocks render source diffs.         |
 | Tables and strikethrough                             | Supported     | GitHub Flavored Markdown syntax is supported.                  |
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
+| Single-newline line breaks in comments and replies   | Supported     | GitHub-style line breaks in comments and replies only.         |
 | Mermaid diagrams                                     | Supported     | Local rendering; trackpad pinch zoom in the zoom dialog.       |
 | HTML comments                                        | Supported     | Displayed as commentable plain-text cards.                     |
 | Agent-file front matter                              | Supported     | Displayed as a safe data list in recognized instruction files. |
@@ -242,6 +289,7 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Footnotes, definition lists, and math/LaTeX          | Not supported |                                                                |
 
 Comments and replies support standard Markdown and GitHub Flavored Markdown.
+Single newlines in comments and replies render as line breaks, like on GitHub.
 Mermaid diagrams render only in document previews.
 
 Use **Zoom** to open a diagram in a large dialog. Trackpad pinches zoom inside

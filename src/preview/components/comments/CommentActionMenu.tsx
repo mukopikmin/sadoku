@@ -1,5 +1,5 @@
 import { Box, Flex, IconButton, Link, Menu, Portal } from "@chakra-ui/react";
-import { Copy, Ellipsis } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { useState } from "react";
 import type { Comment, GitHubCommentExport } from "../../models/comment";
 import { ConfirmDialog } from "../ConfirmDialog";
@@ -84,15 +84,6 @@ export const CommentActionMenu = ({
   return (
     <>
       <Flex position="absolute" right="0" top="0">
-        <IconButton
-          aria-label="Copy comment"
-          disabled={disabled}
-          onClick={handleCopy}
-          size="xs"
-          variant="ghost"
-        >
-          <Copy aria-hidden="true" />
-        </IconButton>
         <Menu.Root>
           <Menu.Trigger asChild>
             <IconButton
@@ -111,6 +102,13 @@ export const CommentActionMenu = ({
                   {lineLabel}
                 </Box>
                 <Menu.Separator />
+                <Menu.Item
+                  value="copy"
+                  disabled={disabled}
+                  onClick={() => void handleCopy()}
+                >
+                  Copy comment
+                </Menu.Item>
                 {onExport && comment.author.type === "human" &&
                   comment.state === "active" && (
                   <Menu.Item

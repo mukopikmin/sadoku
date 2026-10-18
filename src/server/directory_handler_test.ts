@@ -10,6 +10,7 @@ import { previewAssetPaths } from "./preview/asset_manifest.ts";
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb.ts";
+import type { DocumentStore } from "./usecase/document/ports.ts";
 
 const createMemoryStore = (): CommentsStore => {
   const documents = new Map<string, PreviewCommentsDocument>();
@@ -39,6 +40,72 @@ const request = (
   init?: RequestInit,
 ) =>
   handler(new Request(`http://127.0.0.1:3334${path}`, init), serveHandlerInfo);
+
+Deno.test("Connect file creation becomes immediately readable and listed", async () => {
+  const rootPath = await Deno.makeTempDir();
+  try {
+    await Deno.mkdir(join(rootPath, "guides"));
+    const session: DirectorySession = {
+      rootPath,
+      canCreateDocuments: true,
+      documents: [],
+      documentsById: new Map(),
+    };
+    const documentStore: DocumentStore = {
+      ensure: (filePath) => Promise.resolve({ id: 8, filePath }),
+      ensureMany: () => Promise.resolve([]),
+      list: () => Promise.resolve([]),
+      findById: () => Promise.resolve(undefined),
+      findByFilePath: () => Promise.resolve(undefined),
+    };
+    const handler = createDirectoryPreviewHandler(
+      session,
+      createMemoryStore(),
+      {},
+      documentStore,
+    );
+    const client = createClient(
+      PreviewService,
+      createConnectTransport({
+        baseUrl: "http://127.0.0.1:3334",
+        useBinaryFormat: false,
+        fetch: async (input, init) =>
+          await handler(new Request(input, init), serveHandlerInfo),
+      }),
+    );
+    assertEquals((await client.getSession({})).canCreateDocuments, true);
+    const created = await client.createDocument({
+      directory: "guides",
+      filename: "new",
+      title: "New document",
+    });
+    assertEquals(created.id, 8n);
+    assertEquals(created.relativePath, "guides/new.md");
+    assertEquals(created.title, "new.md");
+    assertEquals((await client.listDocuments({})).documents[0].id, created.id);
+    assertEquals(
+      (await client.getDocument({ documentId: created.id })).markdown,
+      "# New document\n",
+    );
+    const duplicate = await request(
+      handler,
+      "/sadoku.preview.v1.PreviewService/CreateDocument",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "connect-protocol-version": "1",
+        },
+        body: JSON.stringify({ filename: "new", directory: "guides" }),
+      },
+    );
+    assertEquals(duplicate.status, 409);
+    assertEquals(duplicate.headers.get("cache-control"), "no-store");
+    assertEquals((await duplicate.json()).code, "already_exists");
+  } finally {
+    await Deno.remove(rootPath, { recursive: true });
+  }
+});
 
 Deno.test("serves directory documents and keeps comments isolated", async () => {
   const rootPath = await Deno.makeTempDir({ prefix: "sadoku-directory-" });

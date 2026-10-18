@@ -33,7 +33,9 @@ const parsePullRequest = (value: unknown): PullRequestMetadata => {
 
 export const toPreviewSession = (
   session: GetSessionResponse,
-): PreviewSession =>
-  session.pullRequest === undefined
-    ? {}
-    : { pullRequest: parsePullRequest(session.pullRequest) };
+): PreviewSession => ({
+  ...(session.canCreateDocuments === true && { canCreateDocuments: true }),
+  ...(session.pullRequest !== undefined && {
+    pullRequest: parsePullRequest(session.pullRequest),
+  }),
+});
