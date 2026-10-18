@@ -23,6 +23,7 @@ import type { DocumentStore } from "./usecase/document/mod.ts";
 import { handlePreviewAssetRequest } from "./preview/assets.ts";
 import { createPreviewEventStream } from "./preview/events.ts";
 import { renderSpaShell } from "./preview/shell.ts";
+import { parsePublicBasePath } from "./preview/base_path.ts";
 import { getCommentsNotificationFilePath } from "./storage/comment/notifications.ts";
 import {
   methodNotAllowedResponse,
@@ -61,6 +62,7 @@ import {
 import { getGitHubAccountResponse } from "./api/github_account_api.ts";
 
 export type DirectoryPreviewHandlerOptions = {
+  trustForwardedPrefix?: boolean;
   runGitHubCommand?: RunGitHubCommand;
   log?: (message: string) => void;
   onEventStreamClose?: () => void;
@@ -102,7 +104,12 @@ export const createDirectoryPreviewHandler = (
     app.all(path, connectMethodNotAllowedResponse);
   };
 
-  app.use("*", async (_context, next) => {
+  app.use("*", async (context, next) => {
+    if (
+      options.trustForwardedPrefix &&
+      parsePublicBasePath(context.req.header("X-Forwarded-Prefix") ?? null) ===
+        undefined
+    ) return textResponse("Invalid public base path.", 400);
     try {
       await next();
     } catch (error) {
@@ -469,6 +476,11 @@ export const createDirectoryPreviewHandler = (
   app.all("/__sadoku", () => notFoundResponse());
   app.all("/__sadoku/*", () => notFoundResponse());
   app.all("/assets*", () => notFoundResponse("Asset not found."));
-  app.get("*", () => noStoreHtml(renderSpaShell("Sadoku")));
+  app.get("*", (context) => {
+    const basePath = options.trustForwardedPrefix
+      ? parsePublicBasePath(context.req.header("X-Forwarded-Prefix") ?? null)
+      : "";
+    return noStoreHtml(renderSpaShell("Sadoku", basePath));
+  });
   return (request) => app.fetch(request);
 };

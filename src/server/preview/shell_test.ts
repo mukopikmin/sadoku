@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 
 import { renderSpaShell } from "./shell.ts";
 import { previewAssetPaths } from "./asset_manifest.ts";
@@ -12,6 +12,15 @@ Deno.test("escapes all HTML-sensitive characters in the SPA title", () => {
     "<title>&lt;&amp;&gt;&quot;&#39; title</title>",
   );
   assertEquals(html.includes(`<title><&>"' title</title>`), false);
+});
+
+Deno.test("renders the public prefix for assets and browser configuration", () => {
+  const html = renderSpaShell("Preview", "/revisions/pr-42");
+  assertStringIncludes(html, 'data-base-path="/revisions/pr-42"');
+  for (const path of Object.values(previewAssetPaths)) {
+    assertStringIncludes(html, `"/revisions/pr-42${path}"`);
+  }
+  assertThrows(() => renderSpaShell("Preview", "//evil.test"));
 });
 
 Deno.test("links existing preview assets in the SPA head", async () => {

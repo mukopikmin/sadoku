@@ -6,12 +6,14 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import type { ComponentType } from "react";
+import { readPreviewBasePath } from "./api/basePath";
 
 const EmptyRoute = () => null;
 
 export const createPreviewRouter = (
   rootComponent: ComponentType,
   initialEntries?: string[],
+  basePath = readPreviewBasePath(),
 ) => {
   const rootRoute = createRootRoute({ component: rootComponent });
   const indexRoute = createRoute({
@@ -35,6 +37,7 @@ export const createPreviewRouter = (
     documentCommentsRoute,
   ]);
   return createRouter({
+    basepath: basePath || "/",
     defaultPendingMs: Number.POSITIVE_INFINITY,
     history: initialEntries
       ? createMemoryHistory({ initialEntries })
