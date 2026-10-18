@@ -34,6 +34,7 @@ Deno.test("creation adapter maps conflicts, validation and unavailable sessions 
       relativePath: "new.md",
       title: "new.md",
       deleted: false,
+      tags: [],
     });
     assertEquals(
       await Deno.readTextFile(join(rootPath, "new.md")),

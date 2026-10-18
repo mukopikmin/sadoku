@@ -1,4 +1,7 @@
-import { assertEquals, assertMatch } from "@std/assert";
+import { Code, ConnectError, createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
+import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import type { CommentsStore } from "../storage/comment/storage.ts";
 import { getCommentsFilePath } from "../storage/comment/storage.ts";
 import type { PreviewCommentsDocument } from "../usecase/comment/types.ts";
@@ -566,6 +569,7 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
   let posts = 0;
   let releasePost: (() => void) | undefined;
   let postedBody = "";
+  let notifyPost: (() => void) | undefined;
   const run: RunGitHubCommand = async (args) => {
     const endpoint = args.at(-1)!;
     let value: unknown;
@@ -576,6 +580,7 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
       postedBody = args.find((arg) => arg.startsWith("body="))!;
       await new Promise<void>((resolve) => {
         releasePost = resolve;
+        notifyPost?.();
       });
       value = {
         data: {
@@ -601,6 +606,32 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
     runGitHubCommand: run,
     log: () => {},
   });
+  const client = createClient(
+    PreviewService,
+    createConnectTransport({
+      baseUrl: "http://127.0.0.1:3334",
+      useBinaryFormat: false,
+      fetch: async (input, init) =>
+        await handler(new Request(input, init), serveHandlerInfo),
+    }),
+  );
+  assertEquals(
+    (await client.getDocument({ documentId: 1n })).githubHeadSha,
+    sha,
+  );
+  assertEquals(
+    (await client.listComments({ documentId: 1n })).githubHeadSha,
+    sha,
+  );
+  const invalidRpc = await assertRejects(
+    () => client.exportCommentToGitHub({ documentId: 1n }),
+    ConnectError,
+  );
+  assertEquals(invalidRpc.code, Code.InvalidArgument);
+  assertEquals(
+    invalidRpc.rawMessage,
+    JSON.stringify({ error: { code: "export_invalid_request" } }),
+  );
   const path = "/__sadoku/documents/1/comments/1/github";
   const init = {
     method: "POST",
@@ -733,6 +764,51 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
   });
   assertEquals(postedBody.includes("Reply"), false);
   assertEquals(posts, 1);
+  const rpcInput = {
+    documentId: 1n,
+    commentId: 1n,
+    headSha: sha,
+    displayedMarkdown: "line",
+    createdAt: "created",
+    body: "Parent",
+    startLine: 1,
+    endLine: 1,
+  };
+  const mismatch = await assertRejects(
+    () =>
+      client.exportCommentToGitHub({
+        ...rpcInput,
+        displayedMarkdown: "Changed",
+      }),
+    ConnectError,
+  );
+  assertEquals(mismatch.code, Code.AlreadyExists);
+  assertEquals(
+    mismatch.rawMessage,
+    JSON.stringify({ error: { code: "export_markdown_changed" } }),
+  );
+  const posted = Promise.withResolvers<void>();
+  notifyPost = posted.resolve;
+  const rpcExport = client.exportCommentToGitHub(rpcInput);
+  await posted.promise;
+  await assertExportError(
+    await requestComments(handler, path, init),
+    409,
+    "export_busy",
+  );
+  const busyRpc = await assertRejects(
+    () => client.exportCommentToGitHub(rpcInput),
+    ConnectError,
+  );
+  assertEquals(busyRpc.code, Code.AlreadyExists);
+  releasePost();
+  const rpcResult = await rpcExport;
+  assertEquals([rpcResult.url, rpcResult.state], [
+    "https://github.com/o/r/pull/1/files",
+    "pending",
+  ]);
+  assertEquals(posts, 2);
+
   delete session.githubPull;
   await assertExportError(
     await requestComments(handler, path, init),
