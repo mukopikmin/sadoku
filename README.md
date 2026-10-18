@@ -198,6 +198,21 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
+`proxy/` is a standalone Go module (Go 1.26+) using only the standard library.
+Set `Options.BackendServiceURL` to an untagged Cloud Run origin verified against
+its tagged URLs and `Options.PublicOrigin` to the browser-facing HTTPS origin.
+`/revisions/TAG/...` forwards to `TAG---<service-host>/...` with
+`X-Forwarded-Prefix: /revisions/TAG`. Test with `go -C proxy test -race ./...`.
+On Cloud Run, IAM ID tokens come from the attached service account's metadata
+endpoint and refresh before expiry. `Options.IAMAudience` defaults to the
+untagged backend origin; set it to the service URL if routing uses another
+alias. Grant the proxy service account `roles/run.invoker` on the backend. Token
+acquisition failures return 502. Internal `Location`/`Content-Location` headers
+use the public revision prefix; external URLs are preserved. Responses use
+`no-store`; fingerprinted assets explicitly marked immutable upstream may use
+private browser caching. Shared caching is disabled. See
+[proxy setup and manual deployment](proxy/README.md).
+
 ```sh
 npm install
 deno task start README.md
