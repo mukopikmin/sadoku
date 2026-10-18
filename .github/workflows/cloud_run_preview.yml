@@ -106,6 +106,7 @@ jobs:
           echo "digest-image=${digest_image}" >> "${GITHUB_OUTPUT}"
 
       - name: Deploy tagged revision without traffic
+        id: deploy
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           REGION: ${{ secrets.GCP_REGION }}
@@ -117,22 +118,27 @@ jobs:
           [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
           [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
           tag="pr-${PR_NUMBER}"
-          gcloud run deploy "${SERVICE}" \
+          revision="$(gcloud run deploy "${SERVICE}" \
             --project "${PROJECT_ID}" \
             --region "${REGION}" \
             --image "${IMAGE}" \
             --update-env-vars SADOKU_TRUST_FORWARDED_PREFIX=true \
             --tag "${tag}" \
             --no-traffic \
-            --quiet
+            --quiet \
+            --format='value(status.latestCreatedRevisionName)')"
+          [[ "${revision}" == "${SERVICE}-"* ]]
+          [[ "${revision}" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]
+          echo "revision=${revision}" >> "${GITHUB_OUTPUT}"
 
-      - name: Resolve and verify preview URL
+      - name: Verify revision readiness and resolve preview URL
         id: preview
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           REGION: ${{ secrets.GCP_REGION }}
           SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          REVISION: ${{ steps.deploy.outputs.revision }}
         run: |
           set -euo pipefail
           tag="pr-${PR_NUMBER}"
@@ -142,22 +148,27 @@ jobs:
               --project "${PROJECT_ID}" \
               --region "${REGION}" \
               --format=json |
-              jq -r --arg tag "${tag}" \
-                '.status.traffic[]? | select(.tag == $tag) | .url // empty')"
+              jq -r --arg tag "${tag}" --arg revision "${REVISION}" \
+                '.status.traffic[]? | select(.tag == $tag and .revisionName == $revision) | .url // empty')"
             [[ -n "${url}" ]] && break
             sleep 5
           done
           if [[ -z "${url}" ]]; then
-            echo "::error::Preview URL for tag ${tag} was not found after 12 attempts."
+            echo "::error::Preview tag ${tag} did not resolve to revision ${REVISION} after 12 attempts."
             exit 1
           fi
           [[ "${url}" =~ ^https://[a-z0-9-]+(\.[a-z0-9-]+)*\.run\.app$ ]]
-          curl --fail --show-error --location \
-            --retry 5 --retry-all-errors --retry-delay 2 \
-            --connect-timeout 10 --max-time 60 \
-            "${url}"
+          if ! gcloud run revisions describe "${REVISION}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --format=json |
+            jq -e 'any(.status.conditions[]?; .type == "Ready" and .status == "True")' >/dev/null; then
+            echo "::error::Revision ${REVISION} is not Ready."
+            exit 1
+          fi
           echo "url=${url}" >> "${GITHUB_OUTPUT}"
-          printf '## Cloud Run preview\n\n%s\n' "${url}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '## Cloud Run preview\n\n%s\n\nRevision: `%s` (Ready)\n' \
+            "${url}" "${REVISION}" >> "${GITHUB_STEP_SUMMARY}"
 
   cleanup:
     name: Remove preview tag
