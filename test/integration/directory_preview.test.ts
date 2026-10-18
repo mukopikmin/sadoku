@@ -229,6 +229,7 @@ Deno.test("directory preview lists the nested fixture documents", async () => {
           document.relativePath
         ),
         [
+          "cloud-run-preview-check.md",
           "comprehensive.md",
           join("guides", "overview.md"),
           join("guides", "setup", "local.md"),
