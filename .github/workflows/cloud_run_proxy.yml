@@ -67,6 +67,7 @@ jobs:
     env:
       PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       REGION: ${{ secrets.GCP_REGION }}
+      REGISTRY_LOCATION: ${{ secrets.ARTIFACT_REGISTRY_LOCATION || secrets.GCP_REGION }}
       REPOSITORY: ${{ secrets.ARTIFACT_REGISTRY_REPOSITORY }}
       SERVICE: ${{ secrets.CLOUD_RUN_PROXY_SERVICE }}
 
@@ -102,12 +103,12 @@ jobs:
         run: |
           set -euo pipefail
           [[ "${PROJECT_ID}" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]$ ]]
-          [[ "${REGION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
+          [[ "${REGISTRY_LOCATION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
           [[ "${REPOSITORY}" =~ ^[a-z][a-z0-9._-]{0,62}$ ]]
           [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
           [[ "${GITHUB_RUN_ID}" =~ ^[1-9][0-9]*$ ]]
           [[ "${GITHUB_RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]]
-          registry="${REGION}-docker.pkg.dev"
+          registry="${REGISTRY_LOCATION}-docker.pkg.dev"
           image="${registry}/${PROJECT_ID}/${REPOSITORY}/revision-proxy:${HEAD_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           gcloud auth configure-docker "${registry}" --quiet
           docker tag "revision-proxy:${HEAD_SHA}" "${image}"
@@ -124,9 +125,10 @@ jobs:
           set -euo pipefail
           [[ "${PROJECT_ID}" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]$ ]]
           [[ "${REGION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
+          [[ "${REGISTRY_LOCATION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
           [[ "${REPOSITORY}" =~ ^[a-z][a-z0-9._-]{0,62}$ ]]
           [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
-          [[ "${IMAGE}" == "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/revision-proxy@sha256:"* ]]
+          [[ "${IMAGE}" == "${REGISTRY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/revision-proxy@sha256:"* ]]
           [[ "${IMAGE##*@sha256:}" =~ ^[0-9a-f]{64}$ ]]
           revision="$(gcloud run services update "${SERVICE}" \
             --project "${PROJECT_ID}" --region "${REGION}" \
