@@ -121,6 +121,7 @@ jobs:
             --project "${PROJECT_ID}" \
             --region "${REGION}" \
             --image "${IMAGE}" \
+            --update-env-vars SADOKU_TRUST_FORWARDED_PREFIX=true \
             --tag "${tag}" \
             --no-traffic \
             --quiet
