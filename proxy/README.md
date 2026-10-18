@@ -45,7 +45,7 @@ credentials; outside Cloud Run it returns 502. There is no authentication
 bypass. Cloud Run can use its default TCP startup probe; `/` intentionally
 returns 404.
 
-## Manual deployment
+## Initial setup and manual deployment
 
 First provision a separate front service with native IAP and its runtime service
 account, authorize IAP users, and grant that account backend invocation. Record
@@ -66,10 +66,77 @@ gcloud run services update "$PROXY_SERVICE" --project "$PROJECT" --region "$REGI
 
 Review the image, service, and environment changes before applying. The deployer
 needs Artifact Registry write, Cloud Run update, and permission to act as the
-runtime service account. No CD is configured. Check IAP login and
-`PUBLIC_ORIGIN/revisions/TAG/` in a browser after deployment. New backend
-revision tags need no proxy updates. Verify tag URLs with
-`gcloud run services describe`.
+runtime service account. Check IAP login and `PUBLIC_ORIGIN/revisions/TAG/` in a
+browser after deployment. New backend revision tags need no proxy updates.
+Verify tag URLs with `gcloud run services describe`.
+
+## Automatic deployment from main
+
+After initial setup, `.github/workflows/cloud_run_proxy.yml` builds and deploys
+the proxy on every push to `main`, including PR merges. Manual dispatch is also
+available from `main`; other branches are skipped. The PR preview workflow
+continues to manage backend revision tags independently.
+
+Create the `cloud-run-proxy` GitHub Environment and register these secrets there
+(repository secrets with the same names may also be used):
+
+| Secret                           | Purpose                                                   |
+| -------------------------------- | --------------------------------------------------------- |
+| `GCP_PROJECT_ID`                 | Project containing the proxy service and image repository |
+| `GCP_REGION`                     | Cloud Run and Artifact Registry region                    |
+| `ARTIFACT_REGISTRY_REPOSITORY`   | Existing Docker image repository                          |
+| `CLOUD_RUN_PROXY_SERVICE`        | Existing front proxy service, **not the backend**         |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Provider authorized for this workflow                     |
+| `GCP_DEPLOY_SERVICE_ACCOUNT`     | Dedicated proxy deployment identity                       |
+
+Use secrets for resource identifiers so Actions masks their values, following
+the [preview workflow convention](../.github/CLOUD_RUN_PREVIEW.md). No
+service-account key is needed. Restrict the Environment's deployment branches to
+`main`. Required reviewers may be configured if an approval before each deploy
+is desired; omit them for unattended main deployments.
+
+The preview provider's `pull_request` condition does not authorize this
+workflow. Use a separate provider for the proxy, or deliberately configure the
+existing provider to allow the additional events. Map
+`google.subject=assertion.sub` and `attribute.repository=assertion.repository`,
+and restrict the proxy provider with the following condition, replacing the
+example repository ID:
+
+```text
+assertion.repository == 'mukopikmin/sadoku' &&
+assertion.repository_id == 'REPOSITORY_ID' &&
+assertion.ref == 'refs/heads/main' &&
+assertion.environment == 'cloud-run-proxy' &&
+assertion.workflow_ref == 'mukopikmin/sadoku/.github/workflows/cloud_run_proxy.yml@refs/heads/main' &&
+assertion.event_name in ['push', 'workflow_dispatch']
+```
+
+Scope the deployer's `roles/iam.workloadIdentityUser` binding to this
+repository, and grant `roles/artifactregistry.writer` on the image repository,
+`roles/run.developer` on **only the existing proxy service**, and
+`roles/iam.serviceAccountUser` on its runtime service account. The runtime
+account still needs backend `roles/run.invoker`. Provisioning the service, IAP
+access, runtime configuration, and these IAM/WIF bindings is a one-time
+infrastructure step outside the workflow.
+
+The build job runs Go vet and race tests, then builds Linux/amd64 without cloud
+credentials. The deploy job loads the image artifact before OIDC authentication;
+it does not check out repository code. Images use a commit/run/attempt tag so
+reruns work with immutable registry tags, and deployments use the pushed digest.
+Deployments are serialized without interrupting a running deployment. GitHub may
+replace a pending run with a newer one when merges arrive quickly.
+
+Only the existing service's image and traffic are updated. Its environment
+variables, runtime identity, ingress, and IAP/IAM policies are preserved. A new
+revision is first created without traffic; after it is ready, it receives 100%
+of traffic, including when the service previously pinned an older revision. An
+update failure leaves the previous traffic assignment in place. A startup probe
+does not verify browser IAP login or authenticated backend forwarding; check
+`PUBLIC_ORIGIN/revisions/TAG/` after the first deployment.
+
+For rollback, use `gcloud run services update-traffic` with
+`--to-revisions PREVIOUS_REVISION=100`, or manually deploy a known-good image.
+The next main push or manual dispatch will deploy main again.
 
 421 indicates a `PUBLIC_ORIGIN`/Host mismatch. 502 indicates token acquisition,
 upstream transport, or unsafe response URL errors; backend 401/403 indicate IAM
