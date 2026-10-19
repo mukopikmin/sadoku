@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { Pencil } from "lucide-react";
 import { useRef, useState } from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
@@ -34,6 +35,7 @@ export const DocumentTitle = ({ documentId, title }: {
           setOpen(true);
         }}
       >
+        {title && <Pencil aria-hidden="true" />}
         {title ? "Edit title" : "Set title"}
       </Button>
       <Dialog.Root
