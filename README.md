@@ -137,6 +137,17 @@ sadoku document list
 sadoku document inspect <document-id>
 ```
 
+Create and register a new local Markdown file:
+
+```sh
+sadoku document add docs/notes.md --create --title "Notes"
+```
+
+The parent directory must already exist. Existing files are never overwritten.
+An omitted extension defaults to `.md`; configured Markdown extensions are
+supported. Without `--title`, the new file is empty. Without `--create`, `add`
+only registers the existing source.
+
 Manage comments by document ID:
 
 ```sh
