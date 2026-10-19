@@ -87,6 +87,7 @@ export const documentSummaryMessage = (
   id: toUint64(document.id),
   relativePath: document.relativePath,
   title: document.title,
+  displayTitle: document.displayTitle,
   deleted: document.deleted,
   tags: document.tags?.map(tagMessage) ?? [],
 });
@@ -97,6 +98,7 @@ export const documentMessage = (
   fileUrl: document.fileUrl ?? "",
   markdown: document.markdown,
   title: document.title,
+  displayTitle: document.displayTitle,
   deleted: document.deleted,
   tags: document.tags?.map(tagMessage) ?? [],
   githubHeadSha,

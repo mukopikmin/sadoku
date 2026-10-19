@@ -7,6 +7,7 @@ service PreviewService {
   rpc GetStatistics(GetStatisticsRequest) returns (GetStatisticsResponse);
   rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse);
   rpc CreateDocument(CreateDocumentRequest) returns (DocumentSummary);
+  rpc UpdateDocumentTitle(UpdateDocumentTitleRequest) returns (DocumentSummary);
   rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
   rpc GetDirectoryStatus(GetDirectoryStatusRequest) returns (GetDirectoryStatusResponse);
   rpc GetSettings(GetSettingsRequest) returns (Settings);
@@ -87,7 +88,10 @@ message DocumentSummary {
   string title = 3;
   bool deleted = 4;
   repeated Tag tags = 5;
+  optional string display_title = 7;
 }
+
+message UpdateDocumentTitleRequest { uint64 document_id = 1; string title = 2; }
 
 message GetDocumentRequest { uint64 document_id = 1; }
 message GetDocumentResponse {
@@ -96,6 +100,7 @@ message GetDocumentResponse {
   string title = 3;
   bool deleted = 4;
   repeated Tag tags = 5;
+  optional string display_title = 7;
   optional string github_head_sha = 6;
 }
 

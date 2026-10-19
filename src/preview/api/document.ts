@@ -61,3 +61,16 @@ export const loadPreviewDocument = async (
       : [],
   };
 };
+
+export const updateDocumentTitle = async (
+  documentId: number,
+  title: string,
+): Promise<void> => {
+  await previewClient.updateDocumentTitle({
+    documentId: BigInt(documentId),
+    title,
+  })
+    .catch((error) => {
+      throw new Error(connectRawMessage(error) || "Failed to save title.");
+    });
+};

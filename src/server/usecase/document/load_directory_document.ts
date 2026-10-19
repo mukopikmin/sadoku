@@ -33,6 +33,7 @@ export const loadDirectoryDocument = async (
     id: document.id,
     relativePath: document.relativePath,
     title: document.title,
+    ...(document.displayTitle && { displayTitle: document.displayTitle }),
     ...content,
     ...(tags && { tags }),
   };

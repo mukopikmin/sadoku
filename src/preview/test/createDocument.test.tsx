@@ -71,6 +71,7 @@ const installFetch = (
       if (/\/documents\/\d+$/.test(path)) {
         return Response.json({
           markdown: "# New guide\n",
+          displayTitle: "File attribute title",
           title: "new.md",
           fileUrl: "file:///docs/new.md",
           tags: [],
@@ -160,6 +161,9 @@ describe("file creation from the document list", () => {
     await waitFor(() => expect(location.pathname).toBe("/documents/2"));
     expect(await screen.findByRole("heading", { name: "New guide" }))
       .toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "File attribute title", level: 1 }),
+    ).toBeTruthy();
     expect(requests).toEqual([{
       directory: "docs/guides",
       filename: "new",

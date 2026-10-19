@@ -1,3 +1,4 @@
+import { DocumentTitle } from "../components/DocumentTitle";
 import { Alert, Container } from "@chakra-ui/react";
 import { useState } from "react";
 import { CommentListPage } from "./comments/CommentList";
@@ -49,6 +50,13 @@ export const DocumentPreviewPage = (
           documents={documents}
           onSelectDocument={onSelectDocument}
           onSelectDocuments={onSelectDocuments}
+        />
+      )}
+      {view === "preview" && (
+        <DocumentTitle
+          key={documentId}
+          documentId={documentId}
+          title={document.displayTitle}
         />
       )}
       {view === "preview" && (

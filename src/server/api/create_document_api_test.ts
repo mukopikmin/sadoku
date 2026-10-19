@@ -8,6 +8,7 @@ import type {
 
 const store: DocumentStore = {
   ensure: (filePath) => Promise.resolve({ id: 1, filePath }),
+  setTitle: () => Promise.resolve(),
   ensureMany: () => Promise.resolve([]),
   list: () => Promise.resolve([]),
   findById: () => Promise.resolve(undefined),
@@ -33,12 +34,13 @@ Deno.test("creation adapter maps conflicts, validation and unavailable sessions 
       id: 1n,
       relativePath: "new.md",
       title: "new.md",
+      displayTitle: "Title",
       deleted: false,
       tags: [],
     });
     assertEquals(
       await Deno.readTextFile(join(rootPath, "new.md")),
-      "# Title\n",
+      "",
     );
     for (
       const [filename, ready, status, code] of [

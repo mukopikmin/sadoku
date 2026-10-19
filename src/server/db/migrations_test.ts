@@ -241,6 +241,7 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
       "0007",
       "0008",
       "0009",
+      "0010",
     ]);
     assertEquals(tablesAfterFirstRun, [
       "comment",
@@ -253,7 +254,7 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
       "schema_migration",
       "sqlite_sequence",
     ]);
-    assertEquals(rowsAfterFirstRun.length, 9);
+    assertEquals(rowsAfterFirstRun.length, 10);
     assertEquals(rowsAfterFirstRun[0]?.version, "0001");
     assertEquals(rowsAfterFirstRun[0]?.name, "create_comment_tables");
     assertEquals(rowsAfterFirstRun[0]?.state, "applied");

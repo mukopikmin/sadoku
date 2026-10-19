@@ -60,6 +60,37 @@ describe("document API tag conversion", () => {
   });
 });
 
+describe("document title API conversion", () => {
+  it("preserves the optional title separately from the filename and Markdown", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        Response.json(
+          String(input).endsWith("/1")
+            ? {
+              title: "guide.md",
+              displayTitle: "File title",
+              markdown: "# Body heading",
+              tags: [],
+            }
+            : [{
+              id: 1,
+              title: "guide.md",
+              displayTitle: "File title",
+              relativePath: "guide.md",
+              tags: [],
+            }],
+        )
+      ),
+    );
+    expect((await loadDocuments())[0].displayTitle).toBe("File title");
+    const document = await loadPreviewDocument(1);
+    expect(document.title).toBe("guide.md");
+    expect(document.displayTitle).toBe("File title");
+    expect(document.markdown).toBe("# Body heading");
+  });
+});
+
 describe("session API conversion", () => {
   it("preserves explicit file creation capability", () => {
     expect(
