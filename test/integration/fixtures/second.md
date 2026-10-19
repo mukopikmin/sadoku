@@ -15,3 +15,10 @@ preview mode.
 const documentName = "second.md";
 console.log(`Previewing ${documentName}`);
 ```
+
+## Preview deployment smoke test
+
+Verification marker: `preview-comment-smoke-v1`.
+
+This section confirms the pull request revision is served through the proxy's
+mapped custom domain.
