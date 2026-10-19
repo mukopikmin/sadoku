@@ -175,6 +175,23 @@ describe("CommentList", () => {
   });
 
   it("groups comments, displays counts, and supports tab keyboard navigation", () => {
+    const expectSectionOrder = (panel: HTMLElement, title: string) => {
+      const heading = within(panel).getByRole("heading", { name: title });
+      const selectAll = within(panel).getByRole("checkbox", {
+        name: "Select all",
+      });
+      const firstComment = within(panel).getAllByRole("article")[0];
+      expect(
+        heading.compareDocumentPosition(selectAll) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      )
+        .not.toBe(0);
+      expect(
+        selectAll.compareDocumentPosition(firstComment) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      )
+        .not.toBe(0);
+    };
     render(
       <CommentList
         actions={createCommentActions()}
@@ -209,6 +226,7 @@ describe("CommentList", () => {
     const unresolvedPanel = screen.getByRole("tabpanel", {
       name: "Unresolved",
     });
+    expectSectionOrder(unresolvedPanel, "Unresolved comments");
     expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale")).not.toBeNull();
@@ -222,6 +240,7 @@ describe("CommentList", () => {
     expect(screen.getByRole("heading", { name: "Resolved comments" }))
       .not.toBeNull();
     const resolvedPanel = screen.getByRole("tabpanel", { name: "Resolved" });
+    expectSectionOrder(resolvedPanel, "Resolved comments");
     expect(within(resolvedPanel).getByText("Resolved comment.")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Resolved")).not.toBeNull();
 

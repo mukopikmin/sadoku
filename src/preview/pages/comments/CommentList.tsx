@@ -9,7 +9,7 @@ import {
   Tabs,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -53,6 +53,7 @@ const formatLineLabel = (comment: Comment): string => {
 
 type CommentSectionProps = {
   actions: CommentActions;
+  children: ReactNode;
   comments: Comment[];
   bulk: ReturnType<typeof useCommentBulkActions>;
   emptyText: string;
@@ -61,6 +62,7 @@ type CommentSectionProps = {
 
 const CommentSection = ({
   actions,
+  children,
   comments,
   bulk,
   emptyText,
@@ -68,6 +70,7 @@ const CommentSection = ({
 }: CommentSectionProps) => (
   <Box as="section">
     <Heading as="h2" size="xl" mt="0" mb="4">{title}</Heading>
+    {children}
     {comments.length === 0
       ? <Text color="fg.muted">{emptyText}</Text>
       : (
@@ -198,69 +201,70 @@ export const CommentList = ({
         ))}
       </Tabs.List>
       <Tabs.Content value={selectedCategory}>
-        {selectedSection.comments.length > 0 && (
-          <Flex align="center" gap="3" mb="4" wrap="wrap">
-            <Checkbox.Root
-              checked={bulk.selectedIds.length ===
-                  selectedSection.comments.length
-                ? true
-                : bulk.selectedIds.length > 0
-                ? "indeterminate"
-                : false}
-              disabled={bulk.isPending}
-              onCheckedChange={bulk.toggleAll}
-            >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Label>Select all</Checkbox.Label>
-            </Checkbox.Root>
-            <Text role="status" color="fg.muted" fontSize="sm">
-              {bulk.selectedIds.length} selected
-            </Text>
-            <Button
-              disabled={bulk.isPending || bulk.selectedIds.length === 0}
-              loading={bulk.state.status === "pending" &&
-                bulk.state.operation !== "delete"}
-              loadingText={selectedCategory === "resolved"
-                ? "Reopening…"
-                : "Resolving…"}
-              onClick={() =>
-                void bulk.run(
-                  selectedCategory === "resolved" ? "reopen" : "resolve",
-                )}
-              size="sm"
-              variant="outline"
-            >
-              {selectedCategory === "resolved"
-                ? "Reopen selected"
-                : "Resolve selected"}
-            </Button>
-            <Button
-              colorPalette="red"
-              disabled={bulk.isPending || bulk.selectedIds.length === 0}
-              onClick={() =>
-                setIsDeleteDialogOpen(true)}
-              size="sm"
-              variant="outline"
-            >
-              Delete selected
-            </Button>
-          </Flex>
-        )}
-        {bulk.state.status === "error" && (
-          <Text role="alert" color="fg.error" mb="4">
-            {bulk.state.message}
-          </Text>
-        )}
         <CommentSection
           actions={actions}
           bulk={bulk}
           comments={selectedSection.comments}
           emptyText={selectedSection.emptyText}
           title={`${selectedSection.label} comments`}
-        />
+        >
+          {selectedSection.comments.length > 0 && (
+            <Flex align="center" gap="3" mb="4" wrap="wrap">
+              <Checkbox.Root
+                checked={bulk.selectedIds.length ===
+                    selectedSection.comments.length
+                  ? true
+                  : bulk.selectedIds.length > 0
+                  ? "indeterminate"
+                  : false}
+                disabled={bulk.isPending}
+                onCheckedChange={bulk.toggleAll}
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Label>Select all</Checkbox.Label>
+              </Checkbox.Root>
+              <Text role="status" color="fg.muted" fontSize="sm">
+                {bulk.selectedIds.length} selected
+              </Text>
+              <Button
+                disabled={bulk.isPending || bulk.selectedIds.length === 0}
+                loading={bulk.state.status === "pending" &&
+                  bulk.state.operation !== "delete"}
+                loadingText={selectedCategory === "resolved"
+                  ? "Reopening…"
+                  : "Resolving…"}
+                onClick={() =>
+                  void bulk.run(
+                    selectedCategory === "resolved" ? "reopen" : "resolve",
+                  )}
+                size="sm"
+                variant="outline"
+              >
+                {selectedCategory === "resolved"
+                  ? "Reopen selected"
+                  : "Resolve selected"}
+              </Button>
+              <Button
+                colorPalette="red"
+                disabled={bulk.isPending || bulk.selectedIds.length === 0}
+                onClick={() =>
+                  setIsDeleteDialogOpen(true)}
+                size="sm"
+                variant="outline"
+              >
+                Delete selected
+              </Button>
+            </Flex>
+          )}
+          {bulk.state.status === "error" && (
+            <Text role="alert" color="fg.error" mb="4">
+              {bulk.state.message}
+            </Text>
+          )}
+        </CommentSection>
       </Tabs.Content>
       <ConfirmDialog
         confirmColorPalette="red"
