@@ -1,9 +1,10 @@
 import {
   Button,
   CloseButton,
+  Combobox,
+  createListCollection,
   Dialog,
   Flex,
-  Input,
   Portal,
   Text,
 } from "@chakra-ui/react";
@@ -20,6 +21,10 @@ type Props = {
   open: boolean;
   tags: DocumentTag[];
 };
+
+type TagOption =
+  | { value: string; label: string; tag: DocumentTag }
+  | { value: "create"; label: string; tag?: never };
 
 export const DocumentTagsDialog = (
   { documentId, onOpenChange, open, tags }: Props,
@@ -41,12 +46,31 @@ export const DocumentTagsDialog = (
   const allTags = query.data ?? [];
   const trimmed = input.trim();
   const exact = allTags.find(({ name }) => name === trimmed);
-  const similar = useMemo(() => {
+  const collection = useMemo(() => {
     const selectedIds = new Set(selectedTags.map(({ id }) => id));
-    return findSimilarTags(
-      input,
-      allTags.filter(({ id }) => !selectedIds.has(id)),
-    );
+    const available = allTags.filter(({ id }) => !selectedIds.has(id));
+    const matching = trimmed
+      ? [
+        ...available.filter(({ name }) => name === trimmed),
+        ...findSimilarTags(input, available, available.length),
+      ]
+      : available;
+    const items: TagOption[] = matching.map((tag) => ({
+      value: String(tag.id),
+      label: tag.name,
+      tag,
+    }));
+    if (
+      trimmed && !exact && !selectedTags.some(({ name }) => name === trimmed)
+    ) {
+      items.push({ value: "create", label: `Create “${trimmed}”` });
+    }
+    return createListCollection({
+      items,
+      itemToString: (item) => item.label,
+      itemToValue: (item) => item.value,
+      isItemDisabled: () => selectedTags.length >= 20,
+    });
   }, [input, allTags, selectedTags]);
   const hasSelected = (tag: DocumentTag) =>
     selectedTags.some((item) => item.id === tag.id);
@@ -79,7 +103,7 @@ export const DocumentTagsDialog = (
     void persist([...selectedTags.map(({ id }) => ({ id })), { id: tag.id }]);
   };
   const addInput = () => {
-    if (!trimmed || saving.current) return;
+    if (!trimmed || saving.current || query.isPending || query.error) return;
     if (/\p{Cc}/u.test(trimmed)) {
       setMessage("Tag names cannot contain line breaks or control characters.");
       return;
@@ -146,80 +170,69 @@ export const DocumentTagsDialog = (
                     </Button>
                   ))}
                 </Flex>
-                <Flex gap="2">
-                  <Input
-                    aria-label="Tag name"
-                    disabled={actions.pending}
-                    value={input}
-                    onChange={(event) => {
-                      setInput(event.currentTarget.value);
-                      setMessage("");
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        addInput();
-                      }
-                    }}
-                    placeholder="Enter a tag name"
-                  />
-                  <Button
-                    disabled={actions.pending || query.isPending || !trimmed ||
-                      selectedTags.length >= 20}
-                    onClick={addInput}
-                  >
-                    Add
-                  </Button>
-                </Flex>
+                <Combobox.Root
+                  collection={collection}
+                  disabled={actions.pending || query.isPending || !!query.error}
+                  inputValue={input}
+                  value={[]}
+                  selectionBehavior="preserve"
+                  onInputValueChange={({ inputValue }) => {
+                    setInput(inputValue);
+                    setMessage("");
+                  }}
+                  onValueChange={({ items }) => {
+                    const item = items[0];
+                    if (item?.tag) addExisting(item.tag);
+                    else if (item?.value === "create") addInput();
+                  }}
+                  positioning={{ sameWidth: true }}
+                  openOnClick
+                >
+                  <Combobox.Label>Tag name</Combobox.Label>
+                  <Combobox.Control>
+                    <Combobox.Input
+                      aria-label="Tag name"
+                      placeholder="Search or create a tag"
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" &&
+                          !event.nativeEvent.isComposing &&
+                          !event.currentTarget.getAttribute(
+                            "aria-activedescendant",
+                          )
+                        ) {
+                          event.preventDefault();
+                          addInput();
+                        }
+                      }}
+                    />
+                    <Combobox.IndicatorGroup>
+                      <Combobox.Trigger aria-label="Show tag options" />
+                    </Combobox.IndicatorGroup>
+                  </Combobox.Control>
+                  <Combobox.Positioner>
+                    <Combobox.Content maxH="64" overflowY="auto">
+                      {collection.items.map((item) => (
+                        <Combobox.Item
+                          item={item}
+                          key={item.value}
+                        >
+                          {item.tag
+                            ? (
+                              <TagLabel
+                                backgroundColor={item.tag.backgroundColor}
+                                name={item.tag.name}
+                              />
+                            )
+                            : item.label}
+                        </Combobox.Item>
+                      ))}
+                      <Combobox.Empty>No tags available.</Combobox.Empty>
+                    </Combobox.Content>
+                  </Combobox.Positioner>
+                </Combobox.Root>
                 {message && (
                   <Text color="fg.error" role="status">{message}</Text>
-                )}
-                {trimmed && exact && !hasSelected(exact) && (
-                  <Flex direction="column" gap="2">
-                    <Text fontSize="sm" fontWeight="semibold">Exact match</Text>
-                    <Button
-                      alignSelf="flex-start"
-                      size="sm"
-                      variant="outline"
-                      disabled={actions.pending || selectedTags.length >= 20}
-                      onClick={() =>
-                        addExisting(exact)}
-                    >
-                      <TagLabel
-                        backgroundColor={exact.backgroundColor}
-                        name={exact.name}
-                      />
-                    </Button>
-                  </Flex>
-                )}
-                {trimmed && similar.length > 0 && (
-                  <Flex direction="column" gap="2">
-                    <Text fontSize="sm" fontWeight="semibold">
-                      Similar tags
-                    </Text>
-                    <Flex gap="2" wrap="wrap">
-                      {similar.map((tag) => (
-                        <Button
-                          key={tag.id}
-                          size="sm"
-                          variant="ghost"
-                          disabled={actions.pending ||
-                            selectedTags.length >= 20}
-                          onClick={() => addExisting(tag)}
-                        >
-                          <TagLabel
-                            backgroundColor={tag.backgroundColor}
-                            name={tag.name}
-                          />
-                        </Button>
-                      ))}
-                    </Flex>
-                    {!exact && (
-                      <Text color="fg.muted" fontSize="sm">
-                        You can still add “{trimmed}” as a new tag.
-                      </Text>
-                    )}
-                  </Flex>
                 )}
                 {query.error && (
                   <Text color="fg.error">{String(query.error)}</Text>
