@@ -245,6 +245,7 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                                     </IconButton>
                                     <IconButton
                                       aria-label={`Delete tag ${tag.name}`}
+                                      colorPalette="red"
                                       disabled={pending}
                                       size="sm"
                                       variant="ghost"
