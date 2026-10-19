@@ -1,7 +1,18 @@
-import { Badge, Box, Heading, Stack, Tabs, Text } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Button,
+  Checkbox,
+  Flex,
+  Heading,
+  Stack,
+  Tabs,
+  Text,
+} from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 import type {
   Comment,
   ResolvedComment,
@@ -9,6 +20,7 @@ import type {
 } from "../../models/comment";
 import { isUnresolvedComment } from "../../models/comment";
 import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
+import { useCommentBulkActions } from "./useCommentBulkActions";
 
 export type CommentListProps = {
   actions: CommentActions;
@@ -39,19 +51,21 @@ const formatLineLabel = (comment: Comment): string => {
   return current;
 };
 
-type CommentSectionProps<T extends Comment> = {
+type CommentSectionProps = {
   actions: CommentActions;
-  comments: T[];
+  comments: Comment[];
+  bulk: ReturnType<typeof useCommentBulkActions>;
   emptyText: string;
   title: string;
 };
 
-const CommentSection = <T extends Comment>({
+const CommentSection = ({
   actions,
   comments,
+  bulk,
   emptyText,
   title,
-}: CommentSectionProps<T>) => (
+}: CommentSectionProps) => (
   <Box as="section">
     <Heading as="h2" size="xl" mt="0" mb="4">{title}</Heading>
     {comments.length === 0
@@ -59,15 +73,35 @@ const CommentSection = <T extends Comment>({
       : (
         <Stack gap="3">
           {comments.map((comment) => (
-            <CommentItem
-              actions={actions}
-              variant="card"
-              comment={comment}
-              key={comment.id}
-              lineLabel={formatLineLabel(comment)}
-              showSource
-              showState
-            />
+            <Flex align="start" gap="3" key={comment.id}>
+              <Checkbox.Root
+                checked={bulk.selectedIds.includes(comment.id)}
+                disabled={bulk.isPending}
+                mt="3"
+                onCheckedChange={() =>
+                  bulk.toggle(comment.id)}
+              >
+                <Checkbox.HiddenInput
+                  aria-label={`Select comment ${comment.id}: ${
+                    formatLineLabel(comment)
+                  }`}
+                />
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+              </Checkbox.Root>
+              <Box flex="1" minW="0">
+                <CommentItem
+                  actions={actions}
+                  variant="card"
+                  comment={comment}
+                  disabled={bulk.isPending}
+                  lineLabel={formatLineLabel(comment)}
+                  showSource
+                  showState
+                />
+              </Box>
+            </Flex>
           ))}
         </Stack>
       )}
@@ -108,8 +142,14 @@ export const CommentList = ({
   };
   const categories = Object.keys(sections) as CommentDisplayCategory[];
   const selectedSection = sections[selectedCategory];
-  const selectCategory = (category: CommentDisplayCategory) =>
+  const bulk = useCommentBulkActions(selectedSection.comments, actions);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const selectCategory = (category: CommentDisplayCategory) => {
+    if (bulk.isPending || isDeleteDialogOpen) return;
+    if (category === selectedCategory) return;
+    bulk.clearSelection();
     setSelectedCategory(category);
+  };
   const selectAdjacentCategory = (
     category: CommentDisplayCategory,
     direction: -1 | 1,
@@ -135,6 +175,7 @@ export const CommentList = ({
         {categories.map((category) => (
           <Tabs.Trigger
             key={category}
+            disabled={bulk.isPending || isDeleteDialogOpen}
             onClick={() => selectCategory(category)}
             onKeyDown={(event) => {
               if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
@@ -157,13 +198,85 @@ export const CommentList = ({
         ))}
       </Tabs.List>
       <Tabs.Content value={selectedCategory}>
+        {selectedSection.comments.length > 0 && (
+          <Flex align="center" gap="3" mb="4" wrap="wrap">
+            <Checkbox.Root
+              checked={bulk.selectedIds.length ===
+                  selectedSection.comments.length
+                ? true
+                : bulk.selectedIds.length > 0
+                ? "indeterminate"
+                : false}
+              disabled={bulk.isPending}
+              onCheckedChange={bulk.toggleAll}
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>Select all</Checkbox.Label>
+            </Checkbox.Root>
+            <Text role="status" color="fg.muted" fontSize="sm">
+              {bulk.selectedIds.length} selected
+            </Text>
+            <Button
+              disabled={bulk.isPending || bulk.selectedIds.length === 0}
+              loading={bulk.state.status === "pending" &&
+                bulk.state.operation !== "delete"}
+              loadingText={selectedCategory === "resolved"
+                ? "Reopening…"
+                : "Resolving…"}
+              onClick={() =>
+                void bulk.run(
+                  selectedCategory === "resolved" ? "reopen" : "resolve",
+                )}
+              size="sm"
+              variant="outline"
+            >
+              {selectedCategory === "resolved"
+                ? "Reopen selected"
+                : "Resolve selected"}
+            </Button>
+            <Button
+              colorPalette="red"
+              disabled={bulk.isPending || bulk.selectedIds.length === 0}
+              onClick={() =>
+                setIsDeleteDialogOpen(true)}
+              size="sm"
+              variant="outline"
+            >
+              Delete selected
+            </Button>
+          </Flex>
+        )}
+        {bulk.state.status === "error" && (
+          <Text role="alert" color="fg.error" mb="4">
+            {bulk.state.message}
+          </Text>
+        )}
         <CommentSection
           actions={actions}
+          bulk={bulk}
           comments={selectedSection.comments}
           emptyText={selectedSection.emptyText}
           title={`${selectedSection.label} comments`}
         />
       </Tabs.Content>
+      <ConfirmDialog
+        confirmColorPalette="red"
+        confirmLabel="Delete"
+        isPending={bulk.isPending}
+        onConfirm={async () => {
+          await bulk.run("delete");
+          setIsDeleteDialogOpen(false);
+        }}
+        onOpenChange={setIsDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+        title="Delete selected comments?"
+      >
+        Delete {bulk.selectedIds.length}{" "}
+        selected comments and their replies? This action cannot be undone.
+      </ConfirmDialog>
     </Tabs.Root>
   );
 };
