@@ -4,6 +4,7 @@ import { updateTag } from "./update_tag.ts";
 
 const updates: unknown[][] = [];
 const store: TagStore = {
+  delete: () => Promise.resolve(),
   list: () => Promise.resolve([]),
   listForDocument: () => Promise.resolve([]),
   rename: () => Promise.resolve({ type: "not_found", message: "unused" }),

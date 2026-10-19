@@ -13,9 +13,9 @@ import {
   Table,
   Text,
 } from "@chakra-ui/react";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { type RefObject, useState } from "react";
-import { useTagsQuery, useUpdateTag } from "../hooks/useTags";
+import { useDeleteTag, useTagsQuery, useUpdateTag } from "../hooks/useTags";
 import { TagLabel } from "./ui/TagLabel";
 
 type Props = {
@@ -27,6 +27,9 @@ type Props = {
 export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
   const tags = useTagsQuery(open);
   const update = useUpdateTag();
+  const remove = useDeleteTag();
+  const [deletingId, setDeletingId] = useState<number>();
+  const pending = update.isPending || remove.isPending;
   const [editingId, setEditingId] = useState<number>();
   const [name, setName] = useState("");
   const [backgroundColor, setBackgroundColor] = useState("#718096");
@@ -37,6 +40,7 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
     currentName: string,
     currentBackgroundColor: string,
   ) => {
+    setDeletingId(undefined);
     setEditingId(id);
     setName(currentName);
     setBackgroundColor(currentBackgroundColor);
@@ -54,6 +58,19 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Could not update tag.",
+      );
+    }
+  };
+
+  const deleteSelected = async () => {
+    if (deletingId === undefined) return;
+    setMessage("");
+    try {
+      await remove.mutateAsync(deletingId);
+      setDeletingId(undefined);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Could not delete tag.",
       );
     }
   };
@@ -184,7 +201,38 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                             {tag.documentCount.toLocaleString()}
                           </Table.Cell>
                           <Table.Cell textAlign="end">
-                            {editingId === tag.id
+                            {deletingId === tag.id
+                              ? (
+                                <Flex direction="column" gap="2">
+                                  <Text>
+                                    Delete{" "}
+                                    {tag.name}? This removes the tag from all
+                                    documents. Documents will be kept.
+                                  </Text>
+                                  <Flex gap="2" justify="flex-end">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={pending}
+                                      onClick={() => {
+                                        setDeletingId(undefined);
+                                        setMessage("");
+                                      }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      colorPalette="red"
+                                      loading={remove.isPending}
+                                      onClick={deleteSelected}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </Flex>
+                                </Flex>
+                              )
+                              : editingId === tag.id
                               ? (
                                 <Flex gap="2" justify="flex-end">
                                   <Button
@@ -205,19 +253,34 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                                 </Flex>
                               )
                               : (
-                                <IconButton
-                                  aria-label={`Edit tag ${tag.name}`}
-                                  onClick={() =>
-                                    startEditing(
-                                      tag.id,
-                                      tag.name,
-                                      tag.backgroundColor,
-                                    )}
-                                  size="sm"
-                                  variant="ghost"
-                                >
-                                  <Pencil aria-hidden="true" />
-                                </IconButton>
+                                <Flex gap="2" justify="flex-end">
+                                  <IconButton
+                                    disabled={pending}
+                                    aria-label={`Edit tag ${tag.name}`}
+                                    onClick={() =>
+                                      startEditing(
+                                        tag.id,
+                                        tag.name,
+                                        tag.backgroundColor,
+                                      )}
+                                    size="sm"
+                                    variant="ghost"
+                                  >
+                                    <Pencil aria-hidden="true" />
+                                  </IconButton>
+                                  <IconButton
+                                    aria-label={`Delete tag ${tag.name}`}
+                                    disabled={pending}
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      cancelEditing();
+                                      setDeletingId(tag.id);
+                                    }}
+                                  >
+                                    <Trash2 aria-hidden="true" />
+                                  </IconButton>
+                                </Flex>
                               )}
                           </Table.Cell>
                         </Table.Row>

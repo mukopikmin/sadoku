@@ -46,6 +46,7 @@ import { getSettings } from "../usecase/settings/get_settings.ts";
 import { updateSettings } from "../usecase/settings/update_settings.ts";
 import type { TagStore } from "../usecase/tag/ports.ts";
 import type { TagError } from "../usecase/tag/types.ts";
+import { deleteTag } from "../usecase/tag/delete_tag.ts";
 import { updateTag } from "../usecase/tag/update_tag.ts";
 import { replaceDocumentTags } from "../usecase/tag/replace_document_tags.ts";
 import { githubExportErrors } from "./comment_api.ts";
@@ -304,6 +305,11 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
     listTags: async () => ({
       tags: (await tags().list()).map(tagSummaryMessage),
     } satisfies MessageInitShape<typeof PreviewService.method.listTags.output>),
+    deleteTag: async ({ id }) => {
+      const result = await deleteTag(tags(), Number(id));
+      if (result) tagResult(result);
+      return {};
+    },
     updateTag: async ({ id, name, backgroundColor }) =>
       tagMessage(
         tagResult(await updateTag(tags(), Number(id), name, backgroundColor)),
