@@ -11,6 +11,12 @@ are not persisted.
 
 ## Install
 
+The preview bundles GitLab Sans for text and GitLab Mono for code, with system
+font fallbacks for Japanese. Both fonts are distributed under SIL OFL 1.1; their
+copyright notices and licenses are
+[included with the fonts](src/preview/public/fonts/README.md) and embedded in
+the compiled binary. No external font service is required.
+
 ### Linux x64 and macOS arm64
 
 ```sh

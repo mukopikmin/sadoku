@@ -1,4 +1,5 @@
 type ManifestEntry = {
+  css?: string[];
   dynamicImports?: string[];
   file: string;
   imports?: string[];
@@ -29,8 +30,17 @@ export const previewAssetPaths = {
   icon: "/assets/icon-512.png",
 };
 
+export const previewStylesheetPaths = (manifest["main.tsx"].css ?? []).map(
+  (file) => {
+    if (file.includes("..") || file.startsWith("/")) {
+      throw new Error(`Invalid preview stylesheet: ${file}`);
+    }
+    return `/assets/${file}`;
+  },
+);
+
 export const fingerprintedPreviewFiles = new Set(
   Object.values(manifest)
-    .map(({ file }) => file)
+    .flatMap(({ file, css }) => [file, ...css ?? []])
     .filter((file) => /-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/i.test(file)),
 );

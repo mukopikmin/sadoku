@@ -11,6 +11,7 @@ import { Toaster } from "./components/ui/toaster";
 import { createPreviewRouter } from "./router";
 import { shikiAdapter } from "./markdown/shikiAdapter";
 import { previewTransport } from "./api/connect";
+import "./fonts.css";
 
 const root = document.getElementById("sadoku-client-root");
 const queryClient = createPreviewQueryClient();
