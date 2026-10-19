@@ -16,13 +16,13 @@ Preview links use the proxy's configured `PUBLIC_ORIGIN` and the route
 `/revisions/pr-<PR number>/`, including the trailing slash. For example,
 `https://preview.example.com/revisions/pr-42/`. The workflow reads this origin
 from the proxy Cloud Run service named by `CLOUD_RUN_PROXY_SERVICE`, in the same
-project and region as the backend. Set that service's `PUBLIC_ORIGIN` to the
-mapped custom domain accepted by the proxy. The comment, deployment environment
-URL, and workflow summary all use this public proxy URL. Backend `run.app` tag
-URLs are used only to verify routing through the Cloud Run API; the workflow
-does not send HTTP requests to the backend or infer the public domain from it.
-Missing or invalid proxy configuration fails the workflow without publishing a
-backend URL.
+project as the backend and the region selected by `CLOUD_RUN_PROXY_REGION` (or
+`GCP_REGION` when unset). Set that service's `PUBLIC_ORIGIN` to the mapped
+custom domain accepted by the proxy. The comment, deployment environment URL,
+and workflow summary all use this public proxy URL. Backend `run.app` tag URLs
+are used only to verify routing through the Cloud Run API; the workflow does not
+send HTTP requests to the backend or infer the public domain from it. Missing or
+invalid proxy configuration fails the workflow without publishing a backend URL.
 
 The deployment job grants `pull-requests: write` for the comment step and uses
 the built-in `GITHUB_TOKEN`; no additional secret is required. The step consumes
@@ -52,7 +52,11 @@ read it: **Settings → Secrets and variables → Actions → Variables → New
 repository variable**. Its value is the existing proxy Cloud Run service's short
 name (for example, `sadoku-revision-proxy`), not the backend service name, a
 URL, a custom domain, or a full resource path. The service must be in the same
-project and region as the backend.
+project as the backend. When its region differs, set the repository Actions
+variable `CLOUD_RUN_PROXY_REGION` to the proxy's actual region (for example,
+`asia-northeast2`). Both workflows use this region for proxy operations and fall
+back to their existing `GCP_REGION` secret when it is unset. Backend deployment
+and readiness checks continue to use `GCP_REGION`.
 
 Alternatively, define the variable separately in both `cloud-run-preview` and
 `cloud-run-proxy` environments. An environment variable overrides a repository

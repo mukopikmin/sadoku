@@ -141,12 +141,14 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REVISION: ${{ steps.deploy.outputs.revision }}
           PROXY_SERVICE: ${{ vars.CLOUD_RUN_PROXY_SERVICE }}
+          PROXY_REGION: ${{ vars.CLOUD_RUN_PROXY_REGION || secrets.GCP_REGION }}
         run: |
           set -euo pipefail
           [[ "${PROXY_SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
+          [[ "${PROXY_REGION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
           public_origin="$(gcloud run services describe "${PROXY_SERVICE}" \
             --project "${PROJECT_ID}" \
-            --region "${REGION}" \
+            --region "${PROXY_REGION}" \
             --format=json |
             jq -er '.spec.template.spec.containers[0].env[]? | select(.name == "PUBLIC_ORIGIN") | .value | select(type == "string")')"
           if [[ ! "${public_origin}" =~ ^https://[a-z0-9-]+(\.[a-z0-9-]+)+/?$ ]]; then
