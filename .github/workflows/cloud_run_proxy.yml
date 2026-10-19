@@ -69,7 +69,7 @@ jobs:
       REGION: ${{ secrets.GCP_REGION }}
       REGISTRY_LOCATION: ${{ secrets.ARTIFACT_REGISTRY_LOCATION || secrets.GCP_REGION }}
       REPOSITORY: ${{ secrets.ARTIFACT_REGISTRY_REPOSITORY }}
-      SERVICE: ${{ secrets.CLOUD_RUN_PROXY_SERVICE }}
+      SERVICE: ${{ vars.CLOUD_RUN_PROXY_SERVICE }}
 
     steps:
       - name: Download image artifact
