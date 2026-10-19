@@ -4,6 +4,20 @@ Pull requests authored by `dependabot[bot]` skip all preview jobs, including
 image builds, deployments, and tag cleanup, even when a person reruns the
 workflow.
 
+After a successful deployment and revision readiness check, the workflow posts
+its preview URL, deployed commit, and workflow run link in a pull request
+comment. Subsequent deployments update the same `github-actions[bot]` comment
+instead of adding new comments. Failed deployments do not post a comment or
+replace the last successful preview comment. Closed pull requests and
+deployments whose commit no longer matches the pull request head skip
+commenting.
+
+The deployment job grants `pull-requests: write` for the comment step and uses
+the built-in `GITHUB_TOKEN`; no additional secret is required. The step consumes
+the ready URL directly within that job, avoiding cross-job output suppression
+when the URL contains resource identifiers registered as secrets. It does not
+check out or execute pull request code.
+
 The preview image includes the pull request's repository contents under `/app`,
 subject to `.dockerignore`. Sadoku opens `/app/test/integration/fixtures` as a
 directory so the preview lists the integration test's Markdown fixtures. Set
