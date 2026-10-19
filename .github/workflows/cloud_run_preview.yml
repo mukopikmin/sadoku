@@ -140,8 +140,19 @@ jobs:
           SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REVISION: ${{ steps.deploy.outputs.revision }}
+          PROXY_SERVICE: ${{ secrets.CLOUD_RUN_PROXY_SERVICE }}
         run: |
           set -euo pipefail
+          [[ "${PROXY_SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
+          public_origin="$(gcloud run services describe "${PROXY_SERVICE}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --format=json |
+            jq -er '.spec.template.spec.containers[0].env[]? | select(.name == "PUBLIC_ORIGIN") | .value | select(type == "string")')"
+          if [[ ! "${public_origin}" =~ ^https://[a-z0-9-]+(\.[a-z0-9-]+)+/?$ ]]; then
+            echo "::error::Proxy PUBLIC_ORIGIN must be an HTTPS domain origin without a path, query, or fragment."
+            exit 1
+          fi
           tag="pr-${PR_NUMBER}"
           url=""
           for attempt in {1..12}; do
@@ -167,6 +178,7 @@ jobs:
             echo "::error::Revision ${REVISION} is not Ready."
             exit 1
           fi
+          url="${public_origin%/}/revisions/${tag}/"
           echo "url=${url}" >> "${GITHUB_OUTPUT}"
           printf '## Cloud Run preview\n\n%s\n\nRevision: `%s` (Ready)\n' \
             "${url}" "${REVISION}" >> "${GITHUB_STEP_SUMMARY}"

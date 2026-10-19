@@ -12,6 +12,18 @@ replace the last successful preview comment. Closed pull requests and
 deployments whose commit no longer matches the pull request head skip
 commenting.
 
+Preview links use the proxy's configured `PUBLIC_ORIGIN` and the route
+`/revisions/pr-<PR number>/`, including the trailing slash. For example,
+`https://preview.example.com/revisions/pr-42/`. The workflow reads this origin
+from the proxy Cloud Run service named by `CLOUD_RUN_PROXY_SERVICE`, in the same
+project and region as the backend. Set that service's `PUBLIC_ORIGIN` to the
+mapped custom domain accepted by the proxy. The comment, deployment environment
+URL, and workflow summary all use this public proxy URL. Backend `run.app` tag
+URLs are used only to verify routing through the Cloud Run API; the workflow
+does not send HTTP requests to the backend or infer the public domain from it.
+Missing or invalid proxy configuration fails the workflow without publishing a
+backend URL.
+
 The deployment job grants `pull-requests: write` for the comment step and uses
 the built-in `GITHUB_TOKEN`; no additional secret is required. The step consumes
 the ready URL directly within that job, avoiding cross-job output suppression
@@ -30,6 +42,7 @@ The `cloud_run_preview.yml` workflow expects these GitHub repository or
 - `GCP_PROJECT_ID`
 - `GCP_REGION`
 - `CLOUD_RUN_SERVICE`
+- `CLOUD_RUN_PROXY_SERVICE`
 - `ARTIFACT_REGISTRY_REPOSITORY`
 - `GCP_WORKLOAD_IDENTITY_PROVIDER`
 - `GCP_DEPLOY_SERVICE_ACCOUNT`
@@ -82,7 +95,9 @@ Grant the deployment service account only these roles, scoped as narrowly as
 Google Cloud IAM permits:
 
 - `roles/artifactregistry.writer` on the one Artifact Registry repository;
-- `roles/run.developer` on the one preview Cloud Run service; and
+- `roles/run.developer` on the one preview Cloud Run service;
+- `run.services.get` on the proxy Cloud Run service to read its `PUBLIC_ORIGIN`
+  (for example, a custom role containing only this permission); and
 - `roles/iam.serviceAccountUser` on the dedicated Cloud Run runtime service
   account.
 

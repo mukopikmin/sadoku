@@ -18,7 +18,7 @@ const runScript = new Function(
 );
 const head = "a".repeat(40);
 const marker = "<!-- sadoku-cloud-run-preview -->";
-const url = "https://pr-42---sadoku-example.run.app";
+const url = "https://preview.example.com/revisions/pr-42/";
 
 type Comment = {
   id: number;
