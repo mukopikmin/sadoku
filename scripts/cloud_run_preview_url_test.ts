@@ -14,7 +14,11 @@ const script = workflow
 
 async function resolvePreview(
   origin: string | undefined,
-  { ready = true, proxyService = "revision-proxy" } = {},
+  {
+    ready = true,
+    proxyService = "revision-proxy",
+    proxyRegion = "asia-northeast1",
+  } = {},
 ) {
   const directory = await Deno.makeTempDir({ prefix: "sadoku-preview-url-" });
   try {
@@ -26,11 +30,16 @@ async function resolvePreview(
 set -eu
 if [ "$1 $2 $3" = 'run services describe' ]; then
   case "$4" in
-    revision-proxy) cat "$FIXTURES/proxy.json" ;;
-    sadoku) cat "$FIXTURES/backend.json" ;;
+    revision-proxy)
+      [ "$5 $6 $7 $8" = "--project example-project --region $EXPECTED_PROXY_REGION" ]
+      cat "$FIXTURES/proxy.json" ;;
+    sadoku)
+      [ "$5 $6 $7 $8" = '--project example-project --region asia-northeast1' ]
+      cat "$FIXTURES/backend.json" ;;
     *) exit 1 ;;
   esac
 elif [ "$1 $2 $3 $4" = 'run revisions describe sadoku-revision' ]; then
+  [ "$5 $6 $7 $8" = '--project example-project --region asia-northeast1' ]
   cat "$FIXTURES/revision.json"
 else
   exit 1
@@ -88,6 +97,8 @@ fi
         REGION: "asia-northeast1",
         SERVICE: "sadoku",
         PROXY_SERVICE: proxyService,
+        PROXY_REGION: proxyRegion,
+        EXPECTED_PROXY_REGION: proxyRegion,
         PR_NUMBER: "42",
         REVISION: "sadoku-revision",
         GITHUB_OUTPUT: output,
@@ -172,5 +183,21 @@ Deno.test({
       assertEquals(result.output, "");
       assertEquals(result.summary, "");
     }
+  },
+});
+
+Deno.test({
+  name:
+    "proxy URL lookup uses its own region while backend checks keep the backend region",
+  ignore: Deno.build.os === "windows",
+  async fn() {
+    const result = await resolvePreview("https://preview.example.com", {
+      proxyRegion: "asia-northeast2",
+    });
+    assertEquals(result.code, 0, result.error);
+    assertEquals(
+      result.output,
+      "url=https://preview.example.com/revisions/pr-42/\n",
+    );
   },
 });
