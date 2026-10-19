@@ -11,6 +11,11 @@ are not persisted.
 
 ## Install
 
+The preview bundles Noto Sans JP for body text, headings, and UI, so Japanese
+documents use a consistent font without an external font service. The font is
+distributed under SIL OFL 1.1; its copyright notices and licenses are
+[included in the compiled binary](src/preview/public/fonts/noto-sans-jp/README.md).
+
 ### Linux x64 and macOS arm64
 
 ```sh
