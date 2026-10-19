@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "./testUtils";
 import { TagsDialog } from "../components/TagsDialog";
 
 beforeEach(() => {
@@ -187,12 +194,27 @@ it("confirms deletion, supports cancel, and refreshes after success", async () =
   fireEvent.click(
     await screen.findByRole("button", { name: "Delete tag API" }),
   );
-  expect(screen.getByText(/This removes the tag from all documents/)).not
-    .toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  const confirmation = await screen.findByRole("alertdialog", {
+    name: "Delete tag?",
+  });
+  expect(
+    within(confirmation).getByText(
+      /Delete API\? This removes the tag from all documents/,
+    ),
+  ).not.toBeNull();
   expect(fetchMock).toHaveBeenCalledOnce();
-  fireEvent.click(screen.getByRole("button", { name: "Delete tag API" }));
-  fireEvent.click(screen.getByRole("button", { name: "Delete", exact: true }));
+  fireEvent.click(within(confirmation).getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  expect(fetchMock).toHaveBeenCalledOnce();
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Delete tag API" }),
+  );
+  const reopened = await screen.findByRole("alertdialog", {
+    name: "Delete tag?",
+  });
+  fireEvent.click(
+    within(reopened).getByRole("button", { name: "Delete", exact: true }),
+  );
   expect(await screen.findByText("No tags yet.")).not.toBeNull();
 });
 
@@ -216,8 +238,15 @@ it("keeps a tag and displays the error when deletion fails", async () => {
   fireEvent.click(
     await screen.findByRole("button", { name: "Delete tag API" }),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Delete", exact: true }));
-  expect(await screen.findByText("Could not delete tag.")).not.toBeNull();
+  const confirmation = await screen.findByRole("alertdialog", {
+    name: "Delete tag?",
+  });
+  fireEvent.click(
+    within(confirmation).getByRole("button", { name: "Delete", exact: true }),
+  );
+  expect((await within(confirmation).findByRole("alert")).textContent).toBe(
+    "Could not delete tag.",
+  );
   expect(screen.getByText("API")).not.toBeNull();
   expect(screen.getByRole("button", { name: "Delete", exact: true })).not
     .toBeNull();
