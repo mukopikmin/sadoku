@@ -18,7 +18,7 @@ console.log(`Previewing ${documentName}`);
 
 ## Preview deployment smoke test
 
-Verification marker: `preview-comment-smoke-v2`.
+Verification marker: `preview-comment-smoke-v3`.
 
 This section confirms the pull request revision is served through the proxy's
 mapped custom domain.
