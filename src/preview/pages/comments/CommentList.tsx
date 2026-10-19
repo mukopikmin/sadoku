@@ -4,7 +4,6 @@ import {
   Button,
   Checkbox,
   Flex,
-  Heading,
   Stack,
   Tabs,
   Text,
@@ -57,7 +56,6 @@ type CommentSectionProps = {
   comments: Comment[];
   bulk: ReturnType<typeof useCommentBulkActions>;
   emptyText: string;
-  title: string;
 };
 
 const CommentSection = ({
@@ -66,10 +64,8 @@ const CommentSection = ({
   comments,
   bulk,
   emptyText,
-  title,
 }: CommentSectionProps) => (
   <Box as="section">
-    <Heading as="h2" size="xl" mt="0" mb="4">{title}</Heading>
     {children}
     {comments.length === 0
       ? <Text color="fg.muted">{emptyText}</Text>
@@ -206,7 +202,6 @@ export const CommentList = ({
           bulk={bulk}
           comments={selectedSection.comments}
           emptyText={selectedSection.emptyText}
-          title={`${selectedSection.label} comments`}
         >
           {selectedSection.comments.length > 0 && (
             <Flex align="center" gap="3" mb="4" wrap="wrap">

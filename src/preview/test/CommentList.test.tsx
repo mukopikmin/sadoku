@@ -175,17 +175,16 @@ describe("CommentList", () => {
   });
 
   it("groups comments, displays counts, and supports tab keyboard navigation", () => {
-    const expectSectionOrder = (panel: HTMLElement, title: string) => {
-      const heading = within(panel).getByRole("heading", { name: title });
+    const expectPanelContent = (panel: HTMLElement) => {
+      expect(
+        within(panel).queryByRole("heading", {
+          name: /^(Unresolved|Resolved) comments$/,
+        }),
+      ).toBeNull();
       const selectAll = within(panel).getByRole("checkbox", {
         name: "Select all",
       });
       const firstComment = within(panel).getAllByRole("article")[0];
-      expect(
-        heading.compareDocumentPosition(selectAll) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      )
-        .not.toBe(0);
       expect(
         selectAll.compareDocumentPosition(firstComment) &
           Node.DOCUMENT_POSITION_FOLLOWING,
@@ -221,12 +220,10 @@ describe("CommentList", () => {
     expect(within(resolvedTab).getByText("1").classList).toContain(
       "chakra-badge",
     );
-    expect(screen.getByRole("heading", { name: "Unresolved comments" }))
-      .not.toBeNull();
     const unresolvedPanel = screen.getByRole("tabpanel", {
       name: "Unresolved",
     });
-    expectSectionOrder(unresolvedPanel, "Unresolved comments");
+    expectPanelContent(unresolvedPanel);
     expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale")).not.toBeNull();
@@ -237,10 +234,8 @@ describe("CommentList", () => {
     );
 
     fireEvent.click(resolvedTab);
-    expect(screen.getByRole("heading", { name: "Resolved comments" }))
-      .not.toBeNull();
     const resolvedPanel = screen.getByRole("tabpanel", { name: "Resolved" });
-    expectSectionOrder(resolvedPanel, "Resolved comments");
+    expectPanelContent(resolvedPanel);
     expect(within(resolvedPanel).getByText("Resolved comment.")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Resolved")).not.toBeNull();
 
