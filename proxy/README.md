@@ -1,8 +1,12 @@
 # Revision proxy
 
 Separate Cloud Run service: browser → native IAP → Go proxy → backend IAM →
-tagged application. TLS uses the front service's `run.app` URL; no load
-balancer, domain mapping, session affinity, or per-tag routing is needed.
+tagged application. Set `PUBLIC_ORIGIN` to the browser-facing HTTPS origin,
+including the mapped custom domain when one is configured. The proxy accepts
+only that host; its `run.app` URL is not an alternative entry point when
+`PUBLIC_ORIGIN` uses a custom domain. Revision links use
+`PUBLIC_ORIGIN/revisions/TAG/`; no per-tag domain mapping or session affinity is
+needed.
 
 The application must support `X-Forwarded-Prefix: /revisions/TAG` for links,
 assets, API calls, and SSE. Only trust that header behind the authenticated
