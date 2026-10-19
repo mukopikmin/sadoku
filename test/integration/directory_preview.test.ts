@@ -232,6 +232,7 @@ Deno.test("directory preview lists the nested fixture documents", async () => {
           "comprehensive.md",
           join("guides", "overview.md"),
           join("guides", "setup", "local.md"),
+          "japanese.md",
           "second.md",
         ],
       );

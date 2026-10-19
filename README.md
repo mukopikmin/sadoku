@@ -51,6 +51,10 @@ Preview a file:
 sadoku start README.md
 ```
 
+For a Japanese typography sample, open
+[test/integration/fixtures/japanese.md](test/integration/fixtures/japanese.md)
+with `sadoku start test/integration/fixtures/japanese.md`.
+
 Preview all supported Markdown files in a directory:
 
 ```sh
