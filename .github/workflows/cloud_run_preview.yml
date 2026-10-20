@@ -1,0 +1,275 @@
+name: Cloud Run PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-run-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build preview image
+    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout PR commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Build image without cloud credentials
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          image="sadoku-pr:${HEAD_SHA}"
+          docker build --tag "${image}" --file Dockerfile .
+          docker save --output "${RUNNER_TEMP}/preview-image.tar" "${image}"
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: preview-image-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/preview-image.tar
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy preview
+    needs: build
+    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    environment:
+      name: cloud-run-preview
+      url: ${{ steps.preview.outputs.url }}
+
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: preview-image-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/preview-image
+
+      - name: Load image before cloud authentication
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          docker load --input "${RUNNER_TEMP}/preview-image/preview-image.tar"
+          docker image inspect "sadoku-pr:${HEAD_SHA}" >/dev/null
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Push immutable image
+        id: image
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          REPOSITORY: ${{ secrets.ARTIFACT_REGISTRY_REPOSITORY }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          [[ "${PROJECT_ID}" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]$ ]]
+          [[ "${REGION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
+          [[ "${REPOSITORY}" =~ ^[a-z][a-z0-9._-]{0,62}$ ]]
+          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+
+          registry="${REGION}-docker.pkg.dev"
+          image="${registry}/${PROJECT_ID}/${REPOSITORY}/sadoku:${HEAD_SHA}"
+          gcloud auth configure-docker "${registry}" --quiet
+          docker tag "sadoku-pr:${HEAD_SHA}" "${image}"
+          docker push "${image}"
+
+          digest_image="$(docker inspect --format='{{index .RepoDigests 0}}' "${image}")"
+          [[ "${digest_image}" =~ ^${registry}/${PROJECT_ID}/${REPOSITORY}/sadoku@sha256:[0-9a-f]{64}$ ]]
+          echo "digest-image=${digest_image}" >> "${GITHUB_OUTPUT}"
+
+      - name: Deploy tagged revision without traffic
+        id: deploy
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+          IMAGE: ${{ steps.image.outputs.digest-image }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
+          [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
+          tag="pr-${PR_NUMBER}"
+          revision="$(gcloud run deploy "${SERVICE}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --image "${IMAGE}" \
+            --update-env-vars SADOKU_TRUST_FORWARDED_PREFIX=true \
+            --tag "${tag}" \
+            --no-traffic \
+            --quiet \
+            --format='value(status.latestCreatedRevisionName)')"
+          [[ "${revision}" == "${SERVICE}-"* ]]
+          [[ "${revision}" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]
+          echo "revision=${revision}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify revision readiness and resolve preview URL
+        id: preview
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REVISION: ${{ steps.deploy.outputs.revision }}
+          PROXY_SERVICE: ${{ vars.CLOUD_RUN_PROXY_SERVICE }}
+          PROXY_REGION: ${{ vars.CLOUD_RUN_PROXY_REGION || secrets.GCP_REGION }}
+        run: |
+          set -euo pipefail
+          [[ "${PROXY_SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
+          [[ "${PROXY_REGION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
+          public_origin="$(gcloud run services describe "${PROXY_SERVICE}" \
+            --project "${PROJECT_ID}" \
+            --region "${PROXY_REGION}" \
+            --format=json |
+            jq -er '.spec.template.spec.containers[0].env[]? | select(.name == "PUBLIC_ORIGIN") | .value | select(type == "string")')"
+          if [[ ! "${public_origin}" =~ ^https://[a-z0-9-]+(\.[a-z0-9-]+)+/?$ ]]; then
+            echo "::error::Proxy PUBLIC_ORIGIN must be an HTTPS domain origin without a path, query, or fragment."
+            exit 1
+          fi
+          tag="pr-${PR_NUMBER}"
+          url=""
+          for attempt in {1..12}; do
+            url="$(gcloud run services describe "${SERVICE}" \
+              --project "${PROJECT_ID}" \
+              --region "${REGION}" \
+              --format=json |
+              jq -r --arg tag "${tag}" --arg revision "${REVISION}" \
+                '.status.traffic[]? | select(.tag == $tag and .revisionName == $revision) | .url // empty')"
+            [[ -n "${url}" ]] && break
+            sleep 5
+          done
+          if [[ -z "${url}" ]]; then
+            echo "::error::Preview tag ${tag} did not resolve to revision ${REVISION} after 12 attempts."
+            exit 1
+          fi
+          [[ "${url}" =~ ^https://[a-z0-9-]+(\.[a-z0-9-]+)*\.run\.app$ ]]
+          if ! gcloud run revisions describe "${REVISION}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --format=json |
+            jq -e 'any(.status.conditions[]?; .type == "Ready" and .status == "True")' >/dev/null; then
+            echo "::error::Revision ${REVISION} is not Ready."
+            exit 1
+          fi
+          url="${public_origin%/}/revisions/${tag}/"
+          echo "url=${url}" >> "${GITHUB_OUTPUT}"
+          printf '## Cloud Run preview\n\n%s\n\nRevision: `%s` (Ready)\n' \
+            "${url}" "${REVISION}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Create or update preview comment
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.url }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const head = context.payload.pull_request.head.sha;
+            const { data: pull } = await github.rest.pulls.get({
+              owner, repo, pull_number: issue_number,
+            });
+            if (pull.state !== 'open' || pull.head.sha !== head) {
+              core.info('Skipping preview comment for a closed or superseded PR.');
+              return;
+            }
+
+            const marker = '<!-- sadoku-cloud-run-preview -->';
+            const body = [
+              marker,
+              '## Cloud Run preview',
+              '',
+              `Preview: ${process.env.PREVIEW_URL}`,
+              `Commit: \`${head}\``,
+              '',
+              `[Deployment logs](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})`,
+            ].join('\n');
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(comment =>
+              comment.user?.login === 'github-actions[bot]' &&
+              comment.body?.startsWith(marker)
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+            }
+
+  cleanup:
+    name: Remove preview tag
+    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: cloud-run-preview
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Remove only this PR's revision tag
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REGION: ${{ secrets.GCP_REGION }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
+          [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
+          tag="pr-${PR_NUMBER}"
+          existing="$(gcloud run services describe "${SERVICE}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --format="value(status.traffic.filter(tag=${tag}).tag)" 2>/dev/null || true)"
+          if [[ "${existing}" != "${tag}" ]]; then
+            echo "Tag ${tag} is already absent; nothing to remove."
+            exit 0
+          fi
+          gcloud run services update-traffic "${SERVICE}" \
+            --project "${PROJECT_ID}" \
+            --region "${REGION}" \
+            --remove-tags "${tag}" \
+            --quiet

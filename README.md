@@ -1,215 +1,143 @@
 # Sadoku
 
-Sadoku is a local Markdown review tool. Open a file, directory, or HTTP(S) URL
-in your browser, preview the rendered Markdown, and leave comments without
-changing the source document.
-
-Document instructions, agent memories, and review comments are stored locally.
-Remote URLs are fetched in full, but their query strings and fragments are
-excluded from the stored document identity so credentials and temporary tokens
-are not persisted.
+Sadoku is a local Markdown review tool. Open a file, directory, or URL in your
+browser, read the rendered Markdown, and leave comments without changing the
+source document. Comments are saved locally.
 
 ## Install
 
-### Linux x64 and macOS arm64
+**Linux x64 / macOS arm64:**
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh | sh
 ```
 
-### Windows x64
-
-Run in PowerShell:
+**Windows x64 (PowerShell):**
 
 ```powershell
 irm https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.ps1 | iex
 ```
 
-Both installers place Sadoku in a user-local application directory. On Linux and
-macOS, make sure `$HOME/.local/bin` is on `PATH`.
-
-To install the latest tested nightly build, pass `--nightly` to `install.sh` or
-`-Nightly` to `install.ps1`.
-
-Update an installed binary with:
+On Linux and macOS, make sure `$HOME/.local/bin` is on `PATH`. To update:
 
 ```sh
 sadoku update
-sadoku update --channel nightly
 ```
 
-## Quick start
+For nightly builds, pass `--nightly` to `install.sh` or `-Nightly` to
+`install.ps1`; update with `sadoku update --channel nightly`.
 
-Preview a file:
+## Open a document
 
 ```sh
 sadoku start README.md
 ```
 
-Preview all supported Markdown files in a directory:
+Sadoku opens your default browser and serves the preview at `127.0.0.1:3334` (or
+the next available port). You can also open a directory, a remote Markdown file,
+or the Markdown files changed in a GitHub pull request:
 
 ```sh
 sadoku start ./docs
-```
-
-Preview a remote document:
-
-```sh
 sadoku start https://example.com/README.md
-```
-
-Preview the Markdown files changed by a GitHub pull request:
-
-```sh
 sadoku start https://github.com/<owner>/<repo>/pull/<number>
 ```
 
-Sadoku binds to `127.0.0.1`, chooses port `3334` or the next available port, and
-opens the preview in your default browser. Common options include:
+| Option                          | Purpose                                                             |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `--port 4000`                   | Choose the starting port.                                           |
+| `--no-open`                     | Start without opening a browser.                                    |
+| `--keep-alive`                  | Keep running after the browser tab closes.                          |
+| `--max-depth 4 --max-files 100` | Increase directory discovery limits (defaults: 2 levels, 20 files). |
+
+Directory previews skip symbolic links, `.git`, and `node_modules` by default.
+Discovery settings are also available under **Settings → Directory discovery**.
+Run `sadoku --help` for all commands and options.
+
+## Review documents
+
+- Use the **+** button beside a document block to add a comment. Comments and
+  replies support Markdown; comments can be resolved and reopened.
+- In the comments view, select comments or use **Select all** to resolve,
+  reopen, or delete them together. Deletion includes replies and asks for
+  confirmation.
+- In a local directory preview, choose **New file** or a folder's **+** button
+  to create a Markdown file. The `.md` extension is added if omitted; an
+  optional title becomes the first heading. Existing files are never
+  overwritten.
+- Use **Zoom** on a Mermaid diagram to enlarge it. Pinch to zoom, scroll to
+  move, and choose **Fit to view** to reset.
+
+### GitHub pull requests
+
+Install the [GitHub CLI](https://cli.github.com/) and authenticate before
+opening a PR, including one in a public repository:
 
 ```sh
-sadoku start README.md --port 4000 --no-open
-sadoku start ./docs --max-depth 4 --max-files 100
-sadoku start README.md --keep-alive
+gh auth login --hostname github.com
+sadoku start https://github.com/<owner>/<repo>/pull/<number>
 ```
 
-Use `sadoku --help` for the complete command and option reference.
+Sadoku shows added and modified Markdown files and checks for new commits every
+30 seconds. When prompted, reload to review the latest version.
 
-### Directory previews
+Choose **Save to GitHub review** from an active human comment's menu to add it
+to your pending review. Nothing is submitted automatically: use **View pending
+GitHub review** to finish or discard it on GitHub. Replies are excluded, and
+local edits or deletions do not automatically sync to GitHub.
 
-Directory previews scan two levels and load up to 20 documents by default.
-Change these limits with `--max-depth` and `--max-files`, or under **Settings →
-Directory discovery**. Sadoku does not follow symbolic links and excludes `.git`
-and `node_modules` by default.
+Saving requires an open PR, an unchanged preview of the current head, and lines
+within one diff hunk. Finish or discard a review on an older commit before
+saving comments on a newer one. See
+[GitHub export details](docs/github-comment-export.md) for update behavior and
+other limitations.
 
-GitHub pull request previews use the same configured Markdown extensions and
-`--max-files` limit. They show added and modified Markdown files, omit deleted
-files, and fetch every document at the pull request's current head commit. The
-document identity remains stable when the branch advances. While the preview is
-open, Sadoku checks the pull request head every 30 seconds. When it advances,
-Sadoku refreshes the complete changed-Markdown list (including added, removed,
-and renamed files) and shows the existing reload prompt in open documents.
-Documents whose paths are unchanged keep their identity and comment storage when
-the head advances; a renamed path is treated as the canonical identity of the
-renamed document. To use this feature, install the
-[GitHub CLI](https://cli.github.com/) and authenticate once with
-`gh auth login --hostname github.com`. All pull request access, including public
-repositories, uses `gh api`; Sadoku never reads or stores a GitHub token. Fetch
-URLs, document identities, logs, and comment storage paths also contain no
-credentials.
+## CLI and coding agents
 
-In a PR preview, choose **Save to GitHub review** from an active human comment's
-menu to add it to your pending review. Sadoku discovers your existing review on
-GitHub, including one started in a browser, or creates a pending review with the
-first comment. Nothing is submitted automatically; use **View pending GitHub
-review** to finish or discard the review on GitHub. Review IDs are not stored
-locally. Replies are excluded.
-
-The displayed Markdown must exactly match the remote document, and the preview
-must use the current PR head. Remote read failures or differences block saving.
-The PR must be open and the selected lines must fit within one diff hunk. A
-pending review must also target the current head; finish or discard an older
-review on GitHub before adding comments for a newer revision.
-
-Saving the same parent again updates its pending body when the revision and
-lines still match. The explicit save uses the current local body. Already
-submitted comments return their existing link and are left unchanged. Local
-edits, resolution and deletion do not automatically change GitHub. See
-[export behavior and edge cases](docs/github-comment-export.md) for details.
-
-### Comments from the CLI
-
-Register and inspect documents:
+You can also manage comments from the terminal:
 
 ```sh
-sadoku document add README.md
-sadoku document list
-sadoku document inspect <document-id>
+sadoku comment add --source README.md --ensure-document --start-line 10 --body "Check this line."
+sadoku comment list --source README.md
+sadoku comment resolve <comment-id> --source README.md
 ```
 
-Manage comments by document ID:
+Use `sadoku --help` for document, comment, instruction, and memory commands.
+Instructions and memories provide document-specific context for agents; memories
+can be reviewed and deleted in the preview, but are added and updated through
+the CLI.
 
-```sh
-sadoku comment list --document <document-id>
-sadoku comment add --document <document-id> --start-line 10 --body "Check this line."
-sadoku comment update <comment-id> --document <document-id> --body "Updated comment."
-sadoku comment resolve <comment-id> --document <document-id>
-sadoku comment delete <comment-id> --document <document-id>
-```
-
-Commands also accept `--source <file.md|url>`. Use `--ensure-document` with
-`comment add` to register that source when needed. Run `sadoku comment --help`
-for reply, reopen, bot attribution, and review-request options.
-
-### Agent memories
-
-Agents can keep reusable background knowledge separately from a document. Memory
-commands use the same document selectors as instruction commands:
-
-```sh
-sadoku memory list --source README.md
-sadoku memory add --source README.md --content "The audience is maintainers."
-sadoku memory update 1 --source README.md --content "The audience is contributors."
-sadoku memory delete 1 --source README.md
-```
-
-The preview UI lets people review and delete memories; additions and updates are
-CLI-only. Memories are context rather than instructions. Do not store
-credentials, access tokens, URL query parameters, or other secrets in them.
-
-## Configuration and storage
-
-Sadoku stores comments in `sadoku.sqlite3` under the platform application-data
-directory:
-
-- macOS: `~/Library/Application Support/sadoku/comments`
-- Linux: `$XDG_DATA_HOME/sadoku/comments`, or `~/.local/share/sadoku/comments`
-- Windows: `%APPDATA%\sadoku\comments`
-
-Set `SADOKU_COMMENTS_DIR` to override this location. Persistent settings live in
-`$XDG_CONFIG_HOME/sadoku/config.toml` (or `~/.config/sadoku/config.toml`) on
-macOS and Linux, and `%APPDATA%\sadoku\config.toml` on Windows.
-
-```toml
-commentsDirectory = "/path/to/sadoku/comments"
-theme_mode = "dark"
-```
-
-## Agent skill
-
-Install the `sadoku-review` skill for compatible coding agents with
+For compatible coding agents, install the `sadoku-review` skill with
 [Agent Package Manager](https://github.com/microsoft/apm):
 
 ```sh
 apm install mukopikmin/sadoku --skill sadoku-review
 ```
 
-The skill requires the `sadoku` executable on `PATH`.
+The skill requires `sadoku` on `PATH`.
 
-## Development
+## Settings and storage
 
-```sh
-npm install
-deno task start README.md
+Comments, instructions, and memories are stored in `sadoku.sqlite3`:
+
+| Platform | Default directory                                                    |
+| -------- | -------------------------------------------------------------------- |
+| macOS    | `~/Library/Application Support/sadoku/comments`                      |
+| Linux    | `$XDG_DATA_HOME/sadoku/comments` or `~/.local/share/sadoku/comments` |
+| Windows  | `%APPDATA%\sadoku\comments`                                          |
+
+Set `SADOKU_COMMENTS_DIR` to use another directory. Persistent settings are in
+`$XDG_CONFIG_HOME/sadoku/config.toml` (or `~/.config/sadoku/config.toml`) on
+macOS and Linux, and `%APPDATA%\sadoku\config.toml` on Windows. For example:
+
+```toml
+commentsDirectory = "/path/to/sadoku/comments"
+theme_mode = "dark"
 ```
 
-Useful project tasks:
-
-```sh
-deno task check
-deno task test
-npm test
-deno task compile
-npm run proto:lint
-npm run proto:generate
-npm run proto:check
-```
-
-Run `npm run proto:check` to validate `proto/` and verify generated `gen/ts/`
-code. The Protobuf CI workflow runs the same check.
-
-Pass `--version <version>` to `deno task compile` or `deno task install` when
-building a versioned binary. Without it, the binary reports `0.0.0-dev`.
+Remote URL query strings and fragments are excluded from stored document
+identities. Sadoku uses `gh` for PR access without reading or storing a GitHub
+token. Avoid putting secrets in comments, instructions, or memories.
 
 ## Supported Markdown
 
@@ -223,7 +151,8 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Suggested edits in comments                          | Supported     | `suggest` and `suggestion` blocks render source diffs.         |
 | Tables and strikethrough                             | Supported     | GitHub Flavored Markdown syntax is supported.                  |
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
-| Mermaid diagrams                                     | Supported     | Rendered from local assets without a CDN.                      |
+| Single-newline line breaks in comments and replies   | Supported     | GitHub-style line breaks in comments and replies only.         |
+| Mermaid diagrams                                     | Supported     | Local rendering; trackpad pinch zoom in the zoom dialog.       |
 | HTML comments                                        | Supported     | Displayed as commentable plain-text cards.                     |
 | Agent-file front matter                              | Supported     | Displayed as a safe data list in recognized instruction files. |
 | Generated table of contents                          | Supported     | Available from the document action menu.                       |
@@ -231,4 +160,23 @@ building a versioned binary. Without it, the binary reports `0.0.0-dev`.
 | Footnotes, definition lists, and math/LaTeX          | Not supported |                                                                |
 
 Comments and replies support standard Markdown and GitHub Flavored Markdown.
+Single newlines in comments and replies render as line breaks, like on GitHub.
 Mermaid diagrams render only in document previews.
+
+Japanese text uses bundled Noto Sans JP with no external font service. See the
+[font notices and licenses](src/preview/public/fonts/noto-sans-jp/README.md).
+
+## Development
+
+Use Deno 2.8 and Node.js 24 to run from source:
+
+```sh
+npm install
+deno task start README.md
+```
+
+Checks: `deno fmt --check`, `deno task check`, `npm test`, `deno task test`, and
+`npm run proto:check`. Build a binary with `deno task compile`.
+
+See [contributor guidelines](AGENTS.md), [proxy setup](proxy/README.md), and the
+[release workflow guide](.agents/skills/sadoku-release/SKILL.md) for details.

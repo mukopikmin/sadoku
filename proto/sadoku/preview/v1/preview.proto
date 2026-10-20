@@ -6,6 +6,7 @@ service PreviewService {
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
   rpc GetStatistics(GetStatisticsRequest) returns (GetStatisticsResponse);
   rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse);
+  rpc CreateDocument(CreateDocumentRequest) returns (DocumentSummary);
   rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
   rpc GetDirectoryStatus(GetDirectoryStatusRequest) returns (GetDirectoryStatusResponse);
   rpc GetSettings(GetSettingsRequest) returns (Settings);
@@ -13,6 +14,7 @@ service PreviewService {
   rpc GetGitHubAccount(GetGitHubAccountRequest) returns (GetGitHubAccountResponse);
   rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
   rpc UpdateTag(UpdateTagRequest) returns (Tag);
+  rpc DeleteTag(DeleteTagRequest) returns (DeleteTagResponse);
   rpc ReplaceDocumentTags(ReplaceDocumentTagsRequest) returns (ReplaceDocumentTagsResponse);
   rpc ListInstructions(ListInstructionsRequest) returns (ListInstructionsResponse);
   rpc CreateInstruction(CreateInstructionRequest) returns (Instruction);
@@ -35,6 +37,7 @@ message GetSessionRequest {}
 
 message GetSessionResponse {
   optional PullRequest pull_request = 1;
+  bool can_create_documents = 2;
 }
 
 message PullRequest {
@@ -74,6 +77,11 @@ message TagSummary {
 
 message ListDocumentsRequest {}
 message ListDocumentsResponse { repeated DocumentSummary documents = 1; }
+message CreateDocumentRequest {
+  string directory = 1;
+  string filename = 2;
+  string title = 3;
+}
 message DocumentSummary {
   uint64 id = 1;
   string relative_path = 2;
@@ -135,6 +143,8 @@ message GitHubAccount {
 
 message ListTagsRequest {}
 message ListTagsResponse { repeated TagSummary tags = 1; }
+message DeleteTagRequest { uint64 id = 1; }
+message DeleteTagResponse {}
 message UpdateTagRequest { uint64 id = 1; string name = 2; string background_color = 3; }
 message TagReference { oneof reference { uint64 id = 1; string name = 2; } }
 message ReplaceDocumentTagsRequest { uint64 document_id = 1; repeated TagReference tags = 2; }

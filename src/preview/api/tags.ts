@@ -47,6 +47,12 @@ export const loadTags = async () => {
     };
   });
 };
+export const deleteTag = async (id: number): Promise<void> => {
+  await previewClient.deleteTag({ id: BigInt(id) }).catch((error) => {
+    throw new Error(connectRawMessage(error));
+  });
+};
+
 export const updateTag = async (
   id: number,
   name: string,

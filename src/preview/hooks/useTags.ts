@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  deleteTag,
   loadTags,
   replaceDocumentTags,
   type TagReference,
@@ -13,6 +14,20 @@ import {
 
 export const useTagsQuery = (enabled = true) =>
   useQuery({ enabled, queryFn: loadTags, queryKey: tagsQueryKey });
+
+export const useDeleteTag = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTag,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: tagsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: documentsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: ["preview-document"] }),
+      ]);
+    },
+  });
+};
 
 export const useUpdateTag = () => {
   const queryClient = useQueryClient();

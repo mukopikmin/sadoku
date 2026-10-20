@@ -1,3 +1,5 @@
+import { previewPath } from "./basePath";
+
 type EventSourceConstructor = new (url: string) => EventSource;
 
 export type PreviewKeepAliveOptions = {
@@ -22,7 +24,7 @@ export const connectPreviewKeepAlive = (
     onConnectionRestored = () => {},
   }: PreviewKeepAliveOptions = {},
 ): () => void => {
-  const events = new EventSourceCtor("/__sadoku/events");
+  const events = new EventSourceCtor(previewPath("/__sadoku/events"));
   events.addEventListener("error", onConnectionLost);
   events.addEventListener("open", onConnectionRestored);
 
@@ -42,7 +44,7 @@ export const connectHotReload = (
   }: HotReloadOptions,
 ): () => void => {
   const events = new EventSourceCtor(
-    `/__sadoku/documents/${documentId}/events`,
+    previewPath(`/__sadoku/documents/${documentId}/events`),
   );
   const notifyInvalidation = (event: Event) => {
     if (!(event instanceof MessageEvent)) return;

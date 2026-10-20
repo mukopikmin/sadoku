@@ -6,5 +6,6 @@ export type PullRequestMetadata = {
 };
 
 export type PreviewSession = {
+  canCreateDocuments?: boolean;
   pullRequest?: PullRequestMetadata;
 };

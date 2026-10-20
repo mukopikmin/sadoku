@@ -1,4 +1,7 @@
-import { cleanup, render, screen, waitFor } from "./testUtils";
+import { QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
+import { createPreviewQueryClient } from "../queryClient";
+import { cleanup, render, screen, waitFor } from "./domTestUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useHotReload } from "../hooks/useHotReload";
 import { useCommentsQuery } from "../hooks/useComments";
@@ -25,6 +28,13 @@ const CommentsHookProbe = () => {
   return <HookProbe />;
 };
 
+const renderProbe = (probe: ReactElement) =>
+  render(
+    <QueryClientProvider client={createPreviewQueryClient()}>
+      {probe}
+    </QueryClientProvider>,
+  );
+
 afterEach(() => {
   cleanup();
   TestEventSource.instances = [];
@@ -35,7 +45,7 @@ describe("useHotReload", () => {
   it("marks reload as available when the document is invalidated", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
 
-    render(<HookProbe />);
+    renderProbe(<HookProbe />);
 
     expect(screen.getByText("waiting")).not.toBeNull();
 
@@ -57,7 +67,7 @@ describe("useHotReload", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<CommentsHookProbe />);
+    renderProbe(<CommentsHookProbe />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     TestEventSource.instances.at(-1)?.dispatchEvent(
       new MessageEvent("invalidate", {

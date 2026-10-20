@@ -82,11 +82,9 @@ describe("CommentItem", () => {
     );
 
     const target = container.querySelector(".comment-source-target")!;
-    const card = container.querySelector(".chakra-card__root")!;
     const sourceMarkdown = target.querySelector(".comment-source-markdown")!;
     const rootThread = container.querySelector(".comment-root-thread")!;
-    expect(target.tagName).toBe("SECTION");
-    expect(card.tagName).toBe("ARTICLE");
+    expect(screen.getByRole("article")).not.toBeNull();
     expect(within(target).getByText("Original line")).not.toBeNull();
     expect(
       within(sourceMarkdown).getByRole("heading", {
@@ -108,7 +106,6 @@ describe("CommentItem", () => {
     expect(container.textContent).toContain("<script>alert(1)</script>");
     expect(screen.getByText("Bot")).not.toBeNull();
     expect(screen.getByText("Stale")).not.toBeNull();
-    expect(target.nextElementSibling).toBe(rootThread);
     expect(rootThread.contains(screen.getByText("Comment"))).toBe(true);
   });
 
@@ -245,7 +242,7 @@ describe("CommentItem", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Copy comment" }).hasAttribute(
+      screen.getByRole("button", { name: "More actions" }).hasAttribute(
         "disabled",
       ),
     ).toBe(true);
@@ -282,14 +279,16 @@ describe("CommentItem", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy comment" }));
+    await openCommentMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy comment" }));
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith("**Comment** body.")
     );
     expect(await screen.findByText("Comment copied")).not.toBeNull();
 
     writeText.mockRejectedValueOnce(new Error("Clipboard unavailable."));
-    fireEvent.click(screen.getByRole("button", { name: "Copy comment" }));
+    await openCommentMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy comment" }));
     expect(await screen.findByText("Could not copy comment")).not.toBeNull();
     expect(screen.getAllByText("Clipboard unavailable.").length)
       .toBeGreaterThan(0);

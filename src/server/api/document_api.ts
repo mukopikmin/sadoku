@@ -1,15 +1,11 @@
+import { readDirectoryDocument } from "../preview/load_document.ts";
 import { noStoreJson, notFoundResponse } from "../responses.ts";
-import {
-  createPreviewSource,
-  readMarkdownSource,
-  sourceUrl,
-} from "../source.ts";
+import { createPreviewSource, readMarkdownSource } from "../source.ts";
 import type { DocumentStore } from "../usecase/document/mod.ts";
 import {
   getDirectoryDocument,
   isDocumentUseCaseError,
   listDirectoryDocuments,
-  loadDirectoryDocument,
 } from "../usecase/document/mod.ts";
 import type { DirectorySession } from "../usecase/document/mod.ts";
 import type { TagStore } from "../usecase/tag/ports.ts";
@@ -59,20 +55,12 @@ export const getDirectoryDocumentResponse = async (
 
   try {
     const document = getDirectoryDocument(session, id);
-    const content = await loadDirectoryDocument(document, {
-      initializeSnapshot: documentStore?.initializeSnapshot
-        ? (documentId, markdown) =>
-          documentStore.initializeSnapshot!(documentId, markdown)
-        : undefined,
-      readMarkdown: async (source) => ({
-        fileUrl: sourceUrl(source),
-        markdown: await readMarkdown(source),
-      }),
-      readSnapshot: documentStore?.readSnapshot
-        ? (documentId) => documentStore.readSnapshot!(documentId)
-        : undefined,
-      tagReader: tagStore,
-    });
+    const content = await readDirectoryDocument(
+      document,
+      documentStore,
+      tagStore,
+      readMarkdown,
+    );
     return noStoreJson({
       ...content,
       ...(session.githubPull

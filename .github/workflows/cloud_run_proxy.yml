@@ -1,0 +1,142 @@
+name: Cloud Run Revision Proxy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-run-proxy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build proxy image
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.x"
+          cache: false
+
+      - name: Check proxy
+        working-directory: proxy
+        run: |
+          set -euo pipefail
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go test -race -count=1 -timeout=60s ./...
+
+      - name: Build image without cloud credentials
+        env:
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          image="revision-proxy:${HEAD_SHA}"
+          docker build --platform linux/amd64 --tag "${image}" proxy
+          docker save --output "${RUNNER_TEMP}/proxy-image.tar" "${image}"
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: proxy-image-${{ github.sha }}
+          path: ${{ runner.temp }}/proxy-image.tar
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    name: Update proxy service
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: cloud-run-proxy
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: ${{ vars.CLOUD_RUN_PROXY_REGION || secrets.GCP_REGION }}
+      REGISTRY_LOCATION: ${{ secrets.ARTIFACT_REGISTRY_LOCATION || secrets.GCP_REGION }}
+      REPOSITORY: ${{ secrets.ARTIFACT_REGISTRY_REPOSITORY }}
+      SERVICE: ${{ vars.CLOUD_RUN_PROXY_SERVICE }}
+
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: proxy-image-${{ github.sha }}
+          path: ${{ runner.temp }}/proxy-image
+
+      - name: Load image before cloud authentication
+        env:
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          docker load --input "${RUNNER_TEMP}/proxy-image/proxy-image.tar"
+          docker image inspect "revision-proxy:${HEAD_SHA}" >/dev/null
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Push immutable proxy image
+        id: image
+        env:
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "${PROJECT_ID}" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]$ ]]
+          [[ "${REGISTRY_LOCATION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
+          [[ "${REPOSITORY}" =~ ^[a-z][a-z0-9._-]{0,62}$ ]]
+          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${GITHUB_RUN_ID}" =~ ^[1-9][0-9]*$ ]]
+          [[ "${GITHUB_RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]]
+          registry="${REGISTRY_LOCATION}-docker.pkg.dev"
+          image="${registry}/${PROJECT_ID}/${REPOSITORY}/revision-proxy:${HEAD_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gcloud auth configure-docker "${registry}" --quiet
+          docker tag "revision-proxy:${HEAD_SHA}" "${image}"
+          docker push "${image}"
+          digest_image="$(docker inspect --format='{{index .RepoDigests 0}}' "${image}")"
+          [[ "${digest_image}" == "${registry}/${PROJECT_ID}/${REPOSITORY}/revision-proxy@sha256:"* ]]
+          [[ "${digest_image##*@sha256:}" =~ ^[0-9a-f]{64}$ ]]
+          echo "digest-image=${digest_image}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update existing proxy and promote ready revision
+        env:
+          IMAGE: ${{ steps.image.outputs.digest-image }}
+        run: |
+          set -euo pipefail
+          [[ "${PROJECT_ID}" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]$ ]]
+          [[ "${REGION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
+          [[ "${REGISTRY_LOCATION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
+          [[ "${REPOSITORY}" =~ ^[a-z][a-z0-9._-]{0,62}$ ]]
+          [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
+          [[ "${IMAGE}" == "${REGISTRY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/revision-proxy@sha256:"* ]]
+          [[ "${IMAGE##*@sha256:}" =~ ^[0-9a-f]{64}$ ]]
+          revision="$(gcloud run services update "${SERVICE}" \
+            --project "${PROJECT_ID}" --region "${REGION}" \
+            --image "${IMAGE}" --no-traffic --quiet \
+            --format='value(status.latestReadyRevisionName)')"
+          [[ "${revision}" == "${SERVICE}-"* ]]
+          [[ "${revision}" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]
+          gcloud run services update-traffic "${SERVICE}" \
+            --project "${PROJECT_ID}" --region "${REGION}" \
+            --to-revisions "${revision}=100" --quiet
+          printf '## Revision proxy deployed\n\nRevision: `%s`\n' "${revision}" >> "${GITHUB_STEP_SUMMARY}"

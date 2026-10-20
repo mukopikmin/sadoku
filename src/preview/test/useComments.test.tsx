@@ -5,7 +5,7 @@ import type { Comment } from "../models/comment";
 import { commentsQueryKey } from "../hooks/previewQueryKeys";
 import { useCommentActions, useCommentsQuery } from "../hooks/useComments";
 import { createPreviewQueryClient } from "../queryClient";
-import { act, cleanup, renderHook, waitFor } from "./testUtils";
+import { act, cleanup, renderHook, waitFor } from "./domTestUtils";
 
 afterEach(() => {
   cleanup();

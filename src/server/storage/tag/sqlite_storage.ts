@@ -77,6 +77,16 @@ export const createSqliteTagStore = (database: AppDatabase): TagStore => {
     });
 
   return {
+    delete: (id) =>
+      withTransaction(database, async () => {
+        if (!await findById(id)) {
+          return {
+            type: "not_found",
+            message: `Tag ${id} not found.`,
+          } satisfies TagError;
+        }
+        await database.execute("DELETE FROM document_tag WHERE id = ?", [id]);
+      }),
     list: async () =>
       ((await database.execute<TagRow>(
         `SELECT t.id, t.name, t.background_color, t.created_at, t.updated_at, COUNT(l.document_id) document_count

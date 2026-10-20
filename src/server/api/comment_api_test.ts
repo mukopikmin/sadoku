@@ -1,4 +1,7 @@
-import { assertEquals, assertMatch } from "@std/assert";
+import { Code, ConnectError, createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
+import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import type { CommentsStore } from "../storage/comment/storage.ts";
 import { getCommentsFilePath } from "../storage/comment/storage.ts";
 import type { PreviewCommentsDocument } from "../usecase/comment/types.ts";
@@ -137,43 +140,68 @@ testWithTempComments("validates comment creation input", async () => {
   }
 });
 
-testWithTempComments("creates comments for a source line range", async () => {
-  const filePath = await createTempMarkdown("one\ntwo\nthree\nfour\nfive");
-  const logs: string[] = [];
-  const handler = createTestPreviewHandler(filePath, {
-    log: (message) => logs.push(message),
-  });
-  try {
-    const response = await requestComments(
-      handler,
-      "/__sadoku/documents/1/comments",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          startLine: 2,
-          endLine: 4,
-          body: "Review range.",
-        }),
-      },
-    );
-    const comment = await response.json();
+testWithTempComments(
+  "stores and reloads trimmed range comments",
+  async () => {
+    const filePath = await createTempMarkdown("one\ntwo\nthree\nfour\nfive");
+    const logs: string[] = [];
+    const handler = createTestPreviewHandler(filePath, {
+      log: (message) => logs.push(message),
+    });
+    try {
+      const response = await requestComments(
+        handler,
+        "/__sadoku/documents/1/comments",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            startLine: 2,
+            endLine: 4,
+            body: "  Review range.  ",
+          }),
+        },
+      );
+      const comment = await response.json();
 
-    assertEquals(response.status, 200);
-    assertEquals(comment.startLine, 2);
-    assertEquals(comment.endLine, 4);
-    assertEquals(comment.originalStartLine, 2);
-    assertEquals(comment.originalEndLine, 4);
-    assertEquals(comment.sourceText, "two\nthree\nfour");
-    assertEquals(logs.length, 1);
-    assertMatch(
-      logs[0],
-      /^Processed comment request: POST \/__sadoku\/documents\/1\/comments -> 200 \(\d+ms\)$/,
-    );
-  } finally {
-    await removeTempMarkdown(filePath);
-  }
-});
+      assertEquals(response.status, 200);
+      assertEquals(response.headers.get("cache-control"), "no-store");
+      assertEquals(comment.id, 1);
+      assertEquals(comment.body, "Review range.");
+      assertEquals(comment.createdAt, comment.updatedAt);
+      assertEquals(comment.startLine, 2);
+      assertEquals(comment.endLine, 4);
+      assertEquals(comment.originalStartLine, 2);
+      assertEquals(comment.originalEndLine, 4);
+      assertEquals(comment.sourceText, "two\nthree\nfour");
+      assertEquals(logs.length, 1);
+      assertMatch(
+        logs[0],
+        /^Processed comment request: POST \/__sadoku\/documents\/1\/comments -> 200 \(\d+ms\)$/,
+      );
+      const reloadResponse = await requestComments(
+        handler,
+        "/__sadoku/documents/1/comments",
+      );
+      assertEquals(reloadResponse.status, 200);
+      const reloadedDocument = await reloadResponse.json();
+      const storedDocument = JSON.parse(
+        await Deno.readTextFile(getCommentsFilePath(filePath)),
+      );
+      for (const document of [reloadedDocument, storedDocument]) {
+        const saved = document.comments[0];
+        assertEquals(saved.body, "Review range.");
+        assertEquals(saved.startLine, 2);
+        assertEquals(saved.endLine, 4);
+        assertEquals(saved.originalStartLine, 2);
+        assertEquals(saved.originalEndLine, 4);
+        assertEquals(saved.sourceText, "two\nthree\nfour");
+      }
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  },
+);
 
 testWithTempComments("uses an injected comments store", async () => {
   const filePath = await createTempMarkdown();
@@ -298,35 +326,6 @@ testWithTempComments(
     }
   },
 );
-
-testWithTempComments("trims comment bodies before storing them", async () => {
-  const filePath = await createTempMarkdown();
-  const handler = createTestPreviewHandler(filePath);
-  try {
-    const response = await requestComments(
-      handler,
-      "/__sadoku/documents/1/comments",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          startLine: 3,
-          endLine: 3,
-          body: "  Review this.  ",
-        }),
-      },
-    );
-    const comment = await response.json();
-
-    assertEquals(response.status, 200);
-    assertEquals(response.headers.get("cache-control"), "no-store");
-    assertEquals(comment.body, "Review this.");
-    assertEquals(comment.id, 1);
-    assertEquals(comment.createdAt, comment.updatedAt);
-  } finally {
-    await removeTempMarkdown(filePath);
-  }
-});
 
 testWithTempComments("adds replies to comments", async () => {
   const filePath = await createTempMarkdown();
@@ -566,6 +565,7 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
   let posts = 0;
   let releasePost: (() => void) | undefined;
   let postedBody = "";
+  let notifyPost: (() => void) | undefined;
   const run: RunGitHubCommand = async (args) => {
     const endpoint = args.at(-1)!;
     let value: unknown;
@@ -576,6 +576,7 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
       postedBody = args.find((arg) => arg.startsWith("body="))!;
       await new Promise<void>((resolve) => {
         releasePost = resolve;
+        notifyPost?.();
       });
       value = {
         data: {
@@ -601,6 +602,32 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
     runGitHubCommand: run,
     log: () => {},
   });
+  const client = createClient(
+    PreviewService,
+    createConnectTransport({
+      baseUrl: "http://127.0.0.1:3334",
+      useBinaryFormat: false,
+      fetch: async (input, init) =>
+        await handler(new Request(input, init), serveHandlerInfo),
+    }),
+  );
+  assertEquals(
+    (await client.getDocument({ documentId: 1n })).githubHeadSha,
+    sha,
+  );
+  assertEquals(
+    (await client.listComments({ documentId: 1n })).githubHeadSha,
+    sha,
+  );
+  const invalidRpc = await assertRejects(
+    () => client.exportCommentToGitHub({ documentId: 1n }),
+    ConnectError,
+  );
+  assertEquals(invalidRpc.code, Code.InvalidArgument);
+  assertEquals(
+    invalidRpc.rawMessage,
+    JSON.stringify({ error: { code: "export_invalid_request" } }),
+  );
   const path = "/__sadoku/documents/1/comments/1/github";
   const init = {
     method: "POST",
@@ -733,6 +760,51 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
   });
   assertEquals(postedBody.includes("Reply"), false);
   assertEquals(posts, 1);
+  const rpcInput = {
+    documentId: 1n,
+    commentId: 1n,
+    headSha: sha,
+    displayedMarkdown: "line",
+    createdAt: "created",
+    body: "Parent",
+    startLine: 1,
+    endLine: 1,
+  };
+  const mismatch = await assertRejects(
+    () =>
+      client.exportCommentToGitHub({
+        ...rpcInput,
+        displayedMarkdown: "Changed",
+      }),
+    ConnectError,
+  );
+  assertEquals(mismatch.code, Code.AlreadyExists);
+  assertEquals(
+    mismatch.rawMessage,
+    JSON.stringify({ error: { code: "export_markdown_changed" } }),
+  );
+  const posted = Promise.withResolvers<void>();
+  notifyPost = posted.resolve;
+  const rpcExport = client.exportCommentToGitHub(rpcInput);
+  await posted.promise;
+  await assertExportError(
+    await requestComments(handler, path, init),
+    409,
+    "export_busy",
+  );
+  const busyRpc = await assertRejects(
+    () => client.exportCommentToGitHub(rpcInput),
+    ConnectError,
+  );
+  assertEquals(busyRpc.code, Code.AlreadyExists);
+  releasePost();
+  const rpcResult = await rpcExport;
+  assertEquals([rpcResult.url, rpcResult.state], [
+    "https://github.com/o/r/pull/1/files",
+    "pending",
+  ]);
+  assertEquals(posts, 2);
+
   delete session.githubPull;
   await assertExportError(
     await requestComments(handler, path, init),

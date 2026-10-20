@@ -61,6 +61,8 @@ const route = (
       return ["/__sadoku/github-account", undefined];
     case "ListTags":
       return ["/__sadoku/tags", undefined, (tags) => ({ tags })];
+    case "DeleteTag":
+      return [`/__sadoku/tags/${body.id}`, { method: "DELETE" }];
     case "UpdateTag":
       return [
         `/__sadoku/tags/${body.id}`,
@@ -185,7 +187,10 @@ const json = (method: string, body: unknown): RequestInit => ({
     ? url.pathname.slice(servicePath.length)
     : undefined;
   if (!method) return globalThis.fetch(input, init);
-  if (method === "GetSession" || method === "GetStatistics") {
+  if (
+    method === "GetSession" || method === "GetStatistics" ||
+    method === "CreateDocument"
+  ) {
     return globalThis.fetch(input, init);
   }
   const text = await new Request(input, init).text() || "{}";

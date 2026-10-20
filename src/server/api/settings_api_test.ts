@@ -133,120 +133,38 @@ Deno.test("PUT rejects invalid JSON", async () => {
   });
 });
 
-Deno.test("PUT rejects invalid theme values", async () => {
+Deno.test("PUT rejects invalid settings", async () => {
   await withSettings(async () => {
-    assertEquals(
-      (await updateSettings(request({
+    const cases: [string, Record<string, unknown>][] = [
+      ["unsupported theme", { theme: "sepia" }],
+      ["unknown property", { extra: true }],
+      ["negative depth", { maxDepth: -1 }],
+      ["fractional depth", { maxDepth: 2.5 }],
+      ["zero file limit", { maxFiles: 0 }],
+      ["directory list must be an array", { excludedDirectories: "vendor" }],
+      ["duplicate directories", { excludedDirectories: ["vendor", "vendor"] }],
+      ["nested directory", { excludedDirectories: ["nested/vendor"] }],
+      ["parent directory", { excludedDirectories: [".."] }],
+      ["empty extensions", { markdownExtensions: [] }],
+      ["extension without a dot", { markdownExtensions: ["md"] }],
+      ["case-insensitive duplicate extensions", {
+        markdownExtensions: [".md", ".MD"],
+      }],
+      ["nested extension", { markdownExtensions: [".nested/md"] }],
+      ["font scale below minimum", { fontScale: 0.74 }],
+      ["font scale above maximum", { fontScale: 1.51 }],
+      ["string font scale", { fontScale: "1" }],
+      ["null font scale", { fontScale: null }],
+    ];
+    for (const [label, invalid] of cases) {
+      const response = await updateSettings(request({
         codeWrap: "wrap",
         maxDepth: 2,
         maxFiles: 20,
-        theme: "sepia",
-      })))
-        .status,
-      400,
-    );
-  });
-});
-
-Deno.test("PUT rejects extra properties", async () => {
-  await withSettings(async () => {
-    assertEquals(
-      (await updateSettings(
-        request({
-          codeWrap: "wrap",
-          extra: true,
-          maxDepth: 2,
-          maxFiles: 20,
-          theme: "dark",
-        }),
-      )).status,
-      400,
-    );
-  });
-});
-
-Deno.test("PUT rejects invalid directory discovery limits", async () => {
-  await withSettings(async () => {
-    for (
-      const limits of [
-        { maxDepth: -1, maxFiles: 20 },
-        { maxDepth: 2.5, maxFiles: 20 },
-        { maxDepth: 2, maxFiles: 0 },
-      ]
-    ) {
-      assertEquals(
-        (await updateSettings(request({
-          codeWrap: "wrap",
-          ...limits,
-          theme: "dark",
-        }))).status,
-        400,
-      );
-    }
-  });
-});
-
-Deno.test("PUT rejects invalid excluded directories", async () => {
-  await withSettings(async () => {
-    for (
-      const excludedDirectories of [
-        "vendor",
-        ["vendor", "vendor"],
-        ["nested/vendor"],
-        [".."],
-      ]
-    ) {
-      assertEquals(
-        (await updateSettings(request({
-          codeWrap: "wrap",
-          excludedDirectories,
-          maxDepth: 2,
-          maxFiles: 20,
-          theme: "dark",
-        }))).status,
-        400,
-      );
-    }
-  });
-});
-
-Deno.test("PUT rejects invalid Markdown extensions", async () => {
-  await withSettings(async () => {
-    for (
-      const markdownExtensions of [
-        [],
-        ["md"],
-        [".md", ".MD"],
-        [".nested/md"],
-      ]
-    ) {
-      assertEquals(
-        (await updateSettings(request({
-          codeWrap: "wrap",
-          markdownExtensions,
-          maxDepth: 2,
-          maxFiles: 20,
-          theme: "dark",
-        }))).status,
-        400,
-      );
-    }
-  });
-});
-
-Deno.test("PUT rejects invalid font scales", async () => {
-  await withSettings(async () => {
-    for (const fontScale of [0.74, 1.51, "1", null]) {
-      assertEquals(
-        (await updateSettings(request({
-          codeWrap: "wrap",
-          fontScale,
-          maxDepth: 2,
-          maxFiles: 20,
-          theme: "dark",
-        }))).status,
-        400,
-      );
+        theme: "dark",
+        ...invalid,
+      }));
+      assertEquals(response.status, 400, label);
     }
   });
 });

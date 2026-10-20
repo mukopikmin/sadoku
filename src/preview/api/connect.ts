@@ -1,18 +1,22 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Code, ConnectError, createClient } from "@connectrpc/connect";
 import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb";
+import { readPreviewBasePath } from "./basePath";
 
-export const previewTransport = createConnectTransport({
-  baseUrl: globalThis.location?.origin ?? "http://127.0.0.1",
-  fetch: (input, init) => {
-    const testFetch = (globalThis as typeof globalThis & {
-      __sadokuConnectTestFetch?: typeof fetch;
-    }).__sadokuConnectTestFetch;
-    return (testFetch ?? globalThis.fetch)(input, init);
-  },
-  useBinaryFormat: false,
-  useHttpGet: false,
-});
+export const createPreviewTransport = (basePath = readPreviewBasePath()) =>
+  createConnectTransport({
+    baseUrl: `${globalThis.location?.origin ?? "http://127.0.0.1"}${basePath}`,
+    fetch: (input, init) => {
+      const testFetch = (globalThis as typeof globalThis & {
+        __sadokuConnectTestFetch?: typeof fetch;
+      }).__sadokuConnectTestFetch;
+      return (testFetch ?? globalThis.fetch)(input, init);
+    },
+    useBinaryFormat: false,
+    useHttpGet: false,
+  });
+
+export const previewTransport = createPreviewTransport();
 
 export const previewClient = createClient(PreviewService, previewTransport);
 

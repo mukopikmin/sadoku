@@ -26,6 +26,7 @@ export type CliCommand =
   | "comment-update";
 
 export type CliOptions = {
+  trustForwardedPrefix?: boolean;
   asBot: boolean;
   body?: string;
   channel?: "stable" | "nightly";
@@ -61,7 +62,7 @@ export class CliUsageError extends Error {
 }
 
 export const usage = `Usage:
-  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive]
+  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--trust-forwarded-prefix]
   sadoku document add <file.md|url>
   sadoku document inspect <document-id>
   sadoku document list
@@ -99,6 +100,7 @@ Options:
   --host            Preview host. Defaults to 127.0.0.1.
   --no-open         Do not open the preview automatically.
   --keep-alive      Keep the server running after the browser tab closes.
+  --trust-forwarded-prefix Accept X-Forwarded-Prefix from a trusted reverse proxy.
   --max-depth       Maximum directory depth to scan. Defaults to 2 (0 scans only the root).
   --max-files       Maximum number of Markdown files to load. Defaults to 20.
   --channel         Update channel.
@@ -126,6 +128,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         "keep-alive",
         "no-open",
         "request-review",
+        "trust-forwarded-prefix",
         "version",
       ],
       default: { host: "127.0.0.1", port: "3334" },
@@ -169,6 +172,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
     ensureDocument: Boolean(flags["ensure-document"]),
     host: flags.host?.toString() ?? "127.0.0.1",
     keepAlive: Boolean(flags["keep-alive"]),
+    ...(flags["trust-forwarded-prefix"] ? { trustForwardedPrefix: true } : {}),
     ...(maxDepth !== undefined ? { maxDepth } : {}),
     ...(maxFiles !== undefined ? { maxFiles } : {}),
     open: !flags["no-open"],
@@ -210,7 +214,8 @@ export const parseArgs = (argv: string[]): CliOptions => {
     if (
       hasCommentOption || hasInstructionOption || base.host !== "127.0.0.1" ||
       base.port !== 3334 ||
-      !base.open || base.keepAlive || maxDepth !== undefined ||
+      !base.open || base.keepAlive || base.trustForwardedPrefix ||
+      maxDepth !== undefined ||
       maxFiles !== undefined
     ) {
       throw new CliUsageError(
@@ -229,7 +234,8 @@ export const parseArgs = (argv: string[]): CliOptions => {
   const noPreviewOptions = () => {
     if (
       base.host !== "127.0.0.1" || base.port !== 3334 || !base.open ||
-      base.keepAlive || maxDepth !== undefined || maxFiles !== undefined
+      base.keepAlive || base.trustForwardedPrefix || maxDepth !== undefined ||
+      maxFiles !== undefined
     ) {
       throw new CliUsageError("This command does not accept preview options.");
     }
