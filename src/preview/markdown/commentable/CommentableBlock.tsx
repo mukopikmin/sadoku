@@ -16,6 +16,7 @@ import type { ActiveComment } from "../../models/comment";
 import {
   MarkdownListDepthContext,
   markdownListIndentEm,
+  markdownTopLevelListIndentEm,
 } from "../markdownRenderers";
 import type { CommentRange } from "./commentRanges";
 import {
@@ -76,7 +77,9 @@ export const CommentableBlock = ({
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
   const listDepth = useContext(MarkdownListDepthContext);
-  const commentIndentEm = listDepth * markdownListIndentEm;
+  const commentIndentEm = listDepth === 0
+    ? 0
+    : markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm;
   const commentGutterLeft = listDepth === 0
     ? "calc(-1 * var(--chakra-spacing-8))"
     : `calc(-1 * var(--chakra-spacing-8) - ${commentIndentEm}em)`;
