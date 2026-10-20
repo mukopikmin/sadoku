@@ -138,6 +138,7 @@ jobs:
         run: npm run install:deps
 
       - name: Measure complete client suite
+        id: measurement
         env:
           BENCH_WORKERS: ${{ matrix.workers }}
           BENCH_SAMPLE: ${{ matrix.sample }}
@@ -188,6 +189,9 @@ jobs:
           }
           (root / "measurement.json").write_text(json.dumps(result, indent=2))
           print("CLIENT_WORKER_BENCHMARK=" + json.dumps(result))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as outputs:
+              outputs.write(f"elapsed={result['elapsed_seconds']}\n")
+              outputs.write(f"rss={result['peak_process_tree_rss_mib']}\n")
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
               summary.write("```json\n" + json.dumps(result, indent=2) + "\n```\n")
           if process.returncode or not tests["success"] or result["passed"] != 292 or result["files"] != 47:
@@ -198,5 +202,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: client-workers-${{ matrix.workers }}-sample-${{ matrix.sample }}
+          name: client-workers-${{ matrix.workers }}-sample-${{ matrix.sample }}-${{ steps.measurement.outputs.elapsed }}s-${{ steps.measurement.outputs.rss }}MiB
           path: /tmp/client-worker-benchmark
