@@ -1,3 +1,4 @@
+import { Check, RotateCcw } from "lucide-react";
 import type { Comment } from "../../models/comment";
 import { toaster } from "../ui/toaster";
 import { CommentActionButton } from "./CommentForm";
@@ -50,6 +51,9 @@ export const CommentResolutionButton = ({
       }}
       type="button"
     >
+      {comment.state === "resolved"
+        ? <RotateCcw aria-hidden="true" />
+        : <Check aria-hidden="true" />}
       {comment.state === "resolved" ? "Reopen" : "Resolve"}
     </CommentActionButton>
   );

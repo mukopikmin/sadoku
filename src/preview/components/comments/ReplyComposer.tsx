@@ -1,4 +1,5 @@
 import { Box, Flex } from "@chakra-ui/react";
+import { Reply } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import type { RunCommentAction } from "./useCommentActionState";
@@ -46,6 +47,7 @@ export const ReplyComposer = ({
             onClick={() => setIsReplying(true)}
             type="button"
           >
+            <Reply aria-hidden="true" />
             Reply
           </CommentActionButton>
           {trailingAction}
