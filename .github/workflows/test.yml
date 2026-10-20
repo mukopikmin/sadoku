@@ -112,3 +112,91 @@ jobs:
       - name: Test Windows installer
         shell: powershell
         run: .\scripts\install_windows_test.ps1
+
+  client-worker-benchmark:
+    name: Client workers ${{ matrix.workers }} / sample ${{ matrix.sample }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        workers: [2, 3, 4]
+        sample: [1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.0.1
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
+
+      - name: Install dependencies
+        run: npm run install:deps
+
+      - name: Measure complete client suite
+        env:
+          BENCH_WORKERS: ${{ matrix.workers }}
+          BENCH_SAMPLE: ${{ matrix.sample }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import time
+
+          workers = int(os.environ["BENCH_WORKERS"])
+          root = Path("/tmp/client-worker-benchmark")
+          root.mkdir()
+          command = ["npm", "--prefix", "src/preview", "test", "--",
+                     f"--maxWorkers={workers}", "--reporter=json",
+                     f"--outputFile={root / 'tests.json'}"]
+          started = time.monotonic()
+          peak_rss_kib = 0
+          with (root / "test.log").open("w") as output:
+              process = subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT)
+              while process.poll() is None:
+                  rows = subprocess.check_output(
+                      ["ps", "-e", "-o", "pid=,ppid=,rss="], text=True)
+                  processes = [tuple(map(int, row.split())) for row in rows.splitlines()]
+                  descendants = {process.pid}
+                  while True:
+                      children = {pid for pid, parent, rss in processes if parent in descendants}
+                      if children <= descendants:
+                          break
+                      descendants |= children
+                  rss = sum(rss for pid, parent, rss in processes if pid in descendants)
+                  peak_rss_kib = max(peak_rss_kib, rss)
+                  time.sleep(0.25)
+          elapsed = time.monotonic() - started
+          tests = json.loads((root / "tests.json").read_text())
+          result = {
+              "sha": os.environ["GITHUB_SHA"],
+              "workers": workers,
+              "sample": int(os.environ["BENCH_SAMPLE"]),
+              "cpus": len(os.sched_getaffinity(0)),
+              "elapsed_seconds": round(elapsed, 3),
+              "peak_process_tree_rss_mib": round(peak_rss_kib / 1024, 1),
+              "files": len(tests["testResults"]),
+              "passed": tests["numPassedTests"],
+              "failed": tests["numFailedTests"],
+              "success": tests["success"],
+          }
+          (root / "measurement.json").write_text(json.dumps(result, indent=2))
+          print("CLIENT_WORKER_BENCHMARK=" + json.dumps(result))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("```json\n" + json.dumps(result, indent=2) + "\n```\n")
+          if process.returncode or not tests["success"] or result["passed"] != 292 or result["files"] != 47:
+              raise SystemExit(1)
+          PY
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: client-workers-${{ matrix.workers }}-sample-${{ matrix.sample }}
+          path: /tmp/client-worker-benchmark
