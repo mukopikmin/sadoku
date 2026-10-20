@@ -1,12 +1,12 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
+import { parse } from "@std/toml";
 
 import {
   getCommentsDirectoryPath,
   getConfigFilePath,
   readConfig,
-  updateCodeWrapConfig,
-  updateThemeConfig,
+  updatePreviewConfig,
 } from "./config.ts";
 
 type ConfigEnvironmentPaths = {
@@ -233,51 +233,49 @@ Deno.test("reads and validates font scale config", async () => {
   });
 });
 
-for (const theme of ["dark", "light"] as const) {
-  Deno.test(`saves theme_mode=${theme} while retaining existing config`, async () => {
-    await withConfigEnvironment(async ({ configFilePath, root }) => {
-      const commentsDirectory = join(root, "comments");
-      await writeConfig(
-        configFilePath,
-        `commentsDirectory = ${
-          JSON.stringify(commentsDirectory)
-        }\ncustom = "kept"\n`,
+Deno.test("updates preview settings while retaining existing config", async () => {
+  await withConfigEnvironment(async ({ configFilePath, root }) => {
+    const commentsDirectory = join(root, "comments");
+    await writeConfig(
+      configFilePath,
+      `commentsDirectory = ${
+        JSON.stringify(commentsDirectory)
+      }\ncustom = "kept"\n`,
+    );
+    for (
+      const [theme, codeWrap] of [["dark", "wrap"], [
+        "light",
+        "scroll",
+      ]] as const
+    ) {
+      await updatePreviewConfig(theme, codeWrap, 2, 20, 1, [".git"], [".md"]);
+      assertEquals(readConfig(), {
+        commentsDirectory,
+        themeMode: theme,
+        codeWrapMode: codeWrap,
+        directoryMaxDepth: 2,
+        directoryMaxFiles: 20,
+        fontScale: 1,
+        excludedDirectories: [".git"],
+        markdownExtensions: [".md"],
+      });
+      assertEquals(
+        parse(await Deno.readTextFile(configFilePath)).custom,
+        "kept",
       );
-
-      await updateThemeConfig(theme);
-
-      assertEquals(readConfig(), { commentsDirectory, themeMode: theme });
-      const saved = await Deno.readTextFile(configFilePath);
-      assertEquals(saved.includes('custom = "kept"'), true);
-    });
-  });
-}
-
-Deno.test("creates the config directory and file when saving a theme", async () => {
-  await withConfigEnvironment(async ({ configFilePath }) => {
-    await updateThemeConfig("dark");
-    assertEquals(readConfig(), { themeMode: "dark" });
-    assertEquals(
-      await Deno.readTextFile(configFilePath),
-      'theme_mode = "dark"\n',
-    );
-    assertEquals(
-      await Deno.stat(configFilePath).then((stat) => stat.isFile),
-      true,
-    );
+    }
   });
 });
 
-Deno.test("saves code wrap mode while retaining existing config", async () => {
+Deno.test("creates the config directory and file when saving preview settings", async () => {
   await withConfigEnvironment(async ({ configFilePath }) => {
-    await writeConfig(configFilePath, 'theme_mode = "dark"\ncustom = "kept"\n');
-
-    await updateCodeWrapConfig("wrap");
-
-    assertEquals(readConfig(), { codeWrapMode: "wrap", themeMode: "dark" });
-    assertEquals(
-      await Deno.readTextFile(configFilePath),
-      'theme_mode = "dark"\ncustom = "kept"\ncode_wrap_mode = "wrap"\n',
-    );
+    assertEquals(readConfig(), undefined);
+    await updatePreviewConfig("dark", "wrap");
+    assertEquals(readConfig(), {
+      themeMode: "dark",
+      codeWrapMode: "wrap",
+      fontScale: 1,
+    });
+    assertEquals((await Deno.stat(configFilePath)).isFile, true);
   });
 });

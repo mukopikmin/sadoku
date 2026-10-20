@@ -61,6 +61,8 @@ const route = (
       return ["/__sadoku/github-account", undefined];
     case "ListTags":
       return ["/__sadoku/tags", undefined, (tags) => ({ tags })];
+    case "DeleteTag":
+      return [`/__sadoku/tags/${body.id}`, { method: "DELETE" }];
     case "UpdateTag":
       return [
         `/__sadoku/tags/${body.id}`,

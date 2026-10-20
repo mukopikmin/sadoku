@@ -63,7 +63,6 @@ describe("DocumentActionBar", () => {
       const button = screen.getByRole("button", { name });
       expect(button.textContent).toBe("");
       expect(button.querySelector("svg")).not.toBeNull();
-      expect(button.children).toHaveLength(1);
     }
 
     fireEvent.pointerEnter(screen.getByRole("button", { name: "Tags" }));

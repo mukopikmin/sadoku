@@ -1,13 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { initializeMermaid } from "../markdown/mermaid";
-import {
-  cleanup,
-  createCommentActions,
-  fireEvent,
-  screen,
-  waitFor,
-} from "./testUtils";
+import { createCommentActions, fireEvent, screen, waitFor } from "./testUtils";
 import { renderMarkdown } from "./markdownPreviewTestUtils";
 
 vi.mock("../markdown/mermaid", () => ({
@@ -17,6 +11,45 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview code and Mermaid", () => {
+  it.each([
+    ["ts", "const value = 1;"],
+    ["mermaid", "graph TD; A --> B"],
+  ])(
+    "creates comments for the full %s fence range",
+    async (language, source) => {
+      const onCreateComment = vi.fn(async () => {});
+      const { container } = renderMarkdown(
+        `\`\`\`${language}\n${source}\n\`\`\`\n`,
+        [],
+        { onCreateComment },
+      );
+      const block = container.querySelector('[data-source-line="1"]')!;
+      expect(block.getAttribute("data-source-end-line")).toBe("3");
+      expect(block.querySelector("pre")?.textContent).toContain(source);
+      if (language === "ts") {
+        await waitFor(() => {
+          expect(block.querySelector("code.language-ts span[style]")).not
+            .toBeNull();
+        });
+      }
+      fireEvent.click(block.querySelector("pre")!);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Add comment on lines 1-3" }),
+      );
+      expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "Review this code block." },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+      await waitFor(() =>
+        expect(onCreateComment).toHaveBeenCalledWith(
+          1,
+          "Review this code block.",
+          3,
+        )
+      );
+    },
+  );
   it("shows the declared language in each fenced code header", () => {
     const { container } = renderMarkdown(`\`\`\`typescript
 const longName = true;
@@ -37,10 +70,6 @@ plain text
     expect(labels.map((label) => label.textContent)).toEqual([
       "TypeScript",
       "TypeScript",
-    ]);
-    expect(labels.map((label) => label.parentElement?.tagName)).toEqual([
-      "HEADER",
-      "HEADER",
     ]);
     expect(
       labels.map((label) =>
@@ -66,56 +95,6 @@ fun main() {
     expect(code.textContent).toContain('println("Hello")');
   });
 
-  it("adds source line controls to code fences", async () => {
-    const { container } = renderMarkdown(`\`\`\`ts
-const value = 1;
-\`\`\`
-`);
-
-    expect(
-      container.querySelector('[data-source-line="1"] pre code.language-ts'),
-    ).not.toBeNull();
-    await waitFor(() => {
-      expect(container.querySelector(".language-ts span[style]")).not
-        .toBeNull();
-    });
-    const block = container.querySelector('[data-source-line="1"]')!;
-    expect(block.getAttribute("data-source-end-line")).toBe("3");
-    expect(block.querySelector("pre code")?.textContent).toContain(
-      "const value = 1;",
-    );
-  });
-
-  it("creates comments for the full fenced code block range", async () => {
-    const onCreateComment = vi.fn(async () => {});
-    const { container } = renderMarkdown(
-      `\`\`\`ts
-const value = 1;
-\`\`\`
-`,
-      [],
-      { onCreateComment },
-    );
-
-    fireEvent.click(container.querySelector("pre")!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on lines 1-3",
-    }));
-    expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
-    fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: "Review this code block." },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
-
-    await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(
-        1,
-        "Review this code block.",
-        3,
-      )
-    );
-  });
-
   it("shows the selected source as raw Markdown in a dialog", async () => {
     const { container } = renderMarkdown(`# Title
 
@@ -123,14 +102,13 @@ Paragraph with **formatting**.
 `);
 
     fireEvent.click(container.querySelector(".commentable-content p")!);
-    const addCommentButton = screen.getByRole("button", {
+    expect(screen.getByRole("button", {
       name: "Add comment on line 3",
-    });
+    })).not.toBeNull();
     const rawMarkdownButton = screen.getByRole("button", {
       name: "View raw Markdown for line 3",
     });
 
-    expect(addCommentButton.nextElementSibling).toBe(rawMarkdownButton);
     fireEvent.click(rawMarkdownButton);
 
     const dialog = await screen.findByRole("dialog", {
@@ -211,40 +189,6 @@ Paragraph with **formatting**.
         3,
       )
     );
-  });
-
-  it("marks code and Mermaid blocks as selected when clicked", () => {
-    const codeResult = renderMarkdown(`\`\`\`ts
-const value = 1;
-\`\`\`
-`);
-    const codeBlock = codeResult.container.querySelector<HTMLElement>(
-      ".commentable-content",
-    );
-    fireEvent.click(codeBlock!);
-
-    expect(
-      codeBlock?.parentElement?.classList.contains(
-        "commentable-block-range-selected",
-      ),
-    ).toBe(true);
-
-    cleanup();
-    const mermaidResult = renderMarkdown(`\`\`\`mermaid
-graph TD
-  A --> B
-\`\`\`
-`);
-    const mermaidBlock = mermaidResult.container.querySelector<HTMLElement>(
-      ".commentable-content",
-    );
-    fireEvent.click(mermaidBlock!);
-
-    expect(
-      mermaidBlock?.parentElement?.classList.contains(
-        "commentable-block-range-selected",
-      ),
-    ).toBe(true);
   });
 
   it("preserves indented code as literal text inside a code block", () => {

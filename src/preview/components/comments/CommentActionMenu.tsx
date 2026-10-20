@@ -125,6 +125,7 @@ export const CommentActionMenu = ({
                 )}
                 <Menu.Item
                   value={comment.state === "resolved" ? "reopen" : "resolve"}
+                  disabled={disabled}
                   onClick={() => {
                     void (comment.state === "resolved"
                       ? handleReopen()
@@ -133,11 +134,12 @@ export const CommentActionMenu = ({
                 >
                   {comment.state === "resolved" ? "Reopen" : "Resolve"}
                 </Menu.Item>
-                <Menu.Item value="edit" onClick={onEdit}>
+                <Menu.Item value="edit" disabled={disabled} onClick={onEdit}>
                   Edit
                 </Menu.Item>
                 <Menu.Item
                   value="delete"
+                  disabled={disabled}
                   onClick={() => setIsDeleteDialogOpen(true)}
                 >
                   Delete

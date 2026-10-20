@@ -32,7 +32,11 @@ export {
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
 } from "./markdownPlugins";
-export { MarkdownListDepthContext, markdownListIndentEm } from "./listContext";
+export {
+  MarkdownListDepthContext,
+  markdownListIndentEm,
+  markdownTopLevelListIndentEm,
+} from "./listContext";
 export type { MarkdownElementProps } from "./rendererTypes";
 export { mergeClassNames } from "./rendererUtils";
 export { renderMarkdownBlockquote } from "./renderers/blockquote";

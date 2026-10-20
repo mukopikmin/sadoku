@@ -217,3 +217,53 @@ Deno.test("Connect instructions remain readable after creation and update", asyn
     },
   );
 });
+
+Deno.test("tag deletion removes shared associations, preserves documents and other tags, and persists", async () => {
+  await withMetadataPreview(
+    async ({ client, documentId, otherDocumentId, handler, reopenClient }) => {
+      const { tags } = await client.replaceDocumentTags({
+        documentId,
+        tags: [
+          { reference: { case: "name", value: "Shared" } },
+          { reference: { case: "name", value: "Keep" } },
+        ],
+      });
+      const shared = tags.find((tag) => tag.name === "Shared")!;
+      const keep = tags.find((tag) => tag.name === "Keep")!;
+      await client.replaceDocumentTags({
+        documentId: otherDocumentId,
+        tags: [{ reference: { case: "id", value: shared.id } }],
+      });
+      const invalid = await assertRejects(
+        () => client.deleteTag({ id: 0n }),
+        ConnectError,
+      );
+      assertEquals(invalid.code, Code.InvalidArgument);
+      await client.deleteTag({ id: shared.id });
+      assertEquals((await client.getDocument({ documentId })).tags, [keep]);
+      assertEquals(
+        (await client.getDocument({ documentId: otherDocumentId })).tags,
+        [],
+      );
+      assertEquals((await client.listDocuments({})).documents.length, 2);
+      assertEquals(
+        (await reopenClient().listTags({})).tags.map((tag) => tag.name),
+        ["Keep"],
+      );
+      const missing = await assertRejects(
+        () => client.deleteTag({ id: shared.id }),
+        ConnectError,
+      );
+      assertEquals(missing.code, Code.NotFound);
+      const response = await handler(
+        new Request(`http://127.0.0.1:3334/__sadoku/tags/${keep.id}`, {
+          method: "DELETE",
+        }),
+        serveHandlerInfo,
+      );
+      assertEquals(response.status, 204);
+      assertEquals((await client.getDocument({ documentId })).tags, []);
+      assertEquals((await client.listTags({})).tags, []);
+    },
+  );
+});
