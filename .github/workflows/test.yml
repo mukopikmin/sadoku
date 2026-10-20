@@ -14,7 +14,7 @@ jobs:
     name: Deno
     runs-on: ubuntu-latest
     env:
-      DENO_DIR: ${{ runner.temp }}/deno-cache
+      DENO_DIR: /tmp/sadoku-deno-cache
 
     steps:
       - name: Checkout
