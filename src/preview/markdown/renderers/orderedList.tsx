@@ -1,6 +1,10 @@
 import { List } from "@chakra-ui/react";
 import { useContext } from "react";
-import { MarkdownListDepthContext, markdownListIndentEm } from "../listContext";
+import {
+  MarkdownListDepthContext,
+  markdownListIndentEm,
+  markdownTopLevelListIndentEm,
+} from "../listContext";
 import type { MarkdownComponentProps } from "../rendererTypes";
 import { mergeClassNames } from "../rendererUtils";
 
@@ -19,7 +23,9 @@ export const MarkdownOrderedList = ({
         listStylePosition="outside"
         m="0"
         pt="0"
-        ps={`${markdownListIndentEm}em`}
+        ps={`${
+          listDepth === 0 ? markdownTopLevelListIndentEm : markdownListIndentEm
+        }em`}
         {...props}
       >
         {children}

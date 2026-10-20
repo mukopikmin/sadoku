@@ -24,7 +24,7 @@ jobs:
           deno-version: v2.8.0
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -44,9 +44,6 @@ jobs:
       - name: Type check
         run: deno task check
 
-      - name: Test client
-        run: npm test
-
       - name: Test
         run: deno task test
 
@@ -59,6 +56,62 @@ jobs:
           trap 'rm -rf "$install_home"' EXIT
           HOME="$install_home" deno task install --version 0.0.0-ci
           test "$("$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
+
+  client:
+    name: Node
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
+
+      - name: Install dependencies
+        run: npm run install:deps
+
+      - name: Test client
+        run: npm test
+
+  go-proxy:
+    name: Go proxy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: proxy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.x"
+          cache: false
+
+      - name: Check formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            gofmt -d .
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -count=1 -timeout=60s ./...
+
+      - name: Build
+        run: CGO_ENABLED=0 go build ./...
 
   windows-installer:
     name: Windows installer

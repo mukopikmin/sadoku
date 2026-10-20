@@ -1,3 +1,5 @@
+import { previewPath } from "../../api/basePath";
+
 import {
   Badge,
   Box,
@@ -85,7 +87,7 @@ export const PreviewHeader = ({
         alt="Sadoku"
         flexShrink="0"
         h="8"
-        src="/assets/icon-512.png"
+        src={previewPath("/assets/icon-512.png")}
         w="8"
       />
       {fileUrl

@@ -1,30 +1,13 @@
 import { ChakraProvider, CodeBlock } from "@chakra-ui/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TransportProvider } from "@connectrpc/connect-query";
-import {
-  cleanup as testingLibraryCleanup,
-  render,
-  renderHook,
-  type RenderOptions,
-} from "@testing-library/react";
-import { RouterProvider } from "@tanstack/react-router";
+import { render, type RenderOptions } from "@testing-library/react";
 import { type ReactElement, type ReactNode, useState } from "react";
-import type { CommentActions } from "../api/commentActions";
-import type { Comment, CommentReply } from "../models/comment";
 import { createPreviewQueryClient } from "../queryClient";
 import { sadokuChakraSystem } from "../theme";
 import { Toaster } from "../components/ui/toaster";
-import { createPreviewRouter } from "../router";
 import { shikiAdapter } from "../markdown/shikiAdapter";
 import { previewTransport } from "../api/connect";
-
-class TestResizeObserver implements ResizeObserver {
-  disconnect() {}
-  observe() {}
-  unobserve() {}
-}
-
-globalThis.ResizeObserver ??= TestResizeObserver;
 
 const TestProvider = ({ children }: { children: ReactNode }) => {
   const [queryClient] = useState(createPreviewQueryClient);
@@ -45,71 +28,18 @@ const TestProvider = ({ children }: { children: ReactNode }) => {
 const renderWithChakra = (ui: ReactElement, options?: RenderOptions) =>
   render(ui, { wrapper: TestProvider, ...options });
 
-export const renderWithRouter = (
-  ui: ReactElement,
-  options?: RenderOptions,
-) => {
-  const router = createPreviewRouter(() => ui);
-  return render(<RouterProvider router={router} />, {
-    wrapper: TestProvider,
-    ...options,
-  });
-};
-
-export const cleanup = () => {
-  testingLibraryCleanup();
-  globalThis.history.replaceState(null, "", "/");
-};
-
-export const createCommentActions = (
-  overrides: Partial<CommentActions> = {},
-): CommentActions => ({
-  onCreateComment: async () => {},
-  onDeleteComment: async () => {},
-  onDeleteReply: async () => {},
-  onReopenComment: async () => {},
-  onReplyComment: async () => {},
-  onResolveComment: async () => {},
-  onUpdateComment: async () => {},
-  onUpdateReply: async () => {},
-  ...overrides,
-});
-
-export const createComment = (
-  overrides: Partial<Comment> = {},
-): Comment => ({
-  author: { type: "human" },
-  body: "Clarify this.",
-  createdAt: "2026-06-05T00:00:00.000Z",
-  endLine: 3,
-  id: 1,
-  originalEndLine: 3,
-  originalStartLine: 3,
-  sourceHash: "example",
-  sourceText: "Body",
-  startLine: 3,
-  state: "active",
-  updatedAt: "2026-06-05T00:00:00.000Z",
-  ...overrides,
-});
-
-export const createCommentReply = (
-  overrides: Partial<CommentReply> = {},
-): CommentReply => ({
-  author: { type: "human" },
-  body: "Reply body.",
-  createdAt: "2026-06-05T01:00:00.000Z",
-  id: 1,
-  updatedAt: "2026-06-05T01:00:00.000Z",
-  ...overrides,
-});
-
 export {
   act,
+  cleanup,
   fireEvent,
   renderHook,
   screen,
   waitFor,
   within,
-} from "@testing-library/react";
+} from "./domTestUtils";
+export {
+  createComment,
+  createCommentActions,
+  createCommentReply,
+} from "./commentFixtures";
 export { renderWithChakra as render };

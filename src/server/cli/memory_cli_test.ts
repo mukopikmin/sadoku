@@ -49,8 +49,8 @@ const createStore = (): MemoryStore => {
 
 Deno.test("memory CLI performs CRUD and normalizes content", async () => {
   const store = createStore();
-  const added = await addMemory(1, "Review this.\r\n\r\n", store);
-  assertEquals(added.content, "Review this.");
+  const added = await addMemory(1, "  Review this.\r\n\r\n", store);
+  assertEquals(added.content, "  Review this.");
   assertEquals(await listMemories(1, store), [added]);
 
   const updated = await updateMemory(
@@ -62,6 +62,11 @@ Deno.test("memory CLI performs CRUD and normalizes content", async () => {
   assertEquals(updated.content, "Updated.\nNext.");
   await deleteMemory(1, added.id, store);
   assertEquals(await listMemories(1, store), []);
+  await assertRejects(
+    () => deleteMemory(1, added.id, store),
+    Error,
+    "Memory not found.",
+  );
 });
 
 Deno.test("memory CLI maps empty content and missing IDs", async () => {

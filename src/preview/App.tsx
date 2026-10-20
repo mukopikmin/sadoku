@@ -25,6 +25,8 @@ import { PreviewLayout } from "./components/layout/PreviewLayout";
 import { usePreviewRoute } from "./hooks/usePreviewRoute";
 import { isUnresolvedComment } from "./models/comment";
 import { useSessionQuery } from "./hooks/useSession";
+import { useDocumentCreator } from "./hooks/useDocumentCreator";
+import { CreateDocumentDialog } from "./components/CreateDocumentDialog";
 
 export const App = () => {
   const tagsTriggerRef = useRef<HTMLButtonElement>(null);
@@ -36,6 +38,12 @@ export const App = () => {
     view,
   } = usePreviewRoute();
   const navigate = useNavigate();
+  const documentCreator = useDocumentCreator((id) => {
+    void navigate({
+      to: "/documents/$documentId",
+      params: { documentId: String(id) },
+    });
+  });
   const documentsQuery = useDocumentsQuery();
   const sessionQuery = useSessionQuery();
   const directoryStatusQuery = useDirectoryStatusQuery();
@@ -226,7 +234,13 @@ export const App = () => {
           documents={documents!}
           onSelectDocument={selectDocument}
           pullRequest={sessionQuery.data?.pullRequest}
+          onCreateDocument={sessionQuery.data?.canCreateDocuments &&
+              directoryStatus?.state !== "loading" &&
+              directoryStatus?.state !== "error"
+            ? documentCreator.open
+            : undefined}
         />
+        <CreateDocumentDialog creator={documentCreator} />
       </PreviewLayout>
     );
   }

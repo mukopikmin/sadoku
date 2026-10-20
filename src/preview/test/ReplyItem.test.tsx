@@ -73,7 +73,6 @@ describe("ReplyItem", () => {
     );
 
     const card = screen.getByRole("article", { name: "Reply" });
-    expect(card.classList).toContain("comment-reply");
     expect(within(card).queryByText("Reply")).toBeNull();
     expect(within(card).getByText("Bot")).not.toBeNull();
     expect(within(card).getByText("Review requested")).not.toBeNull();

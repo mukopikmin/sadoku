@@ -199,7 +199,9 @@ them when making changes.
 ## 6. GitHub Actions and Communication
 
 - For stable releases, follow `.agents/skills/sadoku-release/SKILL.md` and use
-  the repository release tasks and approval gates defined there.
+  its approval gate before pushing a version tag. The tag-triggered Release
+  workflow owns validation, artifact builds, provenance, notes, and publication;
+  do not replace those checks with local inspection.
 - Pin third-party GitHub Actions to a full commit hash and include a comment
   with the corresponding release tag.
 - Keep workflow permissions minimal.

@@ -295,3 +295,28 @@ Deno.test("rejects forbidden options on instruction commands", () => {
     CliUsageError,
   );
 });
+
+Deno.test("requires explicit preview-only forwarded-prefix trust", () => {
+  assertEquals(
+    parseArgs(["start", "README.md"]).trustForwardedPrefix,
+    undefined,
+  );
+  assertEquals(
+    parseArgs(["start", "README.md", "--trust-forwarded-prefix"])
+      .trustForwardedPrefix,
+    true,
+  );
+  for (
+    const command of [["update"], ["document", "list"], [
+      "comment",
+      "list",
+      "--document",
+      "1",
+    ]]
+  ) {
+    assertThrows(
+      () => parseArgs([...command, "--trust-forwarded-prefix"]),
+      CliUsageError,
+    );
+  }
+});

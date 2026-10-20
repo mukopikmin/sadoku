@@ -1,9 +1,10 @@
 import { resolve } from "node:path";
+import { availableParallelism } from "node:os";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => ({
-  base: "/assets/",
+  base: "./",
   define: command === "build"
     ? {
       "process.env.NODE_ENV": JSON.stringify("production"),
@@ -25,10 +26,28 @@ export default defineConfig(({ command }) => ({
     },
   },
   test: {
-    environment: "jsdom",
-    include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
-    maxWorkers: 1,
+    maxWorkers: process.env.CI === "true"
+      ? Math.min(4, availableParallelism())
+      : 2,
     setupFiles: [resolve(import.meta.dirname, "test/connectFetch.ts")],
     testTimeout: 10_000,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "node",
+          environment: "node",
+          include: ["test/**/*.test.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          environment: "jsdom",
+          include: ["test/**/*.test.tsx"],
+        },
+      },
+    ],
   },
 }));

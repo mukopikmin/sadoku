@@ -11,6 +11,11 @@ are not persisted.
 
 ## Install
 
+The preview bundles Noto Sans JP for body text, headings, and UI, so Japanese
+documents use a consistent font without an external font service. The font is
+distributed under SIL OFL 1.1; its copyright notices and licenses are
+[included in the compiled binary](src/preview/public/fonts/noto-sans-jp/README.md).
+
 ### Linux x64 and macOS arm64
 
 ```sh
@@ -45,6 +50,10 @@ Preview a file:
 ```sh
 sadoku start README.md
 ```
+
+For a Japanese typography sample, open
+[test/integration/fixtures/japanese.md](test/integration/fixtures/japanese.md)
+with `sadoku start test/integration/fixtures/japanese.md`.
 
 Preview all supported Markdown files in a directory:
 
@@ -82,6 +91,16 @@ Change these limits with `--max-depth` and `--max-files`, or under **Settings â†
 Directory discovery**. Sadoku does not follow symbolic links and excludes `.git`
 and `node_modules` by default.
 
+In a local directory preview, choose **New file** above the document list to
+create a Markdown file at the root, or use the **+** button on a folder row to
+create one in that folder. Enter a filename and, optionally, a document title.
+Omitting the extension adds `.md`; explicit extensions must match the configured
+Markdown extensions. A title adds `# Title` as the first line; leaving it blank
+creates an empty file. The list continues to display the filename. Existing
+files are never overwritten, and the new file opens in the preview immediately.
+File creation is unavailable for single-file, remote URL, and pull request
+previews.
+
 GitHub pull request previews use the same configured Markdown extensions and
 `--max-files` limit. They show added and modified Markdown files, omit deleted
 files, and fetch every document at the pull request's current head commit. The
@@ -116,6 +135,14 @@ lines still match. The explicit save uses the current local body. Already
 submitted comments return their existing link and are left unchanged. Local
 edits, resolution and deletion do not automatically change GitHub. See
 [export behavior and edge cases](docs/github-comment-export.md) for details.
+
+### Bulk comment actions
+
+In the comments view, select individual comments or use **Select all** in the
+current tab. Choose **Resolve selected**, **Reopen selected**, or **Delete
+selected** to apply an action to the selection. Deletion asks for confirmation
+and includes replies. If some actions fail, those comments remain selected for
+retry.
 
 ### Comments from the CLI
 
@@ -188,6 +215,21 @@ The skill requires the `sadoku` executable on `PATH`.
 
 ## Development
 
+`proxy/` is a standalone Go module (Go 1.26+) using only the standard library.
+Set `Options.BackendServiceURL` to an untagged Cloud Run origin verified against
+its tagged URLs and `Options.PublicOrigin` to the browser-facing HTTPS origin.
+`/revisions/TAG/...` forwards to `TAG---<service-host>/...` with
+`X-Forwarded-Prefix: /revisions/TAG`. Test with `go -C proxy test -race ./...`.
+On Cloud Run, IAM ID tokens come from the attached service account's metadata
+endpoint and refresh before expiry. `Options.IAMAudience` defaults to the
+untagged backend origin; set it to the service URL if routing uses another
+alias. Grant the proxy service account `roles/run.invoker` on the backend. Token
+acquisition failures return 502. Internal `Location`/`Content-Location` headers
+use the public revision prefix; external URLs are preserved. Responses use
+`no-store`; fingerprinted assets explicitly marked immutable upstream may use
+private browser caching. Shared caching is disabled. See
+[proxy setup and manual deployment](proxy/README.md).
+
 ```sh
 npm install
 deno task start README.md
@@ -213,6 +255,35 @@ existing Connect RPC paths unchanged.
 
 Pass `--version <version>` to `deno task compile` or `deno task install` when
 building a versioned binary. Without it, the binary reports `0.0.0-dev`.
+
+### Stable releases
+
+Pushing a tag such as `v0.10.0` starts the `Release` workflow and automatically
+publishes a stable GitHub release. The tag must point to the current tip of
+`main` with a successful `Test` push run, and its version must be newer than the
+previous stable release. Prerelease suffixes and leading zeroes are rejected.
+
+Use the repository's
+[`sadoku-release` skill](.agents/skills/sadoku-release/SKILL.md) to review
+changes, propose a version, and approve the exact commit and notes range before
+pushing the annotated tag. The tag push authorizes publication; there is no
+later approval of generated notes. For example, after approval:
+
+```sh
+git tag --annotate v0.10.0 <approved-full-main-sha> --message "Release v0.10.0"
+git push origin refs/tags/v0.10.0
+```
+
+Actions builds and attests the three platform archives, verifies their checksums
+and provenance, generates notes from the previous stable release (or the root
+`release-notes-baseline` tag for the first release), and rechecks the target
+immediately before publishing. Candidate downloads to the agent's environment
+are unnecessary. Push with authorized user or GitHub App credentials; pushes
+made with `GITHUB_TOKEN` do not trigger the release workflow.
+
+Never move or recreate a stable tag. If a run fails, inspect it before approving
+a rerun; an existing release is never overwritten. A fix on a new commit needs a
+new version/tag. The rolling `nightly` release remains separate.
 
 ## Supported Markdown
 
