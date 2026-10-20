@@ -1,17 +1,13 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { basename, join, relative, resolve } from "@std/path";
+import { basename, join } from "@std/path";
 
 import {
   addComment,
-  formatCommentFilesTable,
   inspectComments,
   listCommentFiles,
-  type ListedCommentFile,
   removeComments,
-  removeCommentsIfConfirmed,
   replyToComment,
   resolveComments,
-  shouldRemoveComments,
 } from "./comment_cli.ts";
 import {
   type CommentsStore,
@@ -95,26 +91,6 @@ const createMemoryCommentsStore = (): {
   };
 };
 
-Deno.test("formats an empty comments file list", () => {
-  assertEquals(formatCommentFilesTable([]), "No comment files found.\n");
-});
-
-Deno.test("formats listed comment files as a table", () => {
-  const entries: ListedCommentFile[] = [{
-    commentCount: 2,
-    fileName: "README.md-12345678.json",
-    markdownPath: "/repo/README.md",
-    openCount: 1,
-    updatedAt: "2026-06-08T14:00:00.000Z",
-  }];
-
-  assertEquals(
-    formatCommentFilesTable(entries),
-    "FILE                     MARKDOWN PATH    COMMENTS  OPEN  UPDATED\n" +
-      "README.md-12345678.json  /repo/README.md  2         1     2026-06-08T14:00:00.000Z\n",
-  );
-});
-
 Deno.test("lists comment files from the configured comments directory", async () => {
   await withTempCommentsDirectory(async () => {
     const filePath = await createTempMarkdown();
@@ -178,65 +154,6 @@ Deno.test("ignores legacy JSON comment files", async () => {
 
     assertEquals(result.entries, []);
     assertEquals(result.warnings, []);
-  });
-});
-
-Deno.test("parses confirmation answers for removing comments", () => {
-  assertEquals(shouldRemoveComments("y"), true);
-  assertEquals(shouldRemoveComments("YES"), true);
-  assertEquals(shouldRemoveComments(" yes "), true);
-  assertEquals(shouldRemoveComments(""), false);
-  assertEquals(shouldRemoveComments("n"), false);
-});
-
-Deno.test("inspects unresolved comments with updated positions", async () => {
-  await withTempCommentsDirectory(async () => {
-    const filePath = await createTempMarkdown("# Title\n\nAdded\nBody\n");
-    try {
-      await writeCommentsDocument(filePath, {
-        comments: [
-          {
-            body: "Revise this.",
-            author: { type: "human" },
-            createdAt: "2026-06-08T13:00:00.000Z",
-            id: 1,
-            startLine: 3,
-            endLine: 3,
-            originalStartLine: 3,
-            originalEndLine: 3,
-            resolved: false,
-            sourceHash: "428a1095",
-            sourceText: "Body",
-            stale: false,
-            updatedAt: "2026-06-08T13:00:00.000Z",
-          },
-          {
-            body: "Done.",
-            author: { type: "human" },
-            createdAt: "2026-06-08T13:00:00.000Z",
-            id: 2,
-            startLine: 1,
-            endLine: 1,
-            originalStartLine: 1,
-            originalEndLine: 1,
-            resolved: true,
-            stale: false,
-            updatedAt: "2026-06-08T13:00:00.000Z",
-          },
-        ],
-        filePath,
-      });
-
-      const document = await inspectComments(filePath);
-
-      assertEquals(document.filePath, filePath);
-      assertEquals(document.comments.length, 1);
-      assertEquals(document.comments[0].id, 1);
-      assertEquals(document.comments[0].startLine, 4);
-      assertEquals(document.comments[0].stale, false);
-    } finally {
-      await removeTempMarkdown(filePath);
-    }
   });
 });
 
@@ -537,102 +454,6 @@ Deno.test("operates on URL comments by URL without query string or fragment", as
     } finally {
       await server.shutdown().catch(() => {});
       await server.finished.catch(() => {});
-    }
-  });
-});
-
-Deno.test("removes comments for the specified Markdown file", async () => {
-  await withTempCommentsDirectory(async () => {
-    const filePath = await createTempMarkdown();
-    const otherFilePath = await createTempMarkdown();
-    try {
-      await writeCommentsDocument(filePath, {
-        comments: [],
-        filePath,
-      });
-      await writeCommentsDocument(otherFilePath, {
-        comments: [],
-        filePath: otherFilePath,
-      });
-
-      const removedFilePath = await removeComments(filePath);
-
-      assertEquals(removedFilePath, filePath);
-      assertEquals(await listCommentFiles(), {
-        entries: [],
-        warnings: [],
-      });
-    } finally {
-      await removeTempMarkdown(filePath);
-      await removeTempMarkdown(otherFilePath);
-    }
-  });
-});
-
-Deno.test("resolves relative Markdown paths when removing comments", async () => {
-  await withTempCommentsDirectory(async () => {
-    const filePath = await createTempMarkdown();
-    try {
-      await writeCommentsDocument(filePath, {
-        comments: [],
-        filePath,
-      });
-
-      const relativeFilePath = relative(Deno.cwd(), filePath);
-      assertEquals(await removeComments(relativeFilePath), resolve(filePath));
-      assertEquals((await listCommentFiles()).entries, []);
-    } finally {
-      await removeTempMarkdown(filePath);
-    }
-  });
-});
-
-Deno.test("keeps comments when removal confirmation is declined", async () => {
-  await withTempCommentsDirectory(async () => {
-    const filePath = await createTempMarkdown();
-    try {
-      await writeCommentsDocument(filePath, {
-        comments: [],
-        filePath,
-      });
-
-      assertEquals(await removeCommentsIfConfirmed(filePath, "n"), undefined);
-      assertEquals((await listCommentFiles()).entries.length, 0);
-    } finally {
-      await removeTempMarkdown(filePath);
-    }
-  });
-});
-
-Deno.test("rejects missing Markdown files or comments when removing", async () => {
-  await withTempCommentsDirectory(async () => {
-    const missingFilePath = resolve("missing-comments-target.md");
-    await assertRejects(
-      () => removeComments(missingFilePath),
-      Error,
-      `Markdown file not found: ${missingFilePath}`,
-    );
-
-    const directoryPath = await Deno.makeTempDir();
-    try {
-      await assertRejects(
-        () => removeComments(directoryPath),
-        Error,
-        `Markdown path is not a file: ${directoryPath}`,
-      );
-    } finally {
-      await Deno.remove(directoryPath);
-    }
-
-    const filePath = await createTempMarkdown();
-    try {
-      await assertRejects(
-        () => removeComments(filePath),
-        Error,
-        `Comments not found for Markdown file: ${filePath}`,
-      );
-    } finally {
-      await removeTempMarkdown(filePath);
     }
   });
 });

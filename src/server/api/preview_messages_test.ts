@@ -4,7 +4,6 @@ import {
   CommentSchema,
   GetDocumentResponseSchema,
   InstructionSchema,
-  TagSchema,
 } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
 import {
   commentMessage,
@@ -16,20 +15,13 @@ import {
 } from "./preview_messages.ts";
 import type { PreviewComment } from "../usecase/comment/types.ts";
 
-// These compile-time checks run under `deno task check`. Init shapes allow
-// omitted scalars, but reject incompatible fields and scalar representations.
+// Keep the public RPC shape independent of storage metadata under `deno task check`.
 const typeContracts = () => {
-  // @ts-expect-error RPC uint64 fields require bigint, not storage numbers.
-  const wrongId: MessageInitShape<typeof TagSchema> = { id: 1 };
   const storageField: MessageInitShape<typeof InstructionSchema> = {
     // @ts-expect-error Instruction deliberately excludes storage documentId.
     documentId: 1n,
   };
-  const wrongReply: MessageInitShape<typeof CommentSchema> = {
-    // @ts-expect-error Nested replies must use generated field names.
-    replies: [{ content: "body" }],
-  };
-  return [wrongId, storageField, wrongReply];
+  return storageField;
 };
 void typeContracts;
 

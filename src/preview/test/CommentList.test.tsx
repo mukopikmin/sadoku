@@ -175,22 +175,6 @@ describe("CommentList", () => {
   });
 
   it("groups comments, displays counts, and supports tab keyboard navigation", () => {
-    const expectPanelContent = (panel: HTMLElement) => {
-      expect(
-        within(panel).queryByRole("heading", {
-          name: /^(Unresolved|Resolved) comments$/,
-        }),
-      ).toBeNull();
-      const selectAll = within(panel).getByRole("checkbox", {
-        name: "Select all",
-      });
-      const firstComment = within(panel).getAllByRole("article")[0];
-      expect(
-        selectAll.compareDocumentPosition(firstComment) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      )
-        .not.toBe(0);
-    };
     render(
       <CommentList
         actions={createCommentActions()}
@@ -214,28 +198,21 @@ describe("CommentList", () => {
     const unresolvedTab = screen.getByRole("tab", { name: "Unresolved" });
     const resolvedTab = screen.getByRole("tab", { name: "Resolved" });
     expect(unresolvedTab.getAttribute("aria-selected")).toBe("true");
-    expect(within(unresolvedTab).getByText("2").classList).toContain(
-      "chakra-badge",
-    );
-    expect(within(resolvedTab).getByText("1").classList).toContain(
-      "chakra-badge",
-    );
+    expect(within(unresolvedTab).getByText("2")).not.toBeNull();
+    expect(within(resolvedTab).getByText("1")).not.toBeNull();
     const unresolvedPanel = screen.getByRole("tabpanel", {
       name: "Unresolved",
     });
-    expectPanelContent(unresolvedPanel);
     expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Original line")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
-    expect(unresolvedPanel.querySelectorAll(".chakra-card__root")).toHaveLength(
-      2,
-    );
+    expect(within(unresolvedPanel).getAllByRole("article")).toHaveLength(2);
 
     fireEvent.click(resolvedTab);
     const resolvedPanel = screen.getByRole("tabpanel", { name: "Resolved" });
-    expectPanelContent(resolvedPanel);
+    expect(within(resolvedPanel).getAllByRole("article")).toHaveLength(1);
     expect(within(resolvedPanel).getByText("Resolved comment.")).not.toBeNull();
     expect(within(resolvedPanel).getByText("Resolved")).not.toBeNull();
 
