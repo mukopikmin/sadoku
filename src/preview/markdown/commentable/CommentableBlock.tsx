@@ -3,6 +3,7 @@ import {
   Button,
   Flex,
   IconButton,
+  Stack,
   Text,
   Textarea,
 } from "@chakra-ui/react";
@@ -250,7 +251,7 @@ export const CommentableBlock = ({
         </Box>
       </Box>
       {(isAdding || comments.length > 0 || error) && (
-        <Box className="comment-thread">
+        <Stack className="comment-thread" gap="3">
           {comments.map((comment) => (
             <CommentItem
               actions={actions}
@@ -323,7 +324,7 @@ export const CommentableBlock = ({
             </Box>
           )}
           {error && <Text color="red.500" fontSize="sm">{error}</Text>}
-        </Box>
+        </Stack>
       )}
     </Box>
   );
