@@ -290,6 +290,7 @@ export const CommentableBlock = ({
               <Textarea
                 aria-label="Comment body"
                 autoFocus
+                fontSize="comment"
                 minH="90px"
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) =>
