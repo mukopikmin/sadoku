@@ -1,0 +1,48 @@
+name: Proxy Test
+
+on:
+  pull_request:
+    paths: &proxy-paths
+      - "proxy/**"
+      - ".github/workflows/proxy_test.yml"
+  push:
+    branches:
+      - main
+    paths: *proxy-paths
+
+permissions:
+  contents: read
+
+jobs:
+  go-proxy:
+    name: Go proxy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: proxy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.x"
+          cache: false
+
+      - name: Check formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            gofmt -d .
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -count=1 -timeout=60s ./...
+
+      - name: Build
+        run: CGO_ENABLED=0 go build ./...
