@@ -20,6 +20,22 @@ Text after a subheading with a plain URL: https://example.com/path?q=1.
 Paragraph after a deep heading with escaped punctuation: \*not emphasized\* and
 an entity: &copy;.
 
+## Consecutive Heading Levels
+
+Compare the vertical spacing between the consecutive h1–h5 headings below.
+
+# Heading Level 1
+
+## Heading Level 2
+
+### Heading Level 3
+
+#### Heading Level 4
+
+##### Heading Level 5
+
+Paragraph after the consecutive headings to compare spacing before body text.
+
 ## Mixed Lists
 
 Text before an unordered list.
