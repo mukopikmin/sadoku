@@ -33,12 +33,13 @@ describe("TagsDialog", () => {
       ])
     );
     vi.stubGlobal("fetch", fetchMock);
+    const onOpenChange = vi.fn();
     const { rerender } = render(
-      <TagsDialog onOpenChange={() => {}} open={false} />,
+      <TagsDialog onOpenChange={onOpenChange} open={false} />,
     );
 
     expect(fetchMock).not.toHaveBeenCalled();
-    rerender(<TagsDialog onOpenChange={() => {}} open />);
+    rerender(<TagsDialog onOpenChange={onOpenChange} open />);
 
     expect(await screen.findByText("API")).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Color" })).not.toBeNull();
@@ -50,6 +51,8 @@ describe("TagsDialog", () => {
     expect(editButton.querySelector("svg")).not.toBeNull();
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledWith("/__sadoku/tags");
+    fireEvent.click(screen.getByRole("button", { name: "Close tags" }));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 
   it("displays an empty state", async () => {
@@ -58,18 +61,6 @@ describe("TagsDialog", () => {
     render(<TagsDialog onOpenChange={() => {}} open />);
 
     expect(await screen.findByText("No tags yet.")).not.toBeNull();
-  });
-
-  it("closes from its dedicated close control", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json([])));
-    const onOpenChange = vi.fn();
-    render(<TagsDialog onOpenChange={onOpenChange} open />);
-
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Close tags" }),
-    );
-
-    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 
   it("displays an error state", async () => {

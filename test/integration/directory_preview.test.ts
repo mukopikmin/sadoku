@@ -51,7 +51,11 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
       await Deno.writeTextFile(join(root, "b.md"), "# B\n");
       await Deno.writeTextFile(aPath, "# A\n");
       await Deno.writeTextFile(join(root, "ignored.txt"), "ignored");
-      await Deno.mkdir(join(root, "guides"));
+      await Deno.mkdir(join(root, "guides", "setup"), { recursive: true });
+      await Deno.writeTextFile(
+        join(root, "guides", "setup", "local.md"),
+        "# Local\n",
+      );
       await Deno.writeTextFile(
         join(root, "guides", "getting-started.md"),
         "# Getting started\n",
@@ -87,10 +91,16 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
         documents.map((document: { relativePath: string }) =>
           document.relativePath
         ),
-        ["a.markdown", "b.md", join("guides", "getting-started.md")],
+        [
+          "a.markdown",
+          "b.md",
+          join("guides", "getting-started.md"),
+          join("guides", "setup", "local.md"),
+        ],
       );
       assertEquals("filePath" in documents[0], false);
-      const [documentA, documentB, nestedDocument] = documents;
+      const [documentA, documentB, nestedDocument, deeplyNestedDocument] =
+        documents;
 
       assertEquals((await listCommentFiles()).entries, []);
 
@@ -99,6 +109,7 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
           [documentA, "# A\n"],
           [documentB, "# B\n"],
           [nestedDocument, "# Getting started\n"],
+          [deeplyNestedDocument, "# Local\n"],
         ] as const
       ) {
         const response = await fetch(
@@ -169,7 +180,7 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
       assertEquals(
         (await (await fetch(new URL("/__sadoku/documents", preview.url)))
           .json()).length,
-        3,
+        4,
       );
 
       const originalIds = documents.map((document: { id: number }) =>
@@ -196,48 +207,6 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
     } finally {
       if (preview) await stopServer(preview);
       await Deno.remove(root, { recursive: true });
-    }
-  });
-});
-
-Deno.test("directory preview lists the nested fixture documents", async () => {
-  await withTempCommentsDirectory(async () => {
-    const preview = await startPreviewServer({
-      file: "test/integration/fixtures",
-      host: "127.0.0.1",
-      keepAlive: true,
-      port: reserveLoopbackPort(),
-    });
-    try {
-      let status: { state: string };
-      do {
-        status = await (await fetch(
-          new URL("/__sadoku/directory-status", preview.url),
-        )).json();
-        if (status.state === "loading") {
-          await new Promise((resolve) => setTimeout(resolve, 5));
-        }
-      } while (status.state === "loading");
-      assertEquals(status.state, "ready");
-      const response = await fetch(
-        new URL("/__sadoku/documents", preview.url),
-      );
-      const documents = await response.json();
-
-      assertEquals(
-        documents.map((document: { relativePath: string }) =>
-          document.relativePath
-        ),
-        [
-          "comprehensive.md",
-          join("guides", "overview.md"),
-          join("guides", "setup", "local.md"),
-          "japanese.md",
-          "second.md",
-        ],
-      );
-    } finally {
-      await stopServer(preview);
     }
   });
 });

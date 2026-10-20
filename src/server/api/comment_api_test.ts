@@ -140,43 +140,68 @@ testWithTempComments("validates comment creation input", async () => {
   }
 });
 
-testWithTempComments("creates comments for a source line range", async () => {
-  const filePath = await createTempMarkdown("one\ntwo\nthree\nfour\nfive");
-  const logs: string[] = [];
-  const handler = createTestPreviewHandler(filePath, {
-    log: (message) => logs.push(message),
-  });
-  try {
-    const response = await requestComments(
-      handler,
-      "/__sadoku/documents/1/comments",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          startLine: 2,
-          endLine: 4,
-          body: "Review range.",
-        }),
-      },
-    );
-    const comment = await response.json();
+testWithTempComments(
+  "stores and reloads trimmed range comments",
+  async () => {
+    const filePath = await createTempMarkdown("one\ntwo\nthree\nfour\nfive");
+    const logs: string[] = [];
+    const handler = createTestPreviewHandler(filePath, {
+      log: (message) => logs.push(message),
+    });
+    try {
+      const response = await requestComments(
+        handler,
+        "/__sadoku/documents/1/comments",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            startLine: 2,
+            endLine: 4,
+            body: "  Review range.  ",
+          }),
+        },
+      );
+      const comment = await response.json();
 
-    assertEquals(response.status, 200);
-    assertEquals(comment.startLine, 2);
-    assertEquals(comment.endLine, 4);
-    assertEquals(comment.originalStartLine, 2);
-    assertEquals(comment.originalEndLine, 4);
-    assertEquals(comment.sourceText, "two\nthree\nfour");
-    assertEquals(logs.length, 1);
-    assertMatch(
-      logs[0],
-      /^Processed comment request: POST \/__sadoku\/documents\/1\/comments -> 200 \(\d+ms\)$/,
-    );
-  } finally {
-    await removeTempMarkdown(filePath);
-  }
-});
+      assertEquals(response.status, 200);
+      assertEquals(response.headers.get("cache-control"), "no-store");
+      assertEquals(comment.id, 1);
+      assertEquals(comment.body, "Review range.");
+      assertEquals(comment.createdAt, comment.updatedAt);
+      assertEquals(comment.startLine, 2);
+      assertEquals(comment.endLine, 4);
+      assertEquals(comment.originalStartLine, 2);
+      assertEquals(comment.originalEndLine, 4);
+      assertEquals(comment.sourceText, "two\nthree\nfour");
+      assertEquals(logs.length, 1);
+      assertMatch(
+        logs[0],
+        /^Processed comment request: POST \/__sadoku\/documents\/1\/comments -> 200 \(\d+ms\)$/,
+      );
+      const reloadResponse = await requestComments(
+        handler,
+        "/__sadoku/documents/1/comments",
+      );
+      assertEquals(reloadResponse.status, 200);
+      const reloadedDocument = await reloadResponse.json();
+      const storedDocument = JSON.parse(
+        await Deno.readTextFile(getCommentsFilePath(filePath)),
+      );
+      for (const document of [reloadedDocument, storedDocument]) {
+        const saved = document.comments[0];
+        assertEquals(saved.body, "Review range.");
+        assertEquals(saved.startLine, 2);
+        assertEquals(saved.endLine, 4);
+        assertEquals(saved.originalStartLine, 2);
+        assertEquals(saved.originalEndLine, 4);
+        assertEquals(saved.sourceText, "two\nthree\nfour");
+      }
+    } finally {
+      await removeTempMarkdown(filePath);
+    }
+  },
+);
 
 testWithTempComments("uses an injected comments store", async () => {
   const filePath = await createTempMarkdown();
@@ -301,35 +326,6 @@ testWithTempComments(
     }
   },
 );
-
-testWithTempComments("trims comment bodies before storing them", async () => {
-  const filePath = await createTempMarkdown();
-  const handler = createTestPreviewHandler(filePath);
-  try {
-    const response = await requestComments(
-      handler,
-      "/__sadoku/documents/1/comments",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          startLine: 3,
-          endLine: 3,
-          body: "  Review this.  ",
-        }),
-      },
-    );
-    const comment = await response.json();
-
-    assertEquals(response.status, 200);
-    assertEquals(response.headers.get("cache-control"), "no-store");
-    assertEquals(comment.body, "Review this.");
-    assertEquals(comment.id, 1);
-    assertEquals(comment.createdAt, comment.updatedAt);
-  } finally {
-    await removeTempMarkdown(filePath);
-  }
-});
 
 testWithTempComments("adds replies to comments", async () => {
   const filePath = await createTempMarkdown();

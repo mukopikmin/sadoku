@@ -11,33 +11,6 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview comments", () => {
-  it("adds source line controls to rendered Markdown blocks", () => {
-    const { container } = renderMarkdown(`# Title
-
-Body
-`);
-
-    expect(container.querySelector('[data-source-line="1"] h1')?.textContent)
-      .toBe("Title");
-    expect(container.querySelector('[data-source-line="3"] p')?.textContent)
-      .toBe("Body");
-  });
-
-  it("focuses the comment textarea when opening the comment form", () => {
-    const { container } = renderMarkdown("# Title\n");
-    const line = container.querySelector('[data-source-line="1"] h1');
-    expect(line).not.toBeNull();
-
-    fireEvent.click(line!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 1",
-    }));
-
-    expect(document.activeElement).toBe(
-      screen.getByPlaceholderText("Write a GitHub PR comment..."),
-    );
-  });
-
   it("submits a new comment with command or control enter", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown("# Title\n\nBody\n", [], {
@@ -54,6 +27,9 @@ Body
     fireEvent.click(screen.getByRole("button", {
       name: "Add comment on line 1",
     }));
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Mac shortcut." } },
@@ -76,6 +52,9 @@ Body
     fireEvent.click(screen.getByRole("button", {
       name: "Add comment on line 3",
     }));
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Control shortcut." } },
