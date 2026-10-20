@@ -35,6 +35,7 @@ export const CommentForm = ({
     <Textarea
       aria-label={textareaAriaLabel}
       autoFocus
+      fontSize="comment"
       minH="90px"
       onChange={(event) => onChange(event.target.value)}
       onKeyDown={(event) =>
