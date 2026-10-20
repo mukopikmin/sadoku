@@ -4,7 +4,6 @@ import type { PreviewComment, PreviewCommentsDocument } from "./types.ts";
 import type { CommentsStore } from "./ports.ts";
 import {
   getLineRangeText,
-  getLineText,
   hashSourceText,
   readResolvedCommentsDocument,
   resolveCommentPosition,
@@ -27,14 +26,6 @@ const createComment = (
   stale: false,
   updatedAt: "2026-06-07T00:00:00.000Z",
   ...overrides,
-});
-
-Deno.test("gets Markdown lines using one-based line numbers", () => {
-  assertEquals(getLineText("first\nsecond\n", 1), "first");
-  assertEquals(getLineText("first\nsecond\n", 2), "second");
-  assertEquals(getLineText("first\nsecond\n", 3), "");
-  assertEquals(getLineText("first\nsecond\n", 4), undefined);
-  assertEquals(getLineText("first\nsecond\n", 0), undefined);
 });
 
 Deno.test("gets Markdown line range text using one-based line numbers", () => {

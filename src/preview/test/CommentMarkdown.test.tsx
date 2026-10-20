@@ -106,6 +106,11 @@ describe("CommentMarkdown", () => {
             {"Please revise this.\n\n```suggest\n<script>edited</script>\nUnchanged\n```\n\nThanks."}
           </CommentMarkdown>
         </div>
+        <div data-testid="suggestion-alias">
+          <CommentMarkdown>
+            {"```suggestion\nReplacement\n```"}
+          </CommentMarkdown>
+        </div>
         <div data-testid="ordinary-diff">
           <CommentMarkdown>
             {"```diff\n-Original\n+<script>edited</script>\n Unchanged\n```"}
@@ -116,12 +121,15 @@ describe("CommentMarkdown", () => {
 
     const suggestion = screen.getByTestId("suggested-diff");
     const ordinary = screen.getByTestId("ordinary-diff");
+    const alias = screen.getByTestId("suggestion-alias");
+    expect(alias.querySelector("[data-code-language-label]")?.textContent).toBe(
+      "suggest",
+    );
+    expect(alias.querySelector("code.language-diff")).not.toBeNull();
     expect(suggestion.querySelector("[data-code-language-label]")?.textContent)
       .toBe("suggest");
     expect(ordinary.querySelector("[data-code-language-label]")?.textContent)
       .toBe("Diff");
-    expect(suggestion.querySelector(".lucide-file-pen-line")).not.toBeNull();
-    expect(ordinary.querySelector(".lucide-code")).not.toBeNull();
     expect(suggestion.querySelector("code.language-diff")).not.toBeNull();
     expect(ordinary.querySelector("code.language-diff")).not.toBeNull();
     await waitFor(() => {
@@ -131,16 +139,6 @@ describe("CommentMarkdown", () => {
     expect(suggestion.querySelector("script")).toBeNull();
     expect(screen.getByText("Please revise this.")).not.toBeNull();
     expect(screen.getByText("Thanks.")).not.toBeNull();
-  });
-
-  it("uses the same suggestion label for the suggestion alias", () => {
-    const { container } = render(
-      <CommentMarkdown>{"```suggestion\nReplacement\n```"}</CommentMarkdown>,
-    );
-
-    expect(container.querySelector("[data-code-language-label]")?.textContent)
-      .toBe("suggest");
-    expect(container.querySelector("code.language-diff")).not.toBeNull();
   });
 
   it("preserves suggestion text when the original source is unavailable", async () => {

@@ -48,7 +48,7 @@ export const ConfirmDialog = ({
               <Dialog.Description>{children}</Dialog.Description>
             </Dialog.Body>
             <Dialog.Footer>
-              <Dialog.CloseTrigger asChild>
+              <Dialog.ActionTrigger asChild>
                 <Button
                   autoFocus
                   disabled={isPending}
@@ -58,7 +58,7 @@ export const ConfirmDialog = ({
                 >
                   {cancelLabel}
                 </Button>
-              </Dialog.CloseTrigger>
+              </Dialog.ActionTrigger>
               <Button
                 colorPalette={confirmColorPalette}
                 disabled={isPending}

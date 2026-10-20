@@ -1,8 +1,10 @@
-import { noStoreJson, textResponse } from "../responses.ts";
+import { noStoreJson, noStoreNoContent, textResponse } from "../responses.ts";
 import type { TagStore } from "../usecase/tag/ports.ts";
 import { replaceDocumentTags } from "../usecase/tag/replace_document_tags.ts";
 import { updateTag } from "../usecase/tag/update_tag.ts";
 import type { TagError } from "../usecase/tag/types.ts";
+
+import { deleteTag } from "../usecase/tag/delete_tag.ts";
 
 const errorResponse = (error: TagError) =>
   textResponse(
@@ -18,6 +20,11 @@ const json = async (request: Request): Promise<unknown | Response> => {
 };
 const isError = (value: unknown): value is TagError =>
   !!value && typeof value === "object" && "type" in value;
+
+export const deleteTagResponse = async (id: number, store: TagStore) => {
+  const result = await deleteTag(store, id);
+  return result ? errorResponse(result) : noStoreNoContent();
+};
 
 export const listTags = async (store: TagStore) =>
   noStoreJson(await store.list());

@@ -33,6 +33,7 @@ const unusedDocumentStore = (
 });
 
 const tagStore = (calls: number[]): TagStore => ({
+  delete: () => Promise.resolve(),
   list: () => Promise.resolve([]),
   listForDocument: (documentId) => {
     calls.push(documentId);

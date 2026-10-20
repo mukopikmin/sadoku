@@ -11,6 +11,11 @@ are not persisted.
 
 ## Install
 
+The preview bundles Noto Sans JP for body text, headings, and UI, so Japanese
+documents use a consistent font without an external font service. The font is
+distributed under SIL OFL 1.1; its copyright notices and licenses are
+[included in the compiled binary](src/preview/public/fonts/noto-sans-jp/README.md).
+
 ### Linux x64 and macOS arm64
 
 ```sh
@@ -45,6 +50,10 @@ Preview a file:
 ```sh
 sadoku start README.md
 ```
+
+For a Japanese typography sample, open
+[test/integration/fixtures/japanese.md](test/integration/fixtures/japanese.md)
+with `sadoku start test/integration/fixtures/japanese.md`.
 
 Preview all supported Markdown files in a directory:
 
@@ -126,6 +135,14 @@ lines still match. The explicit save uses the current local body. Already
 submitted comments return their existing link and are left unchanged. Local
 edits, resolution and deletion do not automatically change GitHub. See
 [export behavior and edge cases](docs/github-comment-export.md) for details.
+
+### Bulk comment actions
+
+In the comments view, select individual comments or use **Select all** in the
+current tab. Choose **Resolve selected**, **Reopen selected**, or **Delete
+selected** to apply an action to the selection. Deletion asks for confirmation
+and includes replies. If some actions fail, those comments remain selected for
+retry.
 
 ### Comments from the CLI
 
