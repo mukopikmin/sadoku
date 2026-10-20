@@ -1,4 +1,4 @@
-name: Cloud Run PR Preview
+name: PR Preview
 
 on:
   pull_request:
@@ -205,8 +205,6 @@ jobs:
             const marker = '<!-- sadoku-cloud-run-preview -->';
             const body = [
               marker,
-              '## Cloud Run preview',
-              '',
               `Preview: ${process.env.PREVIEW_URL}`,
               `Commit: \`${head}\``,
               '',
