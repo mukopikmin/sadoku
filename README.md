@@ -11,6 +11,11 @@ are not persisted.
 
 ## Install
 
+The preview bundles Noto Sans JP for body text, headings, and UI, so Japanese
+documents use a consistent font without an external font service. The font is
+distributed under SIL OFL 1.1; its copyright notices and licenses are
+[included in the compiled binary](src/preview/public/fonts/noto-sans-jp/README.md).
+
 ### Linux x64 and macOS arm64
 
 ```sh
@@ -45,6 +50,10 @@ Preview a file:
 ```sh
 sadoku start README.md
 ```
+
+For a Japanese typography sample, open
+[test/integration/fixtures/japanese.md](test/integration/fixtures/japanese.md)
+with `sadoku start test/integration/fixtures/japanese.md`.
 
 Preview all supported Markdown files in a directory:
 

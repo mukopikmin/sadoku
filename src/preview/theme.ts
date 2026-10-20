@@ -1,5 +1,8 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
+const bodyFont =
+  '"Noto Sans JP Variable", "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+
 export const sadokuChakraSystem = createSystem(
   defaultConfig,
   defineConfig({
@@ -32,10 +35,8 @@ export const sadokuChakraSystem = createSystem(
           "9xl": { value: "calc(7.2rem * var(--sadoku-font-scale, 1))" },
         },
         fonts: {
-          body: {
-            value:
-              '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-          },
+          body: { value: bodyFont },
+          heading: { value: bodyFont },
           mono: {
             value:
               '"JetBrains Mono", "Fira Code", "Cascadia Code", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, Monaco, "UDEV Gothic", "BIZ UDGothic", "Noto Sans Mono CJK JP", monospace',
