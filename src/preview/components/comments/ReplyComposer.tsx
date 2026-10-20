@@ -41,7 +41,7 @@ export const ReplyComposer = ({
   if (!isReplying) {
     return showTrigger
       ? (
-        <Flex align="center" justify="space-between" gap="2" mt="2">
+        <Flex align="center" justify="space-between" gap="2" my="2">
           <CommentActionButton
             disabled={disabled}
             onClick={() => setIsReplying(true)}
