@@ -4,7 +4,7 @@ import {
   scrollToHeadingHash,
   useHeadingHashNavigation,
 } from "../markdown/useHeadingHashNavigation";
-import { cleanup, fireEvent, render } from "./testUtils";
+import { cleanup, fireEvent, render } from "./domTestUtils";
 
 const mockRect = (top: number, bottom: number): DOMRect => ({
   bottom,
