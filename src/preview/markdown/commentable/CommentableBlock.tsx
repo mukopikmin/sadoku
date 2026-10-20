@@ -3,6 +3,7 @@ import {
   Button,
   Flex,
   IconButton,
+  Stack,
   Text,
   Textarea,
 } from "@chakra-ui/react";
@@ -250,7 +251,7 @@ export const CommentableBlock = ({
         </Box>
       </Box>
       {(isAdding || comments.length > 0 || error) && (
-        <Box className="comment-thread">
+        <Stack className="comment-thread" gap="3">
           {comments.map((comment) => (
             <CommentItem
               actions={actions}
@@ -262,7 +263,14 @@ export const CommentableBlock = ({
             />
           ))}
           {isAdding && (
-            <Box mb="1.5">
+            <Box
+              borderLeftColor="accent"
+              borderLeftWidth="3px"
+              mb="1.5"
+              pb="1px"
+              pl="3"
+              pt="2"
+            >
               <Flex align="center" justify="space-between" gap="2" mb="1">
                 <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
                   Commenting on {formatRangeLabel(pendingRange)}.
@@ -324,7 +332,7 @@ export const CommentableBlock = ({
             </Box>
           )}
           {error && <Text color="red.500" fontSize="sm">{error}</Text>}
-        </Box>
+        </Stack>
       )}
     </Box>
   );
