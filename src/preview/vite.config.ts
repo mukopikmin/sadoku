@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { availableParallelism } from "node:os";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
@@ -25,7 +26,9 @@ export default defineConfig(({ command }) => ({
     },
   },
   test: {
-    maxWorkers: 2,
+    maxWorkers: process.env.CI === "true"
+      ? Math.min(4, availableParallelism())
+      : 2,
     setupFiles: [resolve(import.meta.dirname, "test/connectFetch.ts")],
     testTimeout: 10_000,
     projects: [

@@ -1,7 +1,8 @@
 # Client tests
 
-Run the full suite with `npm test` from the repository root. Vitest runs up to
-two files in parallel and preserves isolation between files.
+Run the full suite with `npm test` from the repository root. Vitest preserves
+isolation between files and runs up to two files in parallel locally. In CI it
+runs up to four, capped at the number of CPUs available to the process.
 
 - Use `*.test.ts` for tests that run in Node without a DOM, including API
   adapters and pure model functions.
