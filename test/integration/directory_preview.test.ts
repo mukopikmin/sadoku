@@ -12,6 +12,22 @@ const stopServer = async (preview: StartedPreviewServer) => {
   await preview.server.finished.catch(() => {});
 };
 
+const waitForDirectoryReady = async (preview: StartedPreviewServer) => {
+  const signal = AbortSignal.timeout(5_000);
+  let status: { state: string };
+  do {
+    const response = await fetch(
+      new URL("/__sadoku/directory-status", preview.url),
+      { signal },
+    );
+    status = await response.json();
+    if (status.state === "loading") {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+  } while (status.state === "loading");
+  assertEquals(status.state, "ready");
+};
+
 const reserveLoopbackPort = (): number => {
   const listener = Deno.listen({ hostname: "127.0.0.1", port: 0 });
   const port = listener.addr.port;
@@ -72,16 +88,7 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
         port: reserveLoopbackPort(),
       });
 
-      let directoryStatus: { state: string };
-      do {
-        directoryStatus = await (await fetch(
-          new URL("/__sadoku/directory-status", preview.url),
-        )).json();
-        if (directoryStatus.state === "loading") {
-          await new Promise((resolve) => setTimeout(resolve, 5));
-        }
-      } while (directoryStatus.state === "loading");
-      assertEquals(directoryStatus.state, "ready");
+      await waitForDirectoryReady(preview);
 
       const listResponse = await fetch(
         new URL("/__sadoku/documents", preview.url),
@@ -195,6 +202,7 @@ Deno.test("directory preview supports the complete HTTP workflow", async () => {
         port: reserveLoopbackPort(),
       });
       preview = restarted;
+      await waitForDirectoryReady(restarted);
       const restartedDocuments = await (
         await fetch(new URL("/__sadoku/documents", restarted.url))
       ).json();
