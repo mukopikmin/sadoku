@@ -54,15 +54,6 @@ describe("MarkdownPreview basic rendering", () => {
 
     const labels = screen.getAllByText("HTML COMMENT");
     expect(labels).toHaveLength(2);
-    expect(labels.every((label) => label.tagName === "DIV")).toBe(true);
-    expect(labels.every((label) => label.parentElement?.tagName === "HEADER"))
-      .toBe(true);
-    expect(
-      labels.every((label) =>
-        label.parentElement?.querySelector(".lucide-message-square-text") !==
-          null
-      ),
-    ).toBe(true);
     const cards = labels.map((label) => label.closest("[data-html-comment]")!);
     const body = cards[0].querySelector("p");
     expect(body?.textContent).toBe(

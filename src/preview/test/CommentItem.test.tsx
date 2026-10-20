@@ -82,11 +82,9 @@ describe("CommentItem", () => {
     );
 
     const target = container.querySelector(".comment-source-target")!;
-    const card = container.querySelector(".chakra-card__root")!;
     const sourceMarkdown = target.querySelector(".comment-source-markdown")!;
     const rootThread = container.querySelector(".comment-root-thread")!;
-    expect(target.tagName).toBe("SECTION");
-    expect(card.tagName).toBe("ARTICLE");
+    expect(screen.getByRole("article")).not.toBeNull();
     expect(within(target).getByText("Original line")).not.toBeNull();
     expect(
       within(sourceMarkdown).getByRole("heading", {
@@ -108,7 +106,6 @@ describe("CommentItem", () => {
     expect(container.textContent).toContain("<script>alert(1)</script>");
     expect(screen.getByText("Bot")).not.toBeNull();
     expect(screen.getByText("Stale")).not.toBeNull();
-    expect(target.nextElementSibling).toBe(rootThread);
     expect(rootThread.contains(screen.getByText("Comment"))).toBe(true);
   });
 

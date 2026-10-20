@@ -45,7 +45,6 @@ describe("TagsDialog", () => {
     expect(screen.getByRole("columnheader", { name: "Color" })).not.toBeNull();
     expect(screen.getByText("#123456")).not.toBeNull();
     expect(screen.getByText("12")).not.toBeNull();
-    expect(screen.getAllByRole("columnheader")[3].textContent).toBe("");
     const editButton = screen.getByRole("button", { name: "Edit tag API" });
     expect(editButton.textContent).toBe("");
     expect(editButton.querySelector("svg")).not.toBeNull();

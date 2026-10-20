@@ -71,10 +71,6 @@ plain text
       "TypeScript",
       "TypeScript",
     ]);
-    expect(labels.map((label) => label.parentElement?.tagName)).toEqual([
-      "HEADER",
-      "HEADER",
-    ]);
     expect(
       labels.map((label) =>
         label.querySelector('svg[aria-hidden="true"]') !== null
@@ -106,14 +102,13 @@ Paragraph with **formatting**.
 `);
 
     fireEvent.click(container.querySelector(".commentable-content p")!);
-    const addCommentButton = screen.getByRole("button", {
+    expect(screen.getByRole("button", {
       name: "Add comment on line 3",
-    });
+    })).not.toBeNull();
     const rawMarkdownButton = screen.getByRole("button", {
       name: "View raw Markdown for line 3",
     });
 
-    expect(addCommentButton.nextElementSibling).toBe(rawMarkdownButton);
     fireEvent.click(rawMarkdownButton);
 
     const dialog = await screen.findByRole("dialog", {

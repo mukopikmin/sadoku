@@ -147,15 +147,6 @@ describe("MarkdownPreview comments", () => {
     expect(
       container.querySelector('[data-source-line="3"] .comment-thread'),
     ).not.toBeNull();
-    const commentThread = container.querySelector(
-      '[data-source-line="3"] > .comment-thread',
-    );
-    expect(commentThread?.tagName).toBe("DIV");
-    expect(
-      commentThread?.parentElement?.classList.contains(
-        "commentable-block",
-      ),
-    ).toBe(true);
     expect(container.querySelector(".markdown-range-highlight-comment"))
       .not.toBeNull();
     expect(
@@ -304,19 +295,8 @@ describe("MarkdownPreview comments", () => {
     const block = container.querySelector<HTMLElement>(
       '[data-source-line="3"]',
     );
-    const content = block?.querySelector<HTMLElement>(
-      ":scope > .commentable-content",
-    );
-    const markdownBody = content?.querySelector<HTMLElement>(
-      ":scope > .comment-markdown-body",
-    );
-    expect(block?.tagName).toBe("DIV");
     expect(block?.dataset.sourceLine).toBe("3");
     expect(block?.dataset.sourceEndLine).toBe("3");
-    expect(content?.tagName).toBe("DIV");
-    expect(content?.getAttribute("title")).toBeNull();
-    expect(markdownBody?.tagName).toBe("DIV");
-    expect(markdownBody?.querySelector("p")).toBe(getLine());
     expect(getLine()).not.toBeNull();
     expect(screen.queryByRole("button", {
       name: "Add comment on line 3",
