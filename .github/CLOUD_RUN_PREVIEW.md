@@ -22,12 +22,12 @@ Main deployments publish their URL in the deployment environment and workflow
 summary without posting a pull request comment.
 
 Preview links use the proxy's configured `PUBLIC_ORIGIN` and the route
-`/revisions/<tag>/`, including the trailing slash. The workflow reads this origin
-from the proxy Cloud Run service named by `CLOUD_RUN_PROXY_SERVICE`, in the same
-project as the backend and the region selected by `CLOUD_RUN_PROXY_REGION` (or
-`GCP_REGION` when unset). The workflow uses the proxy URL for comments,
-deployment environment links, and its summary. It queries the backend Cloud Run
-API only to verify the tag and revision readiness.
+`/revisions/<tag>/`, including the trailing slash. The workflow reads this
+origin from the proxy Cloud Run service named by `CLOUD_RUN_PROXY_SERVICE`, in
+the same project as the backend and the region selected by
+`CLOUD_RUN_PROXY_REGION` (or `GCP_REGION` when unset). The workflow uses the
+proxy URL for comments, deployment environment links, and its summary. It
+queries the backend Cloud Run API only to verify the tag and revision readiness.
 
 The preview image includes the selected commit's repository contents under
 `/app`, subject to `.dockerignore`. Sadoku opens
