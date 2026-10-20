@@ -294,38 +294,82 @@ describe("CommentItem", () => {
       .toBeGreaterThan(0);
   });
 
-  it("resolves, reopens, and undoes resolution", async () => {
-    const onReopenComment = vi.fn(async () => {});
-    const onResolveComment = vi.fn(async () => {});
-    const actions = createCommentActions({
-      onReopenComment,
-      onResolveComment,
-    });
+  it.each(["active", "stale"] as const)(
+    "resolves %s comments, reopens, and undoes resolution from the thread buttons",
+    async (state) => {
+      const onReopenComment = vi.fn(async () => {});
+      const onResolveComment = vi.fn(async () => {});
+      const actions = createCommentActions({
+        onReopenComment,
+        onResolveComment,
+      });
+      const { rerender } = render(
+        <CommentItem
+          actions={actions}
+          comment={createComment({ state })}
+          lineLabel="Line 3"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
+      await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
+      expect(await screen.findByText("Comment resolved")).not.toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+      await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(1));
+
+      rerender(
+        <CommentItem
+          actions={actions}
+          comment={createComment({ state: "resolved" })}
+          lineLabel="Line 3"
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+      await waitFor(() => expect(onReopenComment).toHaveBeenCalledTimes(2));
+    },
+  );
+
+  it("disables thread actions while resolution is pending", async () => {
+    let finishResolve!: () => void;
+    const onResolveComment = vi.fn(() =>
+      new Promise<void>((resolve) => {
+        finishResolve = resolve;
+      })
+    );
+    const actions = createCommentActions({ onResolveComment });
+    const comment = createComment({ replies: [createCommentReply()] });
     const { rerender } = render(
       <CommentItem
         actions={actions}
-        comment={createComment()}
+        comment={comment}
+        disabled
         lineLabel="Line 3"
       />,
     );
 
-    await openCommentMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Resolve" }));
-    await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
-    expect(await screen.findByText("Comment resolved")).not.toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
-    await waitFor(() => expect(onReopenComment).toHaveBeenCalledWith(1));
-
+    const resolveButton = screen.getByRole("button", { name: "Resolve" });
+    expect(resolveButton.hasAttribute("disabled")).toBe(true);
     rerender(
-      <CommentItem
-        actions={actions}
-        comment={createComment({ state: "resolved" })}
-        lineLabel="Line 3"
-      />,
+      <CommentItem actions={actions} comment={comment} lineLabel="Line 3" />,
     );
-    await openCommentMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Reopen" }));
-    await waitFor(() => expect(onReopenComment).toHaveBeenCalledTimes(2));
+    fireEvent.click(resolveButton);
+    expect(onResolveComment).toHaveBeenCalledExactlyOnceWith(1);
+    for (
+      const name of [
+        "Resolve",
+        "Reply",
+        "More actions",
+        "More actions for reply",
+      ]
+    ) {
+      expect(screen.getByRole("button", { name }).hasAttribute("disabled"))
+        .toBe(true);
+    }
+
+    finishResolve();
+    await waitFor(() =>
+      expect(resolveButton.hasAttribute("disabled")).toBe(false)
+    );
   });
 
   it("keeps editors open and shows errors when actions fail", async () => {
@@ -346,8 +390,7 @@ describe("CommentItem", () => {
       />,
     );
 
-    await openCommentMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Resolve" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
     expect(await screen.findByText("Could not resolve comment")).not.toBeNull();
     expect(screen.getAllByText("Server unavailable.").length)
       .toBeGreaterThan(0);
@@ -376,8 +419,7 @@ describe("CommentItem", () => {
       />,
     );
 
-    await openCommentMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Resolve" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
     fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
     expect(await screen.findByText("Could not reopen comment")).not.toBeNull();
     expect(screen.getAllByText("Reopen rejected.").length).toBeGreaterThan(0);
