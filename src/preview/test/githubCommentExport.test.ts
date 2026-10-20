@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { exportCommentToGitHub } from "../api/comments";
-import { createComment } from "./testUtils";
+import { createComment } from "./commentFixtures";
 
 afterEach(() => vi.unstubAllGlobals());
 

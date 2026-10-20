@@ -1,12 +1,7 @@
+import { createComment, createCommentActions } from "./commentFixtures";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useCommentBulkActions } from "../pages/comments/useCommentBulkActions";
-import {
-  act,
-  cleanup,
-  createComment,
-  createCommentActions,
-  renderHook,
-} from "./testUtils";
+import { act, cleanup, renderHook } from "./domTestUtils";
 
 afterEach(cleanup);
 

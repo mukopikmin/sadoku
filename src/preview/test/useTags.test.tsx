@@ -8,7 +8,7 @@ import {
 } from "../hooks/previewQueryKeys";
 import { useDeleteTag, useTagActions, useUpdateTag } from "../hooks/useTags";
 import { createPreviewQueryClient } from "../queryClient";
-import { act, cleanup, renderHook } from "./testUtils";
+import { act, cleanup, renderHook } from "./domTestUtils";
 
 afterEach(() => {
   cleanup();

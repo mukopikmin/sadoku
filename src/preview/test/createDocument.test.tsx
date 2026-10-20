@@ -1,11 +1,6 @@
+import { renderWithRouter as render } from "./routerTestUtils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  renderWithRouter as render,
-  screen,
-  waitFor,
-} from "./testUtils";
+import { cleanup, fireEvent, screen, waitFor } from "./testUtils";
 import { App } from "../App";
 
 class TestEventSource extends EventTarget {

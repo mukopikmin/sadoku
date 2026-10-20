@@ -1,11 +1,5 @@
-import {
-  cleanup,
-  fireEvent,
-  renderWithRouter as render,
-  screen,
-  waitFor,
-  within,
-} from "./testUtils";
+import { renderWithRouter as render } from "./routerTestUtils";
+import { cleanup, fireEvent, screen, waitFor, within } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { initializeMermaid } from "../markdown/mermaid";
