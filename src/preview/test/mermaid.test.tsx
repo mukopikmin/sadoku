@@ -69,6 +69,7 @@ describe("initializeMermaid", () => {
       expect.objectContaining({
         startOnLoad: false,
         theme: "dark",
+        themeVariables: { fontSize: "1rem", useGradient: false },
       }),
     ]);
     expect(calls[1]).toEqual([
@@ -121,6 +122,7 @@ describe("initializeMermaid", () => {
       expect.objectContaining({
         startOnLoad: false,
         theme: "default",
+        themeVariables: { fontSize: "1rem", useGradient: false },
       }),
     ]);
   });
