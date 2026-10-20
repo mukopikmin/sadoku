@@ -205,12 +205,8 @@ npm run proto:generate
 npm run proto:check
 ```
 
-Browser/server contracts are defined in `proto/`. TypeScript code generated from
-those schemas is committed under `gen/ts/`; regenerate it instead of editing it
-directly. `proto:check` verifies the schema and regenerates the code to ensure
-the committed output is current; the Protobuf CI workflow runs the same command.
-A future Go server can generate from the same schemas into `gen/go/` and keep
-the existing Connect RPC paths unchanged.
+Run `npm run proto:check` to validate `proto/` and verify generated `gen/ts/`
+code. The Protobuf CI workflow runs the same check.
 
 Pass `--version <version>` to `deno task compile` or `deno task install` when
 building a versioned binary. Without it, the binary reports `0.0.0-dev`.
