@@ -115,8 +115,7 @@ describe("MarkdownPreview comments", () => {
       updatedAt: "2026-06-05T00:00:00.000Z",
     }], { onResolveComment });
 
-    screen.getByRole("button", { name: "More actions" }).click();
-    (await screen.findByRole("menuitem", { name: "Resolve" })).click();
+    screen.getByRole("button", { name: "Resolve" }).click();
 
     await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
   });

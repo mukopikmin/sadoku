@@ -1,5 +1,5 @@
 import { Box, Flex } from "@chakra-ui/react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import type { RunCommentAction } from "./useCommentActionState";
 
@@ -9,6 +9,7 @@ type ReplyComposerProps = {
   onReply: (id: number, body: string) => Promise<void>;
   runAction: RunCommentAction;
   showTrigger: boolean;
+  trailingAction?: ReactNode;
 };
 
 export const ReplyComposer = ({
@@ -17,6 +18,7 @@ export const ReplyComposer = ({
   onReply,
   runAction,
   showTrigger,
+  trailingAction,
 }: ReplyComposerProps) => {
   const [draft, setDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
@@ -38,7 +40,7 @@ export const ReplyComposer = ({
   if (!isReplying) {
     return showTrigger
       ? (
-        <Flex justify="flex-start" mt="1">
+        <Flex align="center" justify="space-between" gap="2" mt="1">
           <CommentActionButton
             disabled={disabled}
             onClick={() => setIsReplying(true)}
@@ -46,6 +48,7 @@ export const ReplyComposer = ({
           >
             Reply
           </CommentActionButton>
+          {trailingAction}
         </Flex>
       )
       : null;

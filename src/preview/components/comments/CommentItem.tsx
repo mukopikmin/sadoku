@@ -5,6 +5,7 @@ import type { Comment } from "../../models/comment";
 import { CommentActionMenu } from "./CommentActionMenu";
 import { CommentEditor } from "./CommentEditor";
 import { CommentMarkdown } from "./CommentMarkdown";
+import { CommentResolutionButton } from "./CommentResolutionButton";
 import { CommentSourceMarkdown } from "./CommentSourceMarkdown";
 import { ReplyComposer } from "./ReplyComposer";
 import { ReplyItem } from "./ReplyItem";
@@ -95,8 +96,6 @@ export const CommentItem = ({
               onDelete={onDeleteComment}
               onExport={actions.onExportComment}
               onEdit={() => setIsEditing(true)}
-              onReopen={onReopenComment}
-              onResolve={onResolveComment}
               reportError={reportError}
               runAction={runAction}
             />
@@ -142,6 +141,15 @@ export const CommentItem = ({
             onReply={onReplyComment}
             runAction={runAction}
             showTrigger={!isEditing}
+            trailingAction={
+              <CommentResolutionButton
+                comment={comment}
+                disabled={isDisabled}
+                onReopen={onReopenComment}
+                onResolve={onResolveComment}
+                runAction={runAction}
+              />
+            }
           />
           {error && <Text color="red.500" fontSize="sm">{error}</Text>}
         </Box>
