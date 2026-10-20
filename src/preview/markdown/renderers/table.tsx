@@ -11,10 +11,13 @@ export const renderMarkdownTable = (
 ) => (
   <Box maxW="100%" overflowX="auto" py="2" w="fit-content">
     <Table.Root
+      fontSize="inherit"
+      lineHeight="inherit"
       m="0"
+      maxW="100%"
       size="sm"
       variant="outline"
-      w="max-content"
+      w="auto"
       {...elementProps}
     >
       {children}
@@ -46,9 +49,13 @@ export const MarkdownTableRow = ({
 export const MarkdownTableColumnHeader = ({
   node: _node,
   ...props
-}: MarkdownComponentProps<"th">) => <Table.ColumnHeader {...props} />;
+}: MarkdownComponentProps<"th">) => (
+  <Table.ColumnHeader overflowWrap="anywhere" {...props} />
+);
 
 export const MarkdownTableCell = ({
   node: _node,
   ...props
-}: MarkdownComponentProps<"td">) => <Table.Cell {...props} />;
+}: MarkdownComponentProps<"td">) => (
+  <Table.Cell overflowWrap="anywhere" {...props} />
+);
