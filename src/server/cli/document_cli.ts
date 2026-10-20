@@ -1,4 +1,4 @@
-import { createPreviewSource } from "../source.ts";
+import { createPreviewSource } from "../session/source.ts";
 import type { DocumentStore } from "../usecase/document/mod.ts";
 import {
   getDocument,

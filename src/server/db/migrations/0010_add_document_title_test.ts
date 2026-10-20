@@ -3,7 +3,7 @@ import { join } from "@std/path";
 import { openAppDatabase } from "../connection.ts";
 import { MIGRATIONS, runMigrations } from "../migrations.ts";
 import { createSqliteDocumentStore } from "../../storage/document/sqlite_storage.ts";
-import { createPreviewSession } from "../../directory_session.ts";
+import { createPreviewSession } from "../../session/directory_session.ts";
 import { updateDocumentTitle } from "../../usecase/document/update_document_title.ts";
 
 Deno.test("document titles survive migration and reopening without changing Markdown", async () => {

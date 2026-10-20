@@ -9,12 +9,12 @@ import {
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb.ts";
 import { openAppDatabase } from "../../src/server/db/connection.ts";
-import { createDirectoryPreviewHandler } from "../../src/server/directory_handler.ts";
+import { createDirectoryPreviewHandler } from "../../src/server/http/router.ts";
 import { createSqliteCommentsStore } from "../../src/server/storage/comment/sqlite_storage.ts";
 import { createSqliteDocumentStore } from "../../src/server/storage/document/sqlite_storage.ts";
 import { createSqliteInstructionStore } from "../../src/server/storage/instruction/sqlite_storage.ts";
 import { createSqliteTagStore } from "../../src/server/storage/tag/sqlite_storage.ts";
-import { serveHandlerInfo } from "../../src/server/test_helpers.ts";
+import { serveHandlerInfo } from "../../src/server/testing/helpers.ts";
 
 const withMetadataPreview = async (
   run: (preview: {

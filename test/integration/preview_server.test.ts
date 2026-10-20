@@ -1,10 +1,10 @@
 import { assertEquals } from "@std/assert";
 
-import { createTestPreviewHandler } from "../../src/server/test_helpers.ts";
+import { createTestPreviewHandler } from "../../src/server/testing/helpers.ts";
 import {
   previewAssetManifest,
   previewAssetPaths,
-} from "../../src/server/preview/asset_manifest.ts";
+} from "../../src/server/http/asset_manifest.ts";
 
 Deno.test("serves hot reload events as an SSE stream", async () => {
   const filePath = "test/integration/fixtures/comprehensive.md";

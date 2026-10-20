@@ -5,7 +5,7 @@ import {
   type StartedPreviewServer,
   startPreviewServer,
 } from "../../src/server/server.ts";
-import { withTempCommentsDirectory } from "../../src/server/test_helpers.ts";
+import { withTempCommentsDirectory } from "../../src/server/testing/helpers.ts";
 
 const stopServer = async (preview: StartedPreviewServer) => {
   await preview.server.shutdown().catch(() => {});

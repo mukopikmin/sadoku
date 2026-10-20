@@ -1,5 +1,5 @@
 export type { CommentsStore } from "./storage/comment/storage.ts";
-export { formatPreviewReloadLog } from "./preview/events.ts";
+export { formatPreviewReloadLog } from "./http/events.ts";
 export {
   formatPreviewClosedLog,
   logPreviewClosed,
