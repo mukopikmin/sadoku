@@ -106,7 +106,33 @@ Paragraph before a table.
 | Mermaid |  yes   |     2 |
 | Lists   |  yes   |     3 |
 
-Paragraph after a table before code.
+Paragraph after a short table. Its text should match the surrounding body text,
+and the table should keep its natural width.
+
+### Table Wrapping And Font Size
+
+Resize the preview to a narrow width and increase the font size in appearance
+settings. The following cells should wrap within the available width, while the
+text size and line height stay consistent with this paragraph.
+
+| Sample            | Content                                                                                                                                                               | Count |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----: |
+| Japanese          | 長い日本語の文章がセルの幅に合わせて自然に折り返されることを確認します。画面を狭くした場合や文字サイズを大きくした場合でも、文章全体が読める状態で表示されます。      |     1 |
+| English           | This longer English sentence should wrap at word boundaries when the preview becomes narrow, while keeping the table text the same size as the surrounding paragraph. |    20 |
+| Long URL          | https://example.com/documentation/markdown/table-rendering/wrapping-and-font-size/abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789            |   300 |
+| Unbroken text     | abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789                                                          |  4000 |
+| Inline formatting | **Bold text**, _italic text_, `inline code`, and [a link](https://example.com) should remain readable inside a wrapping cell.                                         | 50000 |
+
+### Long Table Headers
+
+Long column headers should also wrap. Compare their size with the short cell
+values and this paragraph.
+
+| LongColumnHeaderWithoutSpacesABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 | 長い日本語の列見出しも表示領域に合わせて折り返されることを確認するためのサンプルです |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Short value                                                                                           | 短い値                                                                               |
+
+Paragraph after the wrapping tables before code.
 
 ## Code Blocks
 
