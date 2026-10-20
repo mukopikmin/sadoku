@@ -14,14 +14,20 @@ Deno.test("document titles survive migration and reopening without changing Mark
   try {
     const old = await openAppDatabase({
       path,
-      migrate: MIGRATIONS.slice(0, -1),
+      migrate: MIGRATIONS.filter((migration) => migration.version < "0010"),
     });
     try {
       await old.execute(
         "INSERT INTO comment_document (file_path, created_at, updated_at) VALUES (?, ?, ?)",
         [filePath, "2026-10-19T00:00:00.000Z", "2026-10-19T00:00:00.000Z"],
       );
-      assertEquals(await runMigrations(old), ["0010"]);
+      assertEquals(
+        await runMigrations(
+          old,
+          MIGRATIONS.filter((migration) => migration.version <= "0010"),
+        ),
+        ["0010"],
+      );
       const store = createSqliteDocumentStore(old);
       const session = await createPreviewSession(filePath, store);
       const document = session.documents[0];

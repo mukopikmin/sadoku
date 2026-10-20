@@ -207,6 +207,8 @@ message Comment {
   optional string source_text = 15;
   repeated CommentReply replies = 16;
   optional uint32 display_line = 17;
+  optional string current_source_text = 18;
+  optional bool source_deleted = 19;
 }
 message ListCommentsRequest { uint64 document_id = 1; }
 message CommentsDocument {

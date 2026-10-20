@@ -28,6 +28,7 @@ const document = (filePath: string): PreviewCommentsDocument => ({
       resolved: false,
       sourceHash: "abc123",
       sourceText: "source line",
+      sourceDeleted: true,
       stale: true,
       updatedAt: "2026-07-04T00:03:00.000Z",
     },

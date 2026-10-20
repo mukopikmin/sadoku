@@ -73,6 +73,8 @@ Deno.test("RPC mapping preserves optional falsy values and Proto3 scalar default
   assertEquals(absent.resolvedAt, undefined);
   assertEquals(absent.resolvedBy, undefined);
   assertEquals(absent.sourceText, undefined);
+  assertEquals(absent.currentSourceText, undefined);
+  assertEquals(absent.sourceDeleted, undefined);
   assertEquals(absent.displayLine, undefined);
   assertEquals(absent.replies, []);
   const present = create(
@@ -81,6 +83,8 @@ Deno.test("RPC mapping preserves optional falsy values and Proto3 scalar default
       ...comment,
       sourceText: "",
       sourceHash: "",
+      currentSourceText: "",
+      sourceDeleted: false,
       resolvedAt: "",
       displayLine: 0,
       resolvedBy: { type: "human" },
@@ -112,6 +116,8 @@ Deno.test("RPC mapping preserves optional falsy values and Proto3 scalar default
     resolvedBy: { type: "human" },
     sourceHash: "",
     sourceText: "",
+    currentSourceText: "",
+    sourceDeleted: false,
     displayLine: 0,
     replies: [{
       id: "2",
