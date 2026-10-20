@@ -263,7 +263,14 @@ export const CommentableBlock = ({
             />
           ))}
           {isAdding && (
-            <Box mb="1.5">
+            <Box
+              borderLeftColor="accent"
+              borderLeftWidth="3px"
+              mb="1.5"
+              pb="1px"
+              pl="3"
+              pt="2"
+            >
               <Flex align="center" justify="space-between" gap="2" mb="1">
                 <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
                   Commenting on {formatRangeLabel(pendingRange)}.

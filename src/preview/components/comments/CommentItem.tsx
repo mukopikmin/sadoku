@@ -65,12 +65,12 @@ export const CommentItem = ({
         </Box>
       )}
       <Box
-        borderLeftColor={variant === "card" ? "accent" : undefined}
-        borderLeftWidth={variant === "card" ? "3px" : undefined}
+        borderLeftColor="accent"
+        borderLeftWidth="3px"
         className="comment-root-thread"
-        pb={variant === "card" ? "1px" : undefined}
-        pl={variant === "card" ? "3" : undefined}
-        pt={variant === "card" ? "2" : undefined}
+        pb="1px"
+        pl="3"
+        pt="2"
       >
         <Box position="relative">
           {(comment.author.type === "bot" ||
