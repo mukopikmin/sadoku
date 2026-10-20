@@ -32,6 +32,7 @@ type CommentRow = {
   resolved_by_type: "human" | "bot" | null;
   source_hash: string | null;
   source_text: string | null;
+  source_deleted: number;
   stale: number;
   start_line: number;
   updated_at: string;
@@ -98,6 +99,7 @@ const commentFromRow = (
     : { resolvedBy: { type: row.resolved_by_type } }),
   ...(row.source_hash === null ? {} : { sourceHash: row.source_hash }),
   ...(row.source_text === null ? {} : { sourceText: row.source_text }),
+  ...(toBoolean(row.source_deleted) ? { sourceDeleted: true } : {}),
   stale: toBoolean(row.stale),
   startLine: row.start_line,
   updatedAt: row.updated_at,
@@ -147,7 +149,7 @@ const readCommentsDocumentFromSqlite = async (
     `SELECT id, local_id, start_line, end_line, original_start_line,
       original_end_line, body, author_type, resolved, resolved_at,
       resolved_by_type,
-      source_hash, source_text, stale, created_at, updated_at
+      source_hash, source_text, source_deleted, stale, created_at, updated_at
       FROM comment
       WHERE document_id = ?
       ORDER BY local_id`,
@@ -220,8 +222,8 @@ const writeCommentsDocumentToSqlite = async (
           document_id, local_id, start_line, end_line, original_start_line,
           original_end_line, body, author_type, resolved, resolved_at,
           resolved_by_type, source_hash,
-          source_text, stale, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          source_text, source_deleted, stale, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           documentId,
           comment.id,
@@ -236,6 +238,7 @@ const writeCommentsDocumentToSqlite = async (
           comment.resolvedBy?.type ?? null,
           comment.sourceHash ?? null,
           comment.sourceText ?? null,
+          comment.sourceDeleted === true ? 1 : 0,
           comment.stale ? 1 : 0,
           comment.createdAt,
           comment.updatedAt,

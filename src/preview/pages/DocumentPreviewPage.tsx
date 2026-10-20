@@ -97,7 +97,12 @@ export const DocumentPreviewPage = (
             theme={settings.theme === "dark" ? "dark" : "default"}
           />
         )
-        : <CommentListPage documentId={documentId} />}
+        : (
+          <CommentListPage
+            documentId={documentId}
+            documentDeleted={document.deleted}
+          />
+        )}
     </Container>
   );
 };

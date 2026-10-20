@@ -174,6 +174,33 @@ describe("CommentList", () => {
     ]);
   });
 
+  it("renders both source versions from the API and hides snapshot text for a deleted document", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          filePath: "/tmp/example.md",
+          comments: [{
+            ...createComment({ sourceText: "**Before**" }),
+            currentSourceText: "**After**",
+          }],
+        })
+      ),
+    );
+    const { rerender } = render(<CommentListPage documentId={42} />);
+    expect(await screen.findByText("After")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "At comment time" }))
+      .toHaveTextContent("Before");
+    expect(screen.getByRole("region", { name: "Current" })).toHaveTextContent(
+      "After",
+    );
+    rerender(<CommentListPage documentId={42} documentDeleted />);
+    expect(screen.getByText("The target lines have been deleted."))
+      .toBeInTheDocument();
+    expect(screen.queryByText("After")).toBeNull();
+    expect(screen.getByText("Before")).toBeInTheDocument();
+  });
+
   it("groups comments, displays counts, and supports tab keyboard navigation", () => {
     render(
       <CommentList
@@ -206,7 +233,11 @@ describe("CommentList", () => {
     expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale")).not.toBeNull();
-    expect(within(unresolvedPanel).getByText("Original line")).not.toBeNull();
+    expect(
+      within(screen.getByText("Stale comment.").closest("article")!).getByText(
+        "At comment time",
+      ),
+    ).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
     expect(within(unresolvedPanel).getAllByRole("article")).toHaveLength(2);
 

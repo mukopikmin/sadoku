@@ -115,7 +115,12 @@ const rebaseCommentPosition = (
     if (mapped) mappedRanges.push(mapped);
   }
   if (mappedRanges.length === 0) {
-    return { ...comment, displayLine: comment.startLine, stale: true };
+    return {
+      ...comment,
+      displayLine: comment.startLine,
+      stale: true,
+      sourceDeleted: true,
+    };
   }
   const startLine = Math.min(...mappedRanges.map((range) => range.startLine));
   const endLine = Math.max(...mappedRanges.map((range) => range.endLine));

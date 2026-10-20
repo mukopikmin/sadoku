@@ -168,6 +168,8 @@ export const commentMessage = (
     : undefined,
   sourceHash: comment.sourceHash,
   sourceText: comment.sourceText,
+  currentSourceText: comment.currentSourceText,
+  sourceDeleted: comment.sourceDeleted,
   replies: comment.replies?.map(replyMessage) ?? [],
   displayLine: comment.displayLine === undefined
     ? undefined
