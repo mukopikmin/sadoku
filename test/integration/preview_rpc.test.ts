@@ -440,6 +440,7 @@ Deno.test("Connect missing capabilities remain unimplemented before document loo
       "GetGitHubAccount",
       "ListTags",
       "UpdateTag",
+      "DeleteTag",
       "ReplaceDocumentTags",
       "ListInstructions",
       "CreateInstruction",

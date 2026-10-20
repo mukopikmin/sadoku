@@ -3,6 +3,7 @@ import type { TagStore } from "./ports.ts";
 import { renameTag } from "./rename_tag.ts";
 
 const store: TagStore = {
+  delete: () => Promise.resolve(),
   list: () => Promise.resolve([]),
   listForDocument: () => Promise.resolve([]),
   rename: (id, name) =>

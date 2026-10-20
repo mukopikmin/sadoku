@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "./testUtils";
 import { TagsDialog } from "../components/TagsDialog";
 
 beforeEach(() => {
@@ -160,4 +167,87 @@ describe("TagsDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Tag name already exists.")).not.toBeNull();
   });
+});
+
+it("confirms deletion, supports cancel, and refreshes after success", async () => {
+  let deleted = false;
+  const fetchMock = vi.fn(
+    async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "DELETE") {
+        deleted = true;
+        return new Response(null, { status: 204 });
+      }
+      return Response.json(
+        deleted ? [] : [{
+          id: 1,
+          name: "API",
+          backgroundColor: "#123456",
+          documentCount: 2,
+          createdAt: "now",
+          updatedAt: "now",
+        }],
+      );
+    },
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  render(<TagsDialog onOpenChange={() => {}} open />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Delete tag API" }),
+  );
+  const confirmation = await screen.findByRole("alertdialog", {
+    name: "Delete tag?",
+  });
+  expect(
+    within(confirmation).getByText(
+      /Delete API\? This removes the tag from all documents/,
+    ),
+  ).not.toBeNull();
+  expect(fetchMock).toHaveBeenCalledOnce();
+  fireEvent.click(within(confirmation).getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  expect(fetchMock).toHaveBeenCalledOnce();
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Delete tag API" }),
+  );
+  const reopened = await screen.findByRole("alertdialog", {
+    name: "Delete tag?",
+  });
+  fireEvent.click(
+    within(reopened).getByRole("button", { name: "Delete", exact: true }),
+  );
+  expect(await screen.findByText("No tags yet.")).not.toBeNull();
+});
+
+it("keeps a tag and displays the error when deletion fails", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) =>
+      init?.method === "DELETE"
+        ? new Response("Could not delete tag.", { status: 500 })
+        : Response.json([{
+          id: 1,
+          name: "API",
+          backgroundColor: "#123456",
+          documentCount: 0,
+          createdAt: "now",
+          updatedAt: "now",
+        }])
+    ),
+  );
+  render(<TagsDialog onOpenChange={() => {}} open />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Delete tag API" }),
+  );
+  const confirmation = await screen.findByRole("alertdialog", {
+    name: "Delete tag?",
+  });
+  fireEvent.click(
+    within(confirmation).getByRole("button", { name: "Delete", exact: true }),
+  );
+  expect((await within(confirmation).findByRole("alert")).textContent).toBe(
+    "Could not delete tag.",
+  );
+  expect(screen.getByText("API")).not.toBeNull();
+  expect(screen.getByRole("button", { name: "Delete", exact: true })).not
+    .toBeNull();
 });

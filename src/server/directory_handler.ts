@@ -44,7 +44,12 @@ import {
   replaceInstruction,
 } from "./api/instruction_api.ts";
 import type { TagStore } from "./usecase/tag/ports.ts";
-import { listTags, patchTag, putDocumentTags } from "./api/tag_api.ts";
+import {
+  deleteTagResponse,
+  listTags,
+  patchTag,
+  putDocumentTags,
+} from "./api/tag_api.ts";
 import type { MemoryStore } from "./usecase/memory/ports.ts";
 import { getMemories, removeMemory } from "./api/memory_api.ts";
 import type { RunGitHubCommand } from "./github_pull.ts";
@@ -158,6 +163,7 @@ export const createDirectoryPreviewHandler = (
   register(PreviewService.method.getGitHubAccount, rpc.getGitHubAccount);
   register(PreviewService.method.listTags, rpc.listTags);
   register(PreviewService.method.updateTag, rpc.updateTag);
+  register(PreviewService.method.deleteTag, rpc.deleteTag);
   register(PreviewService.method.replaceDocumentTags, rpc.replaceDocumentTags);
   register(PreviewService.method.listInstructions, rpc.listInstructions);
   register(PreviewService.method.createInstruction, rpc.createInstruction);
@@ -182,6 +188,11 @@ export const createDirectoryPreviewHandler = (
   );
   if (tagStore) {
     app.get("/__sadoku/tags", () => listTags(tagStore));
+    app.delete(
+      "/__sadoku/tags/:tagId",
+      (context) =>
+        deleteTagResponse(Number(context.req.param("tagId")), tagStore),
+    );
     app.patch(
       "/__sadoku/tags/:tagId",
       (context) =>
