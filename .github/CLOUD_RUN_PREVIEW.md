@@ -7,11 +7,11 @@ workflow. Nightly application releases follow successful `Test` runs, so
 proxy-only changes do not publish application releases. Stable tag releases
 remain explicit.
 
-Preview builds use the same application/proxy boundary, checking the full pull
-request diff. Proxy-only changes skip image builds and deployment. Closing a
-pull request still runs tag cleanup, even if application changes were reverted
-before closing it. The change check runs without cloud credentials and only
-needs read access to pull request files.
+Preview builds use `dorny/paths-filter` with the same application/proxy
+boundary, checking the full pull request diff. Proxy-only changes skip image
+builds and deployment. Closing a pull request still runs tag cleanup, even if
+application changes were reverted before closing it. The change check runs
+without cloud credentials and only needs read access to pull request files.
 
 Proxy deployment runs on pushes to `main` that change `proxy/` or
 `.github/workflows/cloud_run_proxy.yml`. It can also be started manually on

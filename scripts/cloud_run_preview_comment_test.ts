@@ -4,9 +4,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 const workflow = await Deno.readTextFile(
   new URL("../.github/workflows/cloud_run_preview.yml", import.meta.url),
 );
-const script = workflow
-  .split("      - name: Create or update preview comment\n")[1]
-  .split("          script: |\n")[1]
+const script = workflow.split("          script: |\n")[1]
   .split("\n  cleanup:")[0]
   .split("\n")
   .map((line) => line.replace(/^ {12}/, ""))

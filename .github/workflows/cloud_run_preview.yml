@@ -23,23 +23,15 @@ jobs:
     steps:
       - name: Check changed PR files
         id: filter
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
-          script: |
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              ...context.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
-            const isApplication = path => !path.startsWith('proxy/') &&
-              path !== '.github/workflows/proxy_test.yml' &&
-              path !== '.github/workflows/cloud_run_proxy.yml';
-            // The API returns at most 3,000 files; build if the list may be incomplete.
-            const application = files.length >= 3000 || files.some(file =>
-              isApplication(file.filename) ||
-              (file.previous_filename && isApplication(file.previous_filename))
-            );
-            core.setOutput('application', String(application));
+          predicate-quantifier: every
+          filters: |
+            application:
+              - '**'
+              - '!proxy/**'
+              - '!.github/workflows/proxy_test.yml'
+              - '!.github/workflows/cloud_run_proxy.yml'
 
   build:
     name: Build preview image
