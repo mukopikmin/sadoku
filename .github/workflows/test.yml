@@ -13,6 +13,8 @@ jobs:
   test:
     name: Deno
     runs-on: ubuntu-latest
+    env:
+      DENO_DIR: /tmp/sadoku-deno-cache
 
     steps:
       - name: Checkout

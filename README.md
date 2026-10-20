@@ -63,8 +63,9 @@ Run `sadoku --help` for all commands and options.
   confirmation.
 - In a local directory preview, choose **New file** or a folder's **+** button
   to create a Markdown file. The `.md` extension is added if omitted; an
-  optional title becomes the first heading. Existing files are never
-  overwritten.
+  optional title appears above the document without changing its Markdown. Use
+  **Set title** or **Edit title** to change it, or clear it to remove it.
+  Existing files are never overwritten.
 - Use **Zoom** on a Mermaid diagram to enlarge it. Pinch to zoom, scroll to
   move, and choose **Fit to view** to reset.
 

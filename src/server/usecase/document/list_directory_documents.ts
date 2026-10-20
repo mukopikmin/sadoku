@@ -6,13 +6,18 @@ export const listDirectoryDocuments = (
   documents: readonly DirectoryDocument[],
   tagReader?: DocumentTagReader,
 ): Promise<DirectoryDocumentSummary[]> =>
-  Promise.all(documents.map(async ({ deleted, id, relativePath, title }) => {
-    const tags = await listDocumentTags(id, tagReader);
-    return {
-      deleted,
-      id,
-      relativePath,
-      title,
-      ...(tags && { tags }),
-    };
-  }));
+  Promise.all(
+    documents.map(
+      async ({ deleted, id, relativePath, title, displayTitle }) => {
+        const tags = await listDocumentTags(id, tagReader);
+        return {
+          deleted,
+          id,
+          relativePath,
+          title,
+          ...(displayTitle && { displayTitle }),
+          ...(tags && { tags }),
+        };
+      },
+    ),
+  );

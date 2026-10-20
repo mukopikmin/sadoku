@@ -189,7 +189,7 @@ const json = (method: string, body: unknown): RequestInit => ({
   if (!method) return globalThis.fetch(input, init);
   if (
     method === "GetSession" || method === "GetStatistics" ||
-    method === "CreateDocument"
+    method === "CreateDocument" || method === "UpdateDocumentTitle"
   ) {
     return globalThis.fetch(input, init);
   }

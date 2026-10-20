@@ -1,3 +1,4 @@
+import { updateDocumentTitle } from "../usecase/document/update_document_title.ts";
 import { isSettingsError } from "../usecase/settings/types.ts";
 import type { MessageInitShape, MessageShape } from "@bufbuild/protobuf";
 import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
@@ -253,6 +254,29 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
         !deps.directoryState || deps.directoryState.status.state === "ready",
         readConfig()?.markdownExtensions,
       ),
+    updateDocumentTitle: async ({ documentId, title }) => {
+      const { document } = resolveDocument(documentId);
+      if (!documentStore) return unavailable("Document titles");
+      try {
+        return documentSummaryMessage(
+          await updateDocumentTitle(document, title, documentStore),
+        );
+      } catch (error) {
+        if (typeof error === "object" && error !== null && "type" in error) {
+          if (error.type === "invalid_document_title") {
+            throw connectFailure(
+              "invalid_argument",
+              "Enter a single-line title.",
+              400,
+            );
+          }
+          if (error.type === "title_storage_unavailable") {
+            return unavailable("Document titles");
+          }
+        }
+        throw error;
+      }
+    },
     getDocument: async ({ documentId }) => {
       const { document } = resolveDocument(documentId);
       return documentMessage(

@@ -4,6 +4,7 @@ import type { Document } from "../../usecase/document/types.ts";
 
 type DocumentRow = {
   file_path: string;
+  title: string | null;
   id: number;
 };
 
@@ -12,6 +13,7 @@ type SnapshotRow = { source_snapshot: string | null };
 const documentFromRow = (row: DocumentRow): Document => ({
   filePath: row.file_path,
   id: row.id,
+  ...(row.title !== null && { displayTitle: row.title }),
 });
 
 export const createSqliteDocumentStore = (
@@ -19,7 +21,7 @@ export const createSqliteDocumentStore = (
 ): DocumentStore => {
   const findById = async (id: number): Promise<Document | undefined> => {
     const row = (await database.execute<DocumentRow>(
-      "SELECT id, file_path FROM comment_document WHERE id = ?",
+      "SELECT id, file_path, title FROM comment_document WHERE id = ?",
       [id],
     )).rows?.[0];
     return row === undefined ? undefined : documentFromRow(row);
@@ -29,7 +31,7 @@ export const createSqliteDocumentStore = (
     filePath: string,
   ): Promise<Document | undefined> => {
     const row = (await database.execute<DocumentRow>(
-      "SELECT id, file_path FROM comment_document WHERE file_path = ?",
+      "SELECT id, file_path, title FROM comment_document WHERE file_path = ?",
       [filePath],
     )).rows?.[0];
     return row === undefined ? undefined : documentFromRow(row);
@@ -64,9 +66,15 @@ export const createSqliteDocumentStore = (
     findById,
     list: async () => {
       const result = await database.execute<DocumentRow>(
-        "SELECT id, file_path FROM comment_document ORDER BY id",
+        "SELECT id, file_path, title FROM comment_document ORDER BY id",
       );
       return (result.rows ?? []).map(documentFromRow);
+    },
+    setTitle: async (id, title) => {
+      await database.execute(
+        "UPDATE comment_document SET title = ?, updated_at = ? WHERE id = ?",
+        [title ?? null, new Date().toISOString(), id],
+      );
     },
     readSnapshot: async (id) => {
       const row = (await database.execute<SnapshotRow>(

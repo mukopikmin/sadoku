@@ -1,6 +1,7 @@
 export type Document = {
   id: number;
   filePath: string;
+  displayTitle?: string;
 };
 
 export type DirectoryDocument = Document & {
@@ -44,7 +45,7 @@ export type PublicDocumentTag = {
 export type DirectoryDocumentSummary =
   & Pick<
     DirectoryDocument,
-    "deleted" | "id" | "relativePath" | "title"
+    "deleted" | "id" | "relativePath" | "title" | "displayTitle"
   >
   & { tags?: PublicDocumentTag[] };
 
