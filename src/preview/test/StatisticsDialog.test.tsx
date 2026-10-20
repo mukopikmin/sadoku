@@ -19,7 +19,8 @@ it("loads and displays database statistics when opened", async () => {
     ),
   );
 
-  render(<StatisticsDialog onOpenChange={() => {}} open />);
+  const onOpenChange = vi.fn();
+  render(<StatisticsDialog onOpenChange={onOpenChange} open />);
 
   expect(await screen.findByRole("dialog", { name: "Database statistics" }))
     .toBeTruthy();
@@ -34,25 +35,8 @@ it("loads and displays database statistics when opened", async () => {
     "textContent",
     "4",
   );
-});
-
-it("offers a close button", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(() =>
-      Promise.resolve(Response.json({
-        commentCount: { bot: "0", human: "0" },
-        databaseSize: "0",
-        documentCount: "0",
-      }))
-    ),
-  );
-  const onOpenChange = vi.fn();
-
-  render(<StatisticsDialog onOpenChange={onOpenChange} open />);
   fireEvent.click(
-    await screen.findByRole("button", { name: "Close database statistics" }),
+    screen.getByRole("button", { name: "Close database statistics" }),
   );
-
   await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
 });

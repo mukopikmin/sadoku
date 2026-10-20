@@ -49,8 +49,8 @@ const createStore = (): InstructionStore => {
 
 Deno.test("instruction CLI performs CRUD and normalizes content", async () => {
   const store = createStore();
-  const added = await addInstruction(1, "Review this.\r\n\r\n", store);
-  assertEquals(added.content, "Review this.");
+  const added = await addInstruction(1, "  Review this.\r\n\r\n", store);
+  assertEquals(added.content, "  Review this.");
   assertEquals(await listInstructions(1, store), [added]);
 
   const updated = await updateInstruction(
@@ -62,6 +62,11 @@ Deno.test("instruction CLI performs CRUD and normalizes content", async () => {
   assertEquals(updated.content, "Updated.\nNext.");
   await deleteInstruction(1, added.id, store);
   assertEquals(await listInstructions(1, store), []);
+  await assertRejects(
+    () => deleteInstruction(1, added.id, store),
+    Error,
+    "Instruction not found.",
+  );
 });
 
 Deno.test("instruction CLI maps empty content and missing IDs", async () => {

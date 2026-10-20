@@ -1,4 +1,4 @@
-import { previewAssetPaths } from "./asset_manifest.ts";
+import { previewAssetPaths, previewStylesheetPaths } from "./asset_manifest.ts";
 import { parsePublicBasePath } from "./base_path.ts";
 
 const escapeHtml = (value: string): string =>
@@ -20,6 +20,11 @@ export const renderSpaShell = (title: string, basePath = ""): string => {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="${basePath}${previewAssetPaths.favicon}" sizes="any">
     <link rel="apple-touch-icon" href="${basePath}${previewAssetPaths.icon}">
+    ${
+    previewStylesheetPaths.map((path) =>
+      `<link rel="stylesheet" href="${basePath}${path}">`
+    ).join("\n    ")
+  }
     <title>${escapeHtml(title)}</title>
   </head>
   <body>

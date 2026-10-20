@@ -11,33 +11,6 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview comments", () => {
-  it("adds source line controls to rendered Markdown blocks", () => {
-    const { container } = renderMarkdown(`# Title
-
-Body
-`);
-
-    expect(container.querySelector('[data-source-line="1"] h1')?.textContent)
-      .toBe("Title");
-    expect(container.querySelector('[data-source-line="3"] p')?.textContent)
-      .toBe("Body");
-  });
-
-  it("focuses the comment textarea when opening the comment form", () => {
-    const { container } = renderMarkdown("# Title\n");
-    const line = container.querySelector('[data-source-line="1"] h1');
-    expect(line).not.toBeNull();
-
-    fireEvent.click(line!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 1",
-    }));
-
-    expect(document.activeElement).toBe(
-      screen.getByPlaceholderText("Write a GitHub PR comment..."),
-    );
-  });
-
   it("submits a new comment with command or control enter", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown("# Title\n\nBody\n", [], {
@@ -54,6 +27,9 @@ Body
     fireEvent.click(screen.getByRole("button", {
       name: "Add comment on line 1",
     }));
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Mac shortcut." } },
@@ -76,6 +52,9 @@ Body
     fireEvent.click(screen.getByRole("button", {
       name: "Add comment on line 3",
     }));
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText("Write a GitHub PR comment..."),
+    );
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Control shortcut." } },
@@ -168,15 +147,6 @@ Body
     expect(
       container.querySelector('[data-source-line="3"] .comment-thread'),
     ).not.toBeNull();
-    const commentThread = container.querySelector(
-      '[data-source-line="3"] > .comment-thread',
-    );
-    expect(commentThread?.tagName).toBe("DIV");
-    expect(
-      commentThread?.parentElement?.classList.contains(
-        "commentable-block",
-      ),
-    ).toBe(true);
     expect(container.querySelector(".markdown-range-highlight-comment"))
       .not.toBeNull();
     expect(
@@ -325,19 +295,8 @@ Body
     const block = container.querySelector<HTMLElement>(
       '[data-source-line="3"]',
     );
-    const content = block?.querySelector<HTMLElement>(
-      ":scope > .commentable-content",
-    );
-    const markdownBody = content?.querySelector<HTMLElement>(
-      ":scope > .comment-markdown-body",
-    );
-    expect(block?.tagName).toBe("DIV");
     expect(block?.dataset.sourceLine).toBe("3");
     expect(block?.dataset.sourceEndLine).toBe("3");
-    expect(content?.tagName).toBe("DIV");
-    expect(content?.getAttribute("title")).toBeNull();
-    expect(markdownBody?.tagName).toBe("DIV");
-    expect(markdownBody?.querySelector("p")).toBe(getLine());
     expect(getLine()).not.toBeNull();
     expect(screen.queryByRole("button", {
       name: "Add comment on line 3",

@@ -5,7 +5,7 @@ import {
   useCommentableBlockLayout,
 } from "../markdown/commentable/useCommentableBlockLayout";
 import type { RangeHighlight } from "../markdown/commentable/commentRanges";
-import { act, cleanup, render, screen, waitFor } from "./testUtils";
+import { act, cleanup, render, screen, waitFor } from "./domTestUtils";
 
 const mockRect = (top: number, bottom: number): DOMRect => ({
   bottom,

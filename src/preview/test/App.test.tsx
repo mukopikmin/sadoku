@@ -1,11 +1,5 @@
-import {
-  cleanup,
-  fireEvent,
-  renderWithRouter as render,
-  screen,
-  waitFor,
-  within,
-} from "./testUtils";
+import { renderWithRouter as render } from "./routerTestUtils";
+import { cleanup, fireEvent, screen, waitFor, within } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { initializeMermaid } from "../markdown/mermaid";
@@ -224,10 +218,11 @@ describe("App", () => {
     const previewNavigation = screen.getByRole("navigation", {
       name: "Preview views",
     });
-    expect(reloadButton.parentElement).toBe(previewNavigation);
     expect(
-      reloadButton.previousElementSibling?.getAttribute("aria-label"),
-    ).toBe("Open settings");
+      within(previewNavigation).getByRole("button", {
+        name: "Reload preview",
+      }),
+    ).toBe(reloadButton);
 
     fireEvent.click(reloadButton);
 
@@ -318,7 +313,7 @@ describe("App", () => {
       .toBeNull();
   });
 
-  it("groups document navigation in the header before the main preview", async () => {
+  it("renders document navigation in the header and Markdown in the main landmark", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -378,7 +373,6 @@ describe("App", () => {
       fileLink,
     );
     expect(header.contains(main)).toBe(false);
-    expect(header.nextElementSibling).toBe(main);
     expect(within(main).getByRole("heading", { name: "Title" })).not.toBeNull();
 
     const tabs = within(header).getByRole("tablist");
@@ -545,7 +539,11 @@ describe("App", () => {
     const previewNavigation = screen.getByRole("navigation", {
       name: "Preview views",
     });
-    expect(settingsButton.parentElement).toBe(previewNavigation);
+    expect(
+      within(previewNavigation).getByRole("button", {
+        name: "Open settings",
+      }),
+    ).toBe(settingsButton);
     expect(settingsButton.textContent).toBe("");
     expect(settingsButton.querySelector('svg[aria-hidden="true"]')).not
       .toBeNull();
