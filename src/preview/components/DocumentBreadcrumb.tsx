@@ -5,12 +5,16 @@ import {
   CloseButton,
   Dialog,
   Flex,
+  IconButton,
   Link,
   Portal,
   Text,
 } from "@chakra-ui/react";
+import { Copy } from "lucide-react";
 import { Fragment, useState } from "react";
 import type { DocumentSummary } from "../models/document";
+import { toaster } from "./ui/toaster";
+import { Tooltip } from "./ui/tooltip";
 
 type DocumentBreadcrumbProps = {
   document: DocumentSummary;
@@ -40,6 +44,26 @@ export const DocumentBreadcrumb = ({
     : documents.filter((item) =>
       parentDirectory(item.relativePath) === openDirectory
     );
+
+  const handleCopyPath = async () => {
+    try {
+      await navigator.clipboard.writeText(document.relativePath);
+      toaster.create({
+        closable: true,
+        description: "The document path was copied to the clipboard.",
+        title: "Path copied",
+        type: "success",
+      });
+    } catch {
+      toaster.create({
+        closable: true,
+        description:
+          "Check your browser's clipboard permissions and try again.",
+        title: "Could not copy path",
+        type: "error",
+      });
+    }
+  };
 
   return (
     <>
@@ -78,6 +102,16 @@ export const DocumentBreadcrumb = ({
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
             <Breadcrumb.CurrentLink>{parts.at(-1)}</Breadcrumb.CurrentLink>
+            <Tooltip content="Copy path">
+              <IconButton
+                aria-label="Copy path"
+                onClick={() => void handleCopyPath()}
+                size="xs"
+                variant="ghost"
+              >
+                <Copy aria-hidden="true" />
+              </IconButton>
+            </Tooltip>
           </Breadcrumb.Item>
         </Breadcrumb.List>
       </Breadcrumb.Root>
