@@ -30,8 +30,8 @@ export const renderMarkdownHeading = (
     fontWeight="semibold"
     lineHeight="1.25"
     m="0"
-    pt="3"
-    pb="2"
+    pt="0.75em"
+    pb="0.4em"
     {...elementProps}
   >
     {children}
