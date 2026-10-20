@@ -127,6 +127,14 @@ submitted comments return their existing link and are left unchanged. Local
 edits, resolution and deletion do not automatically change GitHub. See
 [export behavior and edge cases](docs/github-comment-export.md) for details.
 
+### Bulk comment actions
+
+In the comments view, select individual comments or use **Select all** in the
+current tab. Choose **Resolve selected**, **Reopen selected**, or **Delete
+selected** to apply an action to the selection. Deletion asks for confirmation
+and includes replies. If some actions fail, those comments remain selected for
+retry.
+
 ### Comments from the CLI
 
 Register and inspect documents:

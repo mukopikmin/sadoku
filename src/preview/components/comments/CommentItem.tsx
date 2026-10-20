@@ -13,6 +13,7 @@ import { useCommentActionState } from "./useCommentActionState";
 export type CommentItemProps = {
   actions: CommentActions;
   comment: Comment;
+  disabled?: boolean;
   lineLabel: string;
   showSource?: boolean;
   showState?: boolean;
@@ -25,6 +26,7 @@ const getSourceLabel = (comment: Comment): string =>
 export const CommentItem = ({
   actions,
   comment,
+  disabled = false,
   lineLabel,
   showSource = false,
   showState = false,
@@ -41,6 +43,7 @@ export const CommentItem = ({
   } = actions;
   const [isEditing, setIsEditing] = useState(false);
   const { error, isPending, reportError, runAction } = useCommentActionState();
+  const isDisabled = disabled || isPending;
 
   const content = (
     <>
@@ -87,7 +90,7 @@ export const CommentItem = ({
           {!isEditing && (
             <CommentActionMenu
               comment={comment}
-              disabled={isPending}
+              disabled={isDisabled}
               lineLabel={lineLabel}
               onDelete={onDeleteComment}
               onExport={actions.onExportComment}
@@ -103,7 +106,7 @@ export const CommentItem = ({
               <CommentEditor
                 body={comment.body}
                 commentId={comment.id}
-                disabled={isPending}
+                disabled={isDisabled}
                 onClose={() => setIsEditing(false)}
                 onUpdate={onUpdateComment}
                 runAction={runAction}
@@ -121,7 +124,7 @@ export const CommentItem = ({
               {(comment.replies ?? []).map((reply) => (
                 <ReplyItem
                   commentId={comment.id}
-                  disabled={isPending}
+                  disabled={isDisabled}
                   key={reply.id}
                   onDelete={onDeleteReply}
                   onUpdate={onUpdateReply}
@@ -135,7 +138,7 @@ export const CommentItem = ({
           )}
           <ReplyComposer
             commentId={comment.id}
-            disabled={isPending}
+            disabled={isDisabled}
             onReply={onReplyComment}
             runAction={runAction}
             showTrigger={!isEditing}
