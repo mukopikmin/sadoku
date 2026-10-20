@@ -91,17 +91,11 @@ Change these limits with `--max-depth` and `--max-files`, or under **Settings â†
 Directory discovery**. Sadoku does not follow symbolic links and excludes `.git`
 and `node_modules` by default.
 
-In a local directory preview, choose **New file** above the document list to
-create a Markdown file at the root, or use the **+** button on a folder row to
-create one in that folder. Enter a filename and, optionally, a document title.
-Omitting the extension adds `.md`; explicit extensions must match the configured
-Markdown extensions. The file starts empty; its optional title is stored in the
-local database as a file attribute, independently of Markdown headings, and
-appears above the document body. Use **Set title** or **Edit title** in the
-document view to change it, or save an empty title to remove it. The list
-continues to display the filename. Existing files are never overwritten, and the
-new file opens in the preview immediately. File creation is unavailable for
-single-file, remote URL, and pull request previews.
+In a local directory preview, choose **New file** or a folder's **+** button to
+create a Markdown file. Missing extensions default to `.md`; existing files are
+never overwritten. An optional title appears above the document without changing
+its Markdown. Use **Set title** or **Edit title** to change it, or clear it to
+remove it. The document list shows filenames.
 
 GitHub pull request previews use the same configured Markdown extensions and
 `--max-files` limit. They show added and modified Markdown files, omit deleted
