@@ -47,7 +47,9 @@ export { renderMarkdownParagraph } from "./renderers/paragraph";
 export { renderMarkdownPre } from "./renderers/pre";
 export { renderMarkdownTable } from "./renderers/table";
 
-export const sharedMarkdownComponents: Components = {
+export const sharedMarkdownComponents: Components & {
+  "html-comment": typeof MarkdownHtmlComment;
+} = {
   a: MarkdownLink,
   blockquote: MarkdownBlockquote,
   code: MarkdownCode,
