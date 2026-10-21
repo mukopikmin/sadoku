@@ -1,16 +1,14 @@
 import {
-  Button,
   CloseButton,
-  Collapsible,
   Dialog,
   Flex,
   Portal,
+  Switch,
   Tabs,
   Text,
 } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import { changedRevisionLines } from "../markdown/revisionDiff";
-import { RevisionSourceDiff } from "../markdown/RevisionSourceDiff";
 import { ReadOnlyMarkdownPreview } from "../pages/markdown/ReadOnlyMarkdownPreview";
 
 export const DocumentRevisionsDialog = ({
@@ -75,38 +73,26 @@ export const DocumentRevisionsDialog = ({
                 )}
                 <Tabs.Content value="current">
                   {changes && (
-                    <>
-                      <Flex align="center" gap="3" wrap="wrap" mb="3">
-                        <Button
-                          aria-pressed={highlightChanges && hasChanges}
-                          disabled={!hasChanges}
-                          onClick={() => setHighlightChanges((value) => !value)}
-                          size="sm"
-                          variant={highlightChanges && hasChanges
-                            ? "subtle"
-                            : "outline"}
-                        >
-                          Highlight changes
-                        </Button>
-                        <Text color="fg.muted" fontSize="sm">
-                          {hasChanges
-                            ? `Compared with Previous: ${changes.current.size} added, ${changes.previous.size} removed lines.`
-                            : "No changes since the previous revision."}
-                        </Text>
-                      </Flex>
-                      {hasChanges && (
-                        <Collapsible.Root lazyMount unmountOnExit mb="3">
-                          <Collapsible.Trigger asChild>
-                            <Button size="sm" variant="ghost">
-                              View source diff
-                            </Button>
-                          </Collapsible.Trigger>
-                          <Collapsible.Content>
-                            <RevisionSourceDiff diff={changes.sourceDiff} />
-                          </Collapsible.Content>
-                        </Collapsible.Root>
-                      )}
-                    </>
+                    <Flex align="center" gap="3" wrap="wrap" mb="3">
+                      <Switch.Root
+                        checked={highlightChanges && hasChanges}
+                        disabled={!hasChanges}
+                        onCheckedChange={({ checked }) =>
+                          setHighlightChanges(checked)}
+                        size="sm"
+                      >
+                        <Switch.HiddenInput role="switch" />
+                        <Switch.Label>Highlight changes</Switch.Label>
+                        <Switch.Control>
+                          <Switch.Thumb />
+                        </Switch.Control>
+                      </Switch.Root>
+                      <Text color="fg.muted" fontSize="sm">
+                        {hasChanges
+                          ? `Compared with Previous: ${changes.current.size} added, ${changes.previous.size} removed lines.`
+                          : "No changes since the previous revision."}
+                      </Text>
+                    </Flex>
                   )}
                   <ReadOnlyMarkdownPreview
                     documentPath={documentPath}

@@ -28,6 +28,7 @@ it("renders current and previous Markdown and closes the revision dialog", async
   );
   expect(dialog.getByRole("heading", { name: "Current" })).not.toBeNull();
   expect(dialog.getByText("New content").tagName).toBe("STRONG");
+  expect(dialog.queryByRole("button", { name: "View source diff" })).toBeNull();
   fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
   expect(await dialog.findByRole("heading", { name: "Previous" })).not
     .toBeNull();
@@ -62,7 +63,7 @@ it("explains missing history while keeping the current rendering available", asy
     true,
   );
   expect(dialog.getByText("No previous revision is available.")).not.toBeNull();
-  expect(dialog.queryByRole("button", { name: "Highlight changes" }))
+  expect(dialog.queryByRole("switch", { name: "Highlight changes" }))
     .toBeNull();
   expect(dialog.getByRole("heading", { name: "Current" })).not.toBeNull();
 });
@@ -98,8 +99,8 @@ it("highlights Current relative to Previous and keeps the comparison baseline pl
     />,
   );
   const dialog = within(await screen.findByRole("dialog"));
-  const toggle = dialog.getByRole("button", { name: "Highlight changes" });
-  expect(toggle.getAttribute("aria-pressed")).toBe("true");
+  const toggle = dialog.getByRole("switch", { name: "Highlight changes" });
+  expect(toggle).toHaveProperty("checked", true);
   expect(dialog.getByText("Updated paragraph").closest("ins")).not.toBeNull();
   expect(dialog.getByText("Added item").closest("ins")).not.toBeNull();
   expect(dialog.getByText("Kept item").closest("ins")).toBeNull();
@@ -112,19 +113,22 @@ it("highlights Current relative to Previous and keeps the comparison baseline pl
     .toBeNull();
   expect(dialog.getByText("Removed item").closest("del")).toBeNull();
   expect(dialog.getByText("Kept item").closest("del")).toBeNull();
-  expect(dialog.queryByRole("button", { name: "Highlight changes" }))
+  expect(dialog.queryByRole("switch", { name: "Highlight changes" }))
     .toBeNull();
-  expect(dialog.queryByRole("button", { name: "View source diff" })).toBeNull();
 
   fireEvent.click(dialog.getByRole("tab", { name: "Current" }));
-  const currentToggle = await dialog.findByRole("button", {
+  const currentToggle = await dialog.findByRole("switch", {
     name: "Highlight changes",
   });
   fireEvent.click(currentToggle);
-  expect(currentToggle.getAttribute("aria-pressed")).toBe("false");
-  expect(dialog.getByText("Updated paragraph").closest("ins")).toBeNull();
+  await waitFor(() => {
+    expect(currentToggle).toHaveProperty("checked", false);
+    expect(dialog.getByText("Updated paragraph").closest("ins")).toBeNull();
+  });
   fireEvent.click(currentToggle);
-  expect(dialog.getByText("Updated paragraph").closest("ins")).not.toBeNull();
+  await waitFor(() =>
+    expect(dialog.getByText("Updated paragraph").closest("ins")).not.toBeNull()
+  );
 });
 
 it("keeps unchanged nested list items clear and preserves tables and code rendering", async () => {
@@ -168,7 +172,7 @@ it("explains identical revisions and disables the highlight toggle", async () =>
   const dialog = within(await screen.findByRole("dialog"));
   expect(dialog.getByText("No changes since the previous revision.")).not
     .toBeNull();
-  expect(dialog.getByRole("button", { name: "Highlight changes" }))
+  expect(dialog.getByRole("switch", { name: "Highlight changes" }))
     .toHaveProperty("disabled", true);
   expect(dialog.getByRole("heading", { name: "Same" }).closest("ins"))
     .toBeNull();
@@ -202,7 +206,7 @@ it("highlights front matter changes without shifting body line numbers", async (
     .toBeNull();
 });
 
-it("includes deleted lines in the source diff from Previous without marking surviving content", async () => {
+it("reports removed lines without marking surviving content", async () => {
   render(
     <DocumentRevisionsDialog
       open
@@ -214,43 +218,13 @@ it("includes deleted lines in the source diff from Previous without marking surv
     />,
   );
   const dialog = within(await screen.findByRole("dialog"));
-  expect(dialog.getByRole("button", { name: "Highlight changes" }))
+  expect(dialog.getByRole("switch", { name: "Highlight changes" }))
     .toHaveProperty("disabled", false);
   expect(dialog.getByRole("heading", { name: "Kept" }).closest("ins"))
     .toBeNull();
   expect(dialog.getByText(/Compared with Previous: 0 added, 2 removed lines/))
     .not.toBeNull();
-  fireEvent.click(dialog.getByRole("button", { name: "View source diff" }));
-  const sourceDiff = await dialog.findByRole("region", {
-    name: "Source diff from Previous",
-  });
-  expect(within(sourceDiff).getByText("-Deleted paragraph").closest("del")).not
-    .toBeNull();
   fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
   expect((await dialog.findByText("Deleted paragraph")).closest("del"))
     .toBeNull();
-});
-
-it("shows additions and removals together as inert Markdown source", async () => {
-  render(
-    <DocumentRevisionsDialog
-      open
-      onOpenChange={() => {}}
-      markdown={"# Kept\n\nNew **content**"}
-      previousMarkdown={"# Kept\n\nOld <script>alert(1)</script>"}
-      showHtmlComments
-      theme="default"
-    />,
-  );
-  const dialog = within(await screen.findByRole("dialog"));
-  fireEvent.click(dialog.getByRole("button", { name: "View source diff" }));
-  const diff = await dialog.findByRole("region", {
-    name: "Source diff from Previous",
-  });
-  expect(within(diff).getByText("+New **content**").closest("ins")).not
-    .toBeNull();
-  expect(
-    within(diff).getByText("-Old <script>alert(1)</script>").closest("del"),
-  ).not.toBeNull();
-  expect(diff.querySelector("script, strong")).toBeNull();
 });
