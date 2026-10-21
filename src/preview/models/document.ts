@@ -14,6 +14,7 @@ export type PreviewDocument = {
   deleted: boolean;
   fileUrl: string;
   markdown: string;
+  previousMarkdown?: string;
   title: string;
   displayTitle?: string;
   tags: DocumentTag[];

@@ -1,4 +1,5 @@
 import { updateDocumentTitle } from "../usecase/document/update_document_title.ts";
+import { getPreviousMarkdown } from "../usecase/document/get_previous_markdown.ts";
 import { isSettingsError } from "../usecase/settings/types.ts";
 import type { MessageInitShape, MessageShape } from "@bufbuild/protobuf";
 import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
@@ -278,17 +279,23 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
       }
     },
     getDocument: async ({ documentId }) => {
-      const { document } = resolveDocument(documentId);
+      const { document, source } = resolveDocument(documentId);
+      const content = await readDirectoryDocument(
+        document,
+        documentStore,
+        tagStore,
+        session.readMarkdown,
+      );
       return documentMessage(
-        await readDirectoryDocument(
-          document,
-          documentStore,
-          tagStore,
-          session.readMarkdown,
-        ),
+        content,
         session.githubPull
           ? new URL(document.filePath).searchParams.get("ref") ?? undefined
           : undefined,
+        await getPreviousMarkdown(
+          commentsStore,
+          source.commentSource,
+          content.markdown,
+        ),
       );
     },
     getDirectoryStatus: () => {

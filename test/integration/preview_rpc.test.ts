@@ -96,6 +96,46 @@ const createPreview = async () => {
   };
 };
 
+Deno.test("Connect exposes one previous revision without advancing history on document reads", async () => {
+  const preview = await createPreview();
+  const { client, document, comments } = preview;
+  const documentId = BigInt(document.id);
+  try {
+    const original = await client.getDocument({ documentId });
+    assertEquals(original.previousMarkdown, undefined);
+    await client.createComment({
+      documentId,
+      startLine: 1,
+      endLine: 1,
+      body: "Review",
+    });
+    await Deno.writeTextFile(document.filePath, "# Changed\n");
+    const before = await comments.read(document.filePath);
+    const changed = await client.getDocument({ documentId });
+    assertEquals(changed.markdown, "# Changed\n");
+    assertEquals(changed.previousMarkdown, original.markdown);
+    assertEquals(await comments.read(document.filePath), before);
+    await client.listComments({ documentId });
+    assertEquals(
+      (await client.getDocument({ documentId })).previousMarkdown,
+      original.markdown,
+    );
+    await Deno.writeTextFile(document.filePath, "# Latest\n");
+    assertEquals(
+      (await client.getDocument({ documentId })).previousMarkdown,
+      changed.markdown,
+    );
+    await client.listComments({ documentId });
+    document.deleted = true;
+    await Deno.remove(document.filePath);
+    const deleted = await client.getDocument({ documentId });
+    assertEquals(deleted.markdown, "# Latest\n");
+    assertEquals(deleted.previousMarkdown, changed.markdown);
+  } finally {
+    await preview.close();
+  }
+});
+
 Deno.test("Connect maps document snapshots, status, accounts and memory with REST compatibility", async () => {
   const preview = await createPreview();
   const { client, request, state, document, memories } = preview;

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
 import { DocumentActionBar } from "../components/DocumentActionBar";
+import { DocumentRevisionsDialog } from "../components/DocumentRevisionsDialog";
 import { DocumentBreadcrumb } from "../components/DocumentBreadcrumb";
 import type { DocumentSummary, PreviewDocument } from "../models/document";
 import type { ResolvedPreviewSettings } from "../models/theme";
@@ -42,6 +43,9 @@ export const DocumentPreviewPage = (
   }: Props,
 ) => {
   const [showHtmlComments, setShowHtmlComments] = useState(true);
+  const [revisionsOpen, setRevisionsOpen] = useState(false);
+  const documentPath = selectedDocument?.relativePath ?? document.fileUrl ??
+    document.title;
   return (
     <Container as="main" maxW="980px" px="8" pt="0" pb="16">
       {documents && selectedDocument && (
@@ -66,6 +70,7 @@ export const DocumentPreviewPage = (
           markdown={document.markdown}
           onOpenInstructions={onOpenInstructions}
           onOpenMemories={onOpenMemories}
+          onOpenRevisions={() => setRevisionsOpen(true)}
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
           showHtmlComments={showHtmlComments}
           tagCount={document.tags.length}
@@ -73,6 +78,16 @@ export const DocumentPreviewPage = (
           tags={document.tags}
         />
       )}
+      <DocumentRevisionsDialog
+        documentPath={documentPath}
+        key={`revisions-${documentId}`}
+        markdown={document.markdown}
+        onOpenChange={setRevisionsOpen}
+        open={view === "preview" && revisionsOpen}
+        previousMarkdown={document.previousMarkdown}
+        showHtmlComments={showHtmlComments}
+        theme={settings.theme === "dark" ? "dark" : "default"}
+      />
       {document.deleted && (
         <Alert.Root status="warning" mb="6">
           <Alert.Indicator />
@@ -89,8 +104,7 @@ export const DocumentPreviewPage = (
         ? (
           <MarkdownPreviewPage
             documentId={documentId}
-            documentPath={selectedDocument?.relativePath ?? document.fileUrl ??
-              document.title}
+            documentPath={documentPath}
             key={`${documentId}-${settings.theme}-${settings.fontScale}`}
             markdown={document.markdown}
             showHtmlComments={showHtmlComments}

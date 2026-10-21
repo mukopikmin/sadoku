@@ -55,11 +55,17 @@ export const loadPreviewDocument = async (
   });
   return {
     ...document,
+    previousMarkdown: parsePreviousMarkdown(document.previousMarkdown),
     githubHeadSha: parseGitHubHeadSha(document.githubHeadSha),
     tags: Array.isArray(document.tags)
       ? document.tags.map(parseDocumentTag)
       : [],
   };
+};
+
+export const parsePreviousMarkdown = (value: unknown): string | undefined => {
+  if (value === undefined || typeof value === "string") return value;
+  throw new Error("Invalid previous Markdown revision.");
 };
 
 export const updateDocumentTitle = async (
