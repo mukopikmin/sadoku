@@ -11,6 +11,7 @@ import { extractAgentFrontMatter } from "./frontMatter";
 import { rehypeRevisionHighlights } from "../../markdown/rehypeRevisionHighlights";
 import { RevisionHighlight } from "../../markdown/RevisionHighlight";
 import { containsChangedLine } from "../../markdown/revisionDiff";
+import { useRevisionHighlightLayout } from "../../markdown/useRevisionHighlightLayout";
 
 export const ReadOnlyMarkdownPreview = ({
   documentPath,
@@ -29,6 +30,7 @@ export const ReadOnlyMarkdownPreview = ({
   };
 }) => {
   const root = useRef<HTMLDivElement>(null);
+  const highlightLayouts = useRevisionHighlightLayout(root);
   const frontMatter = extractAgentFrontMatter(markdown, documentPath);
   useEffect(() => {
     if (root.current) {
@@ -55,6 +57,19 @@ export const ReadOnlyMarkdownPreview = ({
 
   return (
     <Box className="markdown-preview" ref={root}>
+      <Box aria-hidden="true" className="markdown-range-highlights">
+        {highlightLayouts.map((layout, index) => (
+          <Box
+            className="markdown-range-highlight"
+            bg={`syntax.${layout.kind}.bg`}
+            borderStartWidth="3px"
+            borderColor={`syntax.${layout.kind}.fg`}
+            height={`${Math.max(0, layout.bottom - layout.top)}px`}
+            key={index}
+            top={`${layout.top}px`}
+          />
+        ))}
+      </Box>
       {frontMatter && (
         <DataList.Root orientation={{ base: "vertical", md: "horizontal" }}>
           {frontMatter.items.map((item) => {
@@ -66,7 +81,9 @@ export const ReadOnlyMarkdownPreview = ({
             return (
               <DataList.Item
                 key={`${item.key}-${item.startLine}`}
-                bg={changed ? `syntax.${revisionHighlight.kind}.bg` : undefined}
+                data-revision-kind={changed
+                  ? revisionHighlight.kind
+                  : undefined}
                 title={changed ? "Changed revision metadata" : undefined}
               >
                 <DataList.ItemLabel>{item.key}</DataList.ItemLabel>

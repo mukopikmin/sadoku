@@ -7,11 +7,8 @@ export const RevisionHighlight = ({ children, kind }: {
 }) => (
   <Box
     as={kind === "addition" ? "ins" : "del"}
-    bg={`syntax.${kind}.bg`}
-    borderStartWidth="3px"
-    borderColor={`syntax.${kind}.fg`}
+    data-revision-kind={kind}
     display="block"
-    px="2"
     textDecoration="none"
     title={kind === "addition"
       ? "Added or changed since previous revision"
