@@ -6,7 +6,8 @@ export const changedRevisionLines = (previous: string, current: string) => {
   const currentLines = new Set<number>();
   let before = 1;
   let after = 1;
-  for (const line of suggestionDiff(previous, current).split("\n")) {
+  const sourceDiff = suggestionDiff(previous, current);
+  for (const line of sourceDiff.split("\n")) {
     if (line.startsWith("-")) previousLines.add(before++);
     else if (line.startsWith("+")) currentLines.add(after++);
     else {
@@ -14,7 +15,7 @@ export const changedRevisionLines = (previous: string, current: string) => {
       after += 1;
     }
   }
-  return { previous: previousLines, current: currentLines };
+  return { previous: previousLines, current: currentLines, sourceDiff };
 };
 
 export const containsChangedLine = (

@@ -86,7 +86,7 @@ it("allows a previous revision that was empty", async () => {
     .toHaveProperty("textContent", "");
 });
 
-it("highlights additions and removals in each revision and toggles both off", async () => {
+it("highlights Current relative to Previous and keeps the comparison baseline plain", async () => {
   render(
     <DocumentRevisionsDialog
       open
@@ -108,18 +108,22 @@ it("highlights additions and removals in each revision and toggles both off", as
     .toBeNull();
 
   fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
-  expect((await dialog.findByText("Original paragraph")).closest("del")).not
+  expect((await dialog.findByText("Original paragraph")).closest("del"))
     .toBeNull();
-  expect(dialog.getByText("Removed item").closest("del")).not.toBeNull();
+  expect(dialog.getByText("Removed item").closest("del")).toBeNull();
   expect(dialog.getByText("Kept item").closest("del")).toBeNull();
-
-  fireEvent.click(toggle);
-  expect(toggle.getAttribute("aria-pressed")).toBe("false");
-  expect(dialog.getByText("Original paragraph").closest("del")).toBeNull();
-  fireEvent.click(dialog.getByRole("tab", { name: "Current" }));
-  expect((await dialog.findByText("Updated paragraph")).closest("ins"))
+  expect(dialog.queryByRole("button", { name: "Highlight changes" }))
     .toBeNull();
-  fireEvent.click(toggle);
+  expect(dialog.queryByRole("button", { name: "View source diff" })).toBeNull();
+
+  fireEvent.click(dialog.getByRole("tab", { name: "Current" }));
+  const currentToggle = await dialog.findByRole("button", {
+    name: "Highlight changes",
+  });
+  fireEvent.click(currentToggle);
+  expect(currentToggle.getAttribute("aria-pressed")).toBe("false");
+  expect(dialog.getByText("Updated paragraph").closest("ins")).toBeNull();
+  fireEvent.click(currentToggle);
   expect(dialog.getByText("Updated paragraph").closest("ins")).not.toBeNull();
 });
 
@@ -190,10 +194,15 @@ it("highlights front matter changes without shifting body line numbers", async (
   expect(dialog.getByRole("heading", { name: "Kept" }).closest("ins"))
     .toBeNull();
   fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
-  expect((await dialog.findByText("Old body")).closest("del")).not.toBeNull();
+  expect((await dialog.findByText("Old body")).closest("del")).toBeNull();
+  const previousPanel = await dialog.findByRole("tabpanel", {
+    name: "Previous",
+  });
+  expect(within(previousPanel).queryByTitle("Changed revision metadata"))
+    .toBeNull();
 });
 
-it("shows a deletion-only change in Previous without marking surviving content", async () => {
+it("includes deleted lines in the source diff from Previous without marking surviving content", async () => {
   render(
     <DocumentRevisionsDialog
       open
@@ -209,7 +218,39 @@ it("shows a deletion-only change in Previous without marking surviving content",
     .toHaveProperty("disabled", false);
   expect(dialog.getByRole("heading", { name: "Kept" }).closest("ins"))
     .toBeNull();
-  fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
-  expect((await dialog.findByText("Deleted paragraph")).closest("del")).not
+  expect(dialog.getByText(/Compared with Previous: 0 added, 2 removed lines/))
+    .not.toBeNull();
+  fireEvent.click(dialog.getByRole("button", { name: "View source diff" }));
+  const sourceDiff = await dialog.findByRole("region", {
+    name: "Source diff from Previous",
+  });
+  expect(within(sourceDiff).getByText("-Deleted paragraph").closest("del")).not
     .toBeNull();
+  fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
+  expect((await dialog.findByText("Deleted paragraph")).closest("del"))
+    .toBeNull();
+});
+
+it("shows additions and removals together as inert Markdown source", async () => {
+  render(
+    <DocumentRevisionsDialog
+      open
+      onOpenChange={() => {}}
+      markdown={"# Kept\n\nNew **content**"}
+      previousMarkdown={"# Kept\n\nOld <script>alert(1)</script>"}
+      showHtmlComments
+      theme="default"
+    />,
+  );
+  const dialog = within(await screen.findByRole("dialog"));
+  fireEvent.click(dialog.getByRole("button", { name: "View source diff" }));
+  const diff = await dialog.findByRole("region", {
+    name: "Source diff from Previous",
+  });
+  expect(within(diff).getByText("+New **content**").closest("ins")).not
+    .toBeNull();
+  expect(
+    within(diff).getByText("-Old <script>alert(1)</script>").closest("del"),
+  ).not.toBeNull();
+  expect(diff.querySelector("script, strong")).toBeNull();
 });
