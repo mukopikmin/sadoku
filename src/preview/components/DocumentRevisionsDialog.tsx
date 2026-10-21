@@ -96,6 +96,7 @@ export const DocumentRevisionsDialog = ({
                             fontSize="sm"
                             fontWeight="semibold"
                             gap="2"
+                            ms="auto"
                           >
                             <Text
                               as="span"
