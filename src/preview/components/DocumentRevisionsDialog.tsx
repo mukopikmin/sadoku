@@ -87,11 +87,37 @@ export const DocumentRevisionsDialog = ({
                           <Switch.Thumb />
                         </Switch.Control>
                       </Switch.Root>
-                      <Text color="fg.muted" fontSize="sm">
-                        {hasChanges
-                          ? `Compared with Previous: ${changes.current.size} added, ${changes.previous.size} removed lines.`
-                          : "No changes since the previous revision."}
-                      </Text>
+                      {hasChanges
+                        ? (
+                          <Flex
+                            as="span"
+                            role="group"
+                            aria-label={`Line changes from Previous: ${changes.current.size} added, ${changes.previous.size} removed`}
+                            fontSize="sm"
+                            fontWeight="semibold"
+                            gap="2"
+                          >
+                            <Text
+                              as="span"
+                              color="syntax.addition.fg"
+                              aria-hidden="true"
+                            >
+                              +{changes.current.size}
+                            </Text>
+                            <Text
+                              as="span"
+                              color="syntax.deletion.fg"
+                              aria-hidden="true"
+                            >
+                              -{changes.previous.size}
+                            </Text>
+                          </Flex>
+                        )
+                        : (
+                          <Text color="fg.muted" fontSize="sm">
+                            No changes since the previous revision.
+                          </Text>
+                        )}
                     </Flex>
                   )}
                   <ReadOnlyMarkdownPreview

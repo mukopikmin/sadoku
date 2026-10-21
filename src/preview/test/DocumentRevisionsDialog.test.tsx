@@ -101,6 +101,11 @@ it("highlights Current relative to Previous and keeps the comparison baseline pl
   const dialog = within(await screen.findByRole("dialog"));
   const toggle = dialog.getByRole("switch", { name: "Highlight changes" });
   expect(toggle).toHaveProperty("checked", true);
+  const lineChanges = within(dialog.getByRole("group", {
+    name: "Line changes from Previous: 2 added, 2 removed",
+  }));
+  expect(lineChanges.getByText("+2")).not.toBeNull();
+  expect(lineChanges.getByText("-2")).not.toBeNull();
   expect(dialog.getByText("Updated paragraph").closest("ins")).not.toBeNull();
   expect(dialog.getByText("Added item").closest("ins")).not.toBeNull();
   expect(dialog.getByText("Kept item").closest("ins")).toBeNull();
@@ -222,8 +227,11 @@ it("reports removed lines without marking surviving content", async () => {
     .toHaveProperty("disabled", false);
   expect(dialog.getByRole("heading", { name: "Kept" }).closest("ins"))
     .toBeNull();
-  expect(dialog.getByText(/Compared with Previous: 0 added, 2 removed lines/))
-    .not.toBeNull();
+  const lineChanges = within(dialog.getByRole("group", {
+    name: "Line changes from Previous: 0 added, 2 removed",
+  }));
+  expect(lineChanges.getByText("+0")).not.toBeNull();
+  expect(lineChanges.getByText("-2")).not.toBeNull();
   fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
   expect((await dialog.findByText("Deleted paragraph")).closest("del"))
     .toBeNull();
