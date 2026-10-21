@@ -103,6 +103,7 @@ message GetDocumentResponse {
   repeated Tag tags = 5;
   optional string display_title = 7;
   optional string github_head_sha = 6;
+  optional string previous_markdown = 8;
 }
 
 message GetDirectoryStatusRequest {}

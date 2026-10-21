@@ -1,6 +1,6 @@
 import { renderWithRouter as render } from "./routerTestUtils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor } from "./testUtils";
+import { cleanup, fireEvent, screen, waitFor, within } from "./testUtils";
 import { App } from "../App";
 import { clearScrollPositions } from "../hooks/useScrollPosition";
 
@@ -79,6 +79,9 @@ const installFetch = (
             deleted: id === 2,
             fileUrl: `file:///tmp/${id}.md`,
             markdown: `# Document ${id}\n`,
+            previousMarkdown: id === 1
+              ? "# Earlier document\n\n**Old content**"
+              : undefined,
             title: `Document ${id}`,
           }));
         }
@@ -115,6 +118,29 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
+  it("opens revisions from the document view and switches the rendered content", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "alpha.md" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Revisions" }));
+    const dialog = within(
+      await screen.findByRole("dialog", { name: "Document revisions" }),
+    );
+    expect(dialog.getByRole("heading", { name: "Document 1" })).not.toBeNull();
+    fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
+    expect(await dialog.findByRole("heading", { name: "Earlier document" })).not
+      .toBeNull();
+    expect(dialog.getByText("Old content").tagName).toBe("STRONG");
+    fireEvent.click(
+      dialog.getByRole("button", { name: "Close document revisions" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Document revisions" }))
+        .toBeNull()
+    );
+    expect(screen.getByRole("heading", { name: "Document 1" })).not.toBeNull();
+  });
   it("shows pull request metadata above the document tree", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();

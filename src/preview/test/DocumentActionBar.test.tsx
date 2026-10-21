@@ -13,6 +13,7 @@ describe("DocumentActionBar", () => {
         memoryCount={4}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
+        onOpenRevisions={() => {}}
         onOpenTags={onOpenTags}
         onToggleHtmlComments={() => {}}
         showHtmlComments
@@ -51,6 +52,7 @@ describe("DocumentActionBar", () => {
         memoryCount={0}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
+        onOpenRevisions={() => {}}
         onOpenTags={onOpenTags}
         onToggleHtmlComments={() => {}}
         showHtmlComments
@@ -76,12 +78,14 @@ describe("DocumentActionBar", () => {
     const onOpenInstructions = vi.fn();
     const onOpenMemories = vi.fn();
     const onToggleHtmlComments = vi.fn();
+    const onOpenRevisions = vi.fn();
     render(
       <DocumentActionBar
         instructionCount={0}
         memoryCount={12}
         onOpenInstructions={onOpenInstructions}
         onOpenMemories={onOpenMemories}
+        onOpenRevisions={onOpenRevisions}
         onOpenTags={() => {}}
         onToggleHtmlComments={onToggleHtmlComments}
         showHtmlComments={false}
@@ -117,8 +121,10 @@ describe("DocumentActionBar", () => {
     fireEvent.click(instructions);
     fireEvent.click(memories);
     fireEvent.click(comments);
+    fireEvent.click(screen.getByRole("button", { name: "Revisions" }));
     expect(onOpenInstructions).toHaveBeenCalledOnce();
     expect(onOpenMemories).toHaveBeenCalledOnce();
     expect(onToggleHtmlComments).toHaveBeenCalledOnce();
+    expect(onOpenRevisions).toHaveBeenCalledOnce();
   });
 });

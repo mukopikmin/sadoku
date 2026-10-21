@@ -43,6 +43,7 @@ export const renderMarkdown = (
           markdown={markdown}
           memoryCount={4}
           onOpenInstructions={() => {}}
+          onOpenRevisions={() => {}}
           onOpenTags={() => {}}
           onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
           showHtmlComments={showHtmlComments}

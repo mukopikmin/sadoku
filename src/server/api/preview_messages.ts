@@ -94,6 +94,7 @@ export const documentSummaryMessage = (
 export const documentMessage = (
   document: DirectoryDocumentContent,
   githubHeadSha?: string,
+  previousMarkdown?: string,
 ): MessageInitShape<typeof GetDocumentResponseSchema> => ({
   fileUrl: document.fileUrl ?? "",
   markdown: document.markdown,
@@ -102,6 +103,7 @@ export const documentMessage = (
   deleted: document.deleted,
   tags: document.tags?.map(tagMessage) ?? [],
   githubHeadSha,
+  previousMarkdown,
 });
 export const directoryStatusMessage = (
   status: DirectorySessionStatus,
