@@ -11,8 +11,7 @@
     "jsr:@std/toml@1.0.11": "1.0.11",
     "npm:@bufbuild/protobuf@2.16.0": "2.16.0",
     "npm:@connectrpc/connect-web@2.2.0": "2.2.0_@bufbuild+protobuf@2.16.0_@connectrpc+connect@2.2.0",
-    "npm:@connectrpc/connect@2.2.0": "2.2.0_@bufbuild+protobuf@2.16.0",
-    "npm:semver@7.8.5": "7.8.5"
+    "npm:@connectrpc/connect@2.2.0": "2.2.0_@bufbuild+protobuf@2.16.0"
   },
   "jsr": {
     "@hono/hono@4.13.13": {
@@ -62,10 +61,6 @@
       "dependencies": [
         "@bufbuild/protobuf"
       ]
-    },
-    "semver@7.8.5": {
-      "integrity": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==",
-      "bin": true
     }
   },
   "workspace": {
@@ -77,8 +72,7 @@
       "jsr:@std/toml@1.0.11",
       "npm:@bufbuild/protobuf@2.16.0",
       "npm:@connectrpc/connect-web@2.2.0",
-      "npm:@connectrpc/connect@2.2.0",
-      "npm:semver@7.8.5"
+      "npm:@connectrpc/connect@2.2.0"
     ]
   }
 }

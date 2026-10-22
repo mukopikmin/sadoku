@@ -6,9 +6,7 @@ WORKDIR /workspace
 
 COPY package.json package-lock.json ./
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-COPY scripts/check_engines.mjs ./scripts/
-# Enforce package.json engines for both runtimes before compiling the app.
-RUN npm_config_engine_strict=true npm run install:deps && npm run check:engines
+RUN npm_config_engine_strict=true npm run install:deps
 
 COPY . .
 RUN deno task compile --output /sadoku

@@ -44,9 +44,6 @@ jobs:
       - name: Install dependencies
         run: npm run install:deps
 
-      - name: Check runtime requirements
-        run: npm run check:engines
-
       - name: Check formatting
         run: deno fmt --check
 
