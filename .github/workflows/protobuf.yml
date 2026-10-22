@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/protobuf.yml
+      - .github/actions/setup-runtimes/**
       - buf.gen.yaml
       - buf.yaml
       - deno.json
@@ -16,6 +17,7 @@ on:
       - main
     paths:
       - .github/workflows/protobuf.yml
+      - .github/actions/setup-runtimes/**
       - buf.gen.yaml
       - buf.yaml
       - deno.json
@@ -36,18 +38,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: "^2.9.8"
-
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: "^26.12.1"
-          check-latest: true
-          cache: npm
-          cache-dependency-path: package-lock.json
+      - name: Setup runtimes
+        uses: ./.github/actions/setup-runtimes
 
       - name: Install protobuf tools
         run: npm ci --ignore-scripts

@@ -2,8 +2,13 @@
   "name": "sadoku",
   "description": "Preview a Markdown file in a local browser-friendly server.",
   "private": true,
+  "engines": {
+    "node": "^26.12.1",
+    "deno": "^2.9.8"
+  },
   "scripts": {
     "build:client": "npm --prefix src/preview run build",
+    "check:engines": "node scripts/check_engines.mjs",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
     "postinstall": "npm ci --prefix src/preview",
     "proto:check": "npm run proto:lint && npm run proto:generate && git add --intent-to-add -- gen/ts && git diff --exit-code -- gen/ts",
@@ -18,6 +23,7 @@
     "@bufbuild/buf": "1.73.0",
     "@bufbuild/protoc-gen-es": "2.16.0",
     "@connectrpc/connect": "2.2.0",
-    "@connectrpc/connect-web": "2.2.0"
+    "@connectrpc/connect-web": "2.2.0",
+    "semver": "7.8.5"
   }
 }

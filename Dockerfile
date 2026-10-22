@@ -1,21 +1,14 @@
-FROM node:26-bookworm-slim AS builder
+FROM node:bookworm-slim AS builder
 
 COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
-
-# Allow minor and patch updates while enforcing the supported, patched ranges.
-RUN set -eu; \
-    node_version="$(node --version)"; \
-    deno_version="$(deno --version | head -n 1 | cut -d ' ' -f 2)"; \
-    dpkg --compare-versions "${node_version#v}" ge 26.12.1; \
-    dpkg --compare-versions "${node_version#v}" lt 27; \
-    dpkg --compare-versions "$deno_version" ge 2.9.8; \
-    dpkg --compare-versions "$deno_version" lt 3
 
 WORKDIR /workspace
 
 COPY package.json package-lock.json ./
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-RUN npm run install:deps
+COPY scripts/check_engines.mjs ./scripts/
+# Enforce package.json engines for both runtimes before compiling the app.
+RUN npm_config_engine_strict=true npm run install:deps && npm run check:engines
 
 COPY . .
 RUN deno task compile --output /sadoku
