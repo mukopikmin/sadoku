@@ -36,8 +36,8 @@ subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the platform-neutral
 `/bin/sh /app/scripts/cloud_run_entrypoint.sh` as the command to execute after
 preparation. The launcher has no dependency on Cloud Run; the ordinary Cloud Run
 entrypoint keeps its existing server arguments and does not prepare sample data.
-See [Preview sample data](../scripts/preview_samples/README.md) for sample
-contents, lifecycle, and usage outside this deployment.
+See [Preview sample data](../scripts/PREVIEW.md) for sample contents, lifecycle,
+and usage outside this deployment.
 
 Set a nonempty `SADOKU_SOURCE` to open another source without preparing samples;
 for example, `/app/README.md` opens only the README. In this mode the configured
