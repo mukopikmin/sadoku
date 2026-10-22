@@ -36,15 +36,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Read Deno requirement
+        id: engines
+        run: |
+          deno_version="$(jq -er '.engines.deno' package.json)"
+          echo "deno=${deno_version}" >> "${GITHUB_OUTPUT}"
+
       - name: Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
-          deno-version: v2.8.0
+          deno-version: ${{ steps.engines.outputs.deno }}
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version-file: package.json
+          check-latest: true
           cache: npm
           cache-dependency-path: package-lock.json
 
