@@ -10,6 +10,8 @@ export type CliCommand =
   | "document-add"
   | "document-inspect"
   | "document-list"
+  | "document-tag-add"
+  | "document-tag-delete"
   | "instruction-add"
   | "instruction-delete"
   | "instruction-list"
@@ -54,6 +56,7 @@ export type CliOptions = {
   source?: string;
   startLine?: number;
   tagId?: number;
+  tagIds?: number[];
   tagName?: string;
   help?: boolean;
   version?: boolean;
@@ -71,6 +74,8 @@ export const usage = `Usage:
   sadoku document add <file.md|url>
   sadoku document inspect <document-id>
   sadoku document list
+  sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
+  sadoku document tag delete <tag-id>... (--document <id> | --source <file.md|url>)
   sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
@@ -295,6 +300,50 @@ export const parseArgs = (argv: string[]): CliOptions => {
   }
 
   if (words[0] === "document") {
+    if (words[1] === "tag") {
+      if (
+        hasInstructionOption || flags.channel !== undefined ||
+        flags.body !== undefined || flags.comment !== undefined ||
+        flags["start-line"] !== undefined || flags["end-line"] !== undefined ||
+        flags["as-bot"] || flags["ensure-document"] || flags["request-review"]
+      ) {
+        throw new CliUsageError(
+          "document tag commands do not accept comment, content, or update options.",
+        );
+      }
+      if ((words[2] !== "add" && words[2] !== "delete") || words.length < 4) {
+        throw new CliUsageError(
+          "document tag add/delete requires at least one tag ID.",
+        );
+      }
+      const documentId = flags.document === undefined
+        ? undefined
+        : positiveInteger(flags.document, "Document ID");
+      const source = flags.source?.toString();
+      if ((documentId === undefined) === (source === undefined)) {
+        throw new CliUsageError(
+          "Specify exactly one of --document or --source.",
+        );
+      }
+      const tagIds = words.slice(3).map((id) => positiveInteger(id, "Tag ID"));
+      if (
+        (documentId !== undefined && !Number.isSafeInteger(documentId)) ||
+        tagIds.some((id) => !Number.isSafeInteger(id))
+      ) {
+        throw new CliUsageError(
+          "Document and tag IDs must be positive safe integers.",
+        );
+      }
+      return {
+        ...base,
+        command: words[2] === "add"
+          ? "document-tag-add"
+          : "document-tag-delete",
+        documentId,
+        source,
+        tagIds,
+      };
+    }
     if (
       hasCommentOption || hasInstructionOption || flags.channel !== undefined
     ) {

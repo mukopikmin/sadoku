@@ -36,6 +36,7 @@ import {
 } from "./memory_cli.ts";
 import { logInfo } from "../../log.ts";
 import { addTag, deleteTag, listTags } from "./tag_cli.ts";
+import { addDocumentTags, deleteDocumentTags } from "./document_tag_cli.ts";
 import type { PreviewServerOptions } from "../server.ts";
 import { createConfiguredStores } from "../storage/factory.ts";
 import { createPreviewSource } from "../source.ts";
@@ -89,7 +90,7 @@ const resolveCommentSource = async (
   return source.documentSource;
 };
 
-const resolveInstructionDocument = async (
+const resolveRegisteredDocument = async (
   options: CliOptions,
   stores: ConfiguredStores,
 ) => {
@@ -103,13 +104,11 @@ const resolveInstructionDocument = async (
   const document = await stores.documents.findByFilePath(source.commentSource);
   if (!document) {
     throw new Error(
-      `Document is not registered: ${source.commentSource}. Run \`sadoku document add ${options.source}\` first.`,
+      `Document is not registered: ${source.commentSource}. Run \`sadoku document add ${source.commentSource}\` first.`,
     );
   }
   return document;
 };
-
-const resolveMemoryDocument = resolveInstructionDocument;
 
 const runWithStores = async <T>(
   operation: (stores: ConfiguredStores) => Promise<T>,
@@ -168,7 +167,10 @@ const executeCli = async (
   if (options.command?.startsWith("document-")) {
     await runWithStores(async (stores) => {
       if (options.command === "document-list") {
-        return printJson(io, await listRegisteredDocuments(stores.documents));
+        return printJson(
+          io,
+          await listRegisteredDocuments(stores.documents, stores.tags),
+        );
       }
       if (options.command === "document-add") {
         return printJson(
@@ -176,9 +178,27 @@ const executeCli = async (
           await addDocument(options.source!, stores.documents),
         );
       }
+      if (
+        options.command === "document-tag-add" ||
+        options.command === "document-tag-delete"
+      ) {
+        const document = await resolveRegisteredDocument(options, stores);
+        return printJson(
+          io,
+          await (
+            options.command === "document-tag-add"
+              ? addDocumentTags
+              : deleteDocumentTags
+          )(document.id, options.tagIds!, stores.tags),
+        );
+      }
       return printJson(
         io,
-        await inspectDocument(options.documentId!, stores.documents),
+        await inspectDocument(
+          options.documentId!,
+          stores.documents,
+          stores.tags,
+        ),
       );
     });
     return;
@@ -269,7 +289,7 @@ const executeCli = async (
 
   if (options.command?.startsWith("instruction-")) {
     await runWithStores(async (stores) => {
-      const document = await resolveInstructionDocument(options, stores);
+      const document = await resolveRegisteredDocument(options, stores);
       switch (options.command) {
         case "instruction-list":
           return printJson(io, {
@@ -312,7 +332,7 @@ const executeCli = async (
 
   if (options.command?.startsWith("memory-")) {
     await runWithStores(async (stores) => {
-      const document = await resolveMemoryDocument(options, stores);
+      const document = await resolveRegisteredDocument(options, stores);
       switch (options.command) {
         case "memory-list":
           return printJson(io, {

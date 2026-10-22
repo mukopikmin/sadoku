@@ -5,6 +5,10 @@ import { deleteTag } from "./delete_tag.ts";
 Deno.test("deleteTag rejects invalid ids before calling storage", async () => {
   const deleted: number[] = [];
   const store: TagStore = {
+    addForDocument: () =>
+      Promise.reject(new Error("Unexpected addForDocument.")),
+    deleteForDocument: () =>
+      Promise.reject(new Error("Unexpected deleteForDocument.")),
     create: () => Promise.reject(new Error("Unexpected create.")),
     list: () => Promise.resolve([]),
     listForDocument: () => Promise.resolve([]),
