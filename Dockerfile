@@ -1,6 +1,15 @@
-FROM node:26.12.1-bookworm-slim AS builder
+FROM node:26-bookworm-slim AS builder
 
-COPY --from=denoland/deno:bin-2.9.8 /deno /usr/local/bin/deno
+COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
+
+# Allow minor and patch updates while enforcing the supported, patched ranges.
+RUN set -eu; \
+    node_version="$(node --version)"; \
+    deno_version="$(deno --version | head -n 1 | cut -d ' ' -f 2)"; \
+    dpkg --compare-versions "${node_version#v}" ge 26.12.1; \
+    dpkg --compare-versions "${node_version#v}" lt 27; \
+    dpkg --compare-versions "$deno_version" ge 2.9.8; \
+    dpkg --compare-versions "$deno_version" lt 3
 
 WORKDIR /workspace
 

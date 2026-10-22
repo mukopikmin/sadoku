@@ -39,12 +39,13 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
-          deno-version: v2.9.8
+          deno-version: "^2.9.8"
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "26.12.1"
+          node-version: "^26.12.1"
+          check-latest: true
           cache: npm
           cache-dependency-path: package-lock.json
 
