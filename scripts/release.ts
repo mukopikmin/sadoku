@@ -33,6 +33,33 @@ type Release = {
   isPrerelease: boolean;
 };
 
+const approvedBaselineFormat =
+  "%(objecttype)%0a%(contents:trailers:key=Previous-Stable-Tag,valueonly)";
+
+export const readApprovedBaseline = (tagInfo: string): string => {
+  const lines = tagInfo.trim().split("\n");
+  if (
+    lines.length !== 2 || lines[0] !== "tag" ||
+    (lines[1] !== BASELINE_TAG && !stableTag.test(lines[1]))
+  ) {
+    throw new Error(
+      "Release requires an annotated tag with exactly one Previous-Stable-Tag trailer containing a stable tag or release-notes-baseline.",
+    );
+  }
+  return lines[1];
+};
+
+type CIRun = {
+  databaseId: number;
+  workflowName: string;
+  headBranch: string;
+  event: string;
+  status: string;
+  conclusion: string;
+  headSha: string;
+  url: string;
+};
+
 const decoder = new TextDecoder();
 
 export const parseArguments = (args: string[]): ReleaseArguments => {
@@ -90,7 +117,7 @@ const requireResult = (result: CommandResult, description: string): string => {
   return result.stdout;
 };
 
-const releaseContext = async (execute: ReleaseRunner) => {
+const releaseContext = async (version: string, execute: ReleaseRunner) => {
   const headSha = requireResult(
     await execute("git", ["rev-parse", "HEAD"]),
     "Read HEAD",
@@ -106,6 +133,14 @@ const releaseContext = async (execute: ReleaseRunner) => {
     ]),
     "Resolve GitHub repository",
   );
+  const approvedPreviousStableTag = readApprovedBaseline(requireResult(
+    await execute("git", [
+      "for-each-ref",
+      `--format=${approvedBaselineFormat}`,
+      `refs/tags/v${version}`,
+    ]),
+    "Read approved notes baseline from release tag",
+  ));
   // Include drafts and every page so API failures cannot masquerade as absence.
   const releasesOutput = requireResult(
     await execute("gh", [
@@ -120,12 +155,42 @@ const releaseContext = async (execute: ReleaseRunner) => {
   const releases: Release[] = releasesOutput
     ? releasesOutput.split("\n").map((line) => JSON.parse(line))
     : [];
-  return {
+  const tagsOutput = requireResult(
+    await execute("git", ["ls-remote", "--tags", "origin", "refs/tags/v*"]),
+    "Read remote stable tags",
+  );
+  const stableTags = tagsOutput.split("\n").flatMap((line) => {
+    const fields = line.trim().split(/\s+/);
+    const tag = (fields[1] ?? "").replace(/^refs\/tags\//, "");
+    return fields.length === 2 && fields[1].startsWith("refs/tags/v") &&
+        tag !== `v${version}` && stableTag.test(tag)
+      ? [tag]
+      : [];
+  });
+  const previousStableTag = selectPreviousStableTag(releases);
+  const context = {
     headSha,
     repository,
     releases,
-    previousStableTag: selectPreviousStableTag(releases),
+    previousStableTag,
+    approvedPreviousStableTag,
+    stableTags,
+    baselineSelection: previousStableTag === BASELINE_TAG
+      ? "no stable release returned by GitHub"
+      : "first stable release in GitHub API order",
   };
+  const diagnostics = JSON.stringify(context);
+  if (previousStableTag === BASELINE_TAG && stableTags.length !== 0) {
+    throw new Error(
+      `Cannot infer a first release: stable tags exist but no stable releases were returned: ${diagnostics}`,
+    );
+  }
+  if (previousStableTag !== approvedPreviousStableTag) {
+    throw new Error(
+      `Notes baseline differs from the approved tag trailer: ${diagnostics}`,
+    );
+  }
+  return context;
 };
 
 const isNewerVersion = (version: string, previousTag: string): boolean => {
@@ -145,7 +210,7 @@ export const inspectRelease = async (
   // Also validate callers that do not enter through the CLI argument parser.
   parseArguments(["check", "--version", version]);
   const tag = `v${version}`;
-  const context = await releaseContext(execute);
+  const context = await releaseContext(version, execute);
   const git = (...args: string[]) => execute("git", args);
   requireResult(
     await git("fetch", "--no-tags", "origin", "main"),
@@ -208,17 +273,16 @@ export const inspectRelease = async (
       "--limit",
       "1",
       "--json",
-      "conclusion,headSha,url",
+      "databaseId,workflowName,headBranch,event,status,conclusion,headSha,url",
     ]),
     "Read Test run",
   );
-  const ciRuns = JSON.parse(ciOutput) as Array<{
-    conclusion: string;
-    headSha: string;
-    url: string;
-  }>;
+  const ciRuns = JSON.parse(ciOutput) as CIRun[];
   const successfulRun = ciRuns.find((run) =>
-    run.conclusion === "success" && run.headSha === context.headSha
+    run.databaseId > 0 && run.workflowName === "Test" &&
+    run.headBranch === "main" && run.event === "push" &&
+    run.status === "completed" && run.conclusion === "success" &&
+    run.headSha === context.headSha && Boolean(run.url)
   );
   const checks: Check[] = [
     {
@@ -258,7 +322,9 @@ export const inspectRelease = async (
     {
       name: "ci",
       ok: Boolean(successfulRun),
-      actual: successfulRun?.url ?? "no successful Test push run on main",
+      actual: `selected URL: ${
+        successfulRun?.url ?? ""
+      }; returned runs: ${ciOutput}`,
       expected: `successful Test run for ${context.headSha}`,
     },
   ];
@@ -269,6 +335,11 @@ export const inspectRelease = async (
     tagObject,
     headSha: context.headSha,
     previousStableTag: context.previousStableTag,
+    approvedPreviousStableTag: context.approvedPreviousStableTag,
+    releases: context.releases,
+    stableTags: context.stableTags,
+    baselineSelection: context.baselineSelection,
+    ciRuns,
     checks,
   };
 };
@@ -279,7 +350,7 @@ export const generateNotes = async (
   execute: ReleaseRunner = run,
 ): Promise<void> => {
   const tag = `v${version}`;
-  const context = await releaseContext(execute);
+  const context = await releaseContext(version, execute);
   requireResult(
     await execute("git", [
       "rev-parse",

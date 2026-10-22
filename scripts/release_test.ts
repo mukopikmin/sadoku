@@ -4,6 +4,7 @@ import {
   generateNotes,
   inspectRelease,
   parseArguments,
+  readApprovedBaseline,
   type ReleaseRunner,
   selectPreviousStableTag,
 } from "./release.ts";
@@ -70,16 +71,30 @@ type Scenario = {
   previousCommit?: string;
   root?: string;
   ancestor?: boolean;
-  ci?: Array<{ conclusion: string; headSha: string; url: string }>;
+  ci?: Array<Record<string, string | number>>;
+  approvedTag?: string;
+  tagInfo?: string;
+  releaseOutput?: string;
+  remoteStableTags?: string;
   existingRelease?: { draft: boolean; prerelease: boolean };
   notes?: { name?: string; body?: string };
-  fail?: "releases" | "fetch" | "remoteTag" | "ci";
+  fail?: "releases" | "fetch" | "remoteTag" | "ci" | "stableTags" | "tagInfo";
 };
 
 const releaseRunner = (scenario: Scenario = {}): ReleaseRunner => {
   const previousTag = scenario.previousTag ?? "v0.9.0";
   const responses: Record<string, string | boolean> = {
     "rev-parse HEAD": head,
+    "for-each-ref --format=%(objecttype)%0a%(contents:trailers:key=Previous-Stable-Tag,valueonly) refs/tags/v0.10.0":
+      scenario.fail === "tagInfo"
+        ? false
+        : scenario.tagInfo ?? `tag\n${scenario.approvedTag ?? previousTag}`,
+    "ls-remote --tags origin refs/tags/v*": scenario.fail === "stableTags"
+      ? false
+      : scenario.remoteStableTags ??
+        (previousTag === BASELINE_TAG
+          ? ""
+          : `${previous}\trefs/tags/${previousTag}`),
     "fetch --no-tags origin main": scenario.fail !== "fetch",
     "rev-parse origin/main": scenario.main ?? head,
     "rev-parse --verify refs/tags/v0.10.0": tagObject,
@@ -117,7 +132,7 @@ const releaseRunner = (scenario: Scenario = {}): ReleaseRunner => {
       }
       response = scenario.fail === "releases"
         ? false
-        : releases.map((release) =>
+        : scenario.releaseOutput ?? releases.map((release) =>
           JSON.stringify({
             tagName: release.tag_name,
             isDraft: release.draft,
@@ -126,11 +141,18 @@ const releaseRunner = (scenario: Scenario = {}): ReleaseRunner => {
         ).join("\n");
     } else if (command === "gh" && args[0] === "run") {
       response = scenario.fail === "ci" ? false : JSON.stringify(
-        scenario.ci ?? [{
+        (scenario.ci ?? [{
           conclusion: "success",
           headSha: head,
           url: "https://example.test/run",
-        }],
+        }]).map((run) => ({
+          databaseId: 1,
+          workflowName: "Test",
+          headBranch: "main",
+          event: "push",
+          status: "completed",
+          ...run,
+        })),
       );
     }
     if (response === undefined) {
@@ -205,7 +227,16 @@ Deno.test("checks the root baseline only for the first stable release", async ()
 });
 
 Deno.test("fails closed on GitHub and Git lookup failures", async () => {
-  for (const fail of ["releases", "fetch", "remoteTag", "ci"] as const) {
+  for (
+    const fail of [
+      "releases",
+      "fetch",
+      "remoteTag",
+      "ci",
+      "stableTags",
+      "tagInfo",
+    ] as const
+  ) {
     await assertRejects(
       () => inspectRelease("0.10.0", releaseRunner({ fail })),
       Error,
@@ -268,4 +299,100 @@ Deno.test("falls back to the release notes baseline", () => {
     ]),
     BASELINE_TAG,
   );
+});
+
+Deno.test("requires one approved baseline in an annotated tag", () => {
+  for (
+    const invalid of [
+      "",
+      "commit\nv0.9.0",
+      "tag",
+      "tag\nv0.9.0\nv0.9.0",
+      "tag\nv0.9.0\nv1.0.0",
+      "tag\nv01.0.0",
+      "tag\nnightly",
+      "tag\nv0.9.0-nightly",
+    ]
+  ) {
+    assertThrows(
+      () => readApprovedBaseline(invalid),
+      Error,
+      "Previous-Stable-Tag",
+    );
+  }
+  for (const tag of ["v0.9.0", BASELINE_TAG]) {
+    assertEquals(readApprovedBaseline(`tag\n${tag}\n`), tag);
+  }
+});
+
+Deno.test("rejects inconsistent baseline lookups before writing notes", async () => {
+  const cases: Array<[Scenario, string]> = [
+    [{ releaseOutput: "" }, "stable tags exist"],
+    [{ releaseOutput: "", approvedTag: BASELINE_TAG }, "stable tags exist"],
+    [{ approvedTag: "v0.8.0" }, "differs from the approved"],
+    [{ releaseOutput: "", remoteStableTags: "" }, "differs from the approved"],
+  ];
+  const directory = await Deno.makeTempDir();
+  try {
+    for (const [scenario, message] of cases) {
+      const error = await assertRejects(
+        () => inspectRelease("0.10.0", releaseRunner(scenario)),
+        Error,
+        message,
+      );
+      assertEquals(error.message.includes('"releases":'), true);
+      assertEquals(
+        error.message.includes('"approvedPreviousStableTag":'),
+        true,
+      );
+      await assertRejects(
+        () =>
+          generateNotes(
+            "0.10.0",
+            `${directory}/notes.json`,
+            releaseRunner(scenario),
+          ),
+        Error,
+        message,
+      );
+    }
+    assertEquals(Array.from(Deno.readDirSync(directory)).length, 0);
+  } finally {
+    await Deno.remove(directory, { recursive: true });
+  }
+});
+
+Deno.test("validates CI metadata and includes returned runs in diagnostics", async () => {
+  for (
+    const [field, value] of Object.entries({
+      databaseId: 0,
+      workflowName: "Other",
+      headBranch: "v0.10.0",
+      event: "pull_request",
+      status: "in_progress",
+      conclusion: "failure",
+      headSha: previous,
+      url: "",
+    })
+  ) {
+    const result = await inspectRelease(
+      "0.10.0",
+      releaseRunner({
+        ci: [{
+          conclusion: "success",
+          headSha: head,
+          url: "https://example.test/run",
+          [field]: value,
+        }],
+      }),
+    );
+    assertEquals(result.ok, false, field);
+    assertEquals(result.ciRuns.length, 1);
+    assertEquals(
+      result.checks.find((check) => check.name === "ci")?.actual.includes(
+        "returned runs:",
+      ),
+      true,
+    );
+  }
 });
