@@ -14,7 +14,7 @@ import { serveHandlerInfo } from "../../src/server/test_helpers.ts";
 
 Deno.test({
   name:
-    "Cloud Run startup seeds usable review scenarios and isolates each startup",
+    "Preview startup seeds usable review scenarios and isolates each startup",
   ignore: Deno.build.os === "windows",
   async fn() {
     const root = await Deno.makeTempDir({
@@ -48,10 +48,13 @@ exec "$PREVIEW_TEST_DENO" run --cached-only --no-check --quiet -P=app "$PREVIEW_
           args: [
             fromFileUrl(
               new URL(
-                "../../scripts/cloud_run_preview_entrypoint.sh",
+                "../../scripts/preview_entrypoint.sh",
                 import.meta.url,
               ),
             ),
+            "sh",
+            "-c",
+            'exec sadoku start "$SADOKU_SOURCE" --no-open',
           ],
           cwd: fromFileUrl(new URL("../../", import.meta.url)),
           env: {
@@ -59,7 +62,6 @@ exec "$PREVIEW_TEST_DENO" run --cached-only --no-check --quiet -P=app "$PREVIEW_
             TMPDIR: root,
             XDG_CONFIG_HOME: join(root, "config"),
             SADOKU_SOURCE: "",
-            SADOKU_TRUST_FORWARDED_PREFIX: "false",
             SADOKU_COMMENTS_DIR: configuredComments,
             PREVIEW_TEST_DENO: Deno.execPath(),
             PREVIEW_TEST_MAIN: fromFileUrl(

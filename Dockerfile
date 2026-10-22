@@ -27,4 +27,5 @@ USER nobody:nogroup
 
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/sh", "/app/scripts/cloud_run_preview_entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/app/scripts/preview_entrypoint.sh"]
+CMD ["/bin/sh", "/app/scripts/cloud_run_entrypoint.sh"]

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# Called only by the preview entrypoint, with a fresh, isolated directory.
+# Prepare sample data in the fresh directory owned by preview_entrypoint.sh.
 script_dir="$(CDPATH= cd "$(dirname "$0")" && pwd)"
 sample_dir="$script_dir/preview_samples"
 documents="$1/documents"
