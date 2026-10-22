@@ -4,6 +4,9 @@ export { version } from "../../version.ts";
 export type CliCommand =
   | "start"
   | "update"
+  | "tag-add"
+  | "tag-delete"
+  | "tag-list"
   | "document-add"
   | "document-inspect"
   | "document-list"
@@ -28,6 +31,7 @@ export type CliCommand =
 export type CliOptions = {
   trustForwardedPrefix?: boolean;
   asBot: boolean;
+  backgroundColor?: string;
   body?: string;
   channel?: "stable" | "nightly";
   command?: CliCommand;
@@ -50,6 +54,8 @@ export type CliOptions = {
   requestReview: boolean;
   source?: string;
   startLine?: number;
+  tagId?: number;
+  tagName?: string;
   help?: boolean;
   version?: boolean;
 };
@@ -66,6 +72,9 @@ export const usage = `Usage:
   sadoku document add <file.md|url>
   sadoku document inspect <document-id>
   sadoku document list
+  sadoku tag add --name <name> [--background-color <#RRGGBB>]
+  sadoku tag delete <tag-id>
+  sadoku tag list
   sadoku instruction list (--document <id> | --source <file.md|url>)
   sadoku instruction add (--document <id> | --source <file.md|url>) --content <text>
   sadoku instruction update <instruction-id> (--document <id> | --source <file.md|url>) --content <text>
@@ -86,6 +95,8 @@ export const usage = `Usage:
   sadoku update [--channel stable|nightly]
 
 Options:
+  --name            Tag name (tag add only).
+  --background-color Tag background color as #RRGGBB (tag add only; defaults to #718096).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
   --ensure-document Register --source when it is not in the database (comment add only).
@@ -133,6 +144,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
       ],
       default: { host: "127.0.0.1", port: "3334" },
       string: [
+        "background-color",
         "body",
         "channel",
         "comment",
@@ -142,6 +154,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         "host",
         "max-depth",
         "max-files",
+        "name",
         "port",
         "source",
         "start-line",
@@ -189,6 +202,13 @@ export const parseArgs = (argv: string[]): CliOptions => {
     flags["start-line"] !== undefined || flags["as-bot"] ||
     flags["ensure-document"] || flags["request-review"];
   const hasInstructionOption = flags.content !== undefined;
+  const hasTagOption = flags.name !== undefined ||
+    flags["background-color"] !== undefined;
+  if (hasTagOption && words[0] !== "tag") {
+    throw new CliUsageError(
+      "--name and --background-color are only accepted by tag add.",
+    );
+  }
 
   if (words[0] === "start" || words.length === 0) {
     if (
@@ -241,6 +261,43 @@ export const parseArgs = (argv: string[]): CliOptions => {
     }
   };
   noPreviewOptions();
+
+  if (words[0] === "tag") {
+    if (
+      hasCommentOption || hasInstructionOption || flags.channel !== undefined
+    ) {
+      throw new CliUsageError(
+        "tag commands do not accept document, comment, content, or update options.",
+      );
+    }
+    if (words[1] === "add" && words.length === 2) {
+      if (typeof flags.name !== "string") {
+        throw new CliUsageError("--name is required.");
+      }
+      return {
+        ...base,
+        command: "tag-add",
+        tagName: flags.name,
+        backgroundColor: flags["background-color"],
+      };
+    }
+    if (hasTagOption) {
+      throw new CliUsageError(
+        "--name and --background-color are only accepted by tag add.",
+      );
+    }
+    if (words[1] === "list" && words.length === 2) {
+      return { ...base, command: "tag-list" };
+    }
+    if (words[1] === "delete" && words.length === 3) {
+      const tagId = positiveInteger(words[2], "Tag ID");
+      if (!Number.isSafeInteger(tagId)) {
+        throw new CliUsageError("Tag ID must be a positive safe integer.");
+      }
+      return { ...base, command: "tag-delete", tagId };
+    }
+    throw new CliUsageError("Invalid tag command.");
+  }
 
   if (words[0] === "document") {
     if (

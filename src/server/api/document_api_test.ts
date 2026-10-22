@@ -33,6 +33,7 @@ const unusedDocumentStore = (
 });
 
 const tagStore = (calls: number[]): TagStore => ({
+  create: () => Promise.reject(new Error("Unexpected create.")),
   delete: () => Promise.resolve(),
   list: () => Promise.resolve([]),
   listForDocument: (documentId) => {

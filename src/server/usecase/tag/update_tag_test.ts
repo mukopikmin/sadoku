@@ -4,6 +4,7 @@ import { updateTag } from "./update_tag.ts";
 
 const updates: unknown[][] = [];
 const store: TagStore = {
+  create: () => Promise.reject(new Error("Unexpected create.")),
   delete: () => Promise.resolve(),
   list: () => Promise.resolve([]),
   listForDocument: () => Promise.resolve([]),

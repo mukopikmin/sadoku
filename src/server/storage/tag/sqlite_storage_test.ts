@@ -1,6 +1,48 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertFalse } from "@std/assert";
 import { openAppDatabase } from "../../db/connection.ts";
 import { createSqliteTagStore } from "./sqlite_storage.ts";
+
+Deno.test("tag storage creates standalone tags, rejects duplicate names, and deletes associations", async () => {
+  const directory = await Deno.makeTempDir();
+  const database = await openAppDatabase({ path: `${directory}/test.sqlite3` });
+  try {
+    const store = createSqliteTagStore(database);
+    assertEquals(await store.list(), []);
+    const created = await store.create("API", "#123456");
+    if ("type" in created) throw new Error(created.message);
+    assertEquals(await store.list(), [{ ...created, documentCount: 0 }]);
+    assertEquals(await store.create("API", "#abcdef"), {
+      type: "conflict",
+      message: "Tag name already exists.",
+    });
+    assertEquals(await store.list(), [{ ...created, documentCount: 0 }]);
+    const now = new Date().toISOString();
+    await database.execute(
+      "INSERT INTO comment_document (file_path, created_at, updated_at) VALUES (?, ?, ?), (?, ?, ?)",
+      ["one.md", now, now, "two.md", now, now],
+    );
+    await store.replaceForDocument(1, [{ name: "API" }, { name: "Other" }]);
+    await store.replaceForDocument(2, [{ id: created.id }]);
+    assertEquals((await store.list())[0].documentCount, 2);
+    assertEquals(await store.delete(created.id), undefined);
+    assertEquals((await store.listForDocument(1)).map(({ name }) => name), [
+      "Other",
+    ]);
+    assertEquals(await store.listForDocument(2), []);
+    assertFalse((await store.list()).some(({ id }) => id === created.id));
+    assertEquals(
+      (await database.execute("SELECT id FROM comment_document")).rows?.length,
+      2,
+    );
+    assertEquals(await store.delete(created.id), {
+      type: "not_found",
+      message: `Tag ${created.id} not found.`,
+    });
+  } finally {
+    database.close();
+    await Deno.remove(directory, { recursive: true });
+  }
+});
 
 Deno.test("tag storage creates, reuses, and replaces document tag associations", async () => {
   const directory = await Deno.makeTempDir();

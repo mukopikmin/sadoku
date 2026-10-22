@@ -3,6 +3,7 @@ import type { TagStore } from "../usecase/tag/ports.ts";
 import { deleteTagResponse, patchTag } from "./tag_api.ts";
 
 const store: TagStore = {
+  create: () => Promise.reject(new Error("Unexpected create.")),
   delete: () => Promise.resolve(),
   list: () => Promise.resolve([]),
   listForDocument: () => Promise.resolve([]),
