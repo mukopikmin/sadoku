@@ -2,15 +2,16 @@ import {
   Box,
   Button,
   CloseButton,
+  createListCollection,
   Dialog,
   Flex,
-  NativeSelect,
   Portal,
+  Select,
   Stack,
   Switch,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useDocumentRevisions } from "../hooks/useDocumentRevisions";
 import { ReadOnlyMarkdownPreview } from "../pages/markdown/ReadOnlyMarkdownPreview";
 
@@ -31,6 +32,21 @@ const RevisionContent = (
   >,
 ) => {
   const revisions = useDocumentRevisions(props.documentId, props.markdown);
+  const savedRevisions = revisions.history.status === "ready"
+    ? revisions.history.revisions
+    : undefined;
+  const collection = useMemo(() =>
+    createListCollection({
+      items: [
+        { value: "current", label: "Current" },
+        ...(savedRevisions ?? []).map((revision, index) => ({
+          value: String(revision.id),
+          label: `${index === 0 ? "Latest saved" : `${index} earlier`} — ${
+            new Date(revision.recordedAt).toLocaleString()
+          }`,
+        })),
+      ],
+    }), [savedRevisions]);
   const [highlightChanges, setHighlightChanges] = useState(true);
   const changes = revisions.comparison.status === "ready"
     ? revisions.comparison.changes
@@ -39,40 +55,43 @@ const RevisionContent = (
     (changes.current.size > 0 || changes.previous.size > 0);
   return (
     <Stack gap="4">
-      <NativeSelect.Root>
-        <NativeSelect.Field
-          aria-label="Revision"
-          value={revisions.selectedId ?? "current"}
-          onChange={(event) => {
-            revisions.selectRevision(
-              event.currentTarget.value === "current"
-                ? undefined
-                : Number(event.currentTarget.value),
-            );
-          }}
-        >
-          <option value="current">Current</option>
-          {revisions.history.status === "ready" &&
-            revisions.history.revisions.map((revision, index) => (
-              <option key={revision.id} value={revision.id}>
-                {index === 0 ? "Latest saved" : `${index} earlier`} —{" "}
-                {new Date(revision.recordedAt).toLocaleString()}
-              </option>
+      <Select.Root
+        collection={collection}
+        value={[String(revisions.selectedId ?? "current")]}
+        onValueChange={({ value }) => {
+          revisions.selectRevision(
+            value[0] === "current" ? undefined : Number(value[0]),
+          );
+        }}
+        positioning={{ strategy: "fixed", hideWhenDetached: true }}
+        lazyMount
+        unmountOnExit
+      >
+        <Select.HiddenSelect />
+        <Select.Control>
+          <Select.Trigger aria-label="Revision">
+            <Select.ValueText />
+          </Select.Trigger>
+          <Select.IndicatorGroup>
+            <Select.Indicator />
+          </Select.IndicatorGroup>
+        </Select.Control>
+        <Select.Positioner>
+          <Select.Content aria-label="Revision">
+            {collection.items.map((item) => (
+              <Select.Item item={item} key={item.value}>
+                <Select.ItemText>{item.label}</Select.ItemText>
+                <Select.ItemIndicator />
+              </Select.Item>
             ))}
-        </NativeSelect.Field>
-        <NativeSelect.Indicator />
-      </NativeSelect.Root>
+          </Select.Content>
+        </Select.Positioner>
+      </Select.Root>
       {revisions.history.status === "loading" && (
         <Text role="status">Loading saved revisions...</Text>
       )}
       {revisions.history.status === "empty" && (
         <Text color="fg.muted">No saved revisions are available.</Text>
-      )}
-      {revisions.history.status === "ready" && (
-        <Text color="fg.muted" fontSize="sm">
-          Showing {revisions.history.revisions.length}{" "}
-          saved revisions, newest first (up to 20).
-        </Text>
       )}
       {revisions.history.status === "error" && (
         <Stack align="start">

@@ -25,6 +25,20 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const chooseRevision = async (name: string | RegExp) => {
+  const trigger = await screen.findByRole("combobox", { name: "Revision" });
+  await waitFor(() => {
+    expect(screen.queryByText("Loading saved revisions...")).toBeNull();
+    expect(screen.queryByText("Loading previous revision for comparison..."))
+      .toBeNull();
+  });
+  fireEvent.click(trigger);
+  fireEvent.click(await screen.findByRole("option", { name }));
+  await waitFor(() =>
+    expect(trigger.getAttribute("aria-expanded")).toBe("false")
+  );
+};
+
 it("loads the latest comparison and switches historical and empty Markdown without tabs", async () => {
   const bodyRequests: number[] = [];
   vi.stubGlobal(
@@ -51,13 +65,10 @@ it("loads the latest comparison and switches historical and empty Markdown witho
   const dialog = within(
     await screen.findByRole("dialog", { name: "Document revisions" }),
   );
-  await dialog.findByRole("option", { name: /2 earlier/ });
   expect(dialog.getByRole("heading", { name: "Current" })).not.toBeNull();
   await waitFor(() => expect(bodyRequests).toEqual([3]));
   expect(dialog.queryByRole("tab")).toBeNull();
-  fireEvent.change(dialog.getByRole("combobox", { name: "Revision" }), {
-    target: { value: "2" },
-  });
+  await chooseRevision(/1 earlier/);
   expect(await dialog.findByRole("heading", { name: "Previous" })).not
     .toBeNull();
   expect(dialog.getByText("Old content").tagName).toBe("EM");
@@ -67,17 +78,13 @@ it("loads the latest comparison and switches historical and empty Markdown witho
     ),
   ).toBeNull();
   expect(dialog.queryByRole("button", { name: /Add comment/ })).toBeNull();
-  fireEvent.change(dialog.getByRole("combobox", { name: "Revision" }), {
-    target: { value: "1" },
-  });
+  await chooseRevision(/2 earlier/);
   await waitFor(() =>
     expect(dialog.getByRole("region", { name: "Revision content" }).textContent)
       .toBe("")
   );
   expect(bodyRequests).toEqual([3, 2, 1]);
-  fireEvent.change(dialog.getByRole("combobox", { name: "Revision" }), {
-    target: { value: "current" },
-  });
+  await chooseRevision("Current");
   expect(dialog.getByRole("heading", { name: "Current" })).not.toBeNull();
   fireEvent.click(
     dialog.getByRole("button", { name: "Close document revisions" }),
@@ -91,17 +98,20 @@ it("keeps the current document visible when there is no saved history", async ()
   expect(await screen.findByText("No saved revisions are available.")).not
     .toBeNull();
   expect(screen.getByRole("heading", { name: "Current" })).not.toBeNull();
-  expect(screen.getAllByRole("option")).toHaveLength(1);
+  fireEvent.click(screen.getByRole("combobox", { name: "Revision" }));
+  expect(await screen.findAllByRole("option")).toHaveLength(1);
 });
 
 it("does not fetch while closed and refreshes the list with Current selected when reopened", async () => {
   let newest = 3;
+  const bodyRequests: number[] = [];
   const fetchMock = vi.fn(async (input, init) => {
     const request = new Request(input, init);
     if (request.url.endsWith("/ListDocumentRevisions")) {
       return Response.json({ revisions: [{ id: String(newest), recordedAt }] });
     }
     const { revisionId } = await request.json();
+    bodyRequests.push(Number(revisionId));
     return Response.json({ id: revisionId, recordedAt, markdown: "# Saved" });
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -110,10 +120,7 @@ it("does not fetch while closed and refreshes the list with Current selected whe
   );
   expect(fetchMock).not.toHaveBeenCalled();
   rerender(<DocumentRevisionsDialog {...props} />);
-  await screen.findByRole("option", { name: /Latest saved/ });
-  fireEvent.change(screen.getByRole("combobox", { name: "Revision" }), {
-    target: { value: "3" },
-  });
+  await chooseRevision(/Latest saved/);
   await screen.findByRole("heading", { name: "Saved" });
   rerender(<DocumentRevisionsDialog {...props} open={false} />);
   await waitFor(() =>
@@ -122,16 +129,14 @@ it("does not fetch while closed and refreshes the list with Current selected whe
   );
   newest = 4;
   rerender(<DocumentRevisionsDialog {...props} />);
-  await waitFor(() =>
-    expect(screen.getByRole("option", { name: /Latest saved/ })).toHaveProperty(
-      "value",
-      "4",
-    )
+  expect(
+    (await screen.findByRole("combobox", { name: "Revision" })).textContent,
+  ).toBe(
+    "Current",
   );
-  expect(screen.getByRole("combobox", { name: "Revision" })).toHaveProperty(
-    "value",
-    "current",
-  );
+  await waitFor(() => expect(bodyRequests).toContain(4));
+  await chooseRevision(/Latest saved/);
+  await chooseRevision("Current");
   expect(screen.getByRole("heading", { name: "Current" })).not.toBeNull();
 });
 
@@ -175,10 +180,7 @@ const selectComparison = async (
       documentPath={documentPath}
     />,
   );
-  await screen.findByRole("option", { name: /Latest saved/ });
-  fireEvent.change(screen.getByRole("combobox", { name: "Revision" }), {
-    target: { value: "1" },
-  });
+  await chooseRevision(/Latest saved/);
   await waitFor(() =>
     expect(screen.queryByText("Loading revision...")).toBeNull()
   );
@@ -299,13 +301,11 @@ it("clears the old comparison while another saved revision loads and compares th
     }),
   );
   render(<DocumentRevisionsDialog {...props} markdown="# Current" />);
-  await screen.findByRole("option", { name: /Latest saved/ });
-  const select = screen.getByRole("combobox", { name: "Revision" });
-  fireEvent.change(select, { target: { value: "2" } });
+  await chooseRevision(/Latest saved/);
   await screen.findByRole("heading", { name: "Old" });
   expect(screen.getByRole("heading", { name: "Old" }).closest("ins")).not
     .toBeNull();
-  fireEvent.change(select, { target: { value: "1" } });
+  await chooseRevision(/1 earlier/);
   await screen.findByText("Loading revision...");
   expect(screen.queryByRole("heading", { name: "Old" })).toBeNull();
   expect(screen.queryByRole("switch", { name: "Highlight changes" }))

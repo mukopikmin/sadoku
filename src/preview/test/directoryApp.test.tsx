@@ -145,10 +145,8 @@ describe("directory preview", () => {
       await screen.findByRole("dialog", { name: "Document revisions" }),
     );
     expect(dialog.getByRole("heading", { name: "Document 1" })).not.toBeNull();
-    await dialog.findByRole("option", { name: /1 earlier/ });
-    fireEvent.change(dialog.getByRole("combobox", { name: "Revision" }), {
-      target: { value: "1" },
-    });
+    fireEvent.click(dialog.getByRole("combobox", { name: "Revision" }));
+    fireEvent.click(await dialog.findByRole("option", { name: /1 earlier/ }));
     expect(await dialog.findByRole("heading", { name: "Earlier document" })).not
       .toBeNull();
     expect(dialog.getByText("Old content").tagName).toBe("STRONG");
