@@ -24,7 +24,8 @@ configured `SADOKU_COMMENTS_DIR`. An unset or empty source enables preparation.
 All sample Markdown comes from `test/integration/fixtures/`, copied with its
 directory structure into the temporary directory. The copies provide five
 documents (one deleted) and fifteen comments, including human and bot authors,
-replies, review requests, resolved comments, instructions, and memories.
+replies, review requests, resolved comments, instructions, and memories. Seeded
+comments, replies, instructions, and memories are in English.
 
 | Fixture                 | Preview state                                                  |
 | ----------------------- | -------------------------------------------------------------- |

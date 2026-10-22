@@ -26,44 +26,44 @@ add_comment() {
 
 review="$documents/comprehensive.md"
 add_comment "$review" '# Comprehensive Document' \
-  '未解決コメントのサンプルです。各Markdown要素の表示を確認してください。'
+  'Open comment: check how each Markdown element renders.'
 add_comment "$review" 'Text before a subheading.' \
-  'botの指摘です。見出し前の説明を補足してください。' --as-bot
+  'Add more context before this subheading.' --as-bot
 sadoku comment reply add --source "$review" --comment 2 \
-  --body '文書ごとの保存先を確認しました。補足を追記する予定です。' >/dev/null
+  --body 'I checked the introduction and will add more context.' >/dev/null
 sadoku comment reply add --source "$review" --comment 2 --as-bot --request-review \
-  --body '補足内容を確認してください。再レビュー依頼の表示サンプルです。' >/dev/null
+  --body 'Please review the added context. This reply requests another review.' >/dev/null
 add_comment "$review" 'Paragraph after simple nested lists.' \
-  '解決済みコメントのサンプルです。必要なら再度開いてください。'
+  'Resolved comment: reopen this thread to try the review workflow.'
 sadoku comment reply add --source "$review" --comment 3 \
-  --body '確認できたので、この指摘は解決します。' >/dev/null
+  --body 'Confirmed. This thread is ready to resolve.' >/dev/null
 sadoku comment resolve 3 --source "$review" >/dev/null
 add_comment "$review" '- [ ] unchecked task' \
-  'チェックリストへのコメントです。手順を実際に試してください。'
+  'Checklist comment: try the steps and confirm the expected behavior.'
 add_comment "$review" '| Table' \
-  '表の行へのコメントです。担当者と進捗を確認してください。' --as-bot
+  'Table comment: verify the status and owner values.' --as-bot
 add_comment "$review" 'const state: PreviewState = "ready";' \
-  'コードへのコメントです。失敗時の状態も検討してください。'
+  'Code comment: consider how failures should be represented.'
 add_comment "$review" '## Mermaid Diagrams' \
-  '図へのコメントです。Mermaidの表示や拡大操作を確認してください。'
+  'Diagram comment: check Mermaid rendering and zoom controls.'
 sadoku instruction add --source "$review" \
-  --content 'レビューでは、利用者が迷わず操作できる説明になっているかを確認してください。' >/dev/null
+  --content 'Check that the document explains the workflow clearly enough for users to follow.' >/dev/null
 sadoku instruction add --source "$review" \
-  --content '指摘には理由と具体的な修正例を添えてください。' >/dev/null
+  --content 'Include a reason and a concrete example with each suggestion.' >/dev/null
 sadoku memory add --source "$review" \
-  --content 'この文書はpreviewの操作確認用です。コメントの編集・返信・解決を自由に試せます。' >/dev/null
+  --content 'This document is for preview checks. Try editing, replying to, and resolving comments.' >/dev/null
 sadoku memory add --source "$review" \
-  --content 'レビュー担当は人とbotの両方を想定しています。' >/dev/null
+  --content 'Reviews may include both human and bot participants.' >/dev/null
 
 changes="$documents/second.md"
 add_comment "$changes" 'This is a second Markdown fixture for checking document selection in directory' \
-  '導入文の変更前に付けたコメントです。現在の本文と引用を比較してください。'
+  'Created before the introduction changed. Compare the current text with the original quote.'
 add_comment "$changes" '- Add a comment to confirm comments remain scoped to this document.' \
-  '本文への行追加後も、このコメントが同じ箇条書きを指すことを確認してください。'
+  'This list item moved after new lines were inserted. Check that the comment still points to it.'
 add_comment "$changes" '- Edit this line to confirm document-scoped hot reload works.' \
-  '削除された箇条書きへのコメントです。削除された引用の表示を確認してください。'
+  'The list item this comment referred to was deleted. Check the saved quote.'
 add_comment "$changes" 'const documentName = "second.md";' \
-  '変更前に解決した指摘です。差分と解決済み表示を確認してください。' --as-bot
+  'Resolved before the document changed. Check the source diff and resolved state.' --as-bot
 sadoku comment resolve 4 --source "$changes" --as-bot >/dev/null
 # Edit only the copied fixture, then advance snapshots through the normal CLI.
 awk '
@@ -85,14 +85,14 @@ sadoku comment list --source "$changes" >/dev/null
 
 archived="$documents/guides/overview.md"
 add_comment "$archived" 'This document is a first-level nested fixture for directory preview mode.' \
-  '文書削除前に残したコメントです。保存された本文と一緒に読めます。'
+  'Created before the document was deleted. Read this comment alongside the saved snapshot.'
 add_comment "$archived" '# Guide Overview' \
-  '削除済み文書に残るbotコメントのサンプルです。' --as-bot
+  'Bot comment retained on a deleted document.' --as-bot
 sadoku memory add --source "$archived" \
-  --content '削除された文書の表示を確認するため、サンプル準備の最後にファイルを削除しています。' >/dev/null
+  --content 'The copied file is deleted during sample preparation to demonstrate saved document snapshots.' >/dev/null
 rm "$archived"
 
-add_comment "$documents/japanese.md" '# 日本語ドキュメントの表示サンプル' \
-  '日本語のコメントです。本文とコメントの文字サイズ・改行を確認してください。'
-add_comment "$documents/japanese.md" '半角：0123456789' \
-  '数字の読みやすさを確認してください。全角数字との比較もできます。' --as-bot
+add_comment "$documents/japanese.md" '# ' \
+  'Comment on the Japanese fixture: compare text size and line wrapping.'
+add_comment "$documents/japanese.md" '0123456789' \
+  'Check digit readability and compare half-width and full-width numbers.' --as-bot
