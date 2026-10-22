@@ -200,7 +200,7 @@ it("keeps Current readable when its latest saved comparison fails and retries th
   await waitFor(() =>
     expect(result.current.comparison).toEqual({
       status: "ready",
-      changes: { previous: new Set(), current: new Set() },
+      changes: { previous: new Set([1]), current: new Set([1]) },
     })
   );
   act(() => result.current.selectRevision(2));
@@ -209,4 +209,101 @@ it("keeps Current readable when its latest saved comparison fails and retries th
     changes: { previous: new Set([1]), current: new Set([1]) },
   });
   expect(loadDocumentRevision).toHaveBeenCalledTimes(2);
+});
+
+it.each(["# Initial", ""])(
+  "merges an unchanged first snapshot with Current, including an empty file (%j)",
+  async (markdown) => {
+    vi.mocked(loadDocumentRevisions).mockResolvedValue([{ id: 1, recordedAt }]);
+    vi.mocked(loadDocumentRevision).mockResolvedValue({
+      id: 1,
+      recordedAt,
+      markdown,
+    });
+    const { result } = renderHook(() => useDocumentRevisions(7, markdown), {
+      wrapper,
+    });
+    await waitFor(() =>
+      expect(result.current.comparison.status).toBe("unavailable")
+    );
+    expect(result.current.showLatestSaved).toBe(false);
+    expect(result.current.content).toEqual({ status: "ready", markdown });
+    expect(result.current.history).toEqual({
+      status: "ready",
+      revisions: [{ id: 1, recordedAt }],
+    });
+    expect(loadDocumentRevision).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("keeps A → B → A history and predecessor diffs while merging only the newest A with Current", async () => {
+  vi.mocked(loadDocumentRevisions).mockResolvedValue(
+    [3, 2, 1].map((id) => ({ id, recordedAt })),
+  );
+  vi.mocked(loadDocumentRevision).mockImplementation(async (
+    _documentId,
+    id,
+  ) => ({
+    id,
+    recordedAt,
+    markdown: id === 2 ? "# B" : "# A",
+    ...(id > 1 && { previousMarkdown: id === 2 ? "# A" : "# B" }),
+  }));
+  const { result } = renderHook(() => useDocumentRevisions(7, "# A"), {
+    wrapper,
+  });
+  await waitFor(() => expect(result.current.comparison.status).toBe("ready"));
+  expect(result.current.showLatestSaved).toBe(false);
+  expect(result.current.comparison).toEqual({
+    status: "ready",
+    changes: { previous: new Set([1]), current: new Set([1]) },
+  });
+  act(() => result.current.selectRevision(1));
+  await waitFor(() =>
+    expect(result.current.comparison.status).toBe("unavailable")
+  );
+  expect(result.current.selectedId).toBe(1);
+  expect(result.current.content).toEqual({ status: "ready", markdown: "# A" });
+  expect(result.current.showLatestSaved).toBe(false);
+  act(() => result.current.selectRevision(2));
+  await waitFor(() =>
+    expect(result.current.content).toEqual({ status: "ready", markdown: "# B" })
+  );
+  expect(result.current.comparison.status).toBe("ready");
+  expect(loadDocumentRevision).toHaveBeenCalledTimes(3);
+});
+
+it("separates a changed live file and returns a merged selection to Current without reviving it later", async () => {
+  vi.mocked(loadDocumentRevisions).mockResolvedValue([{ id: 1, recordedAt }]);
+  vi.mocked(loadDocumentRevision).mockResolvedValue({
+    id: 1,
+    recordedAt,
+    markdown: "# A",
+  });
+  const { result, rerender } = renderHook(
+    ({ markdown }) => useDocumentRevisions(7, markdown),
+    {
+      initialProps: { markdown: "# A" },
+      wrapper,
+    },
+  );
+  await waitFor(() =>
+    expect(result.current.comparison.status).toBe("unavailable")
+  );
+  expect(result.current.showLatestSaved).toBe(false);
+  rerender({ markdown: "# B" });
+  expect(result.current.showLatestSaved).toBe(true);
+  expect(result.current.comparison).toEqual({
+    status: "ready",
+    changes: { previous: new Set([1]), current: new Set([1]) },
+  });
+  act(() => result.current.selectRevision(1));
+  expect(result.current.content).toEqual({ status: "ready", markdown: "# A" });
+  rerender({ markdown: "# A" });
+  await waitFor(() => expect(result.current.selectedId).toBeUndefined());
+  expect(result.current.showLatestSaved).toBe(false);
+  rerender({ markdown: "# B" });
+  expect(result.current.selectedId).toBeUndefined();
+  expect(result.current.content).toEqual({ status: "ready", markdown: "# B" });
+  expect(loadDocumentRevision).toHaveBeenCalledTimes(1);
 });

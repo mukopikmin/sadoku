@@ -39,14 +39,16 @@ const RevisionContent = (
     createListCollection({
       items: [
         { value: "current", label: "Current" },
-        ...(savedRevisions ?? []).map((revision, index) => ({
-          value: String(revision.id),
-          label: `${index === 0 ? "Saved snapshot" : `${index} earlier`} — ${
-            new Date(revision.recordedAt).toLocaleString()
-          }`,
-        })),
+        ...(savedRevisions ?? []).flatMap((revision, index) =>
+          index === 0 && !revisions.showLatestSaved ? [] : [{
+            value: String(revision.id),
+            label: `${index === 0 ? "Saved snapshot" : `${index} earlier`} — ${
+              new Date(revision.recordedAt).toLocaleString()
+            }`,
+          }]
+        ),
       ],
-    }), [savedRevisions]);
+    }), [savedRevisions, revisions.showLatestSaved]);
   const [highlightChanges, setHighlightChanges] = useState(true);
   const changes = revisions.comparison.status === "ready"
     ? revisions.comparison.changes

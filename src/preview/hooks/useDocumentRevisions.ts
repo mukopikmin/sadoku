@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   loadDocumentRevision,
@@ -30,20 +30,37 @@ type ComparisonState =
 
 /** Mounted only while the revision dialog is open; saved bodies are immutable. */
 export const useDocumentRevisions = (documentId: number, markdown: string) => {
-  const [selectedId, selectRevision] = useState<number>();
+  const [requestedId, selectRevision] = useState<number>();
   const list = useQuery({
     queryKey: documentRevisionsQueryKey(documentId),
     queryFn: ({ signal }) => loadDocumentRevisions(documentId, signal),
     staleTime: 0,
   });
-  // Current is compared with the latest saved revision. Saved revisions carry
-  // their immediate predecessor, including predecessors outside the list of 20.
-  const revisionId = selectedId ?? list.data?.[0]?.id;
-  const selected = useQuery({
-    queryKey: documentRevisionQueryKey(documentId, revisionId),
+  const latestId = list.data?.[0]?.id;
+  const latest = useQuery({
+    queryKey: documentRevisionQueryKey(documentId, latestId),
     queryFn: ({ signal }) =>
-      loadDocumentRevision(documentId, revisionId!, signal),
-    enabled: revisionId !== undefined,
+      loadDocumentRevision(documentId, latestId!, signal),
+    enabled: latestId !== undefined,
+    staleTime: Infinity,
+  });
+  const currentMatchesSaved = latest.data?.markdown === markdown;
+  const selectedId = currentMatchesSaved && requestedId === latestId
+    ? undefined
+    : requestedId;
+  useEffect(() => {
+    if (
+      currentMatchesSaved && requestedId !== undefined &&
+      requestedId === latestId
+    ) {
+      selectRevision(undefined);
+    }
+  }, [currentMatchesSaved, requestedId, latestId]);
+  const selected = useQuery({
+    queryKey: documentRevisionQueryKey(documentId, selectedId),
+    queryFn: ({ signal }) =>
+      loadDocumentRevision(documentId, selectedId!, signal),
+    enabled: selectedId !== undefined,
     staleTime: Infinity,
   });
   const history: HistoryState = list.data
@@ -61,8 +78,12 @@ export const useDocumentRevisions = (documentId: number, markdown: string) => {
     ? { status: "error", message: selected.error.message }
     : { status: "loading" };
   const previousMarkdown = selectedId === undefined
-    ? selected.data?.markdown
+    ? currentMatchesSaved
+      ? latest.data?.previousMarkdown
+      : latest.data?.markdown
     : selected.data?.previousMarkdown;
+  const revision = selectedId === undefined ? latest : selected;
+  const revisionId = selectedId ?? latestId;
   const changes = useMemo(
     () =>
       content.status === "ready" && previousMarkdown !== undefined
@@ -76,10 +97,10 @@ export const useDocumentRevisions = (documentId: number, markdown: string) => {
   );
   const comparison: ComparisonState = changes
     ? { status: "ready", changes }
-    : selected.error
-    ? { status: "error", message: selected.error.message }
+    : revision.error
+    ? { status: "error", message: revision.error.message }
     : revisionId !== undefined
-    ? selected.data ? { status: "unavailable" } : { status: "loading" }
+    ? revision.data ? { status: "unavailable" } : { status: "loading" }
     : history.status === "error"
     ? history
     : history.status === "loading"
@@ -89,6 +110,7 @@ export const useDocumentRevisions = (documentId: number, markdown: string) => {
     history,
     content,
     comparison,
+    showLatestSaved: latest.data !== undefined && !currentMatchesSaved,
     selectedId,
     selectRevision,
     retryHistory: () => {
@@ -99,7 +121,7 @@ export const useDocumentRevisions = (documentId: number, markdown: string) => {
     },
     retryComparison: () => {
       if (revisionId === undefined) void list.refetch();
-      else void selected.refetch();
+      else void revision.refetch();
     },
   };
 };

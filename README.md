@@ -72,9 +72,10 @@ Run `sadoku --help` for all commands and options.
   choose from its latest 20 saved revisions, listed newest first with recording
   times. Each selected revision shows changes from its immediately preceding
   saved revision, with highlights and added/removed line counts. Current
-  compares the live document with the latest saved revision. Older saved
-  revisions remain stored. This does not change when document snapshots are
-  recorded.
+  compares the live document with the latest saved revision. When their contents
+  match, they share one Current entry, compared with that saved revision's
+  predecessor. Older saved revisions remain stored. This does not change when
+  document snapshots are recorded.
 
 ### GitHub pull requests
 

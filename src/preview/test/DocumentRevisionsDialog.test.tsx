@@ -102,6 +102,28 @@ it("keeps the current document visible when there is no saved history", async ()
   expect(await screen.findAllByRole("option")).toHaveLength(1);
 });
 
+it("shows only Current for a newly initialized file and keeps its first snapshot stored", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input, init) => {
+      const request = new Request(input, init);
+      return Response.json(
+        request.url.endsWith("/ListDocumentRevisions")
+          ? { revisions: [{ id: "1", recordedAt }] }
+          : { id: "1", recordedAt, markdown: props.markdown },
+      );
+    }),
+  );
+  render(<DocumentRevisionsDialog {...props} />);
+  await screen.findByText("No previous revision is available for comparison.");
+  fireEvent.click(screen.getByRole("combobox", { name: "Revision" }));
+  const options = await screen.findAllByRole("option");
+  expect(options).toHaveLength(1);
+  expect(options[0].textContent).toBe("Current");
+  expect(screen.queryByRole("switch", { name: "Highlight changes" }))
+    .toBeNull();
+});
+
 it("does not fetch while closed and refreshes the list with Current selected when reopened", async () => {
   let newest = 3;
   const bodyRequests: number[] = [];
