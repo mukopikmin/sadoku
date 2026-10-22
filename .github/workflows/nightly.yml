@@ -29,8 +29,26 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Setup runtimes
-        uses: ./.github/actions/setup-runtimes
+      - name: Read Deno requirement
+        id: engines
+        run: |
+          deno_version="$(jq -er '.engines.deno' package.json)"
+          echo "deno=${deno_version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: ${{ steps.engines.outputs.deno }}
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          check-latest: true
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
 
       - name: Install dependencies
         run: npm run install:deps
