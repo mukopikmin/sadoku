@@ -64,6 +64,23 @@ const installFetch = (
             },
           }));
         }
+        if (url === "/sadoku.preview.v1.PreviewService/ListDocumentRevisions") {
+          return Promise.resolve(Response.json({
+            revisions: [
+              { id: "2", recordedAt: "2026-10-22T01:00:00.000Z" },
+              { id: "1", recordedAt: "2026-10-22T00:00:00.000Z" },
+            ],
+          }));
+        }
+        if (url === "/sadoku.preview.v1.PreviewService/GetDocumentRevision") {
+          return Promise.resolve(
+            Response.json({
+              id: "1",
+              recordedAt: "2026-10-22T00:00:00.000Z",
+              markdown: "# Earlier document\n\n**Old content**",
+            }),
+          );
+        }
         const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
         if (documentMatch) {
           const id = Number(documentMatch[1]);
@@ -128,7 +145,10 @@ describe("directory preview", () => {
       await screen.findByRole("dialog", { name: "Document revisions" }),
     );
     expect(dialog.getByRole("heading", { name: "Document 1" })).not.toBeNull();
-    fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
+    await dialog.findByRole("option", { name: /1 earlier/ });
+    fireEvent.change(dialog.getByRole("combobox", { name: "Revision" }), {
+      target: { value: "1" },
+    });
     expect(await dialog.findByRole("heading", { name: "Earlier document" })).not
       .toBeNull();
     expect(dialog.getByText("Old content").tagName).toBe("STRONG");

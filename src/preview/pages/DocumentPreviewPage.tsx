@@ -79,12 +79,12 @@ export const DocumentPreviewPage = (
         />
       )}
       <DocumentRevisionsDialog
+        documentId={documentId}
         documentPath={documentPath}
         key={`revisions-${documentId}`}
         markdown={document.markdown}
         onOpenChange={setRevisionsOpen}
         open={view === "preview" && revisionsOpen}
-        previousMarkdown={document.previousMarkdown}
         showHtmlComments={showHtmlComments}
         theme={settings.theme === "dark" ? "dark" : "default"}
       />

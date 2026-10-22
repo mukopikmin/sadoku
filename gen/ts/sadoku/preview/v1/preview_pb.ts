@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  */
 export const file_sadoku_preview_v1_preview: GenFile = /*@__PURE__*/
   fileDesc(
-    "Ch9zYWRva3UvcHJldmlldy92MS9wcmV2aWV3LnByb3RvEhFzYWRva3UucHJldmlldy52MSITChFHZXRTZXNzaW9uUmVxdWVzdCJ+ChJHZXRTZXNzaW9uUmVzcG9uc2USOQoMcHVsbF9yZXF1ZXN0GAEgASgLMh4uc2Fkb2t1LnByZXZpZXcudjEuUHVsbFJlcXVlc3RIAIgBARIcChRjYW5fY3JlYXRlX2RvY3VtZW50cxgCIAEoCEIPCg1fcHVsbF9yZXF1ZXN0Ik4KC1B1bGxSZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEg4KBm51bWJlchgCIAEoDRINCgV0aXRsZRgDIAEoCRILCgN1cmwYBCABKAkiFgoUR2V0U3RhdGlzdGljc1JlcXVlc3QifgoVR2V0U3RhdGlzdGljc1Jlc3BvbnNlEjYKDWNvbW1lbnRfY291bnQYASABKAsyHy5zYWRva3UucHJldmlldy52MS5Db21tZW50Q291bnQSFQoNZGF0YWJhc2Vfc2l6ZRgCIAEoBBIWCg5kb2N1bWVudF9jb3VudBgDIAEoBCIqCgxDb21tZW50Q291bnQSCwoDYm90GAEgASgEEg0KBWh1bWFuGAIgASgEIjkKA1RhZxIKCgJpZBgBIAEoBBIMCgRuYW1lGAIgASgJEhgKEGJhY2tncm91bmRfY29sb3IYAyABKAkigAEKClRhZ1N1bW1hcnkSCgoCaWQYASABKAQSDAoEbmFtZRgCIAEoCRIYChBiYWNrZ3JvdW5kX2NvbG9yGAMgASgJEhYKDmRvY3VtZW50X2NvdW50GAQgASgEEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCSIWChRMaXN0RG9jdW1lbnRzUmVxdWVzdCJOChVMaXN0RG9jdW1lbnRzUmVzcG9uc2USNQoJZG9jdW1lbnRzGAEgAygLMiIuc2Fkb2t1LnByZXZpZXcudjEuRG9jdW1lbnRTdW1tYXJ5IksKFUNyZWF0ZURvY3VtZW50UmVxdWVzdBIRCglkaXJlY3RvcnkYASABKAkSEAoIZmlsZW5hbWUYAiABKAkSDQoFdGl0bGUYAyABKAkiqAEKD0RvY3VtZW50U3VtbWFyeRIKCgJpZBgBIAEoBBIVCg1yZWxhdGl2ZV9wYXRoGAIgASgJEg0KBXRpdGxlGAMgASgJEg8KB2RlbGV0ZWQYBCABKAgSJAoEdGFncxgFIAMoCzIWLnNhZG9rdS5wcmV2aWV3LnYxLlRhZxIaCg1kaXNwbGF5X3RpdGxlGAcgASgJSACIAQFCEAoOX2Rpc3BsYXlfdGl0bGUiQAoaVXBkYXRlRG9jdW1lbnRUaXRsZVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSDQoFdGl0bGUYAiABKAkiKQoSR2V0RG9jdW1lbnRSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEIpUCChNHZXREb2N1bWVudFJlc3BvbnNlEhAKCGZpbGVfdXJsGAEgASgJEhAKCG1hcmtkb3duGAIgASgJEg0KBXRpdGxlGAMgASgJEg8KB2RlbGV0ZWQYBCABKAgSJAoEdGFncxgFIAMoCzIWLnNhZG9rdS5wcmV2aWV3LnYxLlRhZxIaCg1kaXNwbGF5X3RpdGxlGAcgASgJSACIAQESHAoPZ2l0aHViX2hlYWRfc2hhGAYgASgJSAGIAQESHgoRcHJldmlvdXNfbWFya2Rvd24YCCABKAlIAogBAUIQCg5fZGlzcGxheV90aXRsZUISChBfZ2l0aHViX2hlYWRfc2hhQhQKEl9wcmV2aW91c19tYXJrZG93biIbChlHZXREaXJlY3RvcnlTdGF0dXNSZXF1ZXN0IpIBChpHZXREaXJlY3RvcnlTdGF0dXNSZXNwb25zZRINCgVzdGF0ZRgBIAEoCRIQCghkZXRlY3RlZBgCIAEoBBISCgpyZWdpc3RlcmVkGAMgASgEEjUKBWVycm9yGAQgASgLMiEuc2Fkb2t1LnByZXZpZXcudjEuRGlyZWN0b3J5RXJyb3JIAIgBAUIICgZfZXJyb3IiLwoORGlyZWN0b3J5RXJyb3ISDAoEbmFtZRgBIAEoCRIPCgdtZXNzYWdlGAIgASgJIhQKEkdldFNldHRpbmdzUmVxdWVzdCLDAQoIU2V0dGluZ3MSEgoFdGhlbWUYASABKAlIAIgBARIWCgljb2RlX3dyYXAYAiABKAlIAYgBARISCgpmb250X3NjYWxlGAMgASgBEhwKFGV4Y2x1ZGVkX2RpcmVjdG9yaWVzGAQgAygJEhEKCW1heF9kZXB0aBgFIAEoDRIRCgltYXhfZmlsZXMYBiABKA0SGwoTbWFya2Rvd25fZXh0ZW5zaW9ucxgHIAMoCUIICgZfdGhlbWVCDAoKX2NvZGVfd3JhcCKuAQoVVXBkYXRlU2V0dGluZ3NSZXF1ZXN0Eg0KBXRoZW1lGAEgASgJEhEKCWNvZGVfd3JhcBgCIAEoCRISCgpmb250X3NjYWxlGAMgASgBEhwKFGV4Y2x1ZGVkX2RpcmVjdG9yaWVzGAQgAygJEhEKCW1heF9kZXB0aBgFIAEoDRIRCgltYXhfZmlsZXMYBiABKA0SGwoTbWFya2Rvd25fZXh0ZW5zaW9ucxgHIAMoCSIZChdHZXRHaXRIdWJBY2NvdW50UmVxdWVzdCKMAQoYR2V0R2l0SHViQWNjb3VudFJlc3BvbnNlEgoKAm9rGAEgASgIEjYKB2FjY291bnQYAiABKAsyIC5zYWRva3UucHJldmlldy52MS5HaXRIdWJBY2NvdW50SACIAQESFAoHbWVzc2FnZRgDIAEoCUgBiAEBQgoKCF9hY2NvdW50QgoKCF9tZXNzYWdlImIKDUdpdEh1YkFjY291bnQSDQoFbG9naW4YASABKAkSEQoEbmFtZRgCIAEoCUgAiAEBEhcKCmF2YXRhcl91cmwYAyABKAlIAYgBAUIHCgVfbmFtZUINCgtfYXZhdGFyX3VybCIRCg9MaXN0VGFnc1JlcXVlc3QiPwoQTGlzdFRhZ3NSZXNwb25zZRIrCgR0YWdzGAEgAygLMh0uc2Fkb2t1LnByZXZpZXcudjEuVGFnU3VtbWFyeSIeChBEZWxldGVUYWdSZXF1ZXN0EgoKAmlkGAEgASgEIhMKEURlbGV0ZVRhZ1Jlc3BvbnNlIkYKEFVwZGF0ZVRhZ1JlcXVlc3QSCgoCaWQYASABKAQSDAoEbmFtZRgCIAEoCRIYChBiYWNrZ3JvdW5kX2NvbG9yGAMgASgJIjkKDFRhZ1JlZmVyZW5jZRIMCgJpZBgBIAEoBEgAEg4KBG5hbWUYAiABKAlIAEILCglyZWZlcmVuY2UiYAoaUmVwbGFjZURvY3VtZW50VGFnc1JlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSLQoEdGFncxgCIAMoCzIfLnNhZG9rdS5wcmV2aWV3LnYxLlRhZ1JlZmVyZW5jZSJDChtSZXBsYWNlRG9jdW1lbnRUYWdzUmVzcG9uc2USJAoEdGFncxgBIAMoCzIWLnNhZG9rdS5wcmV2aWV3LnYxLlRhZyJSCgtJbnN0cnVjdGlvbhIKCgJpZBgBIAEoBBIPCgdjb250ZW50GAIgASgJEhIKCmNyZWF0ZWRfYXQYAyABKAkSEgoKdXBkYXRlZF9hdBgEIAEoCSIuChdMaXN0SW5zdHJ1Y3Rpb25zUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBCJQChhMaXN0SW5zdHJ1Y3Rpb25zUmVzcG9uc2USNAoMaW5zdHJ1Y3Rpb25zGAEgAygLMh4uc2Fkb2t1LnByZXZpZXcudjEuSW5zdHJ1Y3Rpb24iQAoYQ3JlYXRlSW5zdHJ1Y3Rpb25SZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEg8KB2NvbnRlbnQYAiABKAkiWAoYVXBkYXRlSW5zdHJ1Y3Rpb25SZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhYKDmluc3RydWN0aW9uX2lkGAIgASgEEg8KB2NvbnRlbnQYAyABKAkiRwoYRGVsZXRlSW5zdHJ1Y3Rpb25SZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhYKDmluc3RydWN0aW9uX2lkGAIgASgEIhsKGURlbGV0ZUluc3RydWN0aW9uUmVzcG9uc2UiYgoGTWVtb3J5EgoKAmlkGAEgASgEEhMKC2RvY3VtZW50X2lkGAIgASgEEg8KB2NvbnRlbnQYAyABKAkSEgoKY3JlYXRlZF9hdBgEIAEoCRISCgp1cGRhdGVkX2F0GAUgASgJIioKE0xpc3RNZW1vcmllc1JlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQiQwoUTGlzdE1lbW9yaWVzUmVzcG9uc2USKwoIbWVtb3JpZXMYASADKAsyGS5zYWRva3UucHJldmlldy52MS5NZW1vcnkiPQoTRGVsZXRlTWVtb3J5UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBIRCgltZW1vcnlfaWQYAiABKAQiFgoURGVsZXRlTWVtb3J5UmVzcG9uc2UiHQoNQ29tbWVudEF1dGhvchIMCgR0eXBlGAEgASgJIrYBCgxDb21tZW50UmVwbHkSCgoCaWQYASABKAQSMAoGYXV0aG9yGAIgASgLMiAuc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudEF1dGhvchIMCgRib2R5GAMgASgJEhIKCmNyZWF0ZWRfYXQYBCABKAkSEgoKdXBkYXRlZF9hdBgFIAEoCRIdChByZXZpZXdfcmVxdWVzdGVkGAYgASgISACIAQFCEwoRX3Jldmlld19yZXF1ZXN0ZWQijgUKB0NvbW1lbnQSCgoCaWQYASABKAQSMAoGYXV0aG9yGAIgASgLMiAuc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudEF1dGhvchIMCgRib2R5GAMgASgJEhIKCnN0YXJ0X2xpbmUYBCABKA0SEAoIZW5kX2xpbmUYBSABKA0SGwoTb3JpZ2luYWxfc3RhcnRfbGluZRgGIAEoDRIZChFvcmlnaW5hbF9lbmRfbGluZRgHIAEoDRISCgpjcmVhdGVkX2F0GAggASgJEhIKCnVwZGF0ZWRfYXQYCSABKAkSEAoIcmVzb2x2ZWQYCiABKAgSDQoFc3RhbGUYCyABKAgSGAoLcmVzb2x2ZWRfYXQYDCABKAlIAIgBARI6CgtyZXNvbHZlZF9ieRgNIAEoCzIgLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnRBdXRob3JIAYgBARIYCgtzb3VyY2VfaGFzaBgOIAEoCUgCiAEBEhgKC3NvdXJjZV90ZXh0GA8gASgJSAOIAQESMAoHcmVwbGllcxgQIAMoCzIfLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnRSZXBseRIZCgxkaXNwbGF5X2xpbmUYESABKA1IBIgBARIgChNjdXJyZW50X3NvdXJjZV90ZXh0GBIgASgJSAWIAQESGwoOc291cmNlX2RlbGV0ZWQYEyABKAhIBogBAUIOCgxfcmVzb2x2ZWRfYXRCDgoMX3Jlc29sdmVkX2J5Qg4KDF9zb3VyY2VfaGFzaEIOCgxfc291cmNlX3RleHRCDwoNX2Rpc3BsYXlfbGluZUIWChRfY3VycmVudF9zb3VyY2VfdGV4dEIRCg9fc291cmNlX2RlbGV0ZWQiKgoTTGlzdENvbW1lbnRzUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBCKFAQoQQ29tbWVudHNEb2N1bWVudBIRCglmaWxlX3BhdGgYASABKAkSLAoIY29tbWVudHMYAiADKAsyGi5zYWRva3UucHJldmlldy52MS5Db21tZW50EhwKD2dpdGh1Yl9oZWFkX3NoYRgDIAEoCUgAiAEBQhIKEF9naXRodWJfaGVhZF9zaGEiXwoUQ3JlYXRlQ29tbWVudFJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKc3RhcnRfbGluZRgCIAEoDRIQCghlbmRfbGluZRgDIAEoDRIMCgRib2R5GAQgASgJIk0KFFVwZGF0ZUNvbW1lbnRSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSDAoEYm9keRgDIAEoCSI/ChREZWxldGVDb21tZW50UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEIhcKFURlbGV0ZUNvbW1lbnRSZXNwb25zZSJYChtTZXRDb21tZW50UmVzb2x1dGlvblJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIQCghyZXNvbHZlZBgDIAEoCCJLChJDcmVhdGVSZXBseVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIMCgRib2R5GAMgASgJIl0KElVwZGF0ZVJlcGx5UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEhAKCHJlcGx5X2lkGAMgASgEEgwKBGJvZHkYBCABKAkiTwoSRGVsZXRlUmVwbHlSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSEAoIcmVwbHlfaWQYAyABKAQiFQoTRGVsZXRlUmVwbHlSZXNwb25zZSK9AQocRXhwb3J0Q29tbWVudFRvR2l0SHViUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEhAKCGhlYWRfc2hhGAMgASgJEhoKEmRpc3BsYXllZF9tYXJrZG93bhgEIAEoCRISCgpjcmVhdGVkX2F0GAUgASgJEgwKBGJvZHkYBiABKAkSEgoKc3RhcnRfbGluZRgHIAEoDRIQCghlbmRfbGluZRgIIAEoDSI7Ch1FeHBvcnRDb21tZW50VG9HaXRIdWJSZXNwb25zZRILCgN1cmwYASABKAkSDQoFc3RhdGUYAiABKAkyhhYKDlByZXZpZXdTZXJ2aWNlElkKCkdldFNlc3Npb24SJC5zYWRva3UucHJldmlldy52MS5HZXRTZXNzaW9uUmVxdWVzdBolLnNhZG9rdS5wcmV2aWV3LnYxLkdldFNlc3Npb25SZXNwb25zZRJiCg1HZXRTdGF0aXN0aWNzEicuc2Fkb2t1LnByZXZpZXcudjEuR2V0U3RhdGlzdGljc1JlcXVlc3QaKC5zYWRva3UucHJldmlldy52MS5HZXRTdGF0aXN0aWNzUmVzcG9uc2USYgoNTGlzdERvY3VtZW50cxInLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3REb2N1bWVudHNSZXF1ZXN0Giguc2Fkb2t1LnByZXZpZXcudjEuTGlzdERvY3VtZW50c1Jlc3BvbnNlEl4KDkNyZWF0ZURvY3VtZW50Eiguc2Fkb2t1LnByZXZpZXcudjEuQ3JlYXRlRG9jdW1lbnRSZXF1ZXN0GiIuc2Fkb2t1LnByZXZpZXcudjEuRG9jdW1lbnRTdW1tYXJ5EmgKE1VwZGF0ZURvY3VtZW50VGl0bGUSLS5zYWRva3UucHJldmlldy52MS5VcGRhdGVEb2N1bWVudFRpdGxlUmVxdWVzdBoiLnNhZG9rdS5wcmV2aWV3LnYxLkRvY3VtZW50U3VtbWFyeRJcCgtHZXREb2N1bWVudBIlLnNhZG9rdS5wcmV2aWV3LnYxLkdldERvY3VtZW50UmVxdWVzdBomLnNhZG9rdS5wcmV2aWV3LnYxLkdldERvY3VtZW50UmVzcG9uc2UScQoSR2V0RGlyZWN0b3J5U3RhdHVzEiwuc2Fkb2t1LnByZXZpZXcudjEuR2V0RGlyZWN0b3J5U3RhdHVzUmVxdWVzdBotLnNhZG9rdS5wcmV2aWV3LnYxLkdldERpcmVjdG9yeVN0YXR1c1Jlc3BvbnNlElEKC0dldFNldHRpbmdzEiUuc2Fkb2t1LnByZXZpZXcudjEuR2V0U2V0dGluZ3NSZXF1ZXN0Ghsuc2Fkb2t1LnByZXZpZXcudjEuU2V0dGluZ3MSVwoOVXBkYXRlU2V0dGluZ3MSKC5zYWRva3UucHJldmlldy52MS5VcGRhdGVTZXR0aW5nc1JlcXVlc3QaGy5zYWRva3UucHJldmlldy52MS5TZXR0aW5ncxJrChBHZXRHaXRIdWJBY2NvdW50Eiouc2Fkb2t1LnByZXZpZXcudjEuR2V0R2l0SHViQWNjb3VudFJlcXVlc3QaKy5zYWRva3UucHJldmlldy52MS5HZXRHaXRIdWJBY2NvdW50UmVzcG9uc2USUwoITGlzdFRhZ3MSIi5zYWRva3UucHJldmlldy52MS5MaXN0VGFnc1JlcXVlc3QaIy5zYWRva3UucHJldmlldy52MS5MaXN0VGFnc1Jlc3BvbnNlEkgKCVVwZGF0ZVRhZxIjLnNhZG9rdS5wcmV2aWV3LnYxLlVwZGF0ZVRhZ1JlcXVlc3QaFi5zYWRva3UucHJldmlldy52MS5UYWcSVgoJRGVsZXRlVGFnEiMuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlVGFnUmVxdWVzdBokLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZVRhZ1Jlc3BvbnNlEnQKE1JlcGxhY2VEb2N1bWVudFRhZ3MSLS5zYWRva3UucHJldmlldy52MS5SZXBsYWNlRG9jdW1lbnRUYWdzUmVxdWVzdBouLnNhZG9rdS5wcmV2aWV3LnYxLlJlcGxhY2VEb2N1bWVudFRhZ3NSZXNwb25zZRJrChBMaXN0SW5zdHJ1Y3Rpb25zEiouc2Fkb2t1LnByZXZpZXcudjEuTGlzdEluc3RydWN0aW9uc1JlcXVlc3QaKy5zYWRva3UucHJldmlldy52MS5MaXN0SW5zdHJ1Y3Rpb25zUmVzcG9uc2USYAoRQ3JlYXRlSW5zdHJ1Y3Rpb24SKy5zYWRva3UucHJldmlldy52MS5DcmVhdGVJbnN0cnVjdGlvblJlcXVlc3QaHi5zYWRva3UucHJldmlldy52MS5JbnN0cnVjdGlvbhJgChFVcGRhdGVJbnN0cnVjdGlvbhIrLnNhZG9rdS5wcmV2aWV3LnYxLlVwZGF0ZUluc3RydWN0aW9uUmVxdWVzdBoeLnNhZG9rdS5wcmV2aWV3LnYxLkluc3RydWN0aW9uEm4KEURlbGV0ZUluc3RydWN0aW9uEisuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlSW5zdHJ1Y3Rpb25SZXF1ZXN0Giwuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlSW5zdHJ1Y3Rpb25SZXNwb25zZRJfCgxMaXN0TWVtb3JpZXMSJi5zYWRva3UucHJldmlldy52MS5MaXN0TWVtb3JpZXNSZXF1ZXN0Gicuc2Fkb2t1LnByZXZpZXcudjEuTGlzdE1lbW9yaWVzUmVzcG9uc2USXwoMRGVsZXRlTWVtb3J5EiYuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlTWVtb3J5UmVxdWVzdBonLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZU1lbW9yeVJlc3BvbnNlElsKDExpc3RDb21tZW50cxImLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3RDb21tZW50c1JlcXVlc3QaIy5zYWRva3UucHJldmlldy52MS5Db21tZW50c0RvY3VtZW50ElQKDUNyZWF0ZUNvbW1lbnQSJy5zYWRva3UucHJldmlldy52MS5DcmVhdGVDb21tZW50UmVxdWVzdBoaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSVAoNVXBkYXRlQ29tbWVudBInLnNhZG9rdS5wcmV2aWV3LnYxLlVwZGF0ZUNvbW1lbnRSZXF1ZXN0Ghouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBJiCg1EZWxldGVDb21tZW50Eicuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlQ29tbWVudFJlcXVlc3QaKC5zYWRva3UucHJldmlldy52MS5EZWxldGVDb21tZW50UmVzcG9uc2USYgoUU2V0Q29tbWVudFJlc29sdXRpb24SLi5zYWRva3UucHJldmlldy52MS5TZXRDb21tZW50UmVzb2x1dGlvblJlcXVlc3QaGi5zYWRva3UucHJldmlldy52MS5Db21tZW50ElAKC0NyZWF0ZVJlcGx5EiUuc2Fkb2t1LnByZXZpZXcudjEuQ3JlYXRlUmVwbHlSZXF1ZXN0Ghouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBJQCgtVcGRhdGVSZXBseRIlLnNhZG9rdS5wcmV2aWV3LnYxLlVwZGF0ZVJlcGx5UmVxdWVzdBoaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSXAoLRGVsZXRlUmVwbHkSJS5zYWRva3UucHJldmlldy52MS5EZWxldGVSZXBseVJlcXVlc3QaJi5zYWRva3UucHJldmlldy52MS5EZWxldGVSZXBseVJlc3BvbnNlEnoKFUV4cG9ydENvbW1lbnRUb0dpdEh1YhIvLnNhZG9rdS5wcmV2aWV3LnYxLkV4cG9ydENvbW1lbnRUb0dpdEh1YlJlcXVlc3QaMC5zYWRva3UucHJldmlldy52MS5FeHBvcnRDb21tZW50VG9HaXRIdWJSZXNwb25zZWIGcHJvdG8z",
+    "Ch9zYWRva3UvcHJldmlldy92MS9wcmV2aWV3LnByb3RvEhFzYWRva3UucHJldmlldy52MSITChFHZXRTZXNzaW9uUmVxdWVzdCJ+ChJHZXRTZXNzaW9uUmVzcG9uc2USOQoMcHVsbF9yZXF1ZXN0GAEgASgLMh4uc2Fkb2t1LnByZXZpZXcudjEuUHVsbFJlcXVlc3RIAIgBARIcChRjYW5fY3JlYXRlX2RvY3VtZW50cxgCIAEoCEIPCg1fcHVsbF9yZXF1ZXN0Ik4KC1B1bGxSZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEg4KBm51bWJlchgCIAEoDRINCgV0aXRsZRgDIAEoCRILCgN1cmwYBCABKAkiFgoUR2V0U3RhdGlzdGljc1JlcXVlc3QifgoVR2V0U3RhdGlzdGljc1Jlc3BvbnNlEjYKDWNvbW1lbnRfY291bnQYASABKAsyHy5zYWRva3UucHJldmlldy52MS5Db21tZW50Q291bnQSFQoNZGF0YWJhc2Vfc2l6ZRgCIAEoBBIWCg5kb2N1bWVudF9jb3VudBgDIAEoBCIqCgxDb21tZW50Q291bnQSCwoDYm90GAEgASgEEg0KBWh1bWFuGAIgASgEIjkKA1RhZxIKCgJpZBgBIAEoBBIMCgRuYW1lGAIgASgJEhgKEGJhY2tncm91bmRfY29sb3IYAyABKAkigAEKClRhZ1N1bW1hcnkSCgoCaWQYASABKAQSDAoEbmFtZRgCIAEoCRIYChBiYWNrZ3JvdW5kX2NvbG9yGAMgASgJEhYKDmRvY3VtZW50X2NvdW50GAQgASgEEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCSIWChRMaXN0RG9jdW1lbnRzUmVxdWVzdCJOChVMaXN0RG9jdW1lbnRzUmVzcG9uc2USNQoJZG9jdW1lbnRzGAEgAygLMiIuc2Fkb2t1LnByZXZpZXcudjEuRG9jdW1lbnRTdW1tYXJ5IksKFUNyZWF0ZURvY3VtZW50UmVxdWVzdBIRCglkaXJlY3RvcnkYASABKAkSEAoIZmlsZW5hbWUYAiABKAkSDQoFdGl0bGUYAyABKAkiqAEKD0RvY3VtZW50U3VtbWFyeRIKCgJpZBgBIAEoBBIVCg1yZWxhdGl2ZV9wYXRoGAIgASgJEg0KBXRpdGxlGAMgASgJEg8KB2RlbGV0ZWQYBCABKAgSJAoEdGFncxgFIAMoCzIWLnNhZG9rdS5wcmV2aWV3LnYxLlRhZxIaCg1kaXNwbGF5X3RpdGxlGAcgASgJSACIAQFCEAoOX2Rpc3BsYXlfdGl0bGUiQAoaVXBkYXRlRG9jdW1lbnRUaXRsZVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSDQoFdGl0bGUYAiABKAkiKQoSR2V0RG9jdW1lbnRSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEIjoKF0RvY3VtZW50UmV2aXNpb25TdW1tYXJ5EgoKAmlkGAEgASgEEhMKC3JlY29yZGVkX2F0GAIgASgJIkUKEERvY3VtZW50UmV2aXNpb24SCgoCaWQYASABKAQSEwoLcmVjb3JkZWRfYXQYAiABKAkSEAoIbWFya2Rvd24YAyABKAkiMwocTGlzdERvY3VtZW50UmV2aXNpb25zUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBCJeCh1MaXN0RG9jdW1lbnRSZXZpc2lvbnNSZXNwb25zZRI9CglyZXZpc2lvbnMYASADKAsyKi5zYWRva3UucHJldmlldy52MS5Eb2N1bWVudFJldmlzaW9uU3VtbWFyeSJGChpHZXREb2N1bWVudFJldmlzaW9uUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBITCgtyZXZpc2lvbl9pZBgCIAEoBCKVAgoTR2V0RG9jdW1lbnRSZXNwb25zZRIQCghmaWxlX3VybBgBIAEoCRIQCghtYXJrZG93bhgCIAEoCRINCgV0aXRsZRgDIAEoCRIPCgdkZWxldGVkGAQgASgIEiQKBHRhZ3MYBSADKAsyFi5zYWRva3UucHJldmlldy52MS5UYWcSGgoNZGlzcGxheV90aXRsZRgHIAEoCUgAiAEBEhwKD2dpdGh1Yl9oZWFkX3NoYRgGIAEoCUgBiAEBEh4KEXByZXZpb3VzX21hcmtkb3duGAggASgJSAKIAQFCEAoOX2Rpc3BsYXlfdGl0bGVCEgoQX2dpdGh1Yl9oZWFkX3NoYUIUChJfcHJldmlvdXNfbWFya2Rvd24iGwoZR2V0RGlyZWN0b3J5U3RhdHVzUmVxdWVzdCKSAQoaR2V0RGlyZWN0b3J5U3RhdHVzUmVzcG9uc2USDQoFc3RhdGUYASABKAkSEAoIZGV0ZWN0ZWQYAiABKAQSEgoKcmVnaXN0ZXJlZBgDIAEoBBI1CgVlcnJvchgEIAEoCzIhLnNhZG9rdS5wcmV2aWV3LnYxLkRpcmVjdG9yeUVycm9ySACIAQFCCAoGX2Vycm9yIi8KDkRpcmVjdG9yeUVycm9yEgwKBG5hbWUYASABKAkSDwoHbWVzc2FnZRgCIAEoCSIUChJHZXRTZXR0aW5nc1JlcXVlc3QiwwEKCFNldHRpbmdzEhIKBXRoZW1lGAEgASgJSACIAQESFgoJY29kZV93cmFwGAIgASgJSAGIAQESEgoKZm9udF9zY2FsZRgDIAEoARIcChRleGNsdWRlZF9kaXJlY3RvcmllcxgEIAMoCRIRCgltYXhfZGVwdGgYBSABKA0SEQoJbWF4X2ZpbGVzGAYgASgNEhsKE21hcmtkb3duX2V4dGVuc2lvbnMYByADKAlCCAoGX3RoZW1lQgwKCl9jb2RlX3dyYXAirgEKFVVwZGF0ZVNldHRpbmdzUmVxdWVzdBINCgV0aGVtZRgBIAEoCRIRCgljb2RlX3dyYXAYAiABKAkSEgoKZm9udF9zY2FsZRgDIAEoARIcChRleGNsdWRlZF9kaXJlY3RvcmllcxgEIAMoCRIRCgltYXhfZGVwdGgYBSABKA0SEQoJbWF4X2ZpbGVzGAYgASgNEhsKE21hcmtkb3duX2V4dGVuc2lvbnMYByADKAkiGQoXR2V0R2l0SHViQWNjb3VudFJlcXVlc3QijAEKGEdldEdpdEh1YkFjY291bnRSZXNwb25zZRIKCgJvaxgBIAEoCBI2CgdhY2NvdW50GAIgASgLMiAuc2Fkb2t1LnByZXZpZXcudjEuR2l0SHViQWNjb3VudEgAiAEBEhQKB21lc3NhZ2UYAyABKAlIAYgBAUIKCghfYWNjb3VudEIKCghfbWVzc2FnZSJiCg1HaXRIdWJBY2NvdW50Eg0KBWxvZ2luGAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIXCgphdmF0YXJfdXJsGAMgASgJSAGIAQFCBwoFX25hbWVCDQoLX2F2YXRhcl91cmwiEQoPTGlzdFRhZ3NSZXF1ZXN0Ij8KEExpc3RUYWdzUmVzcG9uc2USKwoEdGFncxgBIAMoCzIdLnNhZG9rdS5wcmV2aWV3LnYxLlRhZ1N1bW1hcnkiHgoQRGVsZXRlVGFnUmVxdWVzdBIKCgJpZBgBIAEoBCITChFEZWxldGVUYWdSZXNwb25zZSJGChBVcGRhdGVUYWdSZXF1ZXN0EgoKAmlkGAEgASgEEgwKBG5hbWUYAiABKAkSGAoQYmFja2dyb3VuZF9jb2xvchgDIAEoCSI5CgxUYWdSZWZlcmVuY2USDAoCaWQYASABKARIABIOCgRuYW1lGAIgASgJSABCCwoJcmVmZXJlbmNlImAKGlJlcGxhY2VEb2N1bWVudFRhZ3NSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEi0KBHRhZ3MYAiADKAsyHy5zYWRva3UucHJldmlldy52MS5UYWdSZWZlcmVuY2UiQwobUmVwbGFjZURvY3VtZW50VGFnc1Jlc3BvbnNlEiQKBHRhZ3MYASADKAsyFi5zYWRva3UucHJldmlldy52MS5UYWciUgoLSW5zdHJ1Y3Rpb24SCgoCaWQYASABKAQSDwoHY29udGVudBgCIAEoCRISCgpjcmVhdGVkX2F0GAMgASgJEhIKCnVwZGF0ZWRfYXQYBCABKAkiLgoXTGlzdEluc3RydWN0aW9uc1JlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQiUAoYTGlzdEluc3RydWN0aW9uc1Jlc3BvbnNlEjQKDGluc3RydWN0aW9ucxgBIAMoCzIeLnNhZG9rdS5wcmV2aWV3LnYxLkluc3RydWN0aW9uIkAKGENyZWF0ZUluc3RydWN0aW9uUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBIPCgdjb250ZW50GAIgASgJIlgKGFVwZGF0ZUluc3RydWN0aW9uUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBIWCg5pbnN0cnVjdGlvbl9pZBgCIAEoBBIPCgdjb250ZW50GAMgASgJIkcKGERlbGV0ZUluc3RydWN0aW9uUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBIWCg5pbnN0cnVjdGlvbl9pZBgCIAEoBCIbChlEZWxldGVJbnN0cnVjdGlvblJlc3BvbnNlImIKBk1lbW9yeRIKCgJpZBgBIAEoBBITCgtkb2N1bWVudF9pZBgCIAEoBBIPCgdjb250ZW50GAMgASgJEhIKCmNyZWF0ZWRfYXQYBCABKAkSEgoKdXBkYXRlZF9hdBgFIAEoCSIqChNMaXN0TWVtb3JpZXNSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEIkMKFExpc3RNZW1vcmllc1Jlc3BvbnNlEisKCG1lbW9yaWVzGAEgAygLMhkuc2Fkb2t1LnByZXZpZXcudjEuTWVtb3J5Ij0KE0RlbGV0ZU1lbW9yeVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEQoJbWVtb3J5X2lkGAIgASgEIhYKFERlbGV0ZU1lbW9yeVJlc3BvbnNlIh0KDUNvbW1lbnRBdXRob3ISDAoEdHlwZRgBIAEoCSK2AQoMQ29tbWVudFJlcGx5EgoKAmlkGAEgASgEEjAKBmF1dGhvchgCIAEoCzIgLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnRBdXRob3ISDAoEYm9keRgDIAEoCRISCgpjcmVhdGVkX2F0GAQgASgJEhIKCnVwZGF0ZWRfYXQYBSABKAkSHQoQcmV2aWV3X3JlcXVlc3RlZBgGIAEoCEgAiAEBQhMKEV9yZXZpZXdfcmVxdWVzdGVkIo4FCgdDb21tZW50EgoKAmlkGAEgASgEEjAKBmF1dGhvchgCIAEoCzIgLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnRBdXRob3ISDAoEYm9keRgDIAEoCRISCgpzdGFydF9saW5lGAQgASgNEhAKCGVuZF9saW5lGAUgASgNEhsKE29yaWdpbmFsX3N0YXJ0X2xpbmUYBiABKA0SGQoRb3JpZ2luYWxfZW5kX2xpbmUYByABKA0SEgoKY3JlYXRlZF9hdBgIIAEoCRISCgp1cGRhdGVkX2F0GAkgASgJEhAKCHJlc29sdmVkGAogASgIEg0KBXN0YWxlGAsgASgIEhgKC3Jlc29sdmVkX2F0GAwgASgJSACIAQESOgoLcmVzb2x2ZWRfYnkYDSABKAsyIC5zYWRva3UucHJldmlldy52MS5Db21tZW50QXV0aG9ySAGIAQESGAoLc291cmNlX2hhc2gYDiABKAlIAogBARIYCgtzb3VyY2VfdGV4dBgPIAEoCUgDiAEBEjAKB3JlcGxpZXMYECADKAsyHy5zYWRva3UucHJldmlldy52MS5Db21tZW50UmVwbHkSGQoMZGlzcGxheV9saW5lGBEgASgNSASIAQESIAoTY3VycmVudF9zb3VyY2VfdGV4dBgSIAEoCUgFiAEBEhsKDnNvdXJjZV9kZWxldGVkGBMgASgISAaIAQFCDgoMX3Jlc29sdmVkX2F0Qg4KDF9yZXNvbHZlZF9ieUIOCgxfc291cmNlX2hhc2hCDgoMX3NvdXJjZV90ZXh0Qg8KDV9kaXNwbGF5X2xpbmVCFgoUX2N1cnJlbnRfc291cmNlX3RleHRCEQoPX3NvdXJjZV9kZWxldGVkIioKE0xpc3RDb21tZW50c1JlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQihQEKEENvbW1lbnRzRG9jdW1lbnQSEQoJZmlsZV9wYXRoGAEgASgJEiwKCGNvbW1lbnRzGAIgAygLMhouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBIcCg9naXRodWJfaGVhZF9zaGEYAyABKAlIAIgBAUISChBfZ2l0aHViX2hlYWRfc2hhIl8KFENyZWF0ZUNvbW1lbnRSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCnN0YXJ0X2xpbmUYAiABKA0SEAoIZW5kX2xpbmUYAyABKA0SDAoEYm9keRgEIAEoCSJNChRVcGRhdGVDb21tZW50UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEgwKBGJvZHkYAyABKAkiPwoURGVsZXRlQ29tbWVudFJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBCIXChVEZWxldGVDb21tZW50UmVzcG9uc2UiWAobU2V0Q29tbWVudFJlc29sdXRpb25SZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSEAoIcmVzb2x2ZWQYAyABKAgiSwoSQ3JlYXRlUmVwbHlSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSDAoEYm9keRgDIAEoCSJdChJVcGRhdGVSZXBseVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIQCghyZXBseV9pZBgDIAEoBBIMCgRib2R5GAQgASgJIk8KEkRlbGV0ZVJlcGx5UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEhAKCHJlcGx5X2lkGAMgASgEIhUKE0RlbGV0ZVJlcGx5UmVzcG9uc2UivQEKHEV4cG9ydENvbW1lbnRUb0dpdEh1YlJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIQCghoZWFkX3NoYRgDIAEoCRIaChJkaXNwbGF5ZWRfbWFya2Rvd24YBCABKAkSEgoKY3JlYXRlZF9hdBgFIAEoCRIMCgRib2R5GAYgASgJEhIKCnN0YXJ0X2xpbmUYByABKA0SEAoIZW5kX2xpbmUYCCABKA0iOwodRXhwb3J0Q29tbWVudFRvR2l0SHViUmVzcG9uc2USCwoDdXJsGAEgASgJEg0KBXN0YXRlGAIgASgJMu0XCg5QcmV2aWV3U2VydmljZRJZCgpHZXRTZXNzaW9uEiQuc2Fkb2t1LnByZXZpZXcudjEuR2V0U2Vzc2lvblJlcXVlc3QaJS5zYWRva3UucHJldmlldy52MS5HZXRTZXNzaW9uUmVzcG9uc2USYgoNR2V0U3RhdGlzdGljcxInLnNhZG9rdS5wcmV2aWV3LnYxLkdldFN0YXRpc3RpY3NSZXF1ZXN0Giguc2Fkb2t1LnByZXZpZXcudjEuR2V0U3RhdGlzdGljc1Jlc3BvbnNlEmIKDUxpc3REb2N1bWVudHMSJy5zYWRva3UucHJldmlldy52MS5MaXN0RG9jdW1lbnRzUmVxdWVzdBooLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3REb2N1bWVudHNSZXNwb25zZRJeCg5DcmVhdGVEb2N1bWVudBIoLnNhZG9rdS5wcmV2aWV3LnYxLkNyZWF0ZURvY3VtZW50UmVxdWVzdBoiLnNhZG9rdS5wcmV2aWV3LnYxLkRvY3VtZW50U3VtbWFyeRJoChNVcGRhdGVEb2N1bWVudFRpdGxlEi0uc2Fkb2t1LnByZXZpZXcudjEuVXBkYXRlRG9jdW1lbnRUaXRsZVJlcXVlc3QaIi5zYWRva3UucHJldmlldy52MS5Eb2N1bWVudFN1bW1hcnkSXAoLR2V0RG9jdW1lbnQSJS5zYWRva3UucHJldmlldy52MS5HZXREb2N1bWVudFJlcXVlc3QaJi5zYWRva3UucHJldmlldy52MS5HZXREb2N1bWVudFJlc3BvbnNlEnoKFUxpc3REb2N1bWVudFJldmlzaW9ucxIvLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3REb2N1bWVudFJldmlzaW9uc1JlcXVlc3QaMC5zYWRva3UucHJldmlldy52MS5MaXN0RG9jdW1lbnRSZXZpc2lvbnNSZXNwb25zZRJpChNHZXREb2N1bWVudFJldmlzaW9uEi0uc2Fkb2t1LnByZXZpZXcudjEuR2V0RG9jdW1lbnRSZXZpc2lvblJlcXVlc3QaIy5zYWRva3UucHJldmlldy52MS5Eb2N1bWVudFJldmlzaW9uEnEKEkdldERpcmVjdG9yeVN0YXR1cxIsLnNhZG9rdS5wcmV2aWV3LnYxLkdldERpcmVjdG9yeVN0YXR1c1JlcXVlc3QaLS5zYWRva3UucHJldmlldy52MS5HZXREaXJlY3RvcnlTdGF0dXNSZXNwb25zZRJRCgtHZXRTZXR0aW5ncxIlLnNhZG9rdS5wcmV2aWV3LnYxLkdldFNldHRpbmdzUmVxdWVzdBobLnNhZG9rdS5wcmV2aWV3LnYxLlNldHRpbmdzElcKDlVwZGF0ZVNldHRpbmdzEiguc2Fkb2t1LnByZXZpZXcudjEuVXBkYXRlU2V0dGluZ3NSZXF1ZXN0Ghsuc2Fkb2t1LnByZXZpZXcudjEuU2V0dGluZ3MSawoQR2V0R2l0SHViQWNjb3VudBIqLnNhZG9rdS5wcmV2aWV3LnYxLkdldEdpdEh1YkFjY291bnRSZXF1ZXN0Gisuc2Fkb2t1LnByZXZpZXcudjEuR2V0R2l0SHViQWNjb3VudFJlc3BvbnNlElMKCExpc3RUYWdzEiIuc2Fkb2t1LnByZXZpZXcudjEuTGlzdFRhZ3NSZXF1ZXN0GiMuc2Fkb2t1LnByZXZpZXcudjEuTGlzdFRhZ3NSZXNwb25zZRJICglVcGRhdGVUYWcSIy5zYWRva3UucHJldmlldy52MS5VcGRhdGVUYWdSZXF1ZXN0GhYuc2Fkb2t1LnByZXZpZXcudjEuVGFnElYKCURlbGV0ZVRhZxIjLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZVRhZ1JlcXVlc3QaJC5zYWRva3UucHJldmlldy52MS5EZWxldGVUYWdSZXNwb25zZRJ0ChNSZXBsYWNlRG9jdW1lbnRUYWdzEi0uc2Fkb2t1LnByZXZpZXcudjEuUmVwbGFjZURvY3VtZW50VGFnc1JlcXVlc3QaLi5zYWRva3UucHJldmlldy52MS5SZXBsYWNlRG9jdW1lbnRUYWdzUmVzcG9uc2USawoQTGlzdEluc3RydWN0aW9ucxIqLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3RJbnN0cnVjdGlvbnNSZXF1ZXN0Gisuc2Fkb2t1LnByZXZpZXcudjEuTGlzdEluc3RydWN0aW9uc1Jlc3BvbnNlEmAKEUNyZWF0ZUluc3RydWN0aW9uEisuc2Fkb2t1LnByZXZpZXcudjEuQ3JlYXRlSW5zdHJ1Y3Rpb25SZXF1ZXN0Gh4uc2Fkb2t1LnByZXZpZXcudjEuSW5zdHJ1Y3Rpb24SYAoRVXBkYXRlSW5zdHJ1Y3Rpb24SKy5zYWRva3UucHJldmlldy52MS5VcGRhdGVJbnN0cnVjdGlvblJlcXVlc3QaHi5zYWRva3UucHJldmlldy52MS5JbnN0cnVjdGlvbhJuChFEZWxldGVJbnN0cnVjdGlvbhIrLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZUluc3RydWN0aW9uUmVxdWVzdBosLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZUluc3RydWN0aW9uUmVzcG9uc2USXwoMTGlzdE1lbW9yaWVzEiYuc2Fkb2t1LnByZXZpZXcudjEuTGlzdE1lbW9yaWVzUmVxdWVzdBonLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3RNZW1vcmllc1Jlc3BvbnNlEl8KDERlbGV0ZU1lbW9yeRImLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZU1lbW9yeVJlcXVlc3QaJy5zYWRva3UucHJldmlldy52MS5EZWxldGVNZW1vcnlSZXNwb25zZRJbCgxMaXN0Q29tbWVudHMSJi5zYWRva3UucHJldmlldy52MS5MaXN0Q29tbWVudHNSZXF1ZXN0GiMuc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudHNEb2N1bWVudBJUCg1DcmVhdGVDb21tZW50Eicuc2Fkb2t1LnByZXZpZXcudjEuQ3JlYXRlQ29tbWVudFJlcXVlc3QaGi5zYWRva3UucHJldmlldy52MS5Db21tZW50ElQKDVVwZGF0ZUNvbW1lbnQSJy5zYWRva3UucHJldmlldy52MS5VcGRhdGVDb21tZW50UmVxdWVzdBoaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSYgoNRGVsZXRlQ29tbWVudBInLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZUNvbW1lbnRSZXF1ZXN0Giguc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlQ29tbWVudFJlc3BvbnNlEmIKFFNldENvbW1lbnRSZXNvbHV0aW9uEi4uc2Fkb2t1LnByZXZpZXcudjEuU2V0Q29tbWVudFJlc29sdXRpb25SZXF1ZXN0Ghouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBJQCgtDcmVhdGVSZXBseRIlLnNhZG9rdS5wcmV2aWV3LnYxLkNyZWF0ZVJlcGx5UmVxdWVzdBoaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSUAoLVXBkYXRlUmVwbHkSJS5zYWRva3UucHJldmlldy52MS5VcGRhdGVSZXBseVJlcXVlc3QaGi5zYWRva3UucHJldmlldy52MS5Db21tZW50ElwKC0RlbGV0ZVJlcGx5EiUuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlUmVwbHlSZXF1ZXN0GiYuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlUmVwbHlSZXNwb25zZRJ6ChVFeHBvcnRDb21tZW50VG9HaXRIdWISLy5zYWRva3UucHJldmlldy52MS5FeHBvcnRDb21tZW50VG9HaXRIdWJSZXF1ZXN0GjAuc2Fkb2t1LnByZXZpZXcudjEuRXhwb3J0Q29tbWVudFRvR2l0SHViUmVzcG9uc2ViBnByb3RvMw",
   );
 
 /**
@@ -392,6 +392,129 @@ export const GetDocumentRequestSchema: GenMessage<
   messageDesc(file_sadoku_preview_v1_preview, 13);
 
 /**
+ * @generated from message sadoku.preview.v1.DocumentRevisionSummary
+ */
+export type DocumentRevisionSummary =
+  & Message<"sadoku.preview.v1.DocumentRevisionSummary">
+  & {
+    /**
+     * @generated from field: uint64 id = 1;
+     */
+    id: bigint;
+
+    /**
+     * @generated from field: string recorded_at = 2;
+     */
+    recordedAt: string;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.DocumentRevisionSummary.
+ * Use `create(DocumentRevisionSummarySchema)` to create a new message.
+ */
+export const DocumentRevisionSummarySchema: GenMessage<
+  DocumentRevisionSummary
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 14);
+
+/**
+ * @generated from message sadoku.preview.v1.DocumentRevision
+ */
+export type DocumentRevision = Message<"sadoku.preview.v1.DocumentRevision"> & {
+  /**
+   * @generated from field: uint64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string recorded_at = 2;
+   */
+  recordedAt: string;
+
+  /**
+   * @generated from field: string markdown = 3;
+   */
+  markdown: string;
+};
+
+/**
+ * Describes the message sadoku.preview.v1.DocumentRevision.
+ * Use `create(DocumentRevisionSchema)` to create a new message.
+ */
+export const DocumentRevisionSchema: GenMessage<
+  DocumentRevision
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 15);
+
+/**
+ * @generated from message sadoku.preview.v1.ListDocumentRevisionsRequest
+ */
+export type ListDocumentRevisionsRequest =
+  & Message<"sadoku.preview.v1.ListDocumentRevisionsRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListDocumentRevisionsRequest.
+ * Use `create(ListDocumentRevisionsRequestSchema)` to create a new message.
+ */
+export const ListDocumentRevisionsRequestSchema: GenMessage<
+  ListDocumentRevisionsRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 16);
+
+/**
+ * @generated from message sadoku.preview.v1.ListDocumentRevisionsResponse
+ */
+export type ListDocumentRevisionsResponse =
+  & Message<"sadoku.preview.v1.ListDocumentRevisionsResponse">
+  & {
+    /**
+     * @generated from field: repeated sadoku.preview.v1.DocumentRevisionSummary revisions = 1;
+     */
+    revisions: DocumentRevisionSummary[];
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.ListDocumentRevisionsResponse.
+ * Use `create(ListDocumentRevisionsResponseSchema)` to create a new message.
+ */
+export const ListDocumentRevisionsResponseSchema: GenMessage<
+  ListDocumentRevisionsResponse
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 17);
+
+/**
+ * @generated from message sadoku.preview.v1.GetDocumentRevisionRequest
+ */
+export type GetDocumentRevisionRequest =
+  & Message<"sadoku.preview.v1.GetDocumentRevisionRequest">
+  & {
+    /**
+     * @generated from field: uint64 document_id = 1;
+     */
+    documentId: bigint;
+
+    /**
+     * @generated from field: uint64 revision_id = 2;
+     */
+    revisionId: bigint;
+  };
+
+/**
+ * Describes the message sadoku.preview.v1.GetDocumentRevisionRequest.
+ * Use `create(GetDocumentRevisionRequestSchema)` to create a new message.
+ */
+export const GetDocumentRevisionRequestSchema: GenMessage<
+  GetDocumentRevisionRequest
+> = /*@__PURE__*/
+  messageDesc(file_sadoku_preview_v1_preview, 18);
+
+/**
  * @generated from message sadoku.preview.v1.GetDocumentResponse
  */
 export type GetDocumentResponse =
@@ -445,7 +568,7 @@ export type GetDocumentResponse =
 export const GetDocumentResponseSchema: GenMessage<
   GetDocumentResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 14);
+  messageDesc(file_sadoku_preview_v1_preview, 19);
 
 /**
  * @generated from message sadoku.preview.v1.GetDirectoryStatusRequest
@@ -461,7 +584,7 @@ export type GetDirectoryStatusRequest =
 export const GetDirectoryStatusRequestSchema: GenMessage<
   GetDirectoryStatusRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 15);
+  messageDesc(file_sadoku_preview_v1_preview, 20);
 
 /**
  * @generated from message sadoku.preview.v1.GetDirectoryStatusResponse
@@ -497,7 +620,7 @@ export type GetDirectoryStatusResponse =
 export const GetDirectoryStatusResponseSchema: GenMessage<
   GetDirectoryStatusResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 16);
+  messageDesc(file_sadoku_preview_v1_preview, 21);
 
 /**
  * @generated from message sadoku.preview.v1.DirectoryError
@@ -519,7 +642,7 @@ export type DirectoryError = Message<"sadoku.preview.v1.DirectoryError"> & {
  * Use `create(DirectoryErrorSchema)` to create a new message.
  */
 export const DirectoryErrorSchema: GenMessage<DirectoryError> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 17);
+  messageDesc(file_sadoku_preview_v1_preview, 22);
 
 /**
  * @generated from message sadoku.preview.v1.GetSettingsRequest
@@ -535,7 +658,7 @@ export type GetSettingsRequest =
 export const GetSettingsRequestSchema: GenMessage<
   GetSettingsRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 18);
+  messageDesc(file_sadoku_preview_v1_preview, 23);
 
 /**
  * @generated from message sadoku.preview.v1.Settings
@@ -582,7 +705,7 @@ export type Settings = Message<"sadoku.preview.v1.Settings"> & {
  * Use `create(SettingsSchema)` to create a new message.
  */
 export const SettingsSchema: GenMessage<Settings> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 19);
+  messageDesc(file_sadoku_preview_v1_preview, 24);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateSettingsRequest
@@ -633,7 +756,7 @@ export type UpdateSettingsRequest =
 export const UpdateSettingsRequestSchema: GenMessage<
   UpdateSettingsRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 20);
+  messageDesc(file_sadoku_preview_v1_preview, 25);
 
 /**
  * @generated from message sadoku.preview.v1.GetGitHubAccountRequest
@@ -649,7 +772,7 @@ export type GetGitHubAccountRequest =
 export const GetGitHubAccountRequestSchema: GenMessage<
   GetGitHubAccountRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 21);
+  messageDesc(file_sadoku_preview_v1_preview, 26);
 
 /**
  * @generated from message sadoku.preview.v1.GetGitHubAccountResponse
@@ -680,7 +803,7 @@ export type GetGitHubAccountResponse =
 export const GetGitHubAccountResponseSchema: GenMessage<
   GetGitHubAccountResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 22);
+  messageDesc(file_sadoku_preview_v1_preview, 27);
 
 /**
  * @generated from message sadoku.preview.v1.GitHubAccount
@@ -707,7 +830,7 @@ export type GitHubAccount = Message<"sadoku.preview.v1.GitHubAccount"> & {
  * Use `create(GitHubAccountSchema)` to create a new message.
  */
 export const GitHubAccountSchema: GenMessage<GitHubAccount> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 23);
+  messageDesc(file_sadoku_preview_v1_preview, 28);
 
 /**
  * @generated from message sadoku.preview.v1.ListTagsRequest
@@ -719,7 +842,7 @@ export type ListTagsRequest = Message<"sadoku.preview.v1.ListTagsRequest"> & {};
  * Use `create(ListTagsRequestSchema)` to create a new message.
  */
 export const ListTagsRequestSchema: GenMessage<ListTagsRequest> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 24);
+  messageDesc(file_sadoku_preview_v1_preview, 29);
 
 /**
  * @generated from message sadoku.preview.v1.ListTagsResponse
@@ -738,7 +861,7 @@ export type ListTagsResponse = Message<"sadoku.preview.v1.ListTagsResponse"> & {
 export const ListTagsResponseSchema: GenMessage<
   ListTagsResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 25);
+  messageDesc(file_sadoku_preview_v1_preview, 30);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteTagRequest
@@ -757,7 +880,7 @@ export type DeleteTagRequest = Message<"sadoku.preview.v1.DeleteTagRequest"> & {
 export const DeleteTagRequestSchema: GenMessage<
   DeleteTagRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 26);
+  messageDesc(file_sadoku_preview_v1_preview, 31);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteTagResponse
@@ -773,7 +896,7 @@ export type DeleteTagResponse =
 export const DeleteTagResponseSchema: GenMessage<
   DeleteTagResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 27);
+  messageDesc(file_sadoku_preview_v1_preview, 32);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateTagRequest
@@ -802,7 +925,7 @@ export type UpdateTagRequest = Message<"sadoku.preview.v1.UpdateTagRequest"> & {
 export const UpdateTagRequestSchema: GenMessage<
   UpdateTagRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 28);
+  messageDesc(file_sadoku_preview_v1_preview, 33);
 
 /**
  * @generated from message sadoku.preview.v1.TagReference
@@ -831,7 +954,7 @@ export type TagReference = Message<"sadoku.preview.v1.TagReference"> & {
  * Use `create(TagReferenceSchema)` to create a new message.
  */
 export const TagReferenceSchema: GenMessage<TagReference> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 29);
+  messageDesc(file_sadoku_preview_v1_preview, 34);
 
 /**
  * @generated from message sadoku.preview.v1.ReplaceDocumentTagsRequest
@@ -857,7 +980,7 @@ export type ReplaceDocumentTagsRequest =
 export const ReplaceDocumentTagsRequestSchema: GenMessage<
   ReplaceDocumentTagsRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 30);
+  messageDesc(file_sadoku_preview_v1_preview, 35);
 
 /**
  * @generated from message sadoku.preview.v1.ReplaceDocumentTagsResponse
@@ -878,7 +1001,7 @@ export type ReplaceDocumentTagsResponse =
 export const ReplaceDocumentTagsResponseSchema: GenMessage<
   ReplaceDocumentTagsResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 31);
+  messageDesc(file_sadoku_preview_v1_preview, 36);
 
 /**
  * @generated from message sadoku.preview.v1.Instruction
@@ -910,7 +1033,7 @@ export type Instruction = Message<"sadoku.preview.v1.Instruction"> & {
  * Use `create(InstructionSchema)` to create a new message.
  */
 export const InstructionSchema: GenMessage<Instruction> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 32);
+  messageDesc(file_sadoku_preview_v1_preview, 37);
 
 /**
  * @generated from message sadoku.preview.v1.ListInstructionsRequest
@@ -931,7 +1054,7 @@ export type ListInstructionsRequest =
 export const ListInstructionsRequestSchema: GenMessage<
   ListInstructionsRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 33);
+  messageDesc(file_sadoku_preview_v1_preview, 38);
 
 /**
  * @generated from message sadoku.preview.v1.ListInstructionsResponse
@@ -952,7 +1075,7 @@ export type ListInstructionsResponse =
 export const ListInstructionsResponseSchema: GenMessage<
   ListInstructionsResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 34);
+  messageDesc(file_sadoku_preview_v1_preview, 39);
 
 /**
  * @generated from message sadoku.preview.v1.CreateInstructionRequest
@@ -978,7 +1101,7 @@ export type CreateInstructionRequest =
 export const CreateInstructionRequestSchema: GenMessage<
   CreateInstructionRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 35);
+  messageDesc(file_sadoku_preview_v1_preview, 40);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateInstructionRequest
@@ -1009,7 +1132,7 @@ export type UpdateInstructionRequest =
 export const UpdateInstructionRequestSchema: GenMessage<
   UpdateInstructionRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 36);
+  messageDesc(file_sadoku_preview_v1_preview, 41);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteInstructionRequest
@@ -1035,7 +1158,7 @@ export type DeleteInstructionRequest =
 export const DeleteInstructionRequestSchema: GenMessage<
   DeleteInstructionRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 37);
+  messageDesc(file_sadoku_preview_v1_preview, 42);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteInstructionResponse
@@ -1051,7 +1174,7 @@ export type DeleteInstructionResponse =
 export const DeleteInstructionResponseSchema: GenMessage<
   DeleteInstructionResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 38);
+  messageDesc(file_sadoku_preview_v1_preview, 43);
 
 /**
  * @generated from message sadoku.preview.v1.Memory
@@ -1088,7 +1211,7 @@ export type Memory = Message<"sadoku.preview.v1.Memory"> & {
  * Use `create(MemorySchema)` to create a new message.
  */
 export const MemorySchema: GenMessage<Memory> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 39);
+  messageDesc(file_sadoku_preview_v1_preview, 44);
 
 /**
  * @generated from message sadoku.preview.v1.ListMemoriesRequest
@@ -1109,7 +1232,7 @@ export type ListMemoriesRequest =
 export const ListMemoriesRequestSchema: GenMessage<
   ListMemoriesRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 40);
+  messageDesc(file_sadoku_preview_v1_preview, 45);
 
 /**
  * @generated from message sadoku.preview.v1.ListMemoriesResponse
@@ -1130,7 +1253,7 @@ export type ListMemoriesResponse =
 export const ListMemoriesResponseSchema: GenMessage<
   ListMemoriesResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 41);
+  messageDesc(file_sadoku_preview_v1_preview, 46);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteMemoryRequest
@@ -1156,7 +1279,7 @@ export type DeleteMemoryRequest =
 export const DeleteMemoryRequestSchema: GenMessage<
   DeleteMemoryRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 42);
+  messageDesc(file_sadoku_preview_v1_preview, 47);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteMemoryResponse
@@ -1172,7 +1295,7 @@ export type DeleteMemoryResponse =
 export const DeleteMemoryResponseSchema: GenMessage<
   DeleteMemoryResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 43);
+  messageDesc(file_sadoku_preview_v1_preview, 48);
 
 /**
  * @generated from message sadoku.preview.v1.CommentAuthor
@@ -1189,7 +1312,7 @@ export type CommentAuthor = Message<"sadoku.preview.v1.CommentAuthor"> & {
  * Use `create(CommentAuthorSchema)` to create a new message.
  */
 export const CommentAuthorSchema: GenMessage<CommentAuthor> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 44);
+  messageDesc(file_sadoku_preview_v1_preview, 49);
 
 /**
  * @generated from message sadoku.preview.v1.CommentReply
@@ -1231,7 +1354,7 @@ export type CommentReply = Message<"sadoku.preview.v1.CommentReply"> & {
  * Use `create(CommentReplySchema)` to create a new message.
  */
 export const CommentReplySchema: GenMessage<CommentReply> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 45);
+  messageDesc(file_sadoku_preview_v1_preview, 50);
 
 /**
  * @generated from message sadoku.preview.v1.Comment
@@ -1338,7 +1461,7 @@ export type Comment = Message<"sadoku.preview.v1.Comment"> & {
  * Use `create(CommentSchema)` to create a new message.
  */
 export const CommentSchema: GenMessage<Comment> = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 46);
+  messageDesc(file_sadoku_preview_v1_preview, 51);
 
 /**
  * @generated from message sadoku.preview.v1.ListCommentsRequest
@@ -1359,7 +1482,7 @@ export type ListCommentsRequest =
 export const ListCommentsRequestSchema: GenMessage<
   ListCommentsRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 47);
+  messageDesc(file_sadoku_preview_v1_preview, 52);
 
 /**
  * @generated from message sadoku.preview.v1.CommentsDocument
@@ -1388,7 +1511,7 @@ export type CommentsDocument = Message<"sadoku.preview.v1.CommentsDocument"> & {
 export const CommentsDocumentSchema: GenMessage<
   CommentsDocument
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 48);
+  messageDesc(file_sadoku_preview_v1_preview, 53);
 
 /**
  * @generated from message sadoku.preview.v1.CreateCommentRequest
@@ -1424,7 +1547,7 @@ export type CreateCommentRequest =
 export const CreateCommentRequestSchema: GenMessage<
   CreateCommentRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 49);
+  messageDesc(file_sadoku_preview_v1_preview, 54);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateCommentRequest
@@ -1455,7 +1578,7 @@ export type UpdateCommentRequest =
 export const UpdateCommentRequestSchema: GenMessage<
   UpdateCommentRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 50);
+  messageDesc(file_sadoku_preview_v1_preview, 55);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteCommentRequest
@@ -1481,7 +1604,7 @@ export type DeleteCommentRequest =
 export const DeleteCommentRequestSchema: GenMessage<
   DeleteCommentRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 51);
+  messageDesc(file_sadoku_preview_v1_preview, 56);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteCommentResponse
@@ -1497,7 +1620,7 @@ export type DeleteCommentResponse =
 export const DeleteCommentResponseSchema: GenMessage<
   DeleteCommentResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 52);
+  messageDesc(file_sadoku_preview_v1_preview, 57);
 
 /**
  * @generated from message sadoku.preview.v1.SetCommentResolutionRequest
@@ -1528,7 +1651,7 @@ export type SetCommentResolutionRequest =
 export const SetCommentResolutionRequestSchema: GenMessage<
   SetCommentResolutionRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 53);
+  messageDesc(file_sadoku_preview_v1_preview, 58);
 
 /**
  * @generated from message sadoku.preview.v1.CreateReplyRequest
@@ -1559,7 +1682,7 @@ export type CreateReplyRequest =
 export const CreateReplyRequestSchema: GenMessage<
   CreateReplyRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 54);
+  messageDesc(file_sadoku_preview_v1_preview, 59);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateReplyRequest
@@ -1595,7 +1718,7 @@ export type UpdateReplyRequest =
 export const UpdateReplyRequestSchema: GenMessage<
   UpdateReplyRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 55);
+  messageDesc(file_sadoku_preview_v1_preview, 60);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteReplyRequest
@@ -1626,7 +1749,7 @@ export type DeleteReplyRequest =
 export const DeleteReplyRequestSchema: GenMessage<
   DeleteReplyRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 56);
+  messageDesc(file_sadoku_preview_v1_preview, 61);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteReplyResponse
@@ -1642,7 +1765,7 @@ export type DeleteReplyResponse =
 export const DeleteReplyResponseSchema: GenMessage<
   DeleteReplyResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 57);
+  messageDesc(file_sadoku_preview_v1_preview, 62);
 
 /**
  * @generated from message sadoku.preview.v1.ExportCommentToGitHubRequest
@@ -1698,7 +1821,7 @@ export type ExportCommentToGitHubRequest =
 export const ExportCommentToGitHubRequestSchema: GenMessage<
   ExportCommentToGitHubRequest
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 58);
+  messageDesc(file_sadoku_preview_v1_preview, 63);
 
 /**
  * @generated from message sadoku.preview.v1.ExportCommentToGitHubResponse
@@ -1724,7 +1847,7 @@ export type ExportCommentToGitHubResponse =
 export const ExportCommentToGitHubResponseSchema: GenMessage<
   ExportCommentToGitHubResponse
 > = /*@__PURE__*/
-  messageDesc(file_sadoku_preview_v1_preview, 59);
+  messageDesc(file_sadoku_preview_v1_preview, 64);
 
 /**
  * @generated from service sadoku.preview.v1.PreviewService
@@ -1777,6 +1900,22 @@ export const PreviewService: GenService<{
     methodKind: "unary";
     input: typeof GetDocumentRequestSchema;
     output: typeof GetDocumentResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.ListDocumentRevisions
+   */
+  listDocumentRevisions: {
+    methodKind: "unary";
+    input: typeof ListDocumentRevisionsRequestSchema;
+    output: typeof ListDocumentRevisionsResponseSchema;
+  };
+  /**
+   * @generated from rpc sadoku.preview.v1.PreviewService.GetDocumentRevision
+   */
+  getDocumentRevision: {
+    methodKind: "unary";
+    input: typeof GetDocumentRevisionRequestSchema;
+    output: typeof DocumentRevisionSchema;
   };
   /**
    * @generated from rpc sadoku.preview.v1.PreviewService.GetDirectoryStatus

@@ -83,6 +83,24 @@ export const createSqliteDocumentStore = (
         [title ?? null, new Date().toISOString(), id],
       );
     },
+    listRevisions: async (documentId, limit) =>
+      (await database.execute<{ id: number; recorded_at: string }>(
+        `SELECT id, recorded_at FROM document_revision
+          WHERE document_id = ? ORDER BY id DESC LIMIT ?`,
+        [documentId, limit],
+      )).rows?.map((row) => ({ id: row.id, recordedAt: row.recorded_at })) ??
+        [],
+    findRevision: async (documentId, revisionId) => {
+      const row = (await database.execute<
+        { id: number; recorded_at: string; markdown: string }
+      >(
+        `SELECT id, recorded_at, markdown FROM document_revision
+          WHERE document_id = ? AND id = ?`,
+        [documentId, revisionId],
+      )).rows?.[0];
+      return row &&
+        { id: row.id, recordedAt: row.recorded_at, markdown: row.markdown };
+    },
     readSnapshot: async (id) => {
       const row = (await database.execute<SnapshotRow>(
         `SELECT r.markdown AS source_snapshot FROM comment_document d
