@@ -31,12 +31,14 @@ when the URL contains resource identifiers registered as secrets. It does not
 check out or execute pull request code.
 
 The preview image includes the pull request's repository contents under `/app`,
-subject to `.dockerignore`. Its entrypoint prepares sample data using the
-existing Sadoku CLI before starting the server; the application itself has no
-preview-only behavior. Each startup creates an isolated `sadoku-preview.*`
-directory under `/tmp` (or `TMPDIR`), containing Markdown documents and a
-dedicated `SADOKU_COMMENTS_DIR`. Seed failures stop startup and remove the
-incomplete data.
+subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the preview-only
+`scripts/cloud_run_preview_entrypoint.sh`, which prepares sample data using the
+existing Sadoku CLI, then delegates to `scripts/cloud_run_entrypoint.sh` with
+`exec`. The ordinary entrypoint only starts the server and does not prepare
+sample data; the application itself has no preview-only behavior. Each preview
+startup creates an isolated `sadoku-preview.*` directory under `/tmp` (or
+`TMPDIR`), containing Markdown documents and a dedicated `SADOKU_COMMENTS_DIR`.
+Seed failures stop startup and remove the incomplete data.
 
 The samples include seven documents (one deleted), fifteen comments, human and
 bot authors, replies, review requests, resolved comments, instructions, and
@@ -55,7 +57,8 @@ Set a nonempty `SADOKU_SOURCE` to skip sample preparation and open that source
 instead; for example, `/app/README.md` opens only the README. In this mode the
 entrypoint preserves the configured `SADOKU_COMMENTS_DIR` (the image defaults to
 `/tmp/sadoku-comments`). Unset or empty `SADOKU_SOURCE` enables sample
-preparation.
+preparation. Running `scripts/cloud_run_entrypoint.sh` directly always skips
+sample preparation and retains its original source and storage defaults.
 
 The `cloud_run_preview.yml` workflow expects these GitHub repository or
 `cloud-run-preview` environment secrets:

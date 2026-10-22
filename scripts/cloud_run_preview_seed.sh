@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# Called only by the Cloud Run entrypoint, with a fresh, isolated directory.
+# Called only by the preview entrypoint, with a fresh, isolated directory.
 script_dir="$(CDPATH= cd "$(dirname "$0")" && pwd)"
 sample_dir="$script_dir/preview_samples"
 documents="$1/documents"

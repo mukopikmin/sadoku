@@ -47,7 +47,10 @@ exec "$PREVIEW_TEST_DENO" run --cached-only --no-check --quiet -P=app "$PREVIEW_
         const result = await new Deno.Command("sh", {
           args: [
             fromFileUrl(
-              new URL("../../scripts/cloud_run_entrypoint.sh", import.meta.url),
+              new URL(
+                "../../scripts/cloud_run_preview_entrypoint.sh",
+                import.meta.url,
+              ),
             ),
           ],
           cwd: fromFileUrl(new URL("../../", import.meta.url)),
