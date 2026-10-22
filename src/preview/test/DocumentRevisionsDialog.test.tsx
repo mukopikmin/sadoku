@@ -120,7 +120,7 @@ it("does not fetch while closed and refreshes the list with Current selected whe
   );
   expect(fetchMock).not.toHaveBeenCalled();
   rerender(<DocumentRevisionsDialog {...props} />);
-  await chooseRevision(/Latest saved/);
+  await chooseRevision(/Saved snapshot/);
   await screen.findByRole("heading", { name: "Saved" });
   rerender(<DocumentRevisionsDialog {...props} open={false} />);
   await waitFor(() =>
@@ -135,7 +135,7 @@ it("does not fetch while closed and refreshes the list with Current selected whe
     "Current",
   );
   await waitFor(() => expect(bodyRequests).toContain(4));
-  await chooseRevision(/Latest saved/);
+  await chooseRevision(/Saved snapshot/);
   await chooseRevision("Current");
   expect(screen.getByRole("heading", { name: "Current" })).not.toBeNull();
 });
@@ -180,7 +180,7 @@ const selectComparison = async (
       documentPath={documentPath}
     />,
   );
-  await chooseRevision(/Latest saved/);
+  await chooseRevision(/Saved snapshot/);
   await waitFor(() =>
     expect(screen.queryByText("Loading revision...")).toBeNull()
   );
@@ -301,7 +301,7 @@ it("clears the old comparison while another saved revision loads and compares th
     }),
   );
   render(<DocumentRevisionsDialog {...props} markdown="# Current" />);
-  await chooseRevision(/Latest saved/);
+  await chooseRevision(/Saved snapshot/);
   await screen.findByRole("heading", { name: "Old" });
   expect(screen.getByRole("heading", { name: "Old" }).closest("ins")).not
     .toBeNull();

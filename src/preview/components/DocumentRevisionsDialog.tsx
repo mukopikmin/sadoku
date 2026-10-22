@@ -41,7 +41,7 @@ const RevisionContent = (
         { value: "current", label: "Current" },
         ...(savedRevisions ?? []).map((revision, index) => ({
           value: String(revision.id),
-          label: `${index === 0 ? "Latest saved" : `${index} earlier`} — ${
+          label: `${index === 0 ? "Saved snapshot" : `${index} earlier`} — ${
             new Date(revision.recordedAt).toLocaleString()
           }`,
         })),
