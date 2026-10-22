@@ -55,38 +55,94 @@ const RevisionContent = (
     (changes.current.size > 0 || changes.previous.size > 0);
   return (
     <Stack gap="4">
-      <Select.Root
-        collection={collection}
-        value={[String(revisions.selectedId ?? "current")]}
-        onValueChange={({ value }) => {
-          revisions.selectRevision(
-            value[0] === "current" ? undefined : Number(value[0]),
-          );
-        }}
-        positioning={{ strategy: "fixed", hideWhenDetached: true }}
-        lazyMount
-        unmountOnExit
+      <Flex
+        direction={{ base: "column", md: "row" }}
+        align={{ base: "stretch", md: "center" }}
+        gap="4"
       >
-        <Select.HiddenSelect />
-        <Select.Control>
-          <Select.Trigger aria-label="Revision">
-            <Select.ValueText />
-          </Select.Trigger>
-          <Select.IndicatorGroup>
-            <Select.Indicator />
-          </Select.IndicatorGroup>
-        </Select.Control>
-        <Select.Positioner>
-          <Select.Content aria-label="Revision">
-            {collection.items.map((item) => (
-              <Select.Item item={item} key={item.value}>
-                <Select.ItemText>{item.label}</Select.ItemText>
-                <Select.ItemIndicator />
-              </Select.Item>
-            ))}
-          </Select.Content>
-        </Select.Positioner>
-      </Select.Root>
+        <Select.Root
+          flex="1"
+          minW="0"
+          collection={collection}
+          value={[String(revisions.selectedId ?? "current")]}
+          onValueChange={({ value }) => {
+            revisions.selectRevision(
+              value[0] === "current" ? undefined : Number(value[0]),
+            );
+          }}
+          positioning={{ strategy: "fixed", hideWhenDetached: true }}
+          lazyMount
+          unmountOnExit
+        >
+          <Select.HiddenSelect />
+          <Select.Control>
+            <Select.Trigger aria-label="Revision">
+              <Select.ValueText />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              <Select.Indicator />
+            </Select.IndicatorGroup>
+          </Select.Control>
+          <Select.Positioner>
+            <Select.Content aria-label="Revision">
+              {collection.items.map((item) => (
+                <Select.Item item={item} key={item.value}>
+                  <Select.ItemText>{item.label}</Select.ItemText>
+                  <Select.ItemIndicator />
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Positioner>
+        </Select.Root>
+        {changes && (
+          <Flex align="center" gap="3" wrap="wrap" flex={{ md: "1" }}>
+            <Switch.Root
+              checked={highlightChanges && hasChanges}
+              disabled={!hasChanges}
+              onCheckedChange={({ checked }) => setHighlightChanges(checked)}
+              size="sm"
+            >
+              <Switch.HiddenInput role="switch" />
+              <Switch.Label>Highlight changes</Switch.Label>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+            </Switch.Root>
+            {hasChanges
+              ? (
+                <Flex
+                  as="span"
+                  role="group"
+                  aria-label={`Line changes from previous revision: ${changes.current.size} added, ${changes.previous.size} removed`}
+                  fontSize="sm"
+                  fontWeight="semibold"
+                  gap="2"
+                  ms="auto"
+                >
+                  <Text
+                    as="span"
+                    color="syntax.addition.fg"
+                    aria-hidden="true"
+                  >
+                    +{changes.current.size}
+                  </Text>
+                  <Text
+                    as="span"
+                    color="syntax.deletion.fg"
+                    aria-hidden="true"
+                  >
+                    -{changes.previous.size}
+                  </Text>
+                </Flex>
+              )
+              : (
+                <Text color="fg.muted" fontSize="sm">
+                  No changes from the previous revision.
+                </Text>
+              )}
+          </Flex>
+        )}
+      </Flex>
       {revisions.history.status === "loading" && (
         <Text role="status">Loading saved revisions...</Text>
       )}
@@ -125,54 +181,6 @@ const RevisionContent = (
         <Text color="fg.muted" fontSize="sm">
           No previous revision is available for comparison.
         </Text>
-      )}
-      {changes && (
-        <Flex align="center" gap="3" wrap="wrap" mb="3">
-          <Switch.Root
-            checked={highlightChanges && hasChanges}
-            disabled={!hasChanges}
-            onCheckedChange={({ checked }) => setHighlightChanges(checked)}
-            size="sm"
-          >
-            <Switch.HiddenInput role="switch" />
-            <Switch.Label>Highlight changes</Switch.Label>
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-          </Switch.Root>
-          {hasChanges
-            ? (
-              <Flex
-                as="span"
-                role="group"
-                aria-label={`Line changes from previous revision: ${changes.current.size} added, ${changes.previous.size} removed`}
-                fontSize="sm"
-                fontWeight="semibold"
-                gap="2"
-                ms="auto"
-              >
-                <Text
-                  as="span"
-                  color="syntax.addition.fg"
-                  aria-hidden="true"
-                >
-                  +{changes.current.size}
-                </Text>
-                <Text
-                  as="span"
-                  color="syntax.deletion.fg"
-                  aria-hidden="true"
-                >
-                  -{changes.previous.size}
-                </Text>
-              </Flex>
-            )
-            : (
-              <Text color="fg.muted" fontSize="sm">
-                No changes from the previous revision.
-              </Text>
-            )}
-        </Flex>
       )}
       <Box
         role="region"
