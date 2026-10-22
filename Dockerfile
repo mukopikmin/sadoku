@@ -1,6 +1,6 @@
-FROM node:24-bookworm-slim AS builder
+FROM node:26.12.1-bookworm-slim AS builder
 
-COPY --from=denoland/deno:bin-2.8.0 /deno /usr/local/bin/deno
+COPY --from=denoland/deno:bin-2.9.8 /deno /usr/local/bin/deno
 
 WORKDIR /workspace
 
