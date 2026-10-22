@@ -20,13 +20,12 @@ WORKDIR /app
 
 COPY --from=builder /sadoku /usr/local/bin/sadoku
 COPY . /app/
-COPY scripts/cloud_run_entrypoint.sh /usr/local/bin/cloud-run-entrypoint
 
-RUN chmod 755 /usr/local/bin/cloud-run-entrypoint \
-    && chown -R nobody:nogroup /app
+RUN chown -R nobody:nogroup /app
 
 USER nobody:nogroup
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/cloud-run-entrypoint"]
+ENTRYPOINT ["/bin/sh", "/app/scripts/preview_entrypoint.sh"]
+CMD ["/bin/sh", "/app/scripts/cloud_run_entrypoint.sh"]
