@@ -17,6 +17,19 @@ it("converts safe revision IDs and preserves empty saved Markdown", () => {
     markdown: "",
   });
   expect(
+    toDocumentRevision({
+      id: 2n,
+      recordedAt,
+      markdown: "new",
+      previousMarkdown: "",
+    }),
+  ).toEqual({
+    id: 2,
+    recordedAt,
+    markdown: "new",
+    previousMarkdown: "",
+  });
+  expect(
     toDocumentRevisions([{ id: 3n, recordedAt, markdown: "ignored" }, {
       id: 2n,
       recordedAt,
@@ -51,6 +64,15 @@ it("rejects oversized, duplicate, and out-of-order revision lists and invalid Ma
       .toThrow("Invalid saved revisions response.");
   }
   expect(() => toDocumentRevision({ id: 1, recordedAt, markdown: null }))
+    .toThrow("Invalid saved revision response.");
+  expect(() =>
+    toDocumentRevision({
+      id: 1,
+      recordedAt,
+      markdown: "new",
+      previousMarkdown: null,
+    })
+  )
     .toThrow("Invalid saved revision response.");
 });
 

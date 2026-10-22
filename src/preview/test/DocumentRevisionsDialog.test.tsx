@@ -25,7 +25,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-it("loads saved bodies only when selected and renders historical and empty Markdown read-only", async () => {
+it("loads the latest comparison and switches historical and empty Markdown without tabs", async () => {
   const bodyRequests: number[] = [];
   vi.stubGlobal(
     "fetch",
@@ -53,7 +53,8 @@ it("loads saved bodies only when selected and renders historical and empty Markd
   );
   await dialog.findByRole("option", { name: /2 earlier/ });
   expect(dialog.getByRole("heading", { name: "Current" })).not.toBeNull();
-  expect(bodyRequests).toEqual([]);
+  await waitFor(() => expect(bodyRequests).toEqual([3]));
+  expect(dialog.queryByRole("tab")).toBeNull();
   fireEvent.change(dialog.getByRole("combobox", { name: "Revision" }), {
     target: { value: "2" },
   });
@@ -73,7 +74,7 @@ it("loads saved bodies only when selected and renders historical and empty Markd
     expect(dialog.getByRole("region", { name: "Revision content" }).textContent)
       .toBe("")
   );
-  expect(bodyRequests).toEqual([2, 1]);
+  expect(bodyRequests).toEqual([3, 2, 1]);
   fireEvent.change(dialog.getByRole("combobox", { name: "Revision" }), {
     target: { value: "current" },
   });
@@ -100,7 +101,8 @@ it("does not fetch while closed and refreshes the list with Current selected whe
     if (request.url.endsWith("/ListDocumentRevisions")) {
       return Response.json({ revisions: [{ id: String(newest), recordedAt }] });
     }
-    return Response.json({ id: "3", recordedAt, markdown: "# Saved" });
+    const { revisionId } = await request.json();
+    return Response.json({ id: revisionId, recordedAt, markdown: "# Saved" });
   });
   vi.stubGlobal("fetch", fetchMock);
   const { rerender } = render(
@@ -162,14 +164,14 @@ const selectComparison = async (
       return Response.json(
         request.url.endsWith("/ListDocumentRevisions")
           ? { revisions: [{ id: "1", recordedAt }] }
-          : { id: "1", recordedAt, markdown: saved },
+          : { id: "1", recordedAt, markdown, previousMarkdown: saved },
       );
     }),
   );
   render(
     <DocumentRevisionsDialog
       {...props}
-      markdown={markdown}
+      markdown="# Live document"
       documentPath={documentPath}
     />,
   );
@@ -180,13 +182,10 @@ const selectComparison = async (
   await waitFor(() =>
     expect(screen.queryByText("Loading revision...")).toBeNull()
   );
-  const savedPanel = screen.getByRole("tabpanel", { name: "Saved revision" });
-  expect(savedPanel.querySelector("ins, del")).toBeNull();
-  fireEvent.click(screen.getByRole("tab", { name: "Current" }));
   await screen.findByRole("switch", { name: "Highlight changes" });
 };
 
-it("compares Current with the selected saved baseline and toggles highlights without hiding counts", async () => {
+it("compares the selected revision with its own predecessor and toggles highlights without hiding counts", async () => {
   await selectComparison(
     "# Unchanged\n\nUpdated paragraph\n\n- Kept item\n- Added item\n\nKept paragraph",
     "# Unchanged\n\nOriginal paragraph\n\n- Kept item\n- Removed item\n\nKept paragraph",
@@ -194,7 +193,7 @@ it("compares Current with the selected saved baseline and toggles highlights wit
   const toggle = screen.getByRole("switch", { name: "Highlight changes" });
   expect(toggle).toHaveProperty("checked", true);
   expect(screen.getByRole("group", {
-    name: "Line changes from selected revision: 2 added, 2 removed",
+    name: "Line changes from previous revision: 2 added, 2 removed",
   })).not.toBeNull();
   expect(screen.getByText("Updated paragraph").closest("ins")).not.toBeNull();
   expect(screen.getByText("Added item").closest("ins")).not.toBeNull();
@@ -212,11 +211,9 @@ it("compares Current with the selected saved baseline and toggles highlights wit
   await waitFor(() =>
     expect(screen.getByText("Updated paragraph").closest("ins")).not.toBeNull()
   );
-  fireEvent.click(screen.getByRole("tab", { name: "Saved revision" }));
-  expect((await screen.findByText("Original paragraph")).closest("del"))
-    .toBeNull();
-  expect(screen.queryByRole("switch", { name: "Highlight changes" }))
-    .toBeNull();
+  expect(screen.queryByText("Original paragraph")).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Live document" })).toBeNull();
+  expect(screen.queryByRole("tab")).toBeNull();
 });
 
 it.each([
@@ -237,12 +234,12 @@ it.each([
     const heading = screen.getByRole("heading", { name: current.slice(2) });
     expect(heading.closest("ins") !== null).toBe(added > 0);
     if (added + removed === 0) {
-      expect(screen.getByText("No changes from the selected revision.")).not
+      expect(screen.getByText("No changes from the previous revision.")).not
         .toBeNull();
     } else {
       expect(screen.getByRole("group", {
         name:
-          `Line changes from selected revision: ${added} added, ${removed} removed`,
+          `Line changes from previous revision: ${added} added, ${removed} removed`,
       })).not.toBeNull();
     }
   },
@@ -275,11 +272,7 @@ it("compares front matter without shifting body line numbers", async () => {
   expect(screen.getByText("New body").closest("ins")).not.toBeNull();
   expect(screen.getByRole("heading", { name: "Kept" }).closest("ins"))
     .toBeNull();
-  fireEvent.click(screen.getByRole("tab", { name: "Saved revision" }));
-  expect((await screen.findByText("Old body")).closest("del")).toBeNull();
-  const savedPanel = screen.getByRole("tabpanel", { name: "Saved revision" });
-  expect(within(savedPanel).queryByTitle("Changed revision metadata"))
-    .toBeNull();
+  expect(screen.queryByText("Old body")).toBeNull();
 });
 
 it("clears the old comparison while another saved revision loads and compares the new baseline", async () => {
@@ -297,9 +290,12 @@ it("clears the old comparison while another saved revision loads and compares th
         });
       }
       const { revisionId } = await request.json();
-      return revisionId === "1"
-        ? pending
-        : Response.json({ id: "2", recordedAt, markdown: "# Old" });
+      return revisionId === "1" ? pending : Response.json({
+        id: "2",
+        recordedAt,
+        markdown: "# Old",
+        previousMarkdown: "# Older",
+      });
     }),
   );
   render(<DocumentRevisionsDialog {...props} markdown="# Current" />);
@@ -307,19 +303,22 @@ it("clears the old comparison while another saved revision loads and compares th
   const select = screen.getByRole("combobox", { name: "Revision" });
   fireEvent.change(select, { target: { value: "2" } });
   await screen.findByRole("heading", { name: "Old" });
-  fireEvent.click(screen.getByRole("tab", { name: "Current" }));
-  expect(
-    (await screen.findByRole("heading", { name: "Current" })).closest("ins"),
-  ).not.toBeNull();
-  fireEvent.change(select, { target: { value: "1" } });
-  fireEvent.click(screen.getByRole("tab", { name: "Current" }));
-  await screen.findByText("Loading the selected revision for comparison...");
-  expect(screen.getByRole("heading", { name: "Current" }).closest("ins"))
+  expect(screen.getByRole("heading", { name: "Old" }).closest("ins")).not
     .toBeNull();
+  fireEvent.change(select, { target: { value: "1" } });
+  await screen.findByText("Loading revision...");
+  expect(screen.queryByRole("heading", { name: "Old" })).toBeNull();
   expect(screen.queryByRole("switch", { name: "Highlight changes" }))
     .toBeNull();
-  finishLoading(Response.json({ id: "1", recordedAt, markdown: "# Current" }));
-  await screen.findByText("No changes from the selected revision.");
+  finishLoading(
+    Response.json({
+      id: "1",
+      recordedAt,
+      markdown: "# Current",
+      previousMarkdown: "# Current",
+    }),
+  );
+  await screen.findByText("No changes from the previous revision.");
   expect(screen.getByRole("switch", { name: "Highlight changes" }))
     .toHaveProperty("disabled", true);
 });

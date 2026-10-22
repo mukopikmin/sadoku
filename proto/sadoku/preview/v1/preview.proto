@@ -105,6 +105,7 @@ message DocumentRevision {
   uint64 id = 1;
   string recorded_at = 2;
   string markdown = 3;
+  optional string previous_markdown = 4;
 }
 message ListDocumentRevisionsRequest { uint64 document_id = 1; }
 message ListDocumentRevisionsResponse { repeated DocumentRevisionSummary revisions = 1; }

@@ -571,6 +571,26 @@ Deno.test("Connect lists twenty revision summaries and reads scoped immutable bo
         .markdown,
       "# Revision 6",
     );
+    // The oldest visible revision still compares with its actual predecessor,
+    // even though that predecessor is outside the twenty-item list.
+    assertEquals(
+      (await preview.client.getDocumentRevision({ documentId, revisionId: 6n }))
+        .previousMarkdown,
+      "# Revision 5",
+    );
+    assertEquals(
+      (await preview.client.getDocumentRevision({ documentId, revisionId: 1n }))
+        .previousMarkdown,
+      undefined,
+    );
+    assertEquals(
+      (await preview.client.getDocumentRevision({
+        documentId,
+        revisionId: 25n,
+      }))
+        .previousMarkdown,
+      "",
+    );
     assertEquals(
       (await preview.client.getDocumentRevision({
         documentId,
@@ -604,6 +624,20 @@ Deno.test("Connect lists twenty revision summaries and reads scoped immutable bo
       );
       assertEquals(error.code, Code.NotFound);
     }
+    await preview.comments.write(preview.document.filePath, {
+      filePath: preview.document.filePath,
+      comments: [],
+      sourceSnapshot: "# New version after the other document",
+      previousSourceSnapshot: values[24],
+    });
+    assertEquals(
+      (await preview.client.getDocumentRevision({
+        documentId,
+        revisionId: 27n,
+      }))
+        .previousMarkdown,
+      "# Revision 25",
+    );
     const missing = await assertRejects(
       () => preview.client.listDocumentRevisions({ documentId: 999n }),
       ConnectError,

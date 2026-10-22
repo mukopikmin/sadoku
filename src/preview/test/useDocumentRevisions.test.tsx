@@ -23,21 +23,38 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-it("fetches bodies on selection, reuses immutable bodies, and ignores a late response after returning to Current", async () => {
+it("loads Current's baseline, compares each selection with its predecessor, and ignores late responses", async () => {
   vi.mocked(loadDocumentRevisions).mockResolvedValue([{ id: 2, recordedAt }, {
     id: 1,
     recordedAt,
   }]);
   let resolveLate!: (
-    value: { id: number; recordedAt: string; markdown: string },
+    value: {
+      id: number;
+      recordedAt: string;
+      markdown: string;
+      previousMarkdown?: string;
+    },
   ) => void;
   const late = new Promise<
-    { id: number; recordedAt: string; markdown: string }
+    {
+      id: number;
+      recordedAt: string;
+      markdown: string;
+      previousMarkdown?: string;
+    }
   >((resolve) => {
     resolveLate = resolve;
   });
   vi.mocked(loadDocumentRevision).mockImplementation(async (_documentId, id) =>
-    id === 2 ? { id, recordedAt, markdown: "# Saved two" } : await late
+    id === 2
+      ? {
+        id,
+        recordedAt,
+        markdown: "# Saved two",
+        previousMarkdown: "# Saved one",
+      }
+      : await late
   );
   const { result } = renderHook(() => useDocumentRevisions(7, "# Current"), {
     wrapper,
@@ -46,8 +63,9 @@ it("fetches bodies on selection, reuses immutable bodies, and ignores a late res
     status: "ready",
     markdown: "# Current",
   });
-  await waitFor(() => expect(result.current.history.status).toBe("ready"));
   expect(loadDocumentRevision).not.toHaveBeenCalled();
+  await waitFor(() => expect(result.current.comparison.status).toBe("ready"));
+  expect(loadDocumentRevision).toHaveBeenCalledTimes(1);
   act(() => result.current.selectRevision(2));
   await waitFor(() =>
     expect(result.current.content).toEqual({
@@ -55,8 +73,13 @@ it("fetches bodies on selection, reuses immutable bodies, and ignores a late res
       markdown: "# Saved two",
     })
   );
+  expect(result.current.comparison).toEqual({
+    status: "ready",
+    changes: { previous: new Set([1]), current: new Set([1]) },
+  });
   act(() => result.current.selectRevision(1));
   expect(result.current.content).toEqual({ status: "loading" });
+  expect(result.current.comparison).toEqual({ status: "loading" });
   await waitFor(() => expect(loadDocumentRevision).toHaveBeenCalledTimes(2));
   act(() => result.current.selectRevision(undefined));
   await act(async () => {
@@ -81,6 +104,7 @@ it("preserves an empty saved body and uses the latest live Markdown when Current
     id: 1,
     recordedAt,
     markdown: "",
+    previousMarkdown: "",
   });
   const { result, rerender } = renderHook(
     ({ markdown }) => useDocumentRevisions(7, markdown),
@@ -90,12 +114,20 @@ it("preserves an empty saved body and uses the latest live Markdown when Current
   await waitFor(() =>
     expect(result.current.content).toEqual({ status: "ready", markdown: "" })
   );
+  expect(result.current.comparison).toEqual({
+    status: "ready",
+    changes: { previous: new Set(), current: new Set() },
+  });
   rerender({ markdown: "# Updated" });
   expect(result.current.content).toEqual({ status: "ready", markdown: "" });
   act(() => result.current.selectRevision(undefined));
   expect(result.current.content).toEqual({
     status: "ready",
     markdown: "# Updated",
+  });
+  expect(result.current.comparison).toEqual({
+    status: "ready",
+    changes: { previous: new Set(), current: new Set([1]) },
   });
 });
 
@@ -137,4 +169,44 @@ it("exposes retryable history and body failures without hiding Current", async (
       markdown: "# Recovered",
     })
   );
+  expect(result.current.comparison).toEqual({ status: "unavailable" });
+});
+
+it("keeps Current readable when its latest saved comparison fails and retries that comparison", async () => {
+  vi.mocked(loadDocumentRevisions).mockResolvedValue([{ id: 2, recordedAt }]);
+  vi.mocked(loadDocumentRevision).mockRejectedValueOnce(
+    new Error("Unavailable"),
+  )
+    .mockResolvedValue({
+      id: 2,
+      recordedAt,
+      markdown: "# Current",
+      previousMarkdown: "# Different predecessor",
+    });
+  const { result } = renderHook(() => useDocumentRevisions(7, "# Current"), {
+    wrapper,
+  });
+  await waitFor(() =>
+    expect(result.current.comparison).toEqual({
+      status: "error",
+      message: "Unavailable",
+    })
+  );
+  expect(result.current.content).toEqual({
+    status: "ready",
+    markdown: "# Current",
+  });
+  act(() => result.current.retryComparison());
+  await waitFor(() =>
+    expect(result.current.comparison).toEqual({
+      status: "ready",
+      changes: { previous: new Set(), current: new Set() },
+    })
+  );
+  act(() => result.current.selectRevision(2));
+  expect(result.current.comparison).toEqual({
+    status: "ready",
+    changes: { previous: new Set([1]), current: new Set([1]) },
+  });
+  expect(loadDocumentRevision).toHaveBeenCalledTimes(2);
 });

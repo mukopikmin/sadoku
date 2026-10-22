@@ -35,7 +35,7 @@ const installFetch = (
   vi.stubGlobal(
     "fetch",
     vi.fn(
-      (input: RequestInfo | URL) => {
+      (input: RequestInfo | URL, init?: RequestInit) => {
         const url = input instanceof Request
           ? new URL(input.url).pathname
           : new URL(String(input), globalThis.location.origin).pathname;
@@ -73,12 +73,12 @@ const installFetch = (
           }));
         }
         if (url === "/sadoku.preview.v1.PreviewService/GetDocumentRevision") {
-          return Promise.resolve(
+          return new Request(input, init).json().then(({ revisionId }) =>
             Response.json({
-              id: "1",
+              id: revisionId,
               recordedAt: "2026-10-22T00:00:00.000Z",
               markdown: "# Earlier document\n\n**Old content**",
-            }),
+            })
           );
         }
         const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);

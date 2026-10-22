@@ -70,8 +70,9 @@ Run `sadoku --help` for all commands and options.
   move, and choose **Fit to view** to reset.
 - Open **Revisions** in the document action bar to view the current document or
   choose from its latest 20 saved revisions, listed newest first with recording
-  times. Select a saved revision to read it, then use Current to highlight
-  changes against that revision and see added/removed line counts. Older saved
+  times. Each selected revision shows changes from its immediately preceding
+  saved revision, with highlights and added/removed line counts. Current
+  compares the live document with the latest saved revision. Older saved
   revisions remain stored. This does not change when document snapshots are
   recorded.
 

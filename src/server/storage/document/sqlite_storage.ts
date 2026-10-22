@@ -92,14 +92,27 @@ export const createSqliteDocumentStore = (
         [],
     findRevision: async (documentId, revisionId) => {
       const row = (await database.execute<
-        { id: number; recorded_at: string; markdown: string }
+        {
+          id: number;
+          recorded_at: string;
+          markdown: string;
+          previous_markdown: string | null;
+        }
       >(
-        `SELECT id, recorded_at, markdown FROM document_revision
-          WHERE document_id = ? AND id = ?`,
+        `SELECT r.id, r.recorded_at, r.markdown,
+          (SELECT p.markdown FROM document_revision p
+            WHERE p.document_id = r.document_id AND p.id < r.id
+            ORDER BY p.id DESC LIMIT 1) AS previous_markdown
+          FROM document_revision r WHERE r.document_id = ? AND r.id = ?`,
         [documentId, revisionId],
       )).rows?.[0];
       return row &&
-        { id: row.id, recordedAt: row.recorded_at, markdown: row.markdown };
+        {
+          id: row.id,
+          recordedAt: row.recorded_at,
+          markdown: row.markdown,
+          previousMarkdown: row.previous_markdown ?? undefined,
+        };
     },
     readSnapshot: async (id) => {
       const row = (await database.execute<SnapshotRow>(

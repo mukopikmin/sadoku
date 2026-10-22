@@ -121,6 +121,7 @@ export const documentRevisionMessage = (
   id: toUint64(revision.id),
   recordedAt: revision.recordedAt,
   markdown: revision.markdown,
+  previousMarkdown: revision.previousMarkdown,
 });
 export const directoryStatusMessage = (
   status: DirectorySessionStatus,

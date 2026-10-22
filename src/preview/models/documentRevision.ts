@@ -3,4 +3,7 @@ export type DocumentRevisionSummary = {
   recordedAt: string;
 };
 
-export type DocumentRevision = DocumentRevisionSummary & { markdown: string };
+export type DocumentRevision = DocumentRevisionSummary & {
+  markdown: string;
+  previousMarkdown?: string;
+};

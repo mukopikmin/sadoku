@@ -27,11 +27,21 @@ export const toDocumentRevisionSummary = (
 
 export const toDocumentRevision = (value: unknown): DocumentRevision => {
   const summary = toDocumentRevisionSummary(value);
-  const { markdown } = value as { markdown: unknown };
-  if (typeof markdown !== "string") {
+  const { markdown, previousMarkdown } = value as {
+    markdown: unknown;
+    previousMarkdown?: unknown;
+  };
+  if (
+    typeof markdown !== "string" ||
+    (previousMarkdown !== undefined && typeof previousMarkdown !== "string")
+  ) {
     throw new Error("Invalid saved revision response.");
   }
-  return { ...summary, markdown };
+  return {
+    ...summary,
+    markdown,
+    ...(previousMarkdown !== undefined && { previousMarkdown }),
+  };
 };
 
 export const toDocumentRevisions = (
