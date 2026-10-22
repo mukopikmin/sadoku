@@ -190,20 +190,30 @@ Deno.test("parses standalone tag commands", () => {
     "add",
     "--name",
     "要確認",
-    "--background-color",
-    "#A1B2C3",
   ]);
   assertEquals(added.command, "tag-add");
   assertEquals(added.tagName, "要確認");
-  assertEquals(added.backgroundColor, "#A1B2C3");
-  assertEquals(
-    parseArgs(["tag", "add", "--name", "API"]).backgroundColor,
-    undefined,
-  );
   assertEquals(parseArgs(["tag", "list"]).command, "tag-list");
   const deleted = parseArgs(["tag", "delete", "3"]);
   assertEquals(deleted.command, "tag-delete");
   assertEquals(deleted.tagId, 3);
+});
+
+Deno.test("rejects tag color options", () => {
+  for (
+    const command of [["tag", "add", "--name", "API"], ["tag", "list"], [
+      "tag",
+      "delete",
+      "1",
+    ]]
+  ) {
+    assertThrows(
+      () => parseArgs([...command, "--background-color", "#123456"]),
+      CliUsageError,
+      "Unknown option: --background-color",
+    );
+  }
+  assertEquals(usage.includes("--background-color"), false);
 });
 
 Deno.test("rejects invalid tag commands, IDs, and incompatible options", () => {

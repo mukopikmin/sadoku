@@ -155,11 +155,7 @@ const executeCli = async (
         case "tag-add":
           return printJson(
             io,
-            await addTag(
-              options.tagName!,
-              options.backgroundColor,
-              stores.tags,
-            ),
+            await addTag(options.tagName!, stores.tags),
           );
         case "tag-delete":
           await deleteTag(options.tagId!, stores.tags);

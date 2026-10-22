@@ -49,8 +49,6 @@ Deno.test("dispatches standalone tag creation, listing, and deletion without sta
           "add",
           "--name",
           " 要確認 ",
-          "--background-color",
-          "#A1B2C3",
         ],
         dependencies,
         added.io,
@@ -59,7 +57,7 @@ Deno.test("dispatches standalone tag creation, listing, and deletion without sta
     );
     const tag = JSON.parse(added.logs[0]);
     assertEquals(tag.name, "要確認");
-    assertEquals(tag.backgroundColor, "#a1b2c3");
+    assertEquals(tag.backgroundColor, "#718096");
     assertEquals(typeof tag.id, "number");
     assertEquals(typeof tag.createdAt, "string");
     assertEquals(tag.updatedAt, tag.createdAt);
@@ -121,14 +119,13 @@ Deno.test("dispatches standalone tag creation, listing, and deletion without sta
   });
 });
 
-Deno.test("reports invalid tag names and colors without creating tags", async () => {
+Deno.test("rejects invalid tag names and color options without creating tags", async () => {
   await withTempCommentsDirectory(async () => {
     for (
       const options of [
         ["--name", " "],
         ["--name", "a\nb"],
         ["--name", "a".repeat(51)],
-        ["--name", "API", "--background-color", "red"],
       ]
     ) {
       const output = captureIo();
@@ -140,6 +137,17 @@ Deno.test("reports invalid tag names and colors without creating tags", async ()
       assertEquals(output.errors.length, 1);
       assertStringIncludes(output.errors[0], "Tag ");
     }
+    const colorOption = captureIo();
+    assertEquals(
+      await runCli(
+        ["tag", "add", "--name", "API", "--background-color", "#123456"],
+        dependencies,
+        colorOption.io,
+      ),
+      1,
+    );
+    assertEquals(colorOption.logs, []);
+    assertEquals(colorOption.errors[0], "Unknown option: --background-color");
     const listed = captureIo();
     assertEquals(await runCli(["tag", "list"], dependencies, listed.io), 0);
     assertEquals(JSON.parse(listed.logs[0]), []);

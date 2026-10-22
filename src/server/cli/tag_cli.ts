@@ -15,10 +15,9 @@ const mapUseCaseError = (error: TagError): never => {
 
 export const addTag = async (
   name: string,
-  backgroundColor: string | undefined,
   store: TagStore,
 ) => {
-  const result = await addTagUseCase(store, name, backgroundColor);
+  const result = await addTagUseCase(store, name);
   if ("type" in result) return mapUseCaseError(result);
   return result;
 };

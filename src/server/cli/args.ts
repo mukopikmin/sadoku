@@ -31,7 +31,6 @@ export type CliCommand =
 export type CliOptions = {
   trustForwardedPrefix?: boolean;
   asBot: boolean;
-  backgroundColor?: string;
   body?: string;
   channel?: "stable" | "nightly";
   command?: CliCommand;
@@ -72,7 +71,7 @@ export const usage = `Usage:
   sadoku document add <file.md|url>
   sadoku document inspect <document-id>
   sadoku document list
-  sadoku tag add --name <name> [--background-color <#RRGGBB>]
+  sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
   sadoku instruction list (--document <id> | --source <file.md|url>)
@@ -96,7 +95,6 @@ export const usage = `Usage:
 
 Options:
   --name            Tag name (tag add only).
-  --background-color Tag background color as #RRGGBB (tag add only; defaults to #718096).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
   --ensure-document Register --source when it is not in the database (comment add only).
@@ -144,7 +142,6 @@ export const parseArgs = (argv: string[]): CliOptions => {
       ],
       default: { host: "127.0.0.1", port: "3334" },
       string: [
-        "background-color",
         "body",
         "channel",
         "comment",
@@ -202,11 +199,10 @@ export const parseArgs = (argv: string[]): CliOptions => {
     flags["start-line"] !== undefined || flags["as-bot"] ||
     flags["ensure-document"] || flags["request-review"];
   const hasInstructionOption = flags.content !== undefined;
-  const hasTagOption = flags.name !== undefined ||
-    flags["background-color"] !== undefined;
+  const hasTagOption = flags.name !== undefined;
   if (hasTagOption && words[0] !== "tag") {
     throw new CliUsageError(
-      "--name and --background-color are only accepted by tag add.",
+      "--name is only accepted by tag add.",
     );
   }
 
@@ -278,12 +274,11 @@ export const parseArgs = (argv: string[]): CliOptions => {
         ...base,
         command: "tag-add",
         tagName: flags.name,
-        backgroundColor: flags["background-color"],
       };
     }
     if (hasTagOption) {
       throw new CliUsageError(
-        "--name and --background-color are only accepted by tag add.",
+        "--name is only accepted by tag add.",
       );
     }
     if (words[1] === "list" && words.length === 2) {

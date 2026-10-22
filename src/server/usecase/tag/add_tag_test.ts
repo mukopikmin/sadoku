@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { addTag } from "./add_tag.ts";
 import type { TagStore } from "./ports.ts";
 
-Deno.test("addTag normalizes names and colors and uses the default color", async () => {
+Deno.test("addTag normalizes names and always uses the default color", async () => {
   const inputs: string[][] = [];
   const store: Pick<TagStore, "create"> = {
     create: (name, backgroundColor) => {
@@ -16,17 +16,17 @@ Deno.test("addTag normalizes names and colors and uses the default color", async
       });
     },
   };
-  await addTag(store, " API ", "#A1B2C3");
+  await addTag(store, " API ");
   await addTag(store, "要確認");
   await addTag(store, "😀".repeat(50));
   assertEquals(inputs, [
-    ["API", "#a1b2c3"],
+    ["API", "#718096"],
     ["要確認", "#718096"],
     ["😀".repeat(50), "#718096"],
   ]);
 });
 
-Deno.test("addTag rejects invalid names and colors before writing", async () => {
+Deno.test("addTag rejects invalid names before writing", async () => {
   const store: Pick<TagStore, "create"> = {
     create: () => Promise.reject(new Error("Unexpected create.")),
   };
@@ -44,11 +44,5 @@ Deno.test("addTag rejects invalid names and colors before writing", async () => 
   ) {
     const result = await addTag(store, name);
     assertEquals("type" in result && result.type, "invalid");
-  }
-  for (const color of [null, 1, "", "red", "#123", "#12345g"]) {
-    assertEquals(await addTag(store, "API", color), {
-      type: "invalid",
-      message: "Tag background color must be a hexadecimal RGB color.",
-    });
   }
 });
