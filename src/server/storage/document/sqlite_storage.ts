@@ -1,6 +1,7 @@
 import { type AppDatabase, withTransaction } from "../../db/connection.ts";
 import type { DocumentStore } from "../../usecase/document/ports.ts";
 import type { Document } from "../../usecase/document/types.ts";
+import { appendDocumentRevision } from "./sqlite_revisions.ts";
 
 type DocumentRow = {
   file_path: string;
@@ -52,6 +53,12 @@ export const createSqliteDocumentStore = (
     return document;
   };
 
+  const needsSnapshot = async (id: number): Promise<boolean> =>
+    (await database.execute<{ source_revision_id: number | null }>(
+      "SELECT source_revision_id FROM comment_document WHERE id = ?",
+      [id],
+    )).rows?.[0]?.source_revision_id === null;
+
   return {
     ensure,
     ensureMany: (filePaths) =>
@@ -78,17 +85,23 @@ export const createSqliteDocumentStore = (
     },
     readSnapshot: async (id) => {
       const row = (await database.execute<SnapshotRow>(
-        "SELECT source_snapshot FROM comment_document WHERE id = ?",
+        `SELECT r.markdown AS source_snapshot FROM comment_document d
+          JOIN document_revision r ON r.id = d.source_revision_id WHERE d.id = ?`,
         [id],
       )).rows?.[0];
       return row?.source_snapshot ?? undefined;
     },
     initializeSnapshot: async (id, markdown) => {
-      await database.execute(
-        `UPDATE comment_document SET source_snapshot = ?
-          WHERE id = ? AND source_snapshot IS NULL`,
-        [markdown, id],
-      );
+      if (!await needsSnapshot(id)) return;
+      await withTransaction(database, async () => {
+        // Another request may have initialized the snapshot while we waited.
+        if (!await needsSnapshot(id)) return;
+        const revisionId = await appendDocumentRevision(database, id, markdown);
+        await database.execute(
+          "UPDATE comment_document SET source_revision_id = ? WHERE id = ?",
+          [revisionId, id],
+        );
+      });
     },
   };
 };

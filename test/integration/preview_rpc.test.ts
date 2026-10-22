@@ -79,6 +79,7 @@ const createPreview = async () => {
   );
   return {
     root,
+    database,
     client,
     request,
     session,
@@ -96,7 +97,7 @@ const createPreview = async () => {
   };
 };
 
-Deno.test("Connect exposes one previous revision without advancing history on document reads", async () => {
+Deno.test("Connect exposes one previous revision while retaining all revisions without advancing history on document reads", async () => {
   const preview = await createPreview();
   const { client, document, comments } = preview;
   const documentId = BigInt(document.id);
@@ -126,6 +127,22 @@ Deno.test("Connect exposes one previous revision without advancing history on do
       changed.markdown,
     );
     await client.listComments({ documentId });
+    const revisions = (await preview.database.execute(
+      "SELECT markdown FROM document_revision ORDER BY id",
+    )).rows;
+    assertEquals(revisions, [
+      { markdown: original.markdown },
+      { markdown: changed.markdown },
+      { markdown: "# Latest\n" },
+    ]);
+    await client.getDocument({ documentId });
+    await client.listComments({ documentId });
+    assertEquals(
+      (await preview.database.execute(
+        "SELECT markdown FROM document_revision ORDER BY id",
+      )).rows,
+      revisions,
+    );
     document.deleted = true;
     await Deno.remove(document.filePath);
     const deleted = await client.getDocument({ documentId });
