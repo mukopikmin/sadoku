@@ -120,8 +120,6 @@ it("shows only Current for a newly initialized file and keeps its first snapshot
   const options = await screen.findAllByRole("option");
   expect(options).toHaveLength(1);
   expect(options[0].textContent).toBe("Current");
-  expect(screen.queryByRole("switch", { name: "Highlight changes" }))
-    .toBeNull();
 });
 
 it("does not fetch while closed and refreshes the list with Current selected when reopened", async () => {
@@ -206,16 +204,13 @@ const selectComparison = async (
   await waitFor(() =>
     expect(screen.queryByText("Loading revision...")).toBeNull()
   );
-  await screen.findByRole("switch", { name: "Highlight changes" });
 };
 
-it("compares the selected revision with its own predecessor and toggles highlights without hiding counts", async () => {
+it("compares the selected revision with its own predecessor and highlights changes", async () => {
   await selectComparison(
     "# Unchanged\n\nUpdated paragraph\n\n- Kept item\n- Added item\n\nKept paragraph",
     "# Unchanged\n\nOriginal paragraph\n\n- Kept item\n- Removed item\n\nKept paragraph",
   );
-  const toggle = screen.getByRole("switch", { name: "Highlight changes" });
-  expect(toggle).toHaveProperty("checked", true);
   expect(screen.getByRole("group", {
     name: "Line changes from previous revision: 2 added, 2 removed",
   })).not.toBeNull();
@@ -225,16 +220,8 @@ it("compares the selected revision with its own predecessor and toggles highligh
   expect(screen.getByText("Kept paragraph").closest("ins")).toBeNull();
   expect(screen.getByRole("heading", { name: "Unchanged" }).closest("ins"))
     .toBeNull();
-  fireEvent.click(toggle);
-  await waitFor(() =>
-    expect(screen.getByText("Updated paragraph").closest("ins")).toBeNull()
-  );
   expect(screen.getByText("+2")).not.toBeNull();
   expect(screen.getByText("-2")).not.toBeNull();
-  fireEvent.click(toggle);
-  await waitFor(() =>
-    expect(screen.getByText("Updated paragraph").closest("ins")).not.toBeNull()
-  );
   expect(screen.queryByText("Original paragraph")).toBeNull();
   expect(screen.queryByRole("heading", { name: "Live document" })).toBeNull();
   expect(screen.queryByRole("tab")).toBeNull();
@@ -253,8 +240,6 @@ it.each([
   "handles identical, empty and deletion-only baselines ($added/$removed)",
   async ({ current, saved, added, removed }) => {
     await selectComparison(current, saved);
-    const toggle = screen.getByRole("switch", { name: "Highlight changes" });
-    expect(toggle).toHaveProperty("disabled", added + removed === 0);
     const heading = screen.getByRole("heading", { name: current.slice(2) });
     expect(heading.closest("ins") !== null).toBe(added > 0);
     if (added + removed === 0) {
@@ -330,8 +315,6 @@ it("clears the old comparison while another saved revision loads and compares th
   await chooseRevision(/1 earlier/);
   await screen.findByText("Loading revision...");
   expect(screen.queryByRole("heading", { name: "Old" })).toBeNull();
-  expect(screen.queryByRole("switch", { name: "Highlight changes" }))
-    .toBeNull();
   finishLoading(
     Response.json({
       id: "1",
@@ -341,6 +324,4 @@ it("clears the old comparison while another saved revision loads and compares th
     }),
   );
   await screen.findByText("No changes from the previous revision.");
-  expect(screen.getByRole("switch", { name: "Highlight changes" }))
-    .toHaveProperty("disabled", true);
 });

@@ -8,10 +8,9 @@ import {
   Portal,
   Select,
   Stack,
-  Switch,
   Text,
 } from "@chakra-ui/react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useDocumentRevisions } from "../hooks/useDocumentRevisions";
 import { ReadOnlyMarkdownPreview } from "../pages/markdown/ReadOnlyMarkdownPreview";
 
@@ -49,7 +48,6 @@ const RevisionContent = (
         ),
       ],
     }), [savedRevisions, revisions.showLatestSaved]);
-  const [highlightChanges, setHighlightChanges] = useState(true);
   const changes = revisions.comparison.status === "ready"
     ? revisions.comparison.changes
     : undefined;
@@ -98,18 +96,6 @@ const RevisionContent = (
         </Select.Root>
         {changes && (
           <Flex align="center" gap="3" wrap="wrap" flex={{ md: "1" }}>
-            <Switch.Root
-              checked={highlightChanges && hasChanges}
-              disabled={!hasChanges}
-              onCheckedChange={({ checked }) => setHighlightChanges(checked)}
-              size="sm"
-            >
-              <Switch.HiddenInput role="switch" />
-              <Switch.Label>Highlight changes</Switch.Label>
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
-            </Switch.Root>
             {hasChanges
               ? (
                 <Flex
@@ -212,7 +198,7 @@ const RevisionContent = (
             markdown={revisions.content.markdown}
             showHtmlComments={props.showHtmlComments}
             theme={props.theme}
-            revisionHighlight={highlightChanges && changes
+            revisionHighlight={changes
               ? { lines: changes.current, kind: "addition" }
               : undefined}
           />
