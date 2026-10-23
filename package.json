@@ -2,6 +2,10 @@
   "name": "sadoku",
   "description": "Preview a Markdown file in a local browser-friendly server.",
   "private": true,
+  "engines": {
+    "node": "^26.12.1",
+    "deno": "^2.9.8"
+  },
   "scripts": {
     "build:client": "npm --prefix src/preview run build",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
