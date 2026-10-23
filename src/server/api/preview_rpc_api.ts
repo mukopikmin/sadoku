@@ -1,5 +1,7 @@
 import { updateDocumentTitle } from "../usecase/document/update_document_title.ts";
 import { getPreviousMarkdown } from "../usecase/document/get_previous_markdown.ts";
+import { listDocumentRevisions } from "../usecase/document/list_document_revisions.ts";
+import { getDocumentRevision } from "../usecase/document/get_document_revision.ts";
 import { isSettingsError } from "../usecase/settings/types.ts";
 import type { MessageInitShape, MessageShape } from "@bufbuild/protobuf";
 import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
@@ -63,6 +65,8 @@ import {
   commentMessage,
   directoryStatusMessage,
   documentMessage,
+  documentRevisionMessage,
+  documentRevisionSummaryMessage,
   documentSummaryMessage,
   githubAccountMessage,
   instructionMessage,
@@ -130,9 +134,11 @@ export const previewRpcOperation = async <T>(
     if (isDocumentUseCaseError(error)) {
       throw connectFailure(
         "not_found",
-        error.type === "document_not_found"
-          ? "Document not found."
-          : "Saved Markdown snapshot not found.",
+        {
+          document_not_found: "Document not found.",
+          document_snapshot_not_found: "Saved Markdown snapshot not found.",
+          document_revision_not_found: "Document revision not found.",
+        }[error.type],
         404,
       );
     }
@@ -296,6 +302,30 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
           source.commentSource,
           content.markdown,
         ),
+      );
+    },
+    listDocumentRevisions: async ({ documentId }) => {
+      if (!documentStore?.listRevisions) {
+        return unavailable("Document revisions");
+      }
+      const { document } = resolveDocument(documentId);
+      const revisions = await listDocumentRevisions(document.id, {
+        listRevisions: documentStore.listRevisions,
+      });
+      return { revisions: revisions.map(documentRevisionSummaryMessage) };
+    },
+    getDocumentRevision: async ({ documentId, revisionId }) => {
+      if (!documentStore?.findRevision) {
+        return unavailable("Document revisions");
+      }
+      const { document } = resolveDocument(documentId);
+      if (revisionId < 1n || revisionId > BigInt(Number.MAX_SAFE_INTEGER)) {
+        throw connectFailure("not_found", "Document revision not found.", 404);
+      }
+      return documentRevisionMessage(
+        await getDocumentRevision(document.id, Number(revisionId), {
+          findRevision: documentStore.findRevision,
+        }),
       );
     },
     getDirectoryStatus: () => {

@@ -35,7 +35,7 @@ const installFetch = (
   vi.stubGlobal(
     "fetch",
     vi.fn(
-      (input: RequestInfo | URL) => {
+      (input: RequestInfo | URL, init?: RequestInit) => {
         const url = input instanceof Request
           ? new URL(input.url).pathname
           : new URL(String(input), globalThis.location.origin).pathname;
@@ -63,6 +63,23 @@ const installFetch = (
               url: "https://github.com/octo/repo/pull/23",
             },
           }));
+        }
+        if (url === "/sadoku.preview.v1.PreviewService/ListDocumentRevisions") {
+          return Promise.resolve(Response.json({
+            revisions: [
+              { id: "2", recordedAt: "2026-10-22T01:00:00.000Z" },
+              { id: "1", recordedAt: "2026-10-22T00:00:00.000Z" },
+            ],
+          }));
+        }
+        if (url === "/sadoku.preview.v1.PreviewService/GetDocumentRevision") {
+          return new Request(input, init).json().then(({ revisionId }) =>
+            Response.json({
+              id: revisionId,
+              recordedAt: "2026-10-22T00:00:00.000Z",
+              markdown: "# Earlier document\n\n**Old content**",
+            })
+          );
         }
         const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
         if (documentMatch) {
@@ -128,7 +145,8 @@ describe("directory preview", () => {
       await screen.findByRole("dialog", { name: "Document revisions" }),
     );
     expect(dialog.getByRole("heading", { name: "Document 1" })).not.toBeNull();
-    fireEvent.click(dialog.getByRole("tab", { name: "Previous" }));
+    fireEvent.click(dialog.getByRole("combobox", { name: "Revision" }));
+    fireEvent.click(await dialog.findByRole("option", { name: /1 earlier/ }));
     expect(await dialog.findByRole("heading", { name: "Earlier document" })).not
       .toBeNull();
     expect(dialog.getByText("Old content").tagName).toBe("STRONG");

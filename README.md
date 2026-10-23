@@ -68,6 +68,14 @@ Run `sadoku --help` for all commands and options.
   Existing files are never overwritten.
 - Use **Zoom** on a Mermaid diagram to enlarge it. Pinch to zoom, scroll to
   move, and choose **Fit to view** to reset.
+- Open **Revisions** in the document action bar to view the current document or
+  choose from its latest 20 saved revisions, listed newest first with recording
+  times. Each selected revision shows changes from its immediately preceding
+  saved revision, with highlights and added/removed line counts. Current
+  compares the live document with the latest saved revision. When their contents
+  match, they share one Current entry, compared with that saved revision's
+  predecessor. Older saved revisions remain stored. This does not change when
+  document snapshots are recorded.
 
 ### GitHub pull requests
 

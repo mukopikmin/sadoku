@@ -2,6 +2,8 @@ import type { MessageInitShape } from "@bufbuild/protobuf";
 import type {
   CommentReplySchema,
   CommentSchema,
+  DocumentRevisionSchema,
+  DocumentRevisionSummarySchema,
   DocumentSummarySchema,
   GetDirectoryStatusResponseSchema,
   GetDocumentResponseSchema,
@@ -22,6 +24,8 @@ import type {
 import type {
   DirectoryDocumentContent,
   DirectoryDocumentSummary,
+  DocumentRevision,
+  DocumentRevisionSummary,
   PublicDocumentTag,
 } from "../usecase/document/types.ts";
 import type { DocumentInstruction as Instruction } from "../usecase/instruction/types.ts";
@@ -104,6 +108,20 @@ export const documentMessage = (
   tags: document.tags?.map(tagMessage) ?? [],
   githubHeadSha,
   previousMarkdown,
+});
+export const documentRevisionSummaryMessage = (
+  revision: DocumentRevisionSummary,
+): MessageInitShape<typeof DocumentRevisionSummarySchema> => ({
+  id: toUint64(revision.id),
+  recordedAt: revision.recordedAt,
+});
+export const documentRevisionMessage = (
+  revision: DocumentRevision,
+): MessageInitShape<typeof DocumentRevisionSchema> => ({
+  id: toUint64(revision.id),
+  recordedAt: revision.recordedAt,
+  markdown: revision.markdown,
+  previousMarkdown: revision.previousMarkdown,
 });
 export const directoryStatusMessage = (
   status: DirectorySessionStatus,

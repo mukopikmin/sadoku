@@ -62,8 +62,6 @@ export const ReadOnlyMarkdownPreview = ({
           <Box
             className="markdown-range-highlight"
             bg={`syntax.${layout.kind}.bg`}
-            borderStartWidth="3px"
-            borderColor={`syntax.${layout.kind}.fg`}
             height={`${Math.max(0, layout.bottom - layout.top)}px`}
             key={index}
             top={`${layout.top}px`}

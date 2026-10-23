@@ -27,13 +27,22 @@ documents (one deleted) and fifteen comments, including human and bot authors,
 replies, review requests, resolved comments, instructions, and memories. Seeded
 comments, replies, instructions, and memories are in English.
 
-| Fixture                 | Preview state                                                  |
-| ----------------------- | -------------------------------------------------------------- |
-| `comprehensive.md`      | Markdown rendering, seven comments, instructions, and memories |
-| `second.md`             | Source diff, moved comment, deleted passage, resolved comment  |
-| `japanese.md`           | Japanese rendering and two comments                            |
-| `guides/overview.md`    | Deleted document with a saved snapshot, comments, and memory   |
-| `guides/setup/local.md` | Nested path and empty comment, instruction, and memory state   |
+| Fixture                 | Preview state                                                                      |
+| ----------------------- | ---------------------------------------------------------------------------------- |
+| `comprehensive.md`      | 25 saved revisions, Markdown rendering, seven comments, instructions, and memories |
+| `second.md`             | Source diff, moved comment, deleted passage, resolved comment                      |
+| `japanese.md`           | Japanese rendering and two comments                                                |
+| `guides/overview.md`    | Deleted document with a saved snapshot, comments, and memory                       |
+| `guides/setup/local.md` | Nested path and empty comment, instruction, and memory state                       |
+
+Open **Revisions** on `comprehensive.md` to browse the twenty most recent saved
+versions. Its history contains the original fixture, 23 numbered review drafts,
+and the original fixture again as the current version. Each draft changes the
+introduction and the text before a subheading, so selecting an earlier version
+shows its changes from the preceding draft. The oldest listed version also has a
+predecessor outside the twenty-item list. These snapshots are recorded through
+`sadoku comment list` with a comment on the unchanged heading; the remaining
+comments are added to the final text.
 
 The seed script changes the copied `second.md` after adding comments and deletes
 the copied `guides/overview.md`. The original fixtures remain available to the

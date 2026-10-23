@@ -27,6 +27,31 @@ add_comment() {
 review="$documents/comprehensive.md"
 add_comment "$review" '# Comprehensive Document' \
   'Open comment: check how each Markdown element renders.'
+# Save enough drafts to exercise the twenty-revision list and its oldest diff.
+# Keep a comment on the unchanged heading so comment list persists each edit.
+revision=1
+while [ "$revision" -le 23 ]; do
+  awk -v revision="$revision" '
+    $0 == "# Comprehensive Document" {
+      print
+      print ""
+      print "Review draft " revision ": compare this version with the preceding draft in Revisions."
+      next
+    }
+    $0 == "Text before a subheading." {
+      print "Draft " revision ": add context before this subheading."
+      next
+    }
+    { print }
+  ' "$fixture_dir/comprehensive.md" > "$review.updated"
+  mv "$review.updated" "$review"
+  sadoku comment list --source "$review" >/dev/null
+  revision=$((revision + 1))
+done
+cp "$fixture_dir/comprehensive.md" "$review.updated"
+mv "$review.updated" "$review"
+sadoku comment list --source "$review" >/dev/null
+
 add_comment "$review" 'Text before a subheading.' \
   'Add more context before this subheading.' --as-bot
 sadoku comment reply add --source "$review" --comment 2 \
