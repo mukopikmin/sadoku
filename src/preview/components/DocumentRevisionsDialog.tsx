@@ -70,7 +70,11 @@ const RevisionContent = (
               value[0] === "current" ? undefined : Number(value[0]),
             );
           }}
-          positioning={{ strategy: "fixed", hideWhenDetached: true }}
+          positioning={{
+            strategy: "fixed",
+            hideWhenDetached: true,
+            sameWidth: true,
+          }}
           lazyMount
           unmountOnExit
         >
