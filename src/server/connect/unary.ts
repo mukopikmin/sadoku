@@ -13,6 +13,7 @@ export type ConnectCode =
   | "invalid_argument"
   | "not_found"
   | "already_exists"
+  | "aborted"
   | "failed_precondition"
   | "unavailable"
   | "internal"
@@ -42,6 +43,7 @@ const isConnectFailure = (value: unknown): value is ConnectFailure =>
   "status" in value &&
   (value.code === "invalid_argument" ||
     value.code === "not_found" || value.code === "already_exists" ||
+    value.code === "aborted" ||
     value.code === "failed_precondition" || value.code === "unavailable" ||
     value.code === "internal" ||
     value.code === "unimplemented") &&

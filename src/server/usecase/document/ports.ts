@@ -17,6 +17,7 @@ export type DocumentRevisionReader = {
 };
 
 export type DocumentStore = Partial<DocumentRevisionReader> & {
+  recordRevision?: (documentId: number, markdown: string) => Promise<void>;
   ensure: (filePath: string) => Promise<Document>;
   ensureMany: (filePaths: string[]) => Promise<Document[]>;
   findById: (id: number) => Promise<Document | undefined>;

@@ -90,6 +90,18 @@ export const createSqliteDocumentStore = (
         [documentId, limit],
       )).rows?.map((row) => ({ id: row.id, recordedAt: row.recorded_at })) ??
         [],
+    // Restoration archives are independent of comment snapshots: advancing their
+    // pointers here would skip rebasing the comments onto the restored content.
+    recordRevision: (documentId, markdown) =>
+      withTransaction(database, async () => {
+        const latest = (await database.execute<{ markdown: string }>(
+          "SELECT markdown FROM document_revision WHERE document_id = ? ORDER BY id DESC LIMIT 1",
+          [documentId],
+        )).rows?.[0];
+        if (latest?.markdown !== markdown) {
+          await appendDocumentRevision(database, documentId, markdown);
+        }
+      }),
     findRevision: async (documentId, revisionId) => {
       const row = (await database.execute<
         {
