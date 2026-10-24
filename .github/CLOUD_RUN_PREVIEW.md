@@ -29,11 +29,22 @@ the same project as the backend and the region selected by
 proxy URL for comments, deployment environment links, and its summary. It
 queries the backend Cloud Run API only to verify the tag and revision readiness.
 
-The preview image includes the selected commit's repository contents under
-`/app`, subject to `.dockerignore`. Sadoku opens
-`/app/test/integration/fixtures` as a directory so the preview lists the
-integration test's Markdown fixtures. Set `SADOKU_SOURCE` to override the
-source; for example, `/app/README.md` opens only the README.
+The preview image includes the selected commit's repository contents under `/app`,
+subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the platform-neutral
+`scripts/preview_entrypoint.sh`. Docker `CMD` supplies
+`/bin/sh /app/scripts/cloud_run_entrypoint.sh` as the command to execute after
+preparation. The launcher has no dependency on Cloud Run; the ordinary Cloud Run
+entrypoint keeps its existing server arguments and does not prepare sample data.
+See [Preview sample data](../scripts/PREVIEW.md) for sample contents, lifecycle,
+and usage outside this deployment.
+
+Set a nonempty `SADOKU_SOURCE` to open another source without preparing samples;
+for example, `/app/README.md` opens only the README. In this mode the configured
+`SADOKU_COMMENTS_DIR` is preserved (the image defaults to
+`/tmp/sadoku-comments`). Cloud Run instances keep independent temporary data.
+Restarting or redeploying creates new samples. Running
+`scripts/cloud_run_entrypoint.sh` directly skips preparation and retains its
+original source and storage defaults.
 
 The `cloud_run_preview.yml` workflow expects these GitHub repository or
 `cloud-run-preview` environment secrets:

@@ -53,6 +53,7 @@ Deno.test("Connect file creation becomes immediately readable and listed", async
     };
     const documentStore: DocumentStore = {
       ensure: (filePath) => Promise.resolve({ id: 8, filePath }),
+      setTitle: () => Promise.resolve(),
       ensureMany: () => Promise.resolve([]),
       list: () => Promise.resolve([]),
       findById: () => Promise.resolve(undefined),
@@ -82,10 +83,44 @@ Deno.test("Connect file creation becomes immediately readable and listed", async
     assertEquals(created.id, 8n);
     assertEquals(created.relativePath, "guides/new.md");
     assertEquals(created.title, "new.md");
+    assertEquals(created.displayTitle, "New document");
+    const updated = await client.updateDocumentTitle({
+      documentId: created.id,
+      title: " Updated title ",
+    });
+    assertEquals(updated.displayTitle, "Updated title");
+    assertEquals(
+      (await client.getDocument({ documentId: created.id })).displayTitle,
+      "Updated title",
+    );
+    assertEquals(
+      (await client.listDocuments({})).documents[0].displayTitle,
+      "Updated title",
+    );
+    await client.updateDocumentTitle({ documentId: created.id, title: " " });
+    assertEquals(
+      (await client.getDocument({ documentId: created.id })).displayTitle,
+      undefined,
+    );
+    assertEquals(await Deno.readTextFile(join(rootPath, "guides/new.md")), "");
+    const invalid = await request(
+      handler,
+      "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          documentId: String(created.id),
+          title: "One\nTwo",
+        }),
+      },
+    );
+    assertEquals(invalid.status, 400);
+
     assertEquals((await client.listDocuments({})).documents[0].id, created.id);
     assertEquals(
       (await client.getDocument({ documentId: created.id })).markdown,
-      "# New document\n",
+      "",
     );
     const duplicate = await request(
       handler,

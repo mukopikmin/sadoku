@@ -1,6 +1,17 @@
 export type Document = {
   id: number;
   filePath: string;
+  displayTitle?: string;
+};
+
+export type DocumentRevisionSummary = {
+  id: number;
+  recordedAt: string;
+};
+
+export type DocumentRevision = DocumentRevisionSummary & {
+  markdown: string;
+  previousMarkdown?: string;
 };
 
 export type DirectoryDocument = Document & {
@@ -44,7 +55,7 @@ export type PublicDocumentTag = {
 export type DirectoryDocumentSummary =
   & Pick<
     DirectoryDocument,
-    "deleted" | "id" | "relativePath" | "title"
+    "deleted" | "id" | "relativePath" | "title" | "displayTitle"
   >
   & { tags?: PublicDocumentTag[] };
 

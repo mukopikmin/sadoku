@@ -2,6 +2,7 @@ import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { openAppDatabase } from "../../db/connection.ts";
 import { createSqliteDocumentStore } from "./sqlite_storage.ts";
+import { createSqliteCommentsStore } from "../comment/sqlite_storage.ts";
 
 Deno.test("sqlite document store ensures documents and reuses IDs without updating them", async () => {
   const root = await Deno.makeTempDir();
@@ -120,6 +121,71 @@ Deno.test("sqlite document store initializes a snapshot only once", async () => 
       await store.initializeSnapshot?.(document.id, "second");
 
       assertEquals(await store.readSnapshot?.(document.id), "first");
+    } finally {
+      database.close();
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("sqlite document snapshot initialization is atomic and reuses the revision on comment writes", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const database = await openAppDatabase({
+      path: join(root, "documents.db"),
+    });
+    try {
+      const store = createSqliteDocumentStore(database);
+      const comments = createSqliteCommentsStore(database);
+      const document = await store.ensure("document.md");
+      await database.execute(
+        `CREATE TRIGGER reject_snapshot BEFORE UPDATE OF source_revision_id ON comment_document
+          BEGIN SELECT RAISE(ABORT, 'rejected snapshot'); END`,
+      );
+      await assertRejects(() =>
+        store.initializeSnapshot!(document.id, "rejected")
+      );
+      assertEquals(await store.readSnapshot!(document.id), undefined);
+      assertEquals(
+        (await database.execute("SELECT * FROM document_revision")).rows,
+        [],
+      );
+      await database.execute("DROP TRIGGER reject_snapshot");
+      await Promise.all([
+        store.initializeSnapshot!(document.id, ""),
+        store.initializeSnapshot!(document.id, "second"),
+        store.initializeSnapshot!(-1, "missing document"),
+      ]);
+      assertEquals(await store.readSnapshot!(document.id), "");
+      await comments.write(document.filePath, {
+        filePath: document.filePath,
+        comments: [],
+        sourceSnapshot: "",
+      });
+      assertEquals(
+        (await database.execute(
+          "SELECT markdown FROM document_revision ORDER BY id",
+        )).rows,
+        [{ markdown: "" }],
+      );
+      await comments.write(document.filePath, {
+        filePath: document.filePath,
+        comments: [],
+        previousSourceSnapshot: "",
+        sourceSnapshot: "next",
+      });
+      assertEquals(await store.readSnapshot!(document.id), "next");
+      assertEquals(
+        (await comments.read(document.filePath)).previousSourceSnapshot,
+        "",
+      );
+      assertEquals(
+        (await database.execute(
+          "SELECT markdown FROM document_revision ORDER BY id",
+        )).rows,
+        [{ markdown: "" }, { markdown: "next" }],
+      );
     } finally {
       database.close();
     }

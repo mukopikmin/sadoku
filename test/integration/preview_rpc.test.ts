@@ -79,6 +79,7 @@ const createPreview = async () => {
   );
   return {
     root,
+    database,
     client,
     request,
     session,
@@ -95,6 +96,62 @@ const createPreview = async () => {
     },
   };
 };
+
+Deno.test("Connect exposes one previous revision while retaining all revisions without advancing history on document reads", async () => {
+  const preview = await createPreview();
+  const { client, document, comments } = preview;
+  const documentId = BigInt(document.id);
+  try {
+    const original = await client.getDocument({ documentId });
+    assertEquals(original.previousMarkdown, undefined);
+    await client.createComment({
+      documentId,
+      startLine: 1,
+      endLine: 1,
+      body: "Review",
+    });
+    await Deno.writeTextFile(document.filePath, "# Changed\n");
+    const before = await comments.read(document.filePath);
+    const changed = await client.getDocument({ documentId });
+    assertEquals(changed.markdown, "# Changed\n");
+    assertEquals(changed.previousMarkdown, original.markdown);
+    assertEquals(await comments.read(document.filePath), before);
+    await client.listComments({ documentId });
+    assertEquals(
+      (await client.getDocument({ documentId })).previousMarkdown,
+      original.markdown,
+    );
+    await Deno.writeTextFile(document.filePath, "# Latest\n");
+    assertEquals(
+      (await client.getDocument({ documentId })).previousMarkdown,
+      changed.markdown,
+    );
+    await client.listComments({ documentId });
+    const revisions = (await preview.database.execute(
+      "SELECT markdown FROM document_revision ORDER BY id",
+    )).rows;
+    assertEquals(revisions, [
+      { markdown: original.markdown },
+      { markdown: changed.markdown },
+      { markdown: "# Latest\n" },
+    ]);
+    await client.getDocument({ documentId });
+    await client.listComments({ documentId });
+    assertEquals(
+      (await preview.database.execute(
+        "SELECT markdown FROM document_revision ORDER BY id",
+      )).rows,
+      revisions,
+    );
+    document.deleted = true;
+    await Deno.remove(document.filePath);
+    const deleted = await client.getDocument({ documentId });
+    assertEquals(deleted.markdown, "# Latest\n");
+    assertEquals(deleted.previousMarkdown, changed.markdown);
+  } finally {
+    await preview.close();
+  }
+});
 
 Deno.test("Connect maps document snapshots, status, accounts and memory with REST compatibility", async () => {
   const preview = await createPreview();
@@ -437,6 +494,8 @@ Deno.test("Connect missing capabilities remain unimplemented before document loo
   for (
     const method of [
       "GetDirectoryStatus",
+      "ListDocumentRevisions",
+      "GetDocumentRevision",
       "GetGitHubAccount",
       "ListTags",
       "UpdateTag",
@@ -467,5 +526,138 @@ Deno.test("Connect missing capabilities remain unimplemented before document loo
     assertEquals(response.status, 501);
     assertEquals(response.headers.get("cache-control"), "no-store");
     assertEquals((await response.json()).code, "unimplemented");
+  }
+});
+
+Deno.test("Connect lists twenty revision summaries and reads scoped immutable bodies without advancing history", async () => {
+  const preview = await createPreview();
+  const documentId = BigInt(preview.document.id);
+  try {
+    assertEquals(
+      (await preview.client.listDocumentRevisions({ documentId })).revisions,
+      [],
+    );
+    const values = Array.from(
+      { length: 25 },
+      (_, index) => index === 23 ? "" : `# Revision ${index + 1}`,
+    );
+    for (let index = 0; index < values.length; index++) {
+      await preview.comments.write(preview.document.filePath, {
+        filePath: preview.document.filePath,
+        comments: [],
+        sourceSnapshot: values[index],
+        ...(index > 0 && { previousSourceSnapshot: values[index - 1] }),
+      });
+    }
+    const before = await preview.database.execute(
+      "SELECT * FROM comment_document",
+    );
+    const { revisions } = await preview.client.listDocumentRevisions({
+      documentId,
+    });
+    assertEquals(revisions.length, 20);
+    assertEquals(
+      revisions.map((revision) => Number(revision.id)),
+      Array.from({ length: 20 }, (_, i) => 25 - i),
+    );
+    assertEquals(
+      revisions.every((revision) =>
+        !("markdown" in revision) && revision.recordedAt.endsWith("Z")
+      ),
+      true,
+    );
+    assertEquals(
+      (await preview.client.getDocumentRevision({ documentId, revisionId: 6n }))
+        .markdown,
+      "# Revision 6",
+    );
+    // The oldest visible revision still compares with its actual predecessor,
+    // even though that predecessor is outside the twenty-item list.
+    assertEquals(
+      (await preview.client.getDocumentRevision({ documentId, revisionId: 6n }))
+        .previousMarkdown,
+      "# Revision 5",
+    );
+    assertEquals(
+      (await preview.client.getDocumentRevision({ documentId, revisionId: 1n }))
+        .previousMarkdown,
+      undefined,
+    );
+    assertEquals(
+      (await preview.client.getDocumentRevision({
+        documentId,
+        revisionId: 25n,
+      }))
+        .previousMarkdown,
+      "",
+    );
+    assertEquals(
+      (await preview.client.getDocumentRevision({
+        documentId,
+        revisionId: 24n,
+      })).markdown,
+      "",
+    );
+    assertEquals(
+      await preview.database.execute("SELECT * FROM comment_document"),
+      before,
+    );
+    assertEquals(
+      (await preview.database.execute(
+        "SELECT COUNT(*) AS count FROM document_revision",
+      )).rows,
+      [{ count: 25 }],
+    );
+    // A revision belonging to a different registered document cannot be read.
+    const foreignPath = join(preview.root, "other.md");
+    await preview.comments.write(foreignPath, {
+      filePath: foreignPath,
+      comments: [],
+      sourceSnapshot: "private",
+    });
+    for (
+      const revisionId of [0n, 26n, 999n, BigInt(Number.MAX_SAFE_INTEGER) + 1n]
+    ) {
+      const error = await assertRejects(
+        () => preview.client.getDocumentRevision({ documentId, revisionId }),
+        ConnectError,
+      );
+      assertEquals(error.code, Code.NotFound);
+    }
+    await preview.comments.write(preview.document.filePath, {
+      filePath: preview.document.filePath,
+      comments: [],
+      sourceSnapshot: "# New version after the other document",
+      previousSourceSnapshot: values[24],
+    });
+    assertEquals(
+      (await preview.client.getDocumentRevision({
+        documentId,
+        revisionId: 27n,
+      }))
+        .previousMarkdown,
+      "# Revision 25",
+    );
+    const missing = await assertRejects(
+      () => preview.client.listDocumentRevisions({ documentId: 999n }),
+      ConnectError,
+    );
+    assertEquals(missing.code, Code.NotFound);
+    preview.document.deleted = true;
+    await Deno.remove(preview.document.filePath);
+    assertEquals(
+      (await preview.client.listDocumentRevisions({ documentId })).revisions
+        .length,
+      20,
+    );
+    assertEquals(
+      (await preview.client.getDocumentRevision({
+        documentId,
+        revisionId: 25n,
+      })).markdown,
+      "# Revision 25",
+    );
+  } finally {
+    await preview.close();
   }
 });

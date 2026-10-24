@@ -1,9 +1,7 @@
 const linesOf = (text: string): string[] =>
   text === "" ? [] : text.split(/\r?\n/);
 
-export const suggestionDiff = (source: string, replacement: string): string => {
-  const before = linesOf(source);
-  const after = linesOf(replacement);
+const diffLines = (before: string[], after: string[]): string[] => {
   const width = after.length + 1;
   // Bound memory and work for large selections; a full replacement is still
   // a valid diff when finding individual unchanged lines would be expensive.
@@ -11,7 +9,7 @@ export const suggestionDiff = (source: string, replacement: string): string => {
     return [
       ...before.map((line) => `-${line}`),
       ...after.map((line) => `+${line}`),
-    ].join("\n");
+    ];
   }
   const lengths = new Uint32Array((before.length + 1) * width);
   for (let i = before.length - 1; i >= 0; i -= 1) {
@@ -42,5 +40,28 @@ export const suggestionDiff = (source: string, replacement: string): string => {
       j += 1;
     }
   }
-  return diff.join("\n");
+  return diff;
+};
+
+export const suggestionDiff = (source: string, replacement: string): string => {
+  const before = linesOf(source);
+  const after = linesOf(replacement);
+  let start = 0;
+  while (
+    start < before.length && start < after.length &&
+    before[start] === after[start]
+  ) start += 1;
+  let end = 0;
+  while (
+    end < before.length - start && end < after.length - start &&
+    before[before.length - end - 1] === after[after.length - end - 1]
+  ) end += 1;
+  return [
+    ...before.slice(0, start).map((line) => ` ${line}`),
+    ...diffLines(
+      before.slice(start, before.length - end),
+      after.slice(start, after.length - end),
+    ),
+    ...before.slice(before.length - end).map((line) => ` ${line}`),
+  ].join("\n");
 };

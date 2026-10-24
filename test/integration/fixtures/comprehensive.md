@@ -106,7 +106,33 @@ Paragraph before a table.
 | Mermaid |  yes   |     2 |
 | Lists   |  yes   |     3 |
 
-Paragraph after a table before code.
+Paragraph after a short table. Its text should match the surrounding body text,
+and the table should keep its natural width.
+
+### Table Wrapping And Font Size
+
+Resize the preview to a narrow width and increase the font size in appearance
+settings. The following cells should wrap within the available width, while the
+text size and line height stay consistent with this paragraph.
+
+| Sample            | Content                                                                                                                                                               | Count |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----: |
+| Japanese          | 長い日本語の文章がセルの幅に合わせて自然に折り返されることを確認します。画面を狭くした場合や文字サイズを大きくした場合でも、文章全体が読める状態で表示されます。      |     1 |
+| English           | This longer English sentence should wrap at word boundaries when the preview becomes narrow, while keeping the table text the same size as the surrounding paragraph. |    20 |
+| Long URL          | https://example.com/documentation/markdown/table-rendering/wrapping-and-font-size/abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789            |   300 |
+| Unbroken text     | abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789                                                          |  4000 |
+| Inline formatting | **Bold text**, _italic text_, `inline code`, and [a link](https://example.com) should remain readable inside a wrapping cell.                                         | 50000 |
+
+### Long Table Headers
+
+Long column headers should also wrap. Compare their size with the short cell
+values and this paragraph.
+
+| LongColumnHeaderWithoutSpacesABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 | 長い日本語の列見出しも表示領域に合わせて折り返されることを確認するためのサンプルです |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Short value                                                                                           | 短い値                                                                               |
+
+Paragraph after the wrapping tables before code.
 
 ## Code Blocks
 
@@ -135,7 +161,11 @@ Paragraph before a diff code block.
 +const status = "ready";
 ```
 
-Paragraph before Mermaid.
+## Mermaid Diagrams
+
+### Flowchart
+
+Paragraph before a Mermaid flowchart.
 
 ```mermaid
 graph TD
@@ -143,7 +173,172 @@ graph TD
   Server --> Browser[Browser]
 ```
 
-Paragraph after Mermaid before nested fences.
+### Class Diagram
+
+Paragraph before a Mermaid class diagram.
+
+```mermaid
+classDiagram
+  class PreviewSource {
+    <<interface>>
+    +read() String
+  }
+  class MarkdownFile {
+    +String path
+    +read() String
+  }
+  class PreviewServer {
+    +start() void
+    +reload() void
+  }
+  PreviewSource <|.. MarkdownFile : implements
+  PreviewServer --> PreviewSource : reads
+```
+
+### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant Browser
+  participant Server
+  User->>Browser: Open Markdown preview
+  Browser->>Server: Request document
+  activate Server
+  Server-->>Browser: Markdown content
+  deactivate Server
+  alt Document changes
+    Server-->>Browser: Reload event
+    Browser->>Server: Request updated document
+  else Document unchanged
+    Note over Browser,Server: Keep the preview open
+  end
+```
+
+### State Diagram
+
+```mermaid
+stateDiagram-v2
+  [*] --> Loading
+  Loading --> Ready: Document loaded
+  Loading --> Error: Read failed
+  Ready --> Loading: File changed
+  Error --> Loading: Retry
+  Ready --> [*]: Close preview
+```
+
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+  DOCUMENT ||--o{ COMMENT : contains
+  COMMENT ||--o{ REPLY : has
+  DOCUMENT {
+    int id PK
+    string path
+    string title
+  }
+  COMMENT {
+    int id PK
+    int document_id FK
+    int start_line
+    string body
+  }
+  REPLY {
+    int id PK
+    int comment_id FK
+    string body
+  }
+```
+
+### Gantt Chart
+
+```mermaid
+gantt
+  title Preview release plan
+  dateFormat YYYY-MM-DD
+  axisFormat %m/%d
+  section Implementation
+    Markdown rendering :done, markdown, 2026-10-01, 3d
+    Mermaid diagrams :active, diagrams, after markdown, 4d
+  section Validation
+    Browser checks :checks, after diagrams, 2d
+    Release :milestone, after checks, 0d
+```
+
+### Pie Chart
+
+```mermaid
+pie showData
+  title Review comments by status
+  "Open" : 8
+  "Resolved" : 15
+  "Needs follow-up" : 4
+```
+
+### User Journey
+
+```mermaid
+journey
+  title Review a Markdown document
+  section Open
+    Start preview: 5: Author
+    Read document: 4: Reviewer
+  section Review
+    Add comment: 4: Reviewer
+    Reply to comment: 4: Author
+    Resolve thread: 5: Author, Reviewer
+```
+
+### Mindmap
+
+```mermaid
+mindmap
+  root((Markdown preview))
+    Content
+      Headings
+      Tables
+      Code blocks
+    Diagrams
+      Flowcharts
+      Class diagrams
+      Sequence diagrams
+    Review
+      Comments
+      Replies
+```
+
+### Timeline
+
+```mermaid
+timeline
+  title Preview feature milestones
+  section Rendering
+    First release : Markdown preview
+    Diagrams : Local Mermaid assets
+             : Diagram zoom
+  section Collaboration
+    Review : Inline comments
+           : Thread replies
+```
+
+### Git Graph
+
+```mermaid
+gitGraph
+  commit id: "Initial preview"
+  branch diagrams
+  checkout diagrams
+  commit id: "Add Mermaid"
+  commit id: "Add diagram samples"
+  checkout main
+  commit id: "Update docs"
+  merge diagrams id: "Merge diagrams"
+```
+
+### Nested Mermaid Fence
+
+Paragraph before a nested fence that should remain code.
 
 ````md
 ```mermaid

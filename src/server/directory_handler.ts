@@ -156,7 +156,13 @@ export const createDirectoryPreviewHandler = (
   register(PreviewService.method.getStatistics, rpc.getStatistics);
   register(PreviewService.method.listDocuments, rpc.listDocuments);
   register(PreviewService.method.createDocument, rpc.createDocument);
+  register(PreviewService.method.updateDocumentTitle, rpc.updateDocumentTitle);
   register(PreviewService.method.getDocument, rpc.getDocument);
+  register(
+    PreviewService.method.listDocumentRevisions,
+    rpc.listDocumentRevisions,
+  );
+  register(PreviewService.method.getDocumentRevision, rpc.getDocumentRevision);
   register(PreviewService.method.getDirectoryStatus, rpc.getDirectoryStatus);
   register(PreviewService.method.getSettings, rpc.getSettings);
   register(PreviewService.method.updateSettings, rpc.updateSettings);

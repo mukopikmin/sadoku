@@ -2,6 +2,7 @@ import {
   type Comment,
   type CommentReply,
   type CommentsDocument,
+  type CommentSource,
   type GitHubCommentExport,
 } from "../models/comment";
 import { parseGitHubHeadSha } from "./document";
@@ -29,6 +30,8 @@ export type CommentResponse = {
   resolved: boolean;
   resolvedAt?: string;
   resolvedBy?: CommentAuthorResponse;
+  currentSourceText?: string;
+  sourceDeleted?: boolean;
   sourceHash?: string;
   sourceText?: string;
   stale: boolean;
@@ -55,8 +58,23 @@ const toCommentReply = (response: CommentReplyResponse): CommentReply => ({
   updatedAt: response.updatedAt,
 });
 
+const toCurrentSource = (response: CommentResponse): CommentSource => {
+  if (
+    (response.currentSourceText !== undefined &&
+      typeof response.currentSourceText !== "string") ||
+    (response.sourceDeleted !== undefined &&
+      typeof response.sourceDeleted !== "boolean")
+  ) throw new Error("Invalid comment source response.");
+  if (response.sourceDeleted === true) return { state: "deleted" };
+  if (response.stale || response.currentSourceText === undefined) {
+    return { state: "unavailable" };
+  }
+  return { state: "available", text: response.currentSourceText };
+};
+
 export const toComment = (response: CommentResponse): Comment => {
   const common = {
+    currentSource: toCurrentSource(response),
     author: { type: response.author.type },
     body: response.body,
     createdAt: response.createdAt,

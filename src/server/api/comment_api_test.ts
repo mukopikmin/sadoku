@@ -812,3 +812,55 @@ Deno.test("PR comment export validates synchronization, excludes replies and ser
     "export_unavailable",
   );
 });
+
+Deno.test("comments RPC returns original and current ranges through edits, resolution, and deletion", async () => {
+  const filePath = await createTempMarkdown("# Title\n\nOld body\n");
+  const memory = createMemoryCommentsStore();
+  const handler = createTestPreviewHandler(filePath, {
+    commentsStore: memory.store,
+  });
+  const client = createClient(
+    PreviewService,
+    createConnectTransport({
+      baseUrl: "http://127.0.0.1:3334",
+      useBinaryFormat: false,
+      fetch: async (input, init) =>
+        await handler(new Request(input, init), serveHandlerInfo),
+    }),
+  );
+  try {
+    const created = await client.createComment({
+      documentId: 1n,
+      startLine: 3,
+      endLine: 3,
+      body: "Review",
+    });
+    assertEquals(created.currentSourceText, "Old body");
+    await Deno.writeTextFile(
+      filePath,
+      "Intro\n# Title\n\nNew body\nSecond line\n",
+    );
+    const edited = (await client.listComments({ documentId: 1n })).comments[0];
+    assertEquals(edited.sourceText, "Old body");
+    assertEquals(edited.currentSourceText, "New body\nSecond line");
+    assertEquals(edited.startLine, 4);
+    const resolved = await client.setCommentResolution({
+      documentId: 1n,
+      commentId: created.id,
+      resolved: true,
+    });
+    assertEquals(resolved.currentSourceText, edited.currentSourceText);
+    await Deno.writeTextFile(filePath, "Intro\n# Title\n\n");
+    const deleted = (await client.listComments({ documentId: 1n })).comments[0];
+    assertEquals(deleted.sourceDeleted, true);
+    assertEquals(deleted.currentSourceText, undefined);
+    assertEquals(deleted.sourceText, "Old body");
+    assertEquals(deleted.resolved, true);
+    const reloaded =
+      (await client.listComments({ documentId: 1n })).comments[0];
+    assertEquals(reloaded.sourceDeleted, true);
+    assertEquals(reloaded.currentSourceText, undefined);
+  } finally {
+    await removeTempMarkdown(filePath);
+  }
+});

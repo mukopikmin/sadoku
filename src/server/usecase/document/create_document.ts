@@ -69,7 +69,7 @@ export const createDocument = async (
       message: "Use a configured Markdown file extension.",
     } satisfies CreateDocumentError;
   }
-  const markdown = title ? `# ${title}\n` : "";
+  const markdown = "";
   const filePath = await deps.creator.create(
     directory,
     resolvedFilename,
@@ -78,6 +78,11 @@ export const createDocument = async (
   let stored: Document;
   try {
     stored = await deps.documentStore.ensure(filePath);
+    if (deps.documentStore.setTitle) {
+      await deps.documentStore.setTitle(stored.id, title || undefined);
+    } else if (title) {
+      throw new Error("Title storage unavailable.");
+    }
     await deps.documentStore.initializeSnapshot?.(stored.id, markdown);
   } catch {
     throw {
@@ -88,6 +93,7 @@ export const createDocument = async (
   }
   const document = {
     ...stored,
+    displayTitle: title || undefined,
     deleted: false,
     relativePath: directory
       ? `${directory}/${resolvedFilename}`
