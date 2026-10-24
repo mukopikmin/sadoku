@@ -1,3 +1,7 @@
+import { updateDocumentTitle } from "../usecase/document/update_document_title.ts";
+import { getPreviousMarkdown } from "../usecase/document/get_previous_markdown.ts";
+import { listDocumentRevisions } from "../usecase/document/list_document_revisions.ts";
+import { getDocumentRevision } from "../usecase/document/get_document_revision.ts";
 import { isSettingsError } from "../usecase/settings/types.ts";
 import type { MessageInitShape, MessageShape } from "@bufbuild/protobuf";
 import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
@@ -61,6 +65,8 @@ import {
   commentMessage,
   directoryStatusMessage,
   documentMessage,
+  documentRevisionMessage,
+  documentRevisionSummaryMessage,
   documentSummaryMessage,
   githubAccountMessage,
   instructionMessage,
@@ -128,9 +134,11 @@ export const previewRpcOperation = async <T>(
     if (isDocumentUseCaseError(error)) {
       throw connectFailure(
         "not_found",
-        error.type === "document_not_found"
-          ? "Document not found."
-          : "Saved Markdown snapshot not found.",
+        {
+          document_not_found: "Document not found.",
+          document_snapshot_not_found: "Saved Markdown snapshot not found.",
+          document_revision_not_found: "Document revision not found.",
+        }[error.type],
         404,
       );
     }
@@ -253,18 +261,71 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
         !deps.directoryState || deps.directoryState.status.state === "ready",
         readConfig()?.markdownExtensions,
       ),
-    getDocument: async ({ documentId }) => {
+    updateDocumentTitle: async ({ documentId, title }) => {
       const { document } = resolveDocument(documentId);
+      if (!documentStore) return unavailable("Document titles");
+      try {
+        return documentSummaryMessage(
+          await updateDocumentTitle(document, title, documentStore),
+        );
+      } catch (error) {
+        if (typeof error === "object" && error !== null && "type" in error) {
+          if (error.type === "invalid_document_title") {
+            throw connectFailure(
+              "invalid_argument",
+              "Enter a single-line title.",
+              400,
+            );
+          }
+          if (error.type === "title_storage_unavailable") {
+            return unavailable("Document titles");
+          }
+        }
+        throw error;
+      }
+    },
+    getDocument: async ({ documentId }) => {
+      const { document, source } = resolveDocument(documentId);
+      const content = await readDirectoryDocument(
+        document,
+        documentStore,
+        tagStore,
+        session.readMarkdown,
+      );
       return documentMessage(
-        await readDirectoryDocument(
-          document,
-          documentStore,
-          tagStore,
-          session.readMarkdown,
-        ),
+        content,
         session.githubPull
           ? new URL(document.filePath).searchParams.get("ref") ?? undefined
           : undefined,
+        await getPreviousMarkdown(
+          commentsStore,
+          source.commentSource,
+          content.markdown,
+        ),
+      );
+    },
+    listDocumentRevisions: async ({ documentId }) => {
+      if (!documentStore?.listRevisions) {
+        return unavailable("Document revisions");
+      }
+      const { document } = resolveDocument(documentId);
+      const revisions = await listDocumentRevisions(document.id, {
+        listRevisions: documentStore.listRevisions,
+      });
+      return { revisions: revisions.map(documentRevisionSummaryMessage) };
+    },
+    getDocumentRevision: async ({ documentId, revisionId }) => {
+      if (!documentStore?.findRevision) {
+        return unavailable("Document revisions");
+      }
+      const { document } = resolveDocument(documentId);
+      if (revisionId < 1n || revisionId > BigInt(Number.MAX_SAFE_INTEGER)) {
+        throw connectFailure("not_found", "Document revision not found.", 404);
+      }
+      return documentRevisionMessage(
+        await getDocumentRevision(document.id, Number(revisionId), {
+          findRevision: documentStore.findRevision,
+        }),
       );
     },
     getDirectoryStatus: () => {

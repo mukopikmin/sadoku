@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { create } from "@bufbuild/protobuf";
-import { loadDocuments, loadPreviewDocument } from "../api/document";
+import {
+  loadDocuments,
+  loadPreviewDocument,
+  parsePreviousMarkdown,
+} from "../api/document";
 import { toPreviewSession } from "../api/session";
 import { toDatabaseStatistics } from "../api/statistics";
 import {
@@ -9,6 +13,29 @@ import {
 } from "../../../gen/ts/sadoku/preview/v1/preview_pb";
 
 afterEach(() => vi.unstubAllGlobals());
+
+describe("document revision API conversion", () => {
+  it.each([undefined, "", "# Previous\n"])(
+    "preserves the optional revision: %j",
+    async (previousMarkdown) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () =>
+          Response.json({ markdown: "# Current", previousMarkdown })
+        ),
+      );
+      expect((await loadPreviewDocument(1)).previousMarkdown).toBe(
+        previousMarkdown,
+      );
+    },
+  );
+
+  it.each([null, 1, {}, []])("rejects an invalid revision: %j", (value) => {
+    expect(() => parsePreviousMarkdown(value)).toThrow(
+      "Invalid previous Markdown revision.",
+    );
+  });
+});
 
 describe("document API tag conversion", () => {
   it("preserves validated tag background colors", async () => {
@@ -57,6 +84,37 @@ describe("document API tag conversion", () => {
       vi.fn(async () => Response.json([{ id: 1, title: "Doc" }])),
     );
     expect((await loadDocuments())[0].tags).toEqual([]);
+  });
+});
+
+describe("document title API conversion", () => {
+  it("preserves the optional title separately from the filename and Markdown", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        Response.json(
+          String(input).endsWith("/1")
+            ? {
+              title: "guide.md",
+              displayTitle: "File title",
+              markdown: "# Body heading",
+              tags: [],
+            }
+            : [{
+              id: 1,
+              title: "guide.md",
+              displayTitle: "File title",
+              relativePath: "guide.md",
+              tags: [],
+            }],
+        )
+      ),
+    );
+    expect((await loadDocuments())[0].displayTitle).toBe("File title");
+    const document = await loadPreviewDocument(1);
+    expect(document.title).toBe("guide.md");
+    expect(document.displayTitle).toBe("File title");
+    expect(document.markdown).toBe("# Body heading");
   });
 });
 

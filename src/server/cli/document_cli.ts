@@ -7,7 +7,10 @@ import {
   createDocument,
   type CreateDocumentError,
 } from "../usecase/document/create_document.ts";
-import type { DocumentStore } from "../usecase/document/mod.ts";
+import type {
+  DocumentStore,
+  DocumentTagReader,
+} from "../usecase/document/mod.ts";
 import {
   getDocument,
   listDocuments,
@@ -44,7 +47,11 @@ export const addDocument = async (
       markdownExtensions: readConfig()?.markdownExtensions ??
         defaultMarkdownExtensions,
     });
-    return { filePath: document.filePath, id: document.id };
+    return {
+      filePath: document.filePath,
+      id: document.id,
+      ...(document.displayTitle ? { displayTitle: document.displayTitle } : {}),
+    };
   } catch (error) {
     if (typeof error === "object" && error !== null && "type" in error) {
       const failure = error as CreateDocumentError;
@@ -63,8 +70,13 @@ export const addDocument = async (
   }
 };
 
-export const inspectDocument = (id: number, store: DocumentStore) =>
-  getDocument(store, id);
+export const inspectDocument = (
+  id: number,
+  store: DocumentStore,
+  tags?: DocumentTagReader,
+) => getDocument(store, id, tags);
 
-export const listRegisteredDocuments = (store: DocumentStore) =>
-  listDocuments(store);
+export const listRegisteredDocuments = (
+  store: DocumentStore,
+  tags?: DocumentTagReader,
+) => listDocuments(store, tags);

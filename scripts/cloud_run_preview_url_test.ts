@@ -100,6 +100,7 @@ fi
         PROXY_REGION: proxyRegion,
         EXPECTED_PROXY_REGION: proxyRegion,
         PR_NUMBER: "42",
+        PREVIEW_TAG: "pr-42",
         REVISION: "sadoku-revision",
         GITHUB_OUTPUT: output,
         GITHUB_STEP_SUMMARY: summary,

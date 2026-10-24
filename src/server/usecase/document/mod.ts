@@ -1,5 +1,7 @@
 export { ensureDirectoryDocuments } from "./ensure_directory_documents.ts";
 export { getDocument } from "./get_document.ts";
+export { getDocumentRevision } from "./get_document_revision.ts";
+export { listDocumentRevisions } from "./list_document_revisions.ts";
 export { getDirectoryDocument } from "./get_directory_document.ts";
 export { initializeDocumentSnapshot } from "./initialize_document_snapshot.ts";
 export { listDirectoryDocuments } from "./list_directory_documents.ts";
@@ -13,6 +15,7 @@ export { isDocumentUseCaseError } from "./errors.ts";
 export type { DocumentUseCaseError } from "./errors.ts";
 export type {
   DocumentDependencies,
+  DocumentRevisionReader,
   DocumentStore,
   DocumentTagReader,
   InitializeDocumentSnapshot,
@@ -27,6 +30,8 @@ export type {
   DirectoryDocumentSummary,
   DirectorySession,
   Document,
+  DocumentRevision,
+  DocumentRevisionSummary,
   MarkdownDocumentPath,
   PublicDocumentTag,
 } from "./types.ts";

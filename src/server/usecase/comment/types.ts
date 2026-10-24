@@ -24,6 +24,8 @@ export type PreviewComment = {
   resolved: boolean;
   resolvedAt?: string;
   resolvedBy?: CommentAuthor;
+  currentSourceText?: string;
+  sourceDeleted?: boolean;
   sourceHash?: string;
   sourceText?: string;
   stale: boolean;

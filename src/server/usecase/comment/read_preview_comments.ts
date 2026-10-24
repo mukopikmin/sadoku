@@ -1,5 +1,5 @@
 import type { CommentsDependencies } from "./ports.ts";
-import type { CommentSource } from "./helpers.ts";
+import { type CommentSource, withCurrentSource } from "./helpers.ts";
 import { readResolvedCommentsDocument } from "./position.ts";
 
 export const readPreviewComments = async (
@@ -7,7 +7,7 @@ export const readPreviewComments = async (
   source: CommentSource,
   githubHeadSha?: string,
 ) => {
-  const { previousSourceSnapshot: _, sourceSnapshot: __, ...document } =
+  const { previousSourceSnapshot: _, sourceSnapshot, ...document } =
     await readResolvedCommentsDocument(
       source.commentSource,
       source.documentSource,
@@ -16,6 +16,9 @@ export const readPreviewComments = async (
     );
   return {
     ...document,
+    comments: document.comments.map((comment) =>
+      withCurrentSource(comment, sourceSnapshot)
+    ),
     ...(githubHeadSha ? { githubHeadSha } : {}),
   };
 };

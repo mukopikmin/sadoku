@@ -2,11 +2,15 @@
   "name": "sadoku",
   "description": "Preview a Markdown file in a local browser-friendly server.",
   "private": true,
+  "engines": {
+    "node": "^26.12.1",
+    "deno": "^2.9.8"
+  },
   "scripts": {
     "build:client": "npm --prefix src/preview run build",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
     "postinstall": "npm ci --prefix src/preview",
-    "proto:check": "npm run proto:lint && npm run proto:generate && git diff --exit-code -- gen/ts",
+    "proto:check": "npm run proto:lint && npm run proto:generate && git add --intent-to-add -- gen/ts && git diff --exit-code -- gen/ts",
     "proto:generate": "buf generate && deno fmt gen/ts",
     "proto:lint": "buf lint",
     "test": "npm --prefix src/preview test"

@@ -1,5 +1,10 @@
 import type { TagStore } from "./ports.ts";
-import { prepareTagName, type TagError, type TagReference } from "./types.ts";
+import {
+  MAX_DOCUMENT_TAGS,
+  prepareTagName,
+  type TagError,
+  type TagReference,
+} from "./types.ts";
 
 export const replaceDocumentTags = async (
   store: TagStore,
@@ -12,7 +17,7 @@ export const replaceDocumentTags = async (
       message: "Tags must be an array.",
     } satisfies TagError;
   }
-  if (values.length > 20) {
+  if (values.length > MAX_DOCUMENT_TAGS) {
     return {
       type: "invalid",
       message: "A document can have at most 20 tags.",

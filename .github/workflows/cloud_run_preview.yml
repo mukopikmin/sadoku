@@ -1,44 +1,53 @@
-name: Cloud Run PR Preview
+name: Preview
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
 
 concurrency:
-  group: cloud-run-preview-${{ github.event.pull_request.number }}
+  group: cloud-run-preview-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+env:
+  PREVIEW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  PREVIEW_TAG: ${{ github.event_name == 'push' && 'main' || format('pr-{0}', github.event.pull_request.number) }}
 
 jobs:
   build:
     name: Build preview image
-    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.event.action != 'closed' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - name: Checkout PR commit
+      - name: Checkout preview commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ env.PREVIEW_SHA }}
 
       - name: Build image without cloud credentials
-        env:
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
-          image="sadoku-pr:${HEAD_SHA}"
+          [[ "${PREVIEW_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          image="sadoku-preview:${PREVIEW_SHA}"
           docker build --tag "${image}" --file Dockerfile .
           docker save --output "${RUNNER_TEMP}/preview-image.tar" "${image}"
 
       - name: Upload image artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: preview-image-${{ github.event.pull_request.head.sha }}
+          name: preview-image-${{ env.PREVIEW_SHA }}
           path: ${{ runner.temp }}/preview-image.tar
           compression-level: 0
           retention-days: 1
@@ -47,7 +56,6 @@ jobs:
   deploy:
     name: Deploy preview
     needs: build
-    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -61,17 +69,15 @@ jobs:
       - name: Download image artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: preview-image-${{ github.event.pull_request.head.sha }}
+          name: preview-image-${{ env.PREVIEW_SHA }}
           path: ${{ runner.temp }}/preview-image
 
       - name: Load image before cloud authentication
-        env:
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${PREVIEW_SHA}" =~ ^[0-9a-f]{40}$ ]]
           docker load --input "${RUNNER_TEMP}/preview-image/preview-image.tar"
-          docker image inspect "sadoku-pr:${HEAD_SHA}" >/dev/null
+          docker image inspect "sadoku-preview:${PREVIEW_SHA}" >/dev/null
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
@@ -88,18 +94,17 @@ jobs:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           REGION: ${{ secrets.GCP_REGION }}
           REPOSITORY: ${{ secrets.ARTIFACT_REGISTRY_REPOSITORY }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           [[ "${PROJECT_ID}" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]$ ]]
           [[ "${REGION}" =~ ^[a-z]+[a-z0-9-]*[a-z0-9]$ ]]
           [[ "${REPOSITORY}" =~ ^[a-z][a-z0-9._-]{0,62}$ ]]
-          [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${PREVIEW_SHA}" =~ ^[0-9a-f]{40}$ ]]
 
           registry="${REGION}-docker.pkg.dev"
-          image="${registry}/${PROJECT_ID}/${REPOSITORY}/sadoku:${HEAD_SHA}"
+          image="${registry}/${PROJECT_ID}/${REPOSITORY}/sadoku:${PREVIEW_SHA}"
           gcloud auth configure-docker "${registry}" --quiet
-          docker tag "sadoku-pr:${HEAD_SHA}" "${image}"
+          docker tag "sadoku-preview:${PREVIEW_SHA}" "${image}"
           docker push "${image}"
 
           digest_image="$(docker inspect --format='{{index .RepoDigests 0}}' "${image}")"
@@ -113,12 +118,11 @@ jobs:
           REGION: ${{ secrets.GCP_REGION }}
           SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
           IMAGE: ${{ steps.image.outputs.digest-image }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
-          [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
-          tag="pr-${PR_NUMBER}"
+          [[ "${PREVIEW_TAG}" =~ ^(main|pr-[1-9][0-9]*)$ ]]
+          tag="${PREVIEW_TAG}"
           revision="$(gcloud run deploy "${SERVICE}" \
             --project "${PROJECT_ID}" \
             --region "${REGION}" \
@@ -138,7 +142,6 @@ jobs:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           REGION: ${{ secrets.GCP_REGION }}
           SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           REVISION: ${{ steps.deploy.outputs.revision }}
           PROXY_SERVICE: ${{ vars.CLOUD_RUN_PROXY_SERVICE }}
           PROXY_REGION: ${{ vars.CLOUD_RUN_PROXY_REGION || secrets.GCP_REGION }}
@@ -155,7 +158,7 @@ jobs:
             echo "::error::Proxy PUBLIC_ORIGIN must be an HTTPS domain origin without a path, query, or fragment."
             exit 1
           fi
-          tag="pr-${PR_NUMBER}"
+          tag="${PREVIEW_TAG}"
           url=""
           for attempt in {1..12}; do
             url="$(gcloud run services describe "${SERVICE}" \
@@ -186,6 +189,7 @@ jobs:
             "${url}" "${REVISION}" >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Create or update preview comment
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
           PREVIEW_URL: ${{ steps.preview.outputs.url }}
@@ -205,8 +209,6 @@ jobs:
             const marker = '<!-- sadoku-cloud-run-preview -->';
             const body = [
               marker,
-              '## Cloud Run preview',
-              '',
               `Preview: ${process.env.PREVIEW_URL}`,
               `Commit: \`${head}\``,
               '',
@@ -231,7 +233,7 @@ jobs:
 
   cleanup:
     name: Remove preview tag
-    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -7,6 +7,9 @@ import { createDocumentInstructionsMigration } from "./migrations/0006_create_do
 import { createDocumentTagsMigration } from "./migrations/0007_create_document_tags.ts";
 import { addTagBackgroundColorMigration } from "./migrations/0008_add_tag_background_color.ts";
 import { createDocumentMemoriesMigration } from "./migrations/0009_create_document_memories.ts";
+import { addDocumentTitleMigration } from "./migrations/0010_add_document_title.ts";
+import { addCommentSourceDeletedMigration } from "./migrations/0011_add_comment_source_deleted.ts";
+import { createDocumentRevisionsMigration } from "./migrations/0012_create_document_revisions.ts";
 import { type AppDatabase, withTransaction } from "./connection.ts";
 
 export interface Migration {
@@ -36,6 +39,9 @@ export const MIGRATIONS: readonly Migration[] = [
   createDocumentTagsMigration,
   addTagBackgroundColorMigration,
   createDocumentMemoriesMigration,
+  addDocumentTitleMigration,
+  addCommentSourceDeletedMigration,
+  createDocumentRevisionsMigration,
 ];
 
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;

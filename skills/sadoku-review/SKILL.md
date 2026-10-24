@@ -19,12 +19,12 @@ When the user requests a new Markdown file, create and register it together:
 sadoku document add <markdown-path> --create --title "<document-title>"
 ```
 
-The parent directory must already exist. Omit `--title` to create an empty file;
-otherwise the file starts with a level-one heading. An extensionless filename
-defaults to `.md`, and the filename must use a configured Markdown extension.
-`--create` supports local files only, not URLs. Write the requested document
-content to the created file using the normal editing tools, then review the diff
-and run relevant documentation checks.
+The parent directory must already exist. The file starts empty; `--title` sets
+its display title in Sadoku. An extensionless filename defaults to `.md`, and
+the filename must use a configured Markdown extension. `--create` supports local
+files only, not URLs. Write the requested document content to the created file
+using the normal editing tools, then review the diff and run relevant
+documentation checks.
 
 If the file already exists, `--create` fails without overwriting or registering
 it. To register an existing document, omit `--create` and `--title`:

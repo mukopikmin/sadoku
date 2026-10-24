@@ -105,3 +105,31 @@ it("validates optional GitHub revision metadata", () => {
     })
   ).toThrow("Invalid GitHub PR revision");
 });
+
+it("maps current source separately from resolution and rejects invalid metadata", () => {
+  expect(toComment(createResponse({ currentSourceText: "" })).currentSource)
+    .toEqual({ state: "available", text: "" });
+  expect(
+    toComment(
+      createResponse({ resolved: true, stale: true, sourceDeleted: true }),
+    ).currentSource,
+  ).toEqual({ state: "deleted" });
+  expect(
+    toComment(
+      createResponse({
+        resolved: true,
+        stale: true,
+        currentSourceText: "Wrong line",
+      }),
+    ).currentSource,
+  ).toEqual({ state: "unavailable" });
+  expect(toComment(createResponse()).currentSource).toEqual({
+    state: "unavailable",
+  });
+  expect(() =>
+    toComment(createResponse({ currentSourceText: 123 as unknown as string }))
+  ).toThrow("Invalid comment source");
+  expect(() =>
+    toComment(createResponse({ sourceDeleted: "true" as unknown as boolean }))
+  ).toThrow("Invalid comment source");
+});

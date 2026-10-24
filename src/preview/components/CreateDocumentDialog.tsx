@@ -73,7 +73,8 @@ export const CreateDocumentDialog = ({ creator }: {
                         creator.change("title", event.currentTarget.value)}
                     />
                     <Field.HelperText>
-                      Adds a heading at the start of the document.
+                      Saves a title as a file attribute, separate from Markdown
+                      headings.
                     </Field.HelperText>
                   </Field.Root>
                   <Text color="fg.muted" fontSize="sm" overflowWrap="anywhere">

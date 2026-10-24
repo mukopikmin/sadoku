@@ -20,6 +20,7 @@ const setup = () => {
     findById: () => Promise.resolve(undefined),
     findByFilePath: () => Promise.resolve(undefined),
     list: () => Promise.resolve([]),
+    setTitle: () => Promise.resolve(),
     initializeSnapshot: (id, markdown) => {
       snapshots.set(id, markdown);
       return Promise.resolve();
@@ -50,13 +51,14 @@ Deno.test("creates a titled Markdown file, registers it and initializes its snap
   assertEquals(writes, [{
     directory: "guides/nested",
     filename: "setup.md",
-    markdown: "# 開発環境のセットアップ\n",
+    markdown: "",
   }]);
   assertEquals(document.relativePath, "guides/nested/setup.md");
   assertEquals(document.title, "setup.md");
+  assertEquals(document.displayTitle, "開発環境のセットアップ");
   assertEquals(session.documentsById.get(5), document);
   assertEquals(session.documents, [document]);
-  assertEquals(snapshots.get(5), "# 開発環境のセットアップ\n");
+  assertEquals(snapshots.get(5), "");
 });
 
 Deno.test("creates empty documents without a title and revives deleted document IDs", async () => {

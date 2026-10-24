@@ -2,6 +2,8 @@ import type { MessageInitShape } from "@bufbuild/protobuf";
 import type {
   CommentReplySchema,
   CommentSchema,
+  DocumentRevisionSchema,
+  DocumentRevisionSummarySchema,
   DocumentSummarySchema,
   GetDirectoryStatusResponseSchema,
   GetDocumentResponseSchema,
@@ -22,6 +24,8 @@ import type {
 import type {
   DirectoryDocumentContent,
   DirectoryDocumentSummary,
+  DocumentRevision,
+  DocumentRevisionSummary,
   PublicDocumentTag,
 } from "../usecase/document/types.ts";
 import type { DocumentInstruction as Instruction } from "../usecase/instruction/types.ts";
@@ -87,19 +91,37 @@ export const documentSummaryMessage = (
   id: toUint64(document.id),
   relativePath: document.relativePath,
   title: document.title,
+  displayTitle: document.displayTitle,
   deleted: document.deleted,
   tags: document.tags?.map(tagMessage) ?? [],
 });
 export const documentMessage = (
   document: DirectoryDocumentContent,
   githubHeadSha?: string,
+  previousMarkdown?: string,
 ): MessageInitShape<typeof GetDocumentResponseSchema> => ({
   fileUrl: document.fileUrl ?? "",
   markdown: document.markdown,
   title: document.title,
+  displayTitle: document.displayTitle,
   deleted: document.deleted,
   tags: document.tags?.map(tagMessage) ?? [],
   githubHeadSha,
+  previousMarkdown,
+});
+export const documentRevisionSummaryMessage = (
+  revision: DocumentRevisionSummary,
+): MessageInitShape<typeof DocumentRevisionSummarySchema> => ({
+  id: toUint64(revision.id),
+  recordedAt: revision.recordedAt,
+});
+export const documentRevisionMessage = (
+  revision: DocumentRevision,
+): MessageInitShape<typeof DocumentRevisionSchema> => ({
+  id: toUint64(revision.id),
+  recordedAt: revision.recordedAt,
+  markdown: revision.markdown,
+  previousMarkdown: revision.previousMarkdown,
 });
 export const directoryStatusMessage = (
   status: DirectorySessionStatus,
@@ -166,6 +188,8 @@ export const commentMessage = (
     : undefined,
   sourceHash: comment.sourceHash,
   sourceText: comment.sourceText,
+  currentSourceText: comment.currentSourceText,
+  sourceDeleted: comment.sourceDeleted,
   replies: comment.replies?.map(replyMessage) ?? [],
   displayLine: comment.displayLine === undefined
     ? undefined

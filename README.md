@@ -63,10 +63,19 @@ Run `sadoku --help` for all commands and options.
   confirmation.
 - In a local directory preview, choose **New file** or a folder's **+** button
   to create a Markdown file. The `.md` extension is added if omitted; an
-  optional title becomes the first heading. Existing files are never
-  overwritten.
+  optional title appears above the document without changing its Markdown. Use
+  **Set title** or **Edit title** to change it, or clear it to remove it.
+  Existing files are never overwritten.
 - Use **Zoom** on a Mermaid diagram to enlarge it. Pinch to zoom, scroll to
   move, and choose **Fit to view** to reset.
+- Open **Revisions** in the document action bar to view the current document or
+  choose from its latest 20 saved revisions, listed newest first with recording
+  times. Each selected revision shows changes from its immediately preceding
+  saved revision, with highlights and added/removed line counts. Current
+  compares the live document with the latest saved revision. When their contents
+  match, they share one Current entry, compared with that saved revision's
+  predecessor. Older saved revisions remain stored. This does not change when
+  document snapshots are recorded.
 
 ### GitHub pull requests
 
@@ -108,12 +117,47 @@ Create and register a file in an existing directory (`--title` is optional):
 sadoku document add docs/notes.md --create --title "Notes"
 ```
 
-Existing files are never overwritten; missing extensions default to `.md`.
+Existing files are never overwritten; missing extensions default to `.md`. The
+file starts empty; `--title` sets its display title in Sadoku.
 
-Use `sadoku --help` for document, comment, instruction, and memory commands.
-Instructions and memories provide document-specific context for agents; memories
-can be reviewed and deleted in the preview, but are added and updated through
-the CLI.
+Manage tags independently of documents:
+
+```sh
+sadoku tag add --name "Needs review"
+sadoku tag list
+sadoku tag delete <tag-id>
+```
+
+Tag creation and listing return JSON. Each listed tag includes its document
+count. New tags are not attached to any document; names must be unique. Tags
+created through the CLI always use the default background color (`#718096`).
+Deleting a tag also removes it from every document without deleting the
+documents.
+
+Attach or detach existing tags from a registered document:
+
+```sh
+sadoku document tag add 3 5 --source README.md
+sadoku document tag delete 3 --document 1
+sadoku document inspect 1
+sadoku document list
+```
+
+Use exactly one of `--document <id>` or `--source <file.md|url>` for tag
+associations. Both the document and tag IDs must already exist. Adding an
+attached tag or removing an unattached tag succeeds without changing other
+associations; removal preserves the tag itself. Each command applies all
+requested changes atomically, with at most 20 tags per document.
+
+Tag association commands return the resulting tag array as JSON. Document
+listing and inspection include `tags`, containing each tag's `id`, `name`, and
+`backgroundColor`, or an empty array when no tags are attached. Colors are
+read-only through the CLI.
+
+Use `sadoku --help` for document, tag, comment, instruction, and memory
+commands. Instructions and memories provide document-specific context for
+agents; memories can be reviewed and deleted in the preview, but are added and
+updated through the CLI.
 
 For compatible coding agents, install the `sadoku-review` skill with
 [Agent Package Manager](https://github.com/microsoft/apm):
@@ -123,6 +167,38 @@ apm install mukopikmin/sadoku --skill sadoku-review
 ```
 
 The skill requires `sadoku` on `PATH`.
+
+## Stable releases
+
+Use `.agents/skills/sadoku-release/SKILL.md` to approve the version, exact
+tested `main` commit, notes range, and omitted pull requests. Record the
+approved comparison tag in the annotated release tag's `Previous-Stable-Tag`
+trailer:
+
+```sh
+git tag --annotate v<version> <approved-full-sha> \
+  --message "Release v<version>" \
+  --message "Previous-Stable-Tag: <approved-comparison-tag>"
+```
+
+Pushing that tag starts automatic validation, builds, attestation, notes
+generation, and publication. `deno task release:check --version <version>` and
+`deno task release:notes --version <version> --output release-notes.json`
+require Git, an authenticated GitHub CLI, and the release and comparison tags
+locally. Both commands read the approved baseline from the annotated tag and
+compare it with a fresh GitHub lookup. Missing, duplicate, or invalid trailers
+fail.
+
+For a confirmed first release, use `release-notes-baseline` at the repository
+root. An empty stable-release lookup with other stable version tags on the
+remote fails instead of implying a first release. Drafts, prereleases, and
+nightly releases are excluded from the notes baseline. Validation JSON includes
+release candidates, the selection reason, remote stable tags, and returned CI
+runs (ID, workflow, branch, event, status, conclusion, SHA, and URL) for
+diagnosis.
+
+The workflow revalidates the comparison tag and target immediately before
+publication. Failed runs leave tags intact; never move or recreate a stable tag.
 
 ## Settings and storage
 

@@ -16,8 +16,6 @@ type CommentActionMenuProps = {
   onDelete: (id: number) => Promise<void>;
   onExport?: (id: number) => Promise<GitHubCommentExport>;
   onEdit: () => void;
-  onReopen: (id: number) => Promise<void>;
-  onResolve: (id: number) => Promise<void>;
   reportError: ReportCommentActionError;
   runAction: RunCommentAction;
 };
@@ -29,8 +27,6 @@ export const CommentActionMenu = ({
   onDelete,
   onExport,
   onEdit,
-  onReopen,
-  onResolve,
   reportError,
   runAction,
 }: CommentActionMenuProps) => {
@@ -55,30 +51,6 @@ export const CommentActionMenu = ({
     runAction(() => onDelete(comment.id), {
       errorTitle: "Could not delete comment",
       onSuccess: () => setIsDeleteDialogOpen(false),
-    });
-
-  const handleReopen = () =>
-    runAction(() => onReopen(comment.id), {
-      errorTitle: "Could not reopen comment",
-    });
-
-  const handleResolve = () =>
-    runAction(() => onResolve(comment.id), {
-      errorTitle: "Could not resolve comment",
-      onSuccess: () => {
-        toaster.create({
-          action: {
-            label: "Undo",
-            onClick: () => {
-              void handleReopen();
-            },
-          },
-          closable: true,
-          description: "The comment was resolved.",
-          title: "Comment resolved",
-          type: "success",
-        });
-      },
     });
 
   return (
@@ -123,17 +95,6 @@ export const CommentActionMenu = ({
                     Save to GitHub review
                   </Menu.Item>
                 )}
-                <Menu.Item
-                  value={comment.state === "resolved" ? "reopen" : "resolve"}
-                  disabled={disabled}
-                  onClick={() => {
-                    void (comment.state === "resolved"
-                      ? handleReopen()
-                      : handleResolve());
-                  }}
-                >
-                  {comment.state === "resolved" ? "Reopen" : "Resolve"}
-                </Menu.Item>
                 <Menu.Item value="edit" disabled={disabled} onClick={onEdit}>
                   Edit
                 </Menu.Item>

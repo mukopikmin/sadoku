@@ -174,6 +174,33 @@ describe("CommentList", () => {
     ]);
   });
 
+  it("renders both source versions from the API and hides snapshot text for a deleted document", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          filePath: "/tmp/example.md",
+          comments: [{
+            ...createComment({ sourceText: "**Before**" }),
+            currentSourceText: "**After**",
+          }],
+        })
+      ),
+    );
+    const { rerender } = render(<CommentListPage documentId={42} />);
+    expect(await screen.findByText("After")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "At comment time" }))
+      .toHaveTextContent("Before");
+    expect(screen.getByRole("region", { name: "Current" })).toHaveTextContent(
+      "After",
+    );
+    rerender(<CommentListPage documentId={42} documentDeleted />);
+    expect(screen.getByText("The target lines have been deleted."))
+      .toBeInTheDocument();
+    expect(screen.queryByText("After")).toBeNull();
+    expect(screen.getByText("Before")).toBeInTheDocument();
+  });
+
   it("groups comments, displays counts, and supports tab keyboard navigation", () => {
     render(
       <CommentList
@@ -206,7 +233,11 @@ describe("CommentList", () => {
     expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Stale")).not.toBeNull();
-    expect(within(unresolvedPanel).getByText("Original line")).not.toBeNull();
+    expect(
+      within(screen.getByText("Stale comment.").closest("article")!).getByText(
+        "At comment time",
+      ),
+    ).not.toBeNull();
     expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
     expect(within(unresolvedPanel).getAllByRole("article")).toHaveLength(2);
 
@@ -233,43 +264,46 @@ describe("CommentList", () => {
   });
 
   it("passes current and original source ranges to comment actions", async () => {
-    render(
-      <CommentList
-        actions={createCommentActions()}
-        comments={[
-          createComment({ endLine: 5, originalEndLine: 5 }),
-          createComment({
-            body: "Moved range.",
-            endLine: 8,
-            id: 2,
-            originalEndLine: 3,
-            originalStartLine: 2,
-            startLine: 7,
-          }),
-          createComment({
-            body: "Stale range.",
-            endLine: 9,
-            id: 3,
-            originalEndLine: 6,
-            originalStartLine: 4,
-            state: "stale",
-          }),
-        ]}
-      />,
-    );
+    const cases = [
+      [
+        createComment({ endLine: 5, originalEndLine: 5 }),
+        "Lines 3-5",
+      ],
+      [
+        createComment({
+          body: "Moved range.",
+          endLine: 8,
+          id: 2,
+          originalEndLine: 3,
+          originalStartLine: 2,
+          startLine: 7,
+        }),
+        "Lines 7-8 (originally lines 2-3)",
+      ],
+      [
+        createComment({
+          body: "Stale range.",
+          endLine: 9,
+          id: 3,
+          originalEndLine: 6,
+          originalStartLine: 4,
+          state: "stale",
+        }),
+        "Originally lines 4-6",
+      ],
+    ] as const;
 
-    const menuButtons = screen.getAllByRole("button", { name: "More actions" });
-    fireEvent.click(menuButtons[0]);
-    expect(await screen.findByText("Lines 3-5")).not.toBeNull();
-    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
-    await waitFor(() => expect(document.activeElement).toBe(menuButtons[0]));
+    for (const [comment, lineLabel] of cases) {
+      render(
+        <CommentList
+          actions={createCommentActions()}
+          comments={[comment]}
+        />,
+      );
 
-    fireEvent.click(menuButtons[1]);
-    expect(await screen.findByText("Lines 7-8 (originally lines 2-3)"))
-      .not.toBeNull();
-    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
-
-    fireEvent.click(menuButtons[2]);
-    expect(await screen.findByText("Originally lines 4-6")).not.toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+      expect(await screen.findByText(lineLabel)).not.toBeNull();
+      cleanup();
+    }
   });
 });

@@ -2,7 +2,10 @@ import { assertEquals, assertRejects } from "@std/assert";
 import { dirname, join } from "@std/path";
 import { getConfigFilePath } from "../config.ts";
 import { withTempCommentsDirectory } from "../test_helpers.ts";
-import type { DocumentStore } from "../usecase/document/mod.ts";
+import type {
+  DocumentStore,
+  DocumentTagReader,
+} from "../usecase/document/mod.ts";
 import {
   addDocument,
   inspectDocument,
@@ -29,8 +32,32 @@ Deno.test("document CLI registers canonical sources", async () => {
 });
 
 Deno.test("document CLI lists and inspects registered documents", async () => {
-  assertEquals(await listRegisteredDocuments(store), documents);
-  assertEquals(await inspectDocument(2, store), documents[1]);
+  assertEquals(
+    await listRegisteredDocuments(store),
+    documents.map((document) => ({ ...document, tags: [] })),
+  );
+  assertEquals(await inspectDocument(2, store), { ...documents[1], tags: [] });
+});
+
+Deno.test("document CLI includes public tag fields and preserves empty arrays", async () => {
+  const tag = { id: 3, name: "API", backgroundColor: "#123456" };
+  const reader: DocumentTagReader = {
+    listForDocument: (id) =>
+      Promise.resolve(id === 2 ? [{ ...tag, createdAt: "private" }] : []),
+  };
+  assertEquals(await listRegisteredDocuments(store, reader), [
+    { ...documents[0], tags: [] },
+    { ...documents[1], tags: [tag] },
+  ]);
+  assertEquals(await inspectDocument(2, store, reader), {
+    ...documents[1],
+    tags: [tag],
+  });
+  await assertRejects(
+    () => inspectDocument(99, store, reader),
+    Error,
+    "Document not found: 99",
+  );
 });
 
 Deno.test("document creation respects configured extensions and reports registration failures", async () => {
@@ -64,7 +91,7 @@ Deno.test("document creation respects configured extensions and reports registra
         Error,
         "Run document add without --create",
       );
-      assertEquals(await Deno.readTextFile(failedPath), "# Saved\n");
+      assertEquals(await Deno.readTextFile(failedPath), "");
       await assertRejects(
         () =>
           addDocument(join(root, "bad-title.mdown"), store, {

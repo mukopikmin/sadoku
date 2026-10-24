@@ -21,6 +21,16 @@ export const rangeText = (
     ? undefined
     : lines.slice(startLine - 1, endLine).join("\n");
 };
+// Derive response-only text from the same snapshot used to track the range.
+export const withCurrentSource = (
+  comment: PreviewComment,
+  markdown: string | undefined,
+): PreviewComment => ({
+  ...comment,
+  currentSourceText: comment.stale || markdown === undefined
+    ? undefined
+    : rangeText(markdown, comment.startLine, comment.endLine),
+});
 export const hash = (value: string): string => {
   let result = 0x811c9dc5;
   for (let index = 0; index < value.length; index++) {
@@ -54,5 +64,5 @@ export const saveComment = async (
     comments,
     filePath: source.commentSource,
   });
-  return comment;
+  return withCurrentSource(comment, document.sourceSnapshot);
 };
