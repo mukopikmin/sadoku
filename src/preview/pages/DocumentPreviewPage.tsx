@@ -42,7 +42,7 @@ export const DocumentPreviewPage = (
     view,
   }: Props,
 ) => {
-  const [showHtmlComments, setShowHtmlComments] = useState(true);
+  const { showHtmlComments } = settings;
   const [revisionsOpen, setRevisionsOpen] = useState(false);
   const documentPath = selectedDocument?.relativePath ?? document.fileUrl ??
     document.title;
@@ -71,8 +71,6 @@ export const DocumentPreviewPage = (
           onOpenInstructions={onOpenInstructions}
           onOpenMemories={onOpenMemories}
           onOpenRevisions={() => setRevisionsOpen(true)}
-          onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
-          showHtmlComments={showHtmlComments}
           tagCount={document.tags.length}
           onOpenTags={onOpenTags}
           tags={document.tags}

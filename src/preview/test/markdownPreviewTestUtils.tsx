@@ -1,6 +1,5 @@
 import { cleanup, createCommentActions, render } from "./testUtils";
 import { afterEach } from "vitest";
-import { useState } from "react";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { DocumentActionBar } from "../components/DocumentActionBar";
@@ -32,10 +31,10 @@ export const renderMarkdown = (
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
   documentPath?: string,
+  showHtmlComments = true,
 ) => {
   ensurePreviewThemeStyle();
   const PreviewWithActions = () => {
-    const [showHtmlComments, setShowHtmlComments] = useState(true);
     return (
       <>
         <DocumentActionBar
@@ -45,8 +44,7 @@ export const renderMarkdown = (
           onOpenInstructions={() => {}}
           onOpenRevisions={() => {}}
           onOpenTags={() => {}}
-          onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
-          showHtmlComments={showHtmlComments}
+          onOpenMemories={() => {}}
           tagCount={2}
           tags={[]}
         />

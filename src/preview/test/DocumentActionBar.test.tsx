@@ -15,8 +15,6 @@ describe("DocumentActionBar", () => {
         onOpenMemories={() => {}}
         onOpenRevisions={() => {}}
         onOpenTags={onOpenTags}
-        onToggleHtmlComments={() => {}}
-        showHtmlComments
         tagCount={2}
         tags={[
           { backgroundColor: "#3182ce", id: 1, name: "reviewed" },
@@ -54,8 +52,6 @@ describe("DocumentActionBar", () => {
         onOpenMemories={() => {}}
         onOpenRevisions={() => {}}
         onOpenTags={onOpenTags}
-        onToggleHtmlComments={() => {}}
-        showHtmlComments
         tagCount={0}
         tags={[]}
       />,
@@ -77,7 +73,6 @@ describe("DocumentActionBar", () => {
   it("renders accessible icon actions with stable names, badges, and tooltips", async () => {
     const onOpenInstructions = vi.fn();
     const onOpenMemories = vi.fn();
-    const onToggleHtmlComments = vi.fn();
     const onOpenRevisions = vi.fn();
     render(
       <DocumentActionBar
@@ -87,8 +82,6 @@ describe("DocumentActionBar", () => {
         onOpenMemories={onOpenMemories}
         onOpenRevisions={onOpenRevisions}
         onOpenTags={() => {}}
-        onToggleHtmlComments={onToggleHtmlComments}
-        showHtmlComments={false}
         tagCount={0}
         tags={[]}
       />,
@@ -96,35 +89,21 @@ describe("DocumentActionBar", () => {
 
     const instructions = screen.getByRole("button", { name: "Instructions" });
     const memories = screen.getByRole("button", { name: "Memories" });
-    const comments = screen.getByRole("button", {
-      name: "Show HTML comments",
-    });
+    expect(screen.queryByRole("button", { name: /HTML comments/ })).toBeNull();
     expect(instructions.textContent).toBe("");
     expect(memories.textContent).toBe("12");
     expect(instructions.querySelector('svg[aria-hidden="true"]')).not
       .toBeNull();
     expect(memories.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-    expect(comments.textContent).toBe("");
-    expect(comments.getAttribute("aria-pressed")).toBe("true");
-    expect(comments.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
 
     fireEvent.pointerEnter(memories);
     expect((await screen.findByRole("tooltip")).textContent).toBe("Memories");
     fireEvent.pointerLeave(memories);
-    fireEvent.pointerEnter(comments);
-    await waitFor(() =>
-      expect(screen.getByRole("tooltip").textContent).toBe(
-        "Show HTML comments",
-      )
-    );
-
     fireEvent.click(instructions);
     fireEvent.click(memories);
-    fireEvent.click(comments);
     fireEvent.click(screen.getByRole("button", { name: "Revisions" }));
     expect(onOpenInstructions).toHaveBeenCalledOnce();
     expect(onOpenMemories).toHaveBeenCalledOnce();
-    expect(onToggleHtmlComments).toHaveBeenCalledOnce();
     expect(onOpenRevisions).toHaveBeenCalledOnce();
   });
 });

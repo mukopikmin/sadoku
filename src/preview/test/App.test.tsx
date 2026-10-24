@@ -485,6 +485,74 @@ describe("App", () => {
     );
   });
 
+  it("saves HTML comment visibility globally and restores it after remounting", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    let savedSettings: Record<string, unknown> = {};
+    const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/__sadoku/settings") {
+        if (init?.method === "PUT") {
+          savedSettings = JSON.parse(String(init.body));
+        }
+        return Promise.resolve(Response.json(savedSettings));
+      }
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(Response.json([
+          { id: 1, relativePath: "first.md", title: "first.md" },
+          { id: 2, relativePath: "second.md", title: "second.md" },
+        ]));
+      }
+      if (/^\/__sadoku\/documents\/[12]$/.test(url)) {
+        return Promise.resolve(Response.json({
+          fileUrl: `file:///tmp/${url.endsWith("1") ? "first" : "second"}.md`,
+          markdown: "Before\n\n<!-- internal note -->\n\nAfter",
+          title: url.endsWith("1") ? "first.md" : "second.md",
+        }));
+      }
+      if (url.endsWith("/comments")) {
+        return Promise.resolve(
+          Response.json({ comments: [], filePath: "/tmp/test.md" }),
+        );
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    });
+    vi.stubGlobal("fetch", fetch);
+    const app = render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "first.md" }));
+    expect(await screen.findByText("HTML COMMENT")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /HTML comments/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const toggle = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show HTML comments",
+    });
+    expect(toggle.checked).toBe(true);
+    fireEvent.click(toggle);
+    await waitFor(() => expect(savedSettings.showHtmlComments).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull()
+    );
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    expect(screen.getByText("Before")).not.toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "second.md" }));
+    await screen.findByText("Before");
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    app.unmount();
+    render(<App />);
+    await screen.findByText("Before");
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const restored = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show HTML comments",
+    });
+    expect(restored.checked).toBe(false);
+    fireEvent.click(restored);
+    await waitFor(() => expect(savedSettings.showHtmlComments).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    expect(await screen.findByText("HTML COMMENT")).not.toBeNull();
+  });
+
   it("opens settings and selects and saves light and dark preview themes", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
@@ -589,6 +657,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 2,
           maxFiles: 20,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -629,6 +698,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 20,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -646,6 +716,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -670,6 +741,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHtmlComments: true,
         theme: "dark",
       }),
       headers: { "content-type": "application/json" },
@@ -691,6 +763,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHtmlComments: true,
         theme: "light",
       }),
       headers: { "content-type": "application/json" },
@@ -715,6 +788,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -856,6 +930,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 2,
         maxFiles: 20,
+        showHtmlComments: true,
         theme: "light",
       }),
       headers: { "content-type": "application/json" },

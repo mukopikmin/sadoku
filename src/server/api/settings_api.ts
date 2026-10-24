@@ -20,6 +20,7 @@ const readSettings = (): PreviewSettings => {
       ? {}
       : { codeWrap: config.codeWrapMode }),
     fontScale: config?.fontScale ?? 1,
+    showHtmlComments: config?.showHtmlComments ?? true,
     excludedDirectories: config?.excludedDirectories ??
       [...defaultExcludedDirectories],
     maxDepth: config?.directoryMaxDepth ?? defaultDirectoryScanOptions.maxDepth,
@@ -40,6 +41,7 @@ export const previewSettingsStore: SettingsStore = {
       settings.fontScale,
       settings.excludedDirectories,
       settings.markdownExtensions,
+      settings.showHtmlComments,
     ),
 };
 export const getSettings = (): Response => noStoreJson(readSettings());
@@ -68,4 +70,4 @@ export const updateSettings = async (request: Request): Promise<Response> => {
 export const settingsErrorMessage = (error: SettingsError): string =>
   error.reason === "object_required"
     ? "Request body must contain the complete preview settings."
-    : "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, and markdownExtensions settings.";
+    : "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, markdownExtensions, and showHtmlComments settings.";

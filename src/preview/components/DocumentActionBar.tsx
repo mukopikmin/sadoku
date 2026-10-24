@@ -8,7 +8,7 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { Brain, Eye, EyeOff, FileText, History, Tag } from "lucide-react";
+import { Brain, FileText, History, Tag } from "lucide-react";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
 import type { DocumentTag } from "../models/document";
 import { TagLabel } from "./ui/TagLabel";
@@ -21,8 +21,6 @@ type DocumentActionBarProps = {
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
   onOpenRevisions: () => void;
-  onToggleHtmlComments: () => void;
-  showHtmlComments: boolean;
   tagCount: number;
   onOpenTags: () => void;
   tags: DocumentTag[];
@@ -37,8 +35,6 @@ export const DocumentActionBar = (
     onOpenMemories,
     onOpenRevisions,
     onOpenTags,
-    onToggleHtmlComments,
-    showHtmlComments,
     tagCount,
     tags,
   }: DocumentActionBarProps,
@@ -129,26 +125,6 @@ export const DocumentActionBar = (
                 </Badge>
               )}
             </Button>
-          </Tooltip>
-          <Tooltip
-            content={showHtmlComments
-              ? "Hide HTML comments"
-              : "Show HTML comments"}
-          >
-            <IconButton
-              aria-label={showHtmlComments
-                ? "Hide HTML comments"
-                : "Show HTML comments"}
-              aria-pressed={!showHtmlComments}
-              onClick={onToggleHtmlComments}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              {showHtmlComments
-                ? <Eye aria-hidden="true" />
-                : <EyeOff aria-hidden="true" />}
-            </IconButton>
           </Tooltip>
           {markdown !== undefined && <TableOfContents markdown={markdown} />}
           <Tooltip content="Revisions">
