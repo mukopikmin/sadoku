@@ -23,6 +23,7 @@ export const updateSettings = async (store: SettingsStore, body: unknown) => {
     maxFiles,
     markdownExtensions,
     theme,
+    showHtmlComments,
   } = body as Record<
     string,
     unknown
@@ -35,12 +36,14 @@ export const updateSettings = async (store: SettingsStore, body: unknown) => {
     "maxDepth",
     "maxFiles",
     "theme",
+    "showHtmlComments",
   ]);
   if (
     Object.keys(body).some((key) => !allowedKeys.has(key)) ||
     (theme !== "dark" && theme !== "light") ||
     (codeWrap !== "scroll" && codeWrap !== "wrap") ||
     !isValidFontScale(fontScale) ||
+    (showHtmlComments !== undefined && typeof showHtmlComments !== "boolean") ||
     (excludedDirectories !== undefined &&
       !isValidExcludedDirectories(excludedDirectories)) ||
     (markdownExtensions !== undefined &&
@@ -58,6 +61,7 @@ export const updateSettings = async (store: SettingsStore, body: unknown) => {
   await store.write({
     theme,
     codeWrap,
+    showHtmlComments: showHtmlComments ?? current.showHtmlComments,
     fontScale,
     maxDepth,
     maxFiles,

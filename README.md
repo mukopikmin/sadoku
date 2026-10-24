@@ -228,7 +228,7 @@ token. Avoid putting secrets in comments, instructions, or memories.
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
 | Single-newline line breaks in comments and replies   | Supported     | GitHub-style line breaks in comments and replies only.         |
 | Mermaid diagrams                                     | Supported     | Local rendering; trackpad pinch zoom in the zoom dialog.       |
-| HTML comments                                        | Supported     | Displayed as commentable plain-text cards.                     |
+| HTML comments                                        | Supported     | Commentable plain-text cards; visible by default (Settings).   |
 | Agent-file front matter                              | Supported     | Displayed as a safe data list in recognized instruction files. |
 | Generated table of contents                          | Supported     | Available from the document action menu.                       |
 | Raw HTML                                             | Not supported | Escaped for safer previews.                                    |

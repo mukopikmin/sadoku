@@ -86,6 +86,7 @@ export const App = () => {
     changeExcludedDirectories,
     changeFontScale,
     changeMarkdownExtensions,
+    changeShowHtmlComments,
     changeThemeMode,
     settings,
   } = usePreviewSettings();
@@ -98,6 +99,7 @@ export const App = () => {
     onExcludedDirectoriesChange: changeExcludedDirectories,
     onFontScaleChange: changeFontScale,
     onMarkdownExtensionsChange: changeMarkdownExtensions,
+    onShowHtmlCommentsChange: changeShowHtmlComments,
     onThemeModeChange: changeThemeMode,
   };
 

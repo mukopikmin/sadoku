@@ -279,3 +279,20 @@ Deno.test("creates the config directory and file when saving preview settings", 
     assertEquals((await Deno.stat(configFilePath)).isFile, true);
   });
 });
+
+Deno.test("reads and validates HTML comment visibility config", async () => {
+  await withConfigEnvironment(async ({ configFilePath }) => {
+    for (const shown of [true, false]) {
+      await writeConfig(configFilePath, `show_html_comments = ${shown}\n`);
+      assertEquals(readConfig(), { showHtmlComments: shown });
+    }
+    for (const invalid of ['"false"', "0"]) {
+      await writeConfig(configFilePath, `show_html_comments = ${invalid}\n`);
+      assertThrows(
+        () => readConfig(),
+        Error,
+        "show_html_comments in Sadoku config must be a boolean.",
+      );
+    }
+  });
+});

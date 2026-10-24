@@ -343,6 +343,7 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
       settingsMessage(
         await updateSettings(previewSettingsStore, {
           theme: input.theme,
+          showHtmlComments: input.showHtmlComments,
           codeWrap: input.codeWrap,
           fontScale: input.fontScale,
           excludedDirectories: input.excludedDirectories,

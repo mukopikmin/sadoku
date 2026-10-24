@@ -2,6 +2,7 @@ import type { CodeWrapMode, PreviewSettings, ThemeMode } from "../models/theme";
 import { previewClient } from "./connect";
 
 export type SettingsResponse = {
+  showHtmlComments?: unknown;
   codeWrap?: unknown;
   excludedDirectories?: unknown;
   fontScale?: unknown;
@@ -12,6 +13,7 @@ export type SettingsResponse = {
 };
 
 export type SettingsUpdate = {
+  showHtmlComments: boolean;
   codeWrap: CodeWrapMode;
   excludedDirectories: string[];
   fontScale: number;
@@ -34,6 +36,15 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
   ) {
     throw new Error("Settings response contained an invalid code wrap mode.");
   }
+  if (
+    response.showHtmlComments !== undefined &&
+    typeof response.showHtmlComments !== "boolean"
+  ) {
+    throw new Error(
+      "Settings response contained an invalid HTML comment visibility.",
+    );
+  }
+  const showHtmlComments = response.showHtmlComments ?? true;
   const maxDepth = response.maxDepth ?? 2;
   const maxFiles = response.maxFiles ?? 20;
   const excludedDirectories = response.excludedDirectories ?? [
@@ -81,6 +92,7 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
     );
   }
   return {
+    showHtmlComments,
     codeWrap: response.codeWrap,
     excludedDirectories,
     fontScale,

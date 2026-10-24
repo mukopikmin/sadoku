@@ -8,6 +8,8 @@ type AppearanceSettingsProps = {
   onCodeWrapModeChange: (value: CodeWrapMode) => void;
   onFontScaleChange: (value: number) => void;
   onThemeModeChange: (value: ThemeMode) => void;
+  onShowHtmlCommentsChange: (value: boolean) => void;
+  showHtmlComments: boolean;
   themeMode: ThemeMode;
 };
 
@@ -18,6 +20,8 @@ export const AppearanceSettings = (
     onCodeWrapModeChange,
     onFontScaleChange,
     onThemeModeChange,
+    onShowHtmlCommentsChange,
+    showHtmlComments,
     themeMode,
   }: AppearanceSettingsProps,
 ) => {
@@ -92,6 +96,19 @@ export const AppearanceSettings = (
             <Switch.Thumb />
           </Switch.Control>
           <Switch.Label srOnly>Wrap code blocks</Switch.Label>
+        </Switch.Root>
+      </Flex>
+      <Flex alignItems="center" justifyContent="space-between" gap="4">
+        <Text fontWeight="medium">Show HTML comments</Text>
+        <Switch.Root
+          checked={showHtmlComments}
+          onCheckedChange={({ checked }) => onShowHtmlCommentsChange(checked)}
+        >
+          <Switch.HiddenInput />
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          <Switch.Label srOnly>Show HTML comments</Switch.Label>
         </Switch.Root>
       </Flex>
     </>
