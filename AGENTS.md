@@ -25,6 +25,11 @@ them when making changes.
   `src/preview/package-lock.json` consistent with dependency changes.
 - Add or update focused tests for behavior changes. Do not rely only on a
   successful build.
+- GitHub Actions workflow changes are an exception to the focused-test
+  requirement: do not add or expand automated tests for workflow configuration
+  or embedded workflow scripts unless the user explicitly requests them. Use
+  formatting, workflow linting, and existing required CI checks to validate
+  these changes.
 
 ## 2. Project Architecture
 
