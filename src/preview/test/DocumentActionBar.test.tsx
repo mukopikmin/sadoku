@@ -52,15 +52,36 @@ describe("DocumentActionBar", () => {
     )
       .toBeNull();
     expect(preview.getAttribute("aria-selected")).toBe("true");
+    const previewPanel = document.getElementById(
+      preview.getAttribute("aria-controls")!,
+    );
+    expect(previewPanel?.getAttribute("aria-labelledby")).toBe(preview.id);
+    expect(preview.textContent).toBe("");
+    expect(comments.textContent).toBe("2");
     expect(within(comments).getByText("2")).not.toBeNull();
     expect(within(comments).getByRole("img", { name: "Stale comments: 1" }))
       .not.toBeNull();
+
+    fireEvent.pointerEnter(preview);
+    expect((await screen.findByRole("tooltip")).textContent).toBe("Preview");
+    fireEvent.pointerLeave(preview);
+    fireEvent.pointerEnter(comments);
+    await waitFor(() =>
+      expect(screen.getByRole("tooltip").textContent).toBe(
+        "Comments, 2 unresolved, 1 stale",
+      )
+    );
+    fireEvent.pointerLeave(comments);
 
     fireEvent.click(comments);
     await waitFor(() =>
       expect(comments.getAttribute("aria-selected")).toBe("true")
     );
     expect(within(actionBar).getAllByRole("button")).toEqual(actions);
+    const commentsPanel = document.getElementById(
+      comments.getAttribute("aria-controls")!,
+    );
+    expect(commentsPanel?.getAttribute("aria-labelledby")).toBe(comments.id);
 
     fireEvent.click(preview);
     await waitFor(() =>
@@ -95,7 +116,8 @@ describe("DocumentActionBar", () => {
     const comments = screen.getByRole("tab", {
       name: "Comments, 0 unresolved",
     });
-    expect(comments.textContent).toBe("Comments");
+    expect(comments.textContent).toBe("");
+    expect(comments.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(within(comments).queryByRole("img")).toBeNull();
     expect(tagsButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(tagsButton.textContent).toBe("2");
