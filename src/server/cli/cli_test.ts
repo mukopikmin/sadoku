@@ -27,12 +27,319 @@ const captureIo = (): {
   };
 };
 
+const runJsonCommand = async (args: string[]) => {
+  const output = captureIo();
+  assertEquals(
+    await runCli(args, dependencies, output.io),
+    0,
+    output.errors.join("\n"),
+  );
+  assertEquals(output.errors, []);
+  return JSON.parse(output.logs[0]);
+};
+
+Deno.test("document tag commands persist additions and removals and expose tags through document reads", async () => {
+  await withTempCommentsDirectory(async () => {
+    const document = await runJsonCommand([
+      "document",
+      "add",
+      "https://example.com/readme.md?token=secret#top",
+    ]);
+    const other = await runJsonCommand(["document", "add", "README.md"]);
+    const api = await runJsonCommand(["tag", "add", "--name", "API"]);
+    const review = await runJsonCommand(["tag", "add", "--name", "Review"]);
+    const tags = [api, review].map(({ id, name, backgroundColor }) => ({
+      id,
+      name,
+      backgroundColor,
+    }));
+    assertEquals(
+      await runJsonCommand(["document", "inspect", String(document.id)]),
+      { ...document, tags: [] },
+    );
+    assertEquals(
+      await runJsonCommand([
+        "document",
+        "tag",
+        "add",
+        String(api.id),
+        String(review.id),
+        String(api.id),
+        "--source",
+        "https://example.com/readme.md?different=value#other",
+      ]),
+      tags,
+    );
+    assertEquals(
+      await runJsonCommand([
+        "document",
+        "tag",
+        "add",
+        String(api.id),
+        "--document",
+        String(document.id),
+      ]),
+      tags,
+    );
+    assertEquals(
+      await runJsonCommand([
+        "document",
+        "tag",
+        "add",
+        String(api.id),
+        "--document",
+        String(other.id),
+      ]),
+      [tags[0]],
+    );
+    assertEquals(await runJsonCommand(["document", "list"]), [
+      { ...document, tags },
+      { ...other, tags: [tags[0]] },
+    ]);
+    assertEquals(
+      await runJsonCommand(["document", "inspect", String(document.id)]),
+      { ...document, tags },
+    );
+    assertEquals(
+      await runJsonCommand([
+        "document",
+        "tag",
+        "delete",
+        String(api.id),
+        "--document",
+        String(document.id),
+      ]),
+      [tags[1]],
+    );
+    assertEquals(
+      await runJsonCommand([
+        "document",
+        "tag",
+        "delete",
+        String(api.id),
+        "--document",
+        String(document.id),
+      ]),
+      [tags[1]],
+    );
+    assertEquals(
+      await runJsonCommand([
+        "document",
+        "tag",
+        "delete",
+        String(review.id),
+        "--source",
+        "https://example.com/readme.md",
+      ]),
+      [],
+    );
+    assertEquals(
+      await runJsonCommand(["document", "inspect", String(document.id)]),
+      { ...document, tags: [] },
+    );
+    assertEquals(
+      await runJsonCommand(["document", "inspect", String(other.id)]),
+      { ...other, tags: [tags[0]] },
+    );
+    const allTags: Array<{ id: number; documentCount: number }> =
+      await runJsonCommand(["tag", "list"]);
+    assertEquals(
+      allTags.map(({ id, documentCount }) => ({ id, documentCount })),
+      [
+        { id: api.id, documentCount: 1 },
+        { id: review.id, documentCount: 0 },
+      ],
+    );
+  });
+});
+
+Deno.test("document tag commands reject missing documents and tags without partial changes or implicit creation", async () => {
+  await withTempCommentsDirectory(async () => {
+    const document = await runJsonCommand(["document", "add", "README.md"]);
+    const tag = await runJsonCommand(["tag", "add", "--name", "API"]);
+    const target = ["--document", String(document.id)];
+    for (const operation of ["add", "delete"]) {
+      const output = captureIo();
+      assertEquals(
+        await runCli(
+          ["document", "tag", operation, String(tag.id), "999", ...target],
+          dependencies,
+          output.io,
+        ),
+        1,
+      );
+      assertEquals(output.errors, ["Tag 999 not found."]);
+      assertEquals(output.logs, []);
+      assertEquals(
+        (await runJsonCommand(["document", "inspect", String(document.id)]))
+          .tags,
+        [],
+      );
+    }
+    await runJsonCommand(["document", "tag", "add", String(tag.id), ...target]);
+    const failedDelete = captureIo();
+    assertEquals(
+      await runCli(
+        ["document", "tag", "delete", String(tag.id), "999", ...target],
+        dependencies,
+        failedDelete.io,
+      ),
+      1,
+    );
+    assertEquals(
+      (await runJsonCommand(["document", "inspect", String(document.id)])).tags
+        .map(({ id }: { id: number }) => id),
+      [tag.id],
+    );
+    for (
+      const selector of [["--document", "999"], [
+        "--source",
+        "https://example.com/missing.md?token=secret#part",
+      ]]
+    ) {
+      const output = captureIo();
+      assertEquals(
+        await runCli(
+          ["document", "tag", "add", String(tag.id), ...selector],
+          dependencies,
+          output.io,
+        ),
+        1,
+      );
+      assertEquals(output.logs, []);
+      assertEquals(output.errors.length, 1);
+      assertEquals(output.errors[0].includes("token="), false);
+    }
+    assertEquals((await runJsonCommand(["document", "list"])).length, 1);
+    assertEquals((await runJsonCommand(["tag", "list"])).length, 1);
+  });
+});
+
 Deno.test("runs the help command through the server CLI entry point", async () => {
   const output = captureIo();
 
   assertEquals(await runCli(["--help"], dependencies, output.io), 0);
   assertEquals(output.errors, []);
   assertStringIncludes(output.logs.join("\n"), "Usage:");
+});
+
+Deno.test("dispatches standalone tag creation, listing, and deletion without starting a server", async () => {
+  await withTempCommentsDirectory(async () => {
+    const empty = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, empty.io), 0);
+    assertEquals(JSON.parse(empty.logs[0]), []);
+
+    const added = captureIo();
+    assertEquals(
+      await runCli(
+        [
+          "tag",
+          "add",
+          "--name",
+          " 要確認 ",
+        ],
+        dependencies,
+        added.io,
+      ),
+      0,
+    );
+    const tag = JSON.parse(added.logs[0]);
+    assertEquals(tag.name, "要確認");
+    assertEquals(tag.backgroundColor, "#718096");
+    assertEquals(typeof tag.id, "number");
+    assertEquals(typeof tag.createdAt, "string");
+    assertEquals(tag.updatedAt, tag.createdAt);
+    assertEquals(added.errors, []);
+
+    const defaultColor = captureIo();
+    assertEquals(
+      await runCli(
+        ["tag", "add", "--name", "API"],
+        dependencies,
+        defaultColor.io,
+      ),
+      0,
+    );
+    const api = JSON.parse(defaultColor.logs[0]);
+    assertEquals(api.backgroundColor, "#718096");
+
+    const duplicate = captureIo();
+    assertEquals(
+      await runCli(
+        ["tag", "add", "--name", " 要確認 "],
+        dependencies,
+        duplicate.io,
+      ),
+      1,
+    );
+    assertEquals(duplicate.errors, ["Tag name already exists."]);
+    assertEquals(duplicate.logs, []);
+
+    const listed = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, listed.io), 0);
+    assertEquals(JSON.parse(listed.logs[0]), [
+      { ...api, documentCount: 0 },
+      { ...tag, documentCount: 0 },
+    ]);
+    const documents = captureIo();
+    assertEquals(
+      await runCli(["document", "list"], dependencies, documents.io),
+      0,
+    );
+    assertEquals(JSON.parse(documents.logs[0]), []);
+
+    const deleted = captureIo();
+    assertEquals(
+      await runCli(["tag", "delete", String(tag.id)], dependencies, deleted.io),
+      0,
+    );
+    assertEquals(deleted.logs, [`Deleted tag ${tag.id}.`]);
+    const missing = captureIo();
+    assertEquals(
+      await runCli(["tag", "delete", String(tag.id)], dependencies, missing.io),
+      1,
+    );
+    assertEquals(missing.errors, [`Tag ${tag.id} not found.`]);
+    assertEquals(missing.logs, []);
+    const remaining = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, remaining.io), 0);
+    assertEquals(JSON.parse(remaining.logs[0]), [{ ...api, documentCount: 0 }]);
+  });
+});
+
+Deno.test("rejects invalid tag names and color options without creating tags", async () => {
+  await withTempCommentsDirectory(async () => {
+    for (
+      const options of [
+        ["--name", " "],
+        ["--name", "a\nb"],
+        ["--name", "a".repeat(51)],
+      ]
+    ) {
+      const output = captureIo();
+      assertEquals(
+        await runCli(["tag", "add", ...options], dependencies, output.io),
+        1,
+      );
+      assertEquals(output.logs, []);
+      assertEquals(output.errors.length, 1);
+      assertStringIncludes(output.errors[0], "Tag ");
+    }
+    const colorOption = captureIo();
+    assertEquals(
+      await runCli(
+        ["tag", "add", "--name", "API", "--background-color", "#123456"],
+        dependencies,
+        colorOption.io,
+      ),
+      1,
+    );
+    assertEquals(colorOption.logs, []);
+    assertEquals(colorOption.errors[0], "Unknown option: --background-color");
+    const listed = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, listed.io), 0);
+    assertEquals(JSON.parse(listed.logs[0]), []);
+  });
 });
 
 Deno.test("reports usage errors through the server CLI entry point", async () => {
@@ -130,7 +437,11 @@ Deno.test("registers a source on demand before adding a comment", async () => {
         await runCli(["document", "list"], dependencies, documents.io),
         0,
       );
-      assertEquals(JSON.parse(documents.logs[0]), [{ filePath: file, id: 1 }]);
+      assertEquals(JSON.parse(documents.logs[0]), [{
+        filePath: file,
+        id: 1,
+        tags: [],
+      }]);
     } finally {
       await Deno.remove(file);
     }

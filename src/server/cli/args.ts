@@ -4,9 +4,14 @@ export { version } from "../../version.ts";
 export type CliCommand =
   | "start"
   | "update"
+  | "tag-add"
+  | "tag-delete"
+  | "tag-list"
   | "document-add"
   | "document-inspect"
   | "document-list"
+  | "document-tag-add"
+  | "document-tag-delete"
   | "instruction-add"
   | "instruction-delete"
   | "instruction-list"
@@ -50,6 +55,9 @@ export type CliOptions = {
   requestReview: boolean;
   source?: string;
   startLine?: number;
+  tagId?: number;
+  tagIds?: number[];
+  tagName?: string;
   help?: boolean;
   version?: boolean;
 };
@@ -66,6 +74,11 @@ export const usage = `Usage:
   sadoku document add <file.md|url>
   sadoku document inspect <document-id>
   sadoku document list
+  sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
+  sadoku document tag delete <tag-id>... (--document <id> | --source <file.md|url>)
+  sadoku tag add --name <name>
+  sadoku tag delete <tag-id>
+  sadoku tag list
   sadoku instruction list (--document <id> | --source <file.md|url>)
   sadoku instruction add (--document <id> | --source <file.md|url>) --content <text>
   sadoku instruction update <instruction-id> (--document <id> | --source <file.md|url>) --content <text>
@@ -86,6 +99,7 @@ export const usage = `Usage:
   sadoku update [--channel stable|nightly]
 
 Options:
+  --name            Tag name (tag add only).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
   --ensure-document Register --source when it is not in the database (comment add only).
@@ -142,6 +156,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         "host",
         "max-depth",
         "max-files",
+        "name",
         "port",
         "source",
         "start-line",
@@ -189,6 +204,12 @@ export const parseArgs = (argv: string[]): CliOptions => {
     flags["start-line"] !== undefined || flags["as-bot"] ||
     flags["ensure-document"] || flags["request-review"];
   const hasInstructionOption = flags.content !== undefined;
+  const hasTagOption = flags.name !== undefined;
+  if (hasTagOption && words[0] !== "tag") {
+    throw new CliUsageError(
+      "--name is only accepted by tag add.",
+    );
+  }
 
   if (words[0] === "start" || words.length === 0) {
     if (
@@ -242,7 +263,87 @@ export const parseArgs = (argv: string[]): CliOptions => {
   };
   noPreviewOptions();
 
+  if (words[0] === "tag") {
+    if (
+      hasCommentOption || hasInstructionOption || flags.channel !== undefined
+    ) {
+      throw new CliUsageError(
+        "tag commands do not accept document, comment, content, or update options.",
+      );
+    }
+    if (words[1] === "add" && words.length === 2) {
+      if (typeof flags.name !== "string") {
+        throw new CliUsageError("--name is required.");
+      }
+      return {
+        ...base,
+        command: "tag-add",
+        tagName: flags.name,
+      };
+    }
+    if (hasTagOption) {
+      throw new CliUsageError(
+        "--name is only accepted by tag add.",
+      );
+    }
+    if (words[1] === "list" && words.length === 2) {
+      return { ...base, command: "tag-list" };
+    }
+    if (words[1] === "delete" && words.length === 3) {
+      const tagId = positiveInteger(words[2], "Tag ID");
+      if (!Number.isSafeInteger(tagId)) {
+        throw new CliUsageError("Tag ID must be a positive safe integer.");
+      }
+      return { ...base, command: "tag-delete", tagId };
+    }
+    throw new CliUsageError("Invalid tag command.");
+  }
+
   if (words[0] === "document") {
+    if (words[1] === "tag") {
+      if (
+        hasInstructionOption || flags.channel !== undefined ||
+        flags.body !== undefined || flags.comment !== undefined ||
+        flags["start-line"] !== undefined || flags["end-line"] !== undefined ||
+        flags["as-bot"] || flags["ensure-document"] || flags["request-review"]
+      ) {
+        throw new CliUsageError(
+          "document tag commands do not accept comment, content, or update options.",
+        );
+      }
+      if ((words[2] !== "add" && words[2] !== "delete") || words.length < 4) {
+        throw new CliUsageError(
+          "document tag add/delete requires at least one tag ID.",
+        );
+      }
+      const documentId = flags.document === undefined
+        ? undefined
+        : positiveInteger(flags.document, "Document ID");
+      const source = flags.source?.toString();
+      if ((documentId === undefined) === (source === undefined)) {
+        throw new CliUsageError(
+          "Specify exactly one of --document or --source.",
+        );
+      }
+      const tagIds = words.slice(3).map((id) => positiveInteger(id, "Tag ID"));
+      if (
+        (documentId !== undefined && !Number.isSafeInteger(documentId)) ||
+        tagIds.some((id) => !Number.isSafeInteger(id))
+      ) {
+        throw new CliUsageError(
+          "Document and tag IDs must be positive safe integers.",
+        );
+      }
+      return {
+        ...base,
+        command: words[2] === "add"
+          ? "document-tag-add"
+          : "document-tag-delete",
+        documentId,
+        source,
+        tagIds,
+      };
+    }
     if (
       hasCommentOption || hasInstructionOption || flags.channel !== undefined
     ) {

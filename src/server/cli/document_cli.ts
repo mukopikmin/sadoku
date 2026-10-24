@@ -1,5 +1,8 @@
 import { createPreviewSource } from "../session/source.ts";
-import type { DocumentStore } from "../usecase/document/mod.ts";
+import type {
+  DocumentStore,
+  DocumentTagReader,
+} from "../usecase/document/mod.ts";
 import {
   getDocument,
   listDocuments,
@@ -9,8 +12,13 @@ import {
 export const addDocument = (input: string, store: DocumentStore) =>
   registerDocument(store, createPreviewSource(input).commentSource);
 
-export const inspectDocument = (id: number, store: DocumentStore) =>
-  getDocument(store, id);
+export const inspectDocument = (
+  id: number,
+  store: DocumentStore,
+  tags?: DocumentTagReader,
+) => getDocument(store, id, tags);
 
-export const listRegisteredDocuments = (store: DocumentStore) =>
-  listDocuments(store);
+export const listRegisteredDocuments = (
+  store: DocumentStore,
+  tags?: DocumentTagReader,
+) => listDocuments(store, tags);

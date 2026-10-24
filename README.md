@@ -111,10 +111,44 @@ sadoku comment list --source README.md
 sadoku comment resolve <comment-id> --source README.md
 ```
 
-Use `sadoku --help` for document, comment, instruction, and memory commands.
-Instructions and memories provide document-specific context for agents; memories
-can be reviewed and deleted in the preview, but are added and updated through
-the CLI.
+Manage tags independently of documents:
+
+```sh
+sadoku tag add --name "Needs review"
+sadoku tag list
+sadoku tag delete <tag-id>
+```
+
+Tag creation and listing return JSON. Each listed tag includes its document
+count. New tags are not attached to any document; names must be unique. Tags
+created through the CLI always use the default background color (`#718096`).
+Deleting a tag also removes it from every document without deleting the
+documents.
+
+Attach or detach existing tags from a registered document:
+
+```sh
+sadoku document tag add 3 5 --source README.md
+sadoku document tag delete 3 --document 1
+sadoku document inspect 1
+sadoku document list
+```
+
+Use exactly one of `--document <id>` or `--source <file.md|url>` for tag
+associations. Both the document and tag IDs must already exist. Adding an
+attached tag or removing an unattached tag succeeds without changing other
+associations; removal preserves the tag itself. Each command applies all
+requested changes atomically, with at most 20 tags per document.
+
+Tag association commands return the resulting tag array as JSON. Document
+listing and inspection include `tags`, containing each tag's `id`, `name`, and
+`backgroundColor`, or an empty array when no tags are attached. Colors are
+read-only through the CLI.
+
+Use `sadoku --help` for document, tag, comment, instruction, and memory
+commands. Instructions and memories provide document-specific context for
+agents; memories can be reviewed and deleted in the preview, but are added and
+updated through the CLI.
 
 For compatible coding agents, install the `sadoku-review` skill with
 [Agent Package Manager](https://github.com/microsoft/apm):
