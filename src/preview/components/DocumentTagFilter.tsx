@@ -52,6 +52,7 @@ export const DocumentTagFilter = ({
         collection={collection}
         inputValue={searchValue}
         multiple
+        openOnClick
         onInputValueChange={({ inputValue }) => onSearchChange(inputValue)}
         onValueChange={({ value }) =>
           onSelectedTagIdsChange(

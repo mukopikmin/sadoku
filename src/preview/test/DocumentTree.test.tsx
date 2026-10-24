@@ -101,7 +101,7 @@ describe("DocumentTree", () => {
     expect(within(untaggedItem).queryByText("Guide")).toBeNull();
   });
 
-  it("exposes tag choices through a multi-select combobox", async () => {
+  it("opens tag choices on input clicks, including after filtering", async () => {
     render(
       <DocumentTree
         documents={[
@@ -124,12 +124,27 @@ describe("DocumentTree", () => {
       />,
     );
 
-    expect(screen.getByRole("combobox", { name: "Search tags" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
+    const input = screen.getByRole("combobox", { name: "Search tags" });
+    fireEvent.click(input);
 
     const listbox = await screen.findByRole("listbox");
     expect(listbox.getAttribute("aria-multiselectable")).toBe("true");
     expect(screen.getByRole("option", { name: "API" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "Guide" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("option", { name: "API" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox")).toBeNull();
+      const tree = screen.getByRole("tree", { name: "Documents" });
+      expect(within(tree).getByText("reference.md")).toBeTruthy();
+      expect(within(tree).queryByText("start.md")).toBeNull();
+    });
+
+    fireEvent.click(input);
+    expect(await screen.findByRole("option", { name: "Guide" })).toBeTruthy();
+    fireEvent.keyDown(input, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
+    expect(await screen.findByRole("listbox")).toBeTruthy();
   });
 });
