@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { dirname, join } from "@std/path";
-import { withTempCommentsDirectory } from "../test_helpers.ts";
+import { withTempCommentsDirectory } from "../testing/helpers.ts";
 import { getCommentsDirectoryPath } from "../storage/comment/storage.ts";
 import { openAppDatabase } from "./connection.ts";
 

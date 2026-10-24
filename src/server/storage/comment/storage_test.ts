@@ -12,7 +12,7 @@ import {
   createTempMarkdown,
   removeTempMarkdown,
   withTempCommentsDirectory,
-} from "../../test_helpers.ts";
+} from "../../testing/helpers.ts";
 
 Deno.test("returns an empty comments document when storage does not exist", async () => {
   await withTempCommentsDirectory(async () => {

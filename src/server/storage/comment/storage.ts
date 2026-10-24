@@ -17,9 +17,9 @@ import { basename, join } from "@std/path";
 import {
   getCommentsDirectoryPath,
   getLegacyCommentsDirectoryPath,
-} from "../../config.ts";
+} from "../../config/config.ts";
 
-export { getCommentsDirectoryPath } from "../../config.ts";
+export { getCommentsDirectoryPath } from "../../config/config.ts";
 
 type StoredComment = {
   resolved?: boolean;

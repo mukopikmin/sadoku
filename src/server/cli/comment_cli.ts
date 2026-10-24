@@ -14,7 +14,7 @@ import type {
   PreviewComment,
   PreviewCommentsDocument,
 } from "../usecase/comment/types.ts";
-import { createPreviewSource, readMarkdownSource } from "../source.ts";
+import { createPreviewSource, readMarkdownSource } from "../session/source.ts";
 import {
   addComment as addCommentUseCase,
   addReply as addReplyUseCase,

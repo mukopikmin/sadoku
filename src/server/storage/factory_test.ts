@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { getCommentsNotificationFilePath } from "./comment/notifications.ts";
 import { createConfiguredStores } from "./factory.ts";
-import { withTempCommentsDirectory } from "../test_helpers.ts";
+import { withTempCommentsDirectory } from "../testing/helpers.ts";
 
 Deno.test("configured stores share one closable database without document notifications", async () => {
   await withTempCommentsDirectory(async () => {

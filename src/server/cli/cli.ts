@@ -39,7 +39,7 @@ import { addTag, deleteTag, listTags } from "./tag_cli.ts";
 import { addDocumentTags, deleteDocumentTags } from "./document_tag_cli.ts";
 import type { PreviewServerOptions } from "../server.ts";
 import { createConfiguredStores } from "../storage/factory.ts";
-import { createPreviewSource } from "../source.ts";
+import { createPreviewSource } from "../session/source.ts";
 import type { ConfiguredStores } from "../storage/factory.ts";
 
 export type CliDependencies = {
