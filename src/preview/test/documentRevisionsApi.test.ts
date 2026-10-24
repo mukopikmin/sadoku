@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import {
   loadDocumentRevision,
   loadDocumentRevisions,
+  restoreDocumentRevision,
   toDocumentRevision,
   toDocumentRevisions,
   toDocumentRevisionSummary,
@@ -9,6 +10,32 @@ import {
 
 const recordedAt = "2026-10-22T00:00:00.000Z";
 afterEach(() => vi.unstubAllGlobals());
+
+it("restores through Connect, preserving empty expected content and server errors", async () => {
+  const requests: unknown[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input, init) => {
+      const request = new Request(input, init);
+      expect(request.url).toContain("/RestoreDocumentRevision");
+      requests.push(await request.json());
+      return requests.length === 1
+        ? Response.json({})
+        : Response.json({ code: "aborted", message: "The file has changed." }, {
+          status: 409,
+        });
+    }),
+  );
+  await restoreDocumentRevision(7, 4, "");
+  await expect(restoreDocumentRevision(7, 4, undefined)).rejects.toThrow(
+    "The file has changed.",
+  );
+  expect(requests).toEqual([{
+    documentId: "7",
+    revisionId: "4",
+    expectedMarkdown: "",
+  }, { documentId: "7", revisionId: "4" }]);
+});
 
 it("converts safe revision IDs and preserves empty saved Markdown", () => {
   expect(toDocumentRevision({ id: 2n, recordedAt, markdown: "" })).toEqual({

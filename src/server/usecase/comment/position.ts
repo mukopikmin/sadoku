@@ -192,7 +192,7 @@ export const resolveCommentPosition = (
 export const readResolvedCommentsDocument = async (
   filePath: string,
   markdownSource: string,
-  commentsStore: CommentsStore,
+  commentsStore: Pick<CommentsStore, "read" | "write">,
   readMarkdown: MarkdownSourceReader,
 ): Promise<PreviewCommentsDocument> => {
   const [document, markdown] = await Promise.all([
