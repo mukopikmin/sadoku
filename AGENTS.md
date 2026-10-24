@@ -30,6 +30,11 @@ them when making changes.
   user explicitly requests them. Validate them with shell syntax checks and the
   existing CLI instead of adding tests that mirror the sample values. Changes to
   seed control flow or error handling may still need focused tests.
+- GitHub Actions workflow changes are an exception to the focused-test
+  requirement: do not add or expand automated tests for workflow configuration
+  or embedded workflow scripts unless the user explicitly requests them. Use
+  formatting, workflow linting, and existing required CI checks to validate
+  these changes.
 
 ## 2. Project Architecture
 
