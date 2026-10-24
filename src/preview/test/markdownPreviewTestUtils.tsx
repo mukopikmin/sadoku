@@ -38,6 +38,10 @@ export const renderMarkdown = (
     return (
       <>
         <DocumentActionBar
+          onChangeView={() => {}}
+          staleCommentCount={0}
+          unresolvedCommentCount={0}
+          view="preview"
           instructionCount={3}
           markdown={markdown}
           memoryCount={4}

@@ -1,14 +1,87 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 import { DocumentActionBar } from "../components/DocumentActionBar";
+import type { PreviewView } from "../models/previewView";
 
 afterEach(cleanup);
 
 describe("DocumentActionBar", () => {
+  it("keeps the view switch and shared actions available in both views", async () => {
+    const Actions = () => {
+      const [view, setView] = useState<PreviewView>("preview");
+      return (
+        <DocumentActionBar
+          instructionCount={0}
+          markdown="# Heading"
+          memoryCount={0}
+          onChangeView={setView}
+          onOpenInstructions={() => {}}
+          onOpenMemories={() => {}}
+          onOpenRevisions={() => {}}
+          onOpenTags={() => {}}
+          staleCommentCount={1}
+          tagCount={0}
+          tags={[]}
+          unresolvedCommentCount={2}
+          view={view}
+        />
+      );
+    };
+    render(<Actions />);
+
+    const actionBar = screen.getByRole("dialog", { name: "Document actions" });
+    const views = within(actionBar).getByRole("tablist", {
+      name: "Preview views",
+    });
+    const preview = within(views).getByRole("tab", { name: "Preview" });
+    const comments = within(views).getByRole("tab", {
+      name: "Comments, 2 unresolved",
+    });
+    expect(preview.getAttribute("aria-selected")).toBe("true");
+    expect(within(comments).getByText("2")).not.toBeNull();
+    expect(within(comments).getByRole("img", { name: "Stale comments: 1" }))
+      .not.toBeNull();
+
+    fireEvent.click(comments);
+    await waitFor(() =>
+      expect(comments.getAttribute("aria-selected")).toBe("true")
+    );
+    for (const name of ["Tags", "Instructions", "Memories"]) {
+      expect(within(actionBar).getByRole("button", { name })).not.toBeNull();
+    }
+    for (
+      const name of ["Table of contents", "Revisions"]
+    ) {
+      expect(within(actionBar).queryByRole("button", { name })).toBeNull();
+    }
+
+    fireEvent.click(preview);
+    await waitFor(() =>
+      expect(preview.getAttribute("aria-selected")).toBe("true")
+    );
+    for (
+      const name of ["Table of contents", "Revisions"]
+    ) {
+      expect(within(actionBar).getByRole("button", { name })).not.toBeNull();
+    }
+  });
+
   it("describes document tags and opens the editor", async () => {
     const onOpenTags = vi.fn();
     const { rerender } = render(
       <DocumentActionBar
+        onChangeView={() => {}}
+        staleCommentCount={0}
+        unresolvedCommentCount={0}
+        view="preview"
         instructionCount={3}
         memoryCount={4}
         onOpenInstructions={() => {}}
@@ -24,6 +97,11 @@ describe("DocumentActionBar", () => {
     );
 
     const tagsButton = screen.getByRole("button", { name: "Tags" });
+    const comments = screen.getByRole("tab", {
+      name: "Comments, 0 unresolved",
+    });
+    expect(comments.textContent).toBe("Comments");
+    expect(within(comments).queryByRole("img")).toBeNull();
     expect(tagsButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(tagsButton.textContent).toBe("2");
     expect(screen.getByRole("button", { name: "Instructions" }).textContent)
@@ -46,6 +124,10 @@ describe("DocumentActionBar", () => {
     fireEvent.pointerLeave(tagsButton);
     rerender(
       <DocumentActionBar
+        onChangeView={() => {}}
+        staleCommentCount={0}
+        unresolvedCommentCount={0}
+        view="preview"
         instructionCount={0}
         memoryCount={0}
         onOpenInstructions={() => {}}
@@ -76,6 +158,10 @@ describe("DocumentActionBar", () => {
     const onOpenRevisions = vi.fn();
     render(
       <DocumentActionBar
+        onChangeView={() => {}}
+        staleCommentCount={0}
+        unresolvedCommentCount={0}
+        view="preview"
         instructionCount={0}
         memoryCount={12}
         onOpenInstructions={onOpenInstructions}

@@ -216,7 +216,7 @@ describe("App", () => {
       name: "Reload preview",
     });
     const previewNavigation = screen.getByRole("navigation", {
-      name: "Preview views",
+      name: "Application actions",
     });
     expect(
       within(previewNavigation).getByRole("button", {
@@ -363,7 +363,7 @@ describe("App", () => {
     expect(brandIcon.getAttribute("src")).toBe("/assets/icon-512.png");
     const fileLink = screen.getByRole("link", { name: "example.md" });
     expect(fileLink.getAttribute("href")).toBe("file:///tmp/example.md");
-    expect(screen.getByRole("navigation", { name: "Preview views" })).not
+    expect(screen.getByRole("navigation", { name: "Application actions" })).not
       .toBeNull();
 
     const header = screen.getByRole("banner");
@@ -375,7 +375,11 @@ describe("App", () => {
     expect(header.contains(main)).toBe(false);
     expect(within(main).getByRole("heading", { name: "Title" })).not.toBeNull();
 
-    const tabs = within(header).getByRole("tablist");
+    expect(within(header).queryByRole("tablist")).toBeNull();
+    const actionBar = screen.getByRole("dialog", { name: "Document actions" });
+    const tabs = within(actionBar).getByRole("tablist", {
+      name: "Preview views",
+    });
     const previewButton = within(tabs).getByRole("tab", { name: "Preview" });
     const commentsButton = within(tabs).getByRole("tab", {
       name: "Comments, 0 unresolved",
@@ -445,10 +449,23 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("tab", {
       name: "Comments, 0 unresolved",
     }));
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "Document actions" }))
-        .toBeNull()
-    );
+    await waitFor(() => {
+      const actionBar = screen.getByRole("dialog", {
+        name: "Document actions",
+      });
+      expect(
+        within(actionBar).getByRole("tab", {
+          name: "Comments, 0 unresolved",
+        }).getAttribute("aria-selected"),
+      ).toBe("true");
+      expect(within(actionBar).getByRole("button", { name: "Instructions" }))
+        .not.toBeNull();
+      for (
+        const name of ["Table of contents", "Revisions"]
+      ) {
+        expect(within(actionBar).queryByRole("button", { name })).toBeNull();
+      }
+    });
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
     fireEvent.click(
@@ -605,7 +622,7 @@ describe("App", () => {
       name: "Open settings",
     });
     const previewNavigation = screen.getByRole("navigation", {
-      name: "Preview views",
+      name: "Application actions",
     });
     expect(
       within(previewNavigation).getByRole("button", {

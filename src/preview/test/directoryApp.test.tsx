@@ -226,13 +226,10 @@ describe("directory preview", () => {
     expect(screen.getByRole("img", { name: "Sadoku" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Open settings" })).not
       .toBeNull();
-    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(screen.queryByRole("tab", { name: "Preview" })).toBeNull();
     expect(
-      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
-    ).toHaveProperty("disabled", true);
+      screen.queryByRole("tab", { name: "Comments, 0 unresolved" }),
+    ).toBeNull();
     fireEvent.click(screen.getByRole("treeitem", { name: "alpha.md" }));
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();
@@ -390,6 +387,16 @@ describe("directory preview", () => {
     expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
+    const actionBar = screen.getByRole("dialog", { name: "Document actions" });
+    expect(
+      within(actionBar).getByRole("tab", {
+        name: "Comments, 0 unresolved",
+      }).getAttribute("aria-selected"),
+    ).toBe("true");
+    fireEvent.click(within(actionBar).getByRole("tab", { name: "Preview" }));
+    expect(await screen.findByRole("heading", { name: "Document 2" }))
+      .not.toBeNull();
+    expect(location.pathname).toBe("/documents/2");
 
     unmount();
     history.replaceState(null, "", "/documents/999");
@@ -430,10 +437,7 @@ describe("directory preview", () => {
     fireEvent.click(documentButton);
     expect(await screen.findByText("Loading preview...")).not.toBeNull();
     expect(container.querySelector("header")).not.toBeNull();
-    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(screen.queryByRole("tab", { name: "Preview" })).toBeNull();
 
     resolveDocument(Response.json({
       fileUrl: "file:///tmp/1.md",
