@@ -1,5 +1,5 @@
 import { useMatchRoute, useRouterState } from "@tanstack/react-router";
-import type { PreviewView } from "../components/layout/PreviewHeader";
+import type { PreviewView } from "../models/previewView";
 
 export const parseDocumentId = (value: string | undefined) => {
   if (!value || !/^[1-9]\d*$/.test(value)) return undefined;

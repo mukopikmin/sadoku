@@ -2,7 +2,7 @@ import { cleanup, createCommentActions, render } from "./testUtils";
 import { afterEach } from "vitest";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
-import { DocumentActionBar } from "../components/DocumentActionBar";
+import { TableOfContents } from "../pages/markdown/TableOfContents";
 import { markdownStyles as previewThemeCss } from "../markdown/markdownStyles";
 
 afterEach(() => {
@@ -37,17 +37,7 @@ export const renderMarkdown = (
   const PreviewWithActions = () => {
     return (
       <>
-        <DocumentActionBar
-          instructionCount={3}
-          markdown={markdown}
-          memoryCount={4}
-          onOpenInstructions={() => {}}
-          onOpenRevisions={() => {}}
-          onOpenTags={() => {}}
-          onOpenMemories={() => {}}
-          tagCount={2}
-          tags={[]}
-        />
+        <TableOfContents markdown={markdown} />
         <MarkdownPreview
           actions={createCommentActions({
             onCreateComment: callbacks.onCreateComment ?? (async () => {}),
