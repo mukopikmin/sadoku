@@ -6,6 +6,7 @@ export type Tag = {
   updatedAt: string;
 };
 export const DEFAULT_TAG_BACKGROUND_COLOR = "#718096";
+export const MAX_DOCUMENT_TAGS = 20;
 export type TagSummary = Tag & { documentCount: number };
 export type TagReference = { id: number } | { name: string };
 

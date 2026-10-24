@@ -170,6 +170,8 @@ Deno.test("validates reply review requests and numeric identifiers", () => {
 
 Deno.test("usage documents singular resource commands", () => {
   assertMatch(usage, /document add/);
+  assertMatch(usage, /document tag add <tag-id>\.\.\./);
+  assertMatch(usage, /document tag delete <tag-id>\.\.\./);
   assertMatch(usage, /comment delete/);
   assertMatch(usage, /comment reply update/);
   assertMatch(usage, /--ensure-document/);
@@ -197,6 +199,91 @@ Deno.test("parses standalone tag commands", () => {
   const deleted = parseArgs(["tag", "delete", "3"]);
   assertEquals(deleted.command, "tag-delete");
   assertEquals(deleted.tagId, 3);
+});
+
+Deno.test("parses document tag additions and deletions with either document selector", () => {
+  const added = parseArgs([
+    "document",
+    "tag",
+    "add",
+    "3",
+    "5",
+    "--document",
+    "2",
+  ]);
+  assertEquals(added.command, "document-tag-add");
+  assertEquals(added.tagIds, [3, 5]);
+  assertEquals(added.documentId, 2);
+  const deleted = parseArgs([
+    "document",
+    "tag",
+    "delete",
+    "3",
+    "5",
+    "--source",
+    "README.md",
+  ]);
+  assertEquals(deleted.command, "document-tag-delete");
+  assertEquals(deleted.tagIds, [3, 5]);
+  assertEquals(deleted.source, "README.md");
+});
+
+Deno.test("rejects invalid document tag commands and incompatible options", () => {
+  for (
+    const args of [
+      ["document", "tag"],
+      ["document", "tag", "add", "--document", "1"],
+      ["document", "tag", "delete", "--source", "README.md"],
+      ["document", "tag", "add", "3"],
+      [
+        "document",
+        "tag",
+        "add",
+        "3",
+        "--document",
+        "1",
+        "--source",
+        "README.md",
+      ],
+      ...["list", "set", "clear", "update", "remove"].map((
+        operation,
+      ) => ["document", "tag", operation, "3", "--document", "1"]),
+      ...["0", "-1", "1.5", "NaN", "Infinity", "nope", "9007199254740992"]
+        .flatMap((id) => [
+          ["document", "tag", "add", id, "--document", "1"],
+          ["document", "tag", "delete", "3", "--document", id],
+        ]),
+      ...[
+        ["--body", "x"],
+        ["--comment", "1"],
+        ["--start-line", "1"],
+        ["--end-line", "1"],
+        ["--as-bot"],
+        ["--ensure-document"],
+        ["--request-review"],
+        ["--content", "x"],
+        ["--channel", "stable"],
+        ["--name", "API"],
+        ["--background-color", "#123456"],
+        ["--port", "4000"],
+        ["--host", "0.0.0.0"],
+        ["--no-open"],
+        ["--keep-alive"],
+        ["--max-depth", "1"],
+        ["--max-files", "1"],
+        ["--trust-forwarded-prefix"],
+      ].map((
+        option,
+      ) => ["document", "tag", "add", "3", "--document", "1", ...option]),
+    ]
+  ) {
+    assertThrows(
+      () => parseArgs(args),
+      CliUsageError,
+      undefined,
+      args.join(" "),
+    );
+  }
 });
 
 Deno.test("rejects tag color options", () => {
