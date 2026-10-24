@@ -35,6 +35,125 @@ Deno.test("runs the help command through the server CLI entry point", async () =
   assertStringIncludes(output.logs.join("\n"), "Usage:");
 });
 
+Deno.test("dispatches standalone tag creation, listing, and deletion without starting a server", async () => {
+  await withTempCommentsDirectory(async () => {
+    const empty = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, empty.io), 0);
+    assertEquals(JSON.parse(empty.logs[0]), []);
+
+    const added = captureIo();
+    assertEquals(
+      await runCli(
+        [
+          "tag",
+          "add",
+          "--name",
+          " 要確認 ",
+        ],
+        dependencies,
+        added.io,
+      ),
+      0,
+    );
+    const tag = JSON.parse(added.logs[0]);
+    assertEquals(tag.name, "要確認");
+    assertEquals(tag.backgroundColor, "#718096");
+    assertEquals(typeof tag.id, "number");
+    assertEquals(typeof tag.createdAt, "string");
+    assertEquals(tag.updatedAt, tag.createdAt);
+    assertEquals(added.errors, []);
+
+    const defaultColor = captureIo();
+    assertEquals(
+      await runCli(
+        ["tag", "add", "--name", "API"],
+        dependencies,
+        defaultColor.io,
+      ),
+      0,
+    );
+    const api = JSON.parse(defaultColor.logs[0]);
+    assertEquals(api.backgroundColor, "#718096");
+
+    const duplicate = captureIo();
+    assertEquals(
+      await runCli(
+        ["tag", "add", "--name", " 要確認 "],
+        dependencies,
+        duplicate.io,
+      ),
+      1,
+    );
+    assertEquals(duplicate.errors, ["Tag name already exists."]);
+    assertEquals(duplicate.logs, []);
+
+    const listed = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, listed.io), 0);
+    assertEquals(JSON.parse(listed.logs[0]), [
+      { ...api, documentCount: 0 },
+      { ...tag, documentCount: 0 },
+    ]);
+    const documents = captureIo();
+    assertEquals(
+      await runCli(["document", "list"], dependencies, documents.io),
+      0,
+    );
+    assertEquals(JSON.parse(documents.logs[0]), []);
+
+    const deleted = captureIo();
+    assertEquals(
+      await runCli(["tag", "delete", String(tag.id)], dependencies, deleted.io),
+      0,
+    );
+    assertEquals(deleted.logs, [`Deleted tag ${tag.id}.`]);
+    const missing = captureIo();
+    assertEquals(
+      await runCli(["tag", "delete", String(tag.id)], dependencies, missing.io),
+      1,
+    );
+    assertEquals(missing.errors, [`Tag ${tag.id} not found.`]);
+    assertEquals(missing.logs, []);
+    const remaining = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, remaining.io), 0);
+    assertEquals(JSON.parse(remaining.logs[0]), [{ ...api, documentCount: 0 }]);
+  });
+});
+
+Deno.test("rejects invalid tag names and color options without creating tags", async () => {
+  await withTempCommentsDirectory(async () => {
+    for (
+      const options of [
+        ["--name", " "],
+        ["--name", "a\nb"],
+        ["--name", "a".repeat(51)],
+      ]
+    ) {
+      const output = captureIo();
+      assertEquals(
+        await runCli(["tag", "add", ...options], dependencies, output.io),
+        1,
+      );
+      assertEquals(output.logs, []);
+      assertEquals(output.errors.length, 1);
+      assertStringIncludes(output.errors[0], "Tag ");
+    }
+    const colorOption = captureIo();
+    assertEquals(
+      await runCli(
+        ["tag", "add", "--name", "API", "--background-color", "#123456"],
+        dependencies,
+        colorOption.io,
+      ),
+      1,
+    );
+    assertEquals(colorOption.logs, []);
+    assertEquals(colorOption.errors[0], "Unknown option: --background-color");
+    const listed = captureIo();
+    assertEquals(await runCli(["tag", "list"], dependencies, listed.io), 0);
+    assertEquals(JSON.parse(listed.logs[0]), []);
+  });
+});
+
 Deno.test("reports usage errors through the server CLI entry point", async () => {
   const output = captureIo();
 

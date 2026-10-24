@@ -179,6 +179,101 @@ Deno.test("usage documents singular resource commands", () => {
   assertMatch(usage, /instruction delete <instruction-id>/);
   assertMatch(usage, /memory add .*--content <text>/);
   assertMatch(usage, /memory update <memory-id>/);
+  assertMatch(usage, /tag add --name <name>/);
+  assertMatch(usage, /tag delete <tag-id>/);
+  assertMatch(usage, /tag list/);
+});
+
+Deno.test("parses standalone tag commands", () => {
+  const added = parseArgs([
+    "tag",
+    "add",
+    "--name",
+    "要確認",
+  ]);
+  assertEquals(added.command, "tag-add");
+  assertEquals(added.tagName, "要確認");
+  assertEquals(parseArgs(["tag", "list"]).command, "tag-list");
+  const deleted = parseArgs(["tag", "delete", "3"]);
+  assertEquals(deleted.command, "tag-delete");
+  assertEquals(deleted.tagId, 3);
+});
+
+Deno.test("rejects tag color options", () => {
+  for (
+    const command of [["tag", "add", "--name", "API"], ["tag", "list"], [
+      "tag",
+      "delete",
+      "1",
+    ]]
+  ) {
+    assertThrows(
+      () => parseArgs([...command, "--background-color", "#123456"]),
+      CliUsageError,
+      "Unknown option: --background-color",
+    );
+  }
+  assertEquals(usage.includes("--background-color"), false);
+});
+
+Deno.test("rejects invalid tag commands, IDs, and incompatible options", () => {
+  for (
+    const args of [
+      ["tag"],
+      ["tag", "add"],
+      ["tag", "add", "API"],
+      ["tag", "add", "--name", "API", "extra"],
+      ["tag", "delete"],
+      ["tag", "delete", "1", "2"],
+      ["tag", "list", "1"],
+      ["tag", "update", "1", "--name", "API"],
+      ...["0", "-1", "1.5", "NaN", "Infinity", "nope", "9007199254740992"].map((
+        id,
+      ) => ["tag", "delete", id]),
+      ...[
+        ["--document", "1"],
+        ["--source", "README.md"],
+        ["--body", "x"],
+        ["--content", "x"],
+        ["--comment", "1"],
+        ["--start-line", "1"],
+        ["--end-line", "2"],
+        ["--as-bot"],
+        ["--ensure-document"],
+        ["--request-review"],
+        ["--port", "4000"],
+        ["--host", "0.0.0.0"],
+        ["--no-open"],
+        ["--keep-alive"],
+        ["--max-depth", "1"],
+        ["--max-files", "1"],
+        ["--trust-forwarded-prefix"],
+        ["--channel", "stable"],
+      ].map((option) => ["tag", "add", "--name", "API", ...option]),
+      ["tag", "list", "--name", "API"],
+      ["tag", "delete", "1", "--background-color", "#123456"],
+      ["start", "README.md", "--name", "API"],
+      ["update", "--background-color", "#123456"],
+      ["document", "list", "--name", "API"],
+      ["comment", "list", "--document", "1", "--name", "API"],
+      [
+        "instruction",
+        "list",
+        "--document",
+        "1",
+        "--background-color",
+        "#123456",
+      ],
+      ["memory", "list", "--document", "1", "--name", "API"],
+    ]
+  ) {
+    assertThrows(
+      () => parseArgs(args),
+      CliUsageError,
+      undefined,
+      args.join(" "),
+    );
+  }
 });
 
 Deno.test("parses and validates memory commands", () => {

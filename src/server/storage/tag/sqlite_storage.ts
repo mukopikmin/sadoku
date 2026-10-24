@@ -77,6 +77,21 @@ export const createSqliteTagStore = (database: AppDatabase): TagStore => {
     });
 
   return {
+    create: (name, backgroundColor) =>
+      withTransaction(database, async () => {
+        if (await findByName(name)) {
+          return {
+            type: "conflict",
+            message: "Tag name already exists.",
+          } satisfies TagError;
+        }
+        const now = new Date().toISOString();
+        await database.execute(
+          "INSERT INTO document_tag (name, background_color, created_at, updated_at) VALUES (?, ?, ?, ?)",
+          [name, backgroundColor, now, now],
+        );
+        return tag((await findByName(name))!);
+      }),
     delete: (id) =>
       withTransaction(database, async () => {
         if (!await findById(id)) {

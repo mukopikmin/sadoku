@@ -111,10 +111,24 @@ sadoku comment list --source README.md
 sadoku comment resolve <comment-id> --source README.md
 ```
 
-Use `sadoku --help` for document, comment, instruction, and memory commands.
-Instructions and memories provide document-specific context for agents; memories
-can be reviewed and deleted in the preview, but are added and updated through
-the CLI.
+Manage tags independently of documents:
+
+```sh
+sadoku tag add --name "Needs review"
+sadoku tag list
+sadoku tag delete <tag-id>
+```
+
+Tag creation and listing return JSON. Each listed tag includes its document
+count. New tags are not attached to any document; names must be unique. Tags
+created through the CLI always use the default background color (`#718096`).
+Deleting a tag also removes it from every document without deleting the
+documents.
+
+Use `sadoku --help` for document, tag, comment, instruction, and memory
+commands. Instructions and memories provide document-specific context for
+agents; memories can be reviewed and deleted in the preview, but are added and
+updated through the CLI.
 
 For compatible coding agents, install the `sadoku-review` skill with
 [Agent Package Manager](https://github.com/microsoft/apm):

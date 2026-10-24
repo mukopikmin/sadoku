@@ -35,6 +35,7 @@ import {
   updateMemory,
 } from "./memory_cli.ts";
 import { logInfo } from "../../log.ts";
+import { addTag, deleteTag, listTags } from "./tag_cli.ts";
 import type { PreviewServerOptions } from "../server.ts";
 import { createConfiguredStores } from "../storage/factory.ts";
 import { createPreviewSource } from "../source.ts";
@@ -143,6 +144,24 @@ const executeCli = async (
     }
     const result = await installUpdate(plan);
     io.log(`Updated to: ${result.targetVersion}`);
+    return;
+  }
+
+  if (options.command?.startsWith("tag-")) {
+    await runWithStores(async (stores) => {
+      switch (options.command) {
+        case "tag-list":
+          return printJson(io, await listTags(stores.tags));
+        case "tag-add":
+          return printJson(
+            io,
+            await addTag(options.tagName!, stores.tags),
+          );
+        case "tag-delete":
+          await deleteTag(options.tagId!, stores.tags);
+          return io.log(`Deleted tag ${options.tagId}.`);
+      }
+    });
     return;
   }
 
