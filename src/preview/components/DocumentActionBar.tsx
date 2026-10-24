@@ -9,7 +9,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Brain, FileText, History, Tag } from "lucide-react";
-import { TableOfContents } from "../pages/markdown/TableOfContents";
 import type { DocumentTag } from "../models/document";
 import type { PreviewView } from "../models/previewView";
 import { DocumentViewSwitch } from "./DocumentViewSwitch";
@@ -19,7 +18,6 @@ import { Tooltip } from "./ui/tooltip";
 type DocumentActionBarProps = {
   instructionCount: number;
   memoryCount: number;
-  markdown?: string;
   onChangeView: (view: PreviewView) => void;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
@@ -36,7 +34,6 @@ export const DocumentActionBar = (
   {
     instructionCount,
     memoryCount,
-    markdown,
     onChangeView,
     onOpenInstructions,
     onOpenMemories,
@@ -149,24 +146,17 @@ export const DocumentActionBar = (
                 )}
               </Button>
             </Tooltip>
-            {view === "preview" && (
-              <>
-                {markdown !== undefined && (
-                  <TableOfContents markdown={markdown} />
-                )}
-                <Tooltip content="Revisions">
-                  <IconButton
-                    aria-label="Revisions"
-                    onClick={onOpenRevisions}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    <History aria-hidden="true" />
-                  </IconButton>
-                </Tooltip>
-              </>
-            )}
+            <Tooltip content="Revisions">
+              <IconButton
+                aria-label="Revisions"
+                onClick={onOpenRevisions}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <History aria-hidden="true" />
+              </IconButton>
+            </Tooltip>
           </Flex>
         </ActionBar.Content>
       </ActionBar.Positioner>

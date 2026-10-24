@@ -435,7 +435,10 @@ describe("App", () => {
         "aria-hidden",
       ),
     ).toBe("true");
-    const tableOfContentsButton = within(firstActionBar).getByRole("button", {
+    const documentHeader = screen.getByRole("region", {
+      name: "Document header",
+    });
+    const tableOfContentsButton = within(documentHeader).getByRole("button", {
       name: "Table of contents",
     });
     expect(
@@ -460,13 +463,15 @@ describe("App", () => {
       ).toBe("true");
       expect(within(actionBar).getByRole("button", { name: "Instructions" }))
         .not.toBeNull();
-      for (
-        const name of ["Table of contents", "Revisions"]
-      ) {
-        expect(within(actionBar).queryByRole("button", { name })).toBeNull();
-      }
+      expect(within(actionBar).getByRole("button", { name: "Revisions" }))
+        .not.toBeNull();
+      expect(screen.queryByRole("button", { name: "Table of contents" }))
+        .toBeNull();
     });
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+
+    expect(await screen.findByRole("button", { name: "Table of contents" }))
+      .not.toBeNull();
 
     fireEvent.click(
       await screen.findByRole("button", {

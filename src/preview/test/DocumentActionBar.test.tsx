@@ -20,7 +20,6 @@ describe("DocumentActionBar", () => {
       return (
         <DocumentActionBar
           instructionCount={0}
-          markdown="# Heading"
           memoryCount={0}
           onChangeView={setView}
           onOpenInstructions={() => {}}
@@ -45,6 +44,13 @@ describe("DocumentActionBar", () => {
     const comments = within(views).getByRole("tab", {
       name: "Comments, 2 unresolved",
     });
+    const actions = within(actionBar).getAllByRole("button");
+    expect(within(actionBar).getByRole("button", { name: "Revisions" }))
+      .not.toBeNull();
+    expect(
+      within(actionBar).queryByRole("button", { name: "Table of contents" }),
+    )
+      .toBeNull();
     expect(preview.getAttribute("aria-selected")).toBe("true");
     expect(within(comments).getByText("2")).not.toBeNull();
     expect(within(comments).getByRole("img", { name: "Stale comments: 1" }))
@@ -54,24 +60,13 @@ describe("DocumentActionBar", () => {
     await waitFor(() =>
       expect(comments.getAttribute("aria-selected")).toBe("true")
     );
-    for (const name of ["Tags", "Instructions", "Memories"]) {
-      expect(within(actionBar).getByRole("button", { name })).not.toBeNull();
-    }
-    for (
-      const name of ["Table of contents", "Revisions"]
-    ) {
-      expect(within(actionBar).queryByRole("button", { name })).toBeNull();
-    }
+    expect(within(actionBar).getAllByRole("button")).toEqual(actions);
 
     fireEvent.click(preview);
     await waitFor(() =>
       expect(preview.getAttribute("aria-selected")).toBe("true")
     );
-    for (
-      const name of ["Table of contents", "Revisions"]
-    ) {
-      expect(within(actionBar).getByRole("button", { name })).not.toBeNull();
-    }
+    expect(within(actionBar).getAllByRole("button")).toEqual(actions);
   });
 
   it("describes document tags and opens the editor", async () => {
