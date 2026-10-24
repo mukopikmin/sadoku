@@ -29,9 +29,9 @@ the same project as the backend and the region selected by
 proxy URL for comments, deployment environment links, and its summary. It
 queries the backend Cloud Run API only to verify the tag and revision readiness.
 
-The preview image includes the selected commit's repository contents under `/app`,
-subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the platform-neutral
-`scripts/preview_entrypoint.sh`. Docker `CMD` supplies
+The preview image includes the selected commit's repository contents under
+`/app`, subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the
+platform-neutral `scripts/preview_entrypoint.sh`. Docker `CMD` supplies
 `/bin/sh /app/scripts/cloud_run_entrypoint.sh` as the command to execute after
 preparation. The launcher has no dependency on Cloud Run; the ordinary Cloud Run
 entrypoint keeps its existing server arguments and does not prepare sample data.
