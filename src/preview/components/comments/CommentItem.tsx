@@ -6,7 +6,7 @@ import { CommentActionMenu } from "./CommentActionMenu";
 import { CommentEditor } from "./CommentEditor";
 import { CommentMarkdown } from "./CommentMarkdown";
 import { CommentResolutionButton } from "./CommentResolutionButton";
-import { CommentSourceMarkdown } from "./CommentSourceMarkdown";
+import { CommentSourcePreview } from "./CommentSourcePreview";
 import { ReplyComposer } from "./ReplyComposer";
 import { ReplyItem } from "./ReplyItem";
 import { useCommentActionState } from "./useCommentActionState";
@@ -20,9 +20,6 @@ export type CommentItemProps = {
   showState?: boolean;
   variant?: "card";
 };
-
-const getSourceLabel = (comment: Comment): string =>
-  comment.state === "stale" ? "Original line" : "Target line";
 
 export const CommentItem = ({
   actions,
@@ -48,30 +45,14 @@ export const CommentItem = ({
 
   const content = (
     <>
-      {showSource && comment.sourceText && (
-        <Box
-          as="section"
-          className="comment-source-target"
-          mb="2"
-        >
-          <Text
-            color="fg.muted"
-            fontSize="xs"
-            fontWeight="semibold"
-            mb="1"
-          >
-            {getSourceLabel(comment)}
-          </Text>
-          <CommentSourceMarkdown>{comment.sourceText}</CommentSourceMarkdown>
-        </Box>
-      )}
+      {showSource && <CommentSourcePreview comment={comment} />}
       <Box
-        borderLeftColor={variant === "card" ? "accent" : undefined}
-        borderLeftWidth={variant === "card" ? "3px" : undefined}
+        borderLeftColor="accent"
+        borderLeftWidth="3px"
         className="comment-root-thread"
-        pb={variant === "card" ? "1px" : undefined}
-        pl={variant === "card" ? "3" : undefined}
-        pt={variant === "card" ? "2" : undefined}
+        pb="1px"
+        pl="3"
+        pt="2"
       >
         <Box position="relative">
           {(comment.author.type === "bot" ||

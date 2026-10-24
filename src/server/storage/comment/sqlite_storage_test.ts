@@ -28,6 +28,7 @@ const document = (filePath: string): PreviewCommentsDocument => ({
       resolved: false,
       sourceHash: "abc123",
       sourceText: "source line",
+      sourceDeleted: true,
       stale: true,
       updatedAt: "2026-07-04T00:03:00.000Z",
     },
@@ -176,6 +177,103 @@ Deno.test("sqlite comments store omits documents without comments", async () => 
           openCount: entry.openCount,
         })),
         [{ markdownPath: resolvedPath, openCount: 0 }],
+      );
+    } finally {
+      database.close();
+    }
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("sqlite comments store retains all revisions across edits and reopen without duplicating unchanged snapshots", async () => {
+  const root = await Deno.makeTempDir();
+  const path = join(root, "comments.db");
+  let database = await openAppDatabase({ path });
+  try {
+    let store = createSqliteCommentsStore(database);
+    const filePath = "document.md";
+    const initial = { ...document(filePath), sourceSnapshot: "A" };
+    await store.write(filePath, initial);
+    const values = ["A", "B", "C", "A", ""];
+    for (let index = 1; index < values.length; index++) {
+      const next = {
+        ...initial,
+        previousSourceSnapshot: values[index - 1],
+        sourceSnapshot: values[index],
+      };
+      await store.write(filePath, next);
+      // Comment-only updates must reuse both revision references.
+      await store.write(filePath, {
+        ...next,
+        comments: [{ ...initial.comments[0], body: `Edit ${index}` }],
+      });
+      assertEquals((await store.read(filePath)).sourceSnapshot, values[index]);
+      assertEquals(
+        (await store.read(filePath)).previousSourceSnapshot,
+        values[index - 1],
+      );
+    }
+    database.close();
+    database = await openAppDatabase({ path });
+    store = createSqliteCommentsStore(database);
+    assertEquals((await store.read(filePath)).sourceSnapshot, "");
+    assertEquals((await store.read(filePath)).previousSourceSnapshot, "A");
+    assertEquals(
+      (await database.execute<{ markdown: string }>(
+        "SELECT markdown FROM document_revision ORDER BY id",
+      )).rows?.map((row) => row.markdown),
+      values,
+    );
+
+    // Removing the public snapshots must not remove archived revisions.
+    await store.write(filePath, { filePath, comments: [] });
+    assertEquals(await store.read(filePath), { filePath, comments: [] });
+    assertEquals(
+      (await database.execute(
+        "SELECT COUNT(*) AS count FROM document_revision",
+      )).rows,
+      [{ count: values.length }],
+    );
+  } finally {
+    database.close();
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("sqlite comments store rolls back revisions and references when saving comments fails", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const database = await openAppDatabase({ path: join(root, "comments.db") });
+    try {
+      const store = createSqliteCommentsStore(database);
+      const initial = document("document.md");
+      await store.write(initial.filePath, initial);
+      const revisions = await database.execute(
+        "SELECT * FROM document_revision ORDER BY id",
+      );
+      await assertRejects(() =>
+        store.write(initial.filePath, {
+          ...initial,
+          previousSourceSnapshot: initial.sourceSnapshot,
+          sourceSnapshot: "changed",
+          comments: [initial.comments[0], initial.comments[0]],
+        })
+      );
+      assertEquals(await store.read(initial.filePath), initial);
+      assertEquals(
+        await database.execute("SELECT * FROM document_revision ORDER BY id"),
+        revisions,
+      );
+      // A failed transaction must not block subsequent snapshot writes.
+      await store.write(initial.filePath, {
+        ...initial,
+        previousSourceSnapshot: initial.sourceSnapshot,
+        sourceSnapshot: "changed",
+      });
+      assertEquals(
+        (await store.read(initial.filePath)).sourceSnapshot,
+        "changed",
       );
     } finally {
       database.close();

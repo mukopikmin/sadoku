@@ -280,7 +280,10 @@ export const CommentList = ({
   );
 };
 
-export const CommentListPage = ({ documentId }: { documentId?: number }) => {
+export const CommentListPage = ({ documentId, documentDeleted = false }: {
+  documentId?: number;
+  documentDeleted?: boolean;
+}) => {
   const commentsQuery = useCommentsQuery(documentId);
   const actions = useCommentActions(documentId);
   if (!commentsQuery.data) return null;
@@ -288,7 +291,12 @@ export const CommentListPage = ({ documentId }: { documentId?: number }) => {
     <CommentList
       key={documentId}
       actions={actions}
-      comments={commentsQuery.data.comments}
+      comments={documentDeleted
+        ? commentsQuery.data.comments.map((comment) => ({
+          ...comment,
+          currentSource: { state: "deleted" as const },
+        }))
+        : commentsQuery.data.comments}
     />
   );
 };

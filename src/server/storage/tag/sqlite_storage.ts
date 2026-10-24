@@ -76,7 +76,78 @@ export const createSqliteTagStore = (database: AppDatabase): TagStore => {
       return tag((await findById(id))!);
     });
 
+  const changeForDocument = (
+    documentId: number,
+    tagIds: readonly number[],
+    operation: { type: "add"; maxTags: number } | { type: "delete" },
+  ): Promise<Tag[] | TagError> =>
+    withTransaction(database, async () => {
+      const document = (await database.execute<{ id: number }>(
+        "SELECT id FROM comment_document WHERE id = ?",
+        [documentId],
+      )).rows?.[0];
+      if (!document) {
+        return {
+          type: "not_found",
+          message: "Document not found.",
+        } satisfies TagError;
+      }
+      for (const id of tagIds) {
+        if (!await findById(id)) {
+          return {
+            type: "not_found",
+            message: `Tag ${id} not found.`,
+          } satisfies TagError;
+        }
+      }
+      if (operation.type === "add") {
+        const existing = await listForDocument(documentId);
+        if (
+          new Set([...existing.map(({ id }) => id), ...tagIds]).size >
+            operation.maxTags
+        ) {
+          return {
+            type: "invalid",
+            message: `A document can have at most ${operation.maxTags} tags.`,
+          } satisfies TagError;
+        }
+      }
+      for (const id of tagIds) {
+        if (operation.type === "add") {
+          await database.execute(
+            "INSERT INTO document_tag_link (document_id, tag_id) VALUES (?, ?) ON CONFLICT(document_id, tag_id) DO NOTHING",
+            [documentId, id],
+          );
+        } else {
+          await database.execute(
+            "DELETE FROM document_tag_link WHERE document_id = ? AND tag_id = ?",
+            [documentId, id],
+          );
+        }
+      }
+      return await listForDocument(documentId);
+    });
+
   return {
+    addForDocument: (documentId, tagIds, maxTags) =>
+      changeForDocument(documentId, tagIds, { type: "add", maxTags }),
+    deleteForDocument: (documentId, tagIds) =>
+      changeForDocument(documentId, tagIds, { type: "delete" }),
+    create: (name, backgroundColor) =>
+      withTransaction(database, async () => {
+        if (await findByName(name)) {
+          return {
+            type: "conflict",
+            message: "Tag name already exists.",
+          } satisfies TagError;
+        }
+        const now = new Date().toISOString();
+        await database.execute(
+          "INSERT INTO document_tag (name, background_color, created_at, updated_at) VALUES (?, ?, ?, ?)",
+          [name, backgroundColor, now, now],
+        );
+        return tag((await findByName(name))!);
+      }),
     delete: (id) =>
       withTransaction(database, async () => {
         if (!await findById(id)) {

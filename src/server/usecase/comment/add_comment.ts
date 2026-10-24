@@ -14,6 +14,7 @@ import {
   nextId,
   rangeText,
   saveComment,
+  withCurrentSource,
 } from "./helpers.ts";
 
 export const addComment = async (
@@ -59,5 +60,5 @@ export const addComment = async (
     filePath: source.commentSource,
     sourceSnapshot: markdown,
   });
-  return comment;
+  return withCurrentSource(comment, markdown);
 };

@@ -85,7 +85,7 @@ describe("CommentItem", () => {
     const sourceMarkdown = target.querySelector(".comment-source-markdown")!;
     const rootThread = container.querySelector(".comment-root-thread")!;
     expect(screen.getByRole("article")).not.toBeNull();
-    expect(within(target).getByText("Original line")).not.toBeNull();
+    expect(within(target).getByText("At comment time")).not.toBeNull();
     expect(
       within(sourceMarkdown).getByRole("heading", {
         name: "Source heading",
@@ -120,20 +120,15 @@ describe("CommentItem", () => {
       });
 
     render(
-      <>
-        <CommentItem
-          actions={createCommentActions()}
-          comment={createComment({ id: 1, sourceText: "First long source" })}
-          lineLabel="Line 3"
-          showSource
-        />
-        <CommentItem
-          actions={createCommentActions()}
-          comment={createComment({ id: 2, sourceText: "Second long source" })}
-          lineLabel="Line 3"
-          showSource
-        />
-      </>,
+      <CommentItem
+        actions={createCommentActions()}
+        comment={createComment({
+          sourceText: "First long source",
+          currentSource: { state: "available", text: "Updated long source" },
+        })}
+        lineLabel="Line 3"
+        showSource
+      />,
     );
 
     const expandButtons = screen.getAllByRole("button", {
@@ -147,7 +142,96 @@ describe("CommentItem", () => {
     ).toBe("true");
     expect(screen.getAllByRole("button", { name: "Show full source" }))
       .toHaveLength(1);
+    const current = within(screen.getByRole("region", { name: "Current" }));
+    fireEvent.click(current.getByRole("button", { name: "Show full source" }));
+    const original = within(
+      screen.getByRole("region", { name: "At comment time" }),
+    );
+    fireEvent.click(original.getByRole("button", { name: "Collapse source" }));
+    expect(
+      original.getByRole("button", { name: "Show full source" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("false");
+    expect(
+      current.getByRole("button", { name: "Collapse source" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("true");
   });
+
+  it("renders both versions safely and only repeats changed source", () => {
+    const actions = createCommentActions();
+    const original = createComment({ sourceText: "**Original**" });
+    const { container, rerender } = render(
+      <CommentItem
+        actions={actions}
+        comment={{
+          ...original,
+          currentSource: {
+            state: "available",
+            text: "**Updated**\n\n<script>alert(1)</script>",
+          },
+        }}
+        lineLabel="Line 3"
+        showSource
+      />,
+    );
+    expect(
+      within(screen.getByRole("region", { name: "At comment time" })).getByText(
+        "Original",
+      ).tagName,
+    ).toBe("STRONG");
+    expect(
+      within(screen.getByRole("region", { name: "Current" })).getByText(
+        "Updated",
+      ).tagName,
+    ).toBe("STRONG");
+    expect(screen.getByText("Changed")).not.toBeNull();
+    expect(container.querySelector("script")).toBeNull();
+    rerender(
+      <CommentItem
+        actions={actions}
+        comment={{
+          ...original,
+          currentSource: { state: "available", text: original.sourceText! },
+        }}
+        lineLabel="Line 3"
+        showSource
+      />,
+    );
+    expect(screen.getAllByText("Original")).toHaveLength(1);
+    expect(screen.getByText("Unchanged since comment")).not.toBeNull();
+    expect(screen.queryByText("Changed")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show full source" }))
+      .toBeNull();
+  });
+
+  it.each(
+    [
+      ["deleted", "The target lines have been deleted."],
+      ["unavailable", "The current target lines could not be located."],
+    ] as const,
+  )(
+    "keeps the original when the current target is %s, including resolved comments",
+    (state, message) => {
+      render(
+        <CommentItem
+          actions={createCommentActions()}
+          comment={createComment({
+            state: "resolved",
+            currentSource: { state },
+          })}
+          lineLabel="Line 3"
+          showSource
+        />,
+      );
+      expect(screen.getByRole("region", { name: "At comment time" })).not
+        .toBeNull();
+      expect(screen.getByText(message)).not.toBeNull();
+      expect(screen.queryByRole("region", { name: "Current" })).toBeNull();
+    },
+  );
 
   it("edits a comment with focus and keyboard submission", async () => {
     const onUpdateComment = vi.fn(async () => {});
@@ -433,7 +517,7 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
     state: "pending" as const,
   }));
   const actions = createCommentActions({ onExportComment });
-  const { rerender } = render(
+  render(
     <CommentItem
       actions={actions}
       comment={createComment({ replies: [createCommentReply()] })}
@@ -452,6 +536,7 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
     (await screen.findByRole("link", { name: "View pending GitHub review" }))
       .getAttribute("href"),
   ).toBe(url);
+  cleanup();
   for (
     const comment of [
       createComment({ author: { type: "bot" } }),
@@ -459,7 +544,7 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
       createComment({ state: "resolved" }),
     ]
   ) {
-    rerender(
+    render(
       <CommentItem actions={actions} comment={comment} lineLabel="Line 3" />,
     );
     const menu = await openCommentMenu();
@@ -468,7 +553,7 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
         name: "Save to GitHub review",
       }),
     ).toBeNull();
-    fireEvent.keyDown(menu, { key: "Escape" });
+    cleanup();
   }
 });
 

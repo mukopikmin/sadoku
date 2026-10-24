@@ -158,8 +158,6 @@ export const markdownStyles = `
   .comment-thread {
     margin: var(--chakra-spacing-2) 0 var(--chakra-spacing-3);
     margin-left: calc(0em - var(--comment-indent-offset, 0em));
-    border-left: 3px solid var(--chakra-colors-accent);
-    padding: var(--chakra-spacing-2) 0 1px var(--chakra-spacing-3);
   }
 
   .mermaid-container .mermaid {

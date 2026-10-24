@@ -1,6 +1,22 @@
-import type { Document, MarkdownDocumentPath } from "./types.ts";
+import type {
+  Document,
+  DocumentRevision,
+  DocumentRevisionSummary,
+  MarkdownDocumentPath,
+} from "./types.ts";
 
-export type DocumentStore = {
+export type DocumentRevisionReader = {
+  listRevisions: (
+    documentId: number,
+    limit: number,
+  ) => Promise<DocumentRevisionSummary[]>;
+  findRevision: (
+    documentId: number,
+    revisionId: number,
+  ) => Promise<DocumentRevision | undefined>;
+};
+
+export type DocumentStore = Partial<DocumentRevisionReader> & {
   ensure: (filePath: string) => Promise<Document>;
   ensureMany: (filePaths: string[]) => Promise<Document[]>;
   findById: (id: number) => Promise<Document | undefined>;
