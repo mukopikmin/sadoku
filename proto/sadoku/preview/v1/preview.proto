@@ -9,6 +9,8 @@ service PreviewService {
   rpc CreateDocument(CreateDocumentRequest) returns (DocumentSummary);
   rpc UpdateDocumentTitle(UpdateDocumentTitleRequest) returns (DocumentSummary);
   rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+  rpc ListDocumentRevisions(ListDocumentRevisionsRequest) returns (ListDocumentRevisionsResponse);
+  rpc GetDocumentRevision(GetDocumentRevisionRequest) returns (DocumentRevision);
   rpc GetDirectoryStatus(GetDirectoryStatusRequest) returns (GetDirectoryStatusResponse);
   rpc GetSettings(GetSettingsRequest) returns (Settings);
   rpc UpdateSettings(UpdateSettingsRequest) returns (Settings);
@@ -95,6 +97,19 @@ message DocumentSummary {
 message UpdateDocumentTitleRequest { uint64 document_id = 1; string title = 2; }
 
 message GetDocumentRequest { uint64 document_id = 1; }
+message DocumentRevisionSummary {
+  uint64 id = 1;
+  string recorded_at = 2;
+}
+message DocumentRevision {
+  uint64 id = 1;
+  string recorded_at = 2;
+  string markdown = 3;
+  optional string previous_markdown = 4;
+}
+message ListDocumentRevisionsRequest { uint64 document_id = 1; }
+message ListDocumentRevisionsResponse { repeated DocumentRevisionSummary revisions = 1; }
+message GetDocumentRevisionRequest { uint64 document_id = 1; uint64 revision_id = 2; }
 message GetDocumentResponse {
   string file_url = 1;
   string markdown = 2;
@@ -103,6 +118,7 @@ message GetDocumentResponse {
   repeated Tag tags = 5;
   optional string display_title = 7;
   optional string github_head_sha = 6;
+  optional string previous_markdown = 8;
 }
 
 message GetDirectoryStatusRequest {}

@@ -127,6 +127,7 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
       "0009",
       "0010",
       "0011",
+      "0012",
     ]);
     assertEquals(tablesAfterFirstRun, [
       "comment",
@@ -134,12 +135,13 @@ Deno.test("runMigrations applies all migrations to an empty SQLite database once
       "comment_reply",
       "document_instruction",
       "document_memory",
+      "document_revision",
       "document_tag",
       "document_tag_link",
       "schema_migration",
       "sqlite_sequence",
     ]);
-    assertEquals(rowsAfterFirstRun.length, 11);
+    assertEquals(rowsAfterFirstRun.length, 12);
     for (const row of rowsAfterFirstRun) {
       assertMatch(row.started_at, iso8601Pattern, row.version);
       assertExists(row.finished_at, row.version);

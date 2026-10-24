@@ -92,17 +92,32 @@ export async function openAppDatabase(
   }
 }
 
+const pendingTransactions = new WeakMap<AppDatabase, Promise<void>>();
+
 export async function withTransaction<T>(
   database: AppDatabase,
   operation: () => Promise<T>,
 ): Promise<T> {
-  await database.execute("BEGIN");
+  const previous = pendingTransactions.get(database);
+  // Snapshot initialization and comment saves share this connection. Keep their
+  // revision inserts and pointer updates in separate, serialized transactions.
+  const { promise: pending, resolve: release } = Promise.withResolvers<void>();
+  pendingTransactions.set(database, pending);
+  await previous;
   try {
-    const result = await operation();
-    await database.execute("COMMIT");
-    return result;
-  } catch (error) {
-    await database.execute("ROLLBACK");
-    throw error;
+    await database.execute("BEGIN");
+    try {
+      const result = await operation();
+      await database.execute("COMMIT");
+      return result;
+    } catch (error) {
+      await database.execute("ROLLBACK");
+      throw error;
+    }
+  } finally {
+    release();
+    if (pendingTransactions.get(database) === pending) {
+      pendingTransactions.delete(database);
+    }
   }
 }

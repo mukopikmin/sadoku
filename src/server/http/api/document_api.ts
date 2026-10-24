@@ -21,9 +21,13 @@ const parseDocumentId = (rawId: string): number | undefined => {
 
 const mapError = (error: unknown): Response => {
   if (!isDocumentUseCaseError(error)) throw error;
-  return error.type === "document_not_found"
-    ? notFoundResponse("Document not found.")
-    : notFoundResponse("Saved Markdown snapshot not found.");
+  return notFoundResponse(
+    {
+      document_not_found: "Document not found.",
+      document_snapshot_not_found: "Saved Markdown snapshot not found.",
+      document_revision_not_found: "Document revision not found.",
+    }[error.type],
+  );
 };
 
 export const resolveDirectoryDocumentParameter = (

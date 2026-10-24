@@ -1,12 +1,12 @@
-FROM node:24-bookworm-slim AS builder
+FROM node:bookworm-slim AS builder
 
-COPY --from=denoland/deno:bin-2.8.0 /deno /usr/local/bin/deno
+COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
 
 WORKDIR /workspace
 
 COPY package.json package-lock.json ./
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-RUN npm run install:deps
+RUN npm_config_engine_strict=true npm run install:deps
 
 COPY . .
 RUN deno task compile --output /sadoku
@@ -20,13 +20,12 @@ WORKDIR /app
 
 COPY --from=builder /sadoku /usr/local/bin/sadoku
 COPY . /app/
-COPY scripts/cloud_run_entrypoint.sh /usr/local/bin/cloud-run-entrypoint
 
-RUN chmod 755 /usr/local/bin/cloud-run-entrypoint \
-    && chown -R nobody:nogroup /app
+RUN chown -R nobody:nogroup /app
 
 USER nobody:nogroup
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/cloud-run-entrypoint"]
+ENTRYPOINT ["/bin/sh", "/app/scripts/preview_entrypoint.sh"]
+CMD ["/bin/sh", "/app/scripts/cloud_run_entrypoint.sh"]

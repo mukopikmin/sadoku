@@ -4,6 +4,16 @@ export type Document = {
   displayTitle?: string;
 };
 
+export type DocumentRevisionSummary = {
+  id: number;
+  recordedAt: string;
+};
+
+export type DocumentRevision = DocumentRevisionSummary & {
+  markdown: string;
+  previousMarkdown?: string;
+};
+
 export type DirectoryDocument = Document & {
   deleted: boolean;
   relativePath: string;

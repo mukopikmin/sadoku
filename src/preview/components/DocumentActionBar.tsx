@@ -8,7 +8,7 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { Brain, Eye, EyeOff, FileText, Tag } from "lucide-react";
+import { Brain, Eye, EyeOff, FileText, History, Tag } from "lucide-react";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
 import type { DocumentTag } from "../models/document";
 import { TagLabel } from "./ui/TagLabel";
@@ -20,6 +20,7 @@ type DocumentActionBarProps = {
   markdown?: string;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
+  onOpenRevisions: () => void;
   onToggleHtmlComments: () => void;
   showHtmlComments: boolean;
   tagCount: number;
@@ -34,6 +35,7 @@ export const DocumentActionBar = (
     markdown,
     onOpenInstructions,
     onOpenMemories,
+    onOpenRevisions,
     onOpenTags,
     onToggleHtmlComments,
     showHtmlComments,
@@ -149,6 +151,17 @@ export const DocumentActionBar = (
             </IconButton>
           </Tooltip>
           {markdown !== undefined && <TableOfContents markdown={markdown} />}
+          <Tooltip content="Revisions">
+            <IconButton
+              aria-label="Revisions"
+              onClick={onOpenRevisions}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <History aria-hidden="true" />
+            </IconButton>
+          </Tooltip>
         </ActionBar.Content>
       </ActionBar.Positioner>
     </Portal>

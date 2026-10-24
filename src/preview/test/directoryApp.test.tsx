@@ -1,6 +1,6 @@
 import { renderWithRouter as render } from "./routerTestUtils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor } from "./testUtils";
+import { cleanup, fireEvent, screen, waitFor, within } from "./testUtils";
 import { App } from "../App";
 import { clearScrollPositions } from "../hooks/useScrollPosition";
 
@@ -35,7 +35,7 @@ const installFetch = (
   vi.stubGlobal(
     "fetch",
     vi.fn(
-      (input: RequestInfo | URL) => {
+      (input: RequestInfo | URL, init?: RequestInit) => {
         const url = input instanceof Request
           ? new URL(input.url).pathname
           : new URL(String(input), globalThis.location.origin).pathname;
@@ -64,6 +64,23 @@ const installFetch = (
             },
           }));
         }
+        if (url === "/sadoku.preview.v1.PreviewService/ListDocumentRevisions") {
+          return Promise.resolve(Response.json({
+            revisions: [
+              { id: "2", recordedAt: "2026-10-22T01:00:00.000Z" },
+              { id: "1", recordedAt: "2026-10-22T00:00:00.000Z" },
+            ],
+          }));
+        }
+        if (url === "/sadoku.preview.v1.PreviewService/GetDocumentRevision") {
+          return new Request(input, init).json().then(({ revisionId }) =>
+            Response.json({
+              id: revisionId,
+              recordedAt: "2026-10-22T00:00:00.000Z",
+              markdown: "# Earlier document\n\n**Old content**",
+            })
+          );
+        }
         const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
         if (documentMatch) {
           const id = Number(documentMatch[1]);
@@ -79,6 +96,9 @@ const installFetch = (
             deleted: id === 2,
             fileUrl: `file:///tmp/${id}.md`,
             markdown: `# Document ${id}\n`,
+            previousMarkdown: id === 1
+              ? "# Earlier document\n\n**Old content**"
+              : undefined,
             title: `Document ${id}`,
           }));
         }
@@ -115,6 +135,30 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
+  it("opens revisions from the document view and switches the rendered content", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "alpha.md" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Revisions" }));
+    const dialog = within(
+      await screen.findByRole("dialog", { name: "Document revisions" }),
+    );
+    expect(dialog.getByRole("heading", { name: "Document 1" })).not.toBeNull();
+    fireEvent.click(dialog.getByRole("combobox", { name: "Revision" }));
+    fireEvent.click(await dialog.findByRole("option", { name: /1 earlier/ }));
+    expect(await dialog.findByRole("heading", { name: "Earlier document" })).not
+      .toBeNull();
+    expect(dialog.getByText("Old content").tagName).toBe("STRONG");
+    fireEvent.click(
+      dialog.getByRole("button", { name: "Close document revisions" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Document revisions" }))
+        .toBeNull()
+    );
+    expect(screen.getByRole("heading", { name: "Document 1" })).not.toBeNull();
+  });
   it("shows pull request metadata above the document tree", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
