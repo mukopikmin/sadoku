@@ -1,38 +1,37 @@
-# Cloud Run pull request previews
+# Cloud Run previews
 
 Pull requests authored by `dependabot[bot]` skip all preview jobs, including
 image builds, deployments, and tag cleanup, even when a person reruns the
 workflow.
 
+The `cloud_run_preview.yml` workflow deploys same-repository pull requests with
+a `pr-<number>` revision tag and every push to `main`, including merged pull
+requests, with a stable `main` revision tag. Main deployments build the pushed
+commit, including the merge result. Closing a pull request removes only its PR
+tag; the `main` tag remains available. Each PR and `main` have separate
+concurrency groups so their runs do not cancel each other.
+
+Both types of deployment use `--no-traffic` and publish their tagged preview URL
+in the workflow summary and the `cloud-run-preview` deployment environment.
+Existing service traffic is preserved.
+
 After a successful deployment and revision readiness check, the workflow posts
 its preview URL, deployed commit, and workflow run link in a pull request
-comment. Subsequent deployments update the same `github-actions[bot]` comment
-instead of adding new comments. Failed deployments do not post a comment or
-replace the last successful preview comment. Closed pull requests and
-deployments whose commit no longer matches the pull request head skip
-commenting.
+comment. Subsequent deployments update the same `github-actions[bot]` comment.
+Main deployments publish their URL in the deployment environment and workflow
+summary without posting a pull request comment.
 
 Preview links use the proxy's configured `PUBLIC_ORIGIN` and the route
-`/revisions/pr-<PR number>/`, including the trailing slash. For example,
-`https://preview.example.com/revisions/pr-42/`. The workflow reads this origin
-from the proxy Cloud Run service named by `CLOUD_RUN_PROXY_SERVICE`, in the same
-project as the backend and the region selected by `CLOUD_RUN_PROXY_REGION` (or
-`GCP_REGION` when unset). Set that service's `PUBLIC_ORIGIN` to the mapped
-custom domain accepted by the proxy. The comment, deployment environment URL,
-and workflow summary all use this public proxy URL. Backend `run.app` tag URLs
-are used only to verify routing through the Cloud Run API; the workflow does not
-send HTTP requests to the backend or infer the public domain from it. Missing or
-invalid proxy configuration fails the workflow without publishing a backend URL.
+`/revisions/<tag>/`, including the trailing slash. The workflow reads this
+origin from the proxy Cloud Run service named by `CLOUD_RUN_PROXY_SERVICE`, in
+the same project as the backend and the region selected by
+`CLOUD_RUN_PROXY_REGION` (or `GCP_REGION` when unset). The workflow uses the
+proxy URL for comments, deployment environment links, and its summary. It
+queries the backend Cloud Run API only to verify the tag and revision readiness.
 
-The deployment job grants `pull-requests: write` for the comment step and uses
-the built-in `GITHUB_TOKEN`; no additional secret is required. The step consumes
-the ready URL directly within that job, avoiding cross-job output suppression
-when the URL contains resource identifiers registered as secrets. It does not
-check out or execute pull request code.
-
-The preview image includes the pull request's repository contents under `/app`,
-subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the platform-neutral
-`scripts/preview_entrypoint.sh`. Docker `CMD` supplies
+The preview image includes the selected commit's repository contents under
+`/app`, subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the
+platform-neutral `scripts/preview_entrypoint.sh`. Docker `CMD` supplies
 `/bin/sh /app/scripts/cloud_run_entrypoint.sh` as the command to execute after
 preparation. The launcher has no dependency on Cloud Run; the ordinary Cloud Run
 entrypoint keeps its existing server arguments and does not prepare sample data.
@@ -90,7 +89,7 @@ values are hidden. The preview URL is still published as the deployment
 environment URL and may reveal resource identifiers; log masking is not access
 control for that endpoint.
 
-The workflow builds pull request code in a separate job that has no
+The workflow builds the selected commit in a separate job that has no
 `id-token: write` permission and no Google Cloud credentials. Only the saved
 image artifact crosses into the deployment job, and it is loaded before OIDC
 authentication. The deployment job does not check out or execute pull request
@@ -112,8 +111,14 @@ repository ID remains stable if the repository is renamed:
 ```text
 assertion.repository == 'OWNER/REPOSITORY' &&
 assertion.repository_id == 'REPOSITORY_ID' &&
-assertion.event_name == 'pull_request'
+(assertion.event_name == 'pull_request' ||
+ (assertion.event_name == 'push' && assertion.ref == 'refs/heads/main'))
 ```
+
+If the provider currently permits only `pull_request` events, update its
+attribute condition before the first main deployment. The GitHub Environment's
+deployment branch rules must also permit `main` in addition to pull request
+refs. Required reviewers, if configured, still need to approve each deployment.
 
 Apply the same repository restriction to the service account's
 `roles/iam.workloadIdentityUser` binding. Configure required reviewers on the
