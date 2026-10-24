@@ -100,7 +100,7 @@ export const CommentItem = ({
               </Box>
             )}
           {(comment.replies ?? []).length > 0 && (
-            <Stack gap="1" mt="1.5">
+            <Stack gap="3" mt="3">
               {(comment.replies ?? []).map((reply) => (
                 <ReplyItem
                   commentId={comment.id}

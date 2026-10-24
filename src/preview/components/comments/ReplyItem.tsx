@@ -72,9 +72,12 @@ export const ReplyItem = ({
     <Box
       aria-label="Reply"
       as="article"
+      borderColor="border.default"
+      borderLeftWidth="1px"
       className="comment-reply"
       minW="0"
       ml="6"
+      pl="2"
       pr="1"
       position="relative"
       py="1"
