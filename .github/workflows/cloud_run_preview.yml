@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: cloud-run-preview-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+  queue: max
 
 env:
   PREVIEW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -84,6 +85,10 @@ jobs:
     name: Deploy preview
     needs: build
     runs-on: ubuntu-latest
+    concurrency:
+      group: cloud-run-preview-service
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
       id-token: write
@@ -149,18 +154,20 @@ jobs:
           set -euo pipefail
           [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
           [[ "${PREVIEW_TAG}" =~ ^(main|pr-[1-9][0-9]*)$ ]]
+          [[ "${GITHUB_RUN_ID}" =~ ^[1-9][0-9]*$ ]]
+          [[ "${GITHUB_RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]]
           tag="${PREVIEW_TAG}"
-          revision="$(gcloud run deploy "${SERVICE}" \
+          suffix="p$(printf '%s' "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" | sha256sum | cut -c1-12)"
+          revision="${SERVICE}-${suffix}"
+          gcloud run deploy "${SERVICE}" \
             --project "${PROJECT_ID}" \
             --region "${REGION}" \
             --image "${IMAGE}" \
+            --revision-suffix "${suffix}" \
             --update-env-vars SADOKU_TRUST_FORWARDED_PREFIX=true \
             --tag "${tag}" \
             --no-traffic \
-            --quiet \
-            --format='value(status.latestCreatedRevisionName)')"
-          [[ "${revision}" == "${SERVICE}-"* ]]
-          [[ "${revision}" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]
+            --quiet >/dev/null
           echo "revision=${revision}" >> "${GITHUB_OUTPUT}"
 
       - name: Verify revision readiness and resolve preview URL
@@ -262,6 +269,10 @@ jobs:
     name: Remove preview tag
     if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    concurrency:
+      group: cloud-run-preview-service
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
       id-token: write
