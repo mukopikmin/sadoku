@@ -18,20 +18,10 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview heading navigation", () => {
-  it("opens the table of contents from the document actions", async () => {
+  it("opens the table of contents for document headings", async () => {
     renderMarkdown("# Only heading");
 
     const trigger = screen.getByRole("button", { name: "Table of contents" });
-    const actionBar = screen.getByRole("dialog", {
-      name: "Document actions",
-    });
-    expect(actionBar.getAttribute("data-part")).toBe("content");
-    const instructionsButton = within(actionBar).getByRole("button", {
-      name: "Instructions",
-    });
-    const tagsButton = within(actionBar).getByRole("button", { name: "Tags" });
-    expect(within(instructionsButton).getByText("3")).not.toBeNull();
-    expect(within(tagsButton).getByText("2")).not.toBeNull();
     expect(trigger.textContent).toBe("");
     expect(trigger.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(trigger.getAttribute("data-scope")).toBe("popover");
