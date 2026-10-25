@@ -56,3 +56,33 @@ Deno.test("document CLI includes public tag fields and preserves empty arrays", 
     "Document not found: 99",
   );
 });
+
+Deno.test("document CLI persists normalized titles and clears blank titles", async () => {
+  const writes: unknown[] = [];
+  const titledStore: DocumentStore = {
+    ...store,
+    setTitle: (id, title) => {
+      writes.push({ id, title });
+      return Promise.resolve();
+    },
+  };
+  assertEquals(
+    await addDocument("/tmp/a.md", titledStore, "  Preview guide  "),
+    {
+      id: 3,
+      filePath: "/tmp/a.md",
+      displayTitle: "Preview guide",
+    },
+  );
+  assertEquals(await addDocument("/tmp/a.md", titledStore, "  "), {
+    id: 3,
+    filePath: "/tmp/a.md",
+    displayTitle: undefined,
+  });
+  assertEquals(writes, [
+    { id: 3, title: "Preview guide" },
+    { id: 3, title: undefined },
+  ]);
+  await addDocument("/tmp/a.md", titledStore);
+  assertEquals(writes.length, 2);
+});

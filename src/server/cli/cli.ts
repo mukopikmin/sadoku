@@ -175,7 +175,7 @@ const executeCli = async (
       if (options.command === "document-add") {
         return printJson(
           io,
-          await addDocument(options.source!, stores.documents),
+          await addDocument(options.source!, stores.documents, options.title),
         );
       }
       if (

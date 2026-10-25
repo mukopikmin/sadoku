@@ -1,11 +1,11 @@
 import type { DocumentStore } from "./ports.ts";
-import type { DirectoryDocument } from "./types.ts";
+import type { Document } from "./types.ts";
 
-export const updateDocumentTitle = async (
-  document: DirectoryDocument,
+export const updateDocumentTitle = async <T extends Document>(
+  document: T,
   title: string,
   store: DocumentStore,
-): Promise<DirectoryDocument> => {
+): Promise<T> => {
   if (/[\r\n\u0000]/.test(title)) {
     throw { type: "invalid_document_title" } as const;
   }

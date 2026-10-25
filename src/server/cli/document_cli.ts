@@ -1,3 +1,4 @@
+import { updateDocumentTitle } from "../usecase/document/update_document_title.ts";
 import { createPreviewSource } from "../source.ts";
 import type {
   DocumentStore,
@@ -9,8 +10,19 @@ import {
   registerDocument,
 } from "../usecase/document/mod.ts";
 
-export const addDocument = (input: string, store: DocumentStore) =>
-  registerDocument(store, createPreviewSource(input).commentSource);
+export const addDocument = async (
+  input: string,
+  store: DocumentStore,
+  title?: string,
+) => {
+  const document = await registerDocument(
+    store,
+    createPreviewSource(input).commentSource,
+  );
+  return title === undefined
+    ? document
+    : updateDocumentTitle(document, title, store);
+};
 
 export const inspectDocument = (
   id: number,

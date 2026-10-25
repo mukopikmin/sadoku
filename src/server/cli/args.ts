@@ -58,6 +58,7 @@ export type CliOptions = {
   tagId?: number;
   tagIds?: number[];
   tagName?: string;
+  title?: string;
   help?: boolean;
   version?: boolean;
 };
@@ -71,7 +72,7 @@ export class CliUsageError extends Error {
 
 export const usage = `Usage:
   sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--trust-forwarded-prefix]
-  sadoku document add <file.md|url>
+  sadoku document add <file.md|url> [--title <text>]
   sadoku document inspect <document-id>
   sadoku document list
   sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
@@ -100,6 +101,7 @@ export const usage = `Usage:
 
 Options:
   --name            Tag name (tag add only).
+  --title           Display title (document add only).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
   --ensure-document Register --source when it is not in the database (comment add only).
@@ -160,6 +162,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
         "port",
         "source",
         "start-line",
+        "title",
       ],
       unknown: (arg) => {
         if (!arg.startsWith("-")) return true;
@@ -173,6 +176,17 @@ export const parseArgs = (argv: string[]): CliOptions => {
   }
 
   const words = flags._.map(String);
+  if (
+    flags.title !== undefined &&
+    !(words[0] === "document" && words[1] === "add")
+  ) {
+    throw new CliUsageError("--title is only accepted by document add.");
+  }
+  if (flags.title !== undefined && /[\r\n\u0000]/.test(String(flags.title))) {
+    throw new CliUsageError(
+      "--title must be a single line without null characters.",
+    );
+  }
   const maxDepth = flags["max-depth"] === undefined
     ? undefined
     : Number(flags["max-depth"]);
@@ -355,7 +369,12 @@ export const parseArgs = (argv: string[]): CliOptions => {
       return { ...base, command: "document-list" };
     }
     if (words[1] === "add" && words.length === 3) {
-      return { ...base, command: "document-add", source: words[2] };
+      return {
+        ...base,
+        command: "document-add",
+        source: words[2],
+        ...(flags.title !== undefined ? { title: String(flags.title) } : {}),
+      };
     }
     if (words[1] === "inspect" && words.length === 3) {
       return {
