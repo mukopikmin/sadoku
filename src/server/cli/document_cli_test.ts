@@ -1,4 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
+import { dirname, join } from "@std/path";
+import { getConfigFilePath } from "../config.ts";
+import { withTempCommentsDirectory } from "../test_helpers.ts";
 import type {
   DocumentStore,
   DocumentTagReader,
@@ -57,6 +60,58 @@ Deno.test("document CLI includes public tag fields and preserves empty arrays", 
   );
 });
 
+Deno.test("document creation respects configured extensions and reports registration failures", async () => {
+  await withTempCommentsDirectory(async () => {
+    const root = await Deno.makeTempDir();
+    try {
+      const configPath = getConfigFilePath()!;
+      await Deno.mkdir(dirname(configPath), { recursive: true });
+      await Deno.writeTextFile(
+        configPath,
+        'markdown_extensions = [".mdown"]\n',
+      );
+      const path = join(root, "notes.mdown");
+      assertEquals(await addDocument(path, store, { create: true }), {
+        filePath: path,
+        id: 3,
+      });
+      assertEquals(await Deno.readTextFile(path), "");
+      await assertRejects(
+        () => addDocument(join(root, "invalid.md"), store, { create: true }),
+        Error,
+        "configured Markdown file extension",
+      );
+      const failedPath = join(root, "saved.mdown");
+      await assertRejects(
+        () =>
+          addDocument(failedPath, {
+            ...store,
+            ensure: () => Promise.reject(new Error("Storage unavailable")),
+          }, { create: true, title: "Saved" }),
+        Error,
+        "Run document add without --create",
+      );
+      assertEquals(await Deno.readTextFile(failedPath), "");
+      await assertRejects(
+        () =>
+          addDocument(join(root, "bad-title.mdown"), store, {
+            create: true,
+            title: "Two\nlines",
+          }),
+        Error,
+        "single-line title",
+      );
+      assertEquals(
+        (await Array.fromAsync(Deno.readDir(root))).map(({ name }) => name)
+          .sort(),
+        ["notes.mdown", "saved.mdown"],
+      );
+    } finally {
+      await Deno.remove(root, { recursive: true });
+    }
+  });
+});
+
 Deno.test("document CLI persists normalized titles and clears blank titles", async () => {
   const writes: unknown[] = [];
   const titledStore: DocumentStore = {
@@ -67,14 +122,14 @@ Deno.test("document CLI persists normalized titles and clears blank titles", asy
     },
   };
   assertEquals(
-    await addDocument("/tmp/a.md", titledStore, "  Preview guide  "),
+    await addDocument("/tmp/a.md", titledStore, { title: "  Preview guide  " }),
     {
       id: 3,
       filePath: "/tmp/a.md",
       displayTitle: "Preview guide",
     },
   );
-  assertEquals(await addDocument("/tmp/a.md", titledStore, "  "), {
+  assertEquals(await addDocument("/tmp/a.md", titledStore, { title: "  " }), {
     id: 3,
     filePath: "/tmp/a.md",
     displayTitle: undefined,
