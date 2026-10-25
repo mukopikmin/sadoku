@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 
 import { type CliDependencies, type CliIo, runCli } from "./cli.ts";
 import { withTempCommentsDirectory } from "../test_helpers.ts";
+import { join } from "@std/path";
 
 const dependencies: CliDependencies = {
   startPreviewServer: () =>
@@ -26,6 +27,97 @@ const captureIo = (): {
     logs,
   };
 };
+
+Deno.test("document add creates and registers files only with --create", async () => {
+  await withTempCommentsDirectory(async () => {
+    const root = await Deno.makeTempDir();
+    try {
+      await Deno.mkdir(join(root, "docs"));
+      const source = join(root, "docs", "notes");
+      const output = captureIo();
+      assertEquals(
+        await runCli(
+          ["document", "add", source, "--create", "--title", "メモ"],
+          dependencies,
+          output.io,
+        ),
+        0,
+      );
+      assertEquals(output.errors, []);
+      assertEquals(await Deno.readTextFile(`${source}.md`), "");
+      const document = JSON.parse(output.logs[0]);
+      assertEquals(document.filePath, `${source}.md`);
+      assertEquals(document.displayTitle, "メモ");
+      const listed = captureIo();
+      assertEquals(
+        await runCli(["document", "list"], dependencies, listed.io),
+        0,
+      );
+      assertEquals(JSON.parse(listed.logs[0]), [{ ...document, tags: [] }]);
+
+      const duplicate = captureIo();
+      assertEquals(
+        await runCli(
+          ["document", "add", source, "--create", "--title", "Changed"],
+          dependencies,
+          duplicate.io,
+        ),
+        1,
+      );
+      assertStringIncludes(duplicate.errors[0], "already exists");
+      assertEquals(await Deno.readTextFile(`${source}.md`), "");
+      assertEquals(
+        await runCli(
+          ["document", "add", `${source}.md`],
+          dependencies,
+          captureIo().io,
+        ),
+        0,
+      );
+
+      const empty = join(root, "empty.markdown");
+      assertEquals(
+        await runCli(
+          ["document", "add", empty, "--create"],
+          dependencies,
+          captureIo().io,
+        ),
+        0,
+      );
+      assertEquals(await Deno.readTextFile(empty), "");
+
+      for (
+        const path of [
+          "https://example.com/notes.md",
+          join(root, "bad.txt"),
+          join(root, "missing", "notes.md"),
+        ]
+      ) {
+        const failure = captureIo();
+        assertEquals(
+          await runCli(
+            ["document", "add", path, "--create"],
+            dependencies,
+            failure.io,
+          ),
+          1,
+        );
+        assertEquals(failure.logs, []);
+      }
+      const finalList = captureIo();
+      await runCli(["document", "list"], dependencies, finalList.io);
+      assertEquals(JSON.parse(finalList.logs[0]).length, 2);
+      assertEquals(
+        (await Array.fromAsync(Deno.readDir(join(root, "docs")))).map((
+          { name },
+        ) => name),
+        ["notes.md"],
+      );
+    } finally {
+      await Deno.remove(root, { recursive: true });
+    }
+  });
+});
 
 const runJsonCommand = async (args: string[]) => {
   const output = captureIo();

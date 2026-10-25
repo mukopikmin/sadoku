@@ -135,30 +135,55 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
-  it("opens revisions from the document view and switches the rendered content", async () => {
-    vi.stubGlobal("EventSource", DirectoryEventSource);
-    installFetch();
-    render(<App />);
-    fireEvent.click(await screen.findByRole("treeitem", { name: "alpha.md" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Revisions" }));
-    const dialog = within(
-      await screen.findByRole("dialog", { name: "Document revisions" }),
-    );
-    expect(dialog.getByRole("heading", { name: "Document 1" })).not.toBeNull();
-    fireEvent.click(dialog.getByRole("combobox", { name: "Revision" }));
-    fireEvent.click(await dialog.findByRole("option", { name: /1 earlier/ }));
-    expect(await dialog.findByRole("heading", { name: "Earlier document" })).not
-      .toBeNull();
-    expect(dialog.getByText("Old content").tagName).toBe("STRONG");
-    fireEvent.click(
-      dialog.getByRole("button", { name: "Close document revisions" }),
-    );
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "Document revisions" }))
-        .toBeNull()
-    );
-    expect(screen.getByRole("heading", { name: "Document 1" })).not.toBeNull();
-  });
+  it.each(["preview", "comments"])(
+    "opens revisions from the %s view and switches the rendered content",
+    async (view) => {
+      vi.stubGlobal("EventSource", DirectoryEventSource);
+      installFetch();
+      render(<App />);
+      fireEvent.click(
+        await screen.findByRole("treeitem", { name: "alpha.md" }),
+      );
+      await screen.findByRole("heading", { name: "Document 1" });
+      if (view === "comments") {
+        fireEvent.click(
+          screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
+        );
+        await screen.findByRole("tabpanel", { name: "Unresolved" });
+      }
+      fireEvent.click(await screen.findByRole("button", { name: "Revisions" }));
+      const dialog = within(
+        await screen.findByRole("dialog", { name: "Document revisions" }),
+      );
+      expect(dialog.getByRole("heading", { name: "Document 1" })).not
+        .toBeNull();
+      fireEvent.click(dialog.getByRole("combobox", { name: "Revision" }));
+      fireEvent.click(await dialog.findByRole("option", { name: /1 earlier/ }));
+      expect(await dialog.findByRole("heading", { name: "Earlier document" }))
+        .not
+        .toBeNull();
+      expect(dialog.getByText("Old content").tagName).toBe("STRONG");
+      fireEvent.click(
+        dialog.getByRole("button", { name: "Close document revisions" }),
+      );
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", { name: "Document revisions" }))
+          .toBeNull()
+      );
+      const selectedView = view === "comments"
+        ? "Comments, 0 unresolved"
+        : "Preview";
+      expect(
+        screen.getByRole("tab", { name: selectedView }).getAttribute(
+          "aria-selected",
+        ),
+      )
+        .toBe("true");
+      expect(location.pathname).toBe(
+        view === "comments" ? "/documents/1/comments" : "/documents/1",
+      );
+    },
+  );
   it("shows pull request metadata above the document tree", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
@@ -226,13 +251,10 @@ describe("directory preview", () => {
     expect(screen.getByRole("img", { name: "Sadoku" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Open settings" })).not
       .toBeNull();
-    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(screen.queryByRole("tab", { name: "Preview" })).toBeNull();
     expect(
-      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
-    ).toHaveProperty("disabled", true);
+      screen.queryByRole("tab", { name: "Comments, 0 unresolved" }),
+    ).toBeNull();
     fireEvent.click(screen.getByRole("treeitem", { name: "alpha.md" }));
     expect(await screen.findByRole("heading", { name: "Document 1" })).not
       .toBeNull();
@@ -390,6 +412,16 @@ describe("directory preview", () => {
     expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
+    const actionBar = screen.getByRole("dialog", { name: "Document actions" });
+    expect(
+      within(actionBar).getByRole("tab", {
+        name: "Comments, 0 unresolved",
+      }).getAttribute("aria-selected"),
+    ).toBe("true");
+    fireEvent.click(within(actionBar).getByRole("tab", { name: "Preview" }));
+    expect(await screen.findByRole("heading", { name: "Document 2" }))
+      .not.toBeNull();
+    expect(location.pathname).toBe("/documents/2");
 
     unmount();
     history.replaceState(null, "", "/documents/999");
@@ -430,10 +462,7 @@ describe("directory preview", () => {
     fireEvent.click(documentButton);
     expect(await screen.findByText("Loading preview...")).not.toBeNull();
     expect(container.querySelector("header")).not.toBeNull();
-    expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(screen.queryByRole("tab", { name: "Preview" })).toBeNull();
 
     resolveDocument(Response.json({
       fileUrl: "file:///tmp/1.md",

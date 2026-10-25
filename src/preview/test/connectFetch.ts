@@ -53,6 +53,7 @@ const route = (
           markdownExtensions: body.markdownExtensions,
           maxDepth: body.maxDepth,
           maxFiles: body.maxFiles,
+          showHtmlComments: body.showHtmlComments,
           theme: body.theme,
         }),
         settings,

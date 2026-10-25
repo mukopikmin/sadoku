@@ -1,6 +1,6 @@
 ---
 name: sadoku-review
-description: Read unresolved Sadoku review comments through the sadoku CLI, apply requested changes to the referenced Markdown document, verify the result, and reply with a concise description of the changes while leaving comments open for user confirmation. Use when asked to review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
+description: Create and register Markdown files with the sadoku CLI, or read unresolved Sadoku review comments, apply requested changes, verify the result, and reply while leaving comments open for user confirmation. Use when asked to create a Markdown document with Sadoku or review, address, incorporate, or fix feedback attached to a Markdown file with Sadoku.
 ---
 
 # Sadoku Review
@@ -10,6 +10,37 @@ comment storage files directly.
 
 When communicating with the user, use the user's language for replies,
 questions, and the final report.
+
+## Creating and registering documents
+
+When the user requests a new Markdown file, create and register it together:
+
+```sh
+sadoku document add <markdown-path> --create --title "<document-title>"
+```
+
+The parent directory must already exist. The file starts empty; `--title` sets
+its display title in Sadoku. An extensionless filename defaults to `.md`, and
+the filename must use a configured Markdown extension. `--create` supports local
+files only, not URLs. Write the requested document content to the created file
+using the normal editing tools, then review the diff and run relevant
+documentation checks.
+
+If the file already exists, `--create` fails without overwriting or registering
+it. To register an existing document, omit `--create` and `--title`:
+
+```sh
+sadoku document add <markdown-path-or-url>
+```
+
+Do not overwrite an existing file to recover from a creation error. Read it and
+apply only edits authorized by the user. If creation succeeds but registration
+fails, register the saved file without `--create` instead of retrying creation.
+Both successful forms return JSON with the document `id` and canonical
+`filePath`; use them for subsequent Sadoku commands.
+
+For a creation-only request, report the created path and document ID. Follow the
+review workflow below when the user also requests review feedback work.
 
 ## Workflow
 

@@ -139,6 +139,7 @@ export const settingsMessage = (
   settings: PreviewSettings,
 ): MessageInitShape<typeof SettingsSchema> => ({
   theme: settings.theme,
+  showHtmlComments: settings.showHtmlComments,
   codeWrap: settings.codeWrap,
   fontScale: settings.fontScale,
   excludedDirectories: settings.excludedDirectories,

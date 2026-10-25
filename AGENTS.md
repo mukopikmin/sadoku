@@ -23,8 +23,18 @@ them when making changes.
   preview client's dependencies under `src/preview/`.
 - Keep `deno.lock`, the root `package-lock.json`, and
   `src/preview/package-lock.json` consistent with dependency changes.
-- Add or update focused tests for behavior changes. Do not rely only on a
-  successful build.
+- Add or update focused tests for application behavior changes. Do not rely only
+  on a successful build.
+- Keep test additions proportional to the change. Changes limited to preview
+  sample data or seed values do not need dedicated automated tests unless the
+  user explicitly requests them. Validate them with shell syntax checks and the
+  existing CLI instead of adding tests that mirror the sample values. Changes to
+  seed control flow or error handling may still need focused tests.
+- GitHub Actions workflow changes are an exception to the focused-test
+  requirement: do not add or expand automated tests for workflow configuration
+  or embedded workflow scripts unless the user explicitly requests them. Use
+  formatting, workflow linting, and existing required CI checks to validate
+  these changes.
 
 ## 2. Project Architecture
 

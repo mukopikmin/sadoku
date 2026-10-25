@@ -216,7 +216,7 @@ describe("App", () => {
       name: "Reload preview",
     });
     const previewNavigation = screen.getByRole("navigation", {
-      name: "Preview views",
+      name: "Application actions",
     });
     expect(
       within(previewNavigation).getByRole("button", {
@@ -363,7 +363,7 @@ describe("App", () => {
     expect(brandIcon.getAttribute("src")).toBe("/assets/icon-512.png");
     const fileLink = screen.getByRole("link", { name: "example.md" });
     expect(fileLink.getAttribute("href")).toBe("file:///tmp/example.md");
-    expect(screen.getByRole("navigation", { name: "Preview views" })).not
+    expect(screen.getByRole("navigation", { name: "Application actions" })).not
       .toBeNull();
 
     const header = screen.getByRole("banner");
@@ -375,7 +375,11 @@ describe("App", () => {
     expect(header.contains(main)).toBe(false);
     expect(within(main).getByRole("heading", { name: "Title" })).not.toBeNull();
 
-    const tabs = within(header).getByRole("tablist");
+    expect(within(header).queryByRole("tablist")).toBeNull();
+    const actionBar = screen.getByRole("dialog", { name: "Document actions" });
+    const tabs = within(actionBar).getByRole("tablist", {
+      name: "Preview views",
+    });
     const previewButton = within(tabs).getByRole("tab", { name: "Preview" });
     const commentsButton = within(tabs).getByRole("tab", {
       name: "Comments, 0 unresolved",
@@ -431,7 +435,10 @@ describe("App", () => {
         "aria-hidden",
       ),
     ).toBe("true");
-    const tableOfContentsButton = within(firstActionBar).getByRole("button", {
+    const documentHeader = screen.getByRole("region", {
+      name: "Document header",
+    });
+    const tableOfContentsButton = within(documentHeader).getByRole("button", {
       name: "Table of contents",
     });
     expect(
@@ -445,11 +452,26 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("tab", {
       name: "Comments, 0 unresolved",
     }));
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "Document actions" }))
-        .toBeNull()
-    );
+    await waitFor(() => {
+      const actionBar = screen.getByRole("dialog", {
+        name: "Document actions",
+      });
+      expect(
+        within(actionBar).getByRole("tab", {
+          name: "Comments, 0 unresolved",
+        }).getAttribute("aria-selected"),
+      ).toBe("true");
+      expect(within(actionBar).getByRole("button", { name: "Instructions" }))
+        .not.toBeNull();
+      expect(within(actionBar).getByRole("button", { name: "Revisions" }))
+        .not.toBeNull();
+      expect(screen.queryByRole("button", { name: "Table of contents" }))
+        .toBeNull();
+    });
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
+
+    expect(await screen.findByRole("button", { name: "Table of contents" }))
+      .not.toBeNull();
 
     fireEvent.click(
       await screen.findByRole("button", {
@@ -483,6 +505,74 @@ describe("App", () => {
         "/__sadoku/documents/2/instructions",
       ])
     );
+  });
+
+  it("saves HTML comment visibility globally and restores it after remounting", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    let savedSettings: Record<string, unknown> = {};
+    const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/__sadoku/settings") {
+        if (init?.method === "PUT") {
+          savedSettings = JSON.parse(String(init.body));
+        }
+        return Promise.resolve(Response.json(savedSettings));
+      }
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(Response.json([
+          { id: 1, relativePath: "first.md", title: "first.md" },
+          { id: 2, relativePath: "second.md", title: "second.md" },
+        ]));
+      }
+      if (/^\/__sadoku\/documents\/[12]$/.test(url)) {
+        return Promise.resolve(Response.json({
+          fileUrl: `file:///tmp/${url.endsWith("1") ? "first" : "second"}.md`,
+          markdown: "Before\n\n<!-- internal note -->\n\nAfter",
+          title: url.endsWith("1") ? "first.md" : "second.md",
+        }));
+      }
+      if (url.endsWith("/comments")) {
+        return Promise.resolve(
+          Response.json({ comments: [], filePath: "/tmp/test.md" }),
+        );
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    });
+    vi.stubGlobal("fetch", fetch);
+    const app = render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "first.md" }));
+    expect(await screen.findByText("HTML COMMENT")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /HTML comments/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const toggle = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show HTML comments",
+    });
+    expect(toggle.checked).toBe(true);
+    fireEvent.click(toggle);
+    await waitFor(() => expect(savedSettings.showHtmlComments).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull()
+    );
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    expect(screen.getByText("Before")).not.toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
+    fireEvent.click(await screen.findByRole("treeitem", { name: "second.md" }));
+    await screen.findByText("Before");
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    app.unmount();
+    render(<App />);
+    await screen.findByText("Before");
+    expect(screen.queryByText("HTML COMMENT")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const restored = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show HTML comments",
+    });
+    expect(restored.checked).toBe(false);
+    fireEvent.click(restored);
+    await waitFor(() => expect(savedSettings.showHtmlComments).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    expect(await screen.findByText("HTML COMMENT")).not.toBeNull();
   });
 
   it("opens settings and selects and saves light and dark preview themes", async () => {
@@ -537,7 +627,7 @@ describe("App", () => {
       name: "Open settings",
     });
     const previewNavigation = screen.getByRole("navigation", {
-      name: "Preview views",
+      name: "Application actions",
     });
     expect(
       within(previewNavigation).getByRole("button", {
@@ -589,6 +679,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 2,
           maxFiles: 20,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -629,6 +720,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 20,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -646,6 +738,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -670,6 +763,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHtmlComments: true,
         theme: "dark",
       }),
       headers: { "content-type": "application/json" },
@@ -691,6 +785,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHtmlComments: true,
         theme: "light",
       }),
       headers: { "content-type": "application/json" },
@@ -715,6 +810,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHtmlComments: true,
           theme: "light",
         }),
         headers: { "content-type": "application/json" },
@@ -856,6 +952,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 2,
         maxFiles: 20,
+        showHtmlComments: true,
         theme: "light",
       }),
       headers: { "content-type": "application/json" },

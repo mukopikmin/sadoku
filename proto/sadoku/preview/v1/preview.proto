@@ -147,6 +147,7 @@ message Settings {
   uint32 max_depth = 5;
   uint32 max_files = 6;
   repeated string markdown_extensions = 7;
+  optional bool show_html_comments = 8;
 }
 message UpdateSettingsRequest {
   string theme = 1;
@@ -156,6 +157,7 @@ message UpdateSettingsRequest {
   uint32 max_depth = 5;
   uint32 max_files = 6;
   repeated string markdown_extensions = 7;
+  optional bool show_html_comments = 8;
 }
 
 message GetGitHubAccountRequest {}
