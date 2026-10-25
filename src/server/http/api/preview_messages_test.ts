@@ -139,6 +139,14 @@ Deno.test("RPC mapping preserves optional falsy values and Proto3 scalar default
   const snapshot = create(GetDocumentResponseSchema, documentMessage(document));
   assertEquals(snapshot.fileUrl, "");
   assertEquals(snapshot.githubHeadSha, undefined);
+  assertEquals(snapshot.canRestore, false);
+  assertEquals(
+    create(
+      GetDocumentResponseSchema,
+      documentMessage(document, undefined, undefined, true),
+    ).canRestore,
+    true,
+  );
   assertEquals(
     create(GetDocumentResponseSchema, documentMessage(document, ""))
       .githubHeadSha,

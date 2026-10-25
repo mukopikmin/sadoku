@@ -111,3 +111,33 @@ Deno.test("document creation respects configured extensions and reports registra
     }
   });
 });
+
+Deno.test("document CLI persists normalized titles and clears blank titles", async () => {
+  const writes: unknown[] = [];
+  const titledStore: DocumentStore = {
+    ...store,
+    setTitle: (id, title) => {
+      writes.push({ id, title });
+      return Promise.resolve();
+    },
+  };
+  assertEquals(
+    await addDocument("/tmp/a.md", titledStore, { title: "  Preview guide  " }),
+    {
+      id: 3,
+      filePath: "/tmp/a.md",
+      displayTitle: "Preview guide",
+    },
+  );
+  assertEquals(await addDocument("/tmp/a.md", titledStore, { title: "  " }), {
+    id: 3,
+    filePath: "/tmp/a.md",
+    displayTitle: undefined,
+  });
+  assertEquals(writes, [
+    { id: 3, title: "Preview guide" },
+    { id: 3, title: undefined },
+  ]);
+  await addDocument("/tmp/a.md", titledStore);
+  assertEquals(writes.length, 2);
+});

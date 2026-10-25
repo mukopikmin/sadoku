@@ -191,7 +191,8 @@ const json = (method: string, body: unknown): RequestInit => ({
   if (
     method === "GetSession" || method === "GetStatistics" ||
     method === "CreateDocument" || method === "UpdateDocumentTitle" ||
-    method === "ListDocumentRevisions" || method === "GetDocumentRevision"
+    method === "ListDocumentRevisions" || method === "GetDocumentRevision" ||
+    method === "RestoreDocumentRevision"
   ) {
     return globalThis.fetch(input, init);
   }

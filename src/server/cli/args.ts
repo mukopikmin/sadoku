@@ -73,7 +73,7 @@ export class CliUsageError extends Error {
 
 export const usage = `Usage:
   sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--trust-forwarded-prefix]
-  sadoku document add <file.md|url> [--create [--title <text>]]
+  sadoku document add <file.md|url> [--create] [--title <text>]
   sadoku document inspect <document-id>
   sadoku document list
   sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
@@ -102,7 +102,7 @@ export const usage = `Usage:
 
 Options:
   --create          Create a new local Markdown file and register it (document add only).
-  --title           Display title for --create. The new file starts empty.
+  --title           Display title (document add only).
   --name            Tag name (tag add only).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
@@ -187,8 +187,10 @@ export const parseArgs = (argv: string[]): CliOptions => {
       "--create and --title are only accepted by document add.",
     );
   }
-  if (flags.title !== undefined && !flags.create) {
-    throw new CliUsageError("--title requires --create.");
+  if (flags.title !== undefined && /[\r\n\u0000]/.test(String(flags.title))) {
+    throw new CliUsageError(
+      "--title must be a single line without null characters.",
+    );
   }
   const maxDepth = flags["max-depth"] === undefined
     ? undefined

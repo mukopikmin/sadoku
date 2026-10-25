@@ -12,9 +12,13 @@ import {
 } from "@chakra-ui/react";
 import { useMemo } from "react";
 import { useDocumentRevisions } from "../hooks/useDocumentRevisions";
+import { useDocumentRestore } from "../hooks/useDocumentRestore";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { ReadOnlyMarkdownPreview } from "../pages/markdown/ReadOnlyMarkdownPreview";
 
 type Props = {
+  canRestore?: boolean;
+  deleted?: boolean;
   documentId: number;
   documentPath?: string;
   markdown: string;
@@ -27,10 +31,21 @@ type Props = {
 const RevisionContent = (
   props: Pick<
     Props,
-    "documentId" | "documentPath" | "markdown" | "showHtmlComments" | "theme"
+    | "documentId"
+    | "documentPath"
+    | "markdown"
+    | "showHtmlComments"
+    | "theme"
+    | "canRestore"
+    | "deleted"
+    | "onOpenChange"
   >,
 ) => {
   const revisions = useDocumentRevisions(props.documentId, props.markdown);
+  const restore = useDocumentRestore(
+    props.documentId,
+    () => props.onOpenChange(false),
+  );
   const savedRevisions = revisions.history.status === "ready"
     ? revisions.history.revisions
     : undefined;
@@ -53,6 +68,8 @@ const RevisionContent = (
     : undefined;
   const hasChanges = changes !== undefined &&
     (changes.current.size > 0 || changes.previous.size > 0);
+  const restoreId = revisions.selectedId ??
+    (props.deleted ? savedRevisions?.[0]?.id : undefined);
   return (
     <Stack gap="4">
       <Flex
@@ -61,6 +78,7 @@ const RevisionContent = (
         gap="4"
       >
         <Select.Root
+          disabled={restore.isPending}
           flex="1"
           minW="0"
           collection={collection}
@@ -135,6 +153,38 @@ const RevisionContent = (
           </Flex>
         )}
       </Flex>
+      {props.canRestore && restoreId !== undefined &&
+        revisions.content.status === "ready" && (
+        <Button
+          alignSelf="start"
+          disabled={restore.isPending}
+          onClick={() =>
+            restore.request(
+              restoreId,
+              props.deleted ? undefined : props.markdown,
+            )}
+        >
+          Restore this revision
+        </Button>
+      )}
+      <ConfirmDialog
+        title="Restore this revision?"
+        confirmLabel="Restore file"
+        open={restore.open}
+        isPending={restore.isPending}
+        onOpenChange={(open) => {
+          if (!open) restore.cancel();
+        }}
+        onConfirm={restore.confirm}
+      >
+        This replaces the local file with the selected revision. The current
+        contents will be kept in revision history.
+        {restore.error && (
+          <Text as="span" display="block" role="alert" color="fg.error">
+            {restore.error}
+          </Text>
+        )}
+      </ConfirmDialog>
       {revisions.history.status === "loading" && (
         <Text role="status">Loading saved revisions...</Text>
       )}
@@ -231,7 +281,11 @@ export const DocumentRevisionsDialog = (
             <Dialog.Title>Document revisions</Dialog.Title>
           </Dialog.Header>
           <Dialog.Body>
-            <RevisionContent key={props.documentId} {...props} />
+            <RevisionContent
+              key={props.documentId}
+              {...props}
+              onOpenChange={onOpenChange}
+            />
           </Dialog.Body>
           <Dialog.CloseTrigger asChild>
             <CloseButton aria-label="Close document revisions" size="sm" />

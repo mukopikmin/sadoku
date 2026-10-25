@@ -27,7 +27,7 @@ using the normal editing tools, then review the diff and run relevant
 documentation checks.
 
 If the file already exists, `--create` fails without overwriting or registering
-it. To register an existing document, omit `--create` and `--title`:
+it. To register an existing document, omit `--create`:
 
 ```sh
 sadoku document add <markdown-path-or-url>

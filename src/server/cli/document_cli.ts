@@ -1,6 +1,7 @@
 import { basename, dirname } from "@std/path";
 import { readConfig } from "../config/config.ts";
 import { createPreviewSource } from "../session/source.ts";
+import { updateDocumentTitle } from "../usecase/document/update_document_title.ts";
 import { createLocalDocumentCreator } from "../storage/document/create_local_document.ts";
 import { defaultMarkdownExtensions } from "../storage/document/list_markdown_files.ts";
 import {
@@ -23,7 +24,12 @@ export const addDocument = async (
   options: { create?: boolean; title?: string } = {},
 ) => {
   const source = createPreviewSource(input);
-  if (!options.create) return registerDocument(store, source.commentSource);
+  if (!options.create) {
+    const document = await registerDocument(store, source.commentSource);
+    return options.title === undefined
+      ? document
+      : updateDocumentTitle(document, options.title, store);
+  }
   if (
     source.isRemote || !input.trim() || /[\\/]$/.test(input) ||
     /^[.]{1,2}$/.test(basename(input))

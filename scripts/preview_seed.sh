@@ -11,7 +11,8 @@ cp -R "$fixture_dir/." "$documents/"
 
 for document in "$documents/"*.md "$documents/"*/*.md "$documents/"*/*/*.md; do
   [ -f "$document" ] || continue
-  sadoku document add "$document" >/dev/null
+  seed_title="$(awk '/^# / { sub(/^# /, ""); print; exit }' "$document")"
+  sadoku document add "$document" --title "$seed_title" >/dev/null
 done
 
 # Tag IDs start at 1 in the fresh preview database.
