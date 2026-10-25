@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/mukopikmin/sadoku/src/server/config"
@@ -27,9 +28,12 @@ type Session struct {
 	GitHub          *Pull
 	Repository      u.Repository
 	invalidations   map[chan struct{}]struct{}
+	exporting       atomic.Bool
 	directoryStatus *DirectoryStatus
 	ReadRemote      func(context.Context, string) (string, error)
 }
+
+func (s *Session) ExportInProgress() bool { return s.exporting.Load() }
 
 func Source(input string) (identity, fetch string, remote bool) {
 	parsed, err := url.Parse(input)

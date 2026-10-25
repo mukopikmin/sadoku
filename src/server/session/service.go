@@ -63,6 +63,12 @@ type Input struct {
 }
 
 func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, error) {
+	if operation == "ExportCommentToGitHub" {
+		if !s.exporting.CompareAndSwap(false, true) {
+			return nil, exportFailure("export_busy")
+		}
+		defer s.exporting.Store(false)
+	}
 	// These operations do not read or mutate session state. In particular, a
 	// slow statistics query or GitHub command must not serialize progress RPCs.
 	switch operation {
@@ -305,10 +311,22 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		return result, r.SaveComments(s.CommentDocumentID(id), updated)
 	case "ExportCommentToGitHub":
+		if s.GitHub == nil {
+			return nil, u.Fail("not_found", `{"error":{"code":"export_unavailable"}}`)
+		}
+		in.Body = strings.TrimSpace(in.Body)
 		if strings.TrimSpace(in.Body) == "" || in.StartLine < 1 || in.EndLine < in.StartLine || in.CreatedAt == "" || !regexp.MustCompile(`^[a-f0-9]{40,64}$`).MatchString(in.HeadSHA) {
 			return nil, u.Fail("invalid_argument", `{"error":{"code":"export_invalid_request"}}`)
 		}
-		return s.exportComment(ctx, doc, in)
+		result, err := s.exportComment(ctx, doc, in)
+		if err != nil {
+			var failure *u.Failure
+			if errors.As(err, &failure) && strings.HasPrefix(failure.Message, `{"error":{"code":"export_`) {
+				return nil, err
+			}
+			return nil, exportFailure("export_failed")
+		}
+		return result, nil
 	}
 	return nil, u.Fail("unimplemented", "Unknown operation.")
 }

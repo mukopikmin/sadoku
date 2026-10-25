@@ -169,6 +169,41 @@ func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 }
 func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/__sadoku/"), "/")
+	export := req.Method == "POST" && len(parts) == 5 && parts[0] == "documents" && parts[2] == "comments" && parts[4] == "github"
+	if len(parts) >= 2 && parts[0] == "documents" {
+		id, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil || !regexp.MustCompile(`^[1-9][0-9]*$`).MatchString(parts[1]) || u.PositiveID(id) != nil {
+			if export {
+				githubExportError(w, "export_document_not_found", 0)
+			} else {
+				respondError(w, u.Fail("not_found", "Document not found."))
+			}
+			return
+		}
+		if export {
+			if r.session.ExportInProgress() {
+				githubExportError(w, "export_busy", 0)
+				return
+			}
+			r.session.Mu.Lock()
+			_, findErr := r.session.Find(id)
+			available := r.session.GitHub != nil
+			r.session.Mu.Unlock()
+			if findErr != nil {
+				githubExportError(w, "export_document_not_found", 0)
+				return
+			}
+			if !available {
+				githubExportError(w, "export_unavailable", 404)
+				return
+			}
+			commentID, err := strconv.ParseInt(parts[3], 10, 64)
+			if err != nil || u.PositiveID(commentID) != nil {
+				githubExportError(w, "export_comment_not_found", 0)
+				return
+			}
+		}
+	}
 	operation := ""
 	input := session.Input{}
 	method := req.Method
@@ -323,20 +358,42 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if req.Body != nil && (method == "POST" || method == "PUT" || method == "PATCH") && operation != "SetCommentResolution" {
+		invalidBody := func(message string) {
+			if export {
+				githubExportError(w, "export_invalid_request", 0)
+			} else {
+				http.Error(w, message, 400)
+			}
+		}
 		if strings.Split(req.Header.Get("Content-Type"), ";")[0] != "application/json" {
-			http.Error(w, "Content-Type must be application/json.", 400)
+			if export {
+				githubExportError(w, "export_json_required", 0)
+			} else {
+				http.Error(w, "Content-Type must be application/json.", 400)
+			}
 			return
 		}
 		decoder := json.NewDecoder(http.MaxBytesReader(w, req.Body, 32<<20))
 		var fields map[string]json.RawMessage
 		if err := decoder.Decode(&fields); err != nil || fields == nil {
-			http.Error(w, "Request body must be valid JSON.", 400)
+			invalidBody("Request body must be valid JSON.")
 			return
 		}
 		var trailing any
 		if err := decoder.Decode(&trailing); err != io.EOF {
-			http.Error(w, "Request body must be valid JSON.", 400)
+			invalidBody("Request body must be valid JSON.")
 			return
+		}
+		if export {
+			var displayed any
+			if err := json.Unmarshal(fields["displayedMarkdown"], &displayed); err != nil {
+				invalidBody("")
+				return
+			}
+			if _, ok := displayed.(string); !ok {
+				invalidBody("")
+				return
+			}
 		}
 		if operation == "UpdateSettings" {
 			for key, value := range fields {
@@ -400,7 +457,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		}
 		b, _ := json.Marshal(fields)
 		if err := json.Unmarshal(b, &input); err != nil {
-			http.Error(w, "Request body must be valid JSON.", 400)
+			invalidBody("Request body must be valid JSON.")
 			return
 		}
 		// Route parameters always take precedence over JSON input.
@@ -432,14 +489,50 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 	}
 	result, err := r.session.Invoke(req.Context(), operation, input)
 	if err != nil {
-		respondError(w, err)
+		if export {
+			respondGitHubExportError(w, err)
+		} else {
+			respondError(w, err)
+		}
 		return
 	}
 	if operation == "ListDocuments" {
-		result = result.(map[string]any)["documents"]
+		documents := result.(map[string]any)["documents"].([]u.Document)
+		summaries := make([]documentSummary, 0, len(documents))
+		for _, document := range documents {
+			summaries = append(summaries, documentSummary{document.ID, document.RelativePath, document.Title, document.DisplayTitle, document.Deleted, publicDocumentTags(document.Tags)})
+		}
+		result = summaries
+	}
+	if operation == "GetDocument" {
+		document := result.(map[string]any)
+		document["tags"] = publicDocumentTags(document["tags"].([]u.Tag))
 	}
 	if operation == "ListTags" || operation == "ReplaceDocumentTags" {
 		result = result.(map[string]any)["tags"]
 	}
 	respond(w, status, result)
+}
+
+type documentTag struct {
+	ID              int64  `json:"id"`
+	Name            string `json:"name"`
+	BackgroundColor string `json:"backgroundColor"`
+}
+
+type documentSummary struct {
+	ID           int64         `json:"id"`
+	RelativePath string        `json:"relativePath"`
+	Title        string        `json:"title"`
+	DisplayTitle *string       `json:"displayTitle,omitempty"`
+	Deleted      bool          `json:"deleted"`
+	Tags         []documentTag `json:"tags"`
+}
+
+func publicDocumentTags(tags []u.Tag) []documentTag {
+	result := make([]documentTag, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, documentTag{tag.ID, tag.Name, tag.BackgroundColor})
+	}
+	return result
 }

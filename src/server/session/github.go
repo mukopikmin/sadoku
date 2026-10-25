@@ -88,6 +88,9 @@ func ghPages[T any](ctx context.Context, endpoint string) ([]T, error) {
 		if err := ghJSON(ctx, fmt.Sprintf("%s?per_page=100&page=%d", endpoint, page), nil, &values); err != nil {
 			return nil, err
 		}
+		if values == nil {
+			return nil, fmt.Errorf("GitHub returned an invalid list")
+		}
 		all = append(all, values...)
 		if len(values) < 100 {
 			return all, nil
@@ -175,8 +178,11 @@ func GitHubAccount(ctx context.Context) any {
 }
 func exportFailure(code string) error {
 	kind := "already_exists"
-	if code == "export_unavailable" || code == "export_comment_not_found" || code == "export_document_not_found" {
+	if code == "export_comment_not_found" || code == "export_document_not_found" {
 		kind = "not_found"
+	}
+	if code == "export_failed" {
+		kind = "internal"
 	}
 	return u.Fail(kind, `{"error":{"code":"`+code+`"}}`)
 }
@@ -234,7 +240,13 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 	if err != nil {
 		return nil, err
 	}
+	changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
 	comments = u.ResolveComments(comments, markdown)
+	if changed && len(comments.Comments) > 0 {
+		if err = s.Repository.SaveComments(s.CommentDocumentID(doc.ID), comments); err != nil {
+			return nil, err
+		}
+	}
 	var target *u.Comment
 	for i := range comments.Comments {
 		if comments.Comments[i].ID == int64(in.CommentID) {
@@ -263,6 +275,9 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 	if err = ghJSON(ctx, "user", nil, &user); err != nil {
 		return nil, err
 	}
+	if user.Login == "" {
+		return nil, fmt.Errorf("GitHub returned an invalid user")
+	}
 	reviews, err := ghPages[review](ctx, p.endpoint()+"/reviews")
 	if err != nil {
 		return nil, err
@@ -276,6 +291,9 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 			}
 			pending = rev
 		}
+	}
+	if pending != nil && (pending.NodeID == "" || pending.CommitID == "" || u.PositiveID(pending.ID) != nil) {
+		return nil, fmt.Errorf("GitHub returned an invalid pending review")
 	}
 	var existing *remoteComment
 	if pending != nil {
@@ -299,6 +317,9 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 		}
 		for _, c := range list {
 			if c.User.Login == user.Login && c.ReplyID == nil && strings.HasSuffix(c.Body, marker) && (pending == nil || c.ReviewID != pending.ID) {
+				if c.NodeID == "" {
+					return nil, fmt.Errorf("GitHub returned an invalid comment ID")
+				}
 				prefix := p.URL + "#discussion_r"
 				suffix := strings.TrimPrefix(c.HTMLURL, prefix)
 				if !strings.HasPrefix(c.HTMLURL, prefix) || !regexp.MustCompile(`^[0-9]+$`).MatchString(suffix) {
@@ -312,6 +333,9 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 		return nil, exportFailure("export_review_out_of_sync")
 	}
 	if existing != nil {
+		if existing.NodeID == "" {
+			return nil, fmt.Errorf("GitHub returned an invalid comment ID")
+		}
 		start := existing.Line
 		if existing.StartLine != nil {
 			start = *existing.StartLine
@@ -353,6 +377,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 	if err != nil {
 		return nil, err
 	}
+	latest = u.ResolveComments(latest, markdown)
 	found := false
 	for _, c := range latest.Comments {
 		if c.ID == target.ID && c.CreatedAt == target.CreatedAt && c.Body == in.Body && c.StartLine == in.StartLine && c.EndLine == in.EndLine && !c.Resolved && !c.Stale && c.Author.Type == "human" {
