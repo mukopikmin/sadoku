@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 
 import { type CliDependencies, type CliIo, runCli } from "./cli.ts";
-import { withTempCommentsDirectory } from "../test_helpers.ts";
+import { withTempCommentsDirectory } from "../testing/helpers.ts";
 import { join } from "@std/path";
 
 const dependencies: CliDependencies = {

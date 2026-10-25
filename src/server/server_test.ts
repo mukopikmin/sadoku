@@ -5,7 +5,7 @@ import {
   type StartedPreviewServer,
   startPreviewServer,
 } from "./server.ts";
-import { createTempMarkdown, removeTempMarkdown } from "./test_helpers.ts";
+import { createTempMarkdown, removeTempMarkdown } from "./testing/helpers.ts";
 
 const wait = (milliseconds: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));

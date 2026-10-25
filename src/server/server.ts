@@ -1,21 +1,21 @@
 import { formatLogMessage, logError, logInfo } from "../log.ts";
 import { createConfiguredStores } from "./storage/factory.ts";
-import { createPreviewSource, readMarkdownSource } from "./source.ts";
+import { createPreviewSource, readMarkdownSource } from "./session/source.ts";
 import {
   createLoadingDirectorySession,
   createPreviewSession,
   prepareDirectorySession,
-} from "./directory_session.ts";
-import { createDirectoryPreviewHandler } from "./directory_handler.ts";
-import { readConfig } from "./config.ts";
-import { initializeSnapshotQueue } from "./preview/snapshot_queue.ts";
-import type { RunGitHubCommand } from "./github_pull.ts";
+} from "./session/directory_session.ts";
+import { createDirectoryPreviewHandler } from "./http/router.ts";
+import { readConfig } from "./config/config.ts";
+import { initializeSnapshotQueue } from "./session/snapshot_queue.ts";
+import type { RunGitHubCommand } from "./github/pull.ts";
 import { runGitHubCommand } from "./cli/github_cli.ts";
 import {
   createGitHubPullInvalidationHub,
   githubPullPollIntervalMs,
   monitorGitHubPull,
-} from "./github_pull_monitor.ts";
+} from "./github/pull_monitor.ts";
 
 export type PreviewServerOptions = {
   trustForwardedPrefix?: boolean;

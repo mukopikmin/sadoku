@@ -1,4 +1,4 @@
-import type { RunGitHubCommand } from "../github_pull.ts";
+import type { RunGitHubCommand } from "../github/pull.ts";
 
 export const runGitHubCommand: RunGitHubCommand = async (args, signal) => {
   try {

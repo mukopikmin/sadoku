@@ -4,13 +4,13 @@ import { Code, ConnectError, createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb.ts";
 import { openAppDatabase } from "../../src/server/db/connection.ts";
-import { createDirectoryPreviewHandler } from "../../src/server/directory_handler.ts";
-import type { DirectorySessionState } from "../../src/server/directory_session.ts";
+import { createDirectoryPreviewHandler } from "../../src/server/http/router.ts";
+import type { DirectorySessionState } from "../../src/server/session/directory_session.ts";
 import type { DirectorySession } from "../../src/server/usecase/document/types.ts";
 import { createSqliteCommentsStore } from "../../src/server/storage/comment/sqlite_storage.ts";
 import { createSqliteDocumentStore } from "../../src/server/storage/document/sqlite_storage.ts";
 import { createSqliteMemoryStore } from "../../src/server/storage/memory/sqlite_storage.ts";
-import { serveHandlerInfo } from "../../src/server/test_helpers.ts";
+import { serveHandlerInfo } from "../../src/server/testing/helpers.ts";
 
 const createPreview = async () => {
   const root = await Deno.makeTempDir();

@@ -40,14 +40,14 @@ them when making changes.
 
 - Treat `src/server/` as the backend boundary shared by HTTP and command-line
   entry points. Organize backend code by adapter and application-layer role:
-  keep backend CLI adapters in `src/server/cli/`, HTTP/API adapters in
-  `src/server/` (or a feature-specific API directory), use cases in
+  keep backend CLI adapters in `src/server/cli/`, HTTP adapters in
+  `src/server/http/`, API adapters in `src/server/http/api/`, use cases in
   `src/server/usecase/`, and persistence implementations in the appropriate
   `src/server/` storage or feature directory.
 - Name feature-specific backend adapters by feature and adapter role. Use
   `<feature>_cli.ts` under `src/server/cli/` for command-line adapters and
-  `<feature>_api.ts` under `src/server/api/` for HTTP/API adapters; use the same
-  stem for their co-located `*_test.ts` files.
+  `<feature>_api.ts` under `src/server/http/api/` for HTTP/API adapters; use the
+  same stem for their co-located `*_test.ts` files.
 - Keep all command-line interfaces under `src/server/cli/`, including
   application-wide argument parsing, browser-launch behavior, update commands,
   and feature-specific CLI adapters. CLI adapters call the relevant use cases
@@ -56,9 +56,10 @@ them when making changes.
   handling to `src/server/app.ts`; do not place command dispatch or server-side
   orchestration in it. Use `src/server/app.ts` as the composition root that
   connects CLI adapters to server lifecycle implementations.
-- Keep HTTP routing and server lifecycle behavior in `src/server/`. HTTP
-  handlers must remain adapters: parse transport input, call use cases, map
-  use-case errors to HTTP responses, and avoid owning business rules.
+- Keep HTTP routing in `src/server/http/router.ts` and server lifecycle behavior
+  in `src/server/server.ts`. HTTP handlers must remain adapters: parse transport
+  input, call use cases, map use-case errors to HTTP responses, and avoid owning
+  business rules.
 - Keep backend business rules and orchestration in `src/server/usecase/`. Use
   cases must be functions and plain objects, depend on explicit ports, and
   remain independent of Deno, HTTP `Request`/`Response`, and CLI input/output.
@@ -72,10 +73,17 @@ them when making changes.
   Infrastructure implementations, database connections, notifications, and
   resource lifecycle/close behavior remain under `src/server/` and depend on
   those ports, not the reverse.
-- Keep preview document, asset, shell, and event-stream handling in
-  `src/server/preview/`.
-- Keep comment HTTP handling in `src/server/api/comment_api.ts`, comment CLI
-  adaptation in `src/server/cli/comment_cli.ts`, comment business rules in
+- Keep HTTP routing, asset and HTML delivery, event streams, shared response
+  helpers, and Connect protocol handling in `src/server/http/`. Keep API
+  handlers and their response conversion in `src/server/http/api/`.
+- Keep document source resolution, session preparation, snapshot initialization,
+  and session-bound document/comment dependencies in `src/server/session/`.
+- Keep GitHub integration in `src/server/github/`, persistent configuration in
+  `src/server/config/`, and shared server test helpers in `src/server/testing/`.
+  Keep application composition, server lifecycle, and public exports at the
+  `src/server/` root.
+- Keep comment HTTP handling in `src/server/http/api/comment_api.ts`, comment
+  CLI adaptation in `src/server/cli/comment_cli.ts`, comment business rules in
   `src/server/usecase/comment/`, and comment persistence implementations in
   `src/server/storage/comment/`.
 - Keep database connections and migrations in `src/server/db/`. Keep storage
@@ -106,12 +114,12 @@ them when making changes.
   conversion tests, and at least one behavioral client or integration test in
   the same change. Prefer backward-compatible additions over silently renaming
   or removing fields used by the preview client.
-- Build HTTP responses through the shared helpers in `src/server/responses.ts`;
-  do not duplicate common response construction in individual handlers. Serve
-  dynamic preview, comment, and settings data with `Cache-Control: no-store`
-  unless the resource has an explicit immutable caching policy. Use
-  `204 No Content` for successful delete operations that return no updated
-  resource.
+- Build HTTP responses through the shared helpers in
+  `src/server/http/responses.ts`; do not duplicate common response construction
+  in individual handlers. Serve dynamic preview, comment, and settings data with
+  `Cache-Control: no-store` unless the resource has an explicit immutable
+  caching policy. Use `204 No Content` for successful delete operations that
+  return no updated resource.
 - Map discriminated use-case errors explicitly at each adapter boundary. Keep
   HTTP status codes and response wording out of use cases.
 - For remote Markdown sources, preserve the complete URL only for fetching. Use

@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { dirname, join } from "@std/path";
-import { getConfigFilePath } from "../config.ts";
-import { withTempCommentsDirectory } from "../test_helpers.ts";
+import { getConfigFilePath } from "../config/config.ts";
+import { withTempCommentsDirectory } from "../testing/helpers.ts";
 import type {
   DocumentStore,
   DocumentTagReader,

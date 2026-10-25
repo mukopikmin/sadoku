@@ -1,0 +1,60 @@
+import { noStoreJson, noStoreNoContent, textResponse } from "../responses.ts";
+import type { TagStore } from "../../usecase/tag/ports.ts";
+import { replaceDocumentTags } from "../../usecase/tag/replace_document_tags.ts";
+import { updateTag } from "../../usecase/tag/update_tag.ts";
+import type { TagError } from "../../usecase/tag/types.ts";
+
+import { deleteTag } from "../../usecase/tag/delete_tag.ts";
+
+const errorResponse = (error: TagError) =>
+  textResponse(
+    error.message,
+    error.type === "invalid" ? 400 : error.type === "not_found" ? 404 : 409,
+  );
+const json = async (request: Request): Promise<unknown | Response> => {
+  try {
+    return await request.json();
+  } catch {
+    return textResponse("Request body must be valid JSON.", 400);
+  }
+};
+const isError = (value: unknown): value is TagError =>
+  !!value && typeof value === "object" && "type" in value;
+
+export const deleteTagResponse = async (id: number, store: TagStore) => {
+  const result = await deleteTag(store, id);
+  return result ? errorResponse(result) : noStoreNoContent();
+};
+
+export const listTags = async (store: TagStore) =>
+  noStoreJson(await store.list());
+export const patchTag = async (
+  request: Request,
+  id: number,
+  store: TagStore,
+) => {
+  const body = await json(request);
+  if (body instanceof Response) return body;
+  const values = body as { name?: unknown; backgroundColor?: unknown };
+  const result = await updateTag(
+    store,
+    id,
+    values.name,
+    values.backgroundColor,
+  );
+  return isError(result) ? errorResponse(result) : noStoreJson(result);
+};
+export const putDocumentTags = async (
+  request: Request,
+  documentId: number,
+  store: TagStore,
+) => {
+  const body = await json(request);
+  if (body instanceof Response) return body;
+  const result = await replaceDocumentTags(
+    store,
+    documentId,
+    (body as { tags?: unknown }).tags,
+  );
+  return isError(result) ? errorResponse(result) : noStoreJson(result);
+};

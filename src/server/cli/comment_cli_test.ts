@@ -21,7 +21,7 @@ import {
   createTempMarkdown,
   removeTempMarkdown,
   withTempCommentsDirectory,
-} from "../test_helpers.ts";
+} from "../testing/helpers.ts";
 
 const writeCommentsDocument = async (
   filePath: string,

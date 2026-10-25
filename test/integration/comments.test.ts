@@ -3,8 +3,8 @@ import { join } from "@std/path";
 
 import { createConfiguredCommentsStore } from "../../src/server/storage/comment/factory.ts";
 import { getCommentsFilePath } from "../../src/server/storage/comment/storage.ts";
-import { createTestPreviewHandler } from "../../src/server/test_helpers.ts";
-import { withTempCommentsDirectory } from "../../src/server/test_helpers.ts";
+import { createTestPreviewHandler } from "../../src/server/testing/helpers.ts";
+import { withTempCommentsDirectory } from "../../src/server/testing/helpers.ts";
 
 const withConfiguredCommentsDirectory = async (
   run: (commentsDirectory: string) => Promise<void>,

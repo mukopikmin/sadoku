@@ -3,9 +3,9 @@ import { join } from "@std/path";
 import { openAppDatabase } from "../../src/server/db/connection.ts";
 import { createSqliteDocumentStore } from "../../src/server/storage/document/sqlite_storage.ts";
 import { createSqliteCommentsStore } from "../../src/server/storage/comment/sqlite_storage.ts";
-import { createDirectoryPreviewHandler } from "../../src/server/directory_handler.ts";
-import { createPreviewSession } from "../../src/server/directory_session.ts";
-import { serveHandlerInfo } from "../../src/server/test_helpers.ts";
+import { createDirectoryPreviewHandler } from "../../src/server/http/router.ts";
+import { createPreviewSession } from "../../src/server/session/directory_session.ts";
+import { serveHandlerInfo } from "../../src/server/testing/helpers.ts";
 
 Deno.test("restore RPC writes a document-scoped revision and retains live contents in history", async () => {
   const root = await Deno.makeTempDir();

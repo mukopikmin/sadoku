@@ -1,7 +1,7 @@
 import { basename, dirname } from "@std/path";
-import { readConfig } from "../config.ts";
+import { readConfig } from "../config/config.ts";
+import { createPreviewSource } from "../session/source.ts";
 import { updateDocumentTitle } from "../usecase/document/update_document_title.ts";
-import { createPreviewSource } from "../source.ts";
 import { createLocalDocumentCreator } from "../storage/document/create_local_document.ts";
 import { defaultMarkdownExtensions } from "../storage/document/list_markdown_files.ts";
 import {
