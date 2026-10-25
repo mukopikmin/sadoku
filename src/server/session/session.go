@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -18,17 +17,18 @@ import (
 )
 
 type Session struct {
-	Mu            sync.Mutex
-	Root          string
-	Documents     []u.Document
-	Sources       map[int64]string
-	CommentIDs    map[int64]int64
-	CanCreate     bool
-	PullRequest   any
-	GitHub        *Pull
-	Repository    u.Repository
-	invalidations map[chan struct{}]struct{}
-	ReadRemote    func(context.Context, string) (string, error)
+	Mu              sync.Mutex
+	Root            string
+	Documents       []u.Document
+	Sources         map[int64]string
+	CommentIDs      map[int64]int64
+	CanCreate       bool
+	PullRequest     any
+	GitHub          *Pull
+	Repository      u.Repository
+	invalidations   map[chan struct{}]struct{}
+	directoryStatus *DirectoryStatus
+	ReadRemote      func(context.Context, string) (string, error)
 }
 
 func Source(input string) (identity, fetch string, remote bool) {
@@ -98,104 +98,11 @@ func New(ctx context.Context, input string, repo u.Repository, settings config.S
 	} else {
 		s.Root = source
 		s.CanCreate = true
-		var paths []string
-		err := scan(source, settings, 0, &paths)
-		if err != nil {
-			return nil, err
-		}
-		sort.Strings(paths)
-		for _, path := range paths {
-			d, err := repo.Ensure(path)
-			if err != nil {
-				return nil, err
-			}
-			rel, _ := filepath.Rel(source, path)
-			d.RelativePath = filepath.ToSlash(rel)
-			d.Title = filepath.Base(path)
-			d.Tags = []u.Tag{}
-			s.Documents = append(s.Documents, d)
-			s.Sources[d.ID] = path
-		}
-		stored, err := repo.Documents()
-		if err != nil {
-			return nil, err
-		}
-		for _, d := range stored {
-			if len(s.Documents) >= settings.MaxFiles {
-				break
-			}
-			if !filepath.IsAbs(d.FilePath) || !Within(s.Root, d.FilePath) {
-				continue
-			}
-			if _, err := os.Stat(d.FilePath); !os.IsNotExist(err) {
-				continue
-			}
-			d.Deleted = true
-			rel, _ := filepath.Rel(s.Root, d.FilePath)
-			d.RelativePath = filepath.ToSlash(rel)
-			d.Title = filepath.Base(d.FilePath)
-			s.Documents = append(s.Documents, d)
-			s.Sources[d.ID] = d.FilePath
-		}
-	}
-	sort.Slice(s.Documents, func(i, j int) bool { return s.Documents[i].RelativePath < s.Documents[j].RelativePath })
-	for _, d := range s.Documents {
-		if d.Deleted {
-			continue
-		}
-		markdown, err := s.Read(ctx, d.ID)
-		if err != nil {
-			return nil, err
-		}
-		if err = repo.InitializeSnapshot(d.ID, markdown); err != nil {
-			return nil, err
-		}
+		s.directoryStatus = &DirectoryStatus{State: "loading"}
 	}
 	return s, nil
 }
-func scan(root string, settings config.Settings, depth int, paths *[]string) error {
-	entries, err := os.ReadDir(root)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if len(*paths) >= settings.MaxFiles {
-			return nil
-		}
-		if entry.Type()&os.ModeSymlink != 0 {
-			continue
-		}
-		path := filepath.Join(root, entry.Name())
-		if entry.IsDir() {
-			excluded := false
-			for _, name := range settings.ExcludedDirectories {
-				if entry.Name() == name {
-					excluded = true
-				}
-			}
-			if !excluded && depth < settings.MaxDepth {
-				if err = scan(path, settings, depth+1, paths); err != nil {
-					return err
-				}
-			}
-			continue
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return err
-		}
-		if !info.Mode().IsRegular() {
-			continue
-		}
-		for _, extension := range settings.MarkdownExtensions {
-			if strings.EqualFold(filepath.Ext(entry.Name()), extension) {
-				*paths = append(*paths, path)
-				break
-			}
-		}
-	}
-	return nil
-}
+
 func Within(root, path string) bool {
 	rel, err := filepath.Rel(root, path)
 	return err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel)

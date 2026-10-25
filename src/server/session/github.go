@@ -159,14 +159,6 @@ func (s *Session) preparePull(ctx context.Context, p *Pull, settings config.Sett
 			s.CommentIDs = map[int64]int64{}
 		}
 		s.CommentIDs[doc.ID] = commentDoc.ID
-
-		markdown, err := s.Read(ctx, doc.ID)
-		if err != nil {
-			return err
-		}
-		if err = s.Repository.InitializeSnapshot(doc.ID, markdown); err != nil {
-			return err
-		}
 	}
 	return nil
 }

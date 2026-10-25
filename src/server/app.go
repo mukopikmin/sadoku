@@ -25,7 +25,6 @@ func Run(ctx context.Context, args []string, out io.Writer) error {
 }
 func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 	_, source, _ := session.Source(options.Source)
-	log := func(message string) { fmt.Fprintf(out, "[%s] %s\n", db.Now(), message) }
 	settings, _, err := config.Read()
 	if err != nil {
 		return err
@@ -54,6 +53,13 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 		}
 		return err
 	}
+	return startSession(ctx, options, out, s, settings)
+}
+
+func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, s *session.Session, settings config.Settings) error {
+	_, source, _ := session.Source(options.Source)
+	log := func(message string) { fmt.Fprintf(out, "[%s] %s\n", db.Now(), message) }
+
 	if !s.CanCreate {
 		for _, doc := range s.Documents {
 			path := doc.FilePath
@@ -69,12 +75,6 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	monitorDone := make(chan struct{})
-	go func() {
-		defer close(monitorDone)
-		s.Monitor(ctx, settings, func(err error) { fmt.Fprintf(out, "Failed to check GitHub updates: %s\n", err) })
-	}()
-	defer func() { cancel(); <-monitorDone }()
 	var mu sync.Mutex
 	streams := 0
 	var timer *time.Timer
@@ -127,6 +127,15 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 	log("Preview: " + previewURL)
 
 	server := &http.Server{Handler: handler, ReadHeaderTimeout: 10 * time.Second, BaseContext: func(net.Listener) context.Context { return ctx }}
+	var tasks sync.WaitGroup
+	tasks.Add(2)
+	go func() { defer tasks.Done(); s.Prepare(ctx, settings) }()
+	go func() {
+		defer tasks.Done()
+		s.Monitor(ctx, settings, func(err error) { fmt.Fprintf(out, "Failed to check GitHub updates: %s\n", err) })
+	}()
+	defer func() { cancel(); tasks.Wait() }()
+
 	if options.Open {
 		go func() {
 			if browserErr := cli.OpenBrowser(previewURL); browserErr != nil {
@@ -135,7 +144,9 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 		}()
 	}
 	done := make(chan struct{})
+	shutdownDone := make(chan struct{})
 	go func() {
+		defer close(shutdownDone)
 		select {
 		case <-ctx.Done():
 			shutdownCtx, stop := context.WithTimeout(context.Background(), 5*time.Second)
@@ -146,6 +157,8 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 	}()
 	err = server.Serve(listener)
 	close(done)
+	cancel()
+	<-shutdownDone
 	mu.Lock()
 	if timer != nil {
 		timer.Stop()

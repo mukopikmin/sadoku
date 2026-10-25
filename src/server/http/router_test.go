@@ -48,6 +48,7 @@ func setup(t *testing.T) (*session.Session, *httptest.Server, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	s.Prepare(context.Background(), config.Defaults())
 	handler, err := httpadapter.New(s, httpadapter.Options{TrustForwardedPrefix: true})
 	if err != nil {
 		t.Fatal(err)

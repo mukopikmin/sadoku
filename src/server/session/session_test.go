@@ -43,6 +43,7 @@ func TestDirectoryDiscoveryHonorsLimitsAndRetainsDeletedSnapshots(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	s.Prepare(context.Background(), settings)
 	if !s.CanCreate || len(s.Documents) != 3 {
 		t.Fatalf("discovered documents %+v", s.Documents)
 	}
@@ -58,6 +59,7 @@ func TestDirectoryDiscoveryHonorsLimitsAndRetainsDeletedSnapshots(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	s.Prepare(context.Background(), settings)
 	deleted := false
 	for _, d := range s.Documents {
 		if d.RelativePath == "a.md" {
@@ -73,7 +75,11 @@ func TestDirectoryDiscoveryHonorsLimitsAndRetainsDeletedSnapshots(t *testing.T) 
 	}
 	settings.MaxFiles = 1
 	s, err = New(context.Background(), docs, repo, settings)
-	if err != nil || len(s.Documents) != 1 {
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Prepare(context.Background(), settings)
+	if len(s.Documents) != 1 {
 		t.Fatalf("file limit %+v %v", s, err)
 	}
 }

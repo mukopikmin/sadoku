@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"unicode"
 	"unicode/utf8"
@@ -88,6 +89,9 @@ type Comments struct {
 // Repository is the persistence port shared by HTTP and command-line use cases.
 type Repository interface {
 	Ensure(string) (Document, error)
+	EnsureMany(context.Context, []string) ([]Document, error)
+	DocumentsContext(context.Context) ([]Document, error)
+	InitializeSnapshotContext(context.Context, int64, string) error
 	Documents() ([]Document, error)
 	SetTitle(int64, *string) error
 	Snapshot(int64) (*string, *string, error)

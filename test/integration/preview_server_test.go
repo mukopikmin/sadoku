@@ -76,7 +76,25 @@ func startServer(t *testing.T, source string, port int, keepAlive bool) (string,
 			t.Fatal(err)
 		}
 		parsed.Path = ""
-		return parsed.String(), stopped
+		base := parsed.String()
+		if info, err := os.Stat(source); err == nil && info.IsDir() {
+			client := previewv1connect.NewPreviewServiceClient(&http.Client{Timeout: 3 * time.Second}, base, connect.WithProtoJSON())
+			deadline := time.Now().Add(10 * time.Second)
+			for {
+				status, err := client.GetDirectoryStatus(context.Background(), connect.NewRequest(&pb.GetDirectoryStatusRequest{}))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if status.Msg.State == "ready" {
+					break
+				}
+				if status.Msg.State == "error" || time.Now().After(deadline) {
+					t.Fatalf("directory preparation: %+v", status.Msg)
+				}
+				time.Sleep(5 * time.Millisecond)
+			}
+		}
+		return base, stopped
 	case <-stopped:
 		t.Fatalf("server startup: %v", serveErr)
 	case <-time.After(10 * time.Second):
@@ -187,6 +205,11 @@ func TestDeletedDocumentRestoresItsSavedRevision(t *testing.T) {
 		t.Fatal(err)
 	}
 	id := documents.Msg.Documents[0].Id
+	// Displaying a live document initializes its archive even when the
+	// background snapshot queue has not reached it yet.
+	if _, err = client.GetDocument(ctx, connect.NewRequest(&pb.GetDocumentRequest{DocumentId: id})); err != nil {
+		t.Fatal(err)
+	}
 	history, err := client.ListDocumentRevisions(ctx, connect.NewRequest(&pb.ListDocumentRevisionsRequest{DocumentId: id}))
 	if err != nil || len(history.Msg.Revisions) != 1 {
 		t.Fatalf("history %v %v", history, err)

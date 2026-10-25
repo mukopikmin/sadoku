@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"os"
@@ -24,8 +25,35 @@ func (r *Repository) Ensure(path string) (u.Document, error) {
 	err = r.DB.QueryRow("SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle)
 	return d, err
 }
+func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.Document, error) {
+	tx, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	documents := []u.Document{}
+	now := db.Now()
+	for _, path := range paths {
+		if _, err = tx.ExecContext(ctx, "INSERT INTO comment_document(file_path,created_at,updated_at) VALUES(?,?,?) ON CONFLICT(file_path) DO NOTHING", path, now, now); err != nil {
+			return nil, err
+		}
+		var d u.Document
+		if err = tx.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle); err != nil {
+			return nil, err
+		}
+		documents = append(documents, d)
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return documents, nil
+}
+
 func (r *Repository) Documents() ([]u.Document, error) {
-	rows, err := r.DB.Query("SELECT id,file_path,title FROM comment_document ORDER BY id")
+	return r.DocumentsContext(context.Background())
+}
+func (r *Repository) DocumentsContext(ctx context.Context) ([]u.Document, error) {
+	rows, err := r.DB.QueryContext(ctx, "SELECT id,file_path,title FROM comment_document ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -99,21 +127,28 @@ func (r *Repository) RecordRevision(id int64, markdown string) error {
 	return tx.Commit()
 }
 func (r *Repository) InitializeSnapshot(id int64, markdown string) error {
-	tx, err := r.DB.Begin()
+	return r.InitializeSnapshotContext(context.Background(), id, markdown)
+}
+func (r *Repository) InitializeSnapshotContext(ctx context.Context, id int64, markdown string) error {
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 	var revID *int64
-	if err = tx.QueryRow("SELECT source_revision_id FROM comment_document WHERE id=?", id).Scan(&revID); err != nil {
+	if err = tx.QueryRowContext(ctx, "SELECT source_revision_id FROM comment_document WHERE id=?", id).Scan(&revID); err != nil {
 		return err
 	}
 	if revID == nil {
-		id2, err := record(tx, id, markdown)
+		result, err := tx.ExecContext(ctx, "INSERT INTO document_revision(document_id,markdown) VALUES(?,?)", id, markdown)
 		if err != nil {
 			return err
 		}
-		if _, err = tx.Exec("UPDATE comment_document SET source_revision_id=? WHERE id=?", id2, id); err != nil {
+		id2, err := result.LastInsertId()
+		if err != nil {
+			return err
+		}
+		if _, err = tx.ExecContext(ctx, "UPDATE comment_document SET source_revision_id=? WHERE id=?", id2, id); err != nil {
 			return err
 		}
 	}

@@ -2,6 +2,8 @@ package storage
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -168,5 +170,28 @@ func TestRevisionsAreScopedAndBoundedWithoutChangingHistory(t *testing.T) {
 	again, err := r.Revisions(one.ID)
 	if err != nil || len(again) != 20 || again[0].ID != revisions[0].ID {
 		t.Fatal("reads advanced history", err)
+	}
+}
+
+func TestDirectoryRegistrationIsAtomicAndCancellable(t *testing.T) {
+	r := testRepository(t)
+	if _, err := r.DB.Exec(`CREATE TRIGGER reject_registration BEFORE INSERT ON comment_document WHEN NEW.file_path='reject.md' BEGIN SELECT RAISE(ABORT,'rejected'); END`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.EnsureMany(context.Background(), []string{"first.md", "reject.md"}); err == nil {
+		t.Fatal("accepted failed batch")
+	}
+	documents, err := r.Documents()
+	if err != nil || len(documents) != 0 {
+		t.Fatalf("partial registration: %+v %v", documents, err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err = r.EnsureMany(ctx, []string{"cancelled.md"}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancelled registration: %v", err)
+	}
+	documents, err = r.EnsureMany(context.Background(), []string{"second.md", "first.md"})
+	if err != nil || len(documents) != 2 || documents[0].FilePath != "second.md" || documents[1].FilePath != "first.md" {
+		t.Fatalf("batch order: %+v %v", documents, err)
 	}
 }

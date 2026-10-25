@@ -73,7 +73,10 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	case "GetStatistics":
 		return r.Statistics()
 	case "GetDirectoryStatus":
-		return map[string]any{"state": "ready", "detected": len(s.Documents), "registered": len(s.Documents)}, nil
+		if s.directoryStatus == nil {
+			return nil, u.Fail("unimplemented", "Directory status is unavailable.")
+		}
+		return *s.directoryStatus, nil
 	case "GetSettings":
 		settings, _, err := config.Read()
 		return settings, err
@@ -171,6 +174,13 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		if err != nil {
 			return nil, err
+		}
+		if !doc.Deleted {
+			// A request may reach the document before the background queue does.
+			// Preserve the first successfully displayed content, as the old loader did.
+			if err = r.InitializeSnapshotContext(ctx, id, markdown); err != nil {
+				return nil, err
+			}
 		}
 		current, previous, err := r.Snapshot(s.CommentDocumentID(id))
 		if err != nil {
@@ -301,7 +311,7 @@ var invalidFilename = regexp.MustCompile(`[\\/\x00-\x1f<>:"|?*]`)
 var reservedFilename = regexp.MustCompile(`(?i)^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)`)
 
 func (s *Session) createDocument(in Input) (any, error) {
-	if !s.CanCreate {
+	if !s.CanCreate || (s.directoryStatus != nil && s.directoryStatus.State != "ready") {
 		return nil, u.Fail("failed_precondition", "File creation is unavailable in this preview.")
 	}
 	name, title := strings.TrimSpace(in.Filename), strings.TrimSpace(in.Title)
