@@ -1,4 +1,5 @@
 export type PreviewSettings = {
+  showHtmlComments: boolean;
   theme?: "dark" | "light";
   codeWrap?: "scroll" | "wrap";
   fontScale: number;

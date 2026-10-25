@@ -1,6 +1,45 @@
 import { assertEquals, assertMatch, assertThrows } from "@std/assert";
 import { CliUsageError, parseArgs, usage } from "./args.ts";
 
+Deno.test("parses document add file creation options", () => {
+  const options = parseArgs([
+    "document",
+    "add",
+    "notes",
+    "--create",
+    "--title",
+    "Notes",
+  ]);
+  assertEquals(options.command, "document-add");
+  assertEquals(options.source, "notes");
+  assertEquals(options.create, true);
+  assertEquals(options.title, "Notes");
+  assertEquals(
+    parseArgs(["document", "add", "notes", "--create"]).title,
+    undefined,
+  );
+  for (
+    const args of [
+      ["document", "add", "notes", "--title", "Notes"],
+      ["document", "list", "--create"],
+      ["document", "inspect", "1", "--create"],
+      ["start", "notes.md", "--create"],
+      ["update", "--create"],
+      [
+        "memory",
+        "add",
+        "--document",
+        "1",
+        "--content",
+        "Fact",
+        "--title",
+        "Notes",
+      ],
+      ["document", "add", "notes", "extra", "--create"],
+    ]
+  ) assertThrows(() => parseArgs(args), CliUsageError);
+});
+
 Deno.test("parses preview and document commands", () => {
   assertEquals(parseArgs(["start", "README.md", "--no-open"]), {
     asBot: false,

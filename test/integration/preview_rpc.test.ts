@@ -436,6 +436,7 @@ Deno.test("Connect settings preserve optional absence and validate Proto3 defaul
       initial.maxDepth,
       initial.maxFiles,
     ], [undefined, undefined, 1, 2, 20]);
+    assertEquals(initial.showHtmlComments, true);
     const failure = await assertRejects(
       () => client.updateSettings({}),
       ConnectError,
@@ -445,6 +446,7 @@ Deno.test("Connect settings preserve optional absence and validate Proto3 defaul
       theme: "dark",
       codeWrap: "wrap",
       fontScale: 1.25,
+      showHtmlComments: false,
       maxDepth: 0,
       maxFiles: 3,
       excludedDirectories: [],
@@ -459,13 +461,25 @@ Deno.test("Connect settings preserve optional absence and validate Proto3 defaul
       updated.excludedDirectories,
       updated.markdownExtensions,
     ], ["dark", "wrap", 1.25, 0, 3, [], [".md"]]);
+    assertEquals(updated.showHtmlComments, false);
     assertEquals(await client.getSettings({}), updated);
+    const preserved = await client.updateSettings({
+      theme: "dark",
+      codeWrap: "wrap",
+      fontScale: 1.25,
+      maxDepth: 0,
+      maxFiles: 3,
+      excludedDirectories: [],
+      markdownExtensions: [".md"],
+    });
+    assertEquals(preserved.showHtmlComments, false);
     const rest = await request("/__sadoku/settings");
     assertEquals(rest.headers.get("cache-control"), "no-store");
     assertEquals(await rest.json(), {
       theme: "dark",
       codeWrap: "wrap",
       fontScale: 1.25,
+      showHtmlComments: false,
       maxDepth: 0,
       maxFiles: 3,
       excludedDirectories: [],

@@ -8,8 +8,24 @@ The `cloud_run_preview.yml` workflow deploys same-repository pull requests with
 a `pr-<number>` revision tag and every push to `main`, including merged pull
 requests, with a stable `main` revision tag. Main deployments build the pushed
 commit, including the merge result. Closing a pull request removes only its PR
-tag; the `main` tag remains available. Each PR and `main` have separate
-concurrency groups so their runs do not cancel each other.
+tag; the `main` tag remains available. Runs for each PR and `main` queue in
+separate concurrency groups without canceling an in-progress run, so a new
+commit or PR closure cannot interrupt a Cloud Run update. Image builds for
+different PRs and `main` can run in parallel.
+
+Deployment and tag cleanup share the `cloud-run-preview-service` job concurrency
+group because both update the same backend Cloud Run service. They run one at a
+time, including across PRs and `main`. Both concurrency levels use `queue: max`
+to retain up to 100 pending runs or jobs per group instead of replacing a
+waiting deployment with a newer one. GitHub processes them in the order they
+start waiting, which can differ from event dispatch order.
+
+Each deployment supplies an explicit revision suffix derived from the GitHub run
+ID and attempt. The suffix is `p` plus 12 hexadecimal SHA-256 characters,
+keeping the full revision name within Cloud Run's 63-character limit even for a
+49-character service name. Readiness and tag checks use that exact revision name
+instead of the service-wide `latestCreatedRevisionName`, which another
+deployment could change. Reruns use a new suffix.
 
 Both types of deployment use `--no-traffic` and publish their tagged preview URL
 in the workflow summary and the `cloud-run-preview` deployment environment.

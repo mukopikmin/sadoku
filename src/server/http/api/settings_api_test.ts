@@ -59,6 +59,7 @@ Deno.test("GET reads preview settings", async () => {
       markdownExtensions: [".md", ".markdown"],
       maxDepth: 2,
       maxFiles: 20,
+      showHtmlComments: true,
       theme: "light",
     });
   });
@@ -82,6 +83,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
         markdownExtensions: [".md", ".mdx"],
         maxDepth: 4,
         maxFiles: 100,
+        showHtmlComments: false,
         theme: "dark",
       }),
     );
@@ -94,6 +96,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
       markdownExtensions: [".md", ".mdx"],
       maxDepth: 4,
       maxFiles: 100,
+      showHtmlComments: false,
       theme: "dark",
     });
     assertEquals(readConfig(), {
@@ -104,6 +107,7 @@ Deno.test("PUT updates preview settings without losing config", async () => {
       excludedDirectories: [".git", "vendor"],
       fontScale: 1.2,
       markdownExtensions: [".md", ".mdx"],
+      showHtmlComments: false,
       themeMode: "dark",
     });
   });
@@ -136,6 +140,8 @@ Deno.test("PUT rejects invalid JSON", async () => {
 Deno.test("PUT rejects invalid settings", async () => {
   await withSettings(async () => {
     const cases: [string, Record<string, unknown>][] = [
+      ["string comment visibility", { showHtmlComments: "false" }],
+      ["null comment visibility", { showHtmlComments: null }],
       ["unsupported theme", { theme: "sepia" }],
       ["unknown property", { extra: true }],
       ["negative depth", { maxDepth: -1 }],
@@ -166,5 +172,26 @@ Deno.test("PUT rejects invalid settings", async () => {
       }));
       assertEquals(response.status, 400, label);
     }
+  });
+});
+
+Deno.test("PUT preserves HTML comment visibility when older clients omit it", async () => {
+  await withSettings(async () => {
+    const settings = {
+      theme: "light",
+      codeWrap: "scroll",
+      maxDepth: 2,
+      maxFiles: 20,
+    };
+    const initial = await updateSettings(request(settings));
+    assertEquals((await initial.json()).showHtmlComments, true);
+    await updateSettings(request({ ...settings, showHtmlComments: false }));
+    const preserved = await updateSettings(request(settings));
+    assertEquals((await preserved.json()).showHtmlComments, false);
+    assertEquals((await getSettings().json()).showHtmlComments, false);
+    const shown = await updateSettings(
+      request({ ...settings, showHtmlComments: true }),
+    );
+    assertEquals((await shown.json()).showHtmlComments, true);
   });
 });

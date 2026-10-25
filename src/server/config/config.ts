@@ -28,6 +28,7 @@ export type SadokuConfig = {
   markdownExtensions?: string[];
   fontScale?: number;
   themeMode?: "dark" | "light";
+  showHtmlComments?: boolean;
 };
 
 const getEnv = (name: string): string | undefined => {
@@ -136,6 +137,13 @@ const parseConfig = (value: unknown): SadokuConfig | undefined => {
     config.markdownExtensions = value.markdown_extensions;
   }
 
+  if ("show_html_comments" in value) {
+    if (typeof value.show_html_comments !== "boolean") {
+      throw new Error("show_html_comments in Sadoku config must be a boolean.");
+    }
+    config.showHtmlComments = value.show_html_comments;
+  }
+
   if ("font_scale" in value) {
     if (!isValidFontScale(value.font_scale)) {
       throw new Error(
@@ -198,6 +206,7 @@ export const updatePreviewConfig = (
   fontScale = 1,
   excludedDirectories?: string[],
   markdownExtensions?: string[],
+  showHtmlComments?: boolean,
 ): Promise<void> =>
   updateConfig({
     code_wrap_mode: codeWrap,
@@ -214,6 +223,9 @@ export const updatePreviewConfig = (
     ...(markdownExtensions === undefined
       ? {}
       : { markdown_extensions: markdownExtensions }),
+    ...(showHtmlComments === undefined
+      ? {}
+      : { show_html_comments: showHtmlComments }),
     theme_mode: theme,
   });
 
