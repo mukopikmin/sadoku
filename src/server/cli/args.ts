@@ -102,7 +102,7 @@ export const usage = `Usage:
 
 Options:
   --create          Create a new local Markdown file and register it (document add only).
-  --title           Display title for --create. The new file starts empty.
+  --title           Display title (document add only).
   --name            Tag name (tag add only).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
