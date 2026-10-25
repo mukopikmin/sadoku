@@ -18,12 +18,13 @@
     },
     "notices": {
       "read": true,
+      "run": ["go"],
       "write": true
     },
     "compile": {
       "read": true,
       "write": true,
-      "run": ["deno"]
+      "run": ["go"]
     },
     "dist": {
       "read": true,
@@ -71,8 +72,8 @@
     ]
   },
   "tasks": {
-    "start": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=app src/main.ts start",
-    "run": "DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=app src/main.ts",
+    "start": "npm run build:client && go run ./cmd/sadoku start",
+    "run": "go run ./cmd/sadoku",
     "test": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno test -P",
     "notices": "DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=notices scripts/generate_third_party_notices.ts",
     "compile": "npm run build:client && DENO_NO_PACKAGE_JSON=1 deno run --quiet -P=compile scripts/compile.ts",

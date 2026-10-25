@@ -258,15 +258,28 @@ Japanese text uses bundled Noto Sans JP with no external font service. See the
 
 ## Development
 
-Use Deno 2.8 and Node.js 24 to run from source:
+The backend and CLI use Go 1.26. Node.js and Deno versions for the client and
+repository tooling are specified in `package.json`. Run from source:
 
 ```sh
 npm install
-deno task start README.md
+npm run start -- README.md
 ```
 
-Checks: `deno fmt --check`, `deno task check`, `npm test`, `deno task test`, and
-`npm run proto:check`. Build a binary with `deno task compile`.
+Checks: `go vet ./...`, `npm run test:server`, `deno fmt --check`,
+`deno task check`, `npm test`, and `deno task test`. Build a standalone Go
+binary with embedded client assets using
+`npm run build:client && npm run build:server`. The binary needs neither Go nor
+Deno installed. `deno task compile` remains a compatibility entry point for the
+release and installation scripts and also builds the Go binary.
+
+Install the pinned Go protobuf generators with `npm run proto:tools` before
+`npm run proto:check`; ensure `$(go env GOPATH)/bin` is on `PATH`. Go and
+TypeScript bindings share `proto/sadoku/preview/v1/preview.proto`.
+
+The TypeScript backend and its tests are retained as a compatibility reference
+during the migration. Application launchers, release archives, and the container
+run the Go backend. New backend behavior and tests belong in Go.
 
 See [contributor guidelines](AGENTS.md), [proxy setup](proxy/README.md), and the
 [release workflow guide](.agents/skills/sadoku-release/SKILL.md) for details.

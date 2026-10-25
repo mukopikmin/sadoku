@@ -36,7 +36,29 @@ them when making changes.
   formatting, workflow linting, and existing required CI checks to validate
   these changes.
 
-## 2. Project Architecture
+## 2. Production Go Backend
+
+- The production server and CLI are implemented in Go. `cmd/sadoku/main.go` is
+  the executable entry point and delegates to `src/server/app.go`.
+- Keep native code under the corresponding `src/server/` boundaries: `cli/`,
+  `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
+- Use Go's standard library for runtime facilities. Keep domain operations as
+  functions and plain data with explicit persistence ports.
+- Run `npm run build:client` before Go builds or tests; `src/preview/assets.go`
+  embeds the generated client. Never commit client build outputs.
+- Validate Go changes with `gofmt`, `go vet ./...`, and `npm run test:server`.
+  Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
+- Keep `go.mod` and `go.sum` consistent. Use `CGO_ENABLED=0` for release builds.
+- `src/server/db/migrations/legacy.json` preserves the exact original migration
+  statements and checksums; treat it as append-only. Never rewrite an applied
+  statement or checksum during migration to Go.
+- Generate Go and TypeScript RPC bindings together using
+  `npm run proto:generate`.
+- The following TypeScript architecture and Deno guidelines apply to the
+  retained compatibility reference and repository tools. Do not add production
+  backend behavior to the TypeScript reference implementation.
+
+## 2.1 TypeScript Compatibility Architecture
 
 - Treat `src/server/` as the backend boundary shared by HTTP and command-line
   entry points. Organize backend code by adapter and application-layer role:
@@ -129,7 +151,7 @@ them when making changes.
   identifiers. Reuse `createPreviewSource` instead of implementing source
   canonicalization independently.
 
-## 2.1 TypeScript Style
+## 2.2 TypeScript Style
 
 - Prefer plain objects, functions, and factory helpers over `class`
   declarations. Do not introduce classes unless there is a strong

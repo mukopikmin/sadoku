@@ -11,6 +11,9 @@ on:
       - package-lock.json
       - proto/**
       - gen/ts/**
+      - gen/go/**
+      - go.mod
+      - go.sum
   push:
     branches:
       - main
@@ -23,6 +26,9 @@ on:
       - package-lock.json
       - proto/**
       - gen/ts/**
+      - gen/go/**
+      - go.mod
+      - go.sum
 
 permissions:
   contents: read
@@ -54,6 +60,14 @@ jobs:
           check-latest: true
           cache: npm
           cache-dependency-path: package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install Go protobuf generators
+        run: npm run proto:tools
 
       - name: Install protobuf tools
         run: npm ci --ignore-scripts

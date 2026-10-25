@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test:
-    name: Deno
+    name: Server
     runs-on: ubuntu-latest
     env:
       DENO_DIR: /tmp/sadoku-deno-cache
@@ -30,6 +30,11 @@ jobs:
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: ${{ steps.engines.outputs.deno }}
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -52,6 +57,15 @@ jobs:
 
       - name: Test
         run: deno task test
+
+      - name: Check Go formatting
+        run: test -z "$(gofmt -l cmd src/server src/preview/assets.go gen/go)"
+
+      - name: Vet Go server
+        run: go vet ./...
+
+      - name: Test Go server
+        run: npm run test:server
 
       - name: Compile
         run: deno task compile --output /tmp/sadoku-ci

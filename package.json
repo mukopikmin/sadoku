@@ -10,10 +10,15 @@
     "build:client": "npm --prefix src/preview run build",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
     "postinstall": "npm ci --prefix src/preview",
-    "proto:check": "npm run proto:lint && npm run proto:generate && git add --intent-to-add -- gen/ts && git diff --exit-code -- gen/ts",
+    "proto:check": "npm run proto:lint && npm run proto:generate && git add --intent-to-add -- gen/ts gen/go && git diff --exit-code -- gen/ts gen/go",
     "proto:generate": "buf generate && deno fmt gen/ts",
     "proto:lint": "buf lint",
-    "test": "npm --prefix src/preview test"
+    "test": "npm --prefix src/preview test",
+    "start": "npm run build:client && go run ./cmd/sadoku start",
+    "run": "go run ./cmd/sadoku",
+    "test:server": "go test -race -count=1 -timeout=120s ./...",
+    "build:server": "go build -trimpath -o sadoku ./cmd/sadoku",
+    "proto:tools": "go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11 && go install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.20.0"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.16.0"

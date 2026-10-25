@@ -1,4 +1,9 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-run --allow-env=BROWSER,HOME,XDG_CONFIG_HOME,XDG_DATA_HOME,APPDATA,SADOKU_COMMENTS_DIR,MDVIEW_COMMENTS_DIR
-import { runApp } from "./server/app.ts";
-
-Deno.exitCode = await runApp(Deno.args);
+#!/usr/bin/env -S deno run --allow-run=go
+// Compatibility launcher. All application behavior runs in the Go backend.
+const result = await new Deno.Command("go", {
+  args: ["run", "./cmd/sadoku", ...Deno.args],
+  stdin: "inherit",
+  stdout: "inherit",
+  stderr: "inherit",
+}).output();
+Deno.exitCode = result.code;
