@@ -63,20 +63,12 @@ type Input struct {
 }
 
 func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, error) {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
-	r := s.Repository
-	id := int64(in.DocumentID)
+	// These operations do not read or mutate session state. In particular, a
+	// slow statistics query or GitHub command must not serialize progress RPCs.
 	switch operation {
-	case "GetSession":
-		return map[string]any{"canCreateDocuments": s.CanCreate, "pullRequest": s.PullRequest}, nil
 	case "GetStatistics":
-		return r.Statistics()
-	case "GetDirectoryStatus":
-		if s.directoryStatus == nil {
-			return nil, u.Fail("unimplemented", "Directory status is unavailable.")
-		}
-		return *s.directoryStatus, nil
+		return s.Repository.Statistics()
+
 	case "GetSettings":
 		settings, _, err := config.Read()
 		return settings, err
@@ -87,6 +79,20 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		return in.Settings, nil
 	case "GetGitHubAccount":
 		return GitHubAccount(ctx), nil
+	}
+
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	r := s.Repository
+	id := int64(in.DocumentID)
+	switch operation {
+	case "GetSession":
+		return map[string]any{"canCreateDocuments": s.CanCreate, "pullRequest": s.PullRequest}, nil
+	case "GetDirectoryStatus":
+		if s.directoryStatus == nil {
+			return nil, u.Fail("unimplemented", "Directory status is unavailable.")
+		}
+		return *s.directoryStatus, nil
 	case "ListDocuments":
 		docs := append([]u.Document{}, s.Documents...)
 		for i := range docs {

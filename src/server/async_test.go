@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -119,8 +120,16 @@ type gatedDirectoryRepository struct {
 	u.Repository
 	registrationStarted, register, listed, publish chan struct{}
 	fail                                           error
+	statisticsStarted, statisticsRelease           chan struct{}
 }
 
+func (r *gatedDirectoryRepository) Statistics() (any, error) {
+	if r.statisticsStarted != nil {
+		close(r.statisticsStarted)
+		<-r.statisticsRelease
+	}
+	return r.Repository.Statistics()
+}
 func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []string) ([]u.Document, error) {
 	close(r.registrationStarted)
 	select {
@@ -194,6 +203,23 @@ func TestDirectoryPreparationServesProgressReadyErrorsAndCancellation(t *testing
 				}
 				return result.Msg
 			}
+
+			statisticsDone := make(chan error, 1)
+			var releaseStatistics func()
+			if outcome == "ready" {
+				// Simulate a slow independent query while directory work is blocked.
+				// Progress RPCs must remain available even though this RPC has not returned.
+				repo.statisticsStarted = make(chan struct{})
+				repo.statisticsRelease = make(chan struct{})
+				var releaseOnce sync.Once
+				releaseStatistics = func() { releaseOnce.Do(func() { close(repo.statisticsRelease) }) }
+				t.Cleanup(releaseStatistics)
+				go func() {
+					_, err := client.GetStatistics(context.Background(), connect.NewRequest(&pb.GetStatisticsRequest{}))
+					statisticsDone <- err
+				}()
+				awaitSignal(t, repo.statisticsStarted)
+			}
 			loading := status()
 			if loading.State != "loading" || loading.Detected != 2 || loading.Registered != 0 {
 				t.Fatalf("initial progress: %+v", loading)
@@ -235,6 +261,11 @@ func TestDirectoryPreparationServesProgressReadyErrorsAndCancellation(t *testing
 				list, err = client.ListDocuments(context.Background(), connect.NewRequest(&pb.ListDocumentsRequest{}))
 				if err != nil || len(list.Msg.Documents) != 2 {
 					t.Fatalf("ready list: %v %v", list, err)
+				}
+
+				releaseStatistics()
+				if err := <-statisticsDone; err != nil {
+					t.Fatal(err)
 				}
 				stop()
 				awaitSignal(t, snapshotCancelled)
