@@ -26,6 +26,9 @@ type readyOutput struct{ ready chan string }
 
 func (output readyOutput) Write(data []byte) (int, error) {
 	for _, line := range strings.Split(string(data), "\n") {
+		if _, message, ok := strings.Cut(line, "] "); ok {
+			line = message
+		}
 		if strings.HasPrefix(line, "Preview: ") {
 			select {
 			case output.ready <- strings.TrimPrefix(line, "Preview: "):
@@ -63,7 +66,12 @@ func startServer(t *testing.T, source string, port int, keepAlive bool) (string,
 	})
 	select {
 	case previewURL := <-output.ready:
-		return previewURL, stopped
+		parsed, err := url.Parse(previewURL)
+		if err != nil {
+			t.Fatal(err)
+		}
+		parsed.Path = ""
+		return parsed.String(), stopped
 	case <-stopped:
 		t.Fatalf("server startup: %v", serveErr)
 	case <-time.After(10 * time.Second):

@@ -161,7 +161,7 @@ type CommentInput struct {
 }
 
 func ChangeComment(operation string, doc Comments, in CommentInput, markdown, now string) (Comments, any, error) {
-	body := strings.TrimSpace(in.Body)
+	body := TrimSpace(in.Body)
 	author := Author{Type: "human"}
 	if in.AsBot {
 		author.Type = "bot"
@@ -257,4 +257,12 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		result = struct{}{}
 	}
 	return doc, result, nil
+}
+
+// TrimSpace follows ECMAScript String.trim, including BOM and excluding NEL.
+// Persisted CLI bodies must match the text produced by the original runtime.
+func TrimSpace(value string) string {
+	return strings.TrimFunc(value, func(r rune) bool {
+		return r == '\uFEFF' || r == '\u0009' || r == '\u000B' || r == '\u000C' || r == '\u0020' || r == '\u00A0' || r == '\u1680' || (r >= '\u2000' && r <= '\u200A') || r == '\u202F' || r == '\u205F' || r == '\u3000' || r == '\n' || r == '\r' || r == '\u2028' || r == '\u2029'
+	})
 }

@@ -34,22 +34,22 @@ func download(ctx context.Context, url string) ([]byte, error) {
 	client := &http.Client{Timeout: 2 * time.Minute}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Could not download %s: %s", url, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("download failed: HTTP %d", resp.StatusCode)
+		return nil, fmt.Errorf("Could not download %s: HTTP %d.", url, resp.StatusCode)
 	}
 	return io.ReadAll(io.LimitReader(resp.Body, 256<<20))
 }
 func verifyArchive(archive, checksum []byte) error {
 	expected := strings.TrimSpace(string(checksum))
 	if !regexp.MustCompile(`^[0-9a-fA-F]{64}$`).MatchString(expected) {
-		return fmt.Errorf("release checksum is not a 64-digit hexadecimal SHA-256 value")
+		return fmt.Errorf("Release checksum is not a 64-digit hexadecimal SHA-256 value.")
 	}
 	actual := sha256.Sum256(archive)
 	if !strings.EqualFold(expected, hex.EncodeToString(actual[:])) {
-		return fmt.Errorf("release checksum does not match")
+		return fmt.Errorf("Release archive SHA-256 checksum mismatch; the existing binary was not changed.")
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func archiveBinary(archive []byte, root, binary string, isZip bool) ([]byte, err
 		}
 		for _, file := range reader.File {
 			if file.Name == root+"/"+binary && !file.Mode().IsRegular() {
-				return nil, fmt.Errorf("release binary is not a regular file")
+				return nil, fmt.Errorf("Release archive does not contain the expected single Sadoku binary.")
 			}
 			if file.Name == root+"/"+binary {
 				f, err := file.Open()
@@ -89,13 +89,13 @@ func archiveBinary(archive []byte, root, binary string, isZip bool) ([]byte, err
 			}
 			if strings.TrimPrefix(header.Name, "./") == root+"/"+binary {
 				if header.Typeflag != tar.TypeReg {
-					return nil, fmt.Errorf("release binary is not a regular file")
+					return nil, fmt.Errorf("Release archive does not contain the expected single Sadoku binary.")
 				}
 				return io.ReadAll(io.LimitReader(tr, 256<<20))
 			}
 		}
 	}
-	return nil, fmt.Errorf("release archive is missing the binary")
+	return nil, fmt.Errorf("Release archive does not contain the expected single Sadoku binary.")
 }
 func Update(ctx context.Context, channel string, out io.Writer) error {
 	if channel == "" {
@@ -105,7 +105,7 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 		}
 	}
 	if channel != "stable" && channel != "nightly" {
-		return fmt.Errorf("invalid update channel")
+		return usageError("Invalid update channel: %s.", channel)
 	}
 	target := ""
 	switch runtime.GOOS + "/" + runtime.GOARCH {
@@ -116,7 +116,7 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 	case "windows/amd64":
 		target = "windows-x64"
 	default:
-		return fmt.Errorf("self-update is unsupported on this platform")
+		return fmt.Errorf("Self-update is not supported on %s/%s.", runtime.GOOS, runtime.GOARCH)
 	}
 	api := "https://api.github.com/repos/mukopikmin/sadoku"
 	version, tag := "", ""
@@ -125,43 +125,53 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		var release struct {
-			Tag string `json:"tag_name"`
-		}
+		var release map[string]json.RawMessage
 		if err = json.Unmarshal(b, &release); err != nil {
-			return err
+			return fmt.Errorf("GitHub returned an invalid latest release response.")
 		}
-		if !regexp.MustCompile(`^v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$`).MatchString(release.Tag) {
-			return fmt.Errorf("invalid release tag")
+		tagValue := release["tag_name"]
+		if err = json.Unmarshal(tagValue, &tag); err != nil || !regexp.MustCompile(`^v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$`).MatchString(tag) {
+			value := "undefined"
+			if len(tagValue) > 0 {
+				value = string(tagValue)
+				var text string
+				if json.Unmarshal(tagValue, &text) == nil {
+					value = text
+				}
+			}
+			return fmt.Errorf("GitHub returned an invalid stable release tag: %s.", value)
 		}
-		tag = release.Tag
 		version = strings.TrimPrefix(tag, "v")
 	} else {
 		b, err := download(ctx, api+"/git/ref/tags/nightly")
 		if err != nil {
-			return err
+			return fmt.Errorf("GitHub returned invalid nightly tag metadata.")
 		}
 		var ref struct{ Object struct{ SHA string } }
 		if err = json.Unmarshal(b, &ref); err != nil {
-			return err
+			return fmt.Errorf("GitHub returned invalid nightly tag metadata.")
 		}
-		if !regexp.MustCompile(`^[0-9a-f]{40}$`).MatchString(ref.Object.SHA) {
-			return fmt.Errorf("invalid nightly commit")
+		if !regexp.MustCompile(`(?i)^[0-9a-f]{40}$`).MatchString(ref.Object.SHA) {
+			return fmt.Errorf("GitHub returned an invalid nightly commit hash.")
 		}
 		b, err = download(ctx, api+"/commits/"+ref.Object.SHA)
 		if err != nil {
-			return err
+			return fmt.Errorf("GitHub returned invalid nightly commit metadata.")
 		}
 		var commit struct {
-			Commit struct{ Committer struct{ Date time.Time } }
+			Commit struct{ Committer struct{ Date string } }
 		}
 		if err = json.Unmarshal(b, &commit); err != nil {
-			return err
+			return fmt.Errorf("GitHub returned invalid nightly commit metadata.")
 		}
-		if commit.Commit.Committer.Date.IsZero() {
-			return fmt.Errorf("invalid nightly commit date")
+		date, dateErr := time.Parse(time.RFC3339Nano, commit.Commit.Committer.Date)
+		if dateErr != nil {
+			date, dateErr = time.Parse("2006-01-02", commit.Commit.Committer.Date)
 		}
-		version = "nightly-" + commit.Commit.Committer.Date.UTC().Format("20060102") + "-" + ref.Object.SHA[:8]
+		if dateErr != nil {
+			return fmt.Errorf("GitHub returned an invalid nightly commit date.")
+		}
+		version = "nightly-" + date.UTC().Format("20060102") + "-" + ref.Object.SHA[:8]
 		tag = "nightly"
 	}
 	fmt.Fprintf(out, "Current version: %s\nUpdate channel: %s\nAvailable version: %s\n", Version, channel, version)
@@ -169,12 +179,7 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 		fmt.Fprintln(out, "No newer version available: "+version)
 		return nil
 	}
-	fmt.Fprintf(out, "Update Sadoku to %s? [y/N] ", version)
-	answer, err := bufio.NewReader(os.Stdin).ReadString('\n')
-	if err != nil && len(answer) == 0 {
-		return err
-	}
-	if a := strings.ToLower(strings.TrimSpace(answer)); a != "y" && a != "yes" {
+	if !confirmUpdate(os.Stdin, out, version, terminalInput(os.Stdin.Fd())) {
 		fmt.Fprintln(out, "Update cancelled.")
 		return nil
 	}
@@ -214,7 +219,7 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 	}
 	temporary, err := os.CreateTemp(filepath.Dir(executable), ".sadoku-update-*")
 	if err != nil {
-		return err
+		return fmt.Errorf("Sadoku installation directory is not writable: %s", err)
 	}
 	temporaryPath := temporary.Name()
 	if runtime.GOOS == "windows" {
@@ -238,8 +243,15 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 		return err
 	}
 	probe, err := exec.CommandContext(ctx, temporaryPath, "--version").Output()
-	if err != nil || strings.TrimSpace(string(probe)) != "sadoku "+version {
-		return fmt.Errorf("downloaded binary version does not match %s", version)
+	if err != nil {
+		return fmt.Errorf("Downloaded Sadoku binary could not report its version.")
+	}
+	match := regexp.MustCompile(`(?m)^sadoku (\S+)$`).FindStringSubmatch(string(probe))
+	if match == nil {
+		return fmt.Errorf("Downloaded archive does not contain a valid Sadoku binary.")
+	}
+	if match[1] != version {
+		return fmt.Errorf("Downloaded binary version %s does not match expected version %s.", match[1], version)
 	}
 	if runtime.GOOS == "windows" {
 		backup := executable + ".old"
@@ -285,4 +297,15 @@ func updateIsNewer(channel, current, target string) bool {
 		}
 	}
 	return strings.Contains(current, "-") && !strings.Contains(target, "-")
+}
+
+// Like the original confirm(), redirected stdin cancels without a prompt.
+func confirmUpdate(input io.Reader, out io.Writer, version string, terminal bool) bool {
+	if !terminal {
+		return false
+	}
+	fmt.Fprintf(out, "Update Sadoku to %s? [y/N] ", version)
+	answer, _ := bufio.NewReader(input).ReadString('\n')
+	a := strings.ToLower(strings.TrimSpace(answer))
+	return a == "y" || a == "yes"
 }

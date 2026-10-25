@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
@@ -55,12 +56,16 @@ func browserCommand(target, platform, custom string) (string, []string) {
 	case "darwin":
 		return "open", []string{target}
 	case "windows":
-		return "rundll32", []string{"url.dll,FileProtocolHandler", target}
+		return "cmd", []string{"/c", "start", "", target}
 	default:
 		return "xdg-open", []string{target}
 	}
 }
 func OpenBrowser(target string) error {
 	command, args := browserCommand(target, runtime.GOOS, os.Getenv("BROWSER"))
-	return exec.Command(command, args...).Run()
+	err := exec.Command(command, args...).Run()
+	if exit, ok := err.(*exec.ExitError); ok {
+		return fmt.Errorf("%s exited with %d.", command, exit.ExitCode())
+	}
+	return err
 }

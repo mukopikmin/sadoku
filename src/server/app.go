@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -22,6 +24,8 @@ func Run(ctx context.Context, args []string, out io.Writer) error {
 	return cli.Execute(ctx, args, out, func(ctx context.Context, options cli.StartOptions) error { return Start(ctx, options, out) })
 }
 func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
+	_, source, _ := session.Source(options.Source)
+	log := func(message string) { fmt.Fprintf(out, "[%s] %s\n", db.Now(), message) }
 	settings, _, err := config.Read()
 	if err != nil {
 		return err
@@ -45,7 +49,23 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 	repo := &storage.Repository{DB: database, Path: path}
 	s, err := session.New(ctx, options.Source, repo, settings)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("Markdown file or directory not found: %s", source)
+		}
 		return err
+	}
+	if !s.CanCreate {
+		for _, doc := range s.Documents {
+			path := doc.FilePath
+			if s.GitHub == nil {
+				path = source
+			}
+			suffix := ""
+			if doc.Deleted {
+				suffix = " (saved snapshot)"
+			}
+			log(fmt.Sprintf("Registered document: id=%d path=%s%s", doc.ID, path, suffix))
+		}
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -75,6 +95,7 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 				mu.Lock()
 				defer mu.Unlock()
 				if streams == 0 {
+					log("Stopping preview server after browser tab closed: " + source)
 					cancel()
 				}
 			})
@@ -97,14 +118,19 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 		return err
 	}
 	defer listener.Close()
-	previewURL := "http://" + listener.Addr().String()
-	fmt.Fprintf(out, "Serving %s\nPreview: %s\n", options.Source, previewURL)
+	pathname := "/"
+	if !s.CanCreate && s.GitHub == nil && len(s.Documents) > 0 {
+		pathname = fmt.Sprintf("/documents/%d", s.Documents[0].ID)
+	}
+	previewURL := "http://" + listener.Addr().String() + pathname
+	log("Serving " + source)
+	log("Preview: " + previewURL)
 
 	server := &http.Server{Handler: handler, ReadHeaderTimeout: 10 * time.Second, BaseContext: func(net.Listener) context.Context { return ctx }}
 	if options.Open {
 		go func() {
 			if browserErr := cli.OpenBrowser(previewURL); browserErr != nil {
-				fmt.Fprintf(out, "Could not open browser: %s\n", browserErr)
+				fmt.Fprintf(os.Stderr, "[%s] Failed to open browser automatically: %s\n", db.Now(), browserErr)
 			}
 		}()
 	}

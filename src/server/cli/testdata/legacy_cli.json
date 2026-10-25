@@ -1,0 +1,2037 @@
+[
+  {
+    "args": [
+      "--help"
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "--version"
+    ],
+    "stdout": "sadoku 0.0.0-dev\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "list"
+    ],
+    "stdout": "[]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "list"
+    ],
+    "stdout": "[]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/doc.md",
+      "--title",
+      "日本語 <&>"
+    ],
+    "stdout": "{\n  \"filePath\": \"$ROOT/doc.md\",\n  \"id\": 1,\n  \"displayTitle\": \"日本語 <&>\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "list"
+    ],
+    "stdout": "[\n  {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\",\n    \"tags\": []\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "inspect",
+      "1"
+    ],
+    "stdout": "{\n  \"filePath\": \"$ROOT/doc.md\",\n  \"id\": 1,\n  \"displayTitle\": \"日本語 <&>\",\n  \"tags\": []\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      "work"
+    ],
+    "stdout": "{\n  \"id\": 1,\n  \"name\": \"work\",\n  \"backgroundColor\": \"#718096\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      "other"
+    ],
+    "stdout": "{\n  \"id\": 2,\n  \"name\": \"other\",\n  \"backgroundColor\": \"#718096\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "list"
+    ],
+    "stdout": "[\n  {\n    \"id\": 2,\n    \"name\": \"other\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  },\n  {\n    \"id\": 1,\n    \"name\": \"work\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "add",
+      "1",
+      "2",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "[\n  {\n    \"id\": 2,\n    \"name\": \"other\",\n    \"backgroundColor\": \"#718096\"\n  },\n  {\n    \"id\": 1,\n    \"name\": \"work\",\n    \"backgroundColor\": \"#718096\"\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "inspect",
+      "1"
+    ],
+    "stdout": "{\n  \"filePath\": \"$ROOT/doc.md\",\n  \"id\": 1,\n  \"displayTitle\": \"日本語 <&>\",\n  \"tags\": [\n    {\n      \"backgroundColor\": \"#718096\",\n      \"id\": 2,\n      \"name\": \"other\"\n    },\n    {\n      \"backgroundColor\": \"#718096\",\n      \"id\": 1,\n      \"name\": \"work\"\n    }\n  ]\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "delete",
+      "2",
+      "--source",
+      "$ROOT/doc.md"
+    ],
+    "stdout": "[\n  {\n    \"id\": 1,\n    \"name\": \"work\",\n    \"backgroundColor\": \"#718096\"\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "list",
+      "--source",
+      "$ROOT/doc.md"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"instructions\": []\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"memories\": []\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "add",
+      "--document",
+      "1",
+      "--content",
+      "  context <&> \\u2028    日本語 😀  "
+    ],
+    "stdout": "{\n  \"content\": \"  context <&> \\\\u2028    日本語 😀  \",\n  \"createdAt\": \"$TIME\",\n  \"documentId\": 1,\n  \"id\": 1,\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "update",
+      "1",
+      "--document",
+      "1",
+      "--content",
+      "changed"
+    ],
+    "stdout": "{\n  \"content\": \"changed\",\n  \"createdAt\": \"$TIME\",\n  \"documentId\": 1,\n  \"id\": 1,\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"instructions\": [\n    {\n      \"content\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"documentId\": 1,\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    }\n  ]\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "update",
+      "99",
+      "--document",
+      "1",
+      "--content",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Instruction not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "instruction",
+      "add",
+      "--document",
+      "1",
+      "--content",
+      " "
+    ],
+    "stdout": "",
+    "stderr": "Instruction content must not be empty.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "instruction",
+      "delete",
+      "99",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Instruction not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "add",
+      "--document",
+      "1",
+      "--content",
+      "  context <&> \\u2028    日本語 😀  "
+    ],
+    "stdout": "{\n  \"content\": \"  context <&> \\\\u2028    日本語 😀  \",\n  \"createdAt\": \"$TIME\",\n  \"documentId\": 1,\n  \"id\": 1,\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "update",
+      "1",
+      "--document",
+      "1",
+      "--content",
+      "changed"
+    ],
+    "stdout": "{\n  \"content\": \"changed\",\n  \"createdAt\": \"$TIME\",\n  \"documentId\": 1,\n  \"id\": 1,\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"memories\": [\n    {\n      \"content\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"documentId\": 1,\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    }\n  ]\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "update",
+      "99",
+      "--document",
+      "1",
+      "--content",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Memory not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "add",
+      "--document",
+      "1",
+      "--content",
+      " "
+    ],
+    "stdout": "",
+    "stderr": "Memory content must not be empty.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "delete",
+      "99",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Memory not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--document",
+      "1",
+      "--start-line",
+      "2",
+      "--body",
+      "  review <&>  "
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"review <&>\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\",\n  \"id\": 1,\n  \"startLine\": 2,\n  \"endLine\": 2,\n  \"originalStartLine\": 2,\n  \"originalEndLine\": 2,\n  \"replies\": [],\n  \"resolved\": false,\n  \"stale\": false,\n  \"sourceText\": \"Body <&>\",\n  \"sourceHash\": \"1ce7a599\",\n  \"currentSourceText\": \"Body <&>\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--source",
+      "$ROOT/doc.md",
+      "--start-line",
+      "1",
+      "--end-line",
+      "2",
+      "--body",
+      "bot",
+      "--as-bot"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"bot\"\n  },\n  \"body\": \"bot\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\",\n  \"id\": 2,\n  \"startLine\": 1,\n  \"endLine\": 2,\n  \"originalStartLine\": 1,\n  \"originalEndLine\": 2,\n  \"replies\": [],\n  \"resolved\": false,\n  \"stale\": false,\n  \"sourceText\": \"# タイトル\\nBody <&>\",\n  \"sourceHash\": \"d6703f1e\",\n  \"currentSourceText\": \"# タイトル\\nBody <&>\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"review <&>\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 2\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 2,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"d6703f1e\",\n      \"sourceText\": \"# タイトル\\nBody <&>\",\n      \"stale\": false,\n      \"startLine\": 1,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 1\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "update",
+      "1",
+      "--document",
+      "1",
+      "--body",
+      "changed"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"changed\",\n  \"createdAt\": \"$TIME\",\n  \"endLine\": 2,\n  \"id\": 1,\n  \"originalEndLine\": 2,\n  \"originalStartLine\": 2,\n  \"replies\": [],\n  \"resolved\": false,\n  \"sourceHash\": \"1ce7a599\",\n  \"sourceText\": \"Body <&>\",\n  \"stale\": false,\n  \"startLine\": 2,\n  \"updatedAt\": \"$TIME\",\n  \"currentSourceText\": \"Body <&>\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "add",
+      "--document",
+      "1",
+      "--comment",
+      "1",
+      "--body",
+      "human"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"changed\",\n  \"createdAt\": \"$TIME\",\n  \"endLine\": 2,\n  \"id\": 1,\n  \"originalEndLine\": 2,\n  \"originalStartLine\": 2,\n  \"replies\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"human\",\n      \"createdAt\": \"$TIME\",\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"resolved\": false,\n  \"sourceHash\": \"1ce7a599\",\n  \"sourceText\": \"Body <&>\",\n  \"stale\": false,\n  \"startLine\": 2,\n  \"updatedAt\": \"$TIME\",\n  \"currentSourceText\": \"Body <&>\",\n  \"displayLine\": 2\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "add",
+      "--document",
+      "1",
+      "--comment",
+      "1",
+      "--body",
+      "bot",
+      "--as-bot",
+      "--request-review"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"changed\",\n  \"createdAt\": \"$TIME\",\n  \"endLine\": 2,\n  \"id\": 1,\n  \"originalEndLine\": 2,\n  \"originalStartLine\": 2,\n  \"replies\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"human\",\n      \"createdAt\": \"$TIME\",\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"id\": 2,\n      \"updatedAt\": \"$TIME\",\n      \"reviewRequested\": true\n    }\n  ],\n  \"resolved\": false,\n  \"sourceHash\": \"1ce7a599\",\n  \"sourceText\": \"Body <&>\",\n  \"stale\": false,\n  \"startLine\": 2,\n  \"updatedAt\": \"$TIME\",\n  \"currentSourceText\": \"Body <&>\",\n  \"displayLine\": 2\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "update",
+      "1",
+      "--document",
+      "1",
+      "--comment",
+      "1",
+      "--body",
+      "edited"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"changed\",\n  \"createdAt\": \"$TIME\",\n  \"endLine\": 2,\n  \"id\": 1,\n  \"originalEndLine\": 2,\n  \"originalStartLine\": 2,\n  \"replies\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"edited\",\n      \"createdAt\": \"$TIME\",\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"id\": 2,\n      \"reviewRequested\": true,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"resolved\": false,\n  \"sourceHash\": \"1ce7a599\",\n  \"sourceText\": \"Body <&>\",\n  \"stale\": false,\n  \"startLine\": 2,\n  \"updatedAt\": \"$TIME\",\n  \"currentSourceText\": \"Body <&>\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "update",
+      "2",
+      "--document",
+      "1",
+      "--comment",
+      "1",
+      "--body",
+      "edited bot"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"changed\",\n  \"createdAt\": \"$TIME\",\n  \"endLine\": 2,\n  \"id\": 1,\n  \"originalEndLine\": 2,\n  \"originalStartLine\": 2,\n  \"replies\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"edited\",\n      \"createdAt\": \"$TIME\",\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"edited bot\",\n      \"createdAt\": \"$TIME\",\n      \"id\": 2,\n      \"reviewRequested\": true,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"resolved\": false,\n  \"sourceHash\": \"1ce7a599\",\n  \"sourceText\": \"Body <&>\",\n  \"stale\": false,\n  \"startLine\": 2,\n  \"updatedAt\": \"$TIME\",\n  \"currentSourceText\": \"Body <&>\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 2\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 2,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"d6703f1e\",\n      \"sourceText\": \"# タイトル\\nBody <&>\",\n      \"stale\": false,\n      \"startLine\": 1,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 1\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "resolve",
+      "2",
+      "1",
+      "2",
+      "--document",
+      "1",
+      "--as-bot"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": true,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\",\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"bot\"\n      }\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 2,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": true,\n      \"sourceHash\": \"d6703f1e\",\n      \"sourceText\": \"# タイトル\\nBody <&>\",\n      \"stale\": false,\n      \"startLine\": 1,\n      \"updatedAt\": \"$TIME\",\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"bot\"\n      }\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\",\n  \"sourceSnapshot\": \"# タイトル\\nBody <&>\\n\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "resolve",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": true,\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"human\"\n      },\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\",\n  \"sourceSnapshot\": \"# タイトル\\nBody <&>\\n\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": true,\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"human\"\n      },\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 2\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 2,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": true,\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"bot\"\n      },\n      \"sourceHash\": \"d6703f1e\",\n      \"sourceText\": \"# タイトル\\nBody <&>\",\n      \"stale\": false,\n      \"startLine\": 1,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 1\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reopen",
+      "1",
+      "2",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\"\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 2,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"d6703f1e\",\n      \"sourceText\": \"# タイトル\\nBody <&>\",\n      \"stale\": false,\n      \"startLine\": 1,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\",\n  \"sourceSnapshot\": \"# タイトル\\nBody <&>\\n\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reopen",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 2,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\",\n  \"sourceSnapshot\": \"# タイトル\\nBody <&>\\n\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "resolve",
+      "99",
+      "100",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Comment not found: 99, 100\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "update",
+      "99",
+      "--document",
+      "1",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Comment not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "delete",
+      "99",
+      "--document",
+      "1",
+      "--comment",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Reply not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "add",
+      "--document",
+      "1",
+      "--comment",
+      "99",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Comment not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--document",
+      "1",
+      "--start-line",
+      "99",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Comment range does not exist.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--document",
+      "1",
+      "--start-line",
+      "1",
+      "--body",
+      " "
+    ],
+    "stdout": "",
+    "stderr": "Comment body is required.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "add",
+      "--document",
+      "1",
+      "--comment",
+      "1",
+      "--body",
+      " "
+    ],
+    "stdout": "",
+    "stderr": "Reply body is required.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "files": {
+      "doc.md": "# New\n# タイトル\nBody <&>\n"
+    },
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 3\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 2,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"d6703f1e\",\n      \"sourceText\": \"# タイトル\\nBody <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 2\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "resolve",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": true,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\",\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"human\"\n      }\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\",\n  \"previousSourceSnapshot\": \"# タイトル\\nBody <&>\\n\",\n  \"sourceSnapshot\": \"# New\\n# タイトル\\nBody <&>\\n\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reopen",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\",\n  \"previousSourceSnapshot\": \"# タイトル\\nBody <&>\\n\",\n  \"sourceSnapshot\": \"# New\\n# タイトル\\nBody <&>\\n\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"changed\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 2,\n      \"replies\": [\n        {\n          \"author\": {\n            \"type\": \"human\"\n          },\n          \"body\": \"edited\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 1,\n          \"updatedAt\": \"$TIME\"\n        },\n        {\n          \"author\": {\n            \"type\": \"bot\"\n          },\n          \"body\": \"edited bot\",\n          \"createdAt\": \"$TIME\",\n          \"id\": 2,\n          \"reviewRequested\": true,\n          \"updatedAt\": \"$TIME\"\n        }\n      ],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": false,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 3\n    },\n    {\n      \"author\": {\n        \"type\": \"bot\"\n      },\n      \"body\": \"bot\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 2,\n      \"originalEndLine\": 2,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"d6703f1e\",\n      \"sourceText\": \"# タイトル\\nBody <&>\",\n      \"stale\": false,\n      \"startLine\": 2,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 2\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "delete",
+      "1",
+      "--document",
+      "1",
+      "--comment",
+      "1"
+    ],
+    "stdout": "Deleted reply 1.\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "delete",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "Deleted comment 1.\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "delete",
+      "2",
+      "--document",
+      "1"
+    ],
+    "stdout": "Deleted comment 2.\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "delete",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "Deleted instruction 1.\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"instructions\": []\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "delete",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "Deleted memory 1.\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"memories\": []\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "delete",
+      "2",
+      "--document",
+      "1"
+    ],
+    "stdout": "[\n  {\n    \"id\": 1,\n    \"name\": \"work\",\n    \"backgroundColor\": \"#718096\"\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "delete",
+      "99",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Tag 99 not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "delete",
+      "1"
+    ],
+    "stdout": "Deleted tag 1.\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "delete",
+      "99"
+    ],
+    "stdout": "",
+    "stderr": "Tag 99 not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      "other"
+    ],
+    "stdout": "",
+    "stderr": "Tag name already exists.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      ""
+    ],
+    "stdout": "",
+    "stderr": "--name is only accepted by tag add.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      "x\ty"
+    ],
+    "stdout": "",
+    "stderr": "Tag name must not contain control characters.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "stdout": "",
+    "stderr": "Tag name must not exceed 50 characters.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/created.md",
+      "--create",
+      "--title",
+      "Created"
+    ],
+    "stdout": "{\n  \"filePath\": \"$ROOT/created.md\",\n  \"id\": 2,\n  \"displayTitle\": \"Created\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/created.md",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "A file or folder with this name already exists.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/bad.txt",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "Use a configured Markdown file extension.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "https://example.com/doc.md",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "--create requires a local Markdown filename.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/doc.md",
+      "--title",
+      ""
+    ],
+    "stdout": "",
+    "stderr": "Invalid document command.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "list"
+    ],
+    "stdout": "[\n  {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\",\n    \"tags\": []\n  },\n  {\n    \"filePath\": \"$ROOT/created.md\",\n    \"id\": 2,\n    \"displayTitle\": \"Created\",\n    \"tags\": []\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "list",
+      "--source",
+      "$ROOT/unknown.md"
+    ],
+    "stdout": "",
+    "stderr": "Document is not registered: $ROOT/unknown.md. Run `sadoku document add $ROOT/unknown.md` first.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "instruction",
+      "list",
+      "--document",
+      "99"
+    ],
+    "stdout": "",
+    "stderr": "Document not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "instruction",
+      "list"
+    ],
+    "stdout": "",
+    "stderr": "Specify exactly one of --document or --source.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "instruction",
+      "list",
+      "--source",
+      "x",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Specify exactly one of --document or --source.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--source",
+      "$ROOT/unknown.md"
+    ],
+    "stdout": "",
+    "stderr": "Document is not registered: $ROOT/unknown.md. Run `sadoku document add $ROOT/unknown.md` first.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--document",
+      "99"
+    ],
+    "stdout": "",
+    "stderr": "Document not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "list"
+    ],
+    "stdout": "",
+    "stderr": "Specify exactly one of --document or --source.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--source",
+      "x",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Specify exactly one of --document or --source.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--source",
+      "$ROOT/unknown.md"
+    ],
+    "stdout": "",
+    "stderr": "Document is not registered: $ROOT/unknown.md. Pass --ensure-document to register it.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "99"
+    ],
+    "stdout": "",
+    "stderr": "Document not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "list"
+    ],
+    "stdout": "",
+    "stderr": "Specify exactly one of --document or --source.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--source",
+      "x",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Specify exactly one of --document or --source.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [],
+    "stdout": "",
+    "stderr": "Missing Markdown file or directory.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "start"
+    ],
+    "stdout": "",
+    "stderr": "Missing Markdown file or directory.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "start",
+      "a",
+      "b"
+    ],
+    "stdout": "",
+    "stderr": "Only one preview source is accepted.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "unknown"
+    ],
+    "stdout": "",
+    "stderr": "Invalid command: unknown\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--unknown"
+    ],
+    "stdout": "",
+    "stderr": "Unknown option: --unknown\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag"
+    ],
+    "stdout": "",
+    "stderr": "Invalid tag command.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add"
+    ],
+    "stdout": "",
+    "stderr": "--name is required.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "list",
+      "--name",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "--name is only accepted by tag add.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "delete",
+      "bad"
+    ],
+    "stdout": "",
+    "stderr": "Tag ID must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "delete",
+      "9007199254740992"
+    ],
+    "stdout": "",
+    "stderr": "Tag ID must be a positive safe integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document"
+    ],
+    "stdout": "",
+    "stderr": "Invalid document command.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "inspect",
+      "0"
+    ],
+    "stdout": "",
+    "stderr": "Document ID must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "add"
+    ],
+    "stdout": "",
+    "stderr": "document tag add/delete requires at least one tag ID.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "add",
+      "bad",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Tag ID must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "add",
+      "9007199254740992",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Document and tag IDs must be positive safe integers.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "a",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "document commands do not accept comment or update options.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "a",
+      "--title",
+      "a\nb"
+    ],
+    "stdout": "",
+    "stderr": "--title must be a single line without null characters.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--port",
+      "0"
+    ],
+    "stdout": "",
+    "stderr": "Port must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--port",
+      "65536"
+    ],
+    "stdout": "",
+    "stderr": "Invalid port: 65536\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--max-depth",
+      "-1"
+    ],
+    "stdout": "",
+    "stderr": "Unknown option: -1\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--max-files",
+      "0"
+    ],
+    "stdout": "",
+    "stderr": "--max-files must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "update",
+      "a"
+    ],
+    "stdout": "",
+    "stderr": "update does not accept positional arguments.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "update",
+      "--channel",
+      "bad"
+    ],
+    "stdout": "",
+    "stderr": "Invalid update channel: bad.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "list",
+      "--channel",
+      "stable"
+    ],
+    "stdout": "",
+    "stderr": "tag commands do not accept document, comment, content, or update options.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "list",
+      "--port",
+      "3335"
+    ],
+    "stdout": "",
+    "stderr": "This command does not accept preview options.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "list",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "tag commands do not accept document, comment, content, or update options.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "add",
+      "--source",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "--content is required.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "instruction",
+      "delete",
+      "1",
+      "--source",
+      "x",
+      "--content",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "instruction delete does not accept --content.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "add",
+      "--source",
+      "x",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "--comment is required.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "add",
+      "--source",
+      "x",
+      "--comment",
+      "1",
+      "--body",
+      "x",
+      "--request-review"
+    ],
+    "stdout": "",
+    "stderr": "--request-review requires --as-bot.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--source",
+      "x",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "--start-line is required.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--source",
+      "x",
+      "--start-line",
+      "0",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Comment start line must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--source",
+      "x",
+      "--start-line",
+      "2",
+      "--end-line",
+      "1",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Comment end line must not precede the start line.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "resolve",
+      "--source",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "comment resolve requires at least one comment ID.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "update",
+      "--source",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "comment update requires one comment ID.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "reply",
+      "update",
+      "bad",
+      "--source",
+      "x",
+      "--comment",
+      "1",
+      "--body",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "Reply ID must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--source",
+      "x",
+      "--content",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "--content is only accepted by instruction commands.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "start",
+      "a",
+      "--as-bot"
+    ],
+    "stdout": "",
+    "stderr": "Preview commands do not accept document, comment, or update options.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--help",
+      "--unknown"
+    ],
+    "stdout": "",
+    "stderr": "Unknown option: --unknown\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "--help"
+    ],
+    "stdout": "",
+    "stderr": "Invalid tag command.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--help",
+      "--title",
+      "x"
+    ],
+    "stdout": "",
+    "stderr": "--create and --title are only accepted by document add.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--help",
+      "--port",
+      "0"
+    ],
+    "stdout": "",
+    "stderr": "Port must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name"
+    ],
+    "stdout": "",
+    "stderr": "Tag name must not be empty.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      "a",
+      "--name",
+      "b"
+    ],
+    "stdout": "{\n  \"id\": 3,\n  \"name\": \"b\",\n  \"backgroundColor\": \"#718096\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "--help=true"
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "--help=garbage"
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "-hv"
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "-p3334",
+      "--help"
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "--no-keep-alive",
+      "--help"
+    ],
+    "stdout": "",
+    "stderr": "Unknown option: --no-keep-alive\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--port",
+      "--help"
+    ],
+    "stdout": "",
+    "stderr": "Port must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--body",
+      "--help"
+    ],
+    "stdout": "",
+    "stderr": "Preview commands do not accept document, comment, or update options.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--title",
+      "--help"
+    ],
+    "stdout": "",
+    "stderr": "--create and --title are only accepted by document add.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--unknown",
+      "-z"
+    ],
+    "stdout": "",
+    "stderr": "Unknown option: --unknown\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--unknown",
+      "--max-depth",
+      "-1"
+    ],
+    "stdout": "",
+    "stderr": "Unknown option: --unknown\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--help=false"
+    ],
+    "stdout": "",
+    "stderr": "Missing Markdown file or directory.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--help",
+      "false"
+    ],
+    "stdout": "",
+    "stderr": "Missing Markdown file or directory.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--help="
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "-h=true"
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "-h=false"
+    ],
+    "stdout": "$HELP",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "-pv"
+    ],
+    "stdout": "",
+    "stderr": "Port must be a positive integer.\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "--",
+      "--help"
+    ],
+    "stdout": "",
+    "stderr": "Invalid command: --help\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "list",
+      "--port",
+      "3334"
+    ],
+    "stdout": "[\n  {\n    \"id\": 3,\n    \"name\": \"b\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  },\n  {\n    \"id\": 2,\n    \"name\": \"other\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "list",
+      "--host",
+      "127.0.0.1"
+    ],
+    "stdout": "[\n  {\n    \"id\": 3,\n    \"name\": \"b\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  },\n  {\n    \"id\": 2,\n    \"name\": \"other\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "list",
+      "--no-open=false"
+    ],
+    "stdout": "",
+    "stderr": "Unknown option: --no-open=false\n$HELP",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "delete",
+      "1e2"
+    ],
+    "stdout": "",
+    "stderr": "Tag 100 not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "inspect",
+      "9.9e1"
+    ],
+    "stdout": "",
+    "stderr": "Document not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "delete",
+      "0x63",
+      "--document",
+      "1"
+    ],
+    "stdout": "",
+    "stderr": "Memory not found.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--document",
+      "99.0"
+    ],
+    "stdout": "",
+    "stderr": "Document not found: 99\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "add",
+      "0x2",
+      "--document",
+      "1"
+    ],
+    "stdout": "[\n  {\n    \"id\": 2,\n    \"name\": \"other\",\n    \"backgroundColor\": \"#718096\"\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "tag",
+      "delete",
+      "2.0",
+      "--document",
+      "1"
+    ],
+    "stdout": "[]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1e0"
+    ],
+    "stdout": "{\n  \"comments\": [],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "add",
+      "--document",
+      "1",
+      "--content",
+      "  lines\r\n  here\r\n\n"
+    ],
+    "stdout": "{\n  \"content\": \"  lines\\n  here\",\n  \"createdAt\": \"$TIME\",\n  \"documentId\": 1,\n  \"id\": 1,\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "instruction",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"instructions\": [\n    {\n      \"content\": \"  lines\\n  here\",\n      \"createdAt\": \"$TIME\",\n      \"documentId\": 1,\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    }\n  ]\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "add",
+      "--document",
+      "1",
+      "--content",
+      "kept\rnewlines\n\n"
+    ],
+    "stdout": "{\n  \"content\": \"kept\\nnewlines\",\n  \"createdAt\": \"$TIME\",\n  \"documentId\": 1,\n  \"id\": 1,\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "memory",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"document\": {\n    \"filePath\": \"$ROOT/doc.md\",\n    \"id\": 1,\n    \"displayTitle\": \"日本語 <&>\"\n  },\n  \"memories\": [\n    {\n      \"content\": \"kept\\nnewlines\",\n      \"createdAt\": \"$TIME\",\n      \"documentId\": 1,\n      \"id\": 1,\n      \"updatedAt\": \"$TIME\"\n    }\n  ]\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/noextension",
+      "--create"
+    ],
+    "stdout": "{\n  \"filePath\": \"$ROOT/noextension.md\",\n  \"id\": 3\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/CON.md",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "Enter a valid filename, directory, and single-line title.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/name.",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "Enter a valid filename, directory, and single-line title.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/trailing/",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "--create requires a local Markdown filename.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      " ",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "--create requires a local Markdown filename.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "document",
+      "add",
+      "$ROOT/",
+      "--create"
+    ],
+    "stdout": "",
+    "stderr": "--create requires a local Markdown filename.\n",
+    "code": 1
+  },
+  {
+    "args": [
+      "tag",
+      "add",
+      "--name",
+      "﻿ BOM ﻿"
+    ],
+    "stdout": "{\n  \"id\": 4,\n  \"name\": \"BOM\",\n  \"backgroundColor\": \"#718096\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "tag",
+      "list"
+    ],
+    "stdout": "[\n  {\n    \"id\": 4,\n    \"name\": \"BOM\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  },\n  {\n    \"id\": 3,\n    \"name\": \"b\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  },\n  {\n    \"id\": 2,\n    \"name\": \"other\",\n    \"backgroundColor\": \"#718096\",\n    \"createdAt\": \"$TIME\",\n    \"updatedAt\": \"$TIME\",\n    \"documentCount\": 0\n  }\n]\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--document",
+      "1",
+      "--start-line",
+      "3",
+      "--body",
+      "deleted line"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"deleted line\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\",\n  \"id\": 1,\n  \"startLine\": 3,\n  \"endLine\": 3,\n  \"originalStartLine\": 3,\n  \"originalEndLine\": 3,\n  \"replies\": [],\n  \"resolved\": false,\n  \"stale\": false,\n  \"sourceText\": \"Body <&>\",\n  \"sourceHash\": \"1ce7a599\",\n  \"currentSourceText\": \"Body <&>\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "files": {
+      "doc.md": "# New\n# タイトル\n"
+    },
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"deleted line\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 3,\n      \"originalStartLine\": 3,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"stale\": true,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 3,\n      \"sourceDeleted\": true\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"deleted line\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 3,\n      \"originalStartLine\": 3,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"sourceDeleted\": true,\n      \"stale\": true,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 3\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "files": {
+      "doc.md": "# Changed\n"
+    },
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"deleted line\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 3,\n      \"originalStartLine\": 3,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"sourceDeleted\": true,\n      \"stale\": true,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\"\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "update",
+      "1",
+      "--document",
+      "1",
+      "--body",
+      "stale"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"stale\",\n  \"createdAt\": \"$TIME\",\n  \"endLine\": 3,\n  \"id\": 1,\n  \"originalEndLine\": 3,\n  \"originalStartLine\": 3,\n  \"replies\": [],\n  \"resolved\": false,\n  \"sourceHash\": \"1ce7a599\",\n  \"sourceText\": \"Body <&>\",\n  \"sourceDeleted\": true,\n  \"stale\": true,\n  \"startLine\": 3,\n  \"updatedAt\": \"$TIME\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "resolve",
+      "1",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"stale\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 3,\n      \"originalStartLine\": 3,\n      \"replies\": [],\n      \"resolved\": true,\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"sourceDeleted\": true,\n      \"stale\": true,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\",\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"human\"\n      }\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\",\n  \"previousSourceSnapshot\": \"# New\\n# タイトル\\n\",\n  \"sourceSnapshot\": \"# Changed\\n\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "add",
+      "--document",
+      "1",
+      "--start-line",
+      "1",
+      "--body",
+      "﻿ BOM body ﻿"
+    ],
+    "stdout": "{\n  \"author\": {\n    \"type\": \"human\"\n  },\n  \"body\": \"BOM body\",\n  \"createdAt\": \"$TIME\",\n  \"updatedAt\": \"$TIME\",\n  \"id\": 2,\n  \"startLine\": 1,\n  \"endLine\": 1,\n  \"originalStartLine\": 1,\n  \"originalEndLine\": 1,\n  \"replies\": [],\n  \"resolved\": false,\n  \"stale\": false,\n  \"sourceText\": \"# Changed\",\n  \"sourceHash\": \"d6b0ffd2\",\n  \"currentSourceText\": \"# Changed\"\n}\n",
+    "stderr": "",
+    "code": 0
+  },
+  {
+    "args": [
+      "comment",
+      "list",
+      "--document",
+      "1"
+    ],
+    "stdout": "{\n  \"comments\": [\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"stale\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 3,\n      \"id\": 1,\n      \"originalEndLine\": 3,\n      \"originalStartLine\": 3,\n      \"replies\": [],\n      \"resolved\": true,\n      \"resolvedAt\": \"$TIME\",\n      \"resolvedBy\": {\n        \"type\": \"human\"\n      },\n      \"sourceHash\": \"1ce7a599\",\n      \"sourceText\": \"Body <&>\",\n      \"sourceDeleted\": true,\n      \"stale\": true,\n      \"startLine\": 3,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 3\n    },\n    {\n      \"author\": {\n        \"type\": \"human\"\n      },\n      \"body\": \"BOM body\",\n      \"createdAt\": \"$TIME\",\n      \"endLine\": 1,\n      \"id\": 2,\n      \"originalEndLine\": 1,\n      \"originalStartLine\": 1,\n      \"replies\": [],\n      \"resolved\": false,\n      \"sourceHash\": \"d6b0ffd2\",\n      \"sourceText\": \"# Changed\",\n      \"stale\": false,\n      \"startLine\": 1,\n      \"updatedAt\": \"$TIME\",\n      \"displayLine\": 1\n    }\n  ],\n  \"filePath\": \"$ROOT/doc.md\"\n}\n",
+    "stderr": "",
+    "code": 0
+  }
+]

@@ -2,220 +2,311 @@ package cli
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 )
 
+// Validate in the original CLI's order so ambiguous mistakes retain their
+// established diagnostic and help output.
 func validate(o Options) error {
-	words := o.Words
-	if len(words) == 0 {
-		return fmt.Errorf("missing command")
+	word := func(i int) string {
+		if i < len(o.Words) {
+			return o.Words[i]
+		}
+		return ""
 	}
-	allowed := map[string]bool{"help": true, "version": true}
-	allow := func(keys ...string) {
-		for _, key := range keys {
-			allowed[key] = true
+	has := func(key string) bool { _, ok := o.Values[key]; return ok }
+	positive := func(value, name string) (int64, error) {
+		n, err := cliInteger(value)
+		if err != nil || n < 1 {
+			return 0, usageError("%s must be a positive integer.", name)
+		}
+		return n, nil
+	}
+	if (o.Flags["create"] || has("title")) && !(word(0) == "document" && word(1) == "add") {
+		return usageError("--create and --title are only accepted by document add.")
+	}
+	if strings.ContainsAny(o.Values["title"], "\r\n\x00") {
+		return usageError("--title must be a single line without null characters.")
+	}
+	if has("max-depth") {
+		n, err := cliInteger(o.Values["max-depth"])
+		if err != nil || n < 0 {
+			return usageError("--max-depth must be a non-negative integer.")
 		}
 	}
-	count := func(n int) error {
-		if len(words) != n {
-			return fmt.Errorf("unexpected number of arguments")
+	if has("max-files") {
+		if _, err := positive(o.Values["max-files"], "--max-files"); err != nil {
+			return err
+		}
+	}
+	port := int64(3334)
+	if has("port") {
+		n, err := positive(o.Values["port"], "Port")
+		if err != nil {
+			return err
+		}
+		port = n
+	}
+	if port > 65535 {
+		return usageError("Invalid port: %d", port)
+	}
+	commentOptions := has("body") || has("comment") || has("document") || has("end-line") || has("source") || has("start-line") || o.Flags["as-bot"] || o.Flags["ensure-document"] || o.Flags["request-review"]
+	content := has("content")
+	if has("name") && word(0) != "tag" {
+		return usageError("--name is only accepted by tag add.")
+	}
+	preview := (has("host") && o.Values["host"] != "127.0.0.1") || port != 3334 || o.Flags["no-open"] || o.Flags["keep-alive"] || o.Flags["trust-forwarded-prefix"] || has("max-depth") || has("max-files")
+	if word(0) == "start" || len(o.Words) == 0 {
+		if commentOptions || content || has("channel") {
+			return usageError("Preview commands do not accept document, comment, or update options.")
+		}
+		if len(o.Words) > 2 {
+			return usageError("Only one preview source is accepted.")
 		}
 		return nil
 	}
-	need := func(key string) error {
-		if _, ok := o.Values[key]; !ok {
-			return fmt.Errorf("--%s is required", key)
+	if word(0) == "update" {
+		if len(o.Words) != 1 {
+			return usageError("update does not accept positional arguments.")
+		}
+		if commentOptions || content || preview {
+			return usageError("update does not accept preview, document, or comment options.")
+		}
+		if has("channel") && o.Values["channel"] != "stable" && o.Values["channel"] != "nightly" {
+			return usageError("Invalid update channel: %s.", o.Values["channel"])
 		}
 		return nil
 	}
-	if words[0] == "start" {
-		allow("host", "port", "max-depth", "max-files", "no-open", "keep-alive", "trust-forwarded-prefix")
-		if err := count(2); err != nil {
-			return err
-		}
-	} else if words[0] == "update" {
-		allow("channel")
-		if err := count(1); err != nil {
-			return err
-		}
-	} else {
-		if len(words) < 2 {
-			return fmt.Errorf("missing operation")
-		}
-		kind, operation := words[0], words[1]
-		switch kind {
-		case "tag":
-			switch operation {
-			case "add":
-				allow("name")
-				if err := need("name"); err != nil {
-					return err
-				}
-				if err := count(2); err != nil {
-					return err
-				}
-			case "list":
-				if err := count(2); err != nil {
-					return err
-				}
-			case "delete":
-				if err := count(3); err != nil {
-					return err
-				}
-			default:
-				return fmt.Errorf("invalid tag operation")
+	if preview {
+		return usageError("This command does not accept preview options.")
+	}
+	target := func() error {
+		if has("document") {
+			if _, err := positive(o.Values["document"], "Document ID"); err != nil {
+				return err
 			}
-		case "document":
-			switch operation {
-			case "list":
-				if err := count(2); err != nil {
-					return err
-				}
-			case "inspect":
-				if err := count(3); err != nil {
-					return err
-				}
-			case "add":
-				allow("create", "title")
-				if strings.ContainsAny(o.Values["title"], "\r\n\x00") {
-					return fmt.Errorf("title must be a single line")
-				}
-				if err := count(3); err != nil {
-					return err
-				}
-			case "tag":
-				allow("source", "document")
-				if len(words) < 4 || (words[2] != "add" && words[2] != "delete") {
-					return fmt.Errorf("document tag add/delete requires tag IDs")
-				}
-			default:
-				return fmt.Errorf("invalid document operation")
+		}
+		if has("document") == has("source") {
+			return usageError("Specify exactly one of --document or --source.")
+		}
+		return nil
+	}
+	switch word(0) {
+	case "tag":
+		if commentOptions || content || has("channel") {
+			return usageError("tag commands do not accept document, comment, content, or update options.")
+		}
+		if word(1) == "add" && len(o.Words) == 2 {
+			if !has("name") {
+				return usageError("--name is required.")
 			}
-		case "instruction", "memory":
-			allow("source", "document")
-			switch operation {
-			case "list":
-				if err := count(2); err != nil {
-					return err
-				}
-			case "add", "update":
-				allow("content")
-				if strings.TrimSpace(o.Values["content"]) == "" {
-					return fmt.Errorf("--content is required")
-				}
-				n := 2
-				if operation == "update" {
-					n = 3
-				}
-				if err := count(n); err != nil {
-					return err
-				}
-			case "delete":
-				if err := count(3); err != nil {
-					return err
-				}
-			default:
-				return fmt.Errorf("invalid note operation")
+			return nil
+		}
+		if has("name") {
+			return usageError("--name is only accepted by tag add.")
+		}
+		if word(1) == "list" && len(o.Words) == 2 {
+			return nil
+		}
+		if word(1) == "delete" && len(o.Words) == 3 {
+			n, err := positive(word(2), "Tag ID")
+			if err != nil {
+				return err
 			}
-		case "comment":
-			allow("source", "document")
-			switch operation {
-			case "list":
-				if err := count(2); err != nil {
-					return err
-				}
-			case "add":
-				allow("body", "start-line", "end-line", "as-bot", "ensure-document")
-				if err := count(2); err != nil {
-					return err
-				}
-				start, err := number(o.Values["start-line"], "start line", 1)
+			if n > 9007199254740991 {
+				return usageError("Tag ID must be a positive safe integer.")
+			}
+			return nil
+		}
+		return usageError("Invalid tag command.")
+	case "document":
+		if word(1) == "tag" {
+			if content || has("channel") || has("body") || has("comment") || has("start-line") || has("end-line") || o.Flags["as-bot"] || o.Flags["ensure-document"] || o.Flags["request-review"] {
+				return usageError("document tag commands do not accept comment, content, or update options.")
+			}
+			if (word(2) != "add" && word(2) != "delete") || len(o.Words) < 4 {
+				return usageError("document tag add/delete requires at least one tag ID.")
+			}
+			if err := target(); err != nil {
+				return err
+			}
+			safe := true
+			if has("document") {
+				n, _ := positive(o.Values["document"], "Document ID")
+				safe = n <= 9007199254740991
+			}
+			for _, v := range o.Words[3:] {
+				n, err := positive(v, "Tag ID")
 				if err != nil {
 					return err
 				}
-				if value, ok := o.Values["end-line"]; ok {
-					end, err := number(value, "end line", 1)
+				safe = safe && n <= 9007199254740991
+			}
+			if !safe {
+				return usageError("Document and tag IDs must be positive safe integers.")
+			}
+			return nil
+		}
+		if commentOptions || content || has("channel") {
+			return usageError("document commands do not accept comment or update options.")
+		}
+		if word(1) == "list" && len(o.Words) == 2 {
+			return nil
+		}
+		if word(1) == "add" && len(o.Words) == 3 {
+			return nil
+		}
+		if word(1) == "inspect" && len(o.Words) == 3 {
+			_, err := positive(word(2), "Document ID")
+			return err
+		}
+		return usageError("Invalid document command.")
+	case "instruction", "memory":
+		kind := word(0)
+		if has("channel") {
+			return usageError("--channel is only accepted by update.")
+		}
+		if has("body") || has("comment") || has("start-line") || has("end-line") || o.Flags["as-bot"] || o.Flags["ensure-document"] || o.Flags["request-review"] {
+			return usageError("%s commands do not accept comment options or --ensure-document.", kind)
+		}
+		if err := target(); err != nil {
+			return err
+		}
+		if word(1) == "list" && len(o.Words) == 2 {
+			if content {
+				return usageError("%s list does not accept --content.", kind)
+			}
+			return nil
+		}
+		if word(1) == "add" && len(o.Words) == 2 {
+			if !content {
+				return usageError("--content is required.")
+			}
+			return nil
+		}
+		if (word(1) == "update" || word(1) == "delete") && len(o.Words) == 3 {
+			if word(1) == "update" && !content {
+				return usageError("--content is required.")
+			}
+			if word(1) == "delete" && content {
+				return usageError("%s delete does not accept --content.", kind)
+			}
+			_, err := positive(word(2), strings.ToUpper(kind[:1])+kind[1:]+" ID")
+			return err
+		}
+		return usageError("Invalid %s command.", kind)
+	case "comment":
+		if has("channel") {
+			return usageError("--channel is only accepted by update.")
+		}
+		if content {
+			return usageError("--content is only accepted by instruction commands.")
+		}
+		if err := target(); err != nil {
+			return err
+		}
+		if has("comment") {
+			if _, err := positive(o.Values["comment"], "Comment ID"); err != nil {
+				return err
+			}
+		}
+		if o.Flags["ensure-document"] && word(1) != "add" {
+			return usageError("--ensure-document is only accepted by comment add.")
+		}
+		switch word(1) {
+		case "list":
+			if len(o.Words) == 2 {
+				return nil
+			}
+		case "add":
+			if len(o.Words) == 2 {
+				if o.Values["body"] == "" {
+					return usageError("--body is required.")
+				}
+				if !has("start-line") {
+					return usageError("--start-line is required.")
+				}
+				start, err := positive(o.Values["start-line"], "Comment start line")
+				if err != nil {
+					return err
+				}
+				if has("end-line") {
+					end, err := positive(o.Values["end-line"], "Comment end line")
 					if err != nil {
 						return err
 					}
 					if end < start {
-						return fmt.Errorf("end line must not precede start line")
+						return usageError("Comment end line must not precede the start line.")
 					}
-				}
-				if strings.TrimSpace(o.Values["body"]) == "" {
-					return fmt.Errorf("--body is required")
 				}
 				if o.Flags["ensure-document"] && o.Values["source"] == "" {
-					return fmt.Errorf("--ensure-document requires --source")
+					return usageError("--ensure-document requires --source.")
 				}
-			case "update":
-				allow("body")
-				if strings.TrimSpace(o.Values["body"]) == "" {
-					return fmt.Errorf("--body is required")
-				}
-				if err := count(3); err != nil {
-					return err
-				}
-			case "delete":
-				if err := count(3); err != nil {
-					return err
-				}
-			case "resolve", "reopen":
-				allow("as-bot")
-				if len(words) < 3 {
-					return fmt.Errorf("comment IDs are required")
-				}
-			case "reply":
-				allow("comment")
-				if len(words) < 3 {
-					return fmt.Errorf("missing reply operation")
-				}
-				if _, err := number(o.Values["comment"], "comment ID", 1); err != nil {
-					return err
-				}
-				switch words[2] {
-				case "add":
-					allow("body", "as-bot", "request-review")
-					if err := count(3); err != nil {
-						return err
-					}
-					if strings.TrimSpace(o.Values["body"]) == "" {
-						return fmt.Errorf("--body is required")
-					}
-					if o.Flags["request-review"] && !o.Flags["as-bot"] {
-						return fmt.Errorf("--request-review requires --as-bot")
-					}
-				case "update":
-					allow("body")
-					if err := count(4); err != nil {
-						return err
-					}
-					if strings.TrimSpace(o.Values["body"]) == "" {
-						return fmt.Errorf("--body is required")
-					}
-				case "delete":
-					if err := count(4); err != nil {
-						return err
-					}
-				default:
-					return fmt.Errorf("invalid reply operation")
-				}
-			default:
-				return fmt.Errorf("invalid comment operation")
+				return nil
 			}
-		default:
-			return fmt.Errorf("invalid command: %s", kind)
+		case "reply":
+			if !has("comment") {
+				return usageError("--comment is required.")
+			}
+			if word(2) == "add" && len(o.Words) == 3 {
+				if o.Values["body"] == "" {
+					return usageError("--body is required.")
+				}
+				if o.Flags["request-review"] && !o.Flags["as-bot"] {
+					return usageError("--request-review requires --as-bot.")
+				}
+				return nil
+			}
+			if (word(2) == "update" || word(2) == "delete") && len(o.Words) == 4 {
+				if _, err := positive(word(3), "Reply ID"); err != nil {
+					return err
+				}
+				if word(2) == "update" && o.Values["body"] == "" {
+					return usageError("--body is required.")
+				}
+				return nil
+			}
+			return usageError("Invalid comment reply command.")
+		case "update", "delete":
+			if len(o.Words) != 3 {
+				return usageError("comment %s requires one comment ID.", word(1))
+			}
+			if word(1) == "update" && o.Values["body"] == "" {
+				return usageError("--body is required.")
+			}
+			_, err := positive(word(2), "Comment ID")
+			return err
+		case "resolve", "reopen":
+			if len(o.Words) < 3 {
+				return usageError("comment %s requires at least one comment ID.", word(1))
+			}
+			for _, v := range o.Words[2:] {
+				if _, err := positive(v, "Comment ID"); err != nil {
+					return err
+				}
+			}
+			return nil
 		}
+		return usageError("Invalid comment command.")
 	}
-	for key := range o.Values {
-		if !allowed[key] {
-			return fmt.Errorf("--%s is not accepted by this command", key)
-		}
+	return usageError("Invalid command: %s", word(0))
+}
+
+// JavaScript Number accepts integral decimal/exponent and hexadecimal spellings.
+func cliInteger(value string) (int64, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, nil
 	}
-	for key := range o.Flags {
-		if !allowed[key] {
-			return fmt.Errorf("--%s is not accepted by this command", key)
-		}
+	if len(value) > 2 && value[0] == '0' && strings.ContainsAny(value[1:2], "xXoObB") {
+		n, err := strconv.ParseInt(value, 0, 64)
+		return n, err
 	}
-	return nil
+	n, err := strconv.ParseFloat(value, 64)
+	if err != nil || math.IsNaN(n) || math.IsInf(n, 0) || math.Trunc(n) != n || n >= math.Exp2(63) || n < 0 {
+		return 0, fmt.Errorf("invalid integer")
+	}
+	return int64(n), nil
 }
