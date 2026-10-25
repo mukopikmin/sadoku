@@ -93,6 +93,7 @@ type Repository interface {
 	Snapshot(int64) (*string, *string, error)
 	SaveComments(int64, Comments) error
 	ReadComments(int64) (Comments, error)
+	CommentsNotificationPath(int64) (string, error)
 	Revisions(int64) ([]Revision, error)
 	Revision(int64, int64) (Revision, error)
 	RecordRevision(int64, string) error

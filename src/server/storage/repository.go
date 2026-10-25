@@ -182,9 +182,10 @@ func (r *Repository) SaveComments(id int64, doc u.Comments) error {
 		return err
 	}
 	defer tx.Rollback()
+	var source string
 	var old *string
 	var currentID *int64
-	if err = tx.QueryRow("SELECT source_revision_id,(SELECT markdown FROM document_revision WHERE id=source_revision_id) FROM comment_document WHERE id=?", id).Scan(&currentID, &old); err != nil {
+	if err = tx.QueryRow("SELECT file_path,source_revision_id,(SELECT markdown FROM document_revision WHERE id=source_revision_id) FROM comment_document WHERE id=?", id).Scan(&source, &currentID, &old); err != nil {
 		return err
 	}
 	if doc.SourceSnapshot != nil && (old == nil || *old != *doc.SourceSnapshot) {
@@ -221,7 +222,10 @@ func (r *Repository) SaveComments(id int64, doc u.Comments) error {
 	if _, err = tx.Exec("UPDATE comment_document SET updated_at=? WHERE id=?", db.Now(), id); err != nil {
 		return err
 	}
-	return tx.Commit()
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return r.notifyCommentsChanged(source)
 }
 
 func (r *Repository) Tags(documentID int64) ([]u.Tag, error) {

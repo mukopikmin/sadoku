@@ -502,7 +502,7 @@ func (s *Session) Monitor(ctx context.Context, settings config.Settings, logErro
 		}
 		s.Mu.Lock()
 		s.Documents, s.Sources, s.CommentIDs, s.PullRequest, s.GitHub = next.Documents, next.Sources, next.CommentIDs, next.PullRequest, next.GitHub
-		s.Generation++
 		s.Mu.Unlock()
+		s.Invalidate()
 	}
 }

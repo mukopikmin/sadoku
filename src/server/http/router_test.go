@@ -37,7 +37,7 @@ func setup(t *testing.T) (*session.Session, *httptest.Server, string) {
 	if err := os.WriteFile(file, []byte("# Title\n\nBody\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(directory, "db.sqlite3")
+	path := filepath.Join(directory, "comments", "sadoku.sqlite3")
 	database, err := db.Open(path)
 	if err != nil {
 		t.Fatal(err)

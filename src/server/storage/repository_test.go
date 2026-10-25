@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"bytes"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -38,11 +40,23 @@ func TestCommentsAndRevisionsRollbackTogether(t *testing.T) {
 	if err = r.SaveComments(doc.ID, comments); err != nil {
 		t.Fatal(err)
 	}
+	notification, err := r.CommentsNotificationPath(doc.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(notification)
+	if err != nil || len(before) == 0 {
+		t.Fatalf("missing committed-change notification: %q %v", before, err)
+	}
 	changed := "changed"
 	comments.SourceSnapshot = &changed
 	comments.Comments[0].Author.Type = "invalid"
 	if err = r.SaveComments(doc.ID, comments); err == nil {
 		t.Fatal("accepted invalid author")
+	}
+	after, err := os.ReadFile(notification)
+	if err != nil || !bytes.Equal(before, after) {
+		t.Fatalf("failed transaction emitted a notification: %q %v", after, err)
 	}
 	saved, err := r.ReadComments(doc.ID)
 	if err != nil {

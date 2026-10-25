@@ -18,17 +18,17 @@ import (
 )
 
 type Session struct {
-	Mu          sync.Mutex
-	Root        string
-	Documents   []u.Document
-	Sources     map[int64]string
-	CommentIDs  map[int64]int64
-	CanCreate   bool
-	PullRequest any
-	GitHub      *Pull
-	Repository  u.Repository
-	Generation  uint64
-	ReadRemote  func(context.Context, string) (string, error)
+	Mu            sync.Mutex
+	Root          string
+	Documents     []u.Document
+	Sources       map[int64]string
+	CommentIDs    map[int64]int64
+	CanCreate     bool
+	PullRequest   any
+	GitHub        *Pull
+	Repository    u.Repository
+	invalidations map[chan struct{}]struct{}
+	ReadRemote    func(context.Context, string) (string, error)
 }
 
 func Source(input string) (identity, fetch string, remote bool) {

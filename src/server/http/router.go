@@ -9,12 +9,10 @@ import (
 	"io/fs"
 	"mime"
 	"net/http"
-	"os"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/mukopikmin/sadoku/gen/go/sadoku/preview/v1/previewv1connect"
@@ -27,6 +25,7 @@ import (
 
 type Options struct {
 	TrustForwardedPrefix        bool
+	Log                         func(string)
 	OnStreamOpen, OnStreamClose func()
 }
 type entry struct {
@@ -443,98 +442,4 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		result = result.(map[string]any)["tags"]
 	}
 	respond(w, status, result)
-}
-
-// Event streams poll document and SQLite changes, including writes from another CLI process.
-func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
-	r.session.Mu.Lock()
-	if id != 0 {
-		if _, err := r.session.Find(id); err != nil {
-			r.session.Mu.Unlock()
-			respondError(w, err)
-			return
-		}
-	}
-	source := r.session.Sources[id]
-	generation := r.session.Generation
-	lastComments := ""
-	if id != 0 {
-		if comments, err := r.session.Repository.ReadComments(r.session.CommentDocumentID(id)); err == nil {
-			b, _ := json.Marshal(comments)
-			lastComments = string(b)
-		}
-	}
-	r.session.Mu.Unlock()
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "Streaming unavailable.", 500)
-		return
-	}
-	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
-	w.Header().Set("Connection", "keep-alive")
-	w.WriteHeader(200)
-	flusher.Flush()
-	if r.options.OnStreamOpen != nil {
-		r.options.OnStreamOpen()
-	}
-	if r.options.OnStreamClose != nil {
-		defer r.options.OnStreamClose()
-	}
-	stamp := func() string {
-		info, err := os.Stat(source)
-		if err != nil {
-			return "missing"
-		}
-		return fmt.Sprintf("%d:%d", info.Size(), info.ModTime().UnixNano())
-	}
-	before := stamp()
-	ticker := time.NewTicker(400 * time.Millisecond)
-	defer ticker.Stop()
-	heartbeat := time.NewTicker(15 * time.Second)
-	defer heartbeat.Stop()
-	for {
-		select {
-		case <-req.Context().Done():
-			return
-		case <-heartbeat.C:
-			if _, err := fmt.Fprint(w, ": keep-alive\n\n"); err != nil {
-				return
-			}
-			flusher.Flush()
-		case <-ticker.C:
-			resources := []string{}
-			r.session.Mu.Lock()
-			if generation != r.session.Generation {
-				generation = r.session.Generation
-				source = r.session.Sources[id]
-				resources = append(resources, "document", "comments")
-			}
-			r.session.Mu.Unlock()
-			after := stamp()
-			if after != before {
-				before = after
-				resources = append(resources, "document", "comments")
-			}
-			if id != 0 {
-				r.session.Mu.Lock()
-				comments, err := r.session.Repository.ReadComments(r.session.CommentDocumentID(id))
-				r.session.Mu.Unlock()
-				if err == nil {
-					b, _ := json.Marshal(comments)
-					signature := string(b)
-					if lastComments != "" && signature != lastComments {
-						resources = append(resources, "comments")
-					}
-					lastComments = signature
-				}
-			}
-			if len(resources) > 0 {
-				b, _ := json.Marshal(map[string]any{"resources": resources})
-				if _, err := fmt.Fprintf(w, "event: invalidate\ndata: %s\n\n", b); err != nil {
-					return
-				}
-				flusher.Flush()
-			}
-		}
-	}
 }

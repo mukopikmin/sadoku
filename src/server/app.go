@@ -78,7 +78,7 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 	var mu sync.Mutex
 	streams := 0
 	var timer *time.Timer
-	handler, err := httpadapter.New(s, httpadapter.Options{TrustForwardedPrefix: options.TrustForwardedPrefix, OnStreamOpen: func() {
+	handler, err := httpadapter.New(s, httpadapter.Options{TrustForwardedPrefix: options.TrustForwardedPrefix, Log: log, OnStreamOpen: func() {
 		mu.Lock()
 		defer mu.Unlock()
 		streams++
