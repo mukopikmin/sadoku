@@ -1,16 +1,80 @@
 package session
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/mukopikmin/sadoku/src/server/config"
+	"github.com/mukopikmin/sadoku/src/server/db"
+	"github.com/mukopikmin/sadoku/src/server/storage"
 )
 
 func TestRemoteIdentityStripsQueryAndFragment(t *testing.T) {
 	identity, fetch, remote := Source("https://example.com/docs.md?token=private#heading")
 	if !remote || identity != "https://example.com/docs.md" || fetch != "https://example.com/docs.md?token=private#heading" {
 		t.Fatal(identity, fetch, remote)
+	}
+}
+
+func TestDirectoryDiscoveryHonorsLimitsAndRetainsDeletedSnapshots(t *testing.T) {
+	root := t.TempDir()
+	docs := filepath.Join(root, "docs")
+	database, err := db.Open(filepath.Join(root, "app.sqlite3"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	repo := &storage.Repository{DB: database}
+	for _, name := range []string{"a.md", "b.MARKDOWN", "ignored.txt", "nested/c.md", "nested/deep/d.md", ".git/hidden.md", "node_modules/hidden.md"} {
+		path := filepath.Join(docs, filepath.FromSlash(name))
+		if err = os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err = os.WriteFile(path, []byte("# "+name), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	settings := config.Defaults()
+	settings.MaxDepth = 1
+	s, err := New(context.Background(), docs, repo, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !s.CanCreate || len(s.Documents) != 3 {
+		t.Fatalf("discovered documents %+v", s.Documents)
+	}
+	for _, d := range s.Documents {
+		if d.RelativePath != "a.md" && d.RelativePath != "b.MARKDOWN" && d.RelativePath != "nested/c.md" {
+			t.Fatalf("discovered excluded file: %+v", d)
+		}
+	}
+	if err = os.Remove(filepath.Join(docs, "a.md")); err != nil {
+		t.Fatal(err)
+	}
+	s, err = New(context.Background(), docs, repo, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deleted := false
+	for _, d := range s.Documents {
+		if d.RelativePath == "a.md" {
+			snapshot, _, err := repo.Snapshot(d.ID)
+			if err != nil || snapshot == nil || *snapshot != "# a.md" || !d.Deleted {
+				t.Fatalf("deleted snapshot %+v %v", d, err)
+			}
+			deleted = true
+		}
+	}
+	if !deleted {
+		t.Fatal("deleted document disappeared from the session")
+	}
+	settings.MaxFiles = 1
+	s, err = New(context.Background(), docs, repo, settings)
+	if err != nil || len(s.Documents) != 1 {
+		t.Fatalf("file limit %+v %v", s, err)
 	}
 }
 func TestLocalDestinationRejectsTraversalAndSymlinks(t *testing.T) {

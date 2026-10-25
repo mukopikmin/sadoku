@@ -1,8 +1,11 @@
 package db
 
 import (
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -35,6 +38,50 @@ func TestMigrationCompatibility(t *testing.T) {
 	}
 	if err = Migrate(database); err == nil {
 		t.Fatal("accepted edited migration")
+	}
+}
+
+func TestOriginalMigrationsRetainTheirChecksums(t *testing.T) {
+	var migrations []migration
+	if err := json.Unmarshal(legacy, &migrations); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range migrations {
+		source := strings.Join(m.Statements, ";\n")
+		// Version 0007 originally hashed this explicit description rather than
+		// its executable statements. Keep that historical checksum verbatim.
+		if m.Version == "0007" {
+			source = `CREATE TABLE document_tag (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z')); CREATE TABLE document_tag_link (document_id INTEGER NOT NULL, tag_id INTEGER NOT NULL, PRIMARY KEY (document_id, tag_id));`
+		}
+		actual := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(source)))
+		if actual != m.Checksum {
+			t.Errorf("migration %s changed: %s != %s", m.Version, actual, m.Checksum)
+		}
+	}
+}
+
+func TestMigrationLedgerRejectsInterruptedOrUnknownHistory(t *testing.T) {
+	for _, test := range []struct{ name, statement string }{
+		{"failed", `UPDATE schema_migration SET state='failed' WHERE version='0001'`},
+		{"running", `UPDATE schema_migration SET state='running' WHERE version='0001'`},
+		{"unknown", `UPDATE schema_migration SET version='9999' WHERE version='0001'`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "app.sqlite3")
+			database, err := Open(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err = database.Exec(test.statement); err != nil {
+				database.Close()
+				t.Fatal(err)
+			}
+			database.Close()
+			if reopened, err := Open(path); err == nil {
+				reopened.Close()
+				t.Fatal("opened a database with invalid migration history")
+			}
+		})
 	}
 }
 func TestUpgradeLegacySnapshots(t *testing.T) {

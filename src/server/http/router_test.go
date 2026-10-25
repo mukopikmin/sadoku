@@ -27,6 +27,7 @@ func setup(t *testing.T) (*session.Session, *httptest.Server, string) {
 	t.Helper()
 	directory := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(directory, "config"))
+	t.Setenv("APPDATA", "")
 	t.Setenv("SADOKU_COMMENTS_DIR", filepath.Join(directory, "comments"))
 	docs := filepath.Join(directory, "docs")
 	if err := os.Mkdir(docs, 0700); err != nil {

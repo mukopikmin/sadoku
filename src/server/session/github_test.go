@@ -22,6 +22,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	}
 	root := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(root, "config"))
+	t.Setenv("APPDATA", "")
 	sha := strings.Repeat("a", 40)
 	markdown := "# Title\nBody\n"
 	pullURL := "https://github.com/owner/repo/pull/1"

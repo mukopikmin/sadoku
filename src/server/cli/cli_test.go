@@ -12,6 +12,7 @@ import (
 func TestCLIWorkflow(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(directory, "config"))
+	t.Setenv("APPDATA", "")
 	t.Setenv("SADOKU_COMMENTS_DIR", filepath.Join(directory, "comments"))
 	file := filepath.Join(directory, "readme.md")
 	if err := os.WriteFile(file, []byte("# Title\nBody\n"), 0600); err != nil {

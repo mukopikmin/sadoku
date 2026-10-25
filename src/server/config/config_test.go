@@ -1,6 +1,7 @@
 package config
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,6 +9,7 @@ import (
 
 func TestSettingsPreserveExistingConfiguration(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("APPDATA", "")
 	t.Setenv("SADOKU_COMMENTS_DIR", "")
 	t.Setenv("MDVIEW_COMMENTS_DIR", "")
 	if err := AtomicWrite(Path(), []byte("commentsDirectory = '/old/comments'\ncustom = 'keep'\nshow_html_comments = false\n"), 0600); err != nil {
@@ -37,6 +39,33 @@ func TestSettingsPreserveExistingConfiguration(t *testing.T) {
 		t.Fatal(directory, err)
 	}
 }
+
+func TestSettingsRejectInvalidValues(t *testing.T) {
+	valid := func() Settings { s := Defaults(); s.Theme = "dark"; s.CodeWrap = "wrap"; return s }
+	for name, change := range map[string]func(*Settings){
+		"theme":                func(s *Settings) { s.Theme = "system" },
+		"code wrap":            func(s *Settings) { s.CodeWrap = "invalid" },
+		"small font":           func(s *Settings) { s.FontScale = 0.5 },
+		"large font":           func(s *Settings) { s.FontScale = 2 },
+		"NaN font":             func(s *Settings) { s.FontScale = math.NaN() },
+		"negative depth":       func(s *Settings) { s.MaxDepth = -1 },
+		"zero files":           func(s *Settings) { s.MaxFiles = 0 },
+		"parent exclusion":     func(s *Settings) { s.ExcludedDirectories = []string{".."} },
+		"nested exclusion":     func(s *Settings) { s.ExcludedDirectories = []string{"a/b"} },
+		"duplicate exclusions": func(s *Settings) { s.ExcludedDirectories = []string{".git", ".git"} },
+		"empty extensions":     func(s *Settings) { s.MarkdownExtensions = []string{} },
+		"duplicate extensions": func(s *Settings) { s.MarkdownExtensions = []string{".md", ".MD"} },
+		"invalid extension":    func(s *Settings) { s.MarkdownExtensions = []string{"md"} },
+	} {
+		t.Run(name, func(t *testing.T) {
+			settings := valid()
+			change(&settings)
+			if err := Validate(settings, true); err == nil {
+				t.Fatalf("accepted invalid settings: %+v", settings)
+			}
+		})
+	}
+}
 func TestAtomicWriteDoesNotTruncateOnFailure(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "existing")
@@ -62,6 +91,7 @@ func TestAtomicWriteDoesNotTruncateOnFailure(t *testing.T) {
 
 func TestSavePreservesMalformedConfiguration(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("APPDATA", "")
 	contents := []byte("theme_mode = [broken")
 	if err := AtomicWrite(Path(), contents, 0600); err != nil {
 		t.Fatal(err)
