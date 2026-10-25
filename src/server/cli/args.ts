@@ -39,6 +39,8 @@ export type CliOptions = {
   commentId?: number;
   commentIds?: number[];
   content?: string;
+  create?: boolean;
+  title?: string;
   documentId?: number;
   endLine?: number;
   ensureDocument: boolean;
@@ -71,7 +73,7 @@ export class CliUsageError extends Error {
 
 export const usage = `Usage:
   sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--trust-forwarded-prefix]
-  sadoku document add <file.md|url>
+  sadoku document add <file.md|url> [--create [--title <text>]]
   sadoku document inspect <document-id>
   sadoku document list
   sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
@@ -99,6 +101,8 @@ export const usage = `Usage:
   sadoku update [--channel stable|nightly]
 
 Options:
+  --create          Create a new local Markdown file and register it (document add only).
+  --title           Display title for --create. The new file starts empty.
   --name            Tag name (tag add only).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
@@ -136,6 +140,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
     flags = parseCliArgs(argv, {
       alias: { h: "help", p: "port", v: "version" },
       boolean: [
+        "create",
         "as-bot",
         "ensure-document",
         "help",
@@ -147,6 +152,7 @@ export const parseArgs = (argv: string[]): CliOptions => {
       ],
       default: { host: "127.0.0.1", port: "3334" },
       string: [
+        "title",
         "body",
         "channel",
         "comment",
@@ -173,6 +179,17 @@ export const parseArgs = (argv: string[]): CliOptions => {
   }
 
   const words = flags._.map(String);
+  if (
+    (flags.create || flags.title !== undefined) &&
+    !(words[0] === "document" && words[1] === "add")
+  ) {
+    throw new CliUsageError(
+      "--create and --title are only accepted by document add.",
+    );
+  }
+  if (flags.title !== undefined && !flags.create) {
+    throw new CliUsageError("--title requires --create.");
+  }
   const maxDepth = flags["max-depth"] === undefined
     ? undefined
     : Number(flags["max-depth"]);
@@ -355,7 +372,13 @@ export const parseArgs = (argv: string[]): CliOptions => {
       return { ...base, command: "document-list" };
     }
     if (words[1] === "add" && words.length === 3) {
-      return { ...base, command: "document-add", source: words[2] };
+      return {
+        ...base,
+        command: "document-add",
+        source: words[2],
+        ...(flags.create ? { create: true } : {}),
+        ...(flags.title !== undefined ? { title: flags.title.toString() } : {}),
+      };
     }
     if (words[1] === "inspect" && words.length === 3) {
       return {

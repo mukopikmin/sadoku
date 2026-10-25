@@ -111,6 +111,15 @@ sadoku comment list --source README.md
 sadoku comment resolve <comment-id> --source README.md
 ```
 
+Create and register a file in an existing directory (`--title` is optional):
+
+```sh
+sadoku document add docs/notes.md --create --title "Notes"
+```
+
+Existing files are never overwritten; missing extensions default to `.md`. The
+file starts empty; `--title` sets its display title in Sadoku.
+
 Manage tags independently of documents:
 
 ```sh
