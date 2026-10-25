@@ -99,6 +99,7 @@ export const documentMessage = (
   document: DirectoryDocumentContent,
   githubHeadSha?: string,
   previousMarkdown?: string,
+  canRestore = false,
 ): MessageInitShape<typeof GetDocumentResponseSchema> => ({
   fileUrl: document.fileUrl ?? "",
   markdown: document.markdown,
@@ -108,6 +109,7 @@ export const documentMessage = (
   tags: document.tags?.map(tagMessage) ?? [],
   githubHeadSha,
   previousMarkdown,
+  canRestore,
 });
 export const documentRevisionSummaryMessage = (
   revision: DocumentRevisionSummary,

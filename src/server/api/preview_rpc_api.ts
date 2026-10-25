@@ -2,6 +2,8 @@ import { updateDocumentTitle } from "../usecase/document/update_document_title.t
 import { getPreviousMarkdown } from "../usecase/document/get_previous_markdown.ts";
 import { listDocumentRevisions } from "../usecase/document/list_document_revisions.ts";
 import { getDocumentRevision } from "../usecase/document/get_document_revision.ts";
+import { restoreDocumentRevision } from "../usecase/document/restore_document_revision.ts";
+import { createLocalDocumentRestorer } from "../storage/document/restore_local_document.ts";
 import { isSettingsError } from "../usecase/settings/types.ts";
 import type { MessageInitShape, MessageShape } from "@bufbuild/protobuf";
 import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb.ts";
@@ -238,6 +240,10 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
   const instructions = () => instructionStore ?? unavailable("Instructions");
   const tags = () => tagStore ?? unavailable("Tags");
   const memories = () => memoryStore ?? unavailable("Memories");
+  const restoring = new Set<number>();
+  const canRestore = (isRemote: boolean) =>
+    !isRemote && !session.githubPull &&
+    Boolean(documentStore?.findRevision && documentStore?.recordRevision);
   return {
     getSession: () =>
       getSessionResponse({
@@ -302,6 +308,7 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
           source.commentSource,
           content.markdown,
         ),
+        canRestore(source.isRemote),
       );
     },
     listDocumentRevisions: async ({ documentId }) => {
@@ -327,6 +334,63 @@ export const createPreviewRpcHandlers = (deps: PreviewRpcDependencies) => {
           findRevision: documentStore.findRevision,
         }),
       );
+    },
+    restoreDocumentRevision: async (
+      { documentId, revisionId, expectedMarkdown },
+    ) => {
+      const { document, source } = resolveDocument(documentId);
+      if (!canRestore(source.isRemote)) {
+        throw connectFailure(
+          "failed_precondition",
+          "Only local files can be restored.",
+          400,
+        );
+      }
+      if (revisionId < 1n || revisionId > BigInt(Number.MAX_SAFE_INTEGER)) {
+        throw connectFailure("not_found", "Document revision not found.", 404);
+      }
+      if (restoring.has(document.id)) {
+        throw connectFailure(
+          "aborted",
+          "A restore is already in progress.",
+          409,
+        );
+      }
+      restoring.add(document.id);
+      try {
+        await restoreDocumentRevision(
+          document,
+          Number(revisionId),
+          expectedMarkdown,
+          {
+            revisions: { findRevision: documentStore!.findRevision! },
+            recordRevision: documentStore!.recordRevision!,
+            restorer: createLocalDocumentRestorer(session.rootPath),
+            commentsStore,
+          },
+        );
+        return {};
+      } catch (error) {
+        if (typeof error === "object" && error !== null && "type" in error) {
+          if (error.type === "restore_conflict") {
+            throw connectFailure(
+              "aborted",
+              "The file has changed. Reload the document before restoring.",
+              409,
+            );
+          }
+          if (error.type === "restore_unsafe_path") {
+            throw connectFailure(
+              "failed_precondition",
+              "Choose a local file inside the open folder without symbolic links.",
+              400,
+            );
+          }
+        }
+        throw error;
+      } finally {
+        restoring.delete(document.id);
+      }
     },
     getDirectoryStatus: () => {
       if (!deps.directoryState) {

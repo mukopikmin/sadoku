@@ -2,7 +2,21 @@ import type {
   DocumentRevision,
   DocumentRevisionSummary,
 } from "../models/documentRevision";
-import { connectHttpStatus, previewClient } from "./connect";
+import { connectHttpStatus, connectRawMessage, previewClient } from "./connect";
+
+export const restoreDocumentRevision = async (
+  documentId: number,
+  revisionId: number,
+  expectedMarkdown: string | undefined,
+): Promise<void> => {
+  await previewClient.restoreDocumentRevision({
+    documentId: BigInt(documentId),
+    revisionId: BigInt(revisionId),
+    expectedMarkdown,
+  }).catch((error) => {
+    throw new Error(connectRawMessage(error) || "Failed to restore file.");
+  });
+};
 
 export const toDocumentRevisionSummary = (
   value: unknown,

@@ -76,6 +76,11 @@ Run `sadoku --help` for all commands and options.
   match, they share one Current entry, compared with that saved revision's
   predecessor. Older saved revisions remain stored. This does not change when
   document snapshots are recorded.
+- To restore a local file, select a saved revision under **Revisions**, choose
+  **Restore this revision**, and confirm **Restore file**. The current contents
+  are kept in revision history. Deleted files can also be recreated if their
+  parent folder still exists. Reload before restoring if the file has changed
+  since you opened it. Remote URLs and GitHub PR files are read-only.
 
 ### GitHub pull requests
 

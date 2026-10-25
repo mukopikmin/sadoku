@@ -163,6 +163,10 @@ export const createDirectoryPreviewHandler = (
     rpc.listDocumentRevisions,
   );
   register(PreviewService.method.getDocumentRevision, rpc.getDocumentRevision);
+  register(
+    PreviewService.method.restoreDocumentRevision,
+    rpc.restoreDocumentRevision,
+  );
   register(PreviewService.method.getDirectoryStatus, rpc.getDirectoryStatus);
   register(PreviewService.method.getSettings, rpc.getSettings);
   register(PreviewService.method.updateSettings, rpc.updateSettings);

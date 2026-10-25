@@ -90,6 +90,8 @@ export const DocumentPreviewPage = (
         view={view}
       />
       <DocumentRevisionsDialog
+        canRestore={document.canRestore}
+        deleted={document.deleted}
         documentId={documentId}
         documentPath={documentPath}
         key={`revisions-${documentId}`}

@@ -39,6 +39,82 @@ const chooseRevision = async (name: string | RegExp) => {
   );
 };
 
+it("confirms restoration, allows cancellation and retains errors for retry", async () => {
+  const restores: unknown[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input, init) => {
+      const request = new Request(input, init);
+      if (request.url.endsWith("/RestoreDocumentRevision")) {
+        restores.push(await request.json());
+        return restores.length === 1
+          ? Response.json({
+            code: "aborted",
+            message:
+              "The file has changed. Reload the document before restoring.",
+          }, { status: 409 })
+          : Response.json({});
+      }
+      return Response.json(
+        request.url.endsWith("/ListDocumentRevisions")
+          ? { revisions: [{ id: "2", recordedAt }] }
+          : { id: "2", recordedAt, markdown: "# Saved" },
+      );
+    }),
+  );
+  render(<DocumentRevisionsDialog {...props} canRestore />);
+  expect(screen.queryByRole("button", { name: "Restore this revision" }))
+    .toBeNull();
+  await chooseRevision(/Saved snapshot/);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Restore this revision" }),
+  );
+  const confirmation = await screen.findByRole("alertdialog", {
+    name: "Restore this revision?",
+  });
+  fireEvent.click(within(confirmation).getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  expect(restores).toEqual([]);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Restore this revision" }),
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Restore file" }));
+  expect(await screen.findByRole("alert")).toHaveProperty(
+    "textContent",
+    "The file has changed. Reload the document before restoring.",
+  );
+  expect(props.onOpenChange).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Restore file" }));
+  await waitFor(() => expect(props.onOpenChange).toHaveBeenCalledWith(false));
+  expect(restores).toEqual([{
+    documentId: "7",
+    revisionId: "2",
+    expectedMarkdown: props.markdown,
+  }, { documentId: "7", revisionId: "2", expectedMarkdown: props.markdown }]);
+});
+
+it("offers the saved Current entry for a deleted local file but hides restore for remote documents", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input, init) => {
+      const request = new Request(input, init);
+      return Response.json(
+        request.url.endsWith("/ListDocumentRevisions")
+          ? { revisions: [{ id: "1", recordedAt }] }
+          : { id: "1", recordedAt, markdown: props.markdown },
+      );
+    }),
+  );
+  const { rerender } = render(
+    <DocumentRevisionsDialog {...props} canRestore deleted />,
+  );
+  expect(await screen.findByRole("button", { name: "Restore this revision" }))
+    .not.toBeNull();
+  rerender(<DocumentRevisionsDialog {...props} canRestore={false} deleted />);
+  expect(screen.queryByRole("button", { name: "Restore this revision" }))
+    .toBeNull();
+});
+
 it("loads the latest comparison and switches historical and empty Markdown without tabs", async () => {
   const bodyRequests: number[] = [];
   vi.stubGlobal(

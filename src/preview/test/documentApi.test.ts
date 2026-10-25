@@ -14,6 +14,17 @@ import {
 
 afterEach(() => vi.unstubAllGlobals());
 
+it.each([true, false, undefined])(
+  "converts the restore capability: %j",
+  async (canRestore) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ markdown: "saved", canRestore })),
+    );
+    expect((await loadPreviewDocument(1)).canRestore).toBe(canRestore ?? false);
+  },
+);
+
 describe("document revision API conversion", () => {
   it.each([undefined, "", "# Previous\n"])(
     "preserves the optional revision: %j",
