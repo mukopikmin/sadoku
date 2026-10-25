@@ -74,7 +74,9 @@ jobs:
         run: |
           install_home="$(mktemp -d)"
           trap 'rm -rf "$install_home"' EXIT
-          HOME="$install_home" deno task install --version 0.0.0-ci
+          # Keep Go's read-only module cache outside the disposable install home.
+          GOMODCACHE="$(go env GOMODCACHE)" GOCACHE="$(go env GOCACHE)" \
+            HOME="$install_home" deno task install --version 0.0.0-ci
           test "$("$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
 
   client:

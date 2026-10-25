@@ -3,6 +3,8 @@ FROM golang:1.26-bookworm AS go-toolchain
 FROM node:bookworm-slim AS builder
 
 COPY --from=go-toolchain /usr/local/go /usr/local/go
+# Go module downloads use system roots rather than Node's bundled CA store.
+COPY --from=go-toolchain /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /workspace
