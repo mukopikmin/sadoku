@@ -272,7 +272,9 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 					return fmt.Errorf("--create requires a local Markdown filename.")
 				}
 				s := &session.Session{Root: filepath.Dir(source), CanCreate: true, Repository: repo, Sources: map[int64]string{}}
-				result, e := s.Invoke(ctx, "CreateDocument", session.Input{Filename: filepath.Base(source), Title: o.Values["title"]})
+				// Windows path normalization can remove a trailing dot before the
+				// filename validator sees it. Validate the spelling the user supplied.
+				result, e := s.Invoke(ctx, "CreateDocument", session.Input{Filename: filepath.Base(words[2]), Title: o.Values["title"]})
 				if e != nil {
 					return documentError(e)
 				}

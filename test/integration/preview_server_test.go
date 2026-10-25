@@ -20,6 +20,7 @@ import (
 	"github.com/mukopikmin/sadoku/gen/go/sadoku/preview/v1/previewv1connect"
 	"github.com/mukopikmin/sadoku/src/server"
 	"github.com/mukopikmin/sadoku/src/server/cli"
+	"github.com/ncruces/go-sqlite3"
 )
 
 type readyOutput struct{ ready chan string }
@@ -41,6 +42,10 @@ func (output readyOutput) Write(data []byte) (int, error) {
 
 func startServer(t *testing.T, source string, port int, keepAlive bool) (string, <-chan struct{}) {
 	t.Helper()
+	// Readiness timing excludes the one-time SQLite Wasm compilation.
+	if err := sqlite3.Initialize(); err != nil {
+		t.Fatal(err)
+	}
 	root := t.TempDir()
 	t.Setenv("SADOKU_COMMENTS_DIR", filepath.Join(root, "comments"))
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(root, "config"))

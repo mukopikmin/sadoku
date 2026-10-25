@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/mukopikmin/sadoku/src/server/cli"
+	"github.com/ncruces/go-sqlite3"
 )
 
 type previewOutput struct {
@@ -32,6 +33,11 @@ func (o *previewOutput) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 func TestPreviewCommandOutput(t *testing.T) {
+	// Compile the SQLite Wasm module before measuring server readiness. Cold
+	// compilation can exceed ten seconds on a busy race-test runner.
+	if err := sqlite3.Initialize(); err != nil {
+		t.Fatal(err)
+	}
 	for _, directory := range []bool{false, true} {
 		t.Run(fmt.Sprintf("directory=%v", directory), func(t *testing.T) {
 			root := t.TempDir()
