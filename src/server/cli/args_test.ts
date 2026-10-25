@@ -20,7 +20,6 @@ Deno.test("parses document add file creation options", () => {
   );
   for (
     const args of [
-      ["document", "add", "notes", "--title", "Notes"],
       ["document", "list", "--create"],
       ["document", "inspect", "1", "--create"],
       ["start", "notes.md", "--create"],
@@ -539,5 +538,29 @@ Deno.test("requires explicit preview-only forwarded-prefix trust", () => {
       () => parseArgs([...command, "--trust-forwarded-prefix"]),
       CliUsageError,
     );
+  }
+});
+
+Deno.test("document add accepts a title and rejects titles on other commands", () => {
+  assertEquals(
+    parseArgs(["document", "add", "README.md", "--title", "Preview guide"])
+      .title,
+    "Preview guide",
+  );
+  assertEquals(
+    parseArgs(["document", "add", "README.md", "--title="]).title,
+    "",
+  );
+  for (
+    const args of [
+      ["document", "list", "--title", "Guide"],
+      ["document", "inspect", "1", "--title", "Guide"],
+      ["start", "README.md", "--title", "Guide"],
+      ["document", "add", "README.md", "--title", "One\nTwo"],
+      ["document", "add", "README.md", "--title", "One\rTwo"],
+      ["document", "add", "README.md", "--title", "One\u0000Two"],
+    ]
+  ) {
+    assertThrows(() => parseArgs(args), CliUsageError);
   }
 });
