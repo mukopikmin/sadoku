@@ -13,23 +13,10 @@ jobs:
   test:
     name: Server
     runs-on: ubuntu-latest
-    env:
-      DENO_DIR: /tmp/sadoku-deno-cache
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Read Deno requirement
-        id: engines
-        run: |
-          deno_version="$(jq -er '.engines.deno' package.json)"
-          echo "deno=${deno_version}" >> "${GITHUB_OUTPUT}"
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: ${{ steps.engines.outputs.deno }}
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -50,16 +37,16 @@ jobs:
         run: npm run install:deps
 
       - name: Check formatting
-        run: deno fmt --check
+        run: npm run fmt:check
 
-      - name: Type check
-        run: deno task check
+      - name: Build client assets
+        run: npm run build:client
 
       - name: Test repository tooling
-        run: deno task test
+        run: npm run test:tools
 
       - name: Check Go formatting
-        run: test -z "$(gofmt -l cmd src/server src/preview/assets.go gen/go test/integration)"
+        run: test -z "$(gofmt -l cmd internal src/server src/preview/assets.go gen/go test/integration)"
 
       - name: Vet Go server
         run: go vet ./...
@@ -68,7 +55,7 @@ jobs:
         run: npm run test:server
 
       - name: Compile
-        run: deno task compile --output /tmp/sadoku-ci
+        run: npm run compile -- --output /tmp/sadoku-ci
 
       - name: Test Linux installer
         run: |
@@ -76,7 +63,7 @@ jobs:
           trap 'rm -rf "$install_home"' EXIT
           # Keep Go's read-only module cache outside the disposable install home.
           GOMODCACHE="$(go env GOMODCACHE)" GOCACHE="$(go env GOCACHE)" \
-            HOME="$install_home" deno task install --version 0.0.0-ci
+            HOME="$install_home" npm run install:source -- --version 0.0.0-ci
           test "$("$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
 
   client:

@@ -3,28 +3,38 @@
   "description": "Preview a Markdown file in a local browser-friendly server.",
   "private": true,
   "engines": {
-    "node": "^26.12.1",
-    "deno": "^2.9.8"
+    "node": "^26.12.1"
   },
   "scripts": {
     "build:client": "npm --prefix src/preview run build",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
     "postinstall": "npm ci --prefix src/preview",
     "proto:check": "npm run proto:lint && npm run proto:generate && git add --intent-to-add -- gen/ts gen/go && git diff --exit-code -- gen/ts gen/go",
-    "proto:generate": "buf generate && deno fmt gen/ts",
+    "proto:generate": "buf generate && prettier --write gen/ts",
     "proto:lint": "buf lint",
     "test": "npm --prefix src/preview test",
     "start": "npm run build:client && go run ./cmd/sadoku start",
     "run": "go run ./cmd/sadoku",
     "test:server": "go test -race -count=1 -timeout=120s ./...",
-    "build:server": "go build -trimpath -o sadoku ./cmd/sadoku",
-    "proto:tools": "go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11 && go install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.20.0"
+    "build:server": "go run ./cmd/sadoku-tools build",
+    "proto:tools": "go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11 && go install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.20.0",
+    "compile": "npm run build:client && go run ./cmd/sadoku-tools build",
+    "dist": "npm run build:client && go run ./cmd/sadoku-tools dist",
+    "install:source": "npm run install:deps && npm run build:client && go run ./cmd/sadoku-tools install",
+    "notices": "go run ./cmd/sadoku-tools notices",
+    "release:check": "go run ./cmd/sadoku-tools release-check",
+    "release:notes": "go run ./cmd/sadoku-tools release-notes",
+    "test:tools": "go test -race -count=1 ./internal/tooling && node --test scripts/cloud_run_preview_comment_test.mts",
+    "fmt": "prettier --write scripts/*.mts gen/ts",
+    "fmt:check": "prettier --check scripts/*.mts gen/ts",
+    "check": "go vet ./..."
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.16.0"
   },
   "devDependencies": {
     "@bufbuild/buf": "1.73.0",
-    "@bufbuild/protoc-gen-es": "2.16.0"
+    "@bufbuild/protoc-gen-es": "2.16.0",
+    "prettier": "3.6.2"
   }
 }

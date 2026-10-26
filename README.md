@@ -188,8 +188,8 @@ git tag --annotate v<version> <approved-full-sha> \
 ```
 
 Pushing that tag starts automatic validation, builds, attestation, notes
-generation, and publication. `deno task release:check --version <version>` and
-`deno task release:notes --version <version> --output release-notes.json`
+generation, and publication. `npm run release:check -- --version <version>` and
+`npm run release:notes -- --version <version> --output release-notes.json`
 require Git, an authenticated GitHub CLI, and the release and comparison tags
 locally. Both commands read the approved baseline from the annotated tag and
 compare it with a fresh GitHub lookup. Missing, duplicate, or invalid trailers
@@ -258,29 +258,44 @@ Japanese text uses bundled Noto Sans JP with no external font service. See the
 
 ## Development
 
-The backend and CLI use Go 1.26. Node.js and Deno versions for the client and
-repository tooling are specified in `package.json`. Run from source:
+The backend, CLI, and repository tools use Go 1.26. Node.js is used for the
+preview client; its required version is specified in `package.json`.
+Run from source:
 
 ```sh
 npm install
 npm run start -- README.md
 ```
 
-Checks: `go vet ./...`, `npm run test:server`, `deno fmt --check`,
-`deno task check`, `npm test`, and `deno task test` (repository tooling). Build
-a standalone Go binary with embedded client assets using
-`npm run build:client && npm run build:server`. The binary needs neither Go nor
-Deno installed. `deno task compile` remains a compatibility entry point for the
-release and installation scripts and also builds the Go binary.
+Checks: `npm run fmt:check`, `npm run check`, `npm run test:server`,
+`npm test`, and `npm run test:tools`. Build a standalone Go binary with embedded
+client assets using `npm run compile -- --version 1.2.3`. The binary needs
+neither Go nor Node.js installed.
+
+Repository tools run from the repository root:
+
+```sh
+go run ./cmd/sadoku-tools build --version 1.2.3 --target windows-x64 --output sadoku.exe
+go run ./cmd/sadoku-tools install --version 1.2.3
+npm run dist -- --version 1.2.3
+npm run notices
+npm run release:check -- --version 1.2.3
+npm run release:notes -- --version 1.2.3 --output release-notes.json
+```
+
+Build client assets first when invoking `build`, `install`, or `dist` directly.
+Source installation supports macOS and Linux. Archive creation uses Go's standard
+library on every host and supports `darwin-arm64`, `linux-x64`, and `windows-x64`.
+Use repeated `--target` flags to limit distribution builds. Nightly builds use
+`--version nightly --binary-version nightly-YYYYMMDD-COMMIT`.
 
 Install the pinned Go protobuf generators with `npm run proto:tools` before
 `npm run proto:check`; ensure `$(go env GOPATH)/bin` is on `PATH`. Go and
 TypeScript bindings share `proto/sadoku/preview/v1/preview.proto`.
 
-The server and CLI are implemented and tested in Go. The previous TypeScript
-server has been removed; `deno task test` covers repository tooling under
-`scripts/`. Build, release, and source installation scripts continue to use
-Deno.
+Server and tooling tests use Go. The inline GitHub JavaScript action test uses
+Node's built-in test runner. Generated TypeScript bindings and the Node test use
+Prettier; Go formatting uses `gofmt`.
 
 See [contributor guidelines](AGENTS.md), [proxy setup](proxy/README.md), and the
 [release workflow guide](.agents/skills/sadoku-release/SKILL.md) for details.

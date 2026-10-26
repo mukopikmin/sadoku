@@ -17,11 +17,11 @@ them when making changes.
   check cannot run because of an environment limitation, identify the limitation
   before attempting to create the pull request and clearly report the unverified
   check; never describe an incomplete or failed check as successful.
-- Prefer the stable project entry points defined in `deno.json` and
-  `package.json` instead of duplicating their underlying commands.
+- Prefer the stable project entry points defined in `package.json` and
+  `cmd/sadoku-tools` instead of duplicating their underlying commands.
 - Use `npm install` to install dependencies. The root `postinstall` installs the
   preview client's dependencies under `src/preview/`.
-- Keep `deno.lock`, the root `package-lock.json`, and
+- Keep the root `package-lock.json` and
   `src/preview/package-lock.json` consistent with dependency changes.
 - Add or update focused tests for application behavior changes. Do not rely only
   on a successful build.
@@ -75,14 +75,12 @@ them when making changes.
 
 ## 3. Repository Tooling
 
-- Deno remains the runtime for build, release, installation, and tooling tests
-  under `scripts/`. Application behavior and server tests use Go.
-- Keep tooling permissions narrowly scoped and use `DENO_NO_PACKAGE_JSON=1`
-  where existing tasks do so.
-- Prefer functions and plain objects in TypeScript tools. Error subclasses are
-  permitted when interoperability requires them.
-- Keep release and notice generation in `scripts/`; preserve release validation
-  and approval gates when changing those tools.
+- Repository build, release, installation, and notice tools use Go under
+  `internal/tooling/`, with the entry point `cmd/sadoku-tools/`.
+- Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
+  scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
+- Keep release validation and approval gates when changing those tools.
+- Use Prettier for generated TypeScript bindings and the Node action test.
 
 ## 4. Preview Client and Generated Assets
 
@@ -126,8 +124,7 @@ them when making changes.
 
 ## 5. Testing Conventions
 
-- Co-locate server unit tests as `*_test.go`. Keep Deno tooling tests under
-  `scripts/` as `*_test.ts`.
+- Co-locate server and tooling unit tests as `*_test.go`.
 - Put cross-module Go server workflows in `test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
