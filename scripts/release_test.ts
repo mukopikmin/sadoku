@@ -194,21 +194,6 @@ Deno.test("rejects stale main, changed tags, existing releases, and invalid note
   }
 });
 
-Deno.test("requires successful tests for the exact tagged commit", async () => {
-  for (
-    const ci of [
-      [],
-      [{ conclusion: "failure", headSha: head, url: "failed" }],
-      [{ conclusion: "", headSha: head, url: "pending" }],
-      [{ conclusion: "success", headSha: previous, url: "other commit" }],
-    ]
-  ) {
-    const result = await inspectRelease("0.10.0", releaseRunner({ ci }));
-    assertEquals(result.ok, false);
-    assertEquals(result.checks.find((check) => check.name === "ci")?.ok, false);
-  }
-});
-
 Deno.test("checks the root baseline only for the first stable release", async () => {
   const first = { previousTag: BASELINE_TAG };
   assertEquals((await inspectRelease("0.10.0", releaseRunner(first))).ok, true);
@@ -362,9 +347,14 @@ Deno.test("rejects inconsistent baseline lookups before writing notes", async ()
   }
 });
 
-Deno.test("validates CI metadata and includes returned runs in diagnostics", async () => {
-  for (
-    const [field, value] of Object.entries({
+for (
+  const { name, ci } of [
+    { name: "no runs", ci: [] },
+    {
+      name: "blank conclusion",
+      ci: [{ conclusion: "", headSha: head, url: "pending" }],
+    },
+    ...Object.entries({
       databaseId: 0,
       workflowName: "Other",
       headBranch: "v0.10.0",
@@ -373,26 +363,29 @@ Deno.test("validates CI metadata and includes returned runs in diagnostics", asy
       conclusion: "failure",
       headSha: previous,
       url: "",
-    })
-  ) {
+    }).map(([field, value]) => ({
+      name: field,
+      ci: [{
+        conclusion: "success",
+        headSha: head,
+        url: "https://example.test/run",
+        [field]: value,
+      }],
+    })),
+  ]
+) {
+  Deno.test(`rejects invalid release CI (${name}) and reports returned runs`, async () => {
     const result = await inspectRelease(
       "0.10.0",
-      releaseRunner({
-        ci: [{
-          conclusion: "success",
-          headSha: head,
-          url: "https://example.test/run",
-          [field]: value,
-        }],
-      }),
+      releaseRunner({ ci }),
     );
-    assertEquals(result.ok, false, field);
-    assertEquals(result.ciRuns.length, 1);
+    assertEquals(result.ok, false);
+    assertEquals(result.ciRuns.length, ci.length);
+    const check = result.checks.find((check) => check.name === "ci");
+    assertEquals(check?.ok, false);
     assertEquals(
-      result.checks.find((check) => check.name === "ci")?.actual.includes(
-        "returned runs:",
-      ),
+      check?.actual.includes("returned runs:"),
       true,
     );
-  }
-});
+  });
+}
