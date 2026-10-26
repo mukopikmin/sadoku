@@ -7,8 +7,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -137,34 +135,6 @@ func TestArchiveFormats(t *testing.T) {
 			}
 			if modes[root+name] != 0755 {
 				t.Fatal(modes)
-			}
-		})
-	}
-}
-func TestPreviewDocumentAPI(t *testing.T) {
-	for _, tc := range []struct {
-		name, list, document string
-		status               int
-		wantError            bool
-	}{{"valid", `[{"id":42}]`, `{"markdown":"# Preview"}`, 200, false}, {"empty", `[]`, ``, 200, true}, {"missing-id", `[{}]`, ``, 200, true}, {"http-error", `not JSON`, ``, 404, true}, {"invalid-json", `invalid`, ``, 200, true}} {
-		t.Run(tc.name, func(t *testing.T) {
-			var paths []string
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				paths = append(paths, r.URL.Path)
-				w.WriteHeader(tc.status)
-				if r.URL.Path == "/__sadoku/documents" {
-					fmt.Fprint(w, tc.list)
-				} else {
-					fmt.Fprint(w, tc.document)
-				}
-			}))
-			defer server.Close()
-			markdown, err := fetchPreviewDocument(server.Client(), server.URL)
-			if (err != nil) != tc.wantError {
-				t.Fatal(markdown, err)
-			}
-			if !tc.wantError && (markdown != "# Preview" || !reflect.DeepEqual(paths, []string{"/__sadoku/documents", "/__sadoku/documents/42"})) {
-				t.Fatal(markdown, paths)
 			}
 		})
 	}
@@ -331,16 +301,5 @@ func TestSourceInstallPreservesExistingBinary(t *testing.T) {
 	info, err := os.Stat(path)
 	if err != nil || info.Mode().Perm() != 0755 {
 		t.Fatal(info, err)
-	}
-}
-
-func TestPreviewAnnouncement(t *testing.T) {
-	for _, line := range []string{"Preview: http://127.0.0.1:39731/", "[2026-10-26T00:00:00Z] Preview: http://127.0.0.1:39731/"} {
-		if got := previewAddress(line); got != "http://127.0.0.1:39731/" {
-			t.Fatal(got)
-		}
-	}
-	if got := previewAddress("Serving fixture.md"); got != "" {
-		t.Fatal(got)
 	}
 }

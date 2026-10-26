@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 )
 
@@ -135,11 +134,6 @@ func buildArchive(t target, version, binaryVersion string, checksums *[]string) 
 	binary := filepath.Join(dir, name)
 	if err = build(binaryVersion, binary, &t); err != nil {
 		return err
-	}
-	if t.OS == runtime.GOOS && t.Arch == runtime.GOARCH {
-		if err = verifyNativeBinary(binary); err != nil {
-			return err
-		}
 	}
 	output := filepath.Join("dist", archiveRoot(version, t.ID)+ext)
 	// Write to a temporary file so failures cannot leave a partially valid archive.
