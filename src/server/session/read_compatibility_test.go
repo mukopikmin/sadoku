@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -35,6 +37,11 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 			Status      int
 			Text, Error string
 		}
+		Redirects []struct {
+			Redirects   int
+			Text, Error string
+		}
+		Credentials string
 	}
 	b, err := os.ReadFile("testdata/legacy_reads.json")
 	if err != nil {
@@ -46,6 +53,38 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 	if fixture.Reference != "368b47eb1ae18a84d428ce4367d25cb815584968" {
 		t.Fatal("unknown read reference")
 	}
+	for _, test := range fixture.Redirects {
+		t.Run(fmt.Sprintf("redirects/%d", test.Redirects), func(t *testing.T) {
+			remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				n, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/"))
+				if n > 0 {
+					http.Redirect(w, r, "/"+strconv.Itoa(n-1), http.StatusFound)
+					return
+				}
+				fmt.Fprint(w, "# Title")
+			}))
+			defer remote.Close()
+			text, err := ReadMarkdown(context.Background(), remote.URL+"/"+strconv.Itoa(test.Redirects))
+			if test.Error != "" {
+				if err == nil || err.Error() != test.Error {
+					t.Fatalf("redirect limit: %v; want %q", err, test.Error)
+				}
+			} else if err != nil || text != test.Text {
+				t.Fatalf("redirect response: %q %v; want %q", text, err, test.Text)
+			}
+		})
+	}
+	t.Run("URL credentials", func(t *testing.T) {
+		remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprint(w, r.Header.Get("Authorization"))
+		}))
+		defer remote.Close()
+		source := strings.Replace(remote.URL, "http://", "http://user:pass@", 1)
+		text, err := ReadMarkdown(context.Background(), source)
+		if err != nil || text != fixture.Credentials {
+			t.Fatalf("credentials: %q %v; want %q", text, err, fixture.Credentials)
+		}
+	})
 	for i, test := range fixture.Decoding {
 		t.Run(fmt.Sprintf("decoding/%d", i), func(t *testing.T) {
 			data := make([]byte, len(test.Bytes))

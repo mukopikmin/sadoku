@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -61,6 +62,9 @@ func parseHTTPURL(input string) *whatwg.Url {
 	}
 	return parsed
 }
+
+var errRedirectLimit = errors.New("Fetch failed: Maximum number of redirects (20) reached")
+
 func ReadMarkdown(ctx context.Context, source string) (string, error) {
 	_, fetch, remote := Source(source)
 	if !remote {
@@ -71,11 +75,19 @@ func ReadMarkdown(ctx context.Context, source string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(_ *http.Request, via []*http.Request) error {
+		if len(via) > 20 {
+			return errRedirectLimit
+		}
+		return nil
+	}}
 	resp, err := client.Do(req)
 	if err != nil {
 		if ctx.Err() != nil {
 			return "", ctx.Err()
+		}
+		if errors.Is(err, errRedirectLimit) {
+			return "", errRedirectLimit
 		}
 		return "", fmt.Errorf("fetch failed")
 	}

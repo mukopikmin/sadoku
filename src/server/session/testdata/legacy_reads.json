@@ -115,5 +115,24 @@
       "status": 500,
       "error": "Failed to fetch Markdown URL: 500 Internal Server Error"
     }
-  ]
+  ],
+  "redirects": [
+    {
+      "redirects": 10,
+      "text": "# Title"
+    },
+    {
+      "redirects": 11,
+      "text": "# Title"
+    },
+    {
+      "redirects": 20,
+      "text": "# Title"
+    },
+    {
+      "redirects": 21,
+      "error": "Fetch failed: Maximum number of redirects (20) reached"
+    }
+  ],
+  "credentials": "Basic dXNlcjpwYXNz"
 }

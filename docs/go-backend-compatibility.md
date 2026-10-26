@@ -44,8 +44,9 @@ responses are compared directly.
   normalization, escaped paths and dot segments, IPv4/IPv6, query/fragment
   removal, remote document titles, and GitHub pull recognition/identities. The
   WHATWG parser preserves the JavaScript URL rules used by existing databases.
-- Markdown reading compares 26 recorded results across local/remote UTF-8
-  decoding (including BOM and malformed bytes) and HTTP success/error statuses.
+- Markdown reading compares 31 recorded results across local/remote UTF-8
+  decoding (including BOM and malformed bytes), HTTP success/error statuses,
+  redirect chains through the legacy 20-hop limit, and URL credentials.
   Transport failures and cancellation have separate tests.
 - GitHub preparation compares 21 recorded adapter scenarios, including command
   diagnostics, missing/malformed metadata, file-list failures, pagination, and
