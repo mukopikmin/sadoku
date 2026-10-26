@@ -1,10 +1,13 @@
 package tooling
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -19,7 +22,7 @@ type scenario struct {
 	ci                                                                                                                  []ciRun
 }
 
-func releaseRunner(t *testing.T, s scenario) runner {
+func releaseRunner(t *testing.T, s scenario) releaseFixture {
 	t.Helper()
 	fallback := func(s, def string) string {
 		if s != "" {
@@ -47,7 +50,7 @@ func releaseRunner(t *testing.T, s scenario) runner {
 	if s.first || s.emptyTags {
 		responses["ls-remote --tags origin refs/tags/v*"] = ""
 	}
-	return func(command string, args ...string) commandResult {
+	return releaseFixture{previousTag: previous, run: func(command string, args ...string) commandResult {
 		key := strings.Join(args, " ")
 		if s.fail != "" && strings.Contains(command+" "+key, s.fail) {
 			return commandResult{false, "", "command failed"}
@@ -91,7 +94,7 @@ func releaseRunner(t *testing.T, s scenario) runner {
 		}
 		t.Fatalf("unexpected command %s %s", command, key)
 		return commandResult{}
-	}
+	}}
 }
 func TestReleaseInspection(t *testing.T) {
 	cases := []struct {
@@ -107,7 +110,7 @@ func TestReleaseInspection(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			r, err := inspectRelease("0.10.0", releaseRunner(t, tc.s))
+			r, err := inspectRelease(t, "0.10.0", releaseRunner(t, tc.s))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -141,7 +144,7 @@ func TestReleaseRequiresExactCI(t *testing.T) {
 	cases[7].URL = ""
 	for i, c := range cases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			r, err := inspectRelease("0.10.0", releaseRunner(t, scenario{ci: []ciRun{c}}))
+			r, err := inspectRelease(t, "0.10.0", releaseRunner(t, scenario{ci: []ciRun{c}}))
 			if err != nil || r.OK {
 				t.Fatalf("accepted invalid CI: %+v %v", r, err)
 			}
@@ -150,7 +153,7 @@ func TestReleaseRequiresExactCI(t *testing.T) {
 			}
 		})
 	}
-	r, err := inspectRelease("0.10.0", releaseRunner(t, scenario{ci: []ciRun{}}))
+	r, err := inspectRelease(t, "0.10.0", releaseRunner(t, scenario{ci: []ciRun{}}))
 	if err != nil || r.OK {
 		t.Fatal("accepted missing CI", err)
 	}
@@ -158,18 +161,18 @@ func TestReleaseRequiresExactCI(t *testing.T) {
 func TestReleaseFailsClosed(t *testing.T) {
 	for _, fail := range []string{"gh api", "git fetch", "git ls-remote --exit-code", "gh run", "git ls-remote --tags", "git for-each-ref"} {
 		t.Run(fail, func(t *testing.T) {
-			_, err := inspectRelease("0.10.0", releaseRunner(t, scenario{fail: fail}))
+			_, err := inspectRelease(t, "0.10.0", releaseRunner(t, scenario{fail: fail}))
 			if err == nil || !strings.Contains(err.Error(), "command failed") {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
 	}
 	for _, s := range []scenario{{emptyReleases: true}, {approved: "v0.8.0"}, {emptyReleases: true, emptyTags: true}, {releases: "malformed JSON"}} {
-		if _, err := inspectRelease("0.10.0", releaseRunner(t, s)); err == nil {
+		if _, err := inspectRelease(t, "0.10.0", releaseRunner(t, s)); err == nil {
 			t.Fatal("accepted inconsistent context")
 		}
-		output := filepath.Join(t.TempDir(), "notes.json")
-		if err := generateNotes("0.10.0", output, releaseRunner(t, s)); err == nil {
+		output := filepath.Join(t.TempDir(), "notes with spaces.json")
+		if err := generateNotes(t, "0.10.0", output, releaseRunner(t, s)); err == nil {
 			t.Fatal("generated inconsistent notes")
 		}
 		if _, err := os.Stat(output); !os.IsNotExist(err) {
@@ -179,33 +182,44 @@ func TestReleaseFailsClosed(t *testing.T) {
 }
 func TestReleaseArgumentsAndBaseline(t *testing.T) {
 	for _, v := range []string{"v0.1.0", "01.0.0", "0.01.0", "0.1.00", "0.1.0-rc.1", "0.1.0+build.1"} {
-		if err := Run([]string{"release-check", "--version", v}); err == nil {
+		if _, _, err := runRelease(t, releaseRunner(t, scenario{}), "check", "--version", v); err == nil {
 			t.Fatal("accepted", v)
 		}
 	}
-	if err := Run([]string{"release-notes", "--version", "0.1.0"}); err == nil {
+	if _, _, err := runRelease(t, releaseRunner(t, scenario{}), "notes", "--version", "0.1.0"); err == nil {
 		t.Fatal("accepted missing output")
 	}
 	for _, s := range []string{"", "commit\nv0.9.0", "tag", "tag\nv0.9.0\nv0.9.0", "tag\nv0.9.0\nv1.0.0", "tag\nv01.0.0", "tag\nnightly", "tag\nv0.9.0-nightly"} {
-		if _, err := readApprovedBaseline(s); err == nil {
+		info := s
+		if info == "" {
+			info = "\n"
+		}
+		if _, _, err := runRelease(t, releaseRunner(t, scenario{tagInfo: info}), "check", "--version", "0.10.0"); err == nil {
 			t.Fatal("accepted", s)
 		}
 	}
-	for _, s := range []string{"v0.9.0", baselineTag} {
-		if got, err := readApprovedBaseline("tag\n" + s + "\n"); err != nil || got != s {
-			t.Fatal(got, err)
+	for _, tag := range []string{"v0.9.0", baselineTag} {
+		r, err := inspectRelease(t, "0.10.0", releaseRunner(t, scenario{previousTag: tag, first: tag == baselineTag}))
+		if err != nil || !r.OK {
+			t.Fatal(r, err)
 		}
 	}
-	if got := selectPreviousStableTag([]release{{"nightly", false, false}, {"v0.3.0", true, false}, {"v0.2.0", false, false}, {"v0.1.0", false, false}}); got != "v0.2.0" {
-		t.Fatal(got)
+	r, err := inspectRelease(t, "0.10.0", releaseRunner(t, scenario{previousTag: "v0.2.0", releases: `{"tagName":"nightly","isDraft":false,"isPrerelease":false}
+{"tagName":"v0.3.0","isDraft":true,"isPrerelease":false}
+{"tagName":"v0.2.0","isDraft":false,"isPrerelease":false}
+{"tagName":"v0.1.0","isDraft":false,"isPrerelease":false}`}))
+	if err != nil || r.PreviousStableTag != "v0.2.0" {
+		t.Fatal(r, err)
 	}
-	if !isNewerVersion("999999999999999999999.0.0", "v1.0.0") {
-		t.Fatal("version overflow")
+	r, err = inspectRelease(t, "0.10.0", releaseRunner(t, scenario{previousTag: "v0.999999999999999999999.0"}))
+	if err != nil || r.OK || r.Checks[4].OK {
+		t.Fatal("version overflow", r, err)
 	}
+
 }
 func TestGenerateNotes(t *testing.T) {
-	output := filepath.Join(t.TempDir(), "notes.json")
-	if err := generateNotes("0.10.0", output, releaseRunner(t, scenario{})); err != nil {
+	output := filepath.Join(t.TempDir(), "notes with spaces.json")
+	if err := generateNotes(t, "0.10.0", output, releaseRunner(t, scenario{})); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(output)
@@ -220,7 +234,7 @@ func TestGenerateNotes(t *testing.T) {
 		t.Fatal(result)
 	}
 	for _, notes := range []string{`{}`, `{"body":""}`, `{"body":" \n"}`, `malformed`} {
-		if err = generateNotes("0.10.0", output, releaseRunner(t, scenario{notes: notes})); err == nil {
+		if err = generateNotes(t, "0.10.0", output, releaseRunner(t, scenario{notes: notes})); err == nil {
 			t.Fatal("accepted empty notes")
 		}
 		unchanged, _ := os.ReadFile(output)
@@ -228,4 +242,123 @@ func TestGenerateNotes(t *testing.T) {
 			t.Fatal("replaced existing notes on failure")
 		}
 	}
+}
+
+// Exercise the production shell script with isolated git/gh command fixtures.
+// No test contacts GitHub or changes repository tags.
+const baselineTag = "release-notes-baseline"
+
+type runner func(string, ...string) commandResult
+type release struct {
+	TagName      string `json:"tagName"`
+	IsDraft      bool   `json:"isDraft"`
+	IsPrerelease bool   `json:"isPrerelease"`
+}
+type ciRun struct {
+	DatabaseID   int    `json:"databaseId"`
+	WorkflowName string `json:"workflowName"`
+	HeadBranch   string `json:"headBranch"`
+	Event        string `json:"event"`
+	Status       string `json:"status"`
+	Conclusion   string `json:"conclusion"`
+	HeadSHA      string `json:"headSha"`
+	URL          string `json:"url"`
+}
+type releaseInspection struct {
+	OK                bool   `json:"ok"`
+	PreviousStableTag string `json:"previousStableTag"`
+	Checks            []struct {
+		Name   string `json:"name"`
+		OK     bool   `json:"ok"`
+		Actual string `json:"actual"`
+	} `json:"checks"`
+}
+type releaseFixture struct {
+	previousTag string
+	run         runner
+}
+
+func runRelease(t *testing.T, fixture releaseFixture, args ...string) ([]byte, string, error) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("Bash release tooling is exercised on Unix")
+	}
+	for _, name := range []string{"bash", "jq"} {
+		if _, err := exec.LookPath(name); err != nil {
+			t.Fatalf("required test command %s: %v", name, err)
+		}
+	}
+	commands := [][]string{
+		{"git", "rev-parse", "HEAD"},
+		{"gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"git", "for-each-ref", "--format=%(objecttype)%0a%(contents:trailers:key=Previous-Stable-Tag,valueonly)", "refs/tags/v0.10.0"},
+		{"gh", "api", "--paginate", "repos/owner/sadoku/releases?per_page=100", "--jq", ".[] | {tagName: .tag_name, isDraft: .draft, isPrerelease: .prerelease}"},
+		{"git", "ls-remote", "--tags", "origin", "refs/tags/v*"},
+		{"git", "fetch", "--no-tags", "origin", "main"},
+		{"git", "rev-parse", "origin/main"},
+		{"git", "rev-parse", "--verify", "refs/tags/v0.10.0"},
+		{"git", "rev-parse", "--verify", "refs/tags/v0.10.0^{commit}"},
+		{"git", "ls-remote", "--exit-code", "--tags", "origin", "refs/tags/v0.10.0"},
+		{"git", "rev-parse", "--verify", "refs/tags/" + fixture.previousTag + "^{commit}"},
+		{"git", "rev-list", "--max-parents=0", "HEAD"},
+		{"gh", "run", "list", "--repo", "owner/sadoku", "--workflow", "test.yml", "--branch", "main", "--event", "push", "--commit", testHead, "--limit", "1", "--json", "databaseId,workflowName,headBranch,event,status,conclusion,headSha,url"},
+		{"gh", "api", "--method", "POST", "repos/owner/sadoku/releases/generate-notes", "-f", "tag_name=v0.10.0", "-f", "target_commitish=" + testHead, "-f", "previous_tag_name=" + fixture.previousTag},
+	}
+	responses := map[string]commandResult{}
+	for _, args := range commands {
+		responses[strings.Join(args, " ")] = fixture.run(args[0], args[1:]...)
+	}
+	for _, previous := range []string{testPrevious, testHead} {
+		args := []string{"merge-base", "--is-ancestor", previous, testHead}
+		if previous == responses["git rev-parse --verify refs/tags/"+fixture.previousTag+"^{commit}"].Stdout {
+			responses["git "+strings.Join(args, " ")] = fixture.run("git", args...)
+		}
+	}
+	dir := t.TempDir()
+	data, err := json.Marshal(responses)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "responses.json")
+	writeTestFile(t, path, string(data), 0644)
+	stub := `#!/bin/sh
+key="${0##*/} $*"
+exec jq -er --arg key "$key" 'if has($key) then .[$key] | if .Success then .Stdout else .Stderr | halt_error(1) end else error("Unexpected command: " + $key) end' "$SADOKU_RELEASE_RESPONSES"
+`
+	for _, name := range []string{"git", "gh"} {
+		writeTestFile(t, filepath.Join(dir, name), stub, 0755)
+	}
+	script, err := filepath.Abs("../../scripts/release.sh")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command("bash", append([]string{script}, args...)...)
+	cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "SADOKU_RELEASE_RESPONSES="+path)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.Output()
+	return stdout, stderr.String(), err
+}
+func inspectRelease(t *testing.T, version string, fixture releaseFixture) (releaseInspection, error) {
+	t.Helper()
+	out, stderr, err := runRelease(t, fixture, "check", "--version", version)
+	var result releaseInspection
+	if len(out) == 0 {
+		return result, fmt.Errorf("%v: %s", err, stderr)
+	}
+	if decodeErr := json.Unmarshal(out, &result); decodeErr != nil {
+		return result, fmt.Errorf("%v: %s %s", decodeErr, out, stderr)
+	}
+	if result.OK != (err == nil) {
+		return result, fmt.Errorf("exit status does not match release result: %v: %s", err, stderr)
+	}
+	return result, nil
+}
+func generateNotes(t *testing.T, version, output string, fixture releaseFixture) error {
+	t.Helper()
+	_, stderr, err := runRelease(t, fixture, "notes", "--version", version, "--output", output)
+	if err != nil {
+		return fmt.Errorf("%v: %s", err, stderr)
+	}
+	return nil
 }

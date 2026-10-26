@@ -75,8 +75,9 @@ them when making changes.
 
 ## 3. Repository Tooling
 
-- Repository build, release, installation, and notice tools use Go under
-  `internal/tooling/`, with the entry point `cmd/sadoku-tools/`.
+- Build, source installation, and notice tools use Go under `internal/tooling/`,
+  with the entry point `cmd/sadoku-tools/`. Release validation and note generation
+  use Bash, Git, GitHub CLI, and jq in `scripts/release.sh` and `scripts/release.jq`.
 - Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
   scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
 - Keep release validation and approval gates when changing those tools.

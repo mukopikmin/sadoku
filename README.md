@@ -190,8 +190,8 @@ git tag --annotate v<version> <approved-full-sha> \
 Pushing that tag starts automatic validation, builds, attestation, notes
 generation, and publication. `npm run release:check -- --version <version>` and
 `npm run release:notes -- --version <version> --output release-notes.json`
-require Git, an authenticated GitHub CLI, and the release and comparison tags
-locally. Both commands read the approved baseline from the annotated tag and
+require Bash, jq, Git, an authenticated GitHub CLI, and the release and
+comparison tags locally. Both commands read the approved baseline from the annotated tag and
 compare it with a fresh GitHub lookup. Missing, duplicate, or invalid trailers
 fail.
 
@@ -258,7 +258,8 @@ Japanese text uses bundled Noto Sans JP with no external font service. See the
 
 ## Development
 
-The backend, CLI, and repository tools use Go 1.26. Node.js is used for the
+The backend, CLI, build, and notice tools use Go 1.26. Release validation and
+notes use Bash with Git, GitHub CLI, and jq. Node.js is used for the
 preview client; its required version is specified in `package.json`.
 Run from source:
 

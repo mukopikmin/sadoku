@@ -40,23 +40,23 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-
       - name: Validate release target
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          go run ./cmd/sadoku-tools release-check --version "${RELEASE_TAG#v}" > release-check.json || { cat release-check.json; exit 1; }
+          bash scripts/release.sh check --version "${RELEASE_TAG#v}" > release-check.json || { cat release-check.json; exit 1; }
           cat release-check.json
           echo "version=$(jq -er .version release-check.json)" >> "${GITHUB_OUTPUT}"
           echo "target-sha=$(jq -er .headSha release-check.json)" >> "${GITHUB_OUTPUT}"
           echo "tag-object=$(jq -er .tagObject release-check.json)" >> "${GITHUB_OUTPUT}"
           echo "previous-stable-tag=$(jq -er .previousStableTag release-check.json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -112,11 +112,6 @@ jobs:
           ref: ${{ needs.build.outputs.target-sha }}
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-
       - name: Download this run's release artifacts
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -149,7 +144,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          go run ./cmd/sadoku-tools release-notes --version "${VERSION}" --output release-notes.json
+          bash scripts/release.sh notes --version "${VERSION}" --output release-notes.json
           test "$(jq -er .headSha release-notes.json)" = "${TARGET_SHA}"
           test "$(jq -er .previousStableTag release-notes.json)" = "${PREVIOUS_STABLE_TAG}"
           jq -er .body release-notes.json > release-notes.md
@@ -157,7 +152,7 @@ jobs:
 
       - name: Revalidate immediately before publication
         run: |
-          go run ./cmd/sadoku-tools release-check --version "${VERSION}" > release-check.json || { cat release-check.json; exit 1; }
+          bash scripts/release.sh check --version "${VERSION}" > release-check.json || { cat release-check.json; exit 1; }
           test "$(jq -er .tag release-check.json)" = "${RELEASE_TAG}"
           test "$(jq -er .headSha release-check.json)" = "${TARGET_SHA}"
           test "$(jq -er .tagObject release-check.json)" = "${TAG_OBJECT}"

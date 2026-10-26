@@ -1,9 +1,8 @@
-// Package tooling implements build and release tools. Run commands from the repository root.
+// Package tooling implements build and notice tools. Run commands from the repository root.
 package tooling
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -22,7 +21,7 @@ var binaryVersionPattern = regexp.MustCompile(`^[0-9A-Za-z.+-]+$`)
 
 func Run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("expected build, install, dist, notices, release-check, or release-notes")
+		return errors.New("expected build, install, dist, or notices")
 	}
 	flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	version := flags.String("version", "", "binary or release version")
@@ -72,27 +71,6 @@ func Run(args []string) error {
 			*output = "THIRD_PARTY_NOTICES.md"
 		}
 		return generateNotices(*output)
-	case "release-check", "release-notes":
-		if !stableVersion.MatchString(*version) {
-			return fmt.Errorf("invalid semantic version: %s", *version)
-		}
-		if args[0] == "release-notes" {
-			if *output == "" {
-				return errors.New("release-notes requires --output")
-			}
-			return generateNotes(*version, *output, execute)
-		}
-		result, err := inspectRelease(*version, execute)
-		if err != nil {
-			return err
-		}
-		if err = printJSON(result); err != nil {
-			return err
-		}
-		if !result.OK {
-			return errors.New("release validation failed")
-		}
-		return nil
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
@@ -179,17 +157,11 @@ func atomicWrite(path string, data []byte, mode os.FileMode) error {
 	}
 	return os.Rename(f.Name(), path)
 }
-func printJSON(v any) error {
-	e := json.NewEncoder(os.Stdout)
-	e.SetIndent("", "  ")
-	return e.Encode(v)
-}
 
 type commandResult struct {
 	Success        bool
 	Stdout, Stderr string
 }
-type runner func(string, ...string) commandResult
 
 func execute(name string, args ...string) commandResult {
 	var stdout, stderr bytes.Buffer
