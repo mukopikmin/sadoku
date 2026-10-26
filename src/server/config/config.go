@@ -33,7 +33,10 @@ func Path() string {
 	if p := os.Getenv("XDG_CONFIG_HOME"); p != "" {
 		return filepath.Join(p, "sadoku", "config.toml")
 	}
-	p, _ := os.UserHomeDir()
+	p := os.Getenv("HOME")
+	if p == "" {
+		return ""
+	}
 	return filepath.Join(p, ".config", "sadoku", "config.toml")
 }
 
@@ -51,15 +54,8 @@ func Read() (Settings, map[string]any, error) {
 	if err = toml.Unmarshal(b, &extra); err != nil {
 		return s, map[string]any{}, nil
 	}
-	if err = toml.Unmarshal(b, &s); err != nil {
-		return s, extra, err
-	}
-	if value, ok := extra["commentsDirectory"]; ok {
-		if _, valid := value.(string); !valid {
-			return s, extra, fmt.Errorf("commentsDirectory in Sadoku config must be a string")
-		}
-	}
-	return s, extra, Validate(s, false)
+	s, err = settingsFromConfig(extra)
+	return s, extra, err
 }
 
 func Validate(s Settings, complete bool) error {
@@ -88,6 +84,9 @@ func Validate(s Settings, complete bool) error {
 func Save(s Settings) error {
 	if err := Validate(s, true); err != nil {
 		return err
+	}
+	if Path() == "" {
+		return fmt.Errorf("Cannot locate the Sadoku config file.")
 	}
 	_, extra, err := Read()
 	if err != nil {
@@ -159,8 +158,8 @@ func CommentsDirectory() (string, error) {
 	if p := os.Getenv("MDVIEW_COMMENTS_DIR"); p != "" {
 		return p, nil
 	}
-	home, _ := os.UserHomeDir()
-	if runtime.GOOS == "darwin" {
+	home := os.Getenv("HOME")
+	if runtime.GOOS == "darwin" && home != "" {
 		return filepath.Join(home, "Library", "Application Support", "sadoku", "comments"), nil
 	}
 	if runtime.GOOS == "windows" && os.Getenv("APPDATA") != "" {
@@ -168,6 +167,13 @@ func CommentsDirectory() (string, error) {
 	}
 	if p := os.Getenv("XDG_DATA_HOME"); p != "" {
 		return filepath.Join(p, "sadoku", "comments"), nil
+	}
+	if home == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(cwd, ".sadoku", "comments"), nil
 	}
 	return filepath.Join(home, ".local", "share", "sadoku", "comments"), nil
 }

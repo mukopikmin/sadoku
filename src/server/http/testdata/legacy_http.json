@@ -4276,6 +4276,567 @@
           }
         }
       }
+    },
+    {
+      "name": "numeric-rest",
+      "steps": [
+        {
+          "name": "PUT /documents/1/tags {\"tags\":[{\"name\":\"Numeric\"}]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {},
+          "rawBody": "{\"tags\":[{\"name\":\"Numeric\"}]}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 1,
+                "name": "Numeric",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME"
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /documents/1/tags {\"tags\":[{\"id\":1.0}]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {},
+          "rawBody": "{\"tags\":[{\"id\":1.0}]}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 1,
+                "name": "Numeric",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME"
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /documents/1/tags {\"tags\":[{\"id\":1e0}]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {},
+          "rawBody": "{\"tags\":[{\"id\":1e0}]}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 1,
+                "name": "Numeric",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME"
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /documents/1/comments {\"body\":\"Comment\",\"startLine\":1.0,\"endLine\":2e0}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {},
+          "rawBody": "{\"body\":\"Comment\",\"startLine\":1.0,\"endLine\":2e0}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Comment",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "id": 1,
+              "startLine": 1,
+              "endLine": 2,
+              "originalStartLine": 1,
+              "originalEndLine": 2,
+              "replies": [],
+              "resolved": false,
+              "stale": false,
+              "sourceText": "# Title\nBody",
+              "sourceHash": "2d570692",
+              "currentSourceText": "# Title\nBody"
+            }
+          }
+        },
+        {
+          "name": "POST /documents/1/comments {\"body\":\"Comment\",\"startLine\":1e0,\"endLine\":2.0}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {},
+          "rawBody": "{\"body\":\"Comment\",\"startLine\":1e0,\"endLine\":2.0}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Comment",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "id": 2,
+              "startLine": 1,
+              "endLine": 2,
+              "originalStartLine": 1,
+              "originalEndLine": 2,
+              "replies": [],
+              "resolved": false,
+              "stale": false,
+              "sourceText": "# Title\nBody",
+              "sourceHash": "2d570692",
+              "currentSourceText": "# Title\nBody"
+            }
+          }
+        },
+        {
+          "name": "POST /documents/1/comments/1e0/replies {\"body\":\"Reply\"}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments/1e0/replies",
+          "body": {},
+          "rawBody": "{\"body\":\"Reply\"}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Comment",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 1,
+              "replies": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Reply",
+                  "createdAt": "$TIME",
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "resolved": false,
+              "sourceHash": "2d570692",
+              "sourceText": "# Title\nBody",
+              "stale": false,
+              "startLine": 1,
+              "updatedAt": "$TIME",
+              "currentSourceText": "# Title\nBody"
+            }
+          }
+        },
+        {
+          "name": "PUT /documents/1/comments/0x1 {\"body\":\"Updated\"}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/comments/0x1",
+          "body": {},
+          "rawBody": "{\"body\":\"Updated\"}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 1,
+              "replies": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Reply",
+                  "createdAt": "$TIME",
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "resolved": false,
+              "sourceHash": "2d570692",
+              "sourceText": "# Title\nBody",
+              "stale": false,
+              "startLine": 1,
+              "updatedAt": "$TIME",
+              "currentSourceText": "# Title\nBody"
+            }
+          }
+        },
+        {
+          "name": "PUT /documents/1/comments/1.0/replies/0x1 {\"body\":\"Updated reply\"}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/comments/1.0/replies/0x1",
+          "body": {},
+          "rawBody": "{\"body\":\"Updated reply\"}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 1,
+              "replies": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated reply",
+                  "createdAt": "$TIME",
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "resolved": false,
+              "sourceHash": "2d570692",
+              "sourceText": "# Title\nBody",
+              "stale": false,
+              "startLine": 1,
+              "updatedAt": "$TIME",
+              "currentSourceText": "# Title\nBody"
+            }
+          }
+        },
+        {
+          "name": "POST /documents/1/instructions {\"content\":\"Original\"}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/instructions",
+          "body": {},
+          "rawBody": "{\"content\":\"Original\"}",
+          "expected": {
+            "status": 201,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "content": "Original",
+              "createdAt": "$TIME",
+              "documentId": 1,
+              "id": 1,
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "PUT /documents/1/instructions/1e0 {\"content\":\"Updated\"}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/instructions/1e0",
+          "body": {},
+          "rawBody": "{\"content\":\"Updated\"}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "content": "Updated",
+              "createdAt": "$TIME",
+              "documentId": 1,
+              "id": 1,
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "PATCH /tags/0x1 {\"name\":\"Renamed\"}",
+          "method": "PATCH",
+          "path": "/__sadoku/tags/0x1",
+          "body": {},
+          "rawBody": "{\"name\":\"Renamed\"}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": 1,
+              "name": "Renamed",
+              "backgroundColor": "#718096",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "GET /tags",
+          "method": "GET",
+          "path": "/__sadoku/tags",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 1,
+                "name": "Renamed",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /settings {\"theme\":\"dark\",\"codeWrap\":\"wrap\",\"fontScale\":1,\"maxDepth\":1.0,\"maxFiles\":2e1}",
+          "method": "PUT",
+          "path": "/__sadoku/settings",
+          "body": {},
+          "rawBody": "{\"theme\":\"dark\",\"codeWrap\":\"wrap\",\"fontScale\":1,\"maxDepth\":1.0,\"maxFiles\":2e1}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "theme": "dark",
+              "codeWrap": "wrap",
+              "fontScale": 1,
+              "showHtmlComments": true,
+              "excludedDirectories": [
+                ".git",
+                "node_modules"
+              ],
+              "maxDepth": 1,
+              "maxFiles": 20,
+              "markdownExtensions": [
+                ".md",
+                ".markdown"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /documents/1/comments {\"body\":\"Extra fields\",\"startLine\":2,\"endLine\":2,\"headSha\":{},\"tags\":null}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {},
+          "rawBody": "{\"body\":\"Extra fields\",\"startLine\":2,\"endLine\":2,\"headSha\":{},\"tags\":null}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Extra fields",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "id": 3,
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "replies": [],
+              "resolved": false,
+              "stale": false,
+              "sourceText": "Body",
+              "sourceHash": "428a1095",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "PATCH /tags/1 {\"name\":\"Renamed\",\"startLine\":\"ignored\"}",
+          "method": "PATCH",
+          "path": "/__sadoku/tags/1",
+          "body": {},
+          "rawBody": "{\"name\":\"Renamed\",\"startLine\":\"ignored\"}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": 1,
+              "name": "Renamed",
+              "backgroundColor": "#718096",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "PUT /documents/1/tags {\"tags\":[{\"id\":1.0,\"ignored\":true}]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {},
+          "rawBody": "{\"tags\":[{\"id\":1.0,\"ignored\":true}]}",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 1,
+                "name": "Renamed",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME"
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /documents/1/comments {\"body\":\"Fraction\",\"startLine\":1.5,\"endLine\":2}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {},
+          "rawBody": "{\"body\":\"Fraction\",\"startLine\":1.5,\"endLine\":2}",
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment startLine must be a positive integer."
+          }
+        },
+        {
+          "name": "POST /documents/1/comments {\"body\":\"Zero\",\"startLine\":0.0,\"endLine\":2}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {},
+          "rawBody": "{\"body\":\"Zero\",\"startLine\":0.0,\"endLine\":2}",
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment startLine must be a positive integer."
+          }
+        },
+        {
+          "name": "GET /documents/1/comments",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/comments",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "comments": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated",
+                  "createdAt": "$TIME",
+                  "endLine": 2,
+                  "id": 1,
+                  "originalEndLine": 2,
+                  "originalStartLine": 1,
+                  "replies": [
+                    {
+                      "author": {
+                        "type": "human"
+                      },
+                      "body": "Updated reply",
+                      "createdAt": "$TIME",
+                      "id": 1,
+                      "updatedAt": "$TIME"
+                    }
+                  ],
+                  "resolved": false,
+                  "sourceHash": "2d570692",
+                  "sourceText": "# Title\nBody",
+                  "stale": false,
+                  "startLine": 1,
+                  "updatedAt": "$TIME",
+                  "displayLine": 1,
+                  "currentSourceText": "# Title\nBody"
+                },
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Comment",
+                  "createdAt": "$TIME",
+                  "endLine": 2,
+                  "id": 2,
+                  "originalEndLine": 2,
+                  "originalStartLine": 1,
+                  "replies": [],
+                  "resolved": false,
+                  "sourceHash": "2d570692",
+                  "sourceText": "# Title\nBody",
+                  "stale": false,
+                  "startLine": 1,
+                  "updatedAt": "$TIME",
+                  "displayLine": 1,
+                  "currentSourceText": "# Title\nBody"
+                },
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Extra fields",
+                  "createdAt": "$TIME",
+                  "endLine": 2,
+                  "id": 3,
+                  "originalEndLine": 2,
+                  "originalStartLine": 2,
+                  "replies": [],
+                  "resolved": false,
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "stale": false,
+                  "startLine": 2,
+                  "updatedAt": "$TIME",
+                  "displayLine": 2,
+                  "currentSourceText": "Body"
+                }
+              ],
+              "filePath": "$ROOT/readme.md"
+            }
+          }
+        },
+        {
+          "name": "GET /documents/1/instructions",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/instructions",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "instructions": [
+                {
+                  "content": "Updated",
+                  "createdAt": "$TIME",
+                  "documentId": 1,
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

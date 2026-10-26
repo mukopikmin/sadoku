@@ -1,0 +1,225 @@
+{
+  "reference": "368b47eb1ae18a84d428ce4367d25cb815584968",
+  "files": [
+    "z.md",
+    "B.md",
+    "a.md",
+    "é.md",
+    "e.md",
+    "あ.md",
+    "😀.md",
+    ".md",
+    "𐀀.md",
+    "file2.md",
+    "file10.md",
+    "a_b.md",
+    "a-b.md",
+    "a b.md",
+    "_a.md",
+    "1.md",
+    "Ä.md",
+    "ö.md",
+    "zero/guide.md",
+    "zeroZ.md",
+    "zero.md"
+  ],
+  "registration": [
+    "1.md",
+    "B.md",
+    "_a.md",
+    "a b.md",
+    "a-b.md",
+    "a.md",
+    "a_b.md",
+    "e.md",
+    "file10.md",
+    "file2.md",
+    "z.md",
+    "zero.md",
+    "zero/guide.md",
+    "zeroZ.md",
+    "Ä.md",
+    "é.md",
+    "ö.md",
+    "あ.md",
+    "𐀀.md",
+    "😀.md",
+    ".md"
+  ],
+  "initial": [
+    {
+      "id": 3,
+      "path": "_a.md"
+    },
+    {
+      "id": 20,
+      "path": "😀.md"
+    },
+    {
+      "id": 1,
+      "path": "1.md"
+    },
+    {
+      "id": 4,
+      "path": "a b.md"
+    },
+    {
+      "id": 7,
+      "path": "a_b.md"
+    },
+    {
+      "id": 5,
+      "path": "a-b.md"
+    },
+    {
+      "id": 6,
+      "path": "a.md"
+    },
+    {
+      "id": 15,
+      "path": "Ä.md"
+    },
+    {
+      "id": 2,
+      "path": "B.md"
+    },
+    {
+      "id": 8,
+      "path": "e.md"
+    },
+    {
+      "id": 16,
+      "path": "é.md"
+    },
+    {
+      "id": 9,
+      "path": "file10.md"
+    },
+    {
+      "id": 10,
+      "path": "file2.md"
+    },
+    {
+      "id": 17,
+      "path": "ö.md"
+    },
+    {
+      "id": 11,
+      "path": "z.md"
+    },
+    {
+      "id": 12,
+      "path": "zero.md"
+    },
+    {
+      "id": 13,
+      "path": "zero/guide.md"
+    },
+    {
+      "id": 14,
+      "path": "zeroZ.md"
+    },
+    {
+      "id": 18,
+      "path": "あ.md"
+    },
+    {
+      "id": 19,
+      "path": "𐀀.md"
+    },
+    {
+      "id": 21,
+      "path": ".md"
+    }
+  ],
+  "afterCreate": [
+    {
+      "id": 3,
+      "path": "_a.md"
+    },
+    {
+      "id": 20,
+      "path": "😀.md"
+    },
+    {
+      "id": 1,
+      "path": "1.md"
+    },
+    {
+      "id": 4,
+      "path": "a b.md"
+    },
+    {
+      "id": 7,
+      "path": "a_b.md"
+    },
+    {
+      "id": 5,
+      "path": "a-b.md"
+    },
+    {
+      "id": 6,
+      "path": "a.md"
+    },
+    {
+      "id": 15,
+      "path": "Ä.md"
+    },
+    {
+      "id": 22,
+      "path": "Added.md"
+    },
+    {
+      "id": 2,
+      "path": "B.md"
+    },
+    {
+      "id": 8,
+      "path": "e.md"
+    },
+    {
+      "id": 16,
+      "path": "é.md"
+    },
+    {
+      "id": 9,
+      "path": "file10.md"
+    },
+    {
+      "id": 10,
+      "path": "file2.md"
+    },
+    {
+      "id": 17,
+      "path": "ö.md"
+    },
+    {
+      "id": 11,
+      "path": "z.md"
+    },
+    {
+      "id": 12,
+      "path": "zero.md"
+    },
+    {
+      "id": 13,
+      "path": "zero/guide.md"
+    },
+    {
+      "id": 14,
+      "path": "zeroZ.md"
+    },
+    {
+      "id": 18,
+      "path": "あ.md"
+    },
+    {
+      "id": 19,
+      "path": "𐀀.md"
+    },
+    {
+      "id": 21,
+      "path": ".md"
+    }
+  ]
+}

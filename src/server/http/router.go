@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"path"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -189,7 +188,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/__sadoku/"), "/")
 	export := req.Method == "POST" && len(parts) == 5 && parts[0] == "documents" && parts[2] == "comments" && parts[4] == "github"
 	if len(parts) >= 2 && parts[0] == "documents" {
-		id, err := strconv.ParseInt(parts[1], 10, 64)
+		id, err := parseRESTResourceID(parts[1])
 		if err != nil || !regexp.MustCompile(`^[1-9][0-9]*$`).MatchString(parts[1]) || u.PositiveID(id) != nil {
 			if export {
 				githubExportError(w, "export_document_not_found", 0)
@@ -215,7 +214,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 				githubExportError(w, "export_unavailable", 404)
 				return
 			}
-			commentID, err := strconv.ParseInt(parts[3], 10, 64)
+			commentID, err := parseRESTResourceID(parts[3])
 			if err != nil || u.PositiveID(commentID) != nil {
 				githubExportError(w, "export_comment_not_found", 0)
 				return
@@ -261,7 +260,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if len(parts) == 2 && parts[0] == "tags" {
-		n, _ := strconv.ParseInt(parts[1], 10, 64)
+		n, _ := parseRESTResourceID(parts[1])
 		input.ID = session.ID(n)
 		if method == "DELETE" {
 			operation = "DeleteTag"
@@ -272,7 +271,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if len(parts) >= 2 && parts[0] == "documents" {
-		id, _ := strconv.ParseInt(parts[1], 10, 64)
+		id, _ := parseRESTResourceID(parts[1])
 		input.DocumentID = session.ID(id)
 		if len(parts) == 2 && method == "GET" {
 			operation = "GetDocument"
@@ -306,7 +305,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 					}
 				}
 				if len(parts) == 4 {
-					n, _ := strconv.ParseInt(parts[3], 10, 64)
+					n, _ := parseRESTResourceID(parts[3])
 					input.InstructionID = session.ID(n)
 					input.MemoryID = session.ID(n)
 					if method == "PUT" && kind == "Instruction" {
@@ -327,7 +326,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 					}
 				}
 				if len(parts) >= 4 {
-					n, _ := strconv.ParseInt(parts[3], 10, 64)
+					n, _ := parseRESTResourceID(parts[3])
 					input.CommentID = session.ID(n)
 					if len(parts) == 4 {
 						if method == "PUT" {
@@ -350,7 +349,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 						}
 					}
 					if len(parts) == 6 && parts[4] == "replies" {
-						n, _ := strconv.ParseInt(parts[5], 10, 64)
+						n, _ := parseRESTResourceID(parts[5])
 						input.ReplyID = session.ID(n)
 						if method == "PUT" {
 							operation = "UpdateReply"
@@ -469,8 +468,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 		}
-		b, _ := json.Marshal(fields)
-		if err := json.Unmarshal(b, &input); err != nil {
+		if err := decodeRESTInput(operation, fields, &input); err != nil {
 			message := "Request body must be valid JSON."
 			if operation == "UpdateSettings" {
 				message = invalidSettingsMessage
@@ -480,7 +478,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		}
 		// Route parameters always take precedence over JSON input.
 		if len(parts) >= 2 {
-			n, _ := strconv.ParseInt(parts[1], 10, 64)
+			n, _ := parseRESTResourceID(parts[1])
 			if parts[0] == "documents" {
 				input.DocumentID = session.ID(n)
 			} else if parts[0] == "tags" {
@@ -488,12 +486,12 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 		if len(parts) >= 4 && parts[2] == "comments" {
-			n, _ := strconv.ParseInt(parts[3], 10, 64)
+			n, _ := parseRESTResourceID(parts[3])
 			input.CommentID = session.ID(n)
 		}
 	}
 	if len(parts) >= 4 && parts[0] == "documents" {
-		n, _ := strconv.ParseInt(parts[3], 10, 64)
+		n, _ := parseRESTResourceID(parts[3])
 		if parts[2] == "instructions" {
 			input.InstructionID = session.ID(n)
 		}
@@ -501,7 +499,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 			input.MemoryID = session.ID(n)
 		}
 		if len(parts) == 6 && parts[2] == "comments" && parts[4] == "replies" {
-			n, _ = strconv.ParseInt(parts[5], 10, 64)
+			n, _ = parseRESTResourceID(parts[5])
 			input.ReplyID = session.ID(n)
 		}
 	}

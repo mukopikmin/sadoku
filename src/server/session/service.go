@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -478,7 +477,7 @@ func (s *Session) createDocument(in Input) (any, error) {
 		s.Documents = append(s.Documents, doc)
 	}
 	s.Sources[doc.ID] = path
-	sort.Slice(s.Documents, func(i, j int) bool { return s.Documents[i].RelativePath < s.Documents[j].RelativePath })
+	sortDocuments(s.Documents)
 	return doc, nil
 }
 

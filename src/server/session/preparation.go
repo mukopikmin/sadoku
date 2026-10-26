@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/mukopikmin/sadoku/src/server/config"
@@ -53,7 +52,7 @@ func (s *Session) prepareDirectory(ctx context.Context, settings config.Settings
 	if err := scan(ctx, s.Root, settings, 0, &paths); err != nil {
 		return err
 	}
-	sort.Strings(paths)
+	sortRegistrationPaths(paths)
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -100,7 +99,7 @@ func (s *Session) prepareDirectory(ctx context.Context, settings config.Settings
 		d.Tags = []u.Tag{}
 		documents = append(documents, d)
 	}
-	sort.Slice(documents, func(i, j int) bool { return documents[i].RelativePath < documents[j].RelativePath })
+	sortDocuments(documents)
 	if err = ctx.Err(); err != nil {
 		return err
 	}
@@ -160,7 +159,12 @@ func scan(ctx context.Context, root string, settings config.Settings, depth int,
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(root)
+	directory, err := os.Open(root)
+	if err != nil {
+		return err
+	}
+	entries, err := directory.ReadDir(-1)
+	directory.Close()
 	if err != nil {
 		return err
 	}

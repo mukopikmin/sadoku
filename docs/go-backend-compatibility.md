@@ -12,12 +12,12 @@ requests, file edits, deletions, settings, and initial data against the
 production Go handler. It requires transcripts for every method declared in
 `PreviewService`.
 
-| Session             | HTTP requests | Checked behavior                                                                                                                                                            |
-| ------------------- | ------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local directory RPC |           103 | All 32 RPC methods, resource isolation, creation, titles, revisions/restoration, comments/replies/resolution/rebasing, tags, notes, settings, and transport validation      |
-| REST                |            67 | Read/write/delete routes, partial tag updates, validation errors, deleted sources, response fields, and status codes                                                        |
-| GitHub PR RPC       |            20 | Document IDs/counts, escaped filenames, canonical comment identities, immutable source URLs, pending-review export, stale heads, titles, and unavailable local capabilities |
-| Total               |           190 | Response bodies, statuses, content types, and cache policy                                                                                                                  |
+| Session             | HTTP requests | Checked behavior                                                                                                                                                               |
+| ------------------- | ------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Local directory RPC |           103 | All 32 RPC methods, resource isolation, creation, titles, revisions/restoration, comments/replies/resolution/rebasing, tags, notes, settings, and transport validation         |
+| REST                |            87 | Read/write/delete routes, partial tag updates, numeric representations and resource IDs, ignored fields, validation errors, deleted sources, response fields, and status codes |
+| GitHub PR RPC       |            20 | Document IDs/counts, escaped filenames, canonical comment identities, immutable source URLs, pending-review export, stale heads, titles, and unavailable local capabilities    |
+| Total               |           210 | Response bodies, statuses, content types, and cache policy                                                                                                                     |
 
 JSON object key order is ignored; field presence, values, types, and array order
 are compared. Temporary filesystem roots, timestamp fields, and physical SQLite
@@ -32,6 +32,14 @@ responses are compared directly.
 
 - The CLI suite compares 178 captured command transcripts, including stdout,
   stderr, and exit status. Startup and update messages have separate tests.
+- Configuration reading compares 32 recorded TOML cases, including integral
+  floats, absent/default settings, invalid values/types, and exact diagnostics.
+  Missing-HOME tests verify config-save failure and the working-directory
+  fallback for comments.
+- Directory preparation compares registration IDs and displayed order for 21
+  recorded filenames, including case, accents, punctuation, supplementary
+  Unicode, and nested paths, before and after creation. Separate coverage checks
+  that file limits select from native filesystem order before sorting.
 - Source resolution compares 33 recorded URL cases: host/default-port/IDNA
   normalization, escaped paths and dot segments, IPv4/IPv6, query/fragment
   removal, remote document titles, and GitHub pull recognition/identities. The

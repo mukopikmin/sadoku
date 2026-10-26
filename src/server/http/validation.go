@@ -60,3 +60,53 @@ func validateRESTFields(operation string, fields map[string]json.RawMessage) err
 	}
 	return nil
 }
+
+// REST handlers read only their own fields. Decode numbers through float64 to
+// preserve JavaScript JSON.parse semantics (1, 1.0, and 1e0 are the same value).
+func decodeRESTInput(operation string, fields map[string]json.RawMessage, target any) error {
+	var names []string
+	switch operation {
+	case "UpdateSettings":
+		names = []string{"theme", "codeWrap", "fontScale", "maxDepth", "maxFiles", "excludedDirectories", "markdownExtensions", "showHtmlComments"}
+	case "UpdateTag":
+		names = []string{"name", "backgroundColor"}
+	case "ReplaceDocumentTags":
+		names = []string{"tags"}
+	case "CreateInstruction", "UpdateInstruction":
+		names = []string{"content"}
+	case "CreateComment":
+		names = []string{"body", "startLine", "endLine"}
+	case "UpdateComment", "CreateReply", "UpdateReply":
+		names = []string{"body"}
+	case "ExportCommentToGitHub":
+		names = []string{"body", "headSha", "displayedMarkdown", "createdAt", "startLine", "endLine"}
+	}
+	values := map[string]any{}
+	for _, name := range names {
+		if data, ok := fields[name]; ok {
+			var value any
+			if err := json.Unmarshal(data, &value); err != nil {
+				return err
+			}
+			values[name] = value
+		}
+	}
+	if tags, ok := values["tags"].([]any); ok {
+		for i, value := range tags {
+			if tag, ok := value.(map[string]any); ok {
+				reference := map[string]any{}
+				for _, name := range []string{"id", "name"} {
+					if value, ok := tag[name]; ok {
+						reference[name] = value
+					}
+				}
+				tags[i] = reference
+			}
+		}
+	}
+	data, err := json.Marshal(values)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, target)
+}

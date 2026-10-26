@@ -107,3 +107,28 @@ func TestSavePreservesMalformedConfiguration(t *testing.T) {
 		t.Fatal("original configuration changed", err)
 	}
 }
+
+func TestConfigurationWithoutHomeUsesWorkingDirectoryForComments(t *testing.T) {
+	for _, name := range []string{"HOME", "APPDATA", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "SADOKU_COMMENTS_DIR", "MDVIEW_COMMENTS_DIR"} {
+		t.Setenv(name, "")
+	}
+	if path := Path(); path != "" {
+		t.Fatalf("config location without home: %q", path)
+	}
+	settings, _, err := Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.Theme, settings.CodeWrap = "dark", "wrap"
+	if err := Save(settings); err == nil || err.Error() != "Cannot locate the Sadoku config file." {
+		t.Fatalf("save without config location: %v", err)
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	path, err := CommentsDirectory()
+	if err != nil || path != filepath.Join(cwd, ".sadoku", "comments") {
+		t.Fatalf("comments without home: %q %v", path, err)
+	}
+}
