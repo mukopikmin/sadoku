@@ -113,7 +113,7 @@ func Within(root, path string) bool {
 }
 func (s *Session) Find(id int64) (u.Document, error) {
 	if err := u.PositiveID(id); err != nil {
-		return u.Document{}, err
+		return u.Document{}, u.Fail("not_found", "Document not found.")
 	}
 	for _, d := range s.Documents {
 		if d.ID == id {
@@ -174,4 +174,51 @@ func (s *Session) CommentDocumentID(id int64) int64 {
 		return mapped
 	}
 	return id
+}
+
+// GitHub document registration and comment storage have separate identities.
+// Read a missing comment identity without creating a persistent document row.
+func (s *Session) commentStorage(id int64, create bool) (int64, string, error) {
+	identity, _, _ := Source(s.Sources[id])
+	if s.GitHub == nil {
+		return id, identity, nil
+	}
+	if mapped := s.CommentIDs[id]; mapped != 0 {
+		return mapped, identity, nil
+	}
+	document, found, err := s.Repository.FindDocument(identity)
+	if err != nil {
+		return 0, identity, err
+	}
+	if !found && create {
+		document, err = s.Repository.Ensure(identity)
+		found = err == nil
+	}
+	if found {
+		if s.CommentIDs == nil {
+			s.CommentIDs = map[int64]int64{}
+		}
+		s.CommentIDs[id] = document.ID
+		return document.ID, identity, nil
+	}
+	return 0, identity, err
+}
+
+func (s *Session) readComments(id int64) (u.Comments, error) {
+	storageID, identity, err := s.commentStorage(id, false)
+	if err != nil {
+		return u.Comments{}, err
+	}
+	if storageID == 0 {
+		return u.Comments{FilePath: identity, Comments: []u.Comment{}}, nil
+	}
+	return s.Repository.ReadComments(storageID)
+}
+
+func (s *Session) saveComments(id int64, comments u.Comments) error {
+	storageID, _, err := s.commentStorage(id, true)
+	if err != nil {
+		return err
+	}
+	return s.Repository.SaveComments(storageID, comments)
 }

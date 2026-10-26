@@ -89,6 +89,7 @@ type Comments struct {
 // Repository is the persistence port shared by HTTP and command-line use cases.
 type Repository interface {
 	Ensure(string) (Document, error)
+	FindDocument(string) (Document, bool, error)
 	EnsureMany(context.Context, []string) ([]Document, error)
 	DocumentsContext(context.Context) ([]Document, error)
 	InitializeSnapshotContext(context.Context, int64, string) error
@@ -98,6 +99,7 @@ type Repository interface {
 	SaveComments(int64, Comments) error
 	ReadComments(int64) (Comments, error)
 	CommentsNotificationPath(int64) (string, error)
+	CommentsNotificationSourcePath(string) (string, error)
 	Revisions(int64) ([]Revision, error)
 	Revision(int64, int64) (Revision, error)
 	RecordRevision(int64, string) error
@@ -120,14 +122,18 @@ func PositiveID(id int64) error {
 	return nil
 }
 
-func ValidTagName(name string) bool {
-	if name == "" || utf8.RuneCountInString(name) > 50 {
-		return false
+func ValidateTagName(value string) error {
+	name := TrimSpace(value)
+	if name == "" {
+		return Fail("invalid_argument", "Tag name must not be empty.")
 	}
 	for _, r := range name {
 		if unicode.IsControl(r) {
-			return false
+			return Fail("invalid_argument", "Tag name must not contain control characters.")
 		}
 	}
-	return true
+	if utf8.RuneCountInString(name) > 50 {
+		return Fail("invalid_argument", "Tag name must not exceed 50 characters.")
+	}
+	return nil
 }

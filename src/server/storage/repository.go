@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/mukopikmin/sadoku/src/server/db"
@@ -13,6 +14,15 @@ import (
 type Repository struct {
 	DB   *sql.DB
 	Path string
+}
+
+func (r *Repository) FindDocument(path string) (u.Document, bool, error) {
+	var document u.Document
+	err := r.DB.QueryRow("SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&document.ID, &document.FilePath, &document.DisplayTitle)
+	if errors.Is(err, sql.ErrNoRows) {
+		return document, false, nil
+	}
+	return document, err == nil, err
 }
 
 func (r *Repository) Ensure(path string) (u.Document, error) {
@@ -264,10 +274,10 @@ func (r *Repository) SaveComments(id int64, doc u.Comments) error {
 }
 
 func (r *Repository) Tags(documentID int64) ([]u.Tag, error) {
-	query := `SELECT t.id,t.name,t.background_color,COUNT(l.document_id),t.created_at,t.updated_at FROM document_tag t LEFT JOIN document_tag_link l ON l.tag_id=t.id GROUP BY t.id ORDER BY t.id`
+	query := `SELECT t.id,t.name,t.background_color,COUNT(l.document_id),t.created_at,t.updated_at FROM document_tag t LEFT JOIN document_tag_link l ON l.tag_id=t.id GROUP BY t.id ORDER BY t.name`
 	args := []any{}
 	if documentID != 0 {
-		query = `SELECT t.id,t.name,t.background_color,0,t.created_at,t.updated_at FROM document_tag t JOIN document_tag_link l ON l.tag_id=t.id WHERE l.document_id=? ORDER BY t.id`
+		query = `SELECT t.id,t.name,t.background_color,0,t.created_at,t.updated_at FROM document_tag t JOIN document_tag_link l ON l.tag_id=t.id WHERE l.document_id=? ORDER BY t.name`
 		args = append(args, documentID)
 	}
 	rows, err := r.DB.Query(query, args...)
@@ -295,6 +305,18 @@ func (r *Repository) SaveTag(t u.Tag) (u.Tag, error) {
 			t.ID, err = res.LastInsertId()
 		}
 	} else {
+		var existing u.Tag
+		err = r.DB.QueryRow("SELECT name,background_color,created_at,updated_at FROM document_tag WHERE id=?", t.ID).Scan(&existing.Name, &existing.BackgroundColor, &existing.CreatedAt, &existing.UpdatedAt)
+		if errors.Is(err, sql.ErrNoRows) {
+			return t, u.Fail("not_found", "Tag not found.")
+		}
+		if err != nil {
+			return t, err
+		}
+		if existing.Name == t.Name && existing.BackgroundColor == t.BackgroundColor {
+			t.CreatedAt, t.UpdatedAt = existing.CreatedAt, existing.UpdatedAt
+			return t, nil
+		}
 		var res sql.Result
 		res, err = r.DB.Exec("UPDATE document_tag SET name=?,background_color=?,updated_at=? WHERE id=?", t.Name, t.BackgroundColor, now, t.ID)
 		if err == nil {
@@ -359,11 +381,14 @@ func (r *Repository) ReplaceTagReferences(id int64, references []u.TagReference)
 			var found int64
 			err = tx.QueryRow("SELECT id FROM document_tag WHERE id=?", tagID).Scan(&found)
 			if errors.Is(err, sql.ErrNoRows) {
-				return nil, u.Fail("not_found", "Tag not found.")
+				return nil, u.Fail("not_found", fmt.Sprintf("Tag %d not found.", tagID))
 			}
 			if err != nil {
 				return nil, err
 			}
+		}
+		if ids[tagID] {
+			return nil, u.Fail("already_exists", "Tag is already added.")
 		}
 		ids[tagID] = true
 	}

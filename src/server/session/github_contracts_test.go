@@ -126,7 +126,7 @@ func newGitHubFixture(t *testing.T) *githubFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = repo.SaveComments(f.s.CommentDocumentID(int64(f.in.DocumentID)), comments); err != nil {
+	if err = f.s.saveComments(int64(f.in.DocumentID), comments); err != nil {
 		t.Fatal(err)
 	}
 	return f

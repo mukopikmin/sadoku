@@ -71,5 +71,5 @@ func rpcError(err error) error {
 		}
 		return connect.NewError(code, errors.New(failure.Message))
 	}
-	return connect.NewError(connect.CodeInternal, errors.New("Failed to process request."))
+	return connect.NewError(connect.CodeInternal, errors.New("Internal server error."))
 }

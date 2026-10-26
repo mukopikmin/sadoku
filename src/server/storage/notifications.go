@@ -11,7 +11,7 @@ import (
 
 // The filename matches the original TypeScript backend, so changes made by
 // another process (including an older installed CLI) reach the same stream.
-func (r *Repository) commentsNotificationPath(source string) (string, error) {
+func (r *Repository) CommentsNotificationSourcePath(source string) (string, error) {
 	databasePath := r.Path
 	if databasePath == "" {
 		var sequence int
@@ -32,11 +32,11 @@ func (r *Repository) CommentsNotificationPath(id int64) (string, error) {
 	if err := r.DB.QueryRow("SELECT file_path FROM comment_document WHERE id=?", id).Scan(&source); err != nil {
 		return "", err
 	}
-	return r.commentsNotificationPath(source)
+	return r.CommentsNotificationSourcePath(source)
 }
 
 func (r *Repository) notifyCommentsChanged(source string) error {
-	path, err := r.commentsNotificationPath(source)
+	path, err := r.CommentsNotificationSourcePath(source)
 	if err != nil {
 		return err
 	}

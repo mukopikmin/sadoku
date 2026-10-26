@@ -79,8 +79,11 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		settings, _, err := config.Read()
 		return settings, err
 	case "UpdateSettings":
+		if err := config.Validate(in.Settings, true); err != nil {
+			return nil, u.Fail("invalid_argument", "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, markdownExtensions, and showHtmlComments settings.")
+		}
 		if err := config.Save(in.Settings); err != nil {
-			return nil, u.Fail("invalid_argument", err.Error())
+			return nil, err
 		}
 		return in.Settings, nil
 	case "GetGitHubAccount":
@@ -118,27 +121,31 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 				return nil, u.Fail("invalid_argument", "Tag id must be a positive integer.")
 			}
 		}
-		name := strings.TrimSpace(in.Name)
-		if !u.ValidTagName(name) {
-			return nil, u.Fail("invalid_argument", "Enter a valid tag name.")
+		name := u.TrimSpace(in.Name)
+		if err := u.ValidateTagName(name); err != nil {
+			return nil, err
 		}
 		color := in.BackgroundColor
 		if color == "" && operation == "CreateTag" {
 			color = "#718096"
 		}
 		if !regexp.MustCompile(`^#[0-9a-fA-F]{6}$`).MatchString(color) {
-			return nil, u.Fail("invalid_argument", "Enter a valid tag background color.")
+			return nil, u.Fail("invalid_argument", "Tag background color must be a hexadecimal RGB color.")
 		}
 		tag, err := r.SaveTag(u.Tag{ID: int64(in.ID), Name: name, BackgroundColor: strings.ToLower(color)})
 		if err != nil && strings.Contains(err.Error(), "UNIQUE") {
-			return nil, u.Fail("already_exists", "A tag with this name already exists.")
+			return nil, u.Fail("already_exists", "Tag name already exists.")
 		}
 		return tag, err
 	case "DeleteTag":
 		if err := u.PositiveID(int64(in.ID)); err != nil {
 			return nil, u.Fail("invalid_argument", "Tag id must be a positive integer.")
 		}
-		return struct{}{}, r.DeleteTag(int64(in.ID))
+		err := r.DeleteTag(int64(in.ID))
+		if err != nil && err.Error() == "Tag not found." {
+			err = u.Fail("not_found", fmt.Sprintf("Tag %d not found.", in.ID))
+		}
+		return struct{}{}, err
 	case "CreateDocument":
 		return s.createDocument(in)
 	}
@@ -151,10 +158,10 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	}
 	switch operation {
 	case "UpdateDocumentTitle":
-		title := strings.TrimSpace(in.Title)
-		if strings.ContainsAny(title, "\r\n\x00") {
-			return nil, u.Fail("invalid_argument", "Title must be a single line.")
+		if strings.ContainsAny(in.Title, "\r\n\x00") {
+			return nil, u.Fail("invalid_argument", "Enter a single-line title.")
 		}
+		title := u.TrimSpace(in.Title)
 		var value *string
 		if title != "" {
 			value = &title
@@ -194,7 +201,14 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 				return nil, err
 			}
 		}
-		current, previous, err := r.Snapshot(s.CommentDocumentID(id))
+		var current, previous *string
+		storageID, _, err := s.commentStorage(id, false)
+		if err != nil {
+			return nil, err
+		}
+		if storageID != 0 {
+			current, previous, err = r.Snapshot(storageID)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -208,9 +222,18 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		_, _, remote := Source(s.Sources[id])
 		fileURL := s.Sources[id]
 		if !remote {
-			fileURL = (&url.URL{Scheme: "file", Path: filepath.ToSlash(fileURL)}).String()
+			path := filepath.ToSlash(fileURL)
+			if strings.HasPrefix(path, "//") {
+				host, rest, _ := strings.Cut(strings.TrimPrefix(path, "//"), "/")
+				fileURL = (&url.URL{Scheme: "file", Host: host, Path: "/" + rest}).String()
+			} else {
+				if filepath.VolumeName(fileURL) != "" {
+					path = "/" + path
+				}
+				fileURL = (&url.URL{Scheme: "file", Path: path}).String()
+			}
 		}
-		result := map[string]any{"fileUrl": fileURL, "markdown": markdown, "title": doc.Title, "deleted": doc.Deleted, "tags": tags, "canRestore": !remote && s.GitHub == nil}
+		result := map[string]any{"id": doc.ID, "relativePath": doc.RelativePath, "fileUrl": fileURL, "markdown": markdown, "title": doc.Title, "deleted": doc.Deleted, "tags": tags, "canRestore": !remote && s.GitHub == nil}
 		if doc.DisplayTitle != nil {
 			result["displayTitle"] = *doc.DisplayTitle
 		}
@@ -242,9 +265,9 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 				return nil, u.Fail("invalid_argument", "Each tag must contain either an id or name.")
 			}
 			if ref.Name != "" {
-				name := strings.TrimSpace(ref.Name)
-				if !u.ValidTagName(name) {
-					return nil, u.Fail("invalid_argument", "Enter a valid tag name.")
+				name := u.TrimSpace(ref.Name)
+				if err := u.ValidateTagName(name); err != nil {
+					return nil, err
 				}
 				references = append(references, u.TagReference{Name: name})
 			} else {
@@ -267,24 +290,30 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			return map[string]any{key: notes}, err
 		}
 		if strings.HasPrefix(operation, "Delete") {
-			return struct{}{}, r.DeleteNote(kind, id, noteID)
+			return struct{}{}, noteFailure(kind, r.DeleteNote(kind, id, noteID))
 		}
 		if strings.HasPrefix(operation, "Update") {
 			if err := u.PositiveID(noteID); err != nil {
-				return nil, u.Fail("not_found", "Note not found.")
+				return nil, noteFailure(kind, u.Fail("not_found", "Note not found."))
 			}
 		}
-		content := strings.TrimSpace(in.Content)
-		if content == "" {
-			return nil, u.Fail("invalid_argument", "Content must not be empty.")
+		if u.TrimSpace(in.Content) == "" {
+			return nil, noteFailure(kind, u.Fail("invalid_argument", "Content must not be empty."))
 		}
-		return r.SaveNote(kind, u.Note{ID: noteID, DocumentID: id, Content: content})
+		note, err := r.SaveNote(kind, u.Note{ID: noteID, DocumentID: id, Content: in.Content})
+		return note, noteFailure(kind, err)
 	case "ListComments", "CreateComment", "UpdateComment", "DeleteComment", "SetCommentResolution", "CreateReply", "UpdateReply", "DeleteReply":
-		comments, err := r.ReadComments(s.CommentDocumentID(id))
+		comments, err := s.readComments(id)
 		if err != nil {
 			return nil, err
 		}
-		markdown, err := s.Read(ctx, id)
+		markdown := ""
+		if comments.SourceSnapshot != nil {
+			markdown = *comments.SourceSnapshot
+		}
+		if operation == "ListComments" || operation == "CreateComment" {
+			markdown, err = s.Read(ctx, id)
+		}
 		if os.IsNotExist(err) && comments.SourceSnapshot != nil {
 			markdown = *comments.SourceSnapshot
 			err = nil
@@ -296,7 +325,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
 			comments = u.ResolveComments(comments, markdown)
 			if changed && len(comments.Comments) > 0 {
-				if err = r.SaveComments(s.CommentDocumentID(id), comments); err != nil {
+				if err = s.saveComments(id, comments); err != nil {
 					return nil, err
 				}
 			}
@@ -305,17 +334,29 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			}
 			return comments, nil
 		}
+		if operation == "CreateComment" {
+			if err := validateCommentRange(in.StartLine, in.EndLine); err != nil {
+				return nil, err
+			}
+		}
 		updated, result, err := u.ChangeComment(operation, comments, u.CommentInput{CommentID: int64(in.CommentID), ReplyID: int64(in.ReplyID), StartLine: in.StartLine, EndLine: in.EndLine, Body: in.Body, Resolved: in.Resolved, AsBot: in.AsBot, RequestReview: in.RequestReview}, markdown, db.Now())
 		if err != nil {
+			if err.Error() == "Comment range is outside the Markdown source." {
+				return nil, u.Fail("invalid_argument", "Comment range does not exist.")
+			}
 			return nil, err
 		}
-		return result, r.SaveComments(s.CommentDocumentID(id), updated)
+		if comment, ok := result.(u.Comment); ok && operation != "CreateComment" && !comment.Stale && comments.SourceSnapshot != nil {
+			comment.CurrentSourceText = u.RangeText(*comments.SourceSnapshot, comment.StartLine, comment.EndLine)
+			result = comment
+		}
+		return result, s.saveComments(id, updated)
 	case "ExportCommentToGitHub":
 		if s.GitHub == nil {
 			return nil, u.Fail("not_found", `{"error":{"code":"export_unavailable"}}`)
 		}
-		in.Body = strings.TrimSpace(in.Body)
-		if strings.TrimSpace(in.Body) == "" || in.StartLine < 1 || in.EndLine < in.StartLine || in.CreatedAt == "" || !regexp.MustCompile(`^[a-f0-9]{40,64}$`).MatchString(in.HeadSHA) {
+		in.Body = u.TrimSpace(in.Body)
+		if in.Body == "" || in.StartLine < 1 || in.EndLine < in.StartLine || in.CreatedAt == "" || !regexp.MustCompile(`^[a-f0-9]{40,64}$`).MatchString(in.HeadSHA) {
 			return nil, u.Fail("invalid_argument", `{"error":{"code":"export_invalid_request"}}`)
 		}
 		result, err := s.exportComment(ctx, doc, in)
@@ -331,18 +372,46 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	return nil, u.Fail("unimplemented", "Unknown operation.")
 }
 
+func validateCommentRange(start, end int) error {
+	if start < 1 {
+		return u.Fail("invalid_argument", "Comment startLine must be a positive integer.")
+	}
+	if end < 1 {
+		return u.Fail("invalid_argument", "Comment endLine must be a positive integer.")
+	}
+	if end < start {
+		return u.Fail("invalid_argument", "Comment endLine must be greater than or equal to startLine.")
+	}
+	return nil
+}
+
+func noteFailure(kind string, err error) error {
+	if err == nil {
+		return nil
+	}
+	name := strings.ToUpper(kind[:1]) + kind[1:]
+	switch err.Error() {
+	case "Note not found.":
+		return u.Fail("not_found", name+" not found.")
+	case "Content must not be empty.":
+		return u.Fail("invalid_argument", name+" content must not be empty.")
+	}
+	return err
+}
+
 var invalidFilename = regexp.MustCompile(`[\\/\x00-\x1f<>:"|?*]`)
 var reservedFilename = regexp.MustCompile(`(?i)^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)`)
+var invalidDirectoryComponent = regexp.MustCompile(`[\\:\x00-\x1f]`)
 
 func (s *Session) createDocument(in Input) (any, error) {
 	if !s.CanCreate || (s.directoryStatus != nil && s.directoryStatus.State != "ready") {
 		return nil, u.Fail("failed_precondition", "File creation is unavailable in this preview.")
 	}
-	name, title := strings.TrimSpace(in.Filename), strings.TrimSpace(in.Title)
+	name, title := u.TrimSpace(in.Filename), u.TrimSpace(in.Title)
 	invalid := name == "" || name == "." || name == ".." || invalidFilename.MatchString(name) || reservedFilename.MatchString(name) || strings.HasSuffix(name, ".") || strings.HasSuffix(name, " ") || strings.ContainsAny(title, "\r\n\x00")
 	if in.Directory != "" {
 		for _, part := range strings.Split(in.Directory, "/") {
-			if part == "" || part == "." || part == ".." || strings.ContainsAny(part, "\\:\x00\r\n") {
+			if part == "" || part == "." || part == ".." || invalidDirectoryComponent.MatchString(part) {
 				invalid = true
 			}
 		}
@@ -373,7 +442,7 @@ func (s *Session) createDocument(in Input) (any, error) {
 	}
 	f, err := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if errors.Is(err, os.ErrExist) {
-		return nil, u.Fail("already_exists", "Document already exists.")
+		return nil, u.Fail("already_exists", "A file or folder with this name already exists.")
 	}
 	if err != nil {
 		return nil, err
@@ -383,16 +452,16 @@ func (s *Session) createDocument(in Input) (any, error) {
 	}
 	doc, err := s.Repository.Ensure(path)
 	if err != nil {
-		return nil, err
+		return nil, createdDocumentRegistrationFailure()
 	}
 	if title != "" {
 		doc.DisplayTitle = &title
 		if err = s.Repository.SetTitle(doc.ID, &title); err != nil {
-			return nil, err
+			return nil, createdDocumentRegistrationFailure()
 		}
 	}
 	if err = s.Repository.InitializeSnapshot(doc.ID, ""); err != nil {
-		return nil, err
+		return nil, createdDocumentRegistrationFailure()
 	}
 	rel, _ := filepath.Rel(s.Root, path)
 	doc.RelativePath = filepath.ToSlash(rel)
@@ -411,6 +480,10 @@ func (s *Session) createDocument(in Input) (any, error) {
 	s.Sources[doc.ID] = path
 	sort.Slice(s.Documents, func(i, j int) bool { return s.Documents[i].RelativePath < s.Documents[j].RelativePath })
 	return doc, nil
+}
+
+func createdDocumentRegistrationFailure() error {
+	return u.Fail("internal", "The file was created, but could not be added to the preview. Reopen this directory to load it.")
 }
 func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
 	_, _, remote := Source(s.Sources[doc.ID])

@@ -37,7 +37,8 @@ func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
 		if _, _, remote := session.Source(source); !remote {
 			targets = append(targets, watchTarget{path: source, resources: []string{"document", "comments"}, markdown: true})
 		}
-		notification, err := r.session.Repository.CommentsNotificationPath(r.session.CommentDocumentID(id))
+		identity, _, _ := session.Source(source)
+		notification, err := r.session.Repository.CommentsNotificationSourcePath(identity)
 		if err != nil {
 			r.session.Mu.Unlock()
 			respondError(w, err)

@@ -58,12 +58,17 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 
 func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, s *session.Session, settings config.Settings) error {
 	_, source, _ := session.Source(options.Source)
+	if s.GitHub != nil {
+		source = s.GitHub.URL
+	}
 	log := func(message string) { fmt.Fprintf(out, "[%s] %s\n", db.Now(), message) }
 
 	if !s.CanCreate {
 		for _, doc := range s.Documents {
 			path := doc.FilePath
-			if s.GitHub == nil {
+			if s.GitHub != nil {
+				path = s.Sources[doc.ID]
+			} else {
 				path = source
 			}
 			suffix := ""
@@ -132,7 +137,9 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 	go func() { defer tasks.Done(); s.Prepare(ctx, settings) }()
 	go func() {
 		defer tasks.Done()
-		s.Monitor(ctx, settings, func(err error) { fmt.Fprintf(out, "Failed to check GitHub updates: %s\n", err) })
+		s.Monitor(ctx, settings, func(err error) {
+			fmt.Fprintf(os.Stderr, "[%s] Failed to check GitHub pull request for updates: %s\n", db.Now(), err)
+		})
 	}()
 	defer func() { cancel(); tasks.Wait() }()
 

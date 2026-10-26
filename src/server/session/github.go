@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os/exec"
@@ -70,10 +71,14 @@ func gh(ctx context.Context, endpoint string, payload any, raw bool) ([]byte, er
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("GitHub CLI request failed: %s", strings.TrimSpace(stderr.String()))
+		return nil, &githubCommandError{strings.TrimSpace(stderr.String())}
 	}
 	return out, nil
 }
+
+type githubCommandError struct{ stderr string }
+
+func (e *githubCommandError) Error() string { return "GitHub CLI request failed: " + e.stderr }
 func ghJSON(ctx context.Context, endpoint string, payload, out any) error {
 	b, err := gh(ctx, endpoint, payload, false)
 	if err != nil {
@@ -141,7 +146,7 @@ func (s *Session) preparePull(ctx context.Context, p *Pull, settings config.Sett
 		}
 		parts := strings.Split(file.Filename, "/")
 		for i := range parts {
-			parts[i] = url.PathEscape(parts[i])
+			parts[i] = encodeComponent(parts[i])
 		}
 		encoded := strings.Join(parts, "/")
 		doc, err := s.Repository.Ensure(p.URL + "/files/" + encoded)
@@ -152,29 +157,50 @@ func (s *Session) preparePull(ctx context.Context, p *Pull, settings config.Sett
 		doc.Title = filepath.Base(file.Filename)
 		doc.Tags = []u.Tag{}
 		s.Documents = append(s.Documents, doc)
-		s.Sources[doc.ID] = fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s?ref=%s", url.PathEscape(p.Owner), url.PathEscape(p.Repo), encoded, url.QueryEscape(p.HeadSHA))
+		s.Sources[doc.ID] = fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s?ref=%s", encodeComponent(p.Owner), encodeComponent(p.Repo), encoded, encodeComponent(p.HeadSHA))
 		identity, _, _ := Source(s.Sources[doc.ID])
-		commentDoc, err := s.Repository.Ensure(identity)
+		commentDoc, found, err := s.Repository.FindDocument(identity)
 		if err != nil {
 			return err
 		}
-		if s.CommentIDs == nil {
-			s.CommentIDs = map[int64]int64{}
+		if found {
+			if s.CommentIDs == nil {
+				s.CommentIDs = map[int64]int64{}
+			}
+			s.CommentIDs[doc.ID] = commentDoc.ID
 		}
-		s.CommentIDs[doc.ID] = commentDoc.ID
 	}
 	return nil
 }
+
+func encodeComponent(value string) string {
+	return strings.NewReplacer("+", "%20", "%21", "!", "%27", "'", "%28", "(", "%29", ")", "%2A", "*").Replace(url.QueryEscape(value))
+}
 func GitHubAccount(ctx context.Context) any {
-	var account struct {
-		Login     string  `json:"login"`
-		Name      *string `json:"name"`
-		AvatarURL *string `json:"avatar_url"`
+	b, err := gh(ctx, "user", nil, false)
+	if err != nil {
+		message := "GitHub CLI authentication is unavailable."
+		var commandError *githubCommandError
+		if errors.As(err, &commandError) && commandError.stderr != "" {
+			message = commandError.stderr
+		}
+		return map[string]any{"ok": false, "message": message}
 	}
-	if err := ghJSON(ctx, "user", nil, &account); err != nil || account.Login == "" {
-		return map[string]any{"ok": false, "message": "GitHub CLI is not authenticated. Run `gh auth login --hostname github.com`."}
+	var account map[string]any
+	if err = json.Unmarshal(b, &account); err != nil {
+		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}
 	}
-	return map[string]any{"ok": true, "account": map[string]any{"login": account.Login, "name": account.Name, "avatarUrl": account.AvatarURL}}
+	login, ok := account["login"].(string)
+	if !ok || login == "" {
+		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}
+	}
+	result := map[string]any{"login": login}
+	for field, key := range map[string]string{"name": "name", "avatar_url": "avatarUrl"} {
+		if value, ok := account[field].(string); ok && value != "" {
+			result[key] = value
+		}
+	}
+	return map[string]any{"ok": true, "account": result}
 }
 func exportFailure(code string) error {
 	kind := "already_exists"
@@ -236,14 +262,14 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 	if markdown != in.DisplayedMarkdown {
 		return nil, exportFailure("export_markdown_changed")
 	}
-	comments, err := s.Repository.ReadComments(s.CommentDocumentID(doc.ID))
+	comments, err := s.readComments(doc.ID)
 	if err != nil {
 		return nil, err
 	}
 	changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
 	comments = u.ResolveComments(comments, markdown)
 	if changed && len(comments.Comments) > 0 {
-		if err = s.Repository.SaveComments(s.CommentDocumentID(doc.ID), comments); err != nil {
+		if err = s.saveComments(doc.ID, comments); err != nil {
 			return nil, err
 		}
 	}
@@ -373,7 +399,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 		return nil, exportFailure("export_outside_diff")
 	}
 	// Recheck local data and remote head after all paginated reads.
-	latest, err := s.Repository.ReadComments(s.CommentDocumentID(doc.ID))
+	latest, err := s.readComments(doc.ID)
 	if err != nil {
 		return nil, err
 	}

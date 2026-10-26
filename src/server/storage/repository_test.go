@@ -195,3 +195,24 @@ func TestDirectoryRegistrationIsAtomicAndCancellable(t *testing.T) {
 		t.Fatalf("batch order: %+v %v", documents, err)
 	}
 }
+
+func TestUnchangedTagUpdatePreservesItsTimestamp(t *testing.T) {
+	r := testRepository(t)
+	tag, err := r.SaveTag(u.Tag{Name: "Review", BackgroundColor: "#123456"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const timestamp = "2020-01-01T00:00:00.000Z"
+	if _, err := r.DB.Exec("UPDATE document_tag SET updated_at=? WHERE id=?", timestamp, tag.ID); err != nil {
+		t.Fatal(err)
+	}
+	unchanged, err := r.SaveTag(tag)
+	if err != nil || unchanged.UpdatedAt != timestamp {
+		t.Fatalf("unchanged tag: %+v %v", unchanged, err)
+	}
+	tag.Name = "Done"
+	changed, err := r.SaveTag(tag)
+	if err != nil || changed.UpdatedAt == timestamp {
+		t.Fatalf("changed tag: %+v %v", changed, err)
+	}
+}

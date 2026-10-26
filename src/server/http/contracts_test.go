@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -220,5 +222,33 @@ func TestConnectGitHubExportPreservesErrorCodes(t *testing.T) {
 			s.Mu.Unlock()
 			check(valid, connect.CodeInternal, "export_failed")
 		})
+	}
+}
+
+func TestSettingsWriteFailureIsInternalAndPreservesTheFile(t *testing.T) {
+	_, server, _ := setup(t)
+	path := config.Path()
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		t.Fatal(err)
+	}
+	const malformed = "theme_mode = ["
+	if err := os.WriteFile(path, []byte(malformed), 0600); err != nil {
+		t.Fatal(err)
+	}
+	settings := config.Defaults()
+	settings.Theme, settings.CodeWrap = "dark", "wrap"
+	body, _ := json.Marshal(settings)
+	response := restRequest(t, server.URL, "PUT", "/__sadoku/settings", string(body), "application/json", 500)
+	if string(response) != "Internal Server Error" {
+		t.Fatalf("write failure: %s", response)
+	}
+	client := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL, connect.WithProtoJSON())
+	_, err := client.UpdateSettings(context.Background(), connect.NewRequest(&pb.UpdateSettingsRequest{Theme: "dark", CodeWrap: "wrap", FontScale: 1, MaxDepth: 2, MaxFiles: 20, ExcludedDirectories: settings.ExcludedDirectories, MarkdownExtensions: settings.MarkdownExtensions}))
+	if connect.CodeOf(err) != connect.CodeInternal {
+		t.Fatalf("RPC write failure: %v", err)
+	}
+	contents, err := os.ReadFile(path)
+	if err != nil || string(contents) != malformed {
+		t.Fatalf("invalid config was replaced: %q %v", contents, err)
 	}
 }

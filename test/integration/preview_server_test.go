@@ -261,7 +261,7 @@ func TestRESTCommentsRemainScopedAndValidateBodies(t *testing.T) {
 	one, two := documents[0].ID, documents[1].ID
 	path := fmt.Sprintf("/__sadoku/documents/%d/comments", one)
 	response = request("POST", path, `{"startLine":2,"endLine":2,"body":"review"}`)
-	if response.StatusCode != 201 {
+	if response.StatusCode != 200 {
 		t.Fatalf("comment creation: %d", response.StatusCode)
 	}
 	response = request("GET", fmt.Sprintf("/__sadoku/documents/%d/comments", two), "")

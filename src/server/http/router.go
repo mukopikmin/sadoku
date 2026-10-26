@@ -83,18 +83,36 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	r.mux.ServeHTTP(w, req)
+	if validateRPC(w, req) {
+		if req.URL.Path == "/sadoku.preview.v1.PreviewService/CreateDocument" && strings.HasPrefix(strings.ToLower(req.Header.Get("Content-Type")), "application/json") {
+			response := &creationResponse{ResponseWriter: w}
+			r.mux.ServeHTTP(response, req)
+			response.finish()
+		} else {
+			r.mux.ServeHTTP(w, req)
+		}
+	}
 }
 func respond(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if status == 204 {
+		w.Header().Del("Content-Type")
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+	}
 	w.WriteHeader(status)
 	if status != 204 {
 		json.NewEncoder(w).Encode(value)
 	}
 }
+
+func textError(w http.ResponseWriter, message string, status int) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(status)
+	io.WriteString(w, message)
+}
 func respondError(w http.ResponseWriter, err error) {
 	var failure *u.Failure
-	status, message := 500, "Failed to process request."
+	status, message := 500, "Internal Server Error"
 	if errors.As(err, &failure) {
 		message = failure.Message
 		switch failure.Kind {
@@ -110,7 +128,7 @@ func respondError(w http.ResponseWriter, err error) {
 			status = 501
 		}
 	}
-	http.Error(w, message, status)
+	textError(w, message, status)
 }
 func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 	p := req.URL.Path
@@ -119,7 +137,7 @@ func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if strings.HasPrefix(p, "/assets") {
-		http.Error(w, "Asset not found.", 404)
+		textError(w, "Asset not found.", 404)
 		return
 	}
 	if strings.HasPrefix(p, "/__sadoku") {
@@ -127,7 +145,7 @@ func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if req.Method != "GET" && req.Method != "HEAD" {
-		http.Error(w, "Method not allowed.", 405)
+		textError(w, "Method not allowed.", 405)
 		return
 	}
 	prefix := ""
@@ -144,17 +162,17 @@ func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 }
 func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" && req.Method != "HEAD" {
-		http.Error(w, "Method not allowed.", 405)
+		textError(w, "Method not allowed.", 405)
 		return
 	}
 	name := strings.TrimPrefix(req.URL.Path, "/assets/")
 	if !fs.ValidPath(name) || strings.Contains(name, "..") || strings.ContainsAny(name, "\\\x00") {
-		http.Error(w, "Asset not found.", 404)
+		textError(w, "Asset not found.", 404)
 		return
 	}
 	b, err := fs.ReadFile(r.assets, name)
 	if err != nil {
-		http.Error(w, "Asset not found.", 404)
+		textError(w, "Asset not found.", 404)
 		return
 	}
 	contentType := mime.TypeByExtension(path.Ext(name))
@@ -212,7 +230,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		switch parts[0] {
 		case "events":
 			if method != "GET" {
-				http.Error(w, "Method not allowed.", 405)
+				textError(w, "Method not allowed.", 405)
 				return
 			}
 			r.events(w, req, 0)
@@ -306,7 +324,6 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 					}
 					if method == "POST" {
 						operation = "CreateComment"
-						status = 201
 					}
 				}
 				if len(parts) >= 4 {
@@ -328,7 +345,6 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 							input.Resolved = parts[4] == "resolve"
 						case "replies":
 							operation = "CreateReply"
-							status = 201
 						case "github":
 							operation = "ExportCommentToGitHub"
 						}
@@ -351,9 +367,9 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 	if operation == "" {
 		known := len(parts) > 0 && (parts[0] == "settings" || parts[0] == "tags" || parts[0] == "documents" || parts[0] == "github-account" || parts[0] == "directory-status")
 		if known {
-			http.Error(w, "Method not allowed.", 405)
+			textError(w, "Method not allowed.", 405)
 		} else {
-			http.Error(w, "Not found.", 404)
+			textError(w, "Not found.", 404)
 		}
 		return
 	}
@@ -362,14 +378,14 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 			if export {
 				githubExportError(w, "export_invalid_request", 0)
 			} else {
-				http.Error(w, message, 400)
+				textError(w, message, 400)
 			}
 		}
-		if strings.Split(req.Header.Get("Content-Type"), ";")[0] != "application/json" {
+		if strings.ToLower(strings.TrimSpace(strings.Split(req.Header.Get("Content-Type"), ";")[0])) != "application/json" {
 			if export {
 				githubExportError(w, "export_json_required", 0)
 			} else {
-				http.Error(w, "Content-Type must be application/json.", 400)
+				textError(w, "Content-Type must be application/json.", 400)
 			}
 			return
 		}
@@ -395,23 +411,27 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 		}
+		if err := validateRESTFields(operation, fields); err != nil {
+			respondError(w, err)
+			return
+		}
 		if operation == "UpdateSettings" {
-			for key, value := range fields {
+			for _, value := range fields {
 				if string(value) == "null" {
-					http.Error(w, "Settings must not contain null values: "+key, 400)
+					textError(w, invalidSettingsMessage, 400)
 					return
 				}
 			}
 			for _, key := range []string{"theme", "codeWrap", "fontScale", "maxDepth", "maxFiles"} {
 				if _, ok := fields[key]; !ok {
-					http.Error(w, "Request body must contain the complete preview settings.", 400)
+					textError(w, invalidSettingsMessage, 400)
 					return
 				}
 			}
 			allowed := map[string]bool{"theme": true, "codeWrap": true, "fontScale": true, "maxDepth": true, "maxFiles": true, "excludedDirectories": true, "markdownExtensions": true, "showHtmlComments": true}
 			for key := range fields {
 				if !allowed[key] {
-					http.Error(w, "Request body contains unknown settings.", 400)
+					textError(w, invalidSettingsMessage, 400)
 					return
 				}
 			}
@@ -425,13 +445,13 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		if operation == "UpdateTag" {
 			for _, key := range []string{"name", "backgroundColor"} {
 				if value, ok := fields[key]; ok && string(value) == "null" {
-					http.Error(w, "Tag values must be strings.", 400)
+					textError(w, "Tag values must be strings.", 400)
 					return
 				}
 			}
 			if _, name := fields["name"]; !name {
 				if _, color := fields["backgroundColor"]; !color {
-					http.Error(w, "Tag name or background color is required.", 400)
+					textError(w, "Tag name or background color is required.", 400)
 					return
 				}
 			}
@@ -449,15 +469,13 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 		}
-		if operation == "ReplaceDocumentTags" {
-			if value, ok := fields["tags"]; !ok || string(value) == "null" {
-				http.Error(w, "Tags must be an array.", 400)
-				return
-			}
-		}
 		b, _ := json.Marshal(fields)
 		if err := json.Unmarshal(b, &input); err != nil {
-			invalidBody("Request body must be valid JSON.")
+			message := "Request body must be valid JSON."
+			if operation == "UpdateSettings" {
+				message = invalidSettingsMessage
+			}
+			invalidBody(message)
 			return
 		}
 		// Route parameters always take precedence over JSON input.
@@ -506,10 +524,23 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 	}
 	if operation == "GetDocument" {
 		document := result.(map[string]any)
+		delete(document, "canRestore")
+		delete(document, "previousMarkdown")
 		document["tags"] = publicDocumentTags(document["tags"].([]u.Tag))
+	}
+	if operation == "UpdateTag" {
+		tag := result.(u.Tag)
+		result = map[string]any{"id": tag.ID, "name": tag.Name, "backgroundColor": tag.BackgroundColor, "createdAt": tag.CreatedAt, "updatedAt": tag.UpdatedAt}
 	}
 	if operation == "ListTags" || operation == "ReplaceDocumentTags" {
 		result = result.(map[string]any)["tags"]
+		if operation == "ReplaceDocumentTags" {
+			tags := []map[string]any{}
+			for _, tag := range result.([]u.Tag) {
+				tags = append(tags, map[string]any{"id": tag.ID, "name": tag.Name, "backgroundColor": tag.BackgroundColor, "createdAt": tag.CreatedAt, "updatedAt": tag.UpdatedAt})
+			}
+			result = tags
+		}
 	}
 	respond(w, status, result)
 }

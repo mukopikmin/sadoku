@@ -1,0 +1,4281 @@
+{
+  "reference": "368b47eb1ae18a84d428ce4367d25cb815584968",
+  "profiles": [
+    {
+      "name": "rpc",
+      "steps": [
+        {
+          "name": "GetSession",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "canCreateDocuments": true
+            }
+          }
+        },
+        {
+          "name": "GetDirectoryStatus",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDirectoryStatus",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "state": "ready",
+              "detected": "2",
+              "registered": "2"
+            }
+          }
+        },
+        {
+          "name": "GetSettings",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSettings",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fontScale": 1,
+              "excludedDirectories": [
+                ".git",
+                "node_modules"
+              ],
+              "maxDepth": 2,
+              "maxFiles": 20,
+              "markdownExtensions": [
+                ".md",
+                ".markdown"
+              ],
+              "showHtmlComments": true
+            }
+          }
+        },
+        {
+          "name": "GetGitHubAccount",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetGitHubAccount",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "message": "not authenticated"
+            }
+          }
+        },
+        {
+          "name": "GetStatistics",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetStatistics",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "commentCount": {},
+              "databaseSize": "$DATABASE_SIZE",
+              "documentCount": "2"
+            }
+          }
+        },
+        {
+          "name": "ListDocuments",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocuments",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "documents": [
+                {
+                  "id": "1",
+                  "relativePath": "readme.md",
+                  "title": "readme.md"
+                },
+                {
+                  "id": "2",
+                  "relativePath": "second.md",
+                  "title": "second.md"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetDocument",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# Title\nBody\n",
+              "title": "readme.md",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "GetDocument missing document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "ListDocumentRevisions missing document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocumentRevisions",
+          "body": {
+            "documentId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "ListInstructions missing document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListInstructions",
+          "body": {
+            "documentId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "ListMemories missing document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListMemories",
+          "body": {
+            "documentId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "ListComments missing document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListComments",
+          "body": {
+            "documentId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "UpdateDocumentTitle missing document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+          "body": {
+            "documentId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "GetDocument invalid ID {}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {},
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "GetDocument invalid ID {'documentId': '0'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "0"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "GetDocument invalid ID {'documentId': '9007199254740992'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "9007199254740992"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document not found."
+            }
+          }
+        },
+        {
+          "name": "CreateDocument",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "guides",
+            "filename": "new",
+            "title": " New title "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "3",
+              "relativePath": "guides/new.md",
+              "title": "new.md",
+              "displayTitle": "New title"
+            }
+          }
+        },
+        {
+          "name": "read newly created document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "3"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/guides/new.md",
+              "title": "new.md",
+              "displayTitle": "New title",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "duplicate file",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "guides",
+            "filename": "new"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "already_exists",
+              "message": "A file or folder with this name already exists."
+            }
+          }
+        },
+        {
+          "name": "invalid creation {'filename': '../escape'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "../escape"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a valid filename, directory, and single-line title."
+            }
+          }
+        },
+        {
+          "name": "invalid creation {'filename': 'NUL.md'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "NUL.md"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a valid filename, directory, and single-line title."
+            }
+          }
+        },
+        {
+          "name": "invalid creation {'filename': 'x.txt'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "x.txt"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Use a configured Markdown file extension."
+            }
+          }
+        },
+        {
+          "name": "invalid creation {'filename': 'valid', 'title': 'one\\ntwo'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "valid",
+            "title": "one\ntwo"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a valid filename, directory, and single-line title."
+            }
+          }
+        },
+        {
+          "name": "invalid creation {'directory': '../outside', 'filename': 'new'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "../outside",
+            "filename": "new"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a valid filename, directory, and single-line title."
+            }
+          }
+        },
+        {
+          "name": "invalid creation {'filename': ''}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": ""
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a valid filename, directory, and single-line title."
+            }
+          }
+        },
+        {
+          "name": "UpdateDocumentTitle",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+          "body": {
+            "documentId": "1",
+            "title": " Display title "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "relativePath": "readme.md",
+              "title": "readme.md",
+              "displayTitle": "Display title"
+            }
+          }
+        },
+        {
+          "name": "document with title",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# Title\nBody\n",
+              "title": "readme.md",
+              "displayTitle": "Display title",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "clear title",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+          "body": {
+            "documentId": "1",
+            "title": " "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "relativePath": "readme.md",
+              "title": "readme.md"
+            }
+          }
+        },
+        {
+          "name": "invalid title",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+          "body": {
+            "documentId": "1",
+            "title": "two\nlines"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a single-line title."
+            }
+          }
+        },
+        {
+          "name": "ReplaceDocumentTags",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ReplaceDocumentTags",
+          "body": {
+            "documentId": "1",
+            "tags": [
+              {
+                "name": "Alpha"
+              },
+              {
+                "name": "Beta"
+              }
+            ]
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "tags": [
+                {
+                  "id": "1",
+                  "name": "Alpha",
+                  "backgroundColor": "#718096"
+                },
+                {
+                  "id": "2",
+                  "name": "Beta",
+                  "backgroundColor": "#718096"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "duplicate document tags",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ReplaceDocumentTags",
+          "body": {
+            "documentId": "1",
+            "tags": [
+              {
+                "name": "Alpha"
+              },
+              {
+                "id": "1"
+              }
+            ]
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "already_exists",
+              "message": "Tag is already added."
+            }
+          }
+        },
+        {
+          "name": "ListTags",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListTags",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "tags": [
+                {
+                  "id": "1",
+                  "name": "Alpha",
+                  "backgroundColor": "#718096",
+                  "documentCount": "1",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                },
+                {
+                  "id": "2",
+                  "name": "Beta",
+                  "backgroundColor": "#718096",
+                  "documentCount": "1",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UpdateTag",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateTag",
+          "body": {
+            "id": "1",
+            "name": "Gamma",
+            "backgroundColor": "#AABBCC"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "name": "Gamma",
+              "backgroundColor": "#aabbcc"
+            }
+          }
+        },
+        {
+          "name": "tag conflict",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateTag",
+          "body": {
+            "id": "2",
+            "name": "Gamma",
+            "backgroundColor": "#aabbcc"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "already_exists",
+              "message": "Tag name already exists."
+            }
+          }
+        },
+        {
+          "name": "invalid tag color",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateTag",
+          "body": {
+            "id": "1",
+            "name": "Gamma",
+            "backgroundColor": "red"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Tag background color must be a hexadecimal RGB color."
+            }
+          }
+        },
+        {
+          "name": "invalid tag ID",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateTag",
+          "body": {
+            "name": "Zero",
+            "backgroundColor": "#aabbcc"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Tag id must be a positive integer."
+            }
+          }
+        },
+        {
+          "name": "missing tag rolls back",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ReplaceDocumentTags",
+          "body": {
+            "documentId": "1",
+            "tags": [
+              {
+                "id": "999"
+              },
+              {
+                "name": "Must roll back"
+              }
+            ]
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Tag 999 not found."
+            }
+          }
+        },
+        {
+          "name": "too many tags",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ReplaceDocumentTags",
+          "body": {
+            "documentId": "1",
+            "tags": [
+              {
+                "name": "0"
+              },
+              {
+                "name": "1"
+              },
+              {
+                "name": "2"
+              },
+              {
+                "name": "3"
+              },
+              {
+                "name": "4"
+              },
+              {
+                "name": "5"
+              },
+              {
+                "name": "6"
+              },
+              {
+                "name": "7"
+              },
+              {
+                "name": "8"
+              },
+              {
+                "name": "9"
+              },
+              {
+                "name": "10"
+              },
+              {
+                "name": "11"
+              },
+              {
+                "name": "12"
+              },
+              {
+                "name": "13"
+              },
+              {
+                "name": "14"
+              },
+              {
+                "name": "15"
+              },
+              {
+                "name": "16"
+              },
+              {
+                "name": "17"
+              },
+              {
+                "name": "18"
+              },
+              {
+                "name": "19"
+              },
+              {
+                "name": "20"
+              }
+            ]
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "A document can have at most 20 tags."
+            }
+          }
+        },
+        {
+          "name": "tag state after invalid updates",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListTags",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "tags": [
+                {
+                  "id": "2",
+                  "name": "Beta",
+                  "backgroundColor": "#718096",
+                  "documentCount": "1",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                },
+                {
+                  "id": "1",
+                  "name": "Gamma",
+                  "backgroundColor": "#aabbcc",
+                  "documentCount": "1",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "tagged documents",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocuments",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "documents": [
+                {
+                  "id": "3",
+                  "relativePath": "guides/new.md",
+                  "title": "new.md",
+                  "displayTitle": "New title"
+                },
+                {
+                  "id": "1",
+                  "relativePath": "readme.md",
+                  "title": "readme.md",
+                  "tags": [
+                    {
+                      "id": "2",
+                      "name": "Beta",
+                      "backgroundColor": "#718096"
+                    },
+                    {
+                      "id": "1",
+                      "name": "Gamma",
+                      "backgroundColor": "#aabbcc"
+                    }
+                  ]
+                },
+                {
+                  "id": "2",
+                  "relativePath": "second.md",
+                  "title": "second.md"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "CreateInstruction",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateInstruction",
+          "body": {
+            "documentId": "1",
+            "content": " Rule "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "content": " Rule ",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "ListInstructions",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListInstructions",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "instructions": [
+                {
+                  "id": "1",
+                  "content": " Rule ",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UpdateInstruction",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateInstruction",
+          "body": {
+            "documentId": "1",
+            "instructionId": "1",
+            "content": " Updated "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "content": " Updated ",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "instruction isolation",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateInstruction",
+          "body": {
+            "documentId": "2",
+            "instructionId": "1",
+            "content": " Wrong document "
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Instruction not found."
+            }
+          }
+        },
+        {
+          "name": "empty instruction",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateInstruction",
+          "body": {
+            "documentId": "1",
+            "content": " "
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Instruction content must not be empty."
+            }
+          }
+        },
+        {
+          "name": "ListMemories",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListMemories",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "memories": [
+                {
+                  "id": "1",
+                  "documentId": "1",
+                  "content": "Saved memory",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "memory isolation",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteMemory",
+          "body": {
+            "documentId": "2",
+            "memoryId": "1"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Memory not found."
+            }
+          }
+        },
+        {
+          "name": "DeleteMemory",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteMemory",
+          "body": {
+            "documentId": "1",
+            "memoryId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "CreateComment",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateComment",
+          "body": {
+            "documentId": "1",
+            "startLine": 2,
+            "endLine": 2,
+            "body": " Review "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Review",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "second document comment",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateComment",
+          "body": {
+            "documentId": "2",
+            "startLine": 2,
+            "endLine": 2,
+            "body": " Other document "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Other document",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "sourceHash": "d996de07",
+              "sourceText": "Other body",
+              "currentSourceText": "Other body"
+            }
+          }
+        },
+        {
+          "name": "UpdateComment",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateComment",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "body": " Updated review "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "CreateReply",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateReply",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "body": " Reply "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "replies": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Reply",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "UpdateReply",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateReply",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "replyId": "1",
+            "body": " Updated reply "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "replies": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated reply",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "SetCommentResolution",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/SetCommentResolution",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "resolved": true
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "resolved": true,
+              "resolvedAt": "$TIME",
+              "resolvedBy": {
+                "type": "human"
+              },
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "replies": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated reply",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "reopen comment",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/SetCommentResolution",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "resolved": false
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "replies": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated reply",
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "ListComments",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListComments",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "filePath": "$ROOT/readme.md",
+              "comments": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated review",
+                  "startLine": 2,
+                  "endLine": 2,
+                  "originalStartLine": 2,
+                  "originalEndLine": 2,
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME",
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "replies": [
+                    {
+                      "id": "1",
+                      "author": {
+                        "type": "human"
+                      },
+                      "body": "Updated reply",
+                      "createdAt": "$TIME",
+                      "updatedAt": "$TIME"
+                    }
+                  ],
+                  "displayLine": 2,
+                  "currentSourceText": "Body"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "invalid CreateComment {'startLine': 0, 'endLine': 0, 'body': 'bad'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateComment",
+          "body": {
+            "documentId": "1",
+            "startLine": 0,
+            "endLine": 0,
+            "body": "bad"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Comment startLine must be a positive integer."
+            }
+          }
+        },
+        {
+          "name": "invalid CreateComment {'startLine': 4, 'endLine': 4, 'body': 'bad'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateComment",
+          "body": {
+            "documentId": "1",
+            "startLine": 4,
+            "endLine": 4,
+            "body": "bad"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Comment range does not exist."
+            }
+          }
+        },
+        {
+          "name": "invalid CreateComment {'startLine': 2, 'endLine': 2, 'body': ' '}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateComment",
+          "body": {
+            "documentId": "1",
+            "startLine": 2,
+            "endLine": 2,
+            "body": " "
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Comment body is required."
+            }
+          }
+        },
+        {
+          "name": "invalid UpdateComment {'commentId': '999', 'body': 'missing'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateComment",
+          "body": {
+            "documentId": "1",
+            "commentId": "999",
+            "body": "missing"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Comment not found."
+            }
+          }
+        },
+        {
+          "name": "invalid CreateReply {'commentId': '999', 'body': 'missing'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateReply",
+          "body": {
+            "documentId": "1",
+            "commentId": "999",
+            "body": "missing"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Comment not found."
+            }
+          }
+        },
+        {
+          "name": "invalid UpdateReply {'commentId': '1', 'replyId': '999', 'body': 'missing'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateReply",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "replyId": "999",
+            "body": "missing"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Reply not found."
+            }
+          }
+        },
+        {
+          "name": "invalid DeleteReply {'commentId': '1', 'replyId': '999'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteReply",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "replyId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Reply not found."
+            }
+          }
+        },
+        {
+          "name": "invalid DeleteComment {'commentId': '999'}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteComment",
+          "body": {
+            "documentId": "1",
+            "commentId": "999"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Comment not found."
+            }
+          }
+        },
+        {
+          "name": "edit source",
+          "write": "readme.md",
+          "content": "Inserted\n# Title\nBody\n"
+        },
+        {
+          "name": "rebase comments",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListComments",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "filePath": "$ROOT/readme.md",
+              "comments": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated review",
+                  "startLine": 3,
+                  "endLine": 3,
+                  "originalStartLine": 2,
+                  "originalEndLine": 2,
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME",
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "replies": [
+                    {
+                      "id": "1",
+                      "author": {
+                        "type": "human"
+                      },
+                      "body": "Updated reply",
+                      "createdAt": "$TIME",
+                      "updatedAt": "$TIME"
+                    }
+                  ],
+                  "displayLine": 3,
+                  "currentSourceText": "Body"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "previous markdown",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "Inserted\n# Title\nBody\n",
+              "title": "readme.md",
+              "tags": [
+                {
+                  "id": "2",
+                  "name": "Beta",
+                  "backgroundColor": "#718096"
+                },
+                {
+                  "id": "1",
+                  "name": "Gamma",
+                  "backgroundColor": "#aabbcc"
+                }
+              ],
+              "previousMarkdown": "# Title\nBody\n",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "ListDocumentRevisions",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocumentRevisions",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "revisions": [
+                {
+                  "id": "4",
+                  "recordedAt": "$TIME"
+                },
+                {
+                  "id": "1",
+                  "recordedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetDocumentRevision",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "recordedAt": "$TIME",
+              "markdown": "# Title\nBody\n"
+            }
+          }
+        },
+        {
+          "name": "revision isolation",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocumentRevision",
+          "body": {
+            "documentId": "2",
+            "revisionId": "1"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document revision not found."
+            }
+          }
+        },
+        {
+          "name": "restore conflict",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/RestoreDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1",
+            "expectedMarkdown": "wrong"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "aborted",
+              "message": "The file has changed. Reload the document before restoring."
+            }
+          }
+        },
+        {
+          "name": "RestoreDocumentRevision",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/RestoreDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1",
+            "expectedMarkdown": "Inserted\n# Title\nBody\n"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "restored markdown",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# Title\nBody\n",
+              "title": "readme.md",
+              "tags": [
+                {
+                  "id": "2",
+                  "name": "Beta",
+                  "backgroundColor": "#718096"
+                },
+                {
+                  "id": "1",
+                  "name": "Gamma",
+                  "backgroundColor": "#aabbcc"
+                }
+              ],
+              "previousMarkdown": "Inserted\n# Title\nBody\n",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "remove source",
+          "remove": "readme.md"
+        },
+        {
+          "name": "deleted document snapshot",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 500,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "internal",
+              "message": "Internal server error."
+            }
+          },
+          "acceptedDifference": "deleted-live-snapshot",
+          "goExpected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# Title\nBody\n",
+              "title": "readme.md",
+              "tags": [
+                {
+                  "id": "2",
+                  "name": "Beta",
+                  "backgroundColor": "#718096"
+                },
+                {
+                  "id": "1",
+                  "name": "Gamma",
+                  "backgroundColor": "#aabbcc"
+                }
+              ],
+              "previousMarkdown": "Inserted\n# Title\nBody\n",
+              "canRestore": true,
+              "deleted": true
+            }
+          }
+        },
+        {
+          "name": "deleted document comments",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListComments",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "filePath": "$ROOT/readme.md",
+              "comments": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated review",
+                  "startLine": 2,
+                  "endLine": 2,
+                  "originalStartLine": 2,
+                  "originalEndLine": 2,
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME",
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "replies": [
+                    {
+                      "id": "1",
+                      "author": {
+                        "type": "human"
+                      },
+                      "body": "Updated reply",
+                      "createdAt": "$TIME",
+                      "updatedAt": "$TIME"
+                    }
+                  ],
+                  "displayLine": 2,
+                  "currentSourceText": "Body"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "restore deleted document",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/RestoreDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "DeleteReply",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteReply",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "replyId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "DeleteComment",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteComment",
+          "body": {
+            "documentId": "1",
+            "commentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "DeleteInstruction",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteInstruction",
+          "body": {
+            "documentId": "1",
+            "instructionId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "missing instruction delete",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteInstruction",
+          "body": {
+            "documentId": "1",
+            "instructionId": "1"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Instruction not found."
+            }
+          }
+        },
+        {
+          "name": "export unavailable",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ExportCommentToGitHub",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "{\"error\":{\"code\":\"export_unavailable\"}}"
+            }
+          }
+        },
+        {
+          "name": "UpdateSettings",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateSettings",
+          "body": {
+            "theme": "dark",
+            "codeWrap": "wrap",
+            "fontScale": 1.2,
+            "maxDepth": 3,
+            "maxFiles": 30,
+            "excludedDirectories": [
+              ".git"
+            ],
+            "markdownExtensions": [
+              ".md",
+              ".mdx"
+            ],
+            "showHtmlComments": false
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "theme": "dark",
+              "codeWrap": "wrap",
+              "fontScale": 1.2,
+              "excludedDirectories": [
+                ".git"
+              ],
+              "maxDepth": 3,
+              "maxFiles": 30,
+              "markdownExtensions": [
+                ".md",
+                ".mdx"
+              ],
+              "showHtmlComments": false
+            }
+          }
+        },
+        {
+          "name": "persisted settings",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSettings",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "theme": "dark",
+              "codeWrap": "wrap",
+              "fontScale": 1.2,
+              "excludedDirectories": [
+                ".git"
+              ],
+              "maxDepth": 3,
+              "maxFiles": 30,
+              "markdownExtensions": [
+                ".md",
+                ".mdx"
+              ],
+              "showHtmlComments": false
+            }
+          }
+        },
+        {
+          "name": "invalid settings",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateSettings",
+          "body": {
+            "theme": "sepia",
+            "codeWrap": "wrap",
+            "fontScale": 1.2,
+            "maxDepth": 3,
+            "maxFiles": 30,
+            "excludedDirectories": [
+              ".git"
+            ],
+            "markdownExtensions": [
+              ".md",
+              ".mdx"
+            ],
+            "showHtmlComments": false
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, markdownExtensions, and showHtmlComments settings."
+            }
+          }
+        },
+        {
+          "name": "DeleteTag",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteTag",
+          "body": {
+            "id": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "missing tag delete",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/DeleteTag",
+          "body": {
+            "id": "1"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Tag 1 not found."
+            }
+          }
+        },
+        {
+          "name": "statistics after changes",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetStatistics",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "commentCount": {
+                "human": "1"
+              },
+              "databaseSize": "$DATABASE_SIZE",
+              "documentCount": "3"
+            }
+          }
+        },
+        {
+          "name": "title cannot hide leading newline",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+          "body": {
+            "documentId": "1",
+            "title": "\nTitle"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a single-line title."
+            }
+          }
+        },
+        {
+          "name": "filename ECMAScript trim",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "guides",
+            "filename": "﻿new"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "already_exists",
+              "message": "A file or folder with this name already exists."
+            }
+          }
+        },
+        {
+          "name": "control character in directory",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "bad\tfolder",
+            "filename": "new"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Enter a valid filename, directory, and single-line title."
+            }
+          }
+        },
+        {
+          "name": "tag ECMAScript trim",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateTag",
+          "body": {
+            "id": "2",
+            "name": "﻿Beta﻿",
+            "backgroundColor": "#718096"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "2",
+              "name": "Beta",
+              "backgroundColor": "#718096"
+            }
+          }
+        },
+        {
+          "name": "tag control is not whitespace",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateTag",
+          "body": {
+            "id": "2",
+            "name": "Beta",
+            "backgroundColor": "#718096"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Tag name must not contain control characters."
+            }
+          }
+        },
+        {
+          "name": "missing protocol",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "headers": {
+            "Connect-Protocol-Version": ""
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Connect-Protocol-Version must be 1."
+            }
+          }
+        },
+        {
+          "name": "wrong protocol",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "headers": {
+            "Connect-Protocol-Version": "2"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Connect-Protocol-Version must be 1."
+            }
+          }
+        },
+        {
+          "name": "wrong content type",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "headers": {
+            "Content-Type": "text/plain"
+          },
+          "expected": {
+            "status": 415,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Content-Type must be application/json."
+            }
+          }
+        },
+        {
+          "name": "compressed JSON",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "headers": {
+            "Content-Encoding": "gzip"
+          },
+          "expected": {
+            "status": 415,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "unimplemented",
+              "message": "Compressed requests are not supported."
+            }
+          }
+        },
+        {
+          "name": "malformed JSON",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "rawBody": "{",
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Invalid request message."
+            }
+          }
+        },
+        {
+          "name": "unknown JSON field",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {
+            "unexpected": true
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Invalid request message."
+            }
+          }
+        },
+        {
+          "name": "null message",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "rawBody": "null",
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Invalid request message."
+            }
+          }
+        },
+        {
+          "name": "array message",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "rawBody": "[]",
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Invalid request message."
+            }
+          }
+        },
+        {
+          "name": "RPC method GET",
+          "method": "GET",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "expected": {
+            "status": 405,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "unimplemented",
+              "message": "HTTP method is not supported."
+            }
+          }
+        },
+        {
+          "name": "RPC method PUT",
+          "method": "PUT",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "expected": {
+            "status": 405,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "unimplemented",
+              "message": "HTTP method is not supported."
+            }
+          }
+        },
+        {
+          "name": "invalid protobuf scalar",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "invalid"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Invalid request message."
+            }
+          }
+        },
+        {
+          "name": "unknown field cannot create a file",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "must-not-be-created",
+            "extra": true
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Invalid request message."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "rest",
+      "steps": [
+        {
+          "name": "GET /documents",
+          "method": "GET",
+          "path": "/__sadoku/documents",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "deleted": false,
+                "id": 1,
+                "relativePath": "readme.md",
+                "title": "readme.md",
+                "tags": []
+              },
+              {
+                "deleted": false,
+                "id": 2,
+                "relativePath": "second.md",
+                "title": "second.md",
+                "tags": []
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /directory-status",
+          "method": "GET",
+          "path": "/__sadoku/directory-status",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "state": "ready",
+              "detected": 2,
+              "registered": 2
+            }
+          }
+        },
+        {
+          "name": "GET /settings",
+          "method": "GET",
+          "path": "/__sadoku/settings",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fontScale": 1,
+              "showHtmlComments": true,
+              "excludedDirectories": [
+                ".git",
+                "node_modules"
+              ],
+              "maxDepth": 2,
+              "maxFiles": 20,
+              "markdownExtensions": [
+                ".md",
+                ".markdown"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /github-account",
+          "method": "GET",
+          "path": "/__sadoku/github-account",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "message": "not authenticated",
+              "ok": false
+            }
+          }
+        },
+        {
+          "name": "GET /tags",
+          "method": "GET",
+          "path": "/__sadoku/tags",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": []
+          }
+        },
+        {
+          "name": "GET /documents/1",
+          "method": "GET",
+          "path": "/__sadoku/documents/1",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "deleted": false,
+              "id": 1,
+              "relativePath": "readme.md",
+              "title": "readme.md",
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# Title\nBody\n",
+              "tags": []
+            }
+          }
+        },
+        {
+          "name": "GET /documents/1/comments",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/comments",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "comments": [],
+              "filePath": "$ROOT/readme.md"
+            }
+          }
+        },
+        {
+          "name": "GET /documents/1/instructions",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/instructions",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "instructions": []
+            }
+          }
+        },
+        {
+          "name": "GET /documents/1/memories",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/memories",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "memories": [
+                {
+                  "content": "Saved memory",
+                  "createdAt": "$TIME",
+                  "documentId": 1,
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /documents/0",
+          "method": "GET",
+          "path": "/__sadoku/documents/0",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Document not found."
+          }
+        },
+        {
+          "name": "GET /documents/01",
+          "method": "GET",
+          "path": "/__sadoku/documents/01",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Document not found."
+          }
+        },
+        {
+          "name": "GET /documents/+1",
+          "method": "GET",
+          "path": "/__sadoku/documents/+1",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Document not found."
+          }
+        },
+        {
+          "name": "GET /documents/999",
+          "method": "GET",
+          "path": "/__sadoku/documents/999",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Document not found."
+          }
+        },
+        {
+          "name": "GET /documents/9007199254740992",
+          "method": "GET",
+          "path": "/__sadoku/documents/9007199254740992",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Document not found."
+          }
+        },
+        {
+          "name": "PUT /documents/1/tags",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {
+            "tags": [
+              {
+                "name": "Alpha"
+              },
+              {
+                "name": "Beta"
+              }
+            ]
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 1,
+                "name": "Alpha",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME"
+              },
+              {
+                "id": 2,
+                "name": "Beta",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME"
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /tags",
+          "method": "GET",
+          "path": "/__sadoku/tags",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 1,
+                "name": "Alpha",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 1
+              },
+              {
+                "id": 2,
+                "name": "Beta",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "tagged REST documents",
+          "method": "GET",
+          "path": "/__sadoku/documents",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "deleted": false,
+                "id": 1,
+                "relativePath": "readme.md",
+                "title": "readme.md",
+                "tags": [
+                  {
+                    "backgroundColor": "#718096",
+                    "id": 1,
+                    "name": "Alpha"
+                  },
+                  {
+                    "backgroundColor": "#718096",
+                    "id": 2,
+                    "name": "Beta"
+                  }
+                ]
+              },
+              {
+                "deleted": false,
+                "id": 2,
+                "relativePath": "second.md",
+                "title": "second.md",
+                "tags": []
+              }
+            ]
+          }
+        },
+        {
+          "name": "tagged REST document",
+          "method": "GET",
+          "path": "/__sadoku/documents/1",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "deleted": false,
+              "id": 1,
+              "relativePath": "readme.md",
+              "title": "readme.md",
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# Title\nBody\n",
+              "tags": [
+                {
+                  "backgroundColor": "#718096",
+                  "id": 1,
+                  "name": "Alpha"
+                },
+                {
+                  "backgroundColor": "#718096",
+                  "id": 2,
+                  "name": "Beta"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /tags/1",
+          "method": "PATCH",
+          "path": "/__sadoku/tags/1",
+          "body": {
+            "name": "Gamma"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": 1,
+              "name": "Gamma",
+              "backgroundColor": "#718096",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "partial tag color",
+          "method": "PATCH",
+          "path": "/__sadoku/tags/1",
+          "body": {
+            "backgroundColor": "#AABBCC"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": 1,
+              "name": "Gamma",
+              "backgroundColor": "#aabbcc",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "REST tag conflict",
+          "method": "PATCH",
+          "path": "/__sadoku/tags/2",
+          "body": {
+            "name": "Gamma"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Tag name already exists."
+          }
+        },
+        {
+          "name": "REST tag rollback",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {
+            "tags": [
+              {
+                "name": "Rolled back"
+              },
+              {
+                "id": 999
+              }
+            ]
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Tag 999 not found."
+          }
+        },
+        {
+          "name": "REST tag rollback state",
+          "method": "GET",
+          "path": "/__sadoku/tags",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 2,
+                "name": "Beta",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 1
+              },
+              {
+                "id": 1,
+                "name": "Gamma",
+                "backgroundColor": "#aabbcc",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 1
+              },
+              {
+                "id": 3,
+                "name": "Rolled back",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 0
+              }
+            ]
+          },
+          "acceptedDifference": "tag-replacement-rollback",
+          "goExpected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": [
+              {
+                "id": 2,
+                "name": "Beta",
+                "backgroundColor": "#718096",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 1
+              },
+              {
+                "id": 1,
+                "name": "Gamma",
+                "backgroundColor": "#aabbcc",
+                "createdAt": "$TIME",
+                "updatedAt": "$TIME",
+                "documentCount": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "invalid REST tags {}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {},
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Tags must be an array."
+          }
+        },
+        {
+          "name": "invalid REST tags {'tags': None}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {
+            "tags": null
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Tags must be an array."
+          }
+        },
+        {
+          "name": "invalid REST tags {'tags': [None]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {
+            "tags": [
+              null
+            ]
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Each tag must contain an id or name."
+          }
+        },
+        {
+          "name": "invalid REST tags {'tags': [{'id': 1, 'name': 'Alpha'}]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {
+            "tags": [
+              {
+                "id": 1,
+                "name": "Alpha"
+              }
+            ]
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Each tag must contain either an id or name."
+          }
+        },
+        {
+          "name": "invalid REST tags {'tags': [{'id': 0}]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {
+            "tags": [
+              {
+                "id": 0
+              }
+            ]
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Each tag must contain either an id or name."
+          }
+        },
+        {
+          "name": "invalid REST tags {'tags': [{'name': ' '}]}",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/tags",
+          "body": {
+            "tags": [
+              {
+                "name": " "
+              }
+            ]
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Tag name must not be empty."
+          }
+        },
+        {
+          "name": "POST /documents/1/instructions",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/instructions",
+          "body": {
+            "content": " Rule "
+          },
+          "expected": {
+            "status": 201,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "content": " Rule ",
+              "createdAt": "$TIME",
+              "documentId": 1,
+              "id": 1,
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "created REST instruction",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/instructions",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "instructions": [
+                {
+                  "content": " Rule ",
+                  "createdAt": "$TIME",
+                  "documentId": 1,
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /documents/1/instructions/1",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/instructions/1",
+          "body": {
+            "content": " Updated "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "content": " Updated ",
+              "createdAt": "$TIME",
+              "documentId": 1,
+              "id": 1,
+              "updatedAt": "$TIME"
+            }
+          }
+        },
+        {
+          "name": "REST instruction isolation",
+          "method": "PUT",
+          "path": "/__sadoku/documents/2/instructions/1",
+          "body": {
+            "content": " wrong "
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Instruction not found."
+          }
+        },
+        {
+          "name": "REST memory isolation",
+          "method": "DELETE",
+          "path": "/__sadoku/documents/2/memories/1",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Memory not found."
+          }
+        },
+        {
+          "name": "DELETE /documents/1/memories/1",
+          "method": "DELETE",
+          "path": "/__sadoku/documents/1/memories/1",
+          "expected": {
+            "status": 204,
+            "contentType": "",
+            "cacheControl": "",
+            "text": ""
+          }
+        },
+        {
+          "name": "invalid REST instruction {}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/instructions",
+          "body": {},
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Request body must contain an instruction content string."
+          }
+        },
+        {
+          "name": "invalid REST instruction {'content': None}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/instructions",
+          "body": {
+            "content": null
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Request body must contain an instruction content string."
+          }
+        },
+        {
+          "name": "invalid REST instruction {'content': ' '}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/instructions",
+          "body": {
+            "content": " "
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Instruction content must not be empty."
+          }
+        },
+        {
+          "name": "POST /documents/1/comments",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {
+            "startLine": 2,
+            "endLine": 2,
+            "body": " Review "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Review",
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "id": 1,
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "replies": [],
+              "resolved": false,
+              "stale": false,
+              "sourceText": "Body",
+              "sourceHash": "428a1095",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "PUT /documents/1/comments/1",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/comments/1",
+          "body": {
+            "body": " Updated review "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 2,
+              "replies": [],
+              "resolved": false,
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "stale": false,
+              "startLine": 2,
+              "updatedAt": "$TIME",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "POST /documents/1/comments/1/replies",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments/1/replies",
+          "body": {
+            "body": " Reply "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 2,
+              "replies": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Reply",
+                  "createdAt": "$TIME",
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "resolved": false,
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "stale": false,
+              "startLine": 2,
+              "updatedAt": "$TIME",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "PUT /documents/1/comments/1/replies/1",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/comments/1/replies/1",
+          "body": {
+            "body": " Updated reply "
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 2,
+              "replies": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated reply",
+                  "createdAt": "$TIME",
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "resolved": false,
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "stale": false,
+              "startLine": 2,
+              "updatedAt": "$TIME",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "POST /documents/1/comments/1/resolve",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments/1/resolve",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 2,
+              "replies": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated reply",
+                  "createdAt": "$TIME",
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "resolved": true,
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "stale": false,
+              "startLine": 2,
+              "updatedAt": "$TIME",
+              "resolvedAt": "$TIME",
+              "resolvedBy": {
+                "type": "human"
+              },
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "POST /documents/1/comments/1/reopen",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments/1/reopen",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "author": {
+                "type": "human"
+              },
+              "body": "Updated review",
+              "createdAt": "$TIME",
+              "endLine": 2,
+              "id": 1,
+              "originalEndLine": 2,
+              "originalStartLine": 2,
+              "replies": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated reply",
+                  "createdAt": "$TIME",
+                  "id": 1,
+                  "updatedAt": "$TIME"
+                }
+              ],
+              "resolved": false,
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "stale": false,
+              "startLine": 2,
+              "updatedAt": "$TIME",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "REST comment lifecycle",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/comments",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "comments": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated review",
+                  "createdAt": "$TIME",
+                  "endLine": 2,
+                  "id": 1,
+                  "originalEndLine": 2,
+                  "originalStartLine": 2,
+                  "replies": [
+                    {
+                      "author": {
+                        "type": "human"
+                      },
+                      "body": "Updated reply",
+                      "createdAt": "$TIME",
+                      "id": 1,
+                      "updatedAt": "$TIME"
+                    }
+                  ],
+                  "resolved": false,
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "stale": false,
+                  "startLine": 2,
+                  "updatedAt": "$TIME",
+                  "displayLine": 2,
+                  "currentSourceText": "Body"
+                }
+              ],
+              "filePath": "$ROOT/readme.md"
+            }
+          }
+        },
+        {
+          "name": "invalid REST comment {}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {},
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment startLine must be a positive integer."
+          }
+        },
+        {
+          "name": "invalid REST comment {'body': ' '}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {
+            "body": " "
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment startLine must be a positive integer."
+          }
+        },
+        {
+          "name": "invalid REST comment {'body': 'bad', 'startLine': 0, 'endLine': 0}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {
+            "body": "bad",
+            "startLine": 0,
+            "endLine": 0
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment startLine must be a positive integer."
+          }
+        },
+        {
+          "name": "invalid REST comment {'body': 'bad', 'startLine': 4, 'endLine': 4}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {
+            "body": "bad",
+            "startLine": 4,
+            "endLine": 4
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment range does not exist."
+          }
+        },
+        {
+          "name": "invalid REST comment {'body': 'bad', 'startLine': 2.5, 'endLine': 3}",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments",
+          "body": {
+            "body": "bad",
+            "startLine": 2.5,
+            "endLine": 3
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment startLine must be a positive integer."
+          }
+        },
+        {
+          "name": "missing REST comment",
+          "method": "PUT",
+          "path": "/__sadoku/documents/1/comments/999",
+          "body": {
+            "body": "missing"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Comment not found."
+          }
+        },
+        {
+          "name": "edit source",
+          "write": "readme.md",
+          "content": "Inserted\n# Title\nBody\n"
+        },
+        {
+          "name": "rebased REST comments",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/comments",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "comments": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated review",
+                  "createdAt": "$TIME",
+                  "endLine": 3,
+                  "id": 1,
+                  "originalEndLine": 2,
+                  "originalStartLine": 2,
+                  "replies": [
+                    {
+                      "author": {
+                        "type": "human"
+                      },
+                      "body": "Updated reply",
+                      "createdAt": "$TIME",
+                      "id": 1,
+                      "updatedAt": "$TIME"
+                    }
+                  ],
+                  "resolved": false,
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "stale": false,
+                  "startLine": 3,
+                  "updatedAt": "$TIME",
+                  "displayLine": 3,
+                  "currentSourceText": "Body"
+                }
+              ],
+              "filePath": "$ROOT/readme.md"
+            }
+          }
+        },
+        {
+          "name": "REST previous markdown",
+          "method": "GET",
+          "path": "/__sadoku/documents/1",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "deleted": false,
+              "id": 1,
+              "relativePath": "readme.md",
+              "title": "readme.md",
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "Inserted\n# Title\nBody\n",
+              "tags": [
+                {
+                  "backgroundColor": "#718096",
+                  "id": 2,
+                  "name": "Beta"
+                },
+                {
+                  "backgroundColor": "#aabbcc",
+                  "id": 1,
+                  "name": "Gamma"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "remove source",
+          "remove": "readme.md"
+        },
+        {
+          "name": "REST deleted document snapshot",
+          "method": "GET",
+          "path": "/__sadoku/documents/1",
+          "expected": {
+            "status": 500,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Internal Server Error"
+          },
+          "acceptedDifference": "deleted-live-snapshot",
+          "goExpected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "deleted": true,
+              "id": 1,
+              "relativePath": "readme.md",
+              "title": "readme.md",
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "Inserted\n# Title\nBody\n",
+              "tags": [
+                {
+                  "backgroundColor": "#718096",
+                  "id": 2,
+                  "name": "Beta"
+                },
+                {
+                  "backgroundColor": "#aabbcc",
+                  "id": 1,
+                  "name": "Gamma"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "REST deleted document comments",
+          "method": "GET",
+          "path": "/__sadoku/documents/1/comments",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "comments": [
+                {
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Updated review",
+                  "createdAt": "$TIME",
+                  "endLine": 3,
+                  "id": 1,
+                  "originalEndLine": 2,
+                  "originalStartLine": 2,
+                  "replies": [
+                    {
+                      "author": {
+                        "type": "human"
+                      },
+                      "body": "Updated reply",
+                      "createdAt": "$TIME",
+                      "id": 1,
+                      "updatedAt": "$TIME"
+                    }
+                  ],
+                  "resolved": false,
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "stale": false,
+                  "startLine": 3,
+                  "updatedAt": "$TIME",
+                  "displayLine": 3,
+                  "currentSourceText": "Body"
+                }
+              ],
+              "filePath": "$ROOT/readme.md"
+            }
+          }
+        },
+        {
+          "name": "edit source",
+          "write": "readme.md",
+          "content": "# Title\nBody\n"
+        },
+        {
+          "name": "DELETE /documents/1/comments/1/replies/1",
+          "method": "DELETE",
+          "path": "/__sadoku/documents/1/comments/1/replies/1",
+          "expected": {
+            "status": 204,
+            "contentType": "",
+            "cacheControl": "no-store",
+            "text": ""
+          }
+        },
+        {
+          "name": "DELETE /documents/1/comments/1",
+          "method": "DELETE",
+          "path": "/__sadoku/documents/1/comments/1",
+          "expected": {
+            "status": 204,
+            "contentType": "",
+            "cacheControl": "no-store",
+            "text": ""
+          }
+        },
+        {
+          "name": "DELETE /documents/1/instructions/1",
+          "method": "DELETE",
+          "path": "/__sadoku/documents/1/instructions/1",
+          "expected": {
+            "status": 204,
+            "contentType": "",
+            "cacheControl": "",
+            "text": ""
+          }
+        },
+        {
+          "name": "missing REST instruction delete",
+          "method": "DELETE",
+          "path": "/__sadoku/documents/1/instructions/1",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Instruction not found."
+          }
+        },
+        {
+          "name": "REST export unavailable",
+          "method": "POST",
+          "path": "/__sadoku/documents/1/comments/1/github",
+          "body": {},
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "error": {
+                "code": "export_unavailable"
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /settings",
+          "method": "PUT",
+          "path": "/__sadoku/settings",
+          "body": {
+            "theme": "dark",
+            "codeWrap": "wrap",
+            "fontScale": 1.2,
+            "maxDepth": 3,
+            "maxFiles": 30,
+            "excludedDirectories": [
+              ".git"
+            ],
+            "markdownExtensions": [
+              ".md",
+              ".mdx"
+            ],
+            "showHtmlComments": false
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "theme": "dark",
+              "codeWrap": "wrap",
+              "fontScale": 1.2,
+              "showHtmlComments": false,
+              "excludedDirectories": [
+                ".git"
+              ],
+              "maxDepth": 3,
+              "maxFiles": 30,
+              "markdownExtensions": [
+                ".md",
+                ".mdx"
+              ]
+            }
+          }
+        },
+        {
+          "name": "updated REST settings",
+          "method": "GET",
+          "path": "/__sadoku/settings",
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "theme": "dark",
+              "codeWrap": "wrap",
+              "fontScale": 1.2,
+              "showHtmlComments": false,
+              "excludedDirectories": [
+                ".git"
+              ],
+              "maxDepth": 3,
+              "maxFiles": 30,
+              "markdownExtensions": [
+                ".md",
+                ".mdx"
+              ]
+            }
+          }
+        },
+        {
+          "name": "invalid REST settings {'theme': 'sepia', 'codeWrap': 'wrap', 'fontScale': 1.2, 'maxDepth': 3, 'maxFiles': 30, 'excludedDirectories': ['.git'], 'markdownExtensions': ['.md', '.mdx'], 'showHtmlComments': False}",
+          "method": "PUT",
+          "path": "/__sadoku/settings",
+          "body": {
+            "theme": "sepia",
+            "codeWrap": "wrap",
+            "fontScale": 1.2,
+            "maxDepth": 3,
+            "maxFiles": 30,
+            "excludedDirectories": [
+              ".git"
+            ],
+            "markdownExtensions": [
+              ".md",
+              ".mdx"
+            ],
+            "showHtmlComments": false
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, markdownExtensions, and showHtmlComments settings."
+          }
+        },
+        {
+          "name": "invalid REST settings {'theme': 'dark', 'codeWrap': 'wrap', 'fontScale': 1.2, 'maxDepth': 3, 'maxFiles': 30, 'excludedDirectories': ['.git'], 'markdownExtensions': ['.md', '.mdx'], 'showHtmlComments': None}",
+          "method": "PUT",
+          "path": "/__sadoku/settings",
+          "body": {
+            "theme": "dark",
+            "codeWrap": "wrap",
+            "fontScale": 1.2,
+            "maxDepth": 3,
+            "maxFiles": 30,
+            "excludedDirectories": [
+              ".git"
+            ],
+            "markdownExtensions": [
+              ".md",
+              ".mdx"
+            ],
+            "showHtmlComments": null
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, markdownExtensions, and showHtmlComments settings."
+          }
+        },
+        {
+          "name": "invalid REST settings {'theme': 'dark', 'codeWrap': 'wrap', 'fontScale': 1.2, 'maxDepth': 2.5, 'maxFiles': 30, 'excludedDirectories': ['.git'], 'markdownExtensions': ['.md', '.mdx'], 'showHtmlComments': False}",
+          "method": "PUT",
+          "path": "/__sadoku/settings",
+          "body": {
+            "theme": "dark",
+            "codeWrap": "wrap",
+            "fontScale": 1.2,
+            "maxDepth": 2.5,
+            "maxFiles": 30,
+            "excludedDirectories": [
+              ".git"
+            ],
+            "markdownExtensions": [
+              ".md",
+              ".mdx"
+            ],
+            "showHtmlComments": false
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, markdownExtensions, and showHtmlComments settings."
+          }
+        },
+        {
+          "name": "DELETE /tags/1",
+          "method": "DELETE",
+          "path": "/__sadoku/tags/1",
+          "expected": {
+            "status": 204,
+            "contentType": "",
+            "cacheControl": "no-store",
+            "text": ""
+          }
+        },
+        {
+          "name": "missing REST tag delete",
+          "method": "DELETE",
+          "path": "/__sadoku/tags/999",
+          "expected": {
+            "status": 404,
+            "contentType": "text/plain; charset=utf-8",
+            "cacheControl": "",
+            "text": "Tag 999 not found."
+          }
+        }
+      ]
+    },
+    {
+      "name": "github",
+      "steps": [
+        {
+          "name": "GetSession",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSession",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "pullRequest": {
+                "description": "Description",
+                "number": 1,
+                "title": "Pull title",
+                "url": "https://github.com/owner/repo/pull/1"
+              }
+            }
+          }
+        },
+        {
+          "name": "GetStatistics",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetStatistics",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "commentCount": {},
+              "databaseSize": "$DATABASE_SIZE",
+              "documentCount": "2"
+            }
+          }
+        },
+        {
+          "name": "ListDocuments",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocuments",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "documents": [
+                {
+                  "id": "1",
+                  "relativePath": "readme.md",
+                  "title": "readme.md"
+                },
+                {
+                  "id": "2",
+                  "relativePath": "guides/a+b.md",
+                  "title": "a+b.md"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetGitHubAccount",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetGitHubAccount",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "ok": true,
+              "account": {
+                "login": "viewer"
+              }
+            }
+          }
+        },
+        {
+          "name": "GetDirectoryStatus",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDirectoryStatus",
+          "body": {},
+          "expected": {
+            "status": 501,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "unimplemented",
+              "message": "Directory status is unavailable."
+            }
+          }
+        },
+        {
+          "name": "GetDocument",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "https://api.github.com/repos/owner/repo/contents/readme.md?ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "markdown": "# Title\nBody\n",
+              "title": "readme.md",
+              "githubHeadSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        },
+        {
+          "name": "encoded GitHub filename",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "2"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "https://api.github.com/repos/owner/repo/contents/guides/a%2Bb.md?ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "markdown": "# Other\nOther body\n",
+              "title": "a+b.md",
+              "githubHeadSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        },
+        {
+          "name": "ListComments",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListComments",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "filePath": "https://api.github.com/repos/owner/repo/contents/readme.md",
+              "githubHeadSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        },
+        {
+          "name": "encoded comment identity",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListComments",
+          "body": {
+            "documentId": "2"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "filePath": "https://api.github.com/repos/owner/repo/contents/guides/a%2Bb.md",
+              "githubHeadSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        },
+        {
+          "name": "CreateComment",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateComment",
+          "body": {
+            "documentId": "1",
+            "startLine": 2,
+            "endLine": 2,
+            "body": "Review"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "author": {
+                "type": "human"
+              },
+              "body": "Review",
+              "startLine": 2,
+              "endLine": 2,
+              "originalStartLine": 2,
+              "originalEndLine": 2,
+              "createdAt": "$TIME",
+              "updatedAt": "$TIME",
+              "sourceHash": "428a1095",
+              "sourceText": "Body",
+              "currentSourceText": "Body"
+            }
+          }
+        },
+        {
+          "name": "ExportCommentToGitHub",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ExportCommentToGitHub",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "startLine": 2,
+            "endLine": 2,
+            "body": "Review",
+            "createdAt": "$COMMENT_CREATED_AT",
+            "displayedMarkdown": "# Title\nBody\n",
+            "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "url": "https://github.com/owner/repo/pull/1/files",
+              "state": "pending"
+            }
+          }
+        },
+        {
+          "name": "stale GitHub head",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ExportCommentToGitHub",
+          "body": {
+            "documentId": "1",
+            "commentId": "1",
+            "startLine": 2,
+            "endLine": 2,
+            "body": "Review",
+            "createdAt": "$COMMENT_CREATED_AT",
+            "displayedMarkdown": "# Title\nBody\n",
+            "headSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "already_exists",
+              "message": "{\"error\":{\"code\":\"export_out_of_sync\"}}"
+            }
+          }
+        },
+        {
+          "name": "GitHub comments with head",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListComments",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "filePath": "https://api.github.com/repos/owner/repo/contents/readme.md",
+              "comments": [
+                {
+                  "id": "1",
+                  "author": {
+                    "type": "human"
+                  },
+                  "body": "Review",
+                  "startLine": 2,
+                  "endLine": 2,
+                  "originalStartLine": 2,
+                  "originalEndLine": 2,
+                  "createdAt": "$TIME",
+                  "updatedAt": "$TIME",
+                  "sourceHash": "428a1095",
+                  "sourceText": "Body",
+                  "displayLine": 2,
+                  "currentSourceText": "Body"
+                }
+              ],
+              "githubHeadSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        },
+        {
+          "name": "ListDocumentRevisions",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocumentRevisions",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "revisions": [
+                {
+                  "id": "1",
+                  "recordedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetDocumentRevision",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "recordedAt": "$TIME",
+              "markdown": "# Title\nBody\n"
+            }
+          }
+        },
+        {
+          "name": "remote restore unavailable",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/RestoreDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "failed_precondition",
+              "message": "Only local files can be restored."
+            }
+          }
+        },
+        {
+          "name": "PR creation unavailable",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "new"
+          },
+          "expected": {
+            "status": 412,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "failed_precondition",
+              "message": "File creation is unavailable in this preview."
+            }
+          }
+        },
+        {
+          "name": "UpdateDocumentTitle",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+          "body": {
+            "documentId": "1",
+            "title": "Review title"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "relativePath": "readme.md",
+              "title": "readme.md",
+              "displayTitle": "Review title"
+            }
+          }
+        },
+        {
+          "name": "PR display title",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "https://api.github.com/repos/owner/repo/contents/readme.md?ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "markdown": "# Title\nBody\n",
+              "title": "readme.md",
+              "githubHeadSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "displayTitle": "Review title"
+            }
+          }
+        },
+        {
+          "name": "PR statistics after comments",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetStatistics",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "commentCount": {
+                "human": "1"
+              },
+              "databaseSize": "$DATABASE_SIZE",
+              "documentCount": "3"
+            }
+          }
+        }
+      ],
+      "githubResponses": {
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "title": "Pull title",
+          "body": "Description",
+          "state": "open"
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n # Title\n+Body"
+          },
+          {
+            "filename": "guides/a+b.md",
+            "status": "added",
+            "patch": "@@ -0,0 +1,2 @@\n+# Other\n+Other body"
+          }
+        ],
+        "repos/owner/repo/contents/readme.md?ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "# Title\nBody\n",
+        "repos/owner/repo/contents/guides/a%2Bb.md?ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "# Other\nOther body\n",
+        "user": {
+          "login": "viewer",
+          "name": null,
+          "avatar_url": ""
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "graphql": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
