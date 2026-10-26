@@ -35,6 +35,27 @@ func TestCommentWorkflow(t *testing.T) {
 		t.Fatal("missing resolver")
 	}
 }
+
+func TestRebaseLargeDocumentKeepsDistantMovedRanges(t *testing.T) {
+	lines := make([]string, 4000)
+	for i := range lines {
+		lines[i] = fmt.Sprintf("original line %d", i)
+	}
+	before := strings.Join(lines, "\n")
+	prefix := make([]string, 100)
+	for i := range prefix {
+		prefix[i] = fmt.Sprintf("inserted line %d", i)
+	}
+	after := strings.Join(append(prefix, lines...), "\n")
+	comments, _, err := ChangeComment("CreateComment", Comments{Comments: []Comment{}}, CommentInput{StartLine: 2000, EndLine: 2001, Body: "Review"}, before, "2026-10-26T00:00:00.000Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rebased := ResolveComments(comments, after).Comments[0]
+	if rebased.Stale || rebased.StartLine != 2100 || rebased.EndLine != 2101 || rebased.OriginalStartLine != 2000 || rebased.OriginalEndLine != 2001 {
+		t.Fatalf("large document range was lost: %+v", rebased)
+	}
+}
 func TestRebaseComments(t *testing.T) {
 	before := "# Title\nfirst\nsecond\nremoved\nend"
 	after := "# Title\ninserted\nfirst edited\nsecond\nend"

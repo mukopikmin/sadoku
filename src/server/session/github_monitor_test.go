@@ -73,7 +73,7 @@ func TestGitHubMonitorKeepsUnchangedHeadsAndRecoversAfterErrors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fileRequests := 0
+	fileRequests, headRequests := 0, 0
 	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
 		var call struct{ Endpoint string }
 		if err := json.Unmarshal([]byte(line), &call); err != nil {
@@ -82,8 +82,14 @@ func TestGitHubMonitorKeepsUnchangedHeadsAndRecoversAfterErrors(t *testing.T) {
 		if strings.Contains(call.Endpoint, "/files?") {
 			fileRequests++
 		}
+		if call.Endpoint == f.endpoint {
+			headRequests++
+		}
 	}
 	if fileRequests != 2 {
 		t.Fatalf("unchanged head unnecessarily fetched files: %d", fileRequests)
+	}
+	if headRequests != 5 {
+		t.Fatalf("expected initial head and one request per poll, got %d", headRequests)
 	}
 }

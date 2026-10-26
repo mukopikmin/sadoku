@@ -14,9 +14,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/mukopikmin/sadoku/src/server/config"
 	u "github.com/mukopikmin/sadoku/src/server/usecase"
+	whatwg "github.com/nlnwa/whatwg-url/url"
 )
 
 type Pull struct {
@@ -28,25 +30,37 @@ type pullDetails struct {
 	NodeID             string `json:"node_id"`
 	Title, Body, State string
 	Head               struct{ SHA string }
+	titlePresent       bool
 }
 
 func ParsePull(input string) *Pull {
-	parsed, err := url.Parse(input)
-	if err != nil || parsed.Scheme != "https" || !strings.EqualFold(parsed.Host, "github.com") {
+	return parsePullURL(parseHTTPURL(input))
+}
+
+func parsePullURL(parsed *whatwg.Url) *Pull {
+	if parsed == nil || parsed.Scheme() != "https" || parsed.Hostname() != "github.com" {
 		return nil
 	}
-	m := regexp.MustCompile(`^/([^/]+)/([^/]+)/pull/([0-9]+)/?$`).FindStringSubmatch(parsed.Path)
+	m := regexp.MustCompile(`^/([^/]+)/([^/]+)/pull/([0-9]+)/?$`).FindStringSubmatch(parsed.Pathname())
 	if m == nil {
 		return nil
 	}
 	number, err := strconv.Atoi(m[3])
-	if err != nil || number < 1 {
+	if err != nil || number < 1 || int64(number) > 9007199254740991 {
 		return nil
 	}
-	return &Pull{Owner: m[1], Repo: m[2], Number: number, URL: fmt.Sprintf("https://github.com/%s/%s/pull/%d", m[1], m[2], number)}
+	owner, err := url.PathUnescape(m[1])
+	if err != nil || !utf8.ValidString(owner) {
+		return nil
+	}
+	repo, err := url.PathUnescape(m[2])
+	if err != nil || !utf8.ValidString(repo) {
+		return nil
+	}
+	return &Pull{Owner: owner, Repo: repo, Number: number, URL: fmt.Sprintf("https://github.com/%s/%s/pull/%d", m[1], m[2], number)}
 }
 func (p *Pull) endpoint() string {
-	return fmt.Sprintf("repos/%s/%s/pulls/%d", url.PathEscape(p.Owner), url.PathEscape(p.Repo), p.Number)
+	return fmt.Sprintf("repos/%s/%s/pulls/%d", encodeComponent(p.Owner), encodeComponent(p.Repo), p.Number)
 }
 func gh(ctx context.Context, endpoint string, payload any, raw bool) ([]byte, error) {
 	args := []string{"api", "--hostname", "github.com"}
@@ -71,20 +85,37 @@ func gh(ctx context.Context, endpoint string, payload any, raw bool) ([]byte, er
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, &githubCommandError{strings.TrimSpace(stderr.String())}
+		if errors.Is(err, exec.ErrNotFound) {
+			return nil, fmt.Errorf("GitHub pull request previews require the GitHub CLI. Install gh, then run `gh auth login --hostname github.com`.")
+		}
+		return nil, &githubCommandError{u.TrimSpace(decodeText(stderr.Bytes(), true))}
 	}
 	return out, nil
 }
 
 type githubCommandError struct{ stderr string }
 
-func (e *githubCommandError) Error() string { return "GitHub CLI request failed: " + e.stderr }
+func (e *githubCommandError) Error() string {
+	detail := strings.ToLower(e.stderr)
+	switch {
+	case strings.Contains(detail, "not logged"), strings.Contains(detail, "authentication"), strings.Contains(detail, "gh auth login"):
+		return "GitHub CLI is not authenticated. Run `gh auth login --hostname github.com`."
+	case strings.Contains(detail, "rate limit"):
+		return "GitHub API rate limit exceeded. Try again later."
+	case strings.Contains(detail, "not found"), strings.Contains(detail, "http 404"):
+		return "GitHub pull request was not found or the authenticated account cannot access the repository."
+	case e.stderr == "":
+		return "GitHub CLI request failed."
+	default:
+		return "GitHub CLI request failed: " + e.stderr
+	}
+}
 func ghJSON(ctx context.Context, endpoint string, payload, out any) error {
 	b, err := gh(ctx, endpoint, payload, false)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(b, out)
+	return json.Unmarshal([]byte(decodeText(b, true)), out)
 }
 func ghPages[T any](ctx context.Context, endpoint string) ([]T, error) {
 	all := []T{}
@@ -106,44 +137,35 @@ func ghPages[T any](ctx context.Context, endpoint string) ([]T, error) {
 type changedFile struct{ Filename, Status, Patch string }
 
 func (s *Session) preparePull(ctx context.Context, p *Pull, settings config.Settings) error {
-	if err := ghJSON(ctx, p.endpoint(), nil, &p.Details); err != nil {
+	details, err := readPullDetails(ctx, p.endpoint(), true)
+	if err != nil {
 		return err
 	}
+	p.Details = details
 	p.HeadSHA = p.Details.Head.SHA
-	if p.HeadSHA == "" {
-		return fmt.Errorf("GitHub response is missing the head SHA")
+	return s.preparePullSnapshot(ctx, p, settings)
+}
+
+func (s *Session) preparePullSnapshot(ctx context.Context, p *Pull, settings config.Settings) error {
+	files, err := listPullFiles(ctx, p, settings)
+	if err != nil {
+		return err
+	}
+	if !p.Details.titlePresent {
+		return fmt.Errorf("GitHub API response did not contain a valid pull request title.")
 	}
 	s.GitHub = p
 	s.Root = p.URL
 	s.PullRequest = map[string]any{"description": p.Details.Body, "number": p.Number, "title": p.Details.Title, "url": p.URL}
-	files, err := ghPages[changedFile](ctx, p.endpoint()+"/files")
-	if err != nil {
-		return err
-	}
 	s.ReadRemote = func(ctx context.Context, source string) (string, error) {
 		parsed, err := url.Parse(source)
 		if err != nil || parsed.Scheme != "https" || parsed.Host != "api.github.com" {
 			return "", fmt.Errorf("invalid GitHub contents URL")
 		}
 		b, err := gh(ctx, strings.TrimPrefix(parsed.RequestURI(), "/"), nil, true)
-		return string(b), err
+		return decodeText(b, true), err
 	}
 	for _, file := range files {
-		if len(s.Documents) >= settings.MaxFiles {
-			break
-		}
-		if file.Status == "removed" {
-			continue
-		}
-		allowed := false
-		for _, ext := range settings.MarkdownExtensions {
-			if strings.EqualFold(filepath.Ext(file.Filename), ext) {
-				allowed = true
-			}
-		}
-		if !allowed {
-			continue
-		}
 		parts := strings.Split(file.Filename, "/")
 		for i := range parts {
 			parts[i] = encodeComponent(parts[i])
@@ -176,23 +198,26 @@ func (s *Session) preparePull(ctx context.Context, p *Pull, settings config.Sett
 func encodeComponent(value string) string {
 	return strings.NewReplacer("+", "%20", "%21", "!", "%27", "'", "%28", "(", "%29", ")", "%2A", "*").Replace(url.QueryEscape(value))
 }
-func GitHubAccount(ctx context.Context) any {
+func GitHubAccount(ctx context.Context) (any, error) {
 	b, err := gh(ctx, "user", nil, false)
 	if err != nil {
 		message := "GitHub CLI authentication is unavailable."
 		var commandError *githubCommandError
-		if errors.As(err, &commandError) && commandError.stderr != "" {
+		if !errors.As(err, &commandError) {
+			return nil, err
+		}
+		if commandError.stderr != "" {
 			message = commandError.stderr
 		}
-		return map[string]any{"ok": false, "message": message}
+		return map[string]any{"ok": false, "message": message}, nil
 	}
 	var account map[string]any
-	if err = json.Unmarshal(b, &account); err != nil {
-		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}
+	if err = json.Unmarshal([]byte(decodeText(b, true)), &account); err != nil {
+		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}, nil
 	}
 	login, ok := account["login"].(string)
 	if !ok || login == "" {
-		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}
+		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}, nil
 	}
 	result := map[string]any{"login": login}
 	for field, key := range map[string]string{"name": "name", "avatar_url": "avatarUrl"} {
@@ -200,7 +225,7 @@ func GitHubAccount(ctx context.Context) any {
 			result[key] = value
 		}
 	}
-	return map[string]any{"ok": true, "account": result}
+	return map[string]any{"ok": true, "account": result}, nil
 }
 func exportFailure(code string) error {
 	kind := "already_exists"
@@ -370,30 +395,9 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 			return nil, exportFailure("export_review_out_of_sync")
 		}
 	}
-	files, err := ghPages[changedFile](ctx, p.endpoint()+"/files")
+	supported, err := supportsPullRange(ctx, p, doc.RelativePath, in.StartLine, in.EndLine)
 	if err != nil {
 		return nil, err
-	}
-	supported := false
-	hunk := regexp.MustCompile(`^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@`)
-	for _, file := range files {
-		if file.Filename != doc.RelativePath || file.Status == "removed" {
-			continue
-		}
-		for _, line := range strings.Split(file.Patch, "\n") {
-			m := hunk.FindStringSubmatch(line)
-			if m == nil {
-				continue
-			}
-			first, _ := strconv.Atoi(m[1])
-			count := 1
-			if m[2] != "" {
-				count, _ = strconv.Atoi(m[2])
-			}
-			if in.StartLine >= first && in.EndLine < first+count {
-				supported = true
-			}
-		}
 	}
 	if !supported {
 		return nil, exportFailure("export_outside_diff")
@@ -526,8 +530,8 @@ func (s *Session) Monitor(ctx context.Context, settings config.Settings, logErro
 		}
 		pull := *s.GitHub
 		s.Mu.Unlock()
-		var latest pullDetails
-		if err := ghJSON(ctx, pull.endpoint(), nil, &latest); err != nil {
+		latest, err := readPullDetails(ctx, pull.endpoint(), false)
+		if err != nil {
 			if ctx.Err() == nil {
 				logError(err)
 			}
@@ -536,8 +540,10 @@ func (s *Session) Monitor(ctx context.Context, settings config.Settings, logErro
 		if latest.Head.SHA == pull.HeadSHA {
 			continue
 		}
+		pull.HeadSHA = latest.Head.SHA
+		pull.Details.Head.SHA = latest.Head.SHA
 		next := &Session{Repository: s.Repository, Sources: map[int64]string{}, Documents: []u.Document{}}
-		if err := next.preparePull(ctx, &pull, settings); err != nil {
+		if err := next.preparePullSnapshot(ctx, &pull, settings); err != nil {
 			if ctx.Err() == nil {
 				logError(err)
 			}

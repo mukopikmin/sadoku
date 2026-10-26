@@ -30,10 +30,6 @@ type lineRange struct{ start, end int }
 func mapLines(before, after string) map[int]lineRange {
 	old, new := strings.Split(before, "\n"), strings.Split(after, "\n")
 	width := len(new) + 1
-	// Bound memory for untrusted documents; exact source matching remains available.
-	if int64(len(old)+1)*int64(width) > 16_000_000 {
-		return nil
-	}
 	lengths := make([]uint32, (len(old)+1)*width)
 	for i := len(old) - 1; i >= 0; i-- {
 		for j := len(new) - 1; j >= 0; j-- {

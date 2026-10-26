@@ -1,0 +1,273 @@
+{
+  "reference": "368b47eb1ae18a84d428ce4367d25cb815584968",
+  "cases": [
+    {
+      "input": "https://EXAMPLE.com:443/docs/a%20b.md?token=secret#top",
+      "remote": true,
+      "identity": "https://example.com/docs/a%20b.md",
+      "fetch": "https://example.com/docs/a%20b.md?token=secret#top",
+      "title": "a%20b.md",
+      "pull": null
+    },
+    {
+      "input": "http://Example.COM:80",
+      "remote": true,
+      "identity": "http://example.com/",
+      "fetch": "http://example.com/",
+      "title": "/",
+      "pull": null
+    },
+    {
+      "input": "https://example.com",
+      "remote": true,
+      "identity": "https://example.com/",
+      "fetch": "https://example.com/",
+      "title": "/",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/a/../b.md",
+      "remote": true,
+      "identity": "https://example.com/b.md",
+      "fetch": "https://example.com/b.md",
+      "title": "b.md",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/a/%2e%2e/b.md",
+      "remote": true,
+      "identity": "https://example.com/b.md",
+      "fetch": "https://example.com/b.md",
+      "title": "b.md",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/a//b.md",
+      "remote": true,
+      "identity": "https://example.com/a//b.md",
+      "fetch": "https://example.com/a//b.md",
+      "title": "b.md",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/a%2Fb.md",
+      "remote": true,
+      "identity": "https://example.com/a%2Fb.md",
+      "fetch": "https://example.com/a%2Fb.md",
+      "title": "a%2Fb.md",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/日本語.md?x=あ#見出し",
+      "remote": true,
+      "identity": "https://example.com/%E6%97%A5%E6%9C%AC%E8%AA%9E.md",
+      "fetch": "https://example.com/%E6%97%A5%E6%9C%AC%E8%AA%9E.md?x=%E3%81%82#%E8%A6%8B%E5%87%BA%E3%81%97",
+      "title": "%E6%97%A5%E6%9C%AC%E8%AA%9E.md",
+      "pull": null
+    },
+    {
+      "input": "https://例え.テスト/文書.md",
+      "remote": true,
+      "identity": "https://xn--r8jz45g.xn--zckzah/%E6%96%87%E6%9B%B8.md",
+      "fetch": "https://xn--r8jz45g.xn--zckzah/%E6%96%87%E6%9B%B8.md",
+      "title": "%E6%96%87%E6%9B%B8.md",
+      "pull": null
+    },
+    {
+      "input": "http://0x7f.1/file.md",
+      "remote": true,
+      "identity": "http://127.0.0.1/file.md",
+      "fetch": "http://127.0.0.1/file.md",
+      "title": "file.md",
+      "pull": null
+    },
+    {
+      "input": "http://127.000.000.001/file.md",
+      "remote": true,
+      "identity": "http://127.0.0.1/file.md",
+      "fetch": "http://127.0.0.1/file.md",
+      "title": "file.md",
+      "pull": null
+    },
+    {
+      "input": "https://[0:0:0:0:0:0:0:1]:443/a.md",
+      "remote": true,
+      "identity": "https://[::1]/a.md",
+      "fetch": "https://[::1]/a.md",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https:example.com/a.md",
+      "remote": true,
+      "identity": "https://example.com/a.md",
+      "fetch": "https://example.com/a.md",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https:/example.com/a.md",
+      "remote": true,
+      "identity": "https://example.com/a.md",
+      "fetch": "https://example.com/a.md",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https:\\example.com\\a.md",
+      "remote": true,
+      "identity": "https://example.com/a.md",
+      "fetch": "https://example.com/a.md",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": " https://Example.COM/a.md \n",
+      "remote": true,
+      "identity": "https://example.com/a.md",
+      "fetch": "https://example.com/a.md",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https://exa\tmple.com/a.md",
+      "remote": true,
+      "identity": "https://example.com/a.md",
+      "fetch": "https://example.com/a.md",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/a.md?",
+      "remote": true,
+      "identity": "https://example.com/a.md",
+      "fetch": "https://example.com/a.md?",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/a.md#",
+      "remote": true,
+      "identity": "https://example.com/a.md",
+      "fetch": "https://example.com/a.md#",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https://user:pass@EXAMPLE.com:443/a.md",
+      "remote": true,
+      "identity": "https://user:pass@example.com/a.md",
+      "fetch": "https://user:pass@example.com/a.md",
+      "title": "a.md",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/",
+      "remote": true,
+      "identity": "https://example.com/",
+      "fetch": "https://example.com/",
+      "title": "/",
+      "pull": null
+    },
+    {
+      "input": "https://example.com/%E6%96%87%E6%9B%B8.md",
+      "remote": true,
+      "identity": "https://example.com/%E6%96%87%E6%9B%B8.md",
+      "fetch": "https://example.com/%E6%96%87%E6%9B%B8.md",
+      "title": "%E6%96%87%E6%9B%B8.md",
+      "pull": null
+    },
+    {
+      "input": "https://github.com:443/owner/repo/pull/0001/?token=secret#files",
+      "remote": true,
+      "identity": "https://github.com/owner/repo/pull/1",
+      "fetch": "https://github.com/owner/repo/pull/1",
+      "pull": {
+        "owner": "owner",
+        "repo": "repo",
+        "pullNumber": 1,
+        "url": "https://github.com/owner/repo/pull/1"
+      }
+    },
+    {
+      "input": "https://GITHUB.COM/owner/repo/pull/42",
+      "remote": true,
+      "identity": "https://github.com/owner/repo/pull/42",
+      "fetch": "https://github.com/owner/repo/pull/42",
+      "pull": {
+        "owner": "owner",
+        "repo": "repo",
+        "pullNumber": 42,
+        "url": "https://github.com/owner/repo/pull/42"
+      }
+    },
+    {
+      "input": "https://github.com/ow%2Fner/re%20po/pull/1",
+      "remote": true,
+      "identity": "https://github.com/ow%2Fner/re%20po/pull/1",
+      "fetch": "https://github.com/ow%2Fner/re%20po/pull/1",
+      "pull": {
+        "owner": "ow/ner",
+        "repo": "re po",
+        "pullNumber": 1,
+        "url": "https://github.com/ow%2Fner/re%20po/pull/1"
+      }
+    },
+    {
+      "input": "https://github.com/owner/repo/pull/9007199254740992",
+      "remote": true,
+      "identity": "https://github.com/owner/repo/pull/9007199254740992",
+      "fetch": "https://github.com/owner/repo/pull/9007199254740992",
+      "title": "9007199254740992",
+      "pull": null
+    },
+    {
+      "input": "https://github.com/owner/repo/pull/0",
+      "remote": true,
+      "identity": "https://github.com/owner/repo/pull/0",
+      "fetch": "https://github.com/owner/repo/pull/0",
+      "title": "0",
+      "pull": null
+    },
+    {
+      "input": "https://github.com:8443/owner/repo/pull/1",
+      "remote": true,
+      "identity": "https://github.com/owner/repo/pull/1",
+      "fetch": "https://github.com/owner/repo/pull/1",
+      "pull": {
+        "owner": "owner",
+        "repo": "repo",
+        "pullNumber": 1,
+        "url": "https://github.com/owner/repo/pull/1"
+      }
+    },
+    {
+      "input": "https://",
+      "remote": false,
+      "pull": null
+    },
+    {
+      "input": "http://%",
+      "remote": false,
+      "pull": null
+    },
+    {
+      "input": "ftp://example.com/a.md",
+      "remote": false,
+      "pull": null
+    },
+    {
+      "input": "https://github.com/owner/repo/pull/%31",
+      "remote": true,
+      "identity": "https://github.com/owner/repo/pull/%31",
+      "fetch": "https://github.com/owner/repo/pull/%31",
+      "title": "%31",
+      "pull": null
+    },
+    {
+      "input": "https://example.com:99999/a.md",
+      "remote": false,
+      "pull": null
+    }
+  ]
+}

@@ -142,6 +142,56 @@ func TestServerFallsBackFromOccupiedPortAndStopsCleanly(t *testing.T) {
 	}
 }
 
+func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
+	const count = 102
+	var reserved []net.Listener
+	var port int
+	for attempt := 0; attempt < 20; attempt++ {
+		first, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		reserved = []net.Listener{first}
+		port = first.Addr().(*net.TCPAddr).Port
+		if port+count <= 65535 {
+			for i := 1; i < count; i++ {
+				next, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port+i))
+				if err != nil {
+					break
+				}
+				reserved = append(reserved, next)
+			}
+			if len(reserved) == count {
+				break
+			}
+		}
+		for _, listener := range reserved {
+			listener.Close()
+		}
+		reserved = nil
+	}
+	if len(reserved) != count {
+		t.Skip("could not reserve a consecutive port range")
+	}
+	t.Cleanup(func() {
+		for _, listener := range reserved {
+			listener.Close()
+		}
+	})
+	previewURL, _ := startServer(t, markdownFile(t, "preview.md", "# Preview\n"), port, true)
+	parsed, err := url.Parse(previewURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var actual int
+	if _, err := fmt.Sscan(parsed.Port(), &actual); err != nil {
+		t.Fatal(err)
+	}
+	if actual < port+count {
+		t.Fatalf("server used reserved port: %s", previewURL)
+	}
+}
+
 func TestLastEventStreamDisconnectShutsDownServer(t *testing.T) {
 	previewURL, stopped := startServer(t, markdownFile(t, "preview.md", "# Preview\n"), 0, false)
 	response, err := http.Get(previewURL + "/__sadoku/events")

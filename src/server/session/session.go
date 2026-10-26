@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -15,6 +15,8 @@ import (
 
 	"github.com/mukopikmin/sadoku/src/server/config"
 	u "github.com/mukopikmin/sadoku/src/server/usecase"
+	whatwg "github.com/nlnwa/whatwg-url/url"
+	"golang.org/x/text/encoding/unicode"
 )
 
 type Session struct {
@@ -36,40 +38,68 @@ type Session struct {
 func (s *Session) ExportInProgress() bool { return s.exporting.Load() }
 
 func Source(input string) (identity, fetch string, remote bool) {
-	parsed, err := url.Parse(input)
-	if err == nil && (parsed.Scheme == "http" || parsed.Scheme == "https") {
-		full := parsed.String()
-		parsed.RawQuery = ""
-		parsed.Fragment = ""
-		return parsed.String(), full, true
+	parsed := parseHTTPURL(input)
+	if parsed != nil {
+		if pull := parsePullURL(parsed); pull != nil {
+			return pull.URL, pull.URL, true
+		}
+		full := parsed.Href(false)
+		parsed.SetSearch("")
+		parsed.SetHash("")
+		return parsed.Href(false), full, true
 	}
 	abs, _ := filepath.Abs(input)
 	return abs, abs, false
 }
+
+// Persistent identities must follow JavaScript URL rules, including IDNA,
+// default ports, escaped dot segments, and special-scheme URL syntax.
+func parseHTTPURL(input string) *whatwg.Url {
+	parsed, err := whatwg.Parse(input)
+	if err != nil || parsed == nil || (parsed.Scheme() != "http" && parsed.Scheme() != "https") {
+		return nil
+	}
+	return parsed
+}
 func ReadMarkdown(ctx context.Context, source string) (string, error) {
-	_, _, remote := Source(source)
+	_, fetch, remote := Source(source)
 	if !remote {
 		b, err := os.ReadFile(source)
-		return string(b), err
+		return decodeText(b, false), err
 	}
-	req, err := http.NewRequestWithContext(ctx, "GET", source, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", fetch, nil)
 	if err != nil {
 		return "", err
 	}
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+		return "", fmt.Errorf("fetch failed")
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("failed to fetch Markdown URL: %s", resp.Status)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("Failed to fetch Markdown URL: %s", strings.TrimRight(resp.Status, " \t\r\n"))
+	}
+	if resp.StatusCode == 204 || resp.StatusCode == 205 {
+		return "", nil
 	}
 	b, err := io.ReadAll(io.LimitReader(resp.Body, (32<<20)+1))
 	if err == nil && len(b) > 32<<20 {
 		return "", fmt.Errorf("remote Markdown exceeds 32 MiB")
 	}
-	return string(b), err
+	return decodeText(b, true), err
+}
+
+func decodeText(data []byte, remote bool) string {
+	decoder := unicode.UTF8.NewDecoder()
+	if remote {
+		decoder = unicode.UTF8BOM.NewDecoder()
+	}
+	text, _ := decoder.Bytes(data)
+	return string(text)
 }
 func New(ctx context.Context, input string, repo u.Repository, settings config.Settings) (*Session, error) {
 	s := &Session{Repository: repo, Sources: map[int64]string{}, Documents: []u.Document{}}
@@ -92,8 +122,8 @@ func New(ctx context.Context, input string, repo u.Repository, settings config.S
 		}
 		d.RelativePath = filepath.Base(identity)
 		if remote {
-			parsed, _ := url.Parse(identity)
-			d.RelativePath = filepath.Base(parsed.Path)
+			parsed := parseHTTPURL(identity)
+			d.RelativePath = path.Base(parsed.Pathname())
 		}
 		d.Title = d.RelativePath
 		d.Tags = []u.Tag{}

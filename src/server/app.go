@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/mukopikmin/sadoku/src/server/cli"
@@ -115,7 +117,9 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 		if err == nil {
 			break
 		}
-		if port-options.Port >= 100 {
+		// Windows returns WSAEADDRINUSE, not syscall's synthetic EADDRINUSE.
+		inUse := errors.Is(err, syscall.EADDRINUSE) || (runtime.GOOS == "windows" && errors.Is(err, syscall.Errno(10048)))
+		if port == 0 || port == 65535 || !inUse {
 			return err
 		}
 	}

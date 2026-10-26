@@ -83,6 +83,15 @@ func installHTTPGitHubFixture(t *testing.T, directory string) {
 	t.Setenv("GORACE", "atexit_sleep_ms=0")
 }
 
+func TestGitHubAccountWithoutCLIIsServerError(t *testing.T) {
+	_, server, _ := setup(t)
+	t.Setenv("PATH", t.TempDir())
+	body := restRequest(t, server.URL, "GET", "/__sadoku/github-account", "", "", 500)
+	if string(body) != "Internal Server Error" {
+		t.Fatalf("missing gh response: %s", body)
+	}
+}
+
 func TestGitHubAccountPreservesDiagnosticsAndOptionalFields(t *testing.T) {
 	_, server, _ := setup(t)
 	installHTTPGitHubFixture(t, t.TempDir())

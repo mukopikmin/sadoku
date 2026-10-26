@@ -87,7 +87,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		return in.Settings, nil
 	case "GetGitHubAccount":
-		return GitHubAccount(ctx), nil
+		return GitHubAccount(ctx)
 	}
 
 	s.Mu.Lock()

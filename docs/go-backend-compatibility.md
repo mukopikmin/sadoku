@@ -32,6 +32,17 @@ responses are compared directly.
 
 - The CLI suite compares 178 captured command transcripts, including stdout,
   stderr, and exit status. Startup and update messages have separate tests.
+- Source resolution compares 33 recorded URL cases: host/default-port/IDNA
+  normalization, escaped paths and dot segments, IPv4/IPv6, query/fragment
+  removal, remote document titles, and GitHub pull recognition/identities. The
+  WHATWG parser preserves the JavaScript URL rules used by existing databases.
+- Markdown reading compares 26 recorded results across local/remote UTF-8
+  decoding (including BOM and malformed bytes) and HTTP success/error statuses.
+  Transport failures and cancellation have separate tests.
+- GitHub preparation compares 21 recorded adapter scenarios, including command
+  diagnostics, missing/malformed metadata, file-list failures, pagination, and
+  stopping at the configured file limit. Separate regressions check missing
+  `gh`, response decoding, and stopping diff pagination once a file is found.
 - Filesystem/SSE tests cover same-size/mtime writes, atomic replacement,
   deletion/recreation, unrelated files, other CLI processes, and subscribers.
 - Startup tests cover blocked discovery/registration/remote reads, progress,
@@ -40,7 +51,9 @@ responses are compared directly.
   replies, changed remote state, malformed responses, diff hunks, concurrent
   exports, and mutation failures without retries. The monitor test verifies
   unchanged heads, error recovery, added/removed files, and invalidation using
-  virtual time.
+  virtual time, with one head request per poll.
+- Server startup continues past 100 occupied ports. Comment rebasing retains
+  distant moved ranges in documents above the former 16-million-cell cutoff.
 - Storage/configuration tests cover migrations and checksums, rollback, scoped
   resources, bounded revision reads, unchanged tag timestamps, preserved
   malformed configuration, and file creation followed by a registration failure.

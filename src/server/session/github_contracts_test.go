@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -63,8 +64,93 @@ func TestGitHubFixtureProcess(t *testing.T) {
 		fmt.Fprintln(os.Stderr, "unexpected GitHub request:", key)
 		os.Exit(2)
 	}
+	var control struct {
+		Stderr *string `json:"__stderr"`
+		Raw    *string `json:"__raw"`
+	}
+	if json.Unmarshal(response, &control) == nil {
+		if control.Stderr != nil {
+			fmt.Fprint(os.Stderr, *control.Stderr)
+			os.Exit(1)
+		}
+		if control.Raw != nil {
+			fmt.Fprint(os.Stdout, *control.Raw)
+			os.Exit(0)
+		}
+	}
 	os.Stdout.Write(response)
 	os.Exit(0)
+}
+
+func TestLegacyGitHubPullFailureTranscripts(t *testing.T) {
+	var fixture struct {
+		Reference string
+		Cases     []struct {
+			Name      string
+			MaxFiles  int
+			Responses map[string]any
+			Expected  struct {
+				Error, Description, Title string
+				Paths, Calls              []string
+			}
+		}
+	}
+	data, err := os.ReadFile("testdata/legacy_pull.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Reference != "368b47eb1ae18a84d428ce4367d25cb815584968" {
+		t.Fatal("unknown pull reference")
+	}
+	for _, test := range fixture.Cases {
+		t.Run(test.Name, func(t *testing.T) {
+			f := newGitHubFixture(t)
+			f.responses = test.Responses
+			f.write(t)
+			if err := os.WriteFile(filepath.Join(f.directory, "calls.jsonl"), nil, 0600); err != nil {
+				t.Fatal(err)
+			}
+			settings := config.Defaults()
+			if test.MaxFiles != 0 {
+				settings.MaxFiles = test.MaxFiles
+			}
+			s, err := New(context.Background(), "https://github.com/owner/repo/pull/1", f.s.Repository, settings)
+			if test.Expected.Error != "" {
+				if err == nil || err.Error() != test.Expected.Error {
+					t.Errorf("pull error: %v; want %q", err, test.Expected.Error)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				paths := []string{}
+				for _, doc := range s.Documents {
+					paths = append(paths, doc.RelativePath)
+				}
+				if !reflect.DeepEqual(paths, test.Expected.Paths) || s.GitHub.Details.Title != test.Expected.Title || s.GitHub.Details.Body != test.Expected.Description {
+					t.Errorf("pull: paths %v, details %+v; want %+v", paths, s.GitHub.Details, test.Expected)
+				}
+			}
+			calls, err := os.ReadFile(filepath.Join(f.directory, "calls.jsonl"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			endpoints := []string{}
+			for _, line := range strings.Split(strings.TrimSpace(string(calls)), "\n") {
+				var call struct{ Endpoint string }
+				if err := json.Unmarshal([]byte(line), &call); err != nil {
+					t.Fatal(err)
+				}
+				endpoints = append(endpoints, call.Endpoint)
+			}
+			if !reflect.DeepEqual(endpoints, test.Expected.Calls) {
+				t.Errorf("requests: %v; want %v", endpoints, test.Expected.Calls)
+			}
+		})
+	}
 }
 
 type githubFixture struct {
@@ -72,6 +158,29 @@ type githubFixture struct {
 	in                          Input
 	responses                   map[string]any
 	directory, endpoint, marker string
+}
+
+func TestGitHubMarkdownDecodesResponseText(t *testing.T) {
+	f := newGitHubFixture(t)
+	f.responses["repos/owner/repo/contents/readme.md?ref="+f.in.HeadSHA] = map[string]any{"__raw": "\ufeffTitle\nBody\n"}
+	f.write(t)
+	s, err := New(context.Background(), f.s.GitHub.URL, f.s.Repository, config.Defaults())
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, err := s.Read(context.Background(), s.Documents[0].ID)
+	if err != nil || text != "Title\nBody\n" {
+		t.Fatalf("GitHub Markdown response: %q %v", text, err)
+	}
+}
+
+func TestMissingGitHubCLIReportsInstallGuidance(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	_, err := New(context.Background(), "https://github.com/owner/repo/pull/1", nil, config.Defaults())
+	want := "GitHub pull request previews require the GitHub CLI. Install gh, then run `gh auth login --hostname github.com`."
+	if err == nil || err.Error() != want {
+		t.Fatalf("missing gh: %v; want %q", err, want)
+	}
 }
 
 func newGitHubFixture(t *testing.T) *githubFixture {
@@ -302,7 +411,7 @@ func TestGitHubExportPaginatesAndAddsToTheViewerReview(t *testing.T) {
 }
 
 func TestGitHubExportDiffEligibilityAndMutationFailures(t *testing.T) {
-	for _, scenario := range []string{"removed file", "missing patch", "split hunks", "multiline hunk", "mutation error"} {
+	for _, scenario := range []string{"removed file", "missing patch", "split hunks", "multiline hunk", "diff match stops pagination", "mutation error"} {
 		t.Run(scenario, func(t *testing.T) {
 			f := newGitHubFixture(t)
 			file := f.responses[f.endpoint+"/files?per_page=100&page=1"].([]any)[0].(map[string]any)
@@ -311,6 +420,13 @@ func TestGitHubExportDiffEligibilityAndMutationFailures(t *testing.T) {
 				file["status"] = "removed"
 			case "missing patch":
 				delete(file, "patch")
+			case "diff match stops pagination":
+				files := []any{file}
+				for i := 1; i < 100; i++ {
+					files = append(files, map[string]any{"filename": fmt.Sprintf("other-%d.md", i), "status": "modified"})
+				}
+				f.responses[f.endpoint+"/files?per_page=100&page=1"] = files
+				f.responses[f.endpoint+"/files?per_page=100&page=2"] = map[string]any{"__stderr": "unnecessary request"}
 			case "split hunks", "multiline hunk":
 				f.in.StartLine = 1
 				comments, err := f.s.Repository.ReadComments(f.s.CommentDocumentID(int64(f.in.DocumentID)))
@@ -333,6 +449,10 @@ func TestGitHubExportDiffEligibilityAndMutationFailures(t *testing.T) {
 			if scenario == "multiline hunk" {
 				if err != nil || len(calls) != 1 || calls[0]["Variables"].(map[string]any)["startLine"] != float64(1) {
 					t.Fatalf("multiline export: %v %v", calls, err)
+				}
+			} else if scenario == "diff match stops pagination" {
+				if err != nil || len(calls) != 1 {
+					t.Fatalf("matched diff fetched another page: %v %v", calls, err)
 				}
 			} else if err == nil {
 				t.Fatal("accepted failed export")

@@ -1,0 +1,119 @@
+{
+  "reference": "368b47eb1ae18a84d428ce4367d25cb815584968",
+  "decoding": [
+    {
+      "bytes": [],
+      "local": "",
+      "remote": ""
+    },
+    {
+      "bytes": [
+        239,
+        187,
+        191,
+        35,
+        32,
+        84
+      ],
+      "local": "﻿# T",
+      "remote": "# T"
+    },
+    {
+      "bytes": [
+        255,
+        255
+      ],
+      "local": "��",
+      "remote": "��"
+    },
+    {
+      "bytes": [
+        226,
+        130
+      ],
+      "local": "�",
+      "remote": "�"
+    },
+    {
+      "bytes": [
+        237,
+        160,
+        128
+      ],
+      "local": "���",
+      "remote": "���"
+    },
+    {
+      "bytes": [
+        255,
+        254,
+        35,
+        0
+      ],
+      "local": "��#\u0000",
+      "remote": "��#\u0000"
+    },
+    {
+      "bytes": [
+        240,
+        159,
+        152,
+        128
+      ],
+      "local": "😀",
+      "remote": "😀"
+    },
+    {
+      "bytes": [
+        35,
+        239,
+        187,
+        191
+      ],
+      "local": "#﻿",
+      "remote": "#﻿"
+    }
+  ],
+  "statuses": [
+    {
+      "status": 200,
+      "text": "# Title\nBody\n"
+    },
+    {
+      "status": 201,
+      "text": "# Title\nBody\n"
+    },
+    {
+      "status": 202,
+      "text": "# Title\nBody\n"
+    },
+    {
+      "status": 204,
+      "text": ""
+    },
+    {
+      "status": 205,
+      "text": ""
+    },
+    {
+      "status": 206,
+      "text": "# Title\nBody\n"
+    },
+    {
+      "status": 299,
+      "text": "# Title\nBody\n"
+    },
+    {
+      "status": 400,
+      "error": "Failed to fetch Markdown URL: 400 Bad Request"
+    },
+    {
+      "status": 404,
+      "error": "Failed to fetch Markdown URL: 404 Not Found"
+    },
+    {
+      "status": 500,
+      "error": "Failed to fetch Markdown URL: 500 Internal Server Error"
+    }
+  ]
+}
