@@ -46,7 +46,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          bash scripts/release.sh check --version "${RELEASE_TAG#v}" > release-check.json
+          make release-check VERSION="${RELEASE_TAG#v}" > release-check.json
           cat release-check.json
           echo "version=$(jq -er .version release-check.json)" >> "${GITHUB_OUTPUT}"
           echo "target-sha=$(jq -er .headSha release-check.json)" >> "${GITHUB_OUTPUT}"
@@ -69,12 +69,12 @@ jobs:
             src/preview/package-lock.json
 
       - name: Install dependencies
-        run: npm run install:deps
+        run: make deps
 
       - name: Build and verify release artifacts
         env:
           VERSION: ${{ steps.release.outputs.version }}
-        run: npm run dist -- --version "${VERSION}"
+        run: make dist VERSION="${VERSION}"
 
       - name: Attest release archives
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
@@ -144,7 +144,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          bash scripts/release.sh notes --version "${VERSION}" --output release-notes.json
+          make release-notes VERSION="${VERSION}" OUTPUT=release-notes.json
           test "$(jq -er .headSha release-notes.json)" = "${TARGET_SHA}"
           test "$(jq -er .previousStableTag release-notes.json)" = "${PREVIOUS_STABLE_TAG}"
           jq -er .body release-notes.json > release-notes.md
@@ -152,7 +152,7 @@ jobs:
 
       - name: Revalidate immediately before publication
         run: |
-          bash scripts/release.sh check --version "${VERSION}" > release-check.json
+          make release-check VERSION="${VERSION}" > release-check.json
           test "$(jq -er .tag release-check.json)" = "${RELEASE_TAG}"
           test "$(jq -er .headSha release-check.json)" = "${TARGET_SHA}"
           test "$(jq -er .tagObject release-check.json)" = "${TAG_OBJECT}"

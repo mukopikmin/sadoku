@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/protobuf.yml
+      - Makefile
       - .prettierrc.json
       - buf.gen.yaml
       - buf.yaml
@@ -19,6 +20,7 @@ on:
       - main
     paths:
       - .github/workflows/protobuf.yml
+      - Makefile
       - .prettierrc.json
       - buf.gen.yaml
       - buf.yaml
@@ -56,10 +58,10 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Go protobuf generators
-        run: npm run proto:tools
+        run: make proto-tools
 
       - name: Install protobuf tools
-        run: npm ci --ignore-scripts
+        run: make deps
 
       - name: Check schema and generated code
-        run: npm run proto:check
+        run: make proto-check

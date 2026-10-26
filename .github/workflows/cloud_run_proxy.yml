@@ -28,12 +28,7 @@ jobs:
           cache: false
 
       - name: Check proxy
-        working-directory: proxy
-        run: |
-          set -euo pipefail
-          test -z "$(gofmt -l .)"
-          go vet ./...
-          go test -race -count=1 -timeout=60s ./...
+        run: make check-proxy-format vet-proxy test-proxy
 
       - name: Build image without cloud credentials
         env:

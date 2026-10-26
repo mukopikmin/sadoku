@@ -12,7 +12,7 @@ The font is licensed under SIL Open Font License 1.1:
   the upstream license, from
   [Google Fonts commit 295d98a7](https://github.com/google/fonts/blob/295d98a7a0c17c68f1341eaeea354e7960ea70d3/ofl/notosansjp/OFL.txt).
 - `FONTSOURCE-LICENSE.txt` preserves the license supplied by the Fontsource
-  package. Its license is also included by `npm run notices` in release
+  package. Its license is also included by `make notices` in release
   notices.
 
 OFL 1.1 permits embedding and redistributing these fonts with software when each

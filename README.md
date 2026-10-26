@@ -188,8 +188,8 @@ git tag --annotate v<version> <approved-full-sha> \
 ```
 
 Pushing that tag starts automatic validation, builds, attestation, notes
-generation, and publication. `npm run release:check -- --version <version>` and
-`npm run release:notes -- --version <version> --output release-notes.json`
+generation, and publication. `make release-check VERSION=<version>` and
+`make release-notes VERSION=<version> OUTPUT=release-notes.json`
 require Bash, jq, Git, an authenticated GitHub CLI, and the release and
 comparison tags locally. Both commands read the approved baseline from the
 annotated tag and compare it with a fresh GitHub lookup. Missing, duplicate, or
@@ -257,41 +257,42 @@ Japanese text uses bundled Noto Sans JP with no external font service. See the
 
 ## Development
 
-The backend, CLI, build, and notice tools use Go 1.26. Release validation and
-notes use Bash with Git, GitHub CLI, and jq. Node.js is used for the
-preview client; its required version is specified in `package.json`.
-Run from source:
+Use GNU Make as the entry point for repository tasks. Go 1.26 runs the backend,
+CLI, build, and notice tools. Release validation and notes use Bash with Git,
+GitHub CLI, and jq. Node.js runs the preview client and npm tooling; its required
+version is specified in `package.json`.
 
 ```sh
-npm install
-npm run start -- README.md
+make deps
+make start ARGS=README.md
 ```
 
-Checks: `npm run fmt:check`, `npm run check`, `npm run test:server`,
-`npm test`, and `npm run test:tools`. Build a standalone Go binary with embedded
-client assets using `npm run compile -- --version 1.2.3`. The binary needs
-neither Go nor Node.js installed.
-
-Repository tools run from the repository root:
+`package.json` contains npm and Node tasks only. Make invokes those scripts and
+coordinates Go, release, and generated-code tasks:
 
 ```sh
-go run ./cmd/sadoku-tools build --version 1.2.3 --target windows-x64 --output sadoku.exe
-go run ./cmd/sadoku-tools install --version 1.2.3
-npm run dist -- --version 1.2.3
-npm run notices
-npm run release:check -- --version 1.2.3
-npm run release:notes -- --version 1.2.3 --output release-notes.json
+make check                       # formatting and go vet
+make test                        # server, client, action, and proxy tests
+make test-tools                  # repository tooling tests
+make build VERSION=1.2.3          # standalone binary with embedded client assets
+make build TARGET=windows-x64 OUTPUT=sadoku.exe VERSION=1.2.3
+make install VERSION=1.2.3        # source installation on macOS/Linux
+make dist VERSION=1.2.3           # all three platform archives
+make notices
+make release-check VERSION=1.2.3
+make release-notes VERSION=1.2.3 OUTPUT=release-notes.json
 ```
 
-Build client assets first when invoking `build`, `install`, or `dist` directly.
-Source installation supports macOS and Linux. Archive creation uses Go's standard
-library on every host and supports `darwin-arm64`, `linux-x64`, and `windows-x64`.
-Use repeated `--target` flags to limit distribution builds. Nightly builds use
-`--version nightly --binary-version nightly-YYYYMMDD-COMMIT`.
+Build, install, server test, and vet targets build the client assets first. Run
+`make deps` before these targets when setting up a checkout. The standalone
+binary needs neither Go nor Node.js installed. Archive creation supports
+`darwin-arm64`, `linux-x64`, and `windows-x64`. Use `TARGET=linux-x64` or
+`TARGET="linux-x64 windows-x64"` to limit distribution builds. Nightly builds use
+`make dist VERSION=nightly BINARY_VERSION=nightly-YYYYMMDD-COMMIT`.
 
-Install the pinned Go protobuf generators with `npm run proto:tools` before
-`npm run proto:check`; ensure `$(go env GOPATH)/bin` is on `PATH`. Go and
-TypeScript bindings share `proto/sadoku/preview/v1/preview.proto`.
+Install the pinned Go protobuf generators with `make proto-tools` before
+`make proto-check`; ensure `$(go env GOPATH)/bin` is on `PATH`. Go and TypeScript
+bindings share `proto/sadoku/preview/v1/preview.proto`.
 
 Server and tooling tests use Go. The inline GitHub JavaScript action test uses
 Node's built-in test runner. Generated TypeScript bindings and the Node test use

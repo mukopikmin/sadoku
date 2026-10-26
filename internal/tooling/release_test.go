@@ -55,7 +55,7 @@ func runRelease(t *testing.T, commands map[string]releaseReply, args ...string) 
 	if runtime.GOOS == "windows" {
 		t.Skip("Unix release tooling")
 	}
-	for _, name := range []string{"bash", "jq"} {
+	for _, name := range []string{"bash", "jq", "make"} {
 		if _, err := exec.LookPath(name); err != nil {
 			t.Fatalf("required test command %s: %v", name, err)
 		}
@@ -81,6 +81,13 @@ exec jq -jr --arg key "${0##*/} $*" '
 		t.Fatal(err)
 	}
 	cmd := exec.Command("bash", append([]string{script}, args...)...)
+	// Exercise Make's argument forwarding and ensure its output remains valid JSON.
+	root := filepath.Dir(filepath.Dir(script))
+	if len(args) == 3 && args[0] == "check" && args[1] == "--version" {
+		cmd = exec.Command("make", "--no-print-directory", "-C", root, "release-check", "VERSION="+args[2])
+	} else if len(args) == 5 && args[0] == "notes" && args[1] == "--version" && args[3] == "--output" {
+		cmd = exec.Command("make", "--no-print-directory", "-C", root, "release-notes", "VERSION="+args[2], "OUTPUT="+args[4])
+	}
 	cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "SADOKU_RELEASE_REPLIES="+replies)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

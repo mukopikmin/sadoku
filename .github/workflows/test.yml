@@ -34,37 +34,31 @@ jobs:
             src/preview/package-lock.json
 
       - name: Install dependencies
-        run: npm run install:deps
+        run: make deps
 
       - name: Check formatting
-        run: npm run fmt:check
+        run: make check-client-format
 
       - name: Build client assets
-        run: npm run build:client
+        run: make build-client
 
       - name: Test repository tooling
-        run: npm run test:tools
+        run: make test-tools
 
       - name: Check Go formatting
-        run: test -z "$(gofmt -l cmd internal src/server src/preview/assets.go gen/go test/integration)"
+        run: make check-go-format
 
       - name: Vet Go server
-        run: go vet ./...
+        run: make vet
 
       - name: Test Go server
-        run: npm run test:server
+        run: make test-server
 
       - name: Compile
-        run: npm run compile -- --output /tmp/sadoku-ci
+        run: make build OUTPUT=/tmp/sadoku-ci
 
       - name: Test Linux installer
-        run: |
-          install_home="$(mktemp -d)"
-          trap 'rm -rf "$install_home"' EXIT
-          # Keep Go's read-only module cache outside the disposable install home.
-          GOMODCACHE="$(go env GOMODCACHE)" GOCACHE="$(go env GOCACHE)" \
-            HOME="$install_home" npm run install:source -- --version 0.0.0-ci
-          test "$("$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
+        run: make test-install
 
   client:
     name: Node
@@ -85,17 +79,14 @@ jobs:
             src/preview/package-lock.json
 
       - name: Install dependencies
-        run: npm run install:deps
+        run: make deps
 
       - name: Test client
-        run: npm test
+        run: make test-client
 
   go-proxy:
     name: Go proxy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: proxy
 
     steps:
       - name: Checkout
@@ -108,28 +99,31 @@ jobs:
           cache: false
 
       - name: Check formatting
-        run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            gofmt -d .
-            exit 1
-          fi
+        run: make check-proxy-format
 
       - name: Vet
-        run: go vet ./...
+        run: make vet-proxy
 
       - name: Test
-        run: go test -race -count=1 -timeout=60s ./...
+        run: make test-proxy
 
       - name: Build
-        run: CGO_ENABLED=0 go build ./...
+        run: make build-proxy
 
   windows-installer:
     name: Windows installer
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install GNU Make
+        shell: powershell
+        run: choco install make --version=4.4.1 --yes --no-progress
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -143,16 +137,16 @@ jobs:
           check-latest: true
 
       - name: Install dependencies
-        run: npm run install:deps
+        run: make deps
 
       - name: Build client assets
-        run: npm run build:client
+        run: make build-client
 
       - name: Test Go backend on Windows
-        run: go test -count=1 -timeout=120s ./...
+        run: make test-server GO_TEST_FLAGS="-count=1 -timeout=120s"
 
       - name: Build Windows binary
-        run: go build -o sadoku.exe ./cmd/sadoku
+        run: make build OUTPUT=sadoku.exe
 
       - name: Test Windows installer
         shell: powershell
