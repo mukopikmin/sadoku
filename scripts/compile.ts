@@ -1,88 +1,39 @@
-const packagePath = new URL("../package.json", import.meta.url);
-const hiddenPackagePath = new URL(
-  "../package.json.compile-hidden",
-  import.meta.url,
-);
-const versionPath = new URL("../src/version.ts", import.meta.url);
-
-const parseOutputPath = (args: string[]): string => {
-  const outputIndex = args.indexOf("--output");
-  if (outputIndex === -1) return "sadoku";
-
-  const outputPath = args[outputIndex + 1];
-  if (!outputPath) {
-    console.error("Missing value for --output.");
-    Deno.exit(1);
+// Compatibility entry point for release and installer tooling. The shipped
+// application is a Go binary; Deno is only used to run repository tooling.
+const value = (name: string): string | undefined => {
+  const index = Deno.args.indexOf(name);
+  if (index === -1) return undefined;
+  const result = Deno.args[index + 1];
+  if (!result || result.startsWith("--")) {
+    throw new Error(`Missing value for ${name}.`);
   }
-
-  return outputPath;
+  return result;
 };
 
-const parseTarget = (args: string[]): string | undefined => {
-  const targetIndex = args.indexOf("--target");
-  if (targetIndex === -1) return undefined;
-
-  const target = args[targetIndex + 1];
-  if (!target) {
-    console.error("Missing value for --target.");
-    Deno.exit(1);
-  }
-
-  return target;
+const targets: Record<string, { GOOS: string; GOARCH: string }> = {
+  "aarch64-apple-darwin": { GOOS: "darwin", GOARCH: "arm64" },
+  "x86_64-unknown-linux-gnu": { GOOS: "linux", GOARCH: "amd64" },
+  "x86_64-pc-windows-msvc": { GOOS: "windows", GOARCH: "amd64" },
+  "darwin-arm64": { GOOS: "darwin", GOARCH: "arm64" },
+  "linux-x64": { GOOS: "linux", GOARCH: "amd64" },
+  "windows-x64": { GOOS: "windows", GOARCH: "amd64" },
 };
-
-const parseVersion = (args: string[]): string | undefined => {
-  const versionIndex = args.indexOf("--version");
-  if (versionIndex === -1) return undefined;
-
-  const version = args[versionIndex + 1];
-  if (!version) {
-    console.error("Missing value for --version.");
-    Deno.exit(1);
-  }
-
-  return version;
-};
-
-const versionSource = (version: string): string =>
-  `export const version = ${JSON.stringify(version)};\n`;
-
-const outputPath = parseOutputPath(Deno.args);
-const target = parseTarget(Deno.args);
-const version = parseVersion(Deno.args);
-const targetArgs = target ? ["--target", target] : [];
-const originalVersionSource = await Deno.readTextFile(versionPath);
-
-const command = new Deno.Command("deno", {
+const target = value("--target");
+if (target && !targets[target]) throw new Error(`Unknown target: ${target}`);
+const version = value("--version") ?? "0.0.0-dev";
+if (!/^[0-9A-Za-z.+-]+$/.test(version)) throw new Error("Invalid version.");
+const result = await new Deno.Command("go", {
   args: [
-    "compile",
-    "--quiet",
-    "--node-modules-dir=none",
-    "--no-check",
-    "-P=app",
-    "--include",
-    "src/preview/dist",
-    ...targetArgs,
-    "--output",
-    outputPath,
-    "src/main.ts",
+    "build",
+    "-trimpath",
+    "-ldflags",
+    `-s -w -X github.com/mukopikmin/sadoku/src/server/cli.Version=${version}`,
+    "-o",
+    value("--output") ?? "sadoku",
+    "./cmd/sadoku",
   ],
+  env: { CGO_ENABLED: "0", ...(target ? targets[target] : {}) },
   stdout: "inherit",
   stderr: "inherit",
-});
-
-let exitCode = 0;
-
-try {
-  if (version) await Deno.writeTextFile(versionPath, versionSource(version));
-  await Deno.rename(packagePath, hiddenPackagePath);
-  const result = await command.output();
-  if (!result.success) {
-    exitCode = result.code;
-  }
-} finally {
-  await Deno.rename(hiddenPackagePath, packagePath).catch(() => undefined);
-  if (version) await Deno.writeTextFile(versionPath, originalVersionSource);
-}
-
-if (exitCode !== 0) Deno.exit(exitCode);
+}).output();
+if (!result.success) Deno.exit(result.code);

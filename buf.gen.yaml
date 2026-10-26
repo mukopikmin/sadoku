@@ -5,3 +5,13 @@ plugins:
     out: gen/ts
     opt:
       - target=ts
+  - local: protoc-gen-go
+    out: gen/go
+    opt:
+      - paths=source_relative
+      - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/gen/go/sadoku/preview/v1;previewv1
+  - local: protoc-gen-connect-go
+    out: gen/go
+    opt:
+      - paths=source_relative
+      - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/gen/go/sadoku/preview/v1;previewv1

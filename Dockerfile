@@ -1,6 +1,11 @@
+FROM golang:1.26-bookworm AS go-toolchain
+
 FROM node:bookworm-slim AS builder
 
-COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
+COPY --from=go-toolchain /usr/local/go /usr/local/go
+# Go module downloads use system roots rather than Node's bundled CA store.
+COPY --from=go-toolchain /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /workspace
 
@@ -9,16 +14,18 @@ COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
 RUN npm_config_engine_strict=true npm run install:deps
 
 COPY . .
-RUN deno task compile --output /sadoku
+RUN npm run build:client && CGO_ENABLED=0 npm run build:server
 
 FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 ENV HOME=/tmp/sadoku-home \
     SADOKU_COMMENTS_DIR=/tmp/sadoku-comments
 
 WORKDIR /app
 
-COPY --from=builder /sadoku /usr/local/bin/sadoku
+COPY --from=builder /workspace/sadoku /usr/local/bin/sadoku
 COPY . /app/
 
 RUN chown -R nobody:nogroup /app

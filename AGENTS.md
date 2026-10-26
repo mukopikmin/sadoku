@@ -36,121 +36,53 @@ them when making changes.
   formatting, workflow linting, and existing required CI checks to validate
   these changes.
 
-## 2. Project Architecture
+## 2. Production Go Backend
 
-- Treat `src/server/` as the backend boundary shared by HTTP and command-line
-  entry points. Organize backend code by adapter and application-layer role:
-  keep backend CLI adapters in `src/server/cli/`, HTTP adapters in
-  `src/server/http/`, API adapters in `src/server/http/api/`, use cases in
-  `src/server/usecase/`, and persistence implementations in the appropriate
-  `src/server/` storage or feature directory.
-- Name feature-specific backend adapters by feature and adapter role. Use
-  `<feature>_cli.ts` under `src/server/cli/` for command-line adapters and
-  `<feature>_api.ts` under `src/server/http/api/` for HTTP/API adapters; use the
-  same stem for their co-located `*_test.ts` files.
-- Keep all command-line interfaces under `src/server/cli/`, including
-  application-wide argument parsing, browser-launch behavior, update commands,
-  and feature-specific CLI adapters. CLI adapters call the relevant use cases
-  and remain separate from HTTP/API adapters.
-- Keep `src/main.ts` as a thin executable entry point that delegates command
-  handling to `src/server/app.ts`; do not place command dispatch or server-side
-  orchestration in it. Use `src/server/app.ts` as the composition root that
-  connects CLI adapters to server lifecycle implementations.
-- Keep HTTP routing in `src/server/http/router.ts` and server lifecycle behavior
-  in `src/server/server.ts`. HTTP handlers must remain adapters: parse transport
-  input, call use cases, map use-case errors to HTTP responses, and avoid owning
-  business rules.
-- Keep backend business rules and orchestration in `src/server/usecase/`. Use
-  cases must be functions and plain objects, depend on explicit ports, and
-  remain independent of Deno, HTTP `Request`/`Response`, and CLI input/output.
-- Name use-case feature directories for the domain concept in the singular (for
-  example, `src/server/usecase/comment/`). Do not derive use-case names from
-  REST resource collection paths.
-- Put each use-case operation in its own verb-oriented snake-case module (for
-  example, `add_comment.ts` and `delete_reply.ts`). Keep `mod.ts` as a thin
-  public export surface only; do not place use-case implementations in it.
-- Define persistence and other infrastructure ports with their owning use case.
-  Infrastructure implementations, database connections, notifications, and
-  resource lifecycle/close behavior remain under `src/server/` and depend on
-  those ports, not the reverse.
-- Keep HTTP routing, asset and HTML delivery, event streams, shared response
-  helpers, and Connect protocol handling in `src/server/http/`. Keep API
-  handlers and their response conversion in `src/server/http/api/`.
-- Keep document source resolution, session preparation, snapshot initialization,
-  and session-bound document/comment dependencies in `src/server/session/`.
-- Keep GitHub integration in `src/server/github/`, persistent configuration in
-  `src/server/config/`, and shared server test helpers in `src/server/testing/`.
-  Keep application composition, server lifecycle, and public exports at the
-  `src/server/` root.
-- Keep comment HTTP handling in `src/server/http/api/comment_api.ts`, comment
-  CLI adaptation in `src/server/cli/comment_cli.ts`, comment business rules in
-  `src/server/usecase/comment/`, and comment persistence implementations in
-  `src/server/storage/comment/`.
-- Keep database connections and migrations in `src/server/db/`. Keep storage
-  implementations and their selection under `src/server/storage/`, grouped by
-  singular domain concept.
-- Treat database migrations as append-only. Never edit a migration after it has
-  been added; add a new migration with the next four-digit zero-padded version
-  instead. Register each migration in `MIGRATIONS` and add a co-located test
-  covering fresh-database behavior and, when applicable, upgrades from the
-  previous schema.
-- Write persistent configuration and storage files atomically: create and finish
-  writing a temporary file in the destination directory, then rename it into
-  place. Clean up temporary files on failure, and do not truncate an existing
-  persistent file before its replacement has been written successfully.
-- Keep browser-side React code in `src/preview/`.
-- Keep HTTP response types and response-to-model conversion at the
-  `src/preview/api/` boundary. Keep browser-side domain models in
-  `src/preview/models/`.
-- Keep Markdown rendering infrastructure in `src/preview/markdown/`, with
-  element-specific renderers in `src/preview/markdown/renderers/`.
-- Keep release, installation, and notice-generation logic in `scripts/`.
-- Preserve the boundary between the Deno server and the browser client. Pass
-  data through the existing HTTP endpoints instead of importing server modules
-  into client code.
-- Treat existing HTTP endpoint paths, status codes, and response fields as
-  contracts between the Deno server and preview client. When changing a
-  contract, update the server adapter tests, preview API response types and
-  conversion tests, and at least one behavioral client or integration test in
-  the same change. Prefer backward-compatible additions over silently renaming
-  or removing fields used by the preview client.
-- Build HTTP responses through the shared helpers in
-  `src/server/http/responses.ts`; do not duplicate common response construction
-  in individual handlers. Serve dynamic preview, comment, and settings data with
-  `Cache-Control: no-store` unless the resource has an explicit immutable
-  caching policy. Use `204 No Content` for successful delete operations that
-  return no updated resource.
-- Map discriminated use-case errors explicitly at each adapter boundary. Keep
-  HTTP status codes and response wording out of use cases.
-- For remote Markdown sources, preserve the complete URL only for fetching. Use
-  the canonical comment source, with query strings and fragments removed, for
-  document identity and persistent comment storage. Do not persist credentials,
-  access tokens, or other URL query parameters in document or comment
-  identifiers. Reuse `createPreviewSource` instead of implementing source
-  canonicalization independently.
+- The production server and CLI are implemented in Go. `cmd/sadoku/main.go` is
+  the executable entry point and delegates to `src/server/app.go`.
+- Keep native code under the corresponding `src/server/` boundaries: `cli/`,
+  `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
+- Use Go's standard library for runtime facilities. Keep domain operations as
+  functions and plain data with explicit persistence ports.
+- Run `npm run build:client` before Go builds or tests; `src/preview/assets.go`
+  embeds the generated client. Never commit client build outputs.
+- Validate Go changes with `gofmt`, `go vet ./...`, and `npm run test:server`.
+  Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
+- Keep `go.mod` and `go.sum` consistent. Use `CGO_ENABLED=0` for release builds.
+- `src/server/db/migrations/legacy.json` preserves the exact original migration
+  statements and checksums; treat it as append-only. Never rewrite an applied
+  statement or checksum during migration to Go.
+- Generate Go and TypeScript RPC bindings together using
+  `npm run proto:generate`.
+- Keep routing and API adaptation under `http/`, session preparation under
+  `session/`, persistence under `storage/` and `db/`, and shared business rules
+  and persistence ports under `usecase/`.
+- Keep command dispatch and browser launching under `cli/`. The executable entry
+  point stays thin and delegates application composition to `app.go`.
+- Preserve existing HTTP paths, status codes, and response fields. When changing
+  a contract, update server tests, client conversions, and a behavioral client
+  or integration test in the same change.
+- Serve dynamic data with `Cache-Control: no-store`; use `204 No Content` for
+  successful deletes that return no resource.
+- Write persistent configuration and files atomically, finishing a temporary
+  file in the destination directory before renaming it into place. Clean up
+  temporary files on failure and never truncate the previous file first.
+- For remote Markdown, use complete URLs only for fetching. Use the existing
+  source resolver to strip queries and fragments from persistent identities.
+- Preserve loopback binding by default, escaped Markdown HTML, local Mermaid
+  assets, safe file paths, and strict request validation.
+- Do not reintroduce the removed TypeScript server or tests against it.
 
-## 2.1 TypeScript Style
+## 3. Repository Tooling
 
-- Prefer plain objects, functions, and factory helpers over `class`
-  declarations. Do not introduce classes unless there is a strong
-  interoperability reason.
-- Error subclasses are an allowed interoperability exception when callers need
-  `instanceof Error`, a distinct error type, or structured error metadata.
-  Prefer discriminated plain-object errors for use-case business failures.
-
-## 3. Deno and Runtime Behavior
-
-- Use Deno and Web Platform APIs in server code unless an existing dependency
-  already provides the required behavior.
-- Keep Deno permissions narrowly scoped. When adding a runtime capability,
-  update the relevant task or script with only the required `--allow-*`
-  permission.
-- Run Deno commands with `DENO_NO_PACKAGE_JSON=1` where the existing tasks do
-  so, to prevent the root npm configuration from changing Deno resolution.
-- Preserve the default security behavior: bind to `127.0.0.1`, escape raw HTML
-  in Markdown, and serve Mermaid assets locally.
-- Do not weaken path handling, response escaping, or request validation for
-  convenience. Treat Markdown and comment contents as untrusted input.
+- Deno remains the runtime for build, release, installation, and tooling tests
+  under `scripts/`. Application behavior and server tests use Go.
+- Keep tooling permissions narrowly scoped and use `DENO_NO_PACKAGE_JSON=1`
+  where existing tasks do so.
+- Prefer functions and plain objects in TypeScript tools. Error subclasses are
+  permitted when interoperability requires them.
+- Keep release and notice generation in `scripts/`; preserve release validation
+  and approval gates when changing those tools.
 
 ## 4. Preview Client and Generated Assets
 
@@ -194,8 +126,9 @@ them when making changes.
 
 ## 5. Testing Conventions
 
-- Co-locate Deno unit tests with their implementation using `*_test.ts`.
-- Put cross-module server workflows in `test/integration/`.
+- Co-locate server unit tests as `*_test.go`. Keep Deno tooling tests under
+  `scripts/` as `*_test.ts`.
+- Put cross-module Go server workflows in `test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
 - Keep component tests to the minimum needed to verify rendering, accessibility,

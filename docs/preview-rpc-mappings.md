@@ -1,38 +1,38 @@
 # Preview RPC response mappings
 
-Preview RPC adapters call typed use cases and share dependency construction with
-REST adapters. They do not round-trip application results through HTTP JSON.
-`src/server/api/preview_messages.ts` selects public fields using generated
-`MessageInitShape` types; response envelopes in `preview_rpc_api.ts` use
-`satisfies` with each method's generated output type. Do not spread storage
-objects into these messages. `Tag` omits storage timestamps and `Instruction`
-omits `documentId`; `TagSummary` retains its timestamps and document count. REST
-payloads retain their existing fields and numeric IDs.
+The Go handlers in `src/server/http/api/preview_rpc.go` implement the generated
+Connect service interface and share application operations with REST adapters.
+The boundary in `src/server/http/api/rpc.go` uses Protobuf JSON conversion to
+map requests into application inputs and application results into generated Go
+response messages. It does not call REST endpoints or round-trip HTTP responses.
 
-Generated types enforce field names and scalar representations (including
-`bigint` for `uint64`), but do not enforce all semantics:
+The response schema determines which fields are public. Unknown application
+fields are discarded when creating generated messages: `Tag` omits storage
+timestamps and `Instruction` omits `documentId`, while `TagSummary` retains its
+timestamps and document count. REST responses keep numeric IDs. Connect JSON
+represents `uint64` IDs as strings, which the generated browser client converts
+to `bigint`; the Go handlers also support the binary Protobuf codec.
 
-- Init shapes permit omitted scalar fields. Proto3 supplies zero, false, or an
-  empty string; repeated fields become empty lists. Select intended response
-  fields explicitly so accidental omission does not silently change a result.
-- Optional fields preserve presence. Use `undefined` for absence and retain
-  explicitly present false, zero, and empty strings. In particular, a reply's
-  absent `reviewRequested` differs from `false`. A deleted document's absent
-  nonoptional `fileUrl` becomes an empty string, while an absent optional
-  `githubHeadSha` remains undefined.
-- A JavaScript number is not necessarily a valid storage ID or Protobuf integer.
-  Response `uint64` conversions reject negative, fractional, nonfinite, and
-  unsafe numbers before conversion to `bigint`. Document requests outside the
-  positive safe integer range remain not found.
-- Request types do not validate positive comment ranges, nonblank contents,
-  settings choices, or GitHub revision strings. Adapters retain transport
-  validation and use cases retain domain validation. An omitted resolution bool
-  means reopen; omitted settings scalars or instruction content are invalid.
-  `UpdateTag` retains its existing behavior: both nonoptional strings must be
-  valid; omitted strings become empty strings rather than a REST partial patch.
+Generated messages define field names and scalar representations, but
+application validation remains necessary:
 
-`preview_messages_test.ts` checks type rejection, public field selection,
-optional presence, scalar defaults, and integer conversion. SQLite integration
-tests use the official Connect client to check persistence, nested responses,
-isolation, errors, cache headers, and REST compatibility. The comment API tests
-also verify that REST and RPC exports share the same serialization lock.
+- Proto3 supplies zero, false, empty strings, and empty repeated fields when a
+  nonoptional field is omitted. Request validation still checks positive comment
+  ranges, nonblank contents, settings choices, GitHub revision strings, and IDs
+  within the supported storage range.
+- Optional fields preserve presence. Pointer fields distinguish absence from an
+  explicitly present zero, false, or empty string. A missing optional
+  `githubHeadSha` remains absent; a missing nonoptional `fileUrl` defaults to an
+  empty string in the browser client.
+- An omitted resolution bool means reopen. Omitted required settings values or
+  instruction content remain invalid. Both nonoptional strings in `UpdateTag`
+  must be valid; REST tag updates continue to support partial patches.
+- Dynamic responses and errors use `Cache-Control: no-store`. Successful REST
+  deletes without an updated resource return `204 No Content`.
+
+Go adapter and integration tests use the official Connect client with JSON and
+binary Protobuf, and make REST requests against the Go server. They cover
+persistence, nested replies, optional fields, document isolation, revision
+restoration, validation, cache behavior, and event streams. GitHub export tests
+use a local fake GitHub CLI and verify that exports create pending reviews
+without submitting them.

@@ -3,6 +3,7 @@ dist/
 dist-test/
 mdview
 /sadoku
+/sadoku.exe
 THIRD_PARTY_NOTICES.md
 src/preview/dist/
 *.mdview-comments.json
