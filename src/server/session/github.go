@@ -242,7 +242,7 @@ type review struct {
 	ID       int64
 	NodeID   string `json:"node_id"`
 	State    string
-	CommitID string `json:"commit_id"`
+	CommitID *string `json:"commit_id"`
 	User     struct{ Login string }
 }
 type remoteComment struct {
@@ -267,12 +267,15 @@ func graphql(ctx context.Context, query string, variables map[string]any, out an
 	if err := ghJSON(ctx, "graphql", map[string]any{"query": query, "variables": variables}, &result); err != nil {
 		return err
 	}
-	if len(result.Errors) > 0 || len(result.Data) == 0 {
+	if len(result.Errors) > 0 || len(result.Data) == 0 || bytes.Equal(bytes.TrimSpace(result.Data), []byte("null")) {
 		return fmt.Errorf("GitHub GraphQL request failed")
 	}
 	return json.Unmarshal(result.Data, out)
 }
-func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (any, error) {
+func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, assertTarget func() error) (any, error) {
+	if err := assertTarget(); err != nil {
+		return nil, err
+	}
 	p := s.GitHub
 	if p == nil {
 		return nil, exportFailure("export_unavailable")
@@ -316,10 +319,10 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 	var keyBuffer bytes.Buffer
 	encoder := json.NewEncoder(&keyBuffer)
 	encoder.SetEscapeHTML(false)
-	if err = encoder.Encode([]any{p.URL, doc.RelativePath, target.ID, target.CreatedAt}); err != nil {
+	if err = encoder.Encode([]any{p.exportURL(), doc.RelativePath, target.ID, target.CreatedAt}); err != nil {
 		return nil, err
 	}
-	keyBytes := bytes.TrimSuffix(keyBuffer.Bytes(), []byte("\n"))
+	keyBytes := []byte(u.UnescapeJSONSeparators(strings.TrimSuffix(keyBuffer.String(), "\n")))
 	marker := fmt.Sprintf("<!-- sadoku-comment:%x -->", sha256.Sum256(keyBytes))
 	body := in.Body + "\n\n" + marker
 	var user struct{ Login string }
@@ -343,7 +346,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 			pending = rev
 		}
 	}
-	if pending != nil && (pending.NodeID == "" || pending.CommitID == "" || u.PositiveID(pending.ID) != nil) {
+	if pending != nil && (pending.NodeID == "" || pending.CommitID == nil || u.PositiveID(pending.ID) != nil) {
 		return nil, fmt.Errorf("GitHub returned an invalid pending review")
 	}
 	var existing *remoteComment
@@ -354,7 +357,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 		}
 		for i := range list {
 			c := &list[i]
-			if c.User.Login == user.Login && c.ReplyID == nil && c.ReviewID == pending.ID && strings.HasSuffix(c.Body, marker) {
+			if c.User.Login == user.Login && (c.ReplyID == nil || *c.ReplyID == 0) && c.ReviewID == pending.ID && strings.HasSuffix(c.Body, marker) {
 				copy := *c
 				existing = &copy
 				break
@@ -367,11 +370,11 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 			return nil, err
 		}
 		for _, c := range list {
-			if c.User.Login == user.Login && c.ReplyID == nil && strings.HasSuffix(c.Body, marker) && (pending == nil || c.ReviewID != pending.ID) {
+			if c.User.Login == user.Login && (c.ReplyID == nil || *c.ReplyID == 0) && strings.HasSuffix(c.Body, marker) && (pending == nil || c.ReviewID != pending.ID) {
 				if c.NodeID == "" {
 					return nil, fmt.Errorf("GitHub returned an invalid comment ID")
 				}
-				prefix := p.URL + "#discussion_r"
+				prefix := p.exportURL() + "#discussion_r"
 				suffix := strings.TrimPrefix(c.HTMLURL, prefix)
 				if !strings.HasPrefix(c.HTMLURL, prefix) || !regexp.MustCompile(`^[0-9]+$`).MatchString(suffix) {
 					return nil, fmt.Errorf("invalid GitHub comment URL")
@@ -380,7 +383,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 			}
 		}
 	}
-	if pending != nil && pending.CommitID != in.HeadSHA {
+	if pending != nil && *pending.CommitID != in.HeadSHA {
 		return nil, exportFailure("export_review_out_of_sync")
 	}
 	if existing != nil {
@@ -417,8 +420,8 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 	if !found {
 		return nil, exportFailure("export_out_of_sync")
 	}
-	var pull pullDetails
-	if err = ghJSON(ctx, p.endpoint(), nil, &pull); err != nil {
+	pull, err := readExportPull(ctx, p.endpoint())
+	if err != nil {
 		return nil, err
 	}
 	if pull.State != "open" {
@@ -427,9 +430,13 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 	if pull.Head.SHA != in.HeadSHA {
 		return nil, exportFailure("export_out_of_sync")
 	}
-	result := map[string]any{"url": p.URL + "/files", "state": "pending"}
+	if err := assertTarget(); err != nil {
+		return nil, err
+	}
+	result := map[string]any{"url": p.exportURL() + "/files", "state": "pending"}
 	if existing != nil {
-		if existing.Body == body {
+		remoteBody := strings.TrimSuffix(strings.TrimSuffix(existing.Body, marker), "\n\n")
+		if remoteBody == in.Body {
 			return result, nil
 		}
 		var check struct {
@@ -445,7 +452,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input) (
 		if err = graphql(ctx, `query($id:ID!){node(id:$id){... on PullRequestReviewComment{body pullRequestReview{id state author{login} commit{oid}}}}}`, map[string]any{"id": existing.NodeID}, &check); err != nil {
 			return nil, err
 		}
-		if check.Node == nil || check.Node.Body != existing.Body || check.Node.Review.ID != pending.NodeID || check.Node.Review.State != "PENDING" || check.Node.Review.Author.Login != user.Login || check.Node.Review.Commit.OID != in.HeadSHA {
+		if check.Node == nil || check.Node.Body != remoteBody+"\n\n"+marker || check.Node.Review.ID != pending.NodeID || check.Node.Review.State != "PENDING" || check.Node.Review.Author.Login != user.Login || check.Node.Review.Commit.OID != in.HeadSHA {
 			return nil, exportFailure("export_review_out_of_sync")
 		}
 		var updated struct {

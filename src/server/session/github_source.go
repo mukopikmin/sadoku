@@ -147,3 +147,28 @@ func supportsPullRange(ctx context.Context, p *Pull, path string, start, end int
 		}
 	}
 }
+
+// Export validates presence and types before any mutation, without requiring
+// preview-only metadata such as the title or description.
+func readExportPull(ctx context.Context, endpoint string) (pullDetails, error) {
+	var value struct {
+		NodeID *string `json:"node_id"`
+		State  *string
+		Head   *struct{ SHA *string }
+	}
+	var result pullDetails
+	if err := ghJSON(ctx, endpoint, nil, &value); err != nil {
+		return result, err
+	}
+	if value.NodeID == nil || value.State == nil || value.Head == nil || value.Head.SHA == nil {
+		return result, fmt.Errorf("GitHub returned invalid pull request data.")
+	}
+	result.NodeID = *value.NodeID
+	result.State = *value.State
+	result.Head.SHA = *value.Head.SHA
+	return result, nil
+}
+
+func (p *Pull) exportURL() string {
+	return fmt.Sprintf("https://github.com/%s/%s/pull/%d", p.Owner, p.Repo, p.Number)
+}

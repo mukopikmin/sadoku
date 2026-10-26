@@ -62,6 +62,12 @@ type Input struct {
 }
 
 func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, error) {
+	if operation == "RestoreDocumentRevision" && u.PositiveID(int64(in.DocumentID)) == nil && u.PositiveID(int64(in.RevisionID)) == nil {
+		if _, busy := s.restoring.LoadOrStore(in.DocumentID, struct{}{}); busy {
+			return nil, u.Fail("aborted", "A restore is already in progress.")
+		}
+		defer s.restoring.Delete(in.DocumentID)
+	}
 	if operation == "ExportCommentToGitHub" {
 		if !s.exporting.CompareAndSwap(false, true) {
 			return nil, exportFailure("export_busy")
@@ -177,7 +183,15 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		doc.Tags, err = r.Tags(id)
 		return doc, err
 	case "GetDocument":
-		markdown, err := s.Read(ctx, id)
+		source := s.Sources[id]
+		githubHead := ""
+		if s.GitHub != nil {
+			githubHead = s.GitHub.HeadSHA
+		}
+		markdown, err := s.readOutsideLock(ctx, source)
+		if current, findErr := s.Find(id); findErr == nil && s.Sources[id] == source {
+			doc.DisplayTitle = current.DisplayTitle
+		}
 		if os.IsNotExist(err) {
 			doc.Deleted = true
 			snapshot, _, e := r.Snapshot(id)
@@ -218,8 +232,8 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if err != nil {
 			return nil, err
 		}
-		_, _, remote := Source(s.Sources[id])
-		fileURL := s.Sources[id]
+		_, _, remote := Source(source)
+		fileURL := source
 		if !remote {
 			path := filepath.ToSlash(fileURL)
 			if strings.HasPrefix(path, "//") {
@@ -240,7 +254,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			result["previousMarkdown"] = *previous
 		}
 		if s.GitHub != nil {
-			result["githubHeadSha"] = s.GitHub.HeadSHA
+			result["githubHeadSha"] = githubHead
 		}
 		return result, nil
 	case "ListDocumentRevisions":
@@ -302,6 +316,10 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		note, err := r.SaveNote(kind, u.Note{ID: noteID, DocumentID: id, Content: in.Content})
 		return note, noteFailure(kind, err)
 	case "ListComments", "CreateComment", "UpdateComment", "DeleteComment", "SetCommentResolution", "CreateReply", "UpdateReply", "DeleteReply":
+		githubHead := ""
+		if s.GitHub != nil {
+			githubHead = s.GitHub.HeadSHA
+		}
 		comments, err := s.readComments(id)
 		if err != nil {
 			return nil, err
@@ -311,7 +329,15 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			markdown = *comments.SourceSnapshot
 		}
 		if operation == "ListComments" || operation == "CreateComment" {
-			markdown, err = s.Read(ctx, id)
+			markdown, err = s.readOutsideLock(ctx, s.Sources[id])
+			if err == nil || os.IsNotExist(err) {
+				// A comment may have changed while the file/network read was pending.
+				var commentErr error
+				comments, commentErr = s.readComments(id)
+				if commentErr != nil {
+					return nil, commentErr
+				}
+			}
 		}
 		if os.IsNotExist(err) && comments.SourceSnapshot != nil {
 			markdown = *comments.SourceSnapshot
@@ -329,7 +355,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 				}
 			}
 			if s.GitHub != nil {
-				comments.GitHubHeadSHA = s.GitHub.HeadSHA
+				comments.GitHubHeadSHA = githubHead
 			}
 			return comments, nil
 		}
@@ -358,7 +384,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if in.Body == "" || in.StartLine < 1 || in.EndLine < in.StartLine || in.CreatedAt == "" || !regexp.MustCompile(`^[a-f0-9]{40,64}$`).MatchString(in.HeadSHA) {
 			return nil, u.Fail("invalid_argument", `{"error":{"code":"export_invalid_request"}}`)
 		}
-		result, err := s.exportComment(ctx, doc, in)
+		result, err := s.exportOutsideLock(ctx, doc, in)
 		if err != nil {
 			var failure *u.Failure
 			if errors.As(err, &failure) && strings.HasPrefix(failure.Message, `{"error":{"code":"export_`) {
@@ -435,29 +461,20 @@ func (s *Session) createDocument(in Input) (any, error) {
 		return nil, u.Fail("invalid_argument", "Use a configured Markdown file extension.")
 	}
 	path := filepath.Join(s.Root, filepath.FromSlash(in.Directory), name)
-	destination, err := ResolveLocal(s.Root, path, true)
-	if err != nil {
+	if err := createLocalDocument(s.Root, in.Directory, name); err != nil {
 		return nil, err
 	}
-	f, err := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if errors.Is(err, os.ErrExist) {
-		return nil, u.Fail("already_exists", "A file or folder with this name already exists.")
-	}
-	if err != nil {
-		return nil, err
-	}
-	if err = f.Close(); err != nil {
-		return nil, err
-	}
+
 	doc, err := s.Repository.Ensure(path)
 	if err != nil {
 		return nil, createdDocumentRegistrationFailure()
 	}
+	doc.DisplayTitle = nil
 	if title != "" {
 		doc.DisplayTitle = &title
-		if err = s.Repository.SetTitle(doc.ID, &title); err != nil {
-			return nil, createdDocumentRegistrationFailure()
-		}
+	}
+	if err = s.Repository.SetTitle(doc.ID, doc.DisplayTitle); err != nil {
+		return nil, createdDocumentRegistrationFailure()
 	}
 	if err = s.Repository.InitializeSnapshot(doc.ID, ""); err != nil {
 		return nil, createdDocumentRegistrationFailure()
@@ -489,11 +506,11 @@ func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
 	if remote || s.GitHub != nil {
 		return u.Fail("failed_precondition", "Only local files can be restored.")
 	}
-	destination, err := ResolveLocal(s.Root, doc.FilePath, true)
+	revision, err := s.Repository.Revision(doc.ID, int64(in.RevisionID))
 	if err != nil {
 		return err
 	}
-	revision, err := s.Repository.Revision(doc.ID, int64(in.RevisionID))
+	destination, err := ResolveLocal(s.Root, doc.FilePath, true)
 	if err != nil {
 		return err
 	}
@@ -502,11 +519,11 @@ func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	if (in.ExpectedMarkdown == nil && exists) || (in.ExpectedMarkdown != nil && (!exists || *in.ExpectedMarkdown != string(contents))) {
+	if (in.ExpectedMarkdown == nil && exists) || (in.ExpectedMarkdown != nil && (!exists || *in.ExpectedMarkdown != decodeText(contents, false))) {
 		return u.Fail("aborted", "The file has changed. Reload the document before restoring.")
 	}
 	if exists {
-		if err = s.Repository.RecordRevision(doc.ID, string(contents)); err != nil {
+		if err = s.Repository.RecordRevision(doc.ID, decodeText(contents, false)); err != nil {
 			return err
 		}
 	}
@@ -515,7 +532,7 @@ func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
 		return err
 	}
 	latest, readErr := os.ReadFile(destination)
-	if (readErr == nil) != exists || (exists && string(latest) != string(contents)) {
+	if (readErr == nil) != exists || (exists && decodeText(latest, false) != decodeText(contents, false)) {
 		return u.Fail("aborted", "The file has changed. Reload the document before restoring.")
 	}
 	mode := os.FileMode(0600)

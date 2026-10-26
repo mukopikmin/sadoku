@@ -14,10 +14,10 @@ production Go handler. It requires transcripts for every method declared in
 
 | Session             | HTTP requests | Checked behavior                                                                                                                                                               |
 | ------------------- | ------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Local directory RPC |           103 | All 32 RPC methods, resource isolation, creation, titles, revisions/restoration, comments/replies/resolution/rebasing, tags, notes, settings, and transport validation         |
+| Local directory RPC |           124 | All 32 RPC methods, resource isolation, creation, titles, revisions/restoration, comments/replies/resolution/rebasing, tags, notes, settings, and transport validation         |
 | REST                |            87 | Read/write/delete routes, partial tag updates, numeric representations and resource IDs, ignored fields, validation errors, deleted sources, response fields, and status codes |
 | GitHub PR RPC       |            20 | Document IDs/counts, escaped filenames, canonical comment identities, immutable source URLs, pending-review export, stale heads, titles, and unavailable local capabilities    |
-| Total               |           210 | Response bodies, statuses, content types, and cache policy                                                                                                                     |
+| Total               |           231 | Response bodies, statuses, content types, and cache policy                                                                                                                     |
 
 JSON object key order is ignored; field presence, values, types, and array order
 are compared. Temporary filesystem roots, timestamp fields, and physical SQLite
@@ -56,6 +56,17 @@ responses are compared directly.
   deletion/recreation, unrelated files, other CLI processes, and subscribers.
 - Startup tests cover blocked discovery/registration/remote reads, progress,
   cancellation, snapshot errors, and concurrent first-document reads.
+- GitHub export compares 15 recorded scenarios for encoded pull URLs, Unicode
+  marker keys, pending-comment separators/replies, submitted-comment reuse,
+  missing metadata, and null GraphQL data. Mutation variables and counts are
+  compared as well as returned results and error codes.
+- Creation/restoration transcripts cover missing/invalid parent directories,
+  occupied names and symlinks, clearing titles on recreated documents, malformed
+  UTF-8 archival, and revision validation before unsafe-path errors. Symlink
+  scenarios skip when the operating system does not permit creating links.
+- Concurrent restore requests report busy immediately. Slow Markdown reads and
+  GitHub export allow other document reads/local edits to proceed; export
+  rechecks local state and the current session target before mutating GitHub.
 - GitHub export tests cover restart/idempotency, other reviewers, pagination,
   replies, changed remote state, malformed responses, diff hunks, concurrent
   exports, and mutation failures without retries. The monitor test verifies

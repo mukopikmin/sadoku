@@ -40,6 +40,8 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 			GitHubResponses map[string]json.RawMessage
 			Steps           []struct {
 				Name, Method, Path, Write, Remove, Content string
+				Mkdir, Link, Target                        string
+				Bytes                                      []byte
 				Body                                       json.RawMessage
 				RawBody                                    *string
 				Headers                                    map[string]string
@@ -157,8 +159,24 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 			}
 			createdAt := ""
 			for _, step := range profile.Steps {
+				if step.Link != "" {
+					if err := os.Symlink(filepath.Join(root, step.Target), filepath.Join(root, step.Link)); err != nil {
+						t.Skipf("symbolic links unavailable: %v", err)
+					}
+					continue
+				}
 				if step.Write != "" {
-					if err := os.WriteFile(filepath.Join(root, step.Write), []byte(step.Content), 0600); err != nil {
+					data := []byte(step.Content)
+					if step.Bytes != nil {
+						data = step.Bytes
+					}
+					if err := os.WriteFile(filepath.Join(root, step.Write), data, 0600); err != nil {
+						t.Fatal(err)
+					}
+					continue
+				}
+				if step.Mkdir != "" {
+					if err := os.Mkdir(filepath.Join(root, step.Mkdir), 0700); err != nil {
 						t.Fatal(err)
 					}
 					continue

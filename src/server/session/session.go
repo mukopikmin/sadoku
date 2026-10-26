@@ -32,6 +32,7 @@ type Session struct {
 	Repository      u.Repository
 	invalidations   map[chan struct{}]struct{}
 	exporting       atomic.Bool
+	restoring       sync.Map
 	directoryStatus *DirectoryStatus
 	ReadRemote      func(context.Context, string) (string, error)
 }
@@ -173,6 +174,18 @@ func (s *Session) Read(ctx context.Context, id int64) (string, error) {
 		return s.ReadRemote(ctx, source)
 	}
 	return ReadMarkdown(ctx, source)
+}
+
+// Called with Mu held: capture the immutable source before letting other
+// requests proceed, and restore the lock before touching session state again.
+func (s *Session) readOutsideLock(ctx context.Context, source string) (string, error) {
+	read := s.ReadRemote
+	if read == nil {
+		read = ReadMarkdown
+	}
+	s.Mu.Unlock()
+	defer s.Mu.Lock()
+	return read(ctx, source)
 }
 
 // ResolveLocal canonicalizes the selected root and rejects symbolic links below it.

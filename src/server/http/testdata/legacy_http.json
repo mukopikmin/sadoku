@@ -4837,6 +4837,497 @@
           }
         }
       ]
+    },
+    {
+      "name": "file-edge-rpc",
+      "steps": [
+        {
+          "name": "CreateDocument {\"directory\": \"missing\", \"filename\": \"new\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "missing",
+            "filename": "new"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "The destination directory no longer exists."
+            }
+          }
+        },
+        {
+          "name": "CreateDocument {\"directory\": \"readme.md\", \"filename\": \"new\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "readme.md",
+            "filename": "new"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Choose an existing directory without symbolic links."
+            }
+          }
+        },
+        {
+          "name": "occupied directory",
+          "mkdir": "occupied.md"
+        },
+        {
+          "name": "CreateDocument {\"filename\": \"occupied.md\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "occupied.md"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "already_exists",
+              "message": "A file or folder with this name already exists."
+            }
+          }
+        },
+        {
+          "name": "UpdateDocumentTitle {\"documentId\": \"1\", \"title\": \"Old title\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateDocumentTitle",
+          "body": {
+            "documentId": "1",
+            "title": "Old title"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "relativePath": "readme.md",
+              "title": "readme.md",
+              "displayTitle": "Old title"
+            }
+          }
+        },
+        {
+          "name": "delete titled file",
+          "remove": "readme.md"
+        },
+        {
+          "name": "CreateDocument {\"filename\": \"readme.md\", \"title\": \"\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "readme.md",
+            "title": ""
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "1",
+              "relativePath": "readme.md",
+              "title": "readme.md"
+            }
+          }
+        },
+        {
+          "name": "GetDocument {\"documentId\": \"1\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "title": "readme.md",
+              "previousMarkdown": "# Title\nBody\n",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "ListDocuments {}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocuments",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "documents": [
+                {
+                  "id": "1",
+                  "relativePath": "readme.md",
+                  "title": "readme.md"
+                },
+                {
+                  "id": "2",
+                  "relativePath": "second.md",
+                  "title": "second.md"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "edit malformed UTF-8",
+          "write": "readme.md",
+          "bytes": [
+            35,
+            32,
+            84,
+            195,
+            40,
+            10
+          ]
+        },
+        {
+          "name": "GetDocument {\"documentId\": \"1\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# T�(\n",
+              "title": "readme.md",
+              "previousMarkdown": "# Title\nBody\n",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "RestoreDocumentRevision {\"documentId\": \"1\", \"revisionId\": \"1\", \"expectedMarkdown\": \"# T�(\\n\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/RestoreDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1",
+            "expectedMarkdown": "# T�(\n"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {}
+          }
+        },
+        {
+          "name": "GetDocument {\"documentId\": \"1\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/readme.md",
+              "markdown": "# Title\nBody\n",
+              "title": "readme.md",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "ListDocumentRevisions {\"documentId\": \"1\"}",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocumentRevisions",
+          "body": {
+            "documentId": "1"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "revisions": [
+                {
+                  "id": "4",
+                  "recordedAt": "$TIME"
+                },
+                {
+                  "id": "3",
+                  "recordedAt": "$TIME"
+                },
+                {
+                  "id": "1",
+                  "recordedAt": "$TIME"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "settings-followup-rpc",
+      "steps": [
+        {
+          "name": "UpdateSettings after settings update",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/UpdateSettings",
+          "body": {
+            "theme": "dark",
+            "codeWrap": "wrap",
+            "fontScale": 1.25,
+            "maxDepth": 0,
+            "maxFiles": 1,
+            "excludedDirectories": [
+              "guides"
+            ],
+            "markdownExtensions": [
+              ".rst"
+            ],
+            "showHtmlComments": false
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "theme": "dark",
+              "codeWrap": "wrap",
+              "fontScale": 1.25,
+              "excludedDirectories": [
+                "guides"
+              ],
+              "maxFiles": 1,
+              "markdownExtensions": [
+                ".rst"
+              ],
+              "showHtmlComments": false
+            }
+          }
+        },
+        {
+          "name": "CreateDocument after settings update",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "after.md"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Use a configured Markdown file extension."
+            }
+          }
+        },
+        {
+          "name": "CreateDocument after settings update",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "after.rst",
+            "title": "After settings"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "id": "3",
+              "relativePath": "after.rst",
+              "title": "after.rst",
+              "displayTitle": "After settings"
+            }
+          }
+        },
+        {
+          "name": "GetDocument after settings update",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetDocument",
+          "body": {
+            "documentId": "3"
+          },
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "fileUrl": "$FILE_ROOT/after.rst",
+              "title": "after.rst",
+              "displayTitle": "After settings",
+              "canRestore": true
+            }
+          }
+        },
+        {
+          "name": "ListDocuments after settings update",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/ListDocuments",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "documents": [
+                {
+                  "id": "3",
+                  "relativePath": "after.rst",
+                  "title": "after.rst",
+                  "displayTitle": "After settings"
+                },
+                {
+                  "id": "1",
+                  "relativePath": "readme.md",
+                  "title": "readme.md"
+                },
+                {
+                  "id": "2",
+                  "relativePath": "second.md",
+                  "title": "second.md"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GetSettings after settings update",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/GetSettings",
+          "body": {},
+          "expected": {
+            "status": 200,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "theme": "dark",
+              "codeWrap": "wrap",
+              "fontScale": 1.25,
+              "excludedDirectories": [
+                "guides"
+              ],
+              "maxFiles": 1,
+              "markdownExtensions": [
+                ".rst"
+              ],
+              "showHtmlComments": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "creation-symlink-rpc",
+      "steps": [
+        {
+          "link": "linked",
+          "target": "guides"
+        },
+        {
+          "name": "symlink parent",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "directory": "linked",
+            "filename": "new"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "invalid_argument",
+              "message": "Choose an existing directory without symbolic links."
+            }
+          }
+        },
+        {
+          "link": "link.md",
+          "target": "readme.md"
+        },
+        {
+          "name": "symlink target",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/CreateDocument",
+          "body": {
+            "filename": "link.md"
+          },
+          "expected": {
+            "status": 409,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "already_exists",
+              "message": "A file or folder with this name already exists."
+            }
+          }
+        },
+        {
+          "remove": "readme.md"
+        },
+        {
+          "link": "readme.md",
+          "target": "second.md"
+        },
+        {
+          "name": "restore revision validation before path 999",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/RestoreDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "999",
+            "expectedMarkdown": "# Other\nOther body\n"
+          },
+          "expected": {
+            "status": 404,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "not_found",
+              "message": "Document revision not found."
+            }
+          }
+        },
+        {
+          "name": "restore revision validation before path 1",
+          "method": "POST",
+          "path": "/sadoku.preview.v1.PreviewService/RestoreDocumentRevision",
+          "body": {
+            "documentId": "1",
+            "revisionId": "1",
+            "expectedMarkdown": "# Other\nOther body\n"
+          },
+          "expected": {
+            "status": 400,
+            "contentType": "application/json",
+            "cacheControl": "no-store",
+            "json": {
+              "code": "failed_precondition",
+              "message": "Choose a local file inside the open folder without symbolic links."
+            }
+          }
+        }
+      ]
     }
   ]
 }

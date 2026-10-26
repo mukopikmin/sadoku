@@ -51,27 +51,7 @@ func printJSON(out io.Writer, value any) error {
 	}
 	// JSON.stringify emits these Unicode characters literally. Only replace JSON
 	// escapes, leaving user strings containing a literal backslash untouched.
-	s := b.String()
-	var result strings.Builder
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\\' && i+1 < len(s) {
-			if strings.HasPrefix(s[i:], `\u2028`) {
-				result.WriteRune('\u2028')
-				i += 5
-				continue
-			}
-			if strings.HasPrefix(s[i:], `\u2029`) {
-				result.WriteRune('\u2029')
-				i += 5
-				continue
-			}
-			result.WriteString(s[i : i+2])
-			i++
-			continue
-		}
-		result.WriteByte(s[i])
-	}
-	_, err := io.WriteString(out, result.String())
+	_, err := io.WriteString(out, u.UnescapeJSONSeparators(b.String()))
 	return err
 }
 

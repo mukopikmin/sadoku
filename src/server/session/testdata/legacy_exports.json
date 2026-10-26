@@ -1,0 +1,1367 @@
+{
+  "reference": "368b47eb1ae18a84d428ce4367d25cb815584968",
+  "cases": [
+    {
+      "name": "null GraphQL data",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": null
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_failed",
+        "mutations": [
+          {
+            "pullId": "pull1",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "path": "readme.md",
+            "line": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "zero reply ID",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [
+          {
+            "id": 7,
+            "node_id": "review1",
+            "state": "PENDING",
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "user": {
+              "login": "viewer"
+            }
+          }
+        ],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [
+          {
+            "node_id": "comment1",
+            "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "html_url": "https://github.com/owner/repo/pull/1#discussion_r17",
+            "user": {
+              "login": "viewer"
+            },
+            "pull_request_review_id": 7,
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "path": "readme.md",
+            "line": 2,
+            "side": "RIGHT",
+            "in_reply_to_id": 0
+          }
+        ],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "result": {
+          "url": "https://github.com/owner/repo/pull/1/files",
+          "state": "pending"
+        },
+        "mutations": []
+      }
+    },
+    {
+      "name": "encoded owner",
+      "source": "https://github.com/%6fwner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "result": {
+          "url": "https://github.com/owner/repo/pull/1/files",
+          "state": "pending"
+        },
+        "mutations": [
+          {
+            "pullId": "pull1",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "path": "readme.md",
+            "line": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unicode separators",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "folder/ \\u2028.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "folder/ \\u2028.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:016ad216a1eda2b1d2df2d3696f41f48846c86be2e8a0c5db5cd21e8185aeb6e -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "result": {
+          "url": "https://github.com/owner/repo/pull/1/files",
+          "state": "pending"
+        },
+        "mutations": [
+          {
+            "pullId": "pull1",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "body": "Review\n\n<!-- sadoku-comment:016ad216a1eda2b1d2df2d3696f41f48846c86be2e8a0c5db5cd21e8185aeb6e -->",
+            "path": "folder/ \\u2028.md",
+            "line": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "pending separator \"\"",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [
+          {
+            "id": 7,
+            "node_id": "review1",
+            "state": "PENDING",
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "user": {
+              "login": "viewer"
+            }
+          }
+        ],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [
+          {
+            "node_id": "comment1",
+            "body": "Review<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "html_url": "https://github.com/owner/repo/pull/1#discussion_r17",
+            "user": {
+              "login": "viewer"
+            },
+            "pull_request_review_id": 7,
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "path": "readme.md",
+            "line": 2,
+            "side": "RIGHT"
+          }
+        ],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "result": {
+          "url": "https://github.com/owner/repo/pull/1/files",
+          "state": "pending"
+        },
+        "mutations": []
+      }
+    },
+    {
+      "name": "pending separator \"\\n\"",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [
+          {
+            "id": 7,
+            "node_id": "review1",
+            "state": "PENDING",
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "user": {
+              "login": "viewer"
+            }
+          }
+        ],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [
+          {
+            "node_id": "comment1",
+            "body": "Review\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "html_url": "https://github.com/owner/repo/pull/1#discussion_r17",
+            "user": {
+              "login": "viewer"
+            },
+            "pull_request_review_id": 7,
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "path": "readme.md",
+            "line": 2,
+            "side": "RIGHT"
+          }
+        ],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_review_out_of_sync",
+        "mutations": []
+      }
+    },
+    {
+      "name": "pending separator \"\\n\\n\"",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [
+          {
+            "id": 7,
+            "node_id": "review1",
+            "state": "PENDING",
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "user": {
+              "login": "viewer"
+            }
+          }
+        ],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [
+          {
+            "node_id": "comment1",
+            "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "html_url": "https://github.com/owner/repo/pull/1#discussion_r17",
+            "user": {
+              "login": "viewer"
+            },
+            "pull_request_review_id": 7,
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "path": "readme.md",
+            "line": 2,
+            "side": "RIGHT"
+          }
+        ],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "result": {
+          "url": "https://github.com/owner/repo/pull/1/files",
+          "state": "pending"
+        },
+        "mutations": []
+      }
+    },
+    {
+      "name": "pending separator \"\\n\\n\\n\"",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [
+          {
+            "id": 7,
+            "node_id": "review1",
+            "state": "PENDING",
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "user": {
+              "login": "viewer"
+            }
+          }
+        ],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [
+          {
+            "node_id": "comment1",
+            "body": "Review\n\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "html_url": "https://github.com/owner/repo/pull/1#discussion_r17",
+            "user": {
+              "login": "viewer"
+            },
+            "pull_request_review_id": 7,
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "path": "readme.md",
+            "line": 2,
+            "side": "RIGHT"
+          }
+        ],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "result": {
+          "url": "https://github.com/owner/repo/pull/1/files",
+          "state": "pending"
+        },
+        "mutations": [
+          {
+            "id": "comment1",
+            "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->"
+          }
+        ]
+      }
+    },
+    {
+      "name": "submitted encoded owner",
+      "source": "https://github.com/%6fwner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [
+          {
+            "node_id": "comment1",
+            "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+            "html_url": "https://github.com/owner/repo/pull/1#discussion_r17",
+            "user": {
+              "login": "viewer"
+            },
+            "pull_request_review_id": 7,
+            "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "path": "readme.md",
+            "line": 2,
+            "side": "RIGHT"
+          }
+        ],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "result": {
+          "url": "https://github.com/owner/repo/pull/1#discussion_r17",
+          "state": "submitted"
+        },
+        "mutations": []
+      }
+    },
+    {
+      "name": "missing pull node_id",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_failed",
+        "mutations": []
+      }
+    },
+    {
+      "name": "missing pull state",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_failed",
+        "mutations": []
+      }
+    },
+    {
+      "name": "missing pull head",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open"
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_failed",
+        "mutations": []
+      }
+    },
+    {
+      "name": "numeric pull state",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": 1,
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_failed",
+        "mutations": []
+      }
+    },
+    {
+      "name": "empty pending commit",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [
+          {
+            "id": 7,
+            "node_id": "review1",
+            "state": "PENDING",
+            "commit_id": "",
+            "user": {
+              "login": "viewer"
+            }
+          }
+        ],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_review_out_of_sync",
+        "mutations": []
+      }
+    },
+    {
+      "name": "missing pending commit",
+      "source": "https://github.com/owner/repo/pull/1",
+      "path": "readme.md",
+      "responses": {
+        "user": {
+          "login": "viewer"
+        },
+        "repos/owner/repo/pulls/1": {
+          "node_id": "pull1",
+          "title": "Example",
+          "body": "Details",
+          "state": "open",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/reviews?per_page=100&page=1": [
+          {
+            "id": 7,
+            "node_id": "review1",
+            "state": "PENDING",
+            "user": {
+              "login": "viewer"
+            }
+          }
+        ],
+        "repos/owner/repo/pulls/1/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/reviews/7/comments?per_page=100&page=1": [],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "readme.md",
+            "status": "modified",
+            "patch": "@@ -1,2 +1,2 @@\n Title\n+Body"
+          }
+        ],
+        "addPullRequestReview(": {
+          "data": {
+            "addPullRequestReview": {
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING"
+              }
+            }
+          }
+        },
+        "addPullRequestReviewThread(": {
+          "data": {
+            "addPullRequestReviewThread": {
+              "thread": {
+                "id": "thread1"
+              }
+            }
+          }
+        },
+        "updatePullRequestReviewComment(": {
+          "data": {
+            "updatePullRequestReviewComment": {
+              "pullRequestReviewComment": {
+                "id": "comment1"
+              }
+            }
+          }
+        },
+        "on PullRequestReviewComment": {
+          "data": {
+            "node": {
+              "body": "Review\n\n<!-- sadoku-comment:9aec2124af22b79aed9ed267b71ae3e824839ac9fd47b075296a01dba3c8fdc3 -->",
+              "pullRequestReview": {
+                "id": "review1",
+                "state": "PENDING",
+                "author": {
+                  "login": "viewer"
+                },
+                "commit": {
+                  "oid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "error": "export_failed",
+        "mutations": []
+      }
+    }
+  ]
+}

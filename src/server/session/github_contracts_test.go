@@ -525,3 +525,162 @@ func TestGitHubExportRejectsConcurrentRequestsAndClearsBusyState(t *testing.T) {
 		t.Fatal("export remained busy after completing")
 	}
 }
+
+func TestLegacyGitHubExportTranscripts(t *testing.T) {
+	var fixture struct {
+		Reference string
+		Cases     []struct {
+			Name, Source, Path string
+			Responses          map[string]any
+			Expected           struct {
+				Error     string
+				Result    map[string]any
+				Mutations []map[string]any
+			}
+		}
+	}
+	data, err := os.ReadFile("testdata/legacy_exports.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Reference != "368b47eb1ae18a84d428ce4367d25cb815584968" {
+		t.Fatal("unknown export reference")
+	}
+	for _, test := range fixture.Cases {
+		t.Run(test.Name, func(t *testing.T) {
+			f := newGitHubFixture(t)
+			f.s.GitHub = ParsePull(test.Source)
+			f.s.GitHub.HeadSHA = f.in.HeadSHA
+			f.s.Documents[0].RelativePath = test.Path
+			for key, value := range test.Responses {
+				f.responses[key] = value
+			}
+			f.write(t)
+			result, err := f.s.Invoke(context.Background(), "ExportCommentToGitHub", f.in)
+			if test.Expected.Error != "" {
+				if err == nil || !strings.Contains(err.Error(), `"code":"`+test.Expected.Error+`"`) {
+					t.Errorf("export error: %v; want %s", err, test.Expected.Error)
+				}
+			} else if err != nil || !reflect.DeepEqual(result, test.Expected.Result) {
+				t.Errorf("export: %v %v; want %v", result, err, test.Expected.Result)
+			}
+			calls := f.mutations(t)
+			got := []map[string]any{}
+			for _, call := range calls {
+				got = append(got, call["Variables"].(map[string]any))
+			}
+			if !reflect.DeepEqual(got, test.Expected.Mutations) {
+				t.Errorf("mutations: %+v; want %+v", got, test.Expected.Mutations)
+			}
+		})
+	}
+}
+
+func TestGitHubExportAllowsLocalEditsAndRefusesChangedComments(t *testing.T) {
+	f := newGitHubFixture(t)
+	entered, release := make(chan struct{}), make(chan struct{})
+	var once sync.Once
+	unblock := func() { once.Do(func() { close(release) }) }
+	t.Cleanup(unblock)
+	f.s.ReadRemote = func(context.Context, string) (string, error) {
+		close(entered)
+		<-release
+		return f.in.DisplayedMarkdown, nil
+	}
+	done := make(chan error, 1)
+	go func() { _, err := f.s.Invoke(context.Background(), "ExportCommentToGitHub", f.in); done <- err }()
+	select {
+	case <-entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("export did not start")
+	}
+	edited := make(chan error, 1)
+	go func() {
+		_, err := f.s.Invoke(context.Background(), "UpdateComment", Input{DocumentID: f.in.DocumentID, CommentID: f.in.CommentID, Body: "Changed during export"})
+		edited <- err
+	}()
+	select {
+	case err := <-edited:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(time.Second):
+		unblock()
+		<-done
+		t.Fatal("export blocked a local edit")
+	}
+	unblock()
+	err := <-done
+	if err == nil || !strings.Contains(err.Error(), "export_out_of_sync") {
+		t.Fatalf("exported a changed comment: %v", err)
+	}
+	if calls := f.mutations(t); len(calls) != 0 {
+		t.Fatalf("changed comment was posted: %v", calls)
+	}
+}
+
+func TestGitHubRequestsKeepTheirSourceAndRecheckSessionChanges(t *testing.T) {
+	for _, operation := range []string{"GetDocument", "ExportCommentToGitHub"} {
+		t.Run(operation, func(t *testing.T) {
+			f := newGitHubFixture(t)
+			id := int64(f.in.DocumentID)
+			originalSource := f.s.Sources[id]
+			entered, release := make(chan struct{}), make(chan struct{})
+			var once sync.Once
+			unblock := func() { once.Do(func() { close(release) }) }
+			t.Cleanup(unblock)
+			f.s.ReadRemote = func(context.Context, string) (string, error) {
+				close(entered)
+				<-release
+				return f.in.DisplayedMarkdown, nil
+			}
+			type response struct {
+				value any
+				err   error
+			}
+			done := make(chan response, 1)
+			go func() { value, err := f.s.Invoke(context.Background(), operation, f.in); done <- response{value, err} }()
+			select {
+			case <-entered:
+			case <-time.After(5 * time.Second):
+				t.Fatal("request did not read Markdown")
+			}
+			changed := make(chan struct{})
+			go func() {
+				f.s.Mu.Lock()
+				defer f.s.Mu.Unlock()
+				f.s.GitHub.HeadSHA = strings.Repeat("b", 40)
+				f.s.Sources[id] = strings.Replace(originalSource, f.in.HeadSHA, f.s.GitHub.HeadSHA, 1)
+				close(changed)
+			}()
+			select {
+			case <-changed:
+			case <-time.After(time.Second):
+				unblock()
+				<-done
+				t.Fatal("request blocked head monitoring")
+			}
+			unblock()
+			result := <-done
+			if operation == "GetDocument" {
+				if result.err != nil {
+					t.Fatal(result.err)
+				}
+				value := result.value.(map[string]any)
+				if value["fileUrl"] != originalSource || value["githubHeadSha"] != f.in.HeadSHA || value["markdown"] != f.in.DisplayedMarkdown {
+					t.Fatalf("mixed source heads: %v", value)
+				}
+			} else {
+				if result.err == nil || !strings.Contains(result.err.Error(), "export_out_of_sync") {
+					t.Fatalf("exported an outdated session target: %v", result.err)
+				}
+				if calls := f.mutations(t); len(calls) != 0 {
+					t.Fatalf("outdated target was mutated: %v", calls)
+				}
+			}
+		})
+	}
+}
