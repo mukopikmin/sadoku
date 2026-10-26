@@ -191,17 +191,16 @@ Pushing that tag starts automatic validation, builds, attestation, notes
 generation, and publication. `npm run release:check -- --version <version>` and
 `npm run release:notes -- --version <version> --output release-notes.json`
 require Bash, jq, Git, an authenticated GitHub CLI, and the release and
-comparison tags locally. Both commands read the approved baseline from the annotated tag and
-compare it with a fresh GitHub lookup. Missing, duplicate, or invalid trailers
-fail.
+comparison tags locally. Both commands read the approved baseline from the
+annotated tag and compare it with a fresh GitHub lookup. Missing, duplicate, or
+invalid trailers fail.
 
 For a confirmed first release, use `release-notes-baseline` at the repository
 root. An empty stable-release lookup with other stable version tags on the
 remote fails instead of implying a first release. Drafts, prereleases, and
-nightly releases are excluded from the notes baseline. Validation JSON includes
-release candidates, the selection reason, remote stable tags, and returned CI
-runs (ID, workflow, branch, event, status, conclusion, SHA, and URL) for
-diagnosis.
+nightly releases are excluded from the notes baseline. Validation stops at the
+first failure and writes the reason to stderr. Successful checks return only
+`version`, `tag`, `headSha`, `tagObject`, and `previousStableTag` as JSON for CI.
 
 The workflow revalidates the comparison tag and target immediately before
 publication. Failed runs leave tags intact; never move or recreate a stable tag.

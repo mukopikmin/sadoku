@@ -46,7 +46,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          bash scripts/release.sh check --version "${RELEASE_TAG#v}" > release-check.json || { cat release-check.json; exit 1; }
+          bash scripts/release.sh check --version "${RELEASE_TAG#v}" > release-check.json
           cat release-check.json
           echo "version=$(jq -er .version release-check.json)" >> "${GITHUB_OUTPUT}"
           echo "target-sha=$(jq -er .headSha release-check.json)" >> "${GITHUB_OUTPUT}"
@@ -152,7 +152,7 @@ jobs:
 
       - name: Revalidate immediately before publication
         run: |
-          bash scripts/release.sh check --version "${VERSION}" > release-check.json || { cat release-check.json; exit 1; }
+          bash scripts/release.sh check --version "${VERSION}" > release-check.json
           test "$(jq -er .tag release-check.json)" = "${RELEASE_TAG}"
           test "$(jq -er .headSha release-check.json)" = "${TARGET_SHA}"
           test "$(jq -er .tagObject release-check.json)" = "${TAG_OBJECT}"
