@@ -187,23 +187,31 @@ git tag --annotate v<version> <approved-full-sha> \
   --message "Previous-Stable-Tag: <approved-comparison-tag>"
 ```
 
-Pushing that tag starts automatic validation, builds, attestation, notes
-generation, and publication. `make release-check VERSION=<version>` and
-`make release-notes VERSION=<version> OUTPUT=release-notes.json`
-require Bash, jq, Git, an authenticated GitHub CLI, and the release and
-comparison tags locally. Both commands read the approved baseline from the
-annotated tag and compare it with a fresh GitHub lookup. Missing, duplicate, or
-invalid trailers fail.
+Pushing that tag starts the Release workflow: validation, the reusable Test
+workflow on the tagged commit, builds, attestation, notes, and publication.
+The workflow reads the approved baseline from the annotated tag and compares it
+with a fresh GitHub lookup. Missing, duplicate, or invalid trailers fail.
 
 For a confirmed first release, use `release-notes-baseline` at the repository
 root. An empty stable-release lookup with other stable version tags on the
 remote fails instead of implying a first release. Drafts, prereleases, and
-nightly releases are excluded from the notes baseline. Validation stops at the
-first failure and writes the reason to stderr. Successful checks return only
-`version`, `tag`, `headSha`, `tagObject`, and `previousStableTag` as JSON for CI.
+nightly releases are excluded from the notes baseline. Validation requires the
+current `main` tip and an increasing version. After validation, the source commit
+is fixed for testing and building; later `main` updates do not change the release.
 
-The workflow revalidates the comparison tag and target immediately before
-publication. Failed runs leave tags intact; never move or recreate a stable tag.
+Test and build jobs have read-only repository permissions and do not persist
+checkout credentials. A separate publish job downloads the build's immutable
+artifact by ID, attests the archives for consumers, generates notes, and creates
+the release. It does not check out or execute repository code. Before publishing,
+the approved baseline must still be the latest stable release, and both tag
+objects must be unchanged. This also prevents an old failed run from superseding
+a newer release when retried.
+Existing releases fail creation; no assets are overwritten. Failed runs leave
+tags intact; never move or recreate a stable tag. Repository rules should restrict
+stable tag creation and prevent updates or deletion, including the comparison
+baseline. Tag rules enforce who can start publication: a tag push loads its
+workflow from the tagged revision, so workflow checks alone cannot police a
+tag creator who can replace that workflow.
 
 ## Settings and storage
 
@@ -258,9 +266,9 @@ Japanese text uses bundled Noto Sans JP with no external font service. See the
 ## Development
 
 Use GNU Make as the entry point for repository tasks. Go 1.26 runs the backend,
-CLI, build, and notice tools. Release validation and notes use Bash with Git,
-GitHub CLI, and jq. Node.js runs the preview client and npm tooling; its required
-version is specified in `package.json`.
+CLI, build, and notice tools. Release validation and notes run in GitHub Actions
+using Bash, Git, GitHub CLI, and jq. Node.js runs the preview client and npm
+tooling; its required version is specified in `package.json`.
 
 ```sh
 make deps
@@ -268,7 +276,7 @@ make start ARGS=README.md
 ```
 
 `package.json` contains npm and Node tasks only. Make invokes those scripts and
-coordinates Go, release, and generated-code tasks:
+coordinates Go and generated-code tasks:
 
 ```sh
 make check                       # formatting and go vet
@@ -279,8 +287,6 @@ make build TARGET=windows-x64 OUTPUT=sadoku.exe VERSION=1.2.3
 make install VERSION=1.2.3        # source installation on macOS/Linux
 make dist VERSION=1.2.3           # all three platform archives
 make notices
-make release-check VERSION=1.2.3
-make release-notes VERSION=1.2.3 OUTPUT=release-notes.json
 ```
 
 Build, install, server test, and vet targets build the client assets first. Run

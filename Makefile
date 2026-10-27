@@ -14,7 +14,7 @@ GO_SOURCES := cmd internal src/server src/preview/assets.go gen/go test/integrat
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \
  build install dist notices run start test test-server test-tools test-install check vet \
  fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
- check-proxy-format vet-proxy test-proxy build-proxy run-proxy release-check release-notes
+ check-proxy-format vet-proxy test-proxy build-proxy run-proxy
 
 deps:
 	$(NPM) run install:deps
@@ -96,12 +96,6 @@ proto-generate:
 proto-check: proto-lint proto-generate
 	git add --intent-to-add -- gen/ts gen/go
 	git diff --exit-code -- gen/ts gen/go
-
-release-check:
-	@bash scripts/release.sh check --version "$(VERSION)"
-
-release-notes:
-	@bash scripts/release.sh notes --version "$(VERSION)" --output "$(OUTPUT)"
 
 check-proxy-format:
 	test -z "$$(gofmt -l proxy)"
