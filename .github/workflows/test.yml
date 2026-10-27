@@ -25,6 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Install GNU Make
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install make --version=4.4.1 --yes --no-progress
+
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -40,74 +45,48 @@ jobs:
             package-lock.json
             src/preview/package-lock.json
 
-      - name: Configure Deno
-        id: engines
-        run: |
-          echo "deno=$(node -p 'require("./package.json").engines.deno')" >> "$GITHUB_OUTPUT"
-          echo "DENO_DIR=$RUNNER_TEMP/sadoku-deno-cache" >> "$GITHUB_ENV"
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: ${{ steps.engines.outputs.deno }}
-
       - name: Install dependencies
-        run: npm run install:deps
+        run: make deps
 
       - name: Check formatting
         if: runner.os == 'Linux'
-        run: deno fmt --check
+        run: make check-client-format
 
-      - name: Type check
-        if: runner.os == 'Linux'
-        run: deno task check
+      - name: Build client assets
+        run: make build-client
 
       - name: Test repository tooling
         if: runner.os == 'Linux'
-        run: deno task test
-
-      - name: Build client assets
-        run: npm run build:client
+        run: make test-tools
 
       - name: Check Go formatting
         if: runner.os == 'Linux'
-        run: test -z "$(gofmt -l cmd src/server src/preview/assets.go gen/go test/integration proxy)"
+        run: make check-go-format check-proxy-format
 
       - name: Vet Go server
-        run: go vet ./...
+        run: make vet
 
       - name: Test Go server
-        run: npm run test:server
+        run: make test-server
 
       - name: Test client
-        run: npm test
+        run: make test-client
 
       - name: Vet Go proxy
-        working-directory: proxy
-        run: go vet ./...
+        run: make vet-proxy
 
       - name: Test Go proxy
-        working-directory: proxy
-        run: go test -race -count=1 -timeout=60s ./...
+        run: make test-proxy
 
       - name: Build Go proxy
-        working-directory: proxy
-        env:
-          CGO_ENABLED: "0"
-        run: go build ./...
+        run: make build-proxy
 
       - name: Compile
-        run: deno task compile --output "${{ runner.temp }}/sadoku-ci${{ runner.os == 'Windows' && '.exe' || '' }}"
+        run: make build OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os == 'Windows' && '.exe' || '' }}"
 
       - name: Test Linux installer
         if: runner.os == 'Linux'
-        run: |
-          install_home="$(mktemp -d)"
-          trap 'rm -rf "$install_home"' EXIT
-          # Keep Go's read-only module cache outside the disposable install home.
-          GOMODCACHE="$(go env GOMODCACHE)" GOCACHE="$(go env GOCACHE)" \
-            HOME="$install_home" deno task install --version 0.0.0-ci
-          test "$("$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
+        run: make test-install
 
       - name: Test Windows installer
         if: runner.os == 'Windows'

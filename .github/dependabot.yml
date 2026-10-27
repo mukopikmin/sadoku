@@ -22,26 +22,6 @@ updates:
           - "*"
     open-pull-requests-limit: 5
 
-  - package-ecosystem: "deno"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    cooldown:
-      default-days: 7
-    labels:
-      - "dependencies"
-      - "deno"
-    groups:
-      deno-security-updates:
-        applies-to: "security-updates"
-        patterns:
-          - "*"
-      deno-dependencies:
-        applies-to: "version-updates"
-        patterns:
-          - "*"
-    open-pull-requests-limit: 5
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

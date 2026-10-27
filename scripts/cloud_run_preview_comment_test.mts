@@ -1,10 +1,16 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { deepStrictEqual as assertEquals, ok } from "node:assert/strict";
+import { test } from "node:test";
+import { readFile } from "node:fs/promises";
+const assertStringIncludes = (actual: string, expected: string) =>
+  ok(actual.includes(expected));
 
 // Exercise the actual inline action without contacting GitHub.
-const workflow = await Deno.readTextFile(
+const workflow = await readFile(
   new URL("../.github/workflows/cloud_run_preview.yml", import.meta.url),
+  "utf8",
 );
-const script = workflow.split("          script: |\n")[1]
+const script = workflow
+  .split("          script: |\n")[1]
   .split("\n  cleanup:")[0]
   .split("\n")
   .map((line) => line.replace(/^ {12}/, ""))
@@ -26,13 +32,15 @@ type Comment = {
   body: string | null;
 };
 
-async function runScenario(
-  { comments = [], state = "open", currentHead = head }: {
-    comments?: Comment[];
-    state?: string;
-    currentHead?: string;
-  } = {},
-) {
+async function runScenario({
+  comments = [],
+  state = "open",
+  currentHead = head,
+}: {
+  comments?: Comment[];
+  state?: string;
+  currentHead?: string;
+} = {}) {
   const writes: { operation: string; params: Record<string, unknown> }[] = [];
   let listed = false;
   const listComments = () => {};
@@ -83,7 +91,7 @@ async function runScenario(
   return { writes, listed };
 }
 
-Deno.test("preview comment includes the ready URL, deployed commit and run link", async () => {
+test("preview comment includes the ready URL, deployed commit and run link", async () => {
   const { writes } = await runScenario();
   assertEquals(writes.length, 1);
   assertEquals(writes[0].operation, "create");
@@ -98,7 +106,7 @@ Deno.test("preview comment includes the ready URL, deployed commit and run link"
   );
 });
 
-Deno.test("preview redeployment updates the existing bot comment from paginated results", async () => {
+test("preview redeployment updates the existing bot comment from paginated results", async () => {
   const { writes } = await runScenario({
     comments: [
       { id: 1, user: { login: "github-actions[bot]" }, body: "Other job" },
@@ -113,7 +121,7 @@ Deno.test("preview redeployment updates the existing bot comment from paginated 
   assertStringIncludes(String(writes[0].params.body), url);
 });
 
-Deno.test("preview comment never overwrites a contributor's comment with the marker", async () => {
+test("preview comment never overwrites a contributor's comment with the marker", async () => {
   const { writes } = await runScenario({
     comments: [{ id: 2, user: { login: "contributor" }, body: marker }],
   });
@@ -121,13 +129,11 @@ Deno.test("preview comment never overwrites a contributor's comment with the mar
   assertEquals(writes[0].operation, "create");
 });
 
-Deno.test("closed PRs and superseded deployments do not list or write comments", async () => {
-  for (
-    const scenario of [
-      { state: "closed" },
-      { currentHead: "b".repeat(40) },
-    ]
-  ) {
+test("closed PRs and superseded deployments do not list or write comments", async () => {
+  for (const scenario of [
+    { state: "closed" },
+    { currentHead: "b".repeat(40) },
+  ]) {
     assertEquals(await runScenario(scenario), { writes: [], listed: false });
   }
 });
