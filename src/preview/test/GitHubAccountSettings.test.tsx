@@ -14,6 +14,7 @@ const settings = {
   markdownExtensions: [".md"],
   maxDepth: 8,
   maxFiles: 500,
+  showHtmlComments: true,
   theme: "light" as const,
 };
 
@@ -42,6 +43,7 @@ it("shows the GitHub CLI authenticated account in settings", async () => {
       onFontScaleChange={vi.fn()}
       onMarkdownExtensionsChange={vi.fn()}
       onOpenChange={onOpenChange}
+      onShowHtmlCommentsChange={vi.fn()}
       onThemeModeChange={vi.fn()}
       open
       settings={settings}

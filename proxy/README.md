@@ -34,9 +34,9 @@ network path; IAM remains required.
 From the repository root:
 
 ```sh
-go -C proxy test -race ./...
+make test-proxy
 BACKEND_SERVICE_URL=https://BACKEND.run.app PUBLIC_ORIGIN=https://FRONT.run.app \
-  go -C proxy run ./cmd/revision-proxy
+  make run-proxy
 docker build --platform linux/amd64 -t revision-proxy proxy
 docker run --rm -p 127.0.0.1:8080:8080 \
   -e BACKEND_SERVICE_URL=https://BACKEND.run.app \

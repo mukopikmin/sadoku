@@ -1,14 +1,15 @@
 import { DocumentTitle } from "../components/DocumentTitle";
-import { Alert, Container } from "@chakra-ui/react";
+import { Alert, Box, Container, Flex } from "@chakra-ui/react";
 import { useState } from "react";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
+import { TableOfContents } from "./markdown/TableOfContents";
 import { DocumentActionBar } from "../components/DocumentActionBar";
 import { DocumentRevisionsDialog } from "../components/DocumentRevisionsDialog";
 import { DocumentBreadcrumb } from "../components/DocumentBreadcrumb";
 import type { DocumentSummary, PreviewDocument } from "../models/document";
 import type { ResolvedPreviewSettings } from "../models/theme";
-import type { PreviewView } from "../components/layout/PreviewHeader";
+import type { PreviewView } from "../models/previewView";
 
 type Props = {
   document: PreviewDocument;
@@ -16,6 +17,7 @@ type Props = {
   documents?: DocumentSummary[] | null;
   instructionCount: number;
   memoryCount: number;
+  onChangeView: (view: PreviewView) => void;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
   onOpenTags: () => void;
@@ -23,6 +25,8 @@ type Props = {
   onSelectDocuments: () => void;
   selectedDocument?: DocumentSummary;
   settings: ResolvedPreviewSettings;
+  staleCommentCount: number;
+  unresolvedCommentCount: number;
   view: PreviewView;
 };
 export const DocumentPreviewPage = (
@@ -32,6 +36,7 @@ export const DocumentPreviewPage = (
     documents,
     instructionCount,
     memoryCount,
+    onChangeView,
     onOpenInstructions,
     onOpenMemories,
     onOpenTags,
@@ -39,10 +44,12 @@ export const DocumentPreviewPage = (
     onSelectDocuments,
     selectedDocument,
     settings,
+    staleCommentCount,
+    unresolvedCommentCount,
     view,
   }: Props,
 ) => {
-  const [showHtmlComments, setShowHtmlComments] = useState(true);
+  const { showHtmlComments } = settings;
   const [revisionsOpen, setRevisionsOpen] = useState(false);
   const documentPath = selectedDocument?.relativePath ?? document.fileUrl ??
     document.title;
@@ -57,34 +64,40 @@ export const DocumentPreviewPage = (
         />
       )}
       {view === "preview" && (
-        <DocumentTitle
-          key={documentId}
-          documentId={documentId}
-          title={document.displayTitle}
-        />
+        <Flex as="section" aria-label="Document header" align="start" gap="3">
+          <Box flex="1" minW="0">
+            <DocumentTitle
+              key={documentId}
+              documentId={documentId}
+              title={document.displayTitle}
+            />
+          </Box>
+          <TableOfContents markdown={document.markdown} />
+        </Flex>
       )}
-      {view === "preview" && (
-        <DocumentActionBar
-          instructionCount={instructionCount}
-          memoryCount={memoryCount}
-          markdown={document.markdown}
-          onOpenInstructions={onOpenInstructions}
-          onOpenMemories={onOpenMemories}
-          onOpenRevisions={() => setRevisionsOpen(true)}
-          onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
-          showHtmlComments={showHtmlComments}
-          tagCount={document.tags.length}
-          onOpenTags={onOpenTags}
-          tags={document.tags}
-        />
-      )}
+      <DocumentActionBar
+        instructionCount={instructionCount}
+        memoryCount={memoryCount}
+        onChangeView={onChangeView}
+        onOpenInstructions={onOpenInstructions}
+        onOpenMemories={onOpenMemories}
+        onOpenRevisions={() => setRevisionsOpen(true)}
+        tagCount={document.tags.length}
+        onOpenTags={onOpenTags}
+        tags={document.tags}
+        staleCommentCount={staleCommentCount}
+        unresolvedCommentCount={unresolvedCommentCount}
+        view={view}
+      />
       <DocumentRevisionsDialog
+        canRestore={document.canRestore}
+        deleted={document.deleted}
         documentId={documentId}
         documentPath={documentPath}
         key={`revisions-${documentId}`}
         markdown={document.markdown}
         onOpenChange={setRevisionsOpen}
-        open={view === "preview" && revisionsOpen}
+        open={revisionsOpen}
         showHtmlComments={showHtmlComments}
         theme={settings.theme === "dark" ? "dark" : "default"}
       />

@@ -10,42 +10,24 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview basic rendering", () => {
-  it("toggles HTML comments without affecting ordinary Markdown", () => {
-    const { container } = renderMarkdown(
-      "Before\n\n<!-- internal note -->\n\nAfter",
-    );
+  it.each([true, false])(
+    "applies HTML comment visibility %s without affecting ordinary Markdown",
+    (shown) => {
+      const { container } = renderMarkdown(
+        "Before\n\n<!-- internal note -->\n\nAfter",
+        [],
+        {},
+        undefined,
+        shown,
+      );
 
-    expect(screen.getByText("HTML COMMENT")).not.toBeNull();
-    expect(screen.getByText("Before")).not.toBeNull();
-    expect(screen.getByText("After")).not.toBeNull();
-
-    const hideButton = screen.getByRole("button", {
-      name: "Hide HTML comments",
-    });
-    expect(hideButton.getAttribute("aria-pressed")).toBe("false");
-    expect(hideButton.querySelector("svg")?.getAttribute("aria-hidden")).toBe(
-      "true",
-    );
-    expect(hideButton.textContent).toBe("");
-    fireEvent.click(hideButton);
-
-    expect(screen.queryByText("HTML COMMENT")).toBeNull();
-    expect(container.querySelector("[data-html-comment]")).toBeNull();
-    expect(screen.getByText("Before")).not.toBeNull();
-    expect(screen.getByText("After")).not.toBeNull();
-
-    const showButton = screen.getByRole("button", {
-      name: "Show HTML comments",
-    });
-    expect(showButton.getAttribute("aria-pressed")).toBe("true");
-    expect(showButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-    expect(showButton.textContent).toBe("");
-    fireEvent.click(showButton);
-
-    expect(screen.getByText("HTML COMMENT")).not.toBeNull();
-    expect(screen.getByText("Before")).not.toBeNull();
-    expect(screen.getByText("After")).not.toBeNull();
-  });
+      expect(Boolean(container.querySelector("[data-html-comment]"))).toBe(
+        shown,
+      );
+      expect(screen.getByText("Before")).not.toBeNull();
+      expect(screen.getByText("After")).not.toBeNull();
+    },
+  );
 
   it("renders complete single-line and empty HTML comments as plain-text cards", () => {
     const { container } = renderMarkdown(

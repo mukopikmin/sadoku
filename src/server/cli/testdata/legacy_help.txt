@@ -1,0 +1,54 @@
+Usage:
+  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--trust-forwarded-prefix]
+  sadoku document add <file.md|url> [--create] [--title <text>]
+  sadoku document inspect <document-id>
+  sadoku document list
+  sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
+  sadoku document tag delete <tag-id>... (--document <id> | --source <file.md|url>)
+  sadoku tag add --name <name>
+  sadoku tag delete <tag-id>
+  sadoku tag list
+  sadoku instruction list (--document <id> | --source <file.md|url>)
+  sadoku instruction add (--document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction update <instruction-id> (--document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction delete <instruction-id> (--document <id> | --source <file.md|url>)
+  sadoku memory list (--document <id> | --source <file.md|url>)
+  sadoku memory add (--document <id> | --source <file.md|url>) --content <text>
+  sadoku memory update <memory-id> (--document <id> | --source <file.md|url>) --content <text>
+  sadoku memory delete <memory-id> (--document <id> | --source <file.md|url>)
+  sadoku comment list (--document <id> | --source <file.md|url>)
+  sadoku comment add (--document <id> | --source <file.md|url> [--ensure-document]) --start-line <line> [--end-line <line>] --body <text> [--as-bot]
+  sadoku comment update <comment-id> (--document <id> | --source <file.md|url>) --body <text>
+  sadoku comment delete <comment-id> (--document <id> | --source <file.md|url>)
+  sadoku comment resolve <comment-id>... (--document <id> | --source <file.md|url>) [--as-bot]
+  sadoku comment reopen <comment-id>... (--document <id> | --source <file.md|url>)
+  sadoku comment reply add (--document <id> | --source <file.md|url>) --comment <id> --body <text> [--as-bot] [--request-review]
+  sadoku comment reply update <reply-id> (--document <id> | --source <file.md|url>) --comment <id> --body <text>
+  sadoku comment reply delete <reply-id> (--document <id> | --source <file.md|url>) --comment <id>
+  sadoku update [--channel stable|nightly]
+
+Options:
+  --create          Create a new local Markdown file and register it (document add only).
+  --title           Display title (document add only).
+  --name            Tag name (tag add only).
+  --document        Existing document ID.
+  --source          Existing Markdown file or URL.
+  --ensure-document Register --source when it is not in the database (comment add only).
+  --comment         Parent comment ID for reply operations.
+  --start-line      First commented line.
+  --end-line        Last commented line. Defaults to --start-line.
+  --body            Comment or reply body.
+  --content         Instruction or memory content.
+  --as-bot          Attribute supported comment actions to a bot.
+  --request-review  Request review in a bot reply (requires --as-bot).
+  -p, --port        Starting preview port. Defaults to 3334.
+  --host            Preview host. Defaults to 127.0.0.1.
+  --no-open         Do not open the preview automatically.
+  --keep-alive      Keep the server running after the browser tab closes.
+  --trust-forwarded-prefix Accept X-Forwarded-Prefix from a trusted reverse proxy.
+  --max-depth       Maximum directory depth to scan. Defaults to 2 (0 scans only the root).
+  --max-files       Maximum number of Markdown files to load. Defaults to 20.
+  --channel         Update channel.
+  -v, --version     Show version.
+  -h, --help        Show this help message.
+

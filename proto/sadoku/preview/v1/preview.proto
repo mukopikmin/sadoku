@@ -11,6 +11,7 @@ service PreviewService {
   rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
   rpc ListDocumentRevisions(ListDocumentRevisionsRequest) returns (ListDocumentRevisionsResponse);
   rpc GetDocumentRevision(GetDocumentRevisionRequest) returns (DocumentRevision);
+  rpc RestoreDocumentRevision(RestoreDocumentRevisionRequest) returns (RestoreDocumentRevisionResponse);
   rpc GetDirectoryStatus(GetDirectoryStatusRequest) returns (GetDirectoryStatusResponse);
   rpc GetSettings(GetSettingsRequest) returns (Settings);
   rpc UpdateSettings(UpdateSettingsRequest) returns (Settings);
@@ -110,6 +111,12 @@ message DocumentRevision {
 message ListDocumentRevisionsRequest { uint64 document_id = 1; }
 message ListDocumentRevisionsResponse { repeated DocumentRevisionSummary revisions = 1; }
 message GetDocumentRevisionRequest { uint64 document_id = 1; uint64 revision_id = 2; }
+message RestoreDocumentRevisionRequest {
+  uint64 document_id = 1;
+  uint64 revision_id = 2;
+  optional string expected_markdown = 3;
+}
+message RestoreDocumentRevisionResponse {}
 message GetDocumentResponse {
   string file_url = 1;
   string markdown = 2;
@@ -119,6 +126,7 @@ message GetDocumentResponse {
   optional string display_title = 7;
   optional string github_head_sha = 6;
   optional string previous_markdown = 8;
+  bool can_restore = 9;
 }
 
 message GetDirectoryStatusRequest {}
@@ -139,6 +147,7 @@ message Settings {
   uint32 max_depth = 5;
   uint32 max_files = 6;
   repeated string markdown_extensions = 7;
+  optional bool show_html_comments = 8;
 }
 message UpdateSettingsRequest {
   string theme = 1;
@@ -148,6 +157,7 @@ message UpdateSettingsRequest {
   uint32 max_depth = 5;
   uint32 max_files = 6;
   repeated string markdown_extensions = 7;
+  optional bool show_html_comments = 8;
 }
 
 message GetGitHubAccountRequest {}

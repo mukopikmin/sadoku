@@ -1,10 +1,8 @@
 import { Button, Container, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { Link as RouterLink, useNavigate } from "@tanstack/react-router";
-import {
-  PreviewShell,
-  type PreviewView,
-} from "./components/layout/PreviewHeader";
+import { PreviewShell } from "./components/layout/PreviewHeader";
+import type { PreviewView } from "./models/previewView";
 import { markdownStyles } from "./markdown/markdownStyles";
 import { useHotReload } from "./hooks/useHotReload";
 import { connectPreviewKeepAlive } from "./api/hotReload";
@@ -86,6 +84,7 @@ export const App = () => {
     changeExcludedDirectories,
     changeFontScale,
     changeMarkdownExtensions,
+    changeShowHtmlComments,
     changeThemeMode,
     settings,
   } = usePreviewSettings();
@@ -98,6 +97,7 @@ export const App = () => {
     onExcludedDirectoriesChange: changeExcludedDirectories,
     onFontScaleChange: changeFontScale,
     onMarkdownExtensionsChange: changeMarkdownExtensions,
+    onShowHtmlCommentsChange: changeShowHtmlComments,
     onThemeModeChange: changeThemeMode,
   };
 
@@ -219,14 +219,9 @@ export const App = () => {
         dialogs={dialogProps}
         header={{
           ...headerActions,
-          onChangeView: () => {},
           reloadAvailable: false,
           reloading: false,
-          staleCommentCount: 0,
           title: "Documents",
-          unresolvedCommentCount: 0,
-          view: "preview",
-          viewsDisabled: true,
         }}
       >
         <DocumentListPage
@@ -255,14 +250,9 @@ export const App = () => {
         dialogs={dialogProps}
         header={{
           ...headerActions,
-          onChangeView: changeView,
           reloadAvailable: false,
           reloading: false,
-          staleCommentCount: 0,
           title: selectedDocument?.relativePath ?? "Preview",
-          unresolvedCommentCount: 0,
-          view: "preview",
-          viewsDisabled: true,
         }}
       >
         <DocumentLoadingPage
@@ -295,13 +285,9 @@ export const App = () => {
       header={{
         ...headerActions,
         fileUrl: document.fileUrl,
-        onChangeView: changeView,
         reloadAvailable,
         reloading: documentQuery.isFetching || commentsQuery.isFetching,
-        staleCommentCount,
         title: document.title,
-        unresolvedCommentCount,
-        view,
       }}
     >
       <DocumentPreviewPage
@@ -310,6 +296,7 @@ export const App = () => {
         documents={documents}
         instructionCount={instructionsQuery.data?.length ?? 0}
         memoryCount={memoriesQuery.data?.length ?? 0}
+        onChangeView={changeView}
         onOpenInstructions={instructionsDisclosure.onOpen}
         onOpenMemories={memoriesDisclosure.onOpen}
         onOpenTags={documentTagsDisclosure.onOpen}
@@ -317,6 +304,8 @@ export const App = () => {
         onSelectDocuments={selectDocuments}
         selectedDocument={selectedDocument}
         settings={settings}
+        staleCommentCount={staleCommentCount}
+        unresolvedCommentCount={unresolvedCommentCount}
         view={view}
       />
     </PreviewLayout>
