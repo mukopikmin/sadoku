@@ -11,25 +11,19 @@ permissions:
 
 jobs:
   test:
-    name: Server
-    runs-on: ubuntu-latest
-    env:
-      DENO_DIR: /tmp/sadoku-deno-cache
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Read Deno requirement
-        id: engines
-        run: |
-          deno_version="$(jq -er '.engines.deno' package.json)"
-          echo "deno=${deno_version}" >> "${GITHUB_OUTPUT}"
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: ${{ steps.engines.outputs.deno }}
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -46,20 +40,38 @@ jobs:
             package-lock.json
             src/preview/package-lock.json
 
+      - name: Configure Deno
+        id: engines
+        run: |
+          echo "deno=$(node -p 'require("./package.json").engines.deno')" >> "$GITHUB_OUTPUT"
+          echo "DENO_DIR=$RUNNER_TEMP/sadoku-deno-cache" >> "$GITHUB_ENV"
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: ${{ steps.engines.outputs.deno }}
+
       - name: Install dependencies
         run: npm run install:deps
 
       - name: Check formatting
+        if: runner.os == 'Linux'
         run: deno fmt --check
 
       - name: Type check
+        if: runner.os == 'Linux'
         run: deno task check
 
       - name: Test repository tooling
+        if: runner.os == 'Linux'
         run: deno task test
 
+      - name: Build client assets
+        run: npm run build:client
+
       - name: Check Go formatting
-        run: test -z "$(gofmt -l cmd src/server src/preview/assets.go gen/go test/integration)"
+        if: runner.os == 'Linux'
+        run: test -z "$(gofmt -l cmd src/server src/preview/assets.go gen/go test/integration proxy)"
 
       - name: Vet Go server
         run: go vet ./...
@@ -67,10 +79,28 @@ jobs:
       - name: Test Go server
         run: npm run test:server
 
+      - name: Test client
+        run: npm test
+
+      - name: Vet Go proxy
+        working-directory: proxy
+        run: go vet ./...
+
+      - name: Test Go proxy
+        working-directory: proxy
+        run: go test -race -count=1 -timeout=60s ./...
+
+      - name: Build Go proxy
+        working-directory: proxy
+        env:
+          CGO_ENABLED: "0"
+        run: go build ./...
+
       - name: Compile
-        run: deno task compile --output /tmp/sadoku-ci
+        run: deno task compile --output "${{ runner.temp }}/sadoku-ci${{ runner.os == 'Windows' && '.exe' || '' }}"
 
       - name: Test Linux installer
+        if: runner.os == 'Linux'
         run: |
           install_home="$(mktemp -d)"
           trap 'rm -rf "$install_home"' EXIT
@@ -79,94 +109,7 @@ jobs:
             HOME="$install_home" deno task install --version 0.0.0-ci
           test "$("$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
 
-  client:
-    name: Node
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: package.json
-          check-latest: true
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            src/preview/package-lock.json
-
-      - name: Install dependencies
-        run: npm run install:deps
-
-      - name: Test client
-        run: npm test
-
-  go-proxy:
-    name: Go proxy
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: proxy
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: "1.26.x"
-          cache: false
-
-      - name: Check formatting
-        run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            gofmt -d .
-            exit 1
-          fi
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Test
-        run: go test -race -count=1 -timeout=60s ./...
-
-      - name: Build
-        run: CGO_ENABLED=0 go build ./...
-
-  windows-installer:
-    name: Windows installer
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: package.json
-          check-latest: true
-
-      - name: Install dependencies
-        run: npm run install:deps
-
-      - name: Build client assets
-        run: npm run build:client
-
-      - name: Test Go backend on Windows
-        run: go test -count=1 -timeout=120s ./...
-
-      - name: Build Windows binary
-        run: go build -o sadoku.exe ./cmd/sadoku
-
       - name: Test Windows installer
+        if: runner.os == 'Windows'
         shell: powershell
         run: .\scripts\install_windows_test.ps1
