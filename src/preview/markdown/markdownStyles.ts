@@ -58,6 +58,13 @@ export const markdownStyles = `
     z-index: -1;
   }
 
+  /* Keep all highlightable boundaries visible while inspecting their layout. */
+  .markdown-range-highlight,
+  .commentable-content::before {
+    outline: 1px solid var(--chakra-colors-accent);
+    outline-offset: -1px;
+  }
+
   .markdown-range-highlight {
     border-radius: var(--chakra-radii-sm);
     left: calc(-1 * var(--chakra-spacing-2));
