@@ -94,5 +94,5 @@ responses are compared directly.
 The checks cover these recorded scenarios and the regression suites. They do not
 assert equivalence for every possible input or scheduling interleaving.
 
-Run `npm run build:client` before `npm run test:server`. The full required
+Run `make build-client` before `make test-server`. The full required
 checks are defined in `.github/workflows/test.yml`.

@@ -1,5 +1,5 @@
 // Package preview contains the built browser client embedded in the Go binary.
-// Run npm run build:client before building or testing the server.
+// Run make build-client before building or testing the server.
 package preview
 
 import "embed"

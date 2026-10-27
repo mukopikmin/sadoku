@@ -7,14 +7,16 @@ COPY --from=go-toolchain /usr/local/go /usr/local/go
 COPY --from=go-toolchain /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 ENV PATH="/usr/local/go/bin:${PATH}"
 
+RUN apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /workspace
 
-COPY package.json package-lock.json ./
+COPY Makefile package.json package-lock.json ./
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-RUN npm_config_engine_strict=true npm run install:deps
+RUN npm_config_engine_strict=true make deps
 
 COPY . .
-RUN npm run build:client && CGO_ENABLED=0 npm run build:server
+RUN make build
 
 FROM debian:bookworm-slim
 
