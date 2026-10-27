@@ -7,26 +7,25 @@ on:
 
 permissions: {}
 
+env:
+  STABLE_TAG_PATTERN: '^v(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)$'
+
 concurrency:
   group: stable-release
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Validate, build, and attest
+  validate:
+    name: Validate approved release
     if: github.event.deleted == false
     runs-on: ubuntu-latest
     permissions:
-      actions: read
-      artifact-metadata: write
-      attestations: write
       contents: read
-      id-token: write
     outputs:
       version: ${{ steps.release.outputs.version }}
-      target-sha: ${{ steps.release.outputs.target-sha }}
       tag-object: ${{ steps.release.outputs.tag-object }}
       previous-stable-tag: ${{ steps.release.outputs.previous-stable-tag }}
+      previous-tag-object: ${{ steps.release.outputs.previous-tag-object }}
 
     steps:
       - name: Reject moved tags
@@ -39,19 +38,68 @@ jobs:
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: Validate release target
+      - name: Validate version, main commit, and approved notes range
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          make release-check VERSION="${RELEASE_TAG#v}" > release-check.json
-          cat release-check.json
-          echo "version=$(jq -er .version release-check.json)" >> "${GITHUB_OUTPUT}"
-          echo "target-sha=$(jq -er .headSha release-check.json)" >> "${GITHUB_OUTPUT}"
-          echo "tag-object=$(jq -er .tagObject release-check.json)" >> "${GITHUB_OUTPUT}"
-          echo "previous-stable-tag=$(jq -er .previousStableTag release-check.json)" >> "${GITHUB_OUTPUT}"
+          set -euo pipefail
+          fail() { echo "::error::$*"; exit 1; }
+          [[ "${RELEASE_TAG}" =~ ${STABLE_TAG_PATTERN} ]] || fail 'Invalid stable release tag'
+          main="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main" --jq .commit.sha)"
+          test "${GITHUB_SHA}" = "${main}" || fail 'Release must target the current main tip'
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")" = "${GITHUB_SHA}"
+
+          info="$(git for-each-ref '--format=%(objecttype)%0a%(contents:trailers:key=Previous-Stable-Tag,valueonly)' "refs/tags/${RELEASE_TAG}")"
+          previous="${info#*$'\n'}"
+          if [[ "${info}" != $'tag\n'* ]] ||
+             { [[ "${previous}" != release-notes-baseline ]] && [[ ! "${previous}" =~ ${STABLE_TAG_PATTERN} ]]; }; then
+            fail 'Require an annotated tag with exactly one valid Previous-Stable-Tag trailer'
+          fi
+          previous_sha="$(git rev-parse --verify "refs/tags/${previous}^{commit}")"
+          test "${previous_sha}" != "${GITHUB_SHA}" || fail 'Notes range must contain changes'
+          git merge-base --is-ancestor "${previous_sha}" "${GITHUB_SHA}"
+          if [[ "${previous}" == release-notes-baseline ]]; then
+            other_tags="$(git tag --list | awk -v current="${RELEASE_TAG}" -v stable="${STABLE_TAG_PATTERN}" '$0 != current && $0 ~ stable')"
+            test -z "${other_tags}" || fail 'Stable tags exist without a stable release'
+            test "${previous_sha}" = "$(git rev-list --max-parents=0 HEAD)" || fail 'First-release baseline must be the repository root'
+          else
+            jq -en --arg next "${RELEASE_TAG#v}" --arg old "${previous#v}" \
+              'def parts: split(".") | map([length, .]); ($next | parts) > ($old | parts)' >/dev/null || fail 'Version must increase'
+          fi
+          {
+            echo "version=${RELEASE_TAG#v}"
+            echo "tag-object=$(git rev-parse "refs/tags/${RELEASE_TAG}")"
+            echo "previous-stable-tag=${previous}"
+            echo "previous-tag-object=$(git rev-parse "refs/tags/${previous}")"
+          } >> "${GITHUB_OUTPUT}"
+
+  test:
+    name: Test tagged commit
+    needs: validate
+    permissions:
+      contents: read
+    uses: ./.github/workflows/test.yml
+
+  build:
+    name: Build release artifacts
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      artifact-id: ${{ steps.artifact.outputs.artifact-id }}
+
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -71,117 +119,77 @@ jobs:
       - name: Install dependencies
         run: make deps
 
-      - name: Build and verify release artifacts
+      - name: Build release artifacts
         env:
-          VERSION: ${{ steps.release.outputs.version }}
+          VERSION: ${{ needs.validate.outputs.version }}
         run: make dist VERSION="${VERSION}"
 
-      - name: Attest release archives
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
-        with:
-          subject-checksums: dist/checksums.txt
-
       - name: Upload release artifacts
+        id: artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: release-dist
+          name: release-dist-${{ github.run_attempt }}
           path: dist/
           if-no-files-found: error
           retention-days: 7
 
   publish:
-    name: Verify and publish
-    needs: build
+    name: Attest and publish
+    needs: [validate, build]
     runs-on: ubuntu-latest
     permissions:
-      actions: read
-      attestations: read
+      artifact-metadata: write
+      attestations: write
       contents: write
+      id-token: write
     env:
-      GH_TOKEN: ${{ github.token }}
-      VERSION: ${{ needs.build.outputs.version }}
-      TARGET_SHA: ${{ needs.build.outputs.target-sha }}
-      TAG_OBJECT: ${{ needs.build.outputs.tag-object }}
-      PREVIOUS_STABLE_TAG: ${{ needs.build.outputs.previous-stable-tag }}
       RELEASE_TAG: ${{ github.ref_name }}
+      TAG_OBJECT: ${{ needs.validate.outputs.tag-object }}
+      PREVIOUS_STABLE_TAG: ${{ needs.validate.outputs.previous-stable-tag }}
+      PREVIOUS_TAG_OBJECT: ${{ needs.validate.outputs.previous-tag-object }}
 
+    # Do not check out source or execute repository/dependency code with publish permissions.
     steps:
-      - name: Checkout tested commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.build.outputs.target-sha }}
-          fetch-depth: 0
-
-      - name: Download this run's release artifacts
+      - name: Download this build's immutable artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: release-dist
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          merge-multiple: true
           path: dist
 
-      - name: Verify artifact names, checksums, and provenance
-        run: |
-          expected="$(printf '%s\n' \
-            "sadoku-v${VERSION}-darwin-arm64.tar.gz" \
-            "sadoku-v${VERSION}-linux-x64.tar.gz" \
-            "sadoku-v${VERSION}-windows-x64.zip" | sort)"
-          actual="$(awk '{print $2}' dist/checksums.txt | sort)"
-          test "${actual}" = "${expected}"
-          (cd dist && sha256sum --check --strict checksums.txt)
-          while read -r checksum name; do
-            test "$(cat "dist/${name}.sha256")" = "${checksum}"
-            gh attestation verify "dist/${name}" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/release.yml" \
-              --source-digest "${TARGET_SHA}"
-          done < dist/checksums.txt
-          expected_files="$(
-            printf '%s\n' "${expected}"
-            printf '%s\n' "${expected}" | sed 's/$/.sha256/'
-            echo checksums.txt
-          )"
-          actual_files="$(find dist -mindepth 1 -maxdepth 1 -printf '%f\n' | sort)"
-          test "${actual_files}" = "$(printf '%s\n' "${expected_files}" | sort)"
+      - name: Attest release archives for consumers
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
 
-      - name: Generate release notes
+      - name: Generate notes and publish unchanged approved tags
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          make release-notes VERSION="${VERSION}" OUTPUT=release-notes.json
-          test "$(jq -er .headSha release-notes.json)" = "${TARGET_SHA}"
-          test "$(jq -er .previousStableTag release-notes.json)" = "${PREVIOUS_STABLE_TAG}"
-          jq -er .body release-notes.json > release-notes.md
+          set -euo pipefail
+          # A retried publish must not supersede a newer stable release.
+          latest="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' |
+            jq -Rsr --arg pattern "${STABLE_TAG_PATTERN}" 'split("\n") | map(select(test($pattern))) | .[0] // "release-notes-baseline"')"
+          test "${PREVIOUS_STABLE_TAG}" = "${latest}"
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f "tag_name=${RELEASE_TAG}" \
+            -f "target_commitish=${GITHUB_SHA}" \
+            -f "previous_tag_name=${PREVIOUS_STABLE_TAG}" \
+            --jq '.body | select(type == "string" and test("\\S"))' > release-notes.md
           test -s release-notes.md
-
-      - name: Revalidate immediately before publication
-        run: |
-          make release-check VERSION="${VERSION}" > release-check.json
-          test "$(jq -er .tag release-check.json)" = "${RELEASE_TAG}"
-          test "$(jq -er .headSha release-check.json)" = "${TARGET_SHA}"
-          test "$(jq -er .tagObject release-check.json)" = "${TAG_OBJECT}"
-          test "$(jq -er .previousStableTag release-check.json)" = "${PREVIOUS_STABLE_TAG}"
-
-      - name: Publish GitHub release
-        run: |
+          # Tags remain mutable remote state even though source and artifacts are fixed.
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" --jq .object.sha)" = "${TAG_OBJECT}"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${PREVIOUS_STABLE_TAG}" --jq .object.sha)" = "${PREVIOUS_TAG_OBJECT}"
           gh release create "${RELEASE_TAG}" dist/* \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "$(jq -er .title release-notes.json)" \
+            --title "${RELEASE_TAG}" \
             --notes-file release-notes.md \
             --verify-tag \
-            --latest
-
-      - name: Verify published release
-        run: |
-          gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" \
-            --json isDraft,isPrerelease,body,assets,url > published-release.json
-          jq -e '.isDraft == false and .isPrerelease == false' published-release.json
-          test "$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name)" = "${RELEASE_TAG}"
-          test "$(jq -r .body published-release.json)" = "$(jq -r .body release-notes.json)"
-          expected="$(find dist -maxdepth 1 -type f -printf '%f\n' | sort)"
-          actual="$(jq -r '.assets[].name' published-release.json | sort)"
-          test "${actual}" = "${expected}"
-          test "$(git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" | cut -f1)" = "${TAG_OBJECT}"
+            --latest | tee -a "${GITHUB_STEP_SUMMARY}"
           {
-            echo "Release: $(jq -r .url published-release.json)"
-            echo "Target SHA: ${TARGET_SHA}"
+            echo "Target SHA: ${GITHUB_SHA}"
             echo "Notes range: ${PREVIOUS_STABLE_TAG}...${RELEASE_TAG}"
-            cat dist/checksums.txt
-            cat release-notes.md
           } >> "${GITHUB_STEP_SUMMARY}"
