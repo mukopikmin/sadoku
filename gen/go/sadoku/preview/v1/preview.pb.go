@@ -1446,17 +1446,18 @@ func (*GetSettingsRequest) Descriptor() ([]byte, []int) {
 }
 
 type Settings struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Theme               *string                `protobuf:"bytes,1,opt,name=theme,proto3,oneof" json:"theme,omitempty"`
-	CodeWrap            *string                `protobuf:"bytes,2,opt,name=code_wrap,json=codeWrap,proto3,oneof" json:"code_wrap,omitempty"`
-	FontScale           float64                `protobuf:"fixed64,3,opt,name=font_scale,json=fontScale,proto3" json:"font_scale,omitempty"`
-	ExcludedDirectories []string               `protobuf:"bytes,4,rep,name=excluded_directories,json=excludedDirectories,proto3" json:"excluded_directories,omitempty"`
-	MaxDepth            uint32                 `protobuf:"varint,5,opt,name=max_depth,json=maxDepth,proto3" json:"max_depth,omitempty"`
-	MaxFiles            uint32                 `protobuf:"varint,6,opt,name=max_files,json=maxFiles,proto3" json:"max_files,omitempty"`
-	MarkdownExtensions  []string               `protobuf:"bytes,7,rep,name=markdown_extensions,json=markdownExtensions,proto3" json:"markdown_extensions,omitempty"`
-	ShowHtmlComments    *bool                  `protobuf:"varint,8,opt,name=show_html_comments,json=showHtmlComments,proto3,oneof" json:"show_html_comments,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	Theme                   *string                `protobuf:"bytes,1,opt,name=theme,proto3,oneof" json:"theme,omitempty"`
+	CodeWrap                *string                `protobuf:"bytes,2,opt,name=code_wrap,json=codeWrap,proto3,oneof" json:"code_wrap,omitempty"`
+	FontScale               float64                `protobuf:"fixed64,3,opt,name=font_scale,json=fontScale,proto3" json:"font_scale,omitempty"`
+	ExcludedDirectories     []string               `protobuf:"bytes,4,rep,name=excluded_directories,json=excludedDirectories,proto3" json:"excluded_directories,omitempty"`
+	MaxDepth                uint32                 `protobuf:"varint,5,opt,name=max_depth,json=maxDepth,proto3" json:"max_depth,omitempty"`
+	MaxFiles                uint32                 `protobuf:"varint,6,opt,name=max_files,json=maxFiles,proto3" json:"max_files,omitempty"`
+	MarkdownExtensions      []string               `protobuf:"bytes,7,rep,name=markdown_extensions,json=markdownExtensions,proto3" json:"markdown_extensions,omitempty"`
+	ShowHtmlComments        *bool                  `protobuf:"varint,8,opt,name=show_html_comments,json=showHtmlComments,proto3,oneof" json:"show_html_comments,omitempty"`
+	ShowHighlightBoundaries *bool                  `protobuf:"varint,9,opt,name=show_highlight_boundaries,json=showHighlightBoundaries,proto3,oneof" json:"show_highlight_boundaries,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *Settings) Reset() {
@@ -1545,18 +1546,26 @@ func (x *Settings) GetShowHtmlComments() bool {
 	return false
 }
 
+func (x *Settings) GetShowHighlightBoundaries() bool {
+	if x != nil && x.ShowHighlightBoundaries != nil {
+		return *x.ShowHighlightBoundaries
+	}
+	return false
+}
+
 type UpdateSettingsRequest struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Theme               string                 `protobuf:"bytes,1,opt,name=theme,proto3" json:"theme,omitempty"`
-	CodeWrap            string                 `protobuf:"bytes,2,opt,name=code_wrap,json=codeWrap,proto3" json:"code_wrap,omitempty"`
-	FontScale           float64                `protobuf:"fixed64,3,opt,name=font_scale,json=fontScale,proto3" json:"font_scale,omitempty"`
-	ExcludedDirectories []string               `protobuf:"bytes,4,rep,name=excluded_directories,json=excludedDirectories,proto3" json:"excluded_directories,omitempty"`
-	MaxDepth            uint32                 `protobuf:"varint,5,opt,name=max_depth,json=maxDepth,proto3" json:"max_depth,omitempty"`
-	MaxFiles            uint32                 `protobuf:"varint,6,opt,name=max_files,json=maxFiles,proto3" json:"max_files,omitempty"`
-	MarkdownExtensions  []string               `protobuf:"bytes,7,rep,name=markdown_extensions,json=markdownExtensions,proto3" json:"markdown_extensions,omitempty"`
-	ShowHtmlComments    *bool                  `protobuf:"varint,8,opt,name=show_html_comments,json=showHtmlComments,proto3,oneof" json:"show_html_comments,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	Theme                   string                 `protobuf:"bytes,1,opt,name=theme,proto3" json:"theme,omitempty"`
+	CodeWrap                string                 `protobuf:"bytes,2,opt,name=code_wrap,json=codeWrap,proto3" json:"code_wrap,omitempty"`
+	FontScale               float64                `protobuf:"fixed64,3,opt,name=font_scale,json=fontScale,proto3" json:"font_scale,omitempty"`
+	ExcludedDirectories     []string               `protobuf:"bytes,4,rep,name=excluded_directories,json=excludedDirectories,proto3" json:"excluded_directories,omitempty"`
+	MaxDepth                uint32                 `protobuf:"varint,5,opt,name=max_depth,json=maxDepth,proto3" json:"max_depth,omitempty"`
+	MaxFiles                uint32                 `protobuf:"varint,6,opt,name=max_files,json=maxFiles,proto3" json:"max_files,omitempty"`
+	MarkdownExtensions      []string               `protobuf:"bytes,7,rep,name=markdown_extensions,json=markdownExtensions,proto3" json:"markdown_extensions,omitempty"`
+	ShowHtmlComments        *bool                  `protobuf:"varint,8,opt,name=show_html_comments,json=showHtmlComments,proto3,oneof" json:"show_html_comments,omitempty"`
+	ShowHighlightBoundaries *bool                  `protobuf:"varint,9,opt,name=show_highlight_boundaries,json=showHighlightBoundaries,proto3,oneof" json:"show_highlight_boundaries,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *UpdateSettingsRequest) Reset() {
@@ -1641,6 +1650,13 @@ func (x *UpdateSettingsRequest) GetMarkdownExtensions() []string {
 func (x *UpdateSettingsRequest) GetShowHtmlComments() bool {
 	if x != nil && x.ShowHtmlComments != nil {
 		return *x.ShowHtmlComments
+	}
+	return false
+}
+
+func (x *UpdateSettingsRequest) GetShowHighlightBoundaries() bool {
+	if x != nil && x.ShowHighlightBoundaries != nil {
+		return *x.ShowHighlightBoundaries
 	}
 	return false
 }
@@ -3993,7 +4009,7 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\x0eDirectoryError\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\x14\n" +
-	"\x12GetSettingsRequest\"\xe6\x02\n" +
+	"\x12GetSettingsRequest\"\xc5\x03\n" +
 	"\bSettings\x12\x19\n" +
 	"\x05theme\x18\x01 \x01(\tH\x00R\x05theme\x88\x01\x01\x12 \n" +
 	"\tcode_wrap\x18\x02 \x01(\tH\x01R\bcodeWrap\x88\x01\x01\x12\x1d\n" +
@@ -4003,11 +4019,13 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\tmax_depth\x18\x05 \x01(\rR\bmaxDepth\x12\x1b\n" +
 	"\tmax_files\x18\x06 \x01(\rR\bmaxFiles\x12/\n" +
 	"\x13markdown_extensions\x18\a \x03(\tR\x12markdownExtensions\x121\n" +
-	"\x12show_html_comments\x18\b \x01(\bH\x02R\x10showHtmlComments\x88\x01\x01B\b\n" +
+	"\x12show_html_comments\x18\b \x01(\bH\x02R\x10showHtmlComments\x88\x01\x01\x12?\n" +
+	"\x19show_highlight_boundaries\x18\t \x01(\bH\x03R\x17showHighlightBoundaries\x88\x01\x01B\b\n" +
 	"\x06_themeB\f\n" +
 	"\n" +
 	"_code_wrapB\x15\n" +
-	"\x13_show_html_comments\"\xd1\x02\n" +
+	"\x13_show_html_commentsB\x1c\n" +
+	"\x1a_show_highlight_boundaries\"\xb0\x03\n" +
 	"\x15UpdateSettingsRequest\x12\x14\n" +
 	"\x05theme\x18\x01 \x01(\tR\x05theme\x12\x1b\n" +
 	"\tcode_wrap\x18\x02 \x01(\tR\bcodeWrap\x12\x1d\n" +
@@ -4017,8 +4035,10 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\tmax_depth\x18\x05 \x01(\rR\bmaxDepth\x12\x1b\n" +
 	"\tmax_files\x18\x06 \x01(\rR\bmaxFiles\x12/\n" +
 	"\x13markdown_extensions\x18\a \x03(\tR\x12markdownExtensions\x121\n" +
-	"\x12show_html_comments\x18\b \x01(\bH\x00R\x10showHtmlComments\x88\x01\x01B\x15\n" +
-	"\x13_show_html_comments\"\x19\n" +
+	"\x12show_html_comments\x18\b \x01(\bH\x00R\x10showHtmlComments\x88\x01\x01\x12?\n" +
+	"\x19show_highlight_boundaries\x18\t \x01(\bH\x01R\x17showHighlightBoundaries\x88\x01\x01B\x15\n" +
+	"\x13_show_html_commentsB\x1c\n" +
+	"\x1a_show_highlight_boundaries\"\x19\n" +
 	"\x17GetGitHubAccountRequest\"\xa2\x01\n" +
 	"\x18GetGitHubAccountResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12?\n" +

@@ -81,6 +81,13 @@ func settingsFromConfig(values map[string]any) (Settings, error) {
 		}
 		s.ShowHTMLComments = b
 	}
+	if value, exists := values["show_highlight_boundaries"]; exists {
+		b, ok := value.(bool)
+		if !ok {
+			return s, fmt.Errorf("show_highlight_boundaries in Sadoku config must be a boolean.")
+		}
+		s.ShowHighlightBoundaries = b
+	}
 	if value, exists := values["font_scale"]; exists {
 		n, ok := configNumber(value)
 		if !ok || math.IsNaN(n) || n < 0.75 || n > 1.5 {

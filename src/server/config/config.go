@@ -12,14 +12,15 @@ import (
 )
 
 type Settings struct {
-	Theme               string   `json:"theme,omitempty" toml:"theme_mode,omitempty"`
-	CodeWrap            string   `json:"codeWrap,omitempty" toml:"code_wrap_mode,omitempty"`
-	FontScale           float64  `json:"fontScale" toml:"font_scale"`
-	ExcludedDirectories []string `json:"excludedDirectories" toml:"excluded_directories"`
-	MaxDepth            int      `json:"maxDepth" toml:"directory_max_depth"`
-	MaxFiles            int      `json:"maxFiles" toml:"directory_max_files"`
-	MarkdownExtensions  []string `json:"markdownExtensions" toml:"markdown_extensions"`
-	ShowHTMLComments    bool     `json:"showHtmlComments" toml:"show_html_comments"`
+	Theme                   string   `json:"theme,omitempty" toml:"theme_mode,omitempty"`
+	CodeWrap                string   `json:"codeWrap,omitempty" toml:"code_wrap_mode,omitempty"`
+	FontScale               float64  `json:"fontScale" toml:"font_scale"`
+	ExcludedDirectories     []string `json:"excludedDirectories" toml:"excluded_directories"`
+	MaxDepth                int      `json:"maxDepth" toml:"directory_max_depth"`
+	MaxFiles                int      `json:"maxFiles" toml:"directory_max_files"`
+	MarkdownExtensions      []string `json:"markdownExtensions" toml:"markdown_extensions"`
+	ShowHTMLComments        bool     `json:"showHtmlComments" toml:"show_html_comments"`
+	ShowHighlightBoundaries bool     `json:"showHighlightBoundaries,omitempty" toml:"show_highlight_boundaries"`
 }
 
 func Defaults() Settings {
