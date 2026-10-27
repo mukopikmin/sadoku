@@ -188,20 +188,19 @@ git tag --annotate v<version> <approved-full-sha> \
 ```
 
 Pushing that tag starts automatic validation, builds, attestation, notes
-generation, and publication. `deno task release:check --version <version>` and
-`deno task release:notes --version <version> --output release-notes.json`
-require Git, an authenticated GitHub CLI, and the release and comparison tags
-locally. Both commands read the approved baseline from the annotated tag and
-compare it with a fresh GitHub lookup. Missing, duplicate, or invalid trailers
-fail.
+generation, and publication. `make release-check VERSION=<version>` and
+`make release-notes VERSION=<version> OUTPUT=release-notes.json`
+require Bash, jq, Git, an authenticated GitHub CLI, and the release and
+comparison tags locally. Both commands read the approved baseline from the
+annotated tag and compare it with a fresh GitHub lookup. Missing, duplicate, or
+invalid trailers fail.
 
 For a confirmed first release, use `release-notes-baseline` at the repository
 root. An empty stable-release lookup with other stable version tags on the
 remote fails instead of implying a first release. Drafts, prereleases, and
-nightly releases are excluded from the notes baseline. Validation JSON includes
-release candidates, the selection reason, remote stable tags, and returned CI
-runs (ID, workflow, branch, event, status, conclusion, SHA, and URL) for
-diagnosis.
+nightly releases are excluded from the notes baseline. Validation stops at the
+first failure and writes the reason to stderr. Successful checks return only
+`version`, `tag`, `headSha`, `tagObject`, and `previousStableTag` as JSON for CI.
 
 The workflow revalidates the comparison tag and target immediately before
 publication. Failed runs leave tags intact; never move or recreate a stable tag.
@@ -258,15 +257,46 @@ Japanese text uses bundled Noto Sans JP with no external font service. See the
 
 ## Development
 
-Use Deno 2.8 and Node.js 24 to run from source:
+Use GNU Make as the entry point for repository tasks. Go 1.26 runs the backend,
+CLI, build, and notice tools. Release validation and notes use Bash with Git,
+GitHub CLI, and jq. Node.js runs the preview client and npm tooling; its required
+version is specified in `package.json`.
 
 ```sh
-npm install
-deno task start README.md
+make deps
+make start ARGS=README.md
 ```
 
-Checks: `deno fmt --check`, `deno task check`, `npm test`, `deno task test`, and
-`npm run proto:check`. Build a binary with `deno task compile`.
+`package.json` contains npm and Node tasks only. Make invokes those scripts and
+coordinates Go, release, and generated-code tasks:
+
+```sh
+make check                       # formatting and go vet
+make test                        # server, client, action, and proxy tests
+make test-tools                  # repository tooling tests
+make build VERSION=1.2.3          # standalone binary with embedded client assets
+make build TARGET=windows-x64 OUTPUT=sadoku.exe VERSION=1.2.3
+make install VERSION=1.2.3        # source installation on macOS/Linux
+make dist VERSION=1.2.3           # all three platform archives
+make notices
+make release-check VERSION=1.2.3
+make release-notes VERSION=1.2.3 OUTPUT=release-notes.json
+```
+
+Build, install, server test, and vet targets build the client assets first. Run
+`make deps` before these targets when setting up a checkout. The standalone
+binary needs neither Go nor Node.js installed. Archive creation supports
+`darwin-arm64`, `linux-x64`, and `windows-x64`. Use `TARGET=linux-x64` or
+`TARGET="linux-x64 windows-x64"` to limit distribution builds. Nightly builds use
+`make dist VERSION=nightly BINARY_VERSION=nightly-YYYYMMDD-COMMIT`.
+
+Install the pinned Go protobuf generators with `make proto-tools` before
+`make proto-check`; ensure `$(go env GOPATH)/bin` is on `PATH`. Go and TypeScript
+bindings share `proto/sadoku/preview/v1/preview.proto`.
+
+Server and tooling tests use Go. The inline GitHub JavaScript action test uses
+Node's built-in test runner. Generated TypeScript bindings and the Node test use
+Prettier; Go formatting uses `gofmt`.
 
 See [contributor guidelines](AGENTS.md), [proxy setup](proxy/README.md), and the
 [release workflow guide](.agents/skills/sadoku-release/SKILL.md) for details.

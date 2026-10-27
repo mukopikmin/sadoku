@@ -1,0 +1,118 @@
+[
+  {
+    "version": "0001",
+    "name": "create_comment_tables",
+    "checksum": "sha256:22fa6519cbaa37f88508f64e852c0442c323e4ac388600d43a66b06cd2230913",
+    "statements": [
+      "CREATE TABLE IF NOT EXISTS comment_document ( id INTEGER PRIMARY KEY, file_path TEXT NOT NULL, created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z') )",
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_comment_document_file_path ON comment_document(file_path)",
+      "CREATE TABLE IF NOT EXISTS comment ( id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL, local_id INTEGER NOT NULL, start_line INTEGER NOT NULL, end_line INTEGER NOT NULL, original_start_line INTEGER NOT NULL, original_end_line INTEGER NOT NULL, body TEXT NOT NULL, resolved INTEGER NOT NULL DEFAULT 0 CHECK (resolved IN (0, 1)), resolved_at TEXT CHECK (resolved_at IS NULL OR resolved_at GLOB '????-??-??T??:??:??.???Z'), source_hash TEXT, source_text TEXT, stale INTEGER NOT NULL DEFAULT 0 CHECK (stale IN (0, 1)), created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'), FOREIGN KEY (document_id) REFERENCES comment_document(id) ON DELETE CASCADE, UNIQUE (document_id, local_id) )",
+      "CREATE INDEX IF NOT EXISTS idx_comment_document_id ON comment(document_id)",
+      "CREATE INDEX IF NOT EXISTS idx_comment_document_start_line ON comment(document_id, start_line)",
+      "CREATE TABLE IF NOT EXISTS comment_reply ( id INTEGER PRIMARY KEY, comment_id INTEGER NOT NULL, local_id INTEGER NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'), FOREIGN KEY (comment_id) REFERENCES comment(id) ON DELETE CASCADE, UNIQUE (comment_id, local_id) )",
+      "CREATE INDEX IF NOT EXISTS idx_comment_reply_comment_id ON comment_reply(comment_id)"
+    ]
+  },
+  {
+    "version": "0002",
+    "name": "add_comment_authors",
+    "checksum": "sha256:5464e9a06a3ab084ee18c434b42b096fb1eef96503f486637bb23f62c9d019e9",
+    "statements": [
+      "ALTER TABLE comment ADD COLUMN author_type TEXT NOT NULL DEFAULT 'human' CHECK (author_type IN ('human', 'bot'))",
+      "ALTER TABLE comment_reply ADD COLUMN author_type TEXT NOT NULL DEFAULT 'human' CHECK (author_type IN ('human', 'bot'))"
+    ]
+  },
+  {
+    "version": "0003",
+    "name": "add_comment_resolver",
+    "checksum": "sha256:81adfb1bb6504074307a3150342c77edb9d1fd1c07ac1b9c8a2cc99d621cc31a",
+    "statements": [
+      "ALTER TABLE comment ADD COLUMN resolved_by_type TEXT CHECK (resolved_by_type IN ('human', 'bot'))"
+    ]
+  },
+  {
+    "version": "0004",
+    "name": "add_reply_review_requested",
+    "checksum": "sha256:6c8a09f3b68e3c3271ba509ef7e745c08e4b45106a6f10cd0bbff5dcebfe7b50",
+    "statements": [
+      "ALTER TABLE comment_reply ADD COLUMN review_requested INTEGER NOT NULL DEFAULT 0 CHECK (review_requested IN (0, 1))"
+    ]
+  },
+  {
+    "version": "0005",
+    "name": "add_comment_document_snapshot",
+    "checksum": "sha256:d8ec2fe060544566da4dae70b7d3a14179c616980a31768b5b1ef11b9a3e4bd5",
+    "statements": [
+      "ALTER TABLE comment_document ADD COLUMN source_snapshot TEXT",
+      "ALTER TABLE comment_document ADD COLUMN previous_source_snapshot TEXT"
+    ]
+  },
+  {
+    "version": "0006",
+    "name": "create_document_instructions",
+    "checksum": "sha256:5df65c5d2d46fbe152fbd7463b18d731a08d5a80484ab9e928ccde474d854556",
+    "statements": [
+      "CREATE TABLE document_instruction ( id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL, content TEXT NOT NULL CHECK (length(trim(content)) > 0), created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'), FOREIGN KEY (document_id) REFERENCES comment_document(id) ON DELETE CASCADE )",
+      "CREATE INDEX idx_document_instruction_document_id ON document_instruction(document_id)"
+    ]
+  },
+  {
+    "version": "0007",
+    "name": "create_document_tags",
+    "checksum": "sha256:385426fcea60787b26d2a4985b92535e6a5ce1c0f683ffae42bf707144e34d03",
+    "statements": [
+      "CREATE TABLE document_tag (\n      id INTEGER PRIMARY KEY AUTOINCREMENT,\n      name TEXT NOT NULL UNIQUE,\n      created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'),\n      updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z')\n    )",
+      "CREATE TABLE document_tag_link (\n      document_id INTEGER NOT NULL REFERENCES comment_document(id) ON DELETE CASCADE,\n      tag_id INTEGER NOT NULL REFERENCES document_tag(id) ON DELETE CASCADE,\n      UNIQUE(document_id, tag_id)\n    )"
+    ]
+  },
+  {
+    "version": "0008",
+    "name": "add_tag_background_color",
+    "checksum": "sha256:ceff2d6fe8cb1d967fb00c81250b7309dd5476853b8bfece0022449b1f715e99",
+    "statements": [
+      "ALTER TABLE document_tag ADD COLUMN background_color TEXT NOT NULL DEFAULT '#718096' CHECK (background_color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')"
+    ]
+  },
+  {
+    "version": "0009",
+    "name": "create_document_memories",
+    "checksum": "sha256:ccc08773f7fc5b4dc500c69f830d46be838e5546de41d0c6a9fda0d52d4cafa6",
+    "statements": [
+      "CREATE TABLE document_memory ( id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL, content TEXT NOT NULL CHECK (length(trim(content)) > 0), created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'), FOREIGN KEY (document_id) REFERENCES comment_document(id) ON DELETE CASCADE )",
+      "CREATE INDEX idx_document_memory_document_id ON document_memory(document_id)"
+    ]
+  },
+  {
+    "version": "0010",
+    "name": "add_document_title",
+    "checksum": "sha256:6ad5ab3e079129323bcfda4ccb742ed1ad677b37cd014b10d9a7b514b7075951",
+    "statements": [
+      "ALTER TABLE comment_document ADD COLUMN title TEXT"
+    ]
+  },
+  {
+    "version": "0011",
+    "name": "add_comment_source_deleted",
+    "checksum": "sha256:3482cb1855199c0d4133ac3f4325bc868cf4edfd1eace9ed68d175912a6a808c",
+    "statements": [
+      "ALTER TABLE comment ADD COLUMN source_deleted INTEGER NOT NULL DEFAULT 0 CHECK (source_deleted IN (0, 1))"
+    ]
+  },
+  {
+    "version": "0012",
+    "name": "create_document_revisions",
+    "checksum": "sha256:39e44316657551d9c8c8eb8823231c03cea8dbd36c169438cf2cbd5539dca60e",
+    "statements": [
+      "CREATE TABLE document_revision (\n    id INTEGER PRIMARY KEY,\n    document_id INTEGER NOT NULL REFERENCES comment_document(id) ON DELETE CASCADE,\n    markdown TEXT NOT NULL,\n    recorded_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))\n      CHECK (recorded_at GLOB '????-??-??T??:??:??.???Z')\n  )",
+      "CREATE INDEX idx_document_revision_document_id ON document_revision(document_id, id)",
+      "ALTER TABLE comment_document ADD COLUMN source_revision_id INTEGER REFERENCES document_revision(id)",
+      "ALTER TABLE comment_document ADD COLUMN previous_source_revision_id INTEGER REFERENCES document_revision(id)",
+      "INSERT INTO document_revision (document_id, markdown)\n    SELECT id, previous_source_snapshot FROM comment_document\n    WHERE previous_source_snapshot IS NOT NULL ORDER BY id",
+      "UPDATE comment_document SET previous_source_revision_id = (\n    SELECT id FROM document_revision WHERE document_id = comment_document.id\n    ORDER BY id DESC LIMIT 1\n  )",
+      "INSERT INTO document_revision (document_id, markdown)\n    SELECT id, source_snapshot FROM comment_document\n    WHERE source_snapshot IS NOT NULL\n      AND (previous_source_snapshot IS NULL OR source_snapshot <> previous_source_snapshot)\n    ORDER BY id",
+      "UPDATE comment_document SET source_revision_id = (\n    SELECT id FROM document_revision WHERE document_id = comment_document.id\n    ORDER BY id DESC LIMIT 1\n  ) WHERE source_snapshot IS NOT NULL",
+      "ALTER TABLE comment_document DROP COLUMN previous_source_snapshot",
+      "ALTER TABLE comment_document DROP COLUMN source_snapshot"
+    ]
+  }
+]
