@@ -54,25 +54,22 @@ export const getCommentableBlockProps = (
     commentsByLine,
     commentHighlightsByLine,
     markdown: _,
+    rangeHighlights,
     ...props
   } = context;
   const { endLine, startLine } = sourceRange;
   const comments = [...commentsByLine.entries()].flatMap(([line, comments]) =>
     line >= startLine && line <= endLine ? comments : []
   );
-  const hasContinuousSelection = props.selectedRange !== undefined &&
-    props.selectedRange.startLine < props.selectedRange.endLine &&
-    props.selectedRange.endLine >= startLine &&
-    props.selectedRange.startLine <= endLine;
-
   return {
     ...props,
     comments,
     hasCommentHighlight: [...commentHighlightsByLine].some((line) =>
       line >= startLine && line <= endLine
     ),
-    hasContinuousHighlight: hasContinuousSelection ||
-      comments.some((comment) => comment.startLine < comment.endLine),
+    hasContinuousHighlight: rangeHighlights.some((range) =>
+      range.endLine >= startLine && range.startLine <= endLine
+    ),
     isAdding: props.activeCommentLine !== undefined &&
       props.activeCommentLine >= startLine &&
       props.activeCommentLine <= endLine,

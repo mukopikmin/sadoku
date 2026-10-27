@@ -125,17 +125,8 @@ export const markdownStyles = `
     background: color-mix(in srgb, var(--chakra-colors-accent) 8%, var(--chakra-colors-canvas));
   }
 
-  .commentable-block:not(.commentable-block-selected):not(.commentable-block-continuous-highlight):has(.comment-thread) > .commentable-content pre {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 8%, var(--chakra-colors-canvas));
-  }
-
   .commentable-block:not(.commentable-block-selected):hover > .commentable-content::before,
   .commentable-block:not(.commentable-block-selected):focus-within > .commentable-content::before {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-canvas));
-  }
-
-  .commentable-block:not(.commentable-block-selected):hover > .commentable-content pre,
-  .commentable-block:not(.commentable-block-selected):focus-within > .commentable-content pre {
     background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-canvas));
   }
 
@@ -147,12 +138,16 @@ export const markdownStyles = `
     background: color-mix(in srgb, var(--chakra-colors-accent) 18%, var(--chakra-colors-canvas));
   }
 
-  .commentable-block-comment-highlight > .commentable-content pre {
-    background: color-mix(in srgb, var(--chakra-colors-selection-comment) 18%, var(--chakra-colors-canvas));
-  }
-
-  .commentable-block-range-selected > .commentable-content pre {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 18%, var(--chakra-colors-canvas));
+  /* Let the shared block/range highlight show through opaque Markdown surfaces. */
+  .markdown-preview :is(
+    .commentable-block:hover > .commentable-content,
+    .commentable-block:focus-within > .commentable-content,
+    .commentable-block-selected > .commentable-content,
+    .commentable-block-continuous-highlight > .commentable-content,
+    .commentable-block:has(.comment-thread) > .commentable-content,
+    [data-revision-kind]
+  ) :is(thead, pre, .code-block__root) {
+    background: transparent;
   }
 
   .comment-thread {
@@ -171,6 +166,11 @@ export const markdownStyles = `
     padding: var(--chakra-spacing-4);
     background: var(--chakra-colors-canvas-subtle);
     color: var(--chakra-colors-fg);
+  }
+
+  /* Mermaid sets an inline SVG background; use its highlighted container instead. */
+  .mermaid > svg {
+    background: inherit !important;
   }
 
   .mermaid-zoom-stage {
