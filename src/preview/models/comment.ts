@@ -16,7 +16,12 @@ export type CommentReply = {
   updatedAt: string;
 };
 
+export type CommentSource =
+  | { state: "available"; text: string }
+  | { state: "deleted" | "unavailable" };
+
 type CommentBase = {
+  currentSource?: CommentSource;
   author: CommentAuthor;
   body: string;
   createdAt: string;

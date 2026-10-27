@@ -49,104 +49,84 @@ describe("DocumentTagsDialog", () => {
     vi.unstubAllGlobals();
   });
 
-  it("hides selected exact tags and reports duplicate additions", async () => {
+  const renderDialog = (
+    tags: { id: number; name: string; backgroundColor: string }[] = [],
+  ) => {
     render(
       <DocumentTagsDialog
         documentId={7}
         onOpenChange={() => {}}
         open
-        tags={[{ id: 1, name: "API", backgroundColor: "#ffffff" }]}
+        tags={tags}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Tag name"), {
-      target: { value: "API" },
-    });
-    await screen.findByRole("button", { name: "api" });
-    expect(screen.queryByText("Exact match")).toBeNull();
-    expect(screen.queryByRole("button", { name: "API" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+  };
+
+  const readyInput = async () => {
+    const input = screen.getByRole("combobox", { name: "Tag name" });
+    await waitFor(() => expect(input.hasAttribute("disabled")).toBe(false));
+    fireEvent.focus(input);
+    return input;
+  };
+
+  it("lists existing unselected tags without typing and saves a dropdown selection", async () => {
+    renderDialog([{ id: 1, name: "API", backgroundColor: "#ffffff" }]);
+    await readyInput();
+    fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
+    expect(await screen.findByRole("option", { name: "api" })).not.toBeNull();
+    expect(screen.queryByRole("option", { name: "API" })).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: "api" }));
+    await screen.findByRole("button", { name: "api ×" });
+    expect(fetch).toHaveBeenCalledWith(
+      "/__sadoku/documents/7/tags",
+      expect.objectContaining({
+        body: JSON.stringify({ tags: [{ id: 1 }, { id: 2 }] }),
+        method: "PUT",
+      }),
+    );
+  });
+
+  it("hides selected tags and prevents duplicate additions", async () => {
+    renderDialog([{ id: 1, name: "API", backgroundColor: "#ffffff" }]);
+    const input = await readyInput();
+    fireEvent.change(input, { target: { value: "API" } });
+    await screen.findByRole("option", { name: "api" });
+    expect(screen.queryByRole("option", { name: "API" })).toBeNull();
+    expect(screen.queryByRole("option", { name: "Create “API”" })).toBeNull();
+    fireEvent.keyDown(input, { key: "Enter" });
     expect(await screen.findByText("This tag has already been added.")).not
       .toBeNull();
   });
 
-  it("shows only unselected similar tags without match reasons", async () => {
-    render(
-      <DocumentTagsDialog
-        documentId={7}
-        onOpenChange={() => {}}
-        open
-        tags={[{ id: 1, name: "API", backgroundColor: "#ffffff" }]}
-      />,
+  it("offers existing matches and creation in the same dropdown, preserving case", async () => {
+    renderDialog();
+    const input = await readyInput();
+    fireEvent.change(input, { target: { value: "  Api  " } });
+    expect(await screen.findByRole("option", { name: "API" })).not.toBeNull();
+    expect(screen.getByRole("option", { name: "api" })).not.toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: "Create “Api”" }));
+    await screen.findByRole("button", { name: "Api ×" });
+    expect(fetch).toHaveBeenCalledWith(
+      "/__sadoku/documents/7/tags",
+      expect.objectContaining({
+        body: JSON.stringify({ tags: [{ name: "Api" }] }),
+        method: "PUT",
+      }),
     );
-    fireEvent.change(screen.getByLabelText("Tag name"), {
-      target: { value: "ap" },
-    });
-    const suggestion = await screen.findByRole("button", { name: "api" });
-    expect(suggestion.textContent).toBe("api");
-    expect(screen.queryByRole("button", { name: "API" })).toBeNull();
-    expect(screen.getByRole("button", { name: "API ×" })).not.toBeNull();
-    for (const reason of ["case", "prefix", "substring", "distance"]) {
-      expect(screen.queryByText(reason)).toBeNull();
-    }
-    fireEvent.click(suggestion);
-    await screen.findByRole("button", { name: "api ×" });
-    fireEvent.change(screen.getByLabelText("Tag name"), {
-      target: { value: "ap" },
-    });
-    expect(screen.queryByText("Similar tags")).toBeNull();
-    expect(screen.queryByRole("button", { name: "api" })).toBeNull();
   });
 
-  it("allows a distinct new tag even when a similar tag exists", async () => {
-    render(
-      <DocumentTagsDialog
-        documentId={7}
-        onOpenChange={() => {}}
-        open
-        tags={[]}
-      />,
-    );
-    fireEvent.change(screen.getByLabelText("Tag name"), {
-      target: { value: "Api" },
-    });
-    expect(await screen.findByText("Similar tags")).not.toBeNull();
-    expect(screen.getByText("You can still add “Api” as a new tag."))
-      .not.toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Add" }));
-    expect(screen.queryByRole("button", { name: "Save tags" })).toBeNull();
-    await waitFor(() =>
-      expect(fetch).toHaveBeenCalledWith(
-        "/__sadoku/documents/7/tags",
-        expect.objectContaining({
-          body: JSON.stringify({ tags: [{ name: "Api" }] }),
-          method: "PUT",
-        }),
-      )
-    );
-  });
-  it("saves existing tags immediately and preserves them when adding and removing", async () => {
-    render(
-      <DocumentTagsDialog
-        documentId={7}
-        onOpenChange={() => {}}
-        open
-        tags={[]}
-      />,
-    );
-    fireEvent.change(screen.getByLabelText("Tag name"), {
-      target: { value: "API" },
-    });
-    fireEvent.click(await screen.findByRole("button", { name: "API" }));
+  it("uses existing exact matches and preserves saved tags when creating and removing", async () => {
+    renderDialog();
+    const input = await readyInput();
+    fireEvent.change(input, { target: { value: "API" } });
+    expect(await screen.findByRole("option", { name: "API" })).not.toBeNull();
+    expect(screen.queryByRole("option", { name: "Create “API”" })).toBeNull();
+    fireEvent.keyDown(input, { key: "Enter" });
     await screen.findByRole("button", { name: "API ×" });
-    await waitFor(() =>
-      expect(screen.getByLabelText("Tag name").hasAttribute("disabled")).toBe(
-        false,
-      )
-    );
-    fireEvent.change(screen.getByLabelText("Tag name"), {
-      target: { value: "new" },
-    });
-    fireEvent.keyDown(screen.getByLabelText("Tag name"), { key: "Enter" });
+    await readyInput();
+    fireEvent.change(input, { target: { value: "new" } });
+    await screen.findByRole("option", { name: "Create “new”" });
+    fireEvent.keyDown(input, { key: "Enter" });
     await screen.findByRole("button", { name: "new ×" });
     expect(fetch).toHaveBeenCalledWith(
       "/__sadoku/documents/7/tags",
@@ -168,38 +148,89 @@ describe("DocumentTagsDialog", () => {
     );
   });
 
-  it("keeps the input and saved tags when saving fails and allows retry", async () => {
-    render(
-      <DocumentTagsDialog
-        documentId={7}
-        onOpenChange={() => {}}
-        open
-        tags={[]}
-      />,
-    );
-    fireEvent.change(screen.getByLabelText("Tag name"), {
-      target: { value: "new" },
-    });
+  it("selects a highlighted existing tag using the keyboard", async () => {
+    renderDialog();
+    const input = await readyInput();
+    fireEvent.change(input, { target: { value: "ap" } });
+    await screen.findByRole("option", { name: "API" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Add" }).hasAttribute("disabled"),
-      ).toBe(false)
+      expect(input.getAttribute("aria-activedescendant")).toBeTruthy()
     );
+    fireEvent.keyDown(input, { key: "Enter" });
+    await screen.findByRole("button", { name: "api ×" });
+    expect(screen.queryByRole("button", { name: "ap ×" })).toBeNull();
+  });
+
+  it("does not create a tag when Enter confirms IME composition", async () => {
+    renderDialog();
+    const input = await readyInput();
+    fireEvent.change(input, { target: { value: "日本語" } });
+    await screen.findByRole("option", { name: "Create “日本語”" });
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(
+      vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method === "PUT"),
+    ).toHaveLength(0);
+    expect((input as HTMLInputElement).value).toBe("日本語");
+  });
+
+  it("allows creation when no existing tags are available", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json([]));
+    renderDialog();
+    const input = await readyInput();
+    fireEvent.change(input, { target: { value: "First tag" } });
+    fireEvent.click(
+      await screen.findByRole("option", { name: "Create “First tag”" }),
+    );
+    await screen.findByRole("button", { name: "First tag ×" });
+  });
+
+  it("disables dropdown choices and prevents Enter from exceeding the tag limit", async () => {
+    renderDialog(Array.from({ length: 20 }, (_, index) => ({
+      id: index + 10,
+      name: `Tag ${index}`,
+      backgroundColor: "#ffffff",
+    })));
+    const input = await readyInput();
+    fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
+    expect(
+      (await screen.findByRole("option", { name: "API" })).getAttribute(
+        "aria-disabled",
+      ),
+    ).toBe("true");
+    fireEvent.change(input, { target: { value: "new" } });
+    expect(
+      (await screen.findByRole("option", { name: "Create “new”" }))
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(await screen.findByText("A document can have at most 20 tags.")).not
+      .toBeNull();
+    expect(
+      vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method === "PUT"),
+    ).toHaveLength(0);
+  });
+
+  it("keeps the input and saved tags when saving fails and allows retry", async () => {
+    renderDialog();
+    const input = await readyInput();
+    fireEvent.change(input, { target: { value: "new" } });
+    const create = await screen.findByRole("option", { name: "Create “new”" });
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response("Could not save tags", { status: 500 }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    fireEvent.click(create);
     expect((await screen.findByRole("status")).textContent).toBe(
       "Could not save tags",
     );
-    expect((screen.getByLabelText("Tag name") as HTMLInputElement).value).toBe(
-      "new",
-    );
+    expect((input as HTMLInputElement).value).toBe("new");
     expect(screen.queryByRole("button", { name: "new ×" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Add" }));
-    await screen.findByRole("button", { name: "new ×" });
-    expect((screen.getByLabelText("Tag name") as HTMLInputElement).value).toBe(
-      "",
+    await readyInput();
+    fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
+    fireEvent.click(
+      await screen.findByRole("option", { name: "Create “new”" }),
     );
+    await screen.findByRole("button", { name: "new ×" });
+    expect((input as HTMLInputElement).value).toBe("");
   });
 });

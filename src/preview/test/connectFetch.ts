@@ -53,6 +53,7 @@ const route = (
           markdownExtensions: body.markdownExtensions,
           maxDepth: body.maxDepth,
           maxFiles: body.maxFiles,
+          showHtmlComments: body.showHtmlComments,
           theme: body.theme,
         }),
         settings,
@@ -189,7 +190,9 @@ const json = (method: string, body: unknown): RequestInit => ({
   if (!method) return globalThis.fetch(input, init);
   if (
     method === "GetSession" || method === "GetStatistics" ||
-    method === "CreateDocument"
+    method === "CreateDocument" || method === "UpdateDocumentTitle" ||
+    method === "ListDocumentRevisions" || method === "GetDocumentRevision" ||
+    method === "RestoreDocumentRevision"
   ) {
     return globalThis.fetch(input, init);
   }

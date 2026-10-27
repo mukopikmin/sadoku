@@ -33,6 +33,7 @@ export const CommentMarkdown = (
   return (
     <Box
       className="comment-markdown-body comment-body-markdown"
+      fontSize="comment"
       ref={containerRef}
     >
       <ReactMarkdown

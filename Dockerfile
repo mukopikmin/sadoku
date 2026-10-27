@@ -1,32 +1,40 @@
-FROM node:24-bookworm-slim AS builder
+FROM golang:1.26-bookworm AS go-toolchain
 
-COPY --from=denoland/deno:bin-2.8.0 /deno /usr/local/bin/deno
+FROM node:bookworm-slim AS builder
+
+COPY --from=go-toolchain /usr/local/go /usr/local/go
+# Go module downloads use system roots rather than Node's bundled CA store.
+COPY --from=go-toolchain /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
-COPY package.json package-lock.json ./
+COPY Makefile package.json package-lock.json ./
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-RUN npm run install:deps
+RUN npm_config_engine_strict=true make deps
 
 COPY . .
-RUN deno task compile --output /sadoku
+RUN make build
 
 FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 ENV HOME=/tmp/sadoku-home \
     SADOKU_COMMENTS_DIR=/tmp/sadoku-comments
 
 WORKDIR /app
 
-COPY --from=builder /sadoku /usr/local/bin/sadoku
+COPY --from=builder /workspace/sadoku /usr/local/bin/sadoku
 COPY . /app/
-COPY scripts/cloud_run_entrypoint.sh /usr/local/bin/cloud-run-entrypoint
 
-RUN chmod 755 /usr/local/bin/cloud-run-entrypoint \
-    && chown -R nobody:nogroup /app
+RUN chown -R nobody:nogroup /app
 
 USER nobody:nogroup
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/cloud-run-entrypoint"]
+ENTRYPOINT ["/bin/sh", "/app/scripts/preview_entrypoint.sh"]
+CMD ["/bin/sh", "/app/scripts/cloud_run_entrypoint.sh"]

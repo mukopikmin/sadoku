@@ -1,9 +1,8 @@
 import { cleanup, createCommentActions, render } from "./testUtils";
 import { afterEach } from "vitest";
-import { useState } from "react";
 import type { ActiveComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
-import { DocumentActionBar } from "../components/DocumentActionBar";
+import { TableOfContents } from "../pages/markdown/TableOfContents";
 import { markdownStyles as previewThemeCss } from "../markdown/markdownStyles";
 
 afterEach(() => {
@@ -32,23 +31,13 @@ export const renderMarkdown = (
     onResolveComment: (id: number) => Promise<void>;
   }> = {},
   documentPath?: string,
+  showHtmlComments = true,
 ) => {
   ensurePreviewThemeStyle();
   const PreviewWithActions = () => {
-    const [showHtmlComments, setShowHtmlComments] = useState(true);
     return (
       <>
-        <DocumentActionBar
-          instructionCount={3}
-          markdown={markdown}
-          memoryCount={4}
-          onOpenInstructions={() => {}}
-          onOpenTags={() => {}}
-          onToggleHtmlComments={() => setShowHtmlComments((shown) => !shown)}
-          showHtmlComments={showHtmlComments}
-          tagCount={2}
-          tags={[]}
-        />
+        <TableOfContents markdown={markdown} />
         <MarkdownPreview
           actions={createCommentActions({
             onCreateComment: callbacks.onCreateComment ?? (async () => {}),
