@@ -16,6 +16,7 @@ const getPreferredThemeMode = (): ThemeMode =>
 
 export const usePreviewSettings = () => {
   const [settings, setSettings] = useState<ResolvedPreviewSettings>(() => ({
+    showHighlightBoundaries: false,
     showHtmlComments: true,
     codeWrap: "scroll",
     excludedDirectories: [".git", "node_modules"],
@@ -61,6 +62,13 @@ export const usePreviewSettings = () => {
 
   useEffect(() => {
     const root = globalThis.document.documentElement;
+    root.dataset.showHighlightBoundaries = String(
+      settings.showHighlightBoundaries,
+    );
+  }, [settings.showHighlightBoundaries]);
+
+  useEffect(() => {
+    const root = globalThis.document.documentElement;
     root.dataset.theme = settings.theme;
     root.classList.toggle("dark", settings.theme === "dark");
     root.classList.toggle("light", settings.theme === "light");
@@ -80,6 +88,10 @@ export const usePreviewSettings = () => {
 
   const changeShowHtmlComments = (next: boolean) => {
     changeSettings({ showHtmlComments: next });
+  };
+
+  const changeShowHighlightBoundaries = (next: boolean) => {
+    changeSettings({ showHighlightBoundaries: next });
   };
 
   const changeThemeMode = (next: ThemeMode) => {
@@ -114,6 +126,7 @@ export const usePreviewSettings = () => {
     changeExcludedDirectories,
     changeFontScale,
     changeMarkdownExtensions,
+    changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
     settings,

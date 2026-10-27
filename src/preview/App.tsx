@@ -84,6 +84,7 @@ export const App = () => {
     changeExcludedDirectories,
     changeFontScale,
     changeMarkdownExtensions,
+    changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
     settings,
@@ -97,6 +98,7 @@ export const App = () => {
     onExcludedDirectoriesChange: changeExcludedDirectories,
     onFontScaleChange: changeFontScale,
     onMarkdownExtensionsChange: changeMarkdownExtensions,
+    onShowHighlightBoundariesChange: changeShowHighlightBoundaries,
     onShowHtmlCommentsChange: changeShowHtmlComments,
     onThemeModeChange: changeThemeMode,
   };

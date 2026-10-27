@@ -2,6 +2,7 @@ export type ThemeMode = "dark" | "light";
 export type CodeWrapMode = "scroll" | "wrap";
 
 export type PreviewSettings = {
+  showHighlightBoundaries: boolean;
   showHtmlComments: boolean;
   codeWrap?: CodeWrapMode;
   excludedDirectories: string[];

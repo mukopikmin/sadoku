@@ -148,6 +148,7 @@ message Settings {
   uint32 max_files = 6;
   repeated string markdown_extensions = 7;
   optional bool show_html_comments = 8;
+  optional bool show_highlight_boundaries = 9;
 }
 message UpdateSettingsRequest {
   string theme = 1;
@@ -158,6 +159,7 @@ message UpdateSettingsRequest {
   uint32 max_files = 6;
   repeated string markdown_extensions = 7;
   optional bool show_html_comments = 8;
+  optional bool show_highlight_boundaries = 9;
 }
 
 message GetGitHubAccountRequest {}

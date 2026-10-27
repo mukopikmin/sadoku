@@ -10,6 +10,7 @@ describe("AppearanceSettings", () => {
     const onFontScaleChange = vi.fn();
     const onCodeWrapModeChange = vi.fn();
     const onShowHtmlCommentsChange = vi.fn();
+    const onShowHighlightBoundariesChange = vi.fn();
     render(
       <AppearanceSettings
         codeWrapMode="scroll"
@@ -18,6 +19,8 @@ describe("AppearanceSettings", () => {
         onFontScaleChange={onFontScaleChange}
         onThemeModeChange={onThemeModeChange}
         onShowHtmlCommentsChange={onShowHtmlCommentsChange}
+        onShowHighlightBoundariesChange={onShowHighlightBoundariesChange}
+        showHighlightBoundaries={false}
         showHtmlComments
         themeMode="light"
       />,
@@ -34,6 +37,14 @@ describe("AppearanceSettings", () => {
     });
     expect(htmlComments.checked).toBe(true);
     fireEvent.click(htmlComments);
+    const boundaries = screen.getByRole<HTMLInputElement>("checkbox", {
+      name: "Show highlight boundaries",
+    });
+    expect(boundaries.checked).toBe(false);
+    fireEvent.click(boundaries);
+    await waitFor(() =>
+      expect(onShowHighlightBoundariesChange).toHaveBeenCalledWith(true)
+    );
     await waitFor(() =>
       expect(onShowHtmlCommentsChange).toHaveBeenCalledWith(false)
     );

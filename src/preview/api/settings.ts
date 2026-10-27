@@ -2,6 +2,7 @@ import type { CodeWrapMode, PreviewSettings, ThemeMode } from "../models/theme";
 import { previewClient } from "./connect";
 
 export type SettingsResponse = {
+  showHighlightBoundaries?: unknown;
   showHtmlComments?: unknown;
   codeWrap?: unknown;
   excludedDirectories?: unknown;
@@ -13,6 +14,7 @@ export type SettingsResponse = {
 };
 
 export type SettingsUpdate = {
+  showHighlightBoundaries: boolean;
   showHtmlComments: boolean;
   codeWrap: CodeWrapMode;
   excludedDirectories: string[];
@@ -45,6 +47,15 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
     );
   }
   const showHtmlComments = response.showHtmlComments ?? true;
+  if (
+    response.showHighlightBoundaries !== undefined &&
+    typeof response.showHighlightBoundaries !== "boolean"
+  ) {
+    throw new Error(
+      "Settings response contained an invalid highlight boundary visibility.",
+    );
+  }
+  const showHighlightBoundaries = response.showHighlightBoundaries ?? false;
   const maxDepth = response.maxDepth ?? 2;
   const maxFiles = response.maxFiles ?? 20;
   const excludedDirectories = response.excludedDirectories ?? [
@@ -92,6 +103,7 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
     );
   }
   return {
+    showHighlightBoundaries,
     showHtmlComments,
     codeWrap: response.codeWrap,
     excludedDirectories,
