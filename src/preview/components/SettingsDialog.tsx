@@ -16,6 +16,7 @@ export type SettingsDialogProps = {
   onFontScaleChange: (value: number) => void;
   onMarkdownExtensionsChange: (value: string[]) => void;
   onOpenChange: (open: boolean) => void;
+  onShowHtmlCommentsChange: (value: boolean) => void;
   onThemeModeChange: (value: ThemeMode) => void;
   open: boolean;
   settings: ResolvedPreviewSettings;
@@ -52,6 +53,8 @@ export const SettingsDialog = (
                   onCodeWrapModeChange={actions.onCodeWrapModeChange}
                   onFontScaleChange={actions.onFontScaleChange}
                   onThemeModeChange={actions.onThemeModeChange}
+                  onShowHtmlCommentsChange={actions.onShowHtmlCommentsChange}
+                  showHtmlComments={settings.showHtmlComments}
                   themeMode={settings.theme}
                 />
                 <DirectoryDiscoverySettings

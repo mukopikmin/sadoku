@@ -1,0 +1,984 @@
+{
+  "reference": "368b47eb1ae18a84d428ce4367d25cb815584968",
+  "cases": [
+    {
+      "name": "file limit stops before malformed entry",
+      "maxFiles": 1,
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": "Description",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "first.md"
+          },
+          null
+        ]
+      },
+      "expected": {
+        "paths": [
+          "first.md"
+        ],
+        "description": "Description",
+        "title": "Title",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1"
+        ]
+      }
+    },
+    {
+      "name": "null pull JSON",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "__raw": "null"
+        }
+      },
+      "expected": {
+        "error": "Cannot read properties of null (reading 'head')",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "array pull JSON",
+      "responses": {
+        "repos/owner/repo/pulls/1": []
+      },
+      "expected": {
+        "error": "GitHub API response did not contain the pull request head SHA.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "scalar pull JSON",
+      "responses": {
+        "repos/owner/repo/pulls/1": 42
+      },
+      "expected": {
+        "error": "GitHub API response did not contain the pull request head SHA.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "null file entry",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": "Description",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          null
+        ]
+      },
+      "expected": {
+        "error": "Cannot read properties of null (reading 'status')",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1"
+        ]
+      }
+    },
+    {
+      "name": "command please run gh auth login",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "__stderr": "please run gh auth login"
+        }
+      },
+      "expected": {
+        "error": "GitHub CLI is not authenticated. Run `gh auth login --hostname github.com`.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "command API rate limit exceeded",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "__stderr": "API rate limit exceeded"
+        }
+      },
+      "expected": {
+        "error": "GitHub API rate limit exceeded. Try again later.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "command HTTP 404 Not Found",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "__stderr": "HTTP 404 Not Found"
+        }
+      },
+      "expected": {
+        "error": "GitHub pull request was not found or the authenticated account cannot access the repository.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "command boom",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "__stderr": "boom"
+        }
+      },
+      "expected": {
+        "error": "GitHub CLI request failed: boom",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "command ",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "__stderr": ""
+        }
+      },
+      "expected": {
+        "error": "GitHub CLI request failed.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "malformed pull JSON",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "__raw": "{"
+        }
+      },
+      "expected": {
+        "error": "GitHub CLI returned invalid pull request JSON.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "missing head",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title"
+        }
+      },
+      "expected": {
+        "error": "GitHub API response did not contain the pull request head SHA.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "numeric head",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": "Description",
+          "head": {
+            "sha": 42
+          }
+        }
+      },
+      "expected": {
+        "error": "GitHub API response did not contain the pull request head SHA.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "missing title",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "body": "Body",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": []
+      },
+      "expected": {
+        "error": "GitHub API response did not contain a valid pull request title.",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1"
+        ]
+      }
+    },
+    {
+      "name": "numeric title",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": 42,
+          "body": "Description",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      },
+      "expected": {
+        "error": "GitHub API response did not contain a valid pull request title.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "invalid body",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": false,
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      },
+      "expected": {
+        "error": "GitHub API response did not contain a valid pull request body.",
+        "calls": [
+          "repos/owner/repo/pulls/1"
+        ]
+      }
+    },
+    {
+      "name": "malformed files JSON",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": "Description",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": {
+          "__raw": "{"
+        }
+      },
+      "expected": {
+        "error": "Failed to list page 1 of GitHub pull request files: GitHub CLI returned invalid changed-files JSON.",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1"
+        ]
+      }
+    },
+    {
+      "name": "invalid files array",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": "Description",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": {}
+      },
+      "expected": {
+        "error": "GitHub CLI returned invalid changed-files JSON.",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1"
+        ]
+      }
+    },
+    {
+      "name": "page two failure",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": "Description",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          },
+          {
+            "filename": "code.ts"
+          }
+        ],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=2": {
+          "__stderr": "API rate limit exceeded"
+        }
+      },
+      "expected": {
+        "error": "Failed to list page 2 of GitHub pull request files: GitHub API rate limit exceeded. Try again later.",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=2"
+        ]
+      }
+    },
+    {
+      "name": "file limit stops pagination",
+      "maxFiles": 1,
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": "Description",
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": [
+          {
+            "filename": "file0.md"
+          },
+          {
+            "filename": "file1.md"
+          },
+          {
+            "filename": "file2.md"
+          },
+          {
+            "filename": "file3.md"
+          },
+          {
+            "filename": "file4.md"
+          },
+          {
+            "filename": "file5.md"
+          },
+          {
+            "filename": "file6.md"
+          },
+          {
+            "filename": "file7.md"
+          },
+          {
+            "filename": "file8.md"
+          },
+          {
+            "filename": "file9.md"
+          },
+          {
+            "filename": "file10.md"
+          },
+          {
+            "filename": "file11.md"
+          },
+          {
+            "filename": "file12.md"
+          },
+          {
+            "filename": "file13.md"
+          },
+          {
+            "filename": "file14.md"
+          },
+          {
+            "filename": "file15.md"
+          },
+          {
+            "filename": "file16.md"
+          },
+          {
+            "filename": "file17.md"
+          },
+          {
+            "filename": "file18.md"
+          },
+          {
+            "filename": "file19.md"
+          },
+          {
+            "filename": "file20.md"
+          },
+          {
+            "filename": "file21.md"
+          },
+          {
+            "filename": "file22.md"
+          },
+          {
+            "filename": "file23.md"
+          },
+          {
+            "filename": "file24.md"
+          },
+          {
+            "filename": "file25.md"
+          },
+          {
+            "filename": "file26.md"
+          },
+          {
+            "filename": "file27.md"
+          },
+          {
+            "filename": "file28.md"
+          },
+          {
+            "filename": "file29.md"
+          },
+          {
+            "filename": "file30.md"
+          },
+          {
+            "filename": "file31.md"
+          },
+          {
+            "filename": "file32.md"
+          },
+          {
+            "filename": "file33.md"
+          },
+          {
+            "filename": "file34.md"
+          },
+          {
+            "filename": "file35.md"
+          },
+          {
+            "filename": "file36.md"
+          },
+          {
+            "filename": "file37.md"
+          },
+          {
+            "filename": "file38.md"
+          },
+          {
+            "filename": "file39.md"
+          },
+          {
+            "filename": "file40.md"
+          },
+          {
+            "filename": "file41.md"
+          },
+          {
+            "filename": "file42.md"
+          },
+          {
+            "filename": "file43.md"
+          },
+          {
+            "filename": "file44.md"
+          },
+          {
+            "filename": "file45.md"
+          },
+          {
+            "filename": "file46.md"
+          },
+          {
+            "filename": "file47.md"
+          },
+          {
+            "filename": "file48.md"
+          },
+          {
+            "filename": "file49.md"
+          },
+          {
+            "filename": "file50.md"
+          },
+          {
+            "filename": "file51.md"
+          },
+          {
+            "filename": "file52.md"
+          },
+          {
+            "filename": "file53.md"
+          },
+          {
+            "filename": "file54.md"
+          },
+          {
+            "filename": "file55.md"
+          },
+          {
+            "filename": "file56.md"
+          },
+          {
+            "filename": "file57.md"
+          },
+          {
+            "filename": "file58.md"
+          },
+          {
+            "filename": "file59.md"
+          },
+          {
+            "filename": "file60.md"
+          },
+          {
+            "filename": "file61.md"
+          },
+          {
+            "filename": "file62.md"
+          },
+          {
+            "filename": "file63.md"
+          },
+          {
+            "filename": "file64.md"
+          },
+          {
+            "filename": "file65.md"
+          },
+          {
+            "filename": "file66.md"
+          },
+          {
+            "filename": "file67.md"
+          },
+          {
+            "filename": "file68.md"
+          },
+          {
+            "filename": "file69.md"
+          },
+          {
+            "filename": "file70.md"
+          },
+          {
+            "filename": "file71.md"
+          },
+          {
+            "filename": "file72.md"
+          },
+          {
+            "filename": "file73.md"
+          },
+          {
+            "filename": "file74.md"
+          },
+          {
+            "filename": "file75.md"
+          },
+          {
+            "filename": "file76.md"
+          },
+          {
+            "filename": "file77.md"
+          },
+          {
+            "filename": "file78.md"
+          },
+          {
+            "filename": "file79.md"
+          },
+          {
+            "filename": "file80.md"
+          },
+          {
+            "filename": "file81.md"
+          },
+          {
+            "filename": "file82.md"
+          },
+          {
+            "filename": "file83.md"
+          },
+          {
+            "filename": "file84.md"
+          },
+          {
+            "filename": "file85.md"
+          },
+          {
+            "filename": "file86.md"
+          },
+          {
+            "filename": "file87.md"
+          },
+          {
+            "filename": "file88.md"
+          },
+          {
+            "filename": "file89.md"
+          },
+          {
+            "filename": "file90.md"
+          },
+          {
+            "filename": "file91.md"
+          },
+          {
+            "filename": "file92.md"
+          },
+          {
+            "filename": "file93.md"
+          },
+          {
+            "filename": "file94.md"
+          },
+          {
+            "filename": "file95.md"
+          },
+          {
+            "filename": "file96.md"
+          },
+          {
+            "filename": "file97.md"
+          },
+          {
+            "filename": "file98.md"
+          },
+          {
+            "filename": "file99.md"
+          }
+        ],
+        "repos/owner/repo/pulls/1/files?per_page=100&page=2": {
+          "__stderr": "should not request"
+        }
+      },
+      "expected": {
+        "paths": [
+          "file0.md"
+        ],
+        "description": "Description",
+        "title": "Title",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1"
+        ]
+      }
+    },
+    {
+      "name": "null description",
+      "responses": {
+        "repos/owner/repo/pulls/1": {
+          "title": "Title",
+          "body": null,
+          "head": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        "repos/owner/repo/pulls/1/files?per_page=100&page=1": []
+      },
+      "expected": {
+        "paths": [],
+        "description": "",
+        "title": "Title",
+        "calls": [
+          "repos/owner/repo/pulls/1",
+          "repos/owner/repo/pulls/1/files?per_page=100&page=1"
+        ]
+      }
+    }
+  ]
+}

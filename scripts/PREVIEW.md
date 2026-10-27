@@ -24,8 +24,8 @@ configured `SADOKU_COMMENTS_DIR`. An unset or empty source enables preparation.
 All sample Markdown comes from `test/integration/fixtures/`, copied with its
 directory structure into the temporary directory. The copies provide five
 documents (one deleted) and fifteen comments, including human and bot authors,
-replies, review requests, resolved comments, instructions, and memories. Seeded
-comments, replies, instructions, and memories are in English.
+replies, review requests, resolved comments, instructions, memories, and tags.
+Seeded comments, replies, instructions, memories, and tag names are in English.
 
 | Fixture                 | Preview state                                                                      |
 | ----------------------- | ---------------------------------------------------------------------------------- |
@@ -46,8 +46,20 @@ comments are added to the final text.
 
 The seed script changes the copied `second.md` after adding comments and deletes
 the copied `guides/overview.md`. The original fixtures remain available to the
-existing integration tests. Tags and display titles are left unset because the
-existing CLI does not configure them.
+existing integration tests. Tags are created and attached through
+`sadoku tag add` and `sadoku document tag add`:
+
+| Tag            | Documents                         |
+| -------------- | --------------------------------- |
+| `Needs review` | `comprehensive.md`, `second.md`   |
+| `Markdown`     | `comprehensive.md`, `japanese.md` |
+| `Archived`     | `guides/overview.md` (deleted)    |
+| `Unassigned`   | None                              |
+
+`guides/setup/local.md` remains untagged. Use these samples to try tag
+filtering, document tag editing, and tag management, including a tag with no
+documents. Tags use the CLI's default background color. Display titles remain
+unset.
 
 Operation results are stored in the startup's temporary directory. Each launcher
 invocation has independent data; separate preview instances do not share

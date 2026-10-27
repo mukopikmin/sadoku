@@ -1,0 +1,329 @@
+{
+  "reference": "368b47eb1ae18a84d428ce4367d25cb815584968",
+  "cases": [
+    {
+      "content": "",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 2,
+          "maxFiles": 20,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "theme_mode = 'dark'",
+      "expected": {
+        "settings": {
+          "theme": "dark",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 2,
+          "maxFiles": 20,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "theme_mode = ''",
+      "expected": {
+        "error": "theme_mode in Sadoku config must be either \"dark\" or \"light\"."
+      }
+    },
+    {
+      "content": "theme_mode = false",
+      "expected": {
+        "error": "theme_mode in Sadoku config must be either \"dark\" or \"light\"."
+      }
+    },
+    {
+      "content": "code_wrap_mode = ''",
+      "expected": {
+        "error": "code_wrap_mode in Sadoku config must be either \"scroll\" or \"wrap\"."
+      }
+    },
+    {
+      "content": "code_wrap_mode = 1",
+      "expected": {
+        "error": "code_wrap_mode in Sadoku config must be either \"scroll\" or \"wrap\"."
+      }
+    },
+    {
+      "content": "commentsDirectory = 1",
+      "expected": {
+        "error": "commentsDirectory in Sadoku config must be a string."
+      }
+    },
+    {
+      "content": "directory_max_depth = -1",
+      "expected": {
+        "error": "directory_max_depth in Sadoku config must be a non-negative integer."
+      }
+    },
+    {
+      "content": "directory_max_depth = 1.5",
+      "expected": {
+        "error": "directory_max_depth in Sadoku config must be a non-negative integer."
+      }
+    },
+    {
+      "content": "directory_max_depth = 1.0",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 1,
+          "maxFiles": 20,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "directory_max_depth = '1'",
+      "expected": {
+        "error": "directory_max_depth in Sadoku config must be a non-negative integer."
+      }
+    },
+    {
+      "content": "directory_max_files = 0",
+      "expected": {
+        "error": "directory_max_files in Sadoku config must be a positive integer."
+      }
+    },
+    {
+      "content": "directory_max_files = 2.0",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 2,
+          "maxFiles": 2,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "directory_max_files = false",
+      "expected": {
+        "error": "directory_max_files in Sadoku config must be a positive integer."
+      }
+    },
+    {
+      "content": "excluded_directories = 'vendor'",
+      "expected": {
+        "error": "excluded_directories in Sadoku config must be an array of unique directory names."
+      }
+    },
+    {
+      "content": "excluded_directories = ['x',1]",
+      "expected": {
+        "error": "excluded_directories in Sadoku config must be an array of unique directory names."
+      }
+    },
+    {
+      "content": "excluded_directories = ['x','x']",
+      "expected": {
+        "error": "excluded_directories in Sadoku config must be an array of unique directory names."
+      }
+    },
+    {
+      "content": "excluded_directories = ['..']",
+      "expected": {
+        "error": "excluded_directories in Sadoku config must be an array of unique directory names."
+      }
+    },
+    {
+      "content": "excluded_directories = []",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 2,
+          "maxFiles": 20,
+          "excludedDirectories": [],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "markdown_extensions = []",
+      "expected": {
+        "error": "markdown_extensions in Sadoku config must be a non-empty array of unique file extensions beginning with a dot."
+      }
+    },
+    {
+      "content": "markdown_extensions = ['.MD','.md']",
+      "expected": {
+        "error": "markdown_extensions in Sadoku config must be a non-empty array of unique file extensions beginning with a dot."
+      }
+    },
+    {
+      "content": "markdown_extensions = ['md']",
+      "expected": {
+        "error": "markdown_extensions in Sadoku config must be a non-empty array of unique file extensions beginning with a dot."
+      }
+    },
+    {
+      "content": "markdown_extensions = [1]",
+      "expected": {
+        "error": "markdown_extensions in Sadoku config must be a non-empty array of unique file extensions beginning with a dot."
+      }
+    },
+    {
+      "content": "font_scale = '1'",
+      "expected": {
+        "error": "font_scale in Sadoku config must be a finite number between 0.75 and 1.5."
+      }
+    },
+    {
+      "content": "font_scale = nan",
+      "expected": {
+        "error": "font_scale in Sadoku config must be a finite number between 0.75 and 1.5."
+      }
+    },
+    {
+      "content": "font_scale = inf",
+      "expected": {
+        "error": "font_scale in Sadoku config must be a finite number between 0.75 and 1.5."
+      }
+    },
+    {
+      "content": "font_scale = 0.5",
+      "expected": {
+        "error": "font_scale in Sadoku config must be a finite number between 0.75 and 1.5."
+      }
+    },
+    {
+      "content": "font_scale = 1",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 2,
+          "maxFiles": 20,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "font_scale = 1.25",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1.25,
+          "maxDepth": 2,
+          "maxFiles": 20,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "show_html_comments = 0",
+      "expected": {
+        "error": "show_html_comments in Sadoku config must be a boolean."
+      }
+    },
+    {
+      "content": "theme_mode = [broken",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 2,
+          "maxFiles": 20,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": true
+        }
+      }
+    },
+    {
+      "content": "commentsDirectory = '/comments'\ncustom='preserve'\nshow_html_comments=false",
+      "expected": {
+        "settings": {
+          "theme": "",
+          "codeWrap": "",
+          "fontScale": 1,
+          "maxDepth": 2,
+          "maxFiles": 20,
+          "excludedDirectories": [
+            ".git",
+            "node_modules"
+          ],
+          "markdownExtensions": [
+            ".md",
+            ".markdown"
+          ],
+          "showHtmlComments": false
+        }
+      }
+    }
+  ]
+}

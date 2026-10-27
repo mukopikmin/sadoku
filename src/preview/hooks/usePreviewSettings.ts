@@ -16,6 +16,7 @@ const getPreferredThemeMode = (): ThemeMode =>
 
 export const usePreviewSettings = () => {
   const [settings, setSettings] = useState<ResolvedPreviewSettings>(() => ({
+    showHtmlComments: true,
     codeWrap: "scroll",
     excludedDirectories: [".git", "node_modules"],
     fontScale: 1,
@@ -77,6 +78,10 @@ export const usePreviewSettings = () => {
     changeSettings({ codeWrap: next });
   };
 
+  const changeShowHtmlComments = (next: boolean) => {
+    changeSettings({ showHtmlComments: next });
+  };
+
   const changeThemeMode = (next: ThemeMode) => {
     changeSettings({ theme: next });
   };
@@ -109,6 +114,7 @@ export const usePreviewSettings = () => {
     changeExcludedDirectories,
     changeFontScale,
     changeMarkdownExtensions,
+    changeShowHtmlComments,
     changeThemeMode,
     settings,
   };

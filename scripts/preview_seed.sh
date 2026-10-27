@@ -11,8 +11,19 @@ cp -R "$fixture_dir/." "$documents/"
 
 for document in "$documents/"*.md "$documents/"*/*.md "$documents/"*/*/*.md; do
   [ -f "$document" ] || continue
-  sadoku document add "$document" >/dev/null
+  seed_title="$(awk '/^# / { sub(/^# /, ""); print; exit }' "$document")"
+  sadoku document add "$document" --title "$seed_title" >/dev/null
 done
+
+# Tag IDs start at 1 in the fresh preview database.
+sadoku tag add --name 'Needs review' >/dev/null
+sadoku tag add --name 'Markdown' >/dev/null
+sadoku tag add --name 'Archived' >/dev/null
+sadoku tag add --name 'Unassigned' >/dev/null
+sadoku document tag add 1 2 --source "$documents/comprehensive.md" >/dev/null
+sadoku document tag add 1 --source "$documents/second.md" >/dev/null
+sadoku document tag add 2 --source "$documents/japanese.md" >/dev/null
+sadoku document tag add 3 --source "$documents/guides/overview.md" >/dev/null
 
 # Locate the selected text so formatting changes do not silently move comments.
 add_comment() {

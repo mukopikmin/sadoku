@@ -17,9 +17,6 @@ jobs:
   go-proxy:
     name: Go proxy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: proxy
 
     steps:
       - name: Checkout
@@ -32,17 +29,13 @@ jobs:
           cache: false
 
       - name: Check formatting
-        run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            gofmt -d .
-            exit 1
-          fi
+        run: make check-proxy-format
 
       - name: Vet
-        run: go vet ./...
+        run: make vet-proxy
 
       - name: Test
-        run: go test -race -count=1 -timeout=60s ./...
+        run: make test-proxy
 
       - name: Build
-        run: CGO_ENABLED=0 go build ./...
+        run: make build-proxy
