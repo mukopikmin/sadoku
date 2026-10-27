@@ -17,11 +17,12 @@ them when making changes.
   check cannot run because of an environment limitation, identify the limitation
   before attempting to create the pull request and clearly report the unverified
   check; never describe an incomplete or failed check as successful.
-- Prefer the stable project entry points defined in `deno.json` and
-  `package.json` instead of duplicating their underlying commands.
-- Use `npm install` to install dependencies. The root `postinstall` installs the
-  preview client's dependencies under `src/preview/`.
-- Keep `deno.lock`, the root `package-lock.json`, and
+- Use `Makefile` as the entry point for Go, release, and npm tasks. Keep
+  `package.json` scripts limited to npm and Node tooling.
+- Use `make deps` to install npm dependencies from the lockfiles. When using
+  `npm install` directly, the root `postinstall` also installs the preview client's
+  dependencies under `src/preview/`.
+- Keep the root `package-lock.json` and
   `src/preview/package-lock.json` consistent with dependency changes.
 - Add or update focused tests for application behavior changes. Do not rely only
   on a successful build.
@@ -44,16 +45,16 @@ them when making changes.
   `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
 - Use Go's standard library for runtime facilities. Keep domain operations as
   functions and plain data with explicit persistence ports.
-- Run `npm run build:client` before Go builds or tests; `src/preview/assets.go`
+- Run `make build-client` before Go builds or tests; `src/preview/assets.go`
   embeds the generated client. Never commit client build outputs.
-- Validate Go changes with `gofmt`, `go vet ./...`, and `npm run test:server`.
+- Validate Go changes with `make check-go-format`, `make vet`, and `make test-server`.
   Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
 - Keep `go.mod` and `go.sum` consistent. Use `CGO_ENABLED=0` for release builds.
 - `src/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
 - Generate Go and TypeScript RPC bindings together using
-  `npm run proto:generate`.
+  `make proto-generate`.
 - Keep routing and API adaptation under `http/`, session preparation under
   `session/`, persistence under `storage/` and `db/`, and shared business rules
   and persistence ports under `usecase/`.
@@ -75,14 +76,13 @@ them when making changes.
 
 ## 3. Repository Tooling
 
-- Deno remains the runtime for build, release, installation, and tooling tests
-  under `scripts/`. Application behavior and server tests use Go.
-- Keep tooling permissions narrowly scoped and use `DENO_NO_PACKAGE_JSON=1`
-  where existing tasks do so.
-- Prefer functions and plain objects in TypeScript tools. Error subclasses are
-  permitted when interoperability requires them.
-- Keep release and notice generation in `scripts/`; preserve release validation
-  and approval gates when changing those tools.
+- Build, source installation, and notice tools use Go under `internal/tooling/`,
+  with the entry point `cmd/sadoku-tools/`. Release validation and note generation
+  use Bash, Git, GitHub CLI, and jq in `scripts/release.sh`.
+- Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
+  scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
+- Keep release validation and approval gates when changing those tools.
+- Use Prettier for generated TypeScript bindings and the Node action test.
 
 ## 4. Preview Client and Generated Assets
 
@@ -120,14 +120,13 @@ them when making changes.
   the table and tests when support changes.
 - `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
   generated outputs and MUST NOT be committed.
-- Build client assets with `npm run build:client`; do not edit generated files
+- Build client assets with `make build-client`; do not edit generated files
   under `src/preview/dist/`.
 - Keep Mermaid rendering functional without CDN or other network access.
 
 ## 5. Testing Conventions
 
-- Co-locate server unit tests as `*_test.go`. Keep Deno tooling tests under
-  `scripts/` as `*_test.ts`.
+- Co-locate server and tooling unit tests as `*_test.go`.
 - Put cross-module Go server workflows in `test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
@@ -144,8 +143,8 @@ them when making changes.
   UI. Avoid tests coupled to private implementation details.
 - Use temporary files and ephemeral or explicitly reserved loopback ports. Tests
   must not open a real browser or depend on external network services.
-- When changing generated archives or binaries, verify the relevant `compile`,
-  `dist`, or installation path in addition to unit tests.
+- When changing generated archives or binaries, verify the relevant `make build`,
+  `make dist`, or installation path in addition to unit tests.
 
 ## 6. GitHub Actions and Communication
 
