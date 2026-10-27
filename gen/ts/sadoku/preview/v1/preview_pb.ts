@@ -17,7 +17,8 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file sadoku/preview/v1/preview.proto.
  */
-export const file_sadoku_preview_v1_preview: GenFile = /*@__PURE__*/
+export const file_sadoku_preview_v1_preview: GenFile =
+  /*@__PURE__*/
   fileDesc(
     "Ch9zYWRva3UvcHJldmlldy92MS9wcmV2aWV3LnByb3RvEhFzYWRva3UucHJldmlldy52MSITChFHZXRTZXNzaW9uUmVxdWVzdCJ+ChJHZXRTZXNzaW9uUmVzcG9uc2USOQoMcHVsbF9yZXF1ZXN0GAEgASgLMh4uc2Fkb2t1LnByZXZpZXcudjEuUHVsbFJlcXVlc3RIAIgBARIcChRjYW5fY3JlYXRlX2RvY3VtZW50cxgCIAEoCEIPCg1fcHVsbF9yZXF1ZXN0Ik4KC1B1bGxSZXF1ZXN0EhMKC2Rlc2NyaXB0aW9uGAEgASgJEg4KBm51bWJlchgCIAEoDRINCgV0aXRsZRgDIAEoCRILCgN1cmwYBCABKAkiFgoUR2V0U3RhdGlzdGljc1JlcXVlc3QifgoVR2V0U3RhdGlzdGljc1Jlc3BvbnNlEjYKDWNvbW1lbnRfY291bnQYASABKAsyHy5zYWRva3UucHJldmlldy52MS5Db21tZW50Q291bnQSFQoNZGF0YWJhc2Vfc2l6ZRgCIAEoBBIWCg5kb2N1bWVudF9jb3VudBgDIAEoBCIqCgxDb21tZW50Q291bnQSCwoDYm90GAEgASgEEg0KBWh1bWFuGAIgASgEIjkKA1RhZxIKCgJpZBgBIAEoBBIMCgRuYW1lGAIgASgJEhgKEGJhY2tncm91bmRfY29sb3IYAyABKAkigAEKClRhZ1N1bW1hcnkSCgoCaWQYASABKAQSDAoEbmFtZRgCIAEoCRIYChBiYWNrZ3JvdW5kX2NvbG9yGAMgASgJEhYKDmRvY3VtZW50X2NvdW50GAQgASgEEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCSIWChRMaXN0RG9jdW1lbnRzUmVxdWVzdCJOChVMaXN0RG9jdW1lbnRzUmVzcG9uc2USNQoJZG9jdW1lbnRzGAEgAygLMiIuc2Fkb2t1LnByZXZpZXcudjEuRG9jdW1lbnRTdW1tYXJ5IksKFUNyZWF0ZURvY3VtZW50UmVxdWVzdBIRCglkaXJlY3RvcnkYASABKAkSEAoIZmlsZW5hbWUYAiABKAkSDQoFdGl0bGUYAyABKAkiqAEKD0RvY3VtZW50U3VtbWFyeRIKCgJpZBgBIAEoBBIVCg1yZWxhdGl2ZV9wYXRoGAIgASgJEg0KBXRpdGxlGAMgASgJEg8KB2RlbGV0ZWQYBCABKAgSJAoEdGFncxgFIAMoCzIWLnNhZG9rdS5wcmV2aWV3LnYxLlRhZxIaCg1kaXNwbGF5X3RpdGxlGAcgASgJSACIAQFCEAoOX2Rpc3BsYXlfdGl0bGUiQAoaVXBkYXRlRG9jdW1lbnRUaXRsZVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSDQoFdGl0bGUYAiABKAkiKQoSR2V0RG9jdW1lbnRSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEIjoKF0RvY3VtZW50UmV2aXNpb25TdW1tYXJ5EgoKAmlkGAEgASgEEhMKC3JlY29yZGVkX2F0GAIgASgJInsKEERvY3VtZW50UmV2aXNpb24SCgoCaWQYASABKAQSEwoLcmVjb3JkZWRfYXQYAiABKAkSEAoIbWFya2Rvd24YAyABKAkSHgoRcHJldmlvdXNfbWFya2Rvd24YBCABKAlIAIgBAUIUChJfcHJldmlvdXNfbWFya2Rvd24iMwocTGlzdERvY3VtZW50UmV2aXNpb25zUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBCJeCh1MaXN0RG9jdW1lbnRSZXZpc2lvbnNSZXNwb25zZRI9CglyZXZpc2lvbnMYASADKAsyKi5zYWRva3UucHJldmlldy52MS5Eb2N1bWVudFJldmlzaW9uU3VtbWFyeSJGChpHZXREb2N1bWVudFJldmlzaW9uUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBITCgtyZXZpc2lvbl9pZBgCIAEoBCKAAQoeUmVzdG9yZURvY3VtZW50UmV2aXNpb25SZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhMKC3JldmlzaW9uX2lkGAIgASgEEh4KEWV4cGVjdGVkX21hcmtkb3duGAMgASgJSACIAQFCFAoSX2V4cGVjdGVkX21hcmtkb3duIiEKH1Jlc3RvcmVEb2N1bWVudFJldmlzaW9uUmVzcG9uc2UiqgIKE0dldERvY3VtZW50UmVzcG9uc2USEAoIZmlsZV91cmwYASABKAkSEAoIbWFya2Rvd24YAiABKAkSDQoFdGl0bGUYAyABKAkSDwoHZGVsZXRlZBgEIAEoCBIkCgR0YWdzGAUgAygLMhYuc2Fkb2t1LnByZXZpZXcudjEuVGFnEhoKDWRpc3BsYXlfdGl0bGUYByABKAlIAIgBARIcCg9naXRodWJfaGVhZF9zaGEYBiABKAlIAYgBARIeChFwcmV2aW91c19tYXJrZG93bhgIIAEoCUgCiAEBEhMKC2Nhbl9yZXN0b3JlGAkgASgIQhAKDl9kaXNwbGF5X3RpdGxlQhIKEF9naXRodWJfaGVhZF9zaGFCFAoSX3ByZXZpb3VzX21hcmtkb3duIhsKGUdldERpcmVjdG9yeVN0YXR1c1JlcXVlc3QikgEKGkdldERpcmVjdG9yeVN0YXR1c1Jlc3BvbnNlEg0KBXN0YXRlGAEgASgJEhAKCGRldGVjdGVkGAIgASgEEhIKCnJlZ2lzdGVyZWQYAyABKAQSNQoFZXJyb3IYBCABKAsyIS5zYWRva3UucHJldmlldy52MS5EaXJlY3RvcnlFcnJvckgAiAEBQggKBl9lcnJvciIvCg5EaXJlY3RvcnlFcnJvchIMCgRuYW1lGAEgASgJEg8KB21lc3NhZ2UYAiABKAkiFAoSR2V0U2V0dGluZ3NSZXF1ZXN0IsECCghTZXR0aW5ncxISCgV0aGVtZRgBIAEoCUgAiAEBEhYKCWNvZGVfd3JhcBgCIAEoCUgBiAEBEhIKCmZvbnRfc2NhbGUYAyABKAESHAoUZXhjbHVkZWRfZGlyZWN0b3JpZXMYBCADKAkSEQoJbWF4X2RlcHRoGAUgASgNEhEKCW1heF9maWxlcxgGIAEoDRIbChNtYXJrZG93bl9leHRlbnNpb25zGAcgAygJEh8KEnNob3dfaHRtbF9jb21tZW50cxgIIAEoCEgCiAEBEiYKGXNob3dfaGlnaGxpZ2h0X2JvdW5kYXJpZXMYCSABKAhIA4gBAUIICgZfdGhlbWVCDAoKX2NvZGVfd3JhcEIVChNfc2hvd19odG1sX2NvbW1lbnRzQhwKGl9zaG93X2hpZ2hsaWdodF9ib3VuZGFyaWVzIqwCChVVcGRhdGVTZXR0aW5nc1JlcXVlc3QSDQoFdGhlbWUYASABKAkSEQoJY29kZV93cmFwGAIgASgJEhIKCmZvbnRfc2NhbGUYAyABKAESHAoUZXhjbHVkZWRfZGlyZWN0b3JpZXMYBCADKAkSEQoJbWF4X2RlcHRoGAUgASgNEhEKCW1heF9maWxlcxgGIAEoDRIbChNtYXJrZG93bl9leHRlbnNpb25zGAcgAygJEh8KEnNob3dfaHRtbF9jb21tZW50cxgIIAEoCEgAiAEBEiYKGXNob3dfaGlnaGxpZ2h0X2JvdW5kYXJpZXMYCSABKAhIAYgBAUIVChNfc2hvd19odG1sX2NvbW1lbnRzQhwKGl9zaG93X2hpZ2hsaWdodF9ib3VuZGFyaWVzIhkKF0dldEdpdEh1YkFjY291bnRSZXF1ZXN0IowBChhHZXRHaXRIdWJBY2NvdW50UmVzcG9uc2USCgoCb2sYASABKAgSNgoHYWNjb3VudBgCIAEoCzIgLnNhZG9rdS5wcmV2aWV3LnYxLkdpdEh1YkFjY291bnRIAIgBARIUCgdtZXNzYWdlGAMgASgJSAGIAQFCCgoIX2FjY291bnRCCgoIX21lc3NhZ2UiYgoNR2l0SHViQWNjb3VudBINCgVsb2dpbhgBIAEoCRIRCgRuYW1lGAIgASgJSACIAQESFwoKYXZhdGFyX3VybBgDIAEoCUgBiAEBQgcKBV9uYW1lQg0KC19hdmF0YXJfdXJsIhEKD0xpc3RUYWdzUmVxdWVzdCI/ChBMaXN0VGFnc1Jlc3BvbnNlEisKBHRhZ3MYASADKAsyHS5zYWRva3UucHJldmlldy52MS5UYWdTdW1tYXJ5Ih4KEERlbGV0ZVRhZ1JlcXVlc3QSCgoCaWQYASABKAQiEwoRRGVsZXRlVGFnUmVzcG9uc2UiRgoQVXBkYXRlVGFnUmVxdWVzdBIKCgJpZBgBIAEoBBIMCgRuYW1lGAIgASgJEhgKEGJhY2tncm91bmRfY29sb3IYAyABKAkiOQoMVGFnUmVmZXJlbmNlEgwKAmlkGAEgASgESAASDgoEbmFtZRgCIAEoCUgAQgsKCXJlZmVyZW5jZSJgChpSZXBsYWNlRG9jdW1lbnRUYWdzUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBItCgR0YWdzGAIgAygLMh8uc2Fkb2t1LnByZXZpZXcudjEuVGFnUmVmZXJlbmNlIkMKG1JlcGxhY2VEb2N1bWVudFRhZ3NSZXNwb25zZRIkCgR0YWdzGAEgAygLMhYuc2Fkb2t1LnByZXZpZXcudjEuVGFnIlIKC0luc3RydWN0aW9uEgoKAmlkGAEgASgEEg8KB2NvbnRlbnQYAiABKAkSEgoKY3JlYXRlZF9hdBgDIAEoCRISCgp1cGRhdGVkX2F0GAQgASgJIi4KF0xpc3RJbnN0cnVjdGlvbnNSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEIlAKGExpc3RJbnN0cnVjdGlvbnNSZXNwb25zZRI0CgxpbnN0cnVjdGlvbnMYASADKAsyHi5zYWRva3UucHJldmlldy52MS5JbnN0cnVjdGlvbiJAChhDcmVhdGVJbnN0cnVjdGlvblJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSDwoHY29udGVudBgCIAEoCSJYChhVcGRhdGVJbnN0cnVjdGlvblJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSFgoOaW5zdHJ1Y3Rpb25faWQYAiABKAQSDwoHY29udGVudBgDIAEoCSJHChhEZWxldGVJbnN0cnVjdGlvblJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSFgoOaW5zdHJ1Y3Rpb25faWQYAiABKAQiGwoZRGVsZXRlSW5zdHJ1Y3Rpb25SZXNwb25zZSJiCgZNZW1vcnkSCgoCaWQYASABKAQSEwoLZG9jdW1lbnRfaWQYAiABKAQSDwoHY29udGVudBgDIAEoCRISCgpjcmVhdGVkX2F0GAQgASgJEhIKCnVwZGF0ZWRfYXQYBSABKAkiKgoTTGlzdE1lbW9yaWVzUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBCJDChRMaXN0TWVtb3JpZXNSZXNwb25zZRIrCghtZW1vcmllcxgBIAMoCzIZLnNhZG9rdS5wcmV2aWV3LnYxLk1lbW9yeSI9ChNEZWxldGVNZW1vcnlSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhEKCW1lbW9yeV9pZBgCIAEoBCIWChREZWxldGVNZW1vcnlSZXNwb25zZSIdCg1Db21tZW50QXV0aG9yEgwKBHR5cGUYASABKAkitgEKDENvbW1lbnRSZXBseRIKCgJpZBgBIAEoBBIwCgZhdXRob3IYAiABKAsyIC5zYWRva3UucHJldmlldy52MS5Db21tZW50QXV0aG9yEgwKBGJvZHkYAyABKAkSEgoKY3JlYXRlZF9hdBgEIAEoCRISCgp1cGRhdGVkX2F0GAUgASgJEh0KEHJldmlld19yZXF1ZXN0ZWQYBiABKAhIAIgBAUITChFfcmV2aWV3X3JlcXVlc3RlZCKOBQoHQ29tbWVudBIKCgJpZBgBIAEoBBIwCgZhdXRob3IYAiABKAsyIC5zYWRva3UucHJldmlldy52MS5Db21tZW50QXV0aG9yEgwKBGJvZHkYAyABKAkSEgoKc3RhcnRfbGluZRgEIAEoDRIQCghlbmRfbGluZRgFIAEoDRIbChNvcmlnaW5hbF9zdGFydF9saW5lGAYgASgNEhkKEW9yaWdpbmFsX2VuZF9saW5lGAcgASgNEhIKCmNyZWF0ZWRfYXQYCCABKAkSEgoKdXBkYXRlZF9hdBgJIAEoCRIQCghyZXNvbHZlZBgKIAEoCBINCgVzdGFsZRgLIAEoCBIYCgtyZXNvbHZlZF9hdBgMIAEoCUgAiAEBEjoKC3Jlc29sdmVkX2J5GA0gASgLMiAuc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudEF1dGhvckgBiAEBEhgKC3NvdXJjZV9oYXNoGA4gASgJSAKIAQESGAoLc291cmNlX3RleHQYDyABKAlIA4gBARIwCgdyZXBsaWVzGBAgAygLMh8uc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudFJlcGx5EhkKDGRpc3BsYXlfbGluZRgRIAEoDUgEiAEBEiAKE2N1cnJlbnRfc291cmNlX3RleHQYEiABKAlIBYgBARIbCg5zb3VyY2VfZGVsZXRlZBgTIAEoCEgGiAEBQg4KDF9yZXNvbHZlZF9hdEIOCgxfcmVzb2x2ZWRfYnlCDgoMX3NvdXJjZV9oYXNoQg4KDF9zb3VyY2VfdGV4dEIPCg1fZGlzcGxheV9saW5lQhYKFF9jdXJyZW50X3NvdXJjZV90ZXh0QhEKD19zb3VyY2VfZGVsZXRlZCIqChNMaXN0Q29tbWVudHNSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEIoUBChBDb21tZW50c0RvY3VtZW50EhEKCWZpbGVfcGF0aBgBIAEoCRIsCghjb21tZW50cxgCIAMoCzIaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSHAoPZ2l0aHViX2hlYWRfc2hhGAMgASgJSACIAQFCEgoQX2dpdGh1Yl9oZWFkX3NoYSJfChRDcmVhdGVDb21tZW50UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpzdGFydF9saW5lGAIgASgNEhAKCGVuZF9saW5lGAMgASgNEgwKBGJvZHkYBCABKAkiTQoUVXBkYXRlQ29tbWVudFJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIMCgRib2R5GAMgASgJIj8KFERlbGV0ZUNvbW1lbnRSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQiFwoVRGVsZXRlQ29tbWVudFJlc3BvbnNlIlgKG1NldENvbW1lbnRSZXNvbHV0aW9uUmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEhAKCHJlc29sdmVkGAMgASgIIksKEkNyZWF0ZVJlcGx5UmVxdWVzdBITCgtkb2N1bWVudF9pZBgBIAEoBBISCgpjb21tZW50X2lkGAIgASgEEgwKBGJvZHkYAyABKAkiXQoSVXBkYXRlUmVwbHlSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSEAoIcmVwbHlfaWQYAyABKAQSDAoEYm9keRgEIAEoCSJPChJEZWxldGVSZXBseVJlcXVlc3QSEwoLZG9jdW1lbnRfaWQYASABKAQSEgoKY29tbWVudF9pZBgCIAEoBBIQCghyZXBseV9pZBgDIAEoBCIVChNEZWxldGVSZXBseVJlc3BvbnNlIr0BChxFeHBvcnRDb21tZW50VG9HaXRIdWJSZXF1ZXN0EhMKC2RvY3VtZW50X2lkGAEgASgEEhIKCmNvbW1lbnRfaWQYAiABKAQSEAoIaGVhZF9zaGEYAyABKAkSGgoSZGlzcGxheWVkX21hcmtkb3duGAQgASgJEhIKCmNyZWF0ZWRfYXQYBSABKAkSDAoEYm9keRgGIAEoCRISCgpzdGFydF9saW5lGAcgASgNEhAKCGVuZF9saW5lGAggASgNIjsKHUV4cG9ydENvbW1lbnRUb0dpdEh1YlJlc3BvbnNlEgsKA3VybBgBIAEoCRINCgVzdGF0ZRgCIAEoCTLwGAoOUHJldmlld1NlcnZpY2USWQoKR2V0U2Vzc2lvbhIkLnNhZG9rdS5wcmV2aWV3LnYxLkdldFNlc3Npb25SZXF1ZXN0GiUuc2Fkb2t1LnByZXZpZXcudjEuR2V0U2Vzc2lvblJlc3BvbnNlEmIKDUdldFN0YXRpc3RpY3MSJy5zYWRva3UucHJldmlldy52MS5HZXRTdGF0aXN0aWNzUmVxdWVzdBooLnNhZG9rdS5wcmV2aWV3LnYxLkdldFN0YXRpc3RpY3NSZXNwb25zZRJiCg1MaXN0RG9jdW1lbnRzEicuc2Fkb2t1LnByZXZpZXcudjEuTGlzdERvY3VtZW50c1JlcXVlc3QaKC5zYWRva3UucHJldmlldy52MS5MaXN0RG9jdW1lbnRzUmVzcG9uc2USXgoOQ3JlYXRlRG9jdW1lbnQSKC5zYWRva3UucHJldmlldy52MS5DcmVhdGVEb2N1bWVudFJlcXVlc3QaIi5zYWRva3UucHJldmlldy52MS5Eb2N1bWVudFN1bW1hcnkSaAoTVXBkYXRlRG9jdW1lbnRUaXRsZRItLnNhZG9rdS5wcmV2aWV3LnYxLlVwZGF0ZURvY3VtZW50VGl0bGVSZXF1ZXN0GiIuc2Fkb2t1LnByZXZpZXcudjEuRG9jdW1lbnRTdW1tYXJ5ElwKC0dldERvY3VtZW50EiUuc2Fkb2t1LnByZXZpZXcudjEuR2V0RG9jdW1lbnRSZXF1ZXN0GiYuc2Fkb2t1LnByZXZpZXcudjEuR2V0RG9jdW1lbnRSZXNwb25zZRJ6ChVMaXN0RG9jdW1lbnRSZXZpc2lvbnMSLy5zYWRva3UucHJldmlldy52MS5MaXN0RG9jdW1lbnRSZXZpc2lvbnNSZXF1ZXN0GjAuc2Fkb2t1LnByZXZpZXcudjEuTGlzdERvY3VtZW50UmV2aXNpb25zUmVzcG9uc2USaQoTR2V0RG9jdW1lbnRSZXZpc2lvbhItLnNhZG9rdS5wcmV2aWV3LnYxLkdldERvY3VtZW50UmV2aXNpb25SZXF1ZXN0GiMuc2Fkb2t1LnByZXZpZXcudjEuRG9jdW1lbnRSZXZpc2lvbhKAAQoXUmVzdG9yZURvY3VtZW50UmV2aXNpb24SMS5zYWRva3UucHJldmlldy52MS5SZXN0b3JlRG9jdW1lbnRSZXZpc2lvblJlcXVlc3QaMi5zYWRva3UucHJldmlldy52MS5SZXN0b3JlRG9jdW1lbnRSZXZpc2lvblJlc3BvbnNlEnEKEkdldERpcmVjdG9yeVN0YXR1cxIsLnNhZG9rdS5wcmV2aWV3LnYxLkdldERpcmVjdG9yeVN0YXR1c1JlcXVlc3QaLS5zYWRva3UucHJldmlldy52MS5HZXREaXJlY3RvcnlTdGF0dXNSZXNwb25zZRJRCgtHZXRTZXR0aW5ncxIlLnNhZG9rdS5wcmV2aWV3LnYxLkdldFNldHRpbmdzUmVxdWVzdBobLnNhZG9rdS5wcmV2aWV3LnYxLlNldHRpbmdzElcKDlVwZGF0ZVNldHRpbmdzEiguc2Fkb2t1LnByZXZpZXcudjEuVXBkYXRlU2V0dGluZ3NSZXF1ZXN0Ghsuc2Fkb2t1LnByZXZpZXcudjEuU2V0dGluZ3MSawoQR2V0R2l0SHViQWNjb3VudBIqLnNhZG9rdS5wcmV2aWV3LnYxLkdldEdpdEh1YkFjY291bnRSZXF1ZXN0Gisuc2Fkb2t1LnByZXZpZXcudjEuR2V0R2l0SHViQWNjb3VudFJlc3BvbnNlElMKCExpc3RUYWdzEiIuc2Fkb2t1LnByZXZpZXcudjEuTGlzdFRhZ3NSZXF1ZXN0GiMuc2Fkb2t1LnByZXZpZXcudjEuTGlzdFRhZ3NSZXNwb25zZRJICglVcGRhdGVUYWcSIy5zYWRva3UucHJldmlldy52MS5VcGRhdGVUYWdSZXF1ZXN0GhYuc2Fkb2t1LnByZXZpZXcudjEuVGFnElYKCURlbGV0ZVRhZxIjLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZVRhZ1JlcXVlc3QaJC5zYWRva3UucHJldmlldy52MS5EZWxldGVUYWdSZXNwb25zZRJ0ChNSZXBsYWNlRG9jdW1lbnRUYWdzEi0uc2Fkb2t1LnByZXZpZXcudjEuUmVwbGFjZURvY3VtZW50VGFnc1JlcXVlc3QaLi5zYWRva3UucHJldmlldy52MS5SZXBsYWNlRG9jdW1lbnRUYWdzUmVzcG9uc2USawoQTGlzdEluc3RydWN0aW9ucxIqLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3RJbnN0cnVjdGlvbnNSZXF1ZXN0Gisuc2Fkb2t1LnByZXZpZXcudjEuTGlzdEluc3RydWN0aW9uc1Jlc3BvbnNlEmAKEUNyZWF0ZUluc3RydWN0aW9uEisuc2Fkb2t1LnByZXZpZXcudjEuQ3JlYXRlSW5zdHJ1Y3Rpb25SZXF1ZXN0Gh4uc2Fkb2t1LnByZXZpZXcudjEuSW5zdHJ1Y3Rpb24SYAoRVXBkYXRlSW5zdHJ1Y3Rpb24SKy5zYWRva3UucHJldmlldy52MS5VcGRhdGVJbnN0cnVjdGlvblJlcXVlc3QaHi5zYWRva3UucHJldmlldy52MS5JbnN0cnVjdGlvbhJuChFEZWxldGVJbnN0cnVjdGlvbhIrLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZUluc3RydWN0aW9uUmVxdWVzdBosLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZUluc3RydWN0aW9uUmVzcG9uc2USXwoMTGlzdE1lbW9yaWVzEiYuc2Fkb2t1LnByZXZpZXcudjEuTGlzdE1lbW9yaWVzUmVxdWVzdBonLnNhZG9rdS5wcmV2aWV3LnYxLkxpc3RNZW1vcmllc1Jlc3BvbnNlEl8KDERlbGV0ZU1lbW9yeRImLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZU1lbW9yeVJlcXVlc3QaJy5zYWRva3UucHJldmlldy52MS5EZWxldGVNZW1vcnlSZXNwb25zZRJbCgxMaXN0Q29tbWVudHMSJi5zYWRva3UucHJldmlldy52MS5MaXN0Q29tbWVudHNSZXF1ZXN0GiMuc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudHNEb2N1bWVudBJUCg1DcmVhdGVDb21tZW50Eicuc2Fkb2t1LnByZXZpZXcudjEuQ3JlYXRlQ29tbWVudFJlcXVlc3QaGi5zYWRva3UucHJldmlldy52MS5Db21tZW50ElQKDVVwZGF0ZUNvbW1lbnQSJy5zYWRva3UucHJldmlldy52MS5VcGRhdGVDb21tZW50UmVxdWVzdBoaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSYgoNRGVsZXRlQ29tbWVudBInLnNhZG9rdS5wcmV2aWV3LnYxLkRlbGV0ZUNvbW1lbnRSZXF1ZXN0Giguc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlQ29tbWVudFJlc3BvbnNlEmIKFFNldENvbW1lbnRSZXNvbHV0aW9uEi4uc2Fkb2t1LnByZXZpZXcudjEuU2V0Q29tbWVudFJlc29sdXRpb25SZXF1ZXN0Ghouc2Fkb2t1LnByZXZpZXcudjEuQ29tbWVudBJQCgtDcmVhdGVSZXBseRIlLnNhZG9rdS5wcmV2aWV3LnYxLkNyZWF0ZVJlcGx5UmVxdWVzdBoaLnNhZG9rdS5wcmV2aWV3LnYxLkNvbW1lbnQSUAoLVXBkYXRlUmVwbHkSJS5zYWRva3UucHJldmlldy52MS5VcGRhdGVSZXBseVJlcXVlc3QaGi5zYWRva3UucHJldmlldy52MS5Db21tZW50ElwKC0RlbGV0ZVJlcGx5EiUuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlUmVwbHlSZXF1ZXN0GiYuc2Fkb2t1LnByZXZpZXcudjEuRGVsZXRlUmVwbHlSZXNwb25zZRJ6ChVFeHBvcnRDb21tZW50VG9HaXRIdWISLy5zYWRva3UucHJldmlldy52MS5FeHBvcnRDb21tZW50VG9HaXRIdWJSZXF1ZXN0GjAuc2Fkb2t1LnByZXZpZXcudjEuRXhwb3J0Q29tbWVudFRvR2l0SHViUmVzcG9uc2ViBnByb3RvMw",
   );
@@ -26,24 +27,21 @@ export const file_sadoku_preview_v1_preview: GenFile = /*@__PURE__*/
  * @generated from message sadoku.preview.v1.GetSessionRequest
  */
 export type GetSessionRequest =
-  & Message<"sadoku.preview.v1.GetSessionRequest">
-  & {};
+  Message<"sadoku.preview.v1.GetSessionRequest"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.GetSessionRequest.
  * Use `create(GetSessionRequestSchema)` to create a new message.
  */
-export const GetSessionRequestSchema: GenMessage<
-  GetSessionRequest
-> = /*@__PURE__*/
+export const GetSessionRequestSchema: GenMessage<GetSessionRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 0);
 
 /**
  * @generated from message sadoku.preview.v1.GetSessionResponse
  */
 export type GetSessionResponse =
-  & Message<"sadoku.preview.v1.GetSessionResponse">
-  & {
+  Message<"sadoku.preview.v1.GetSessionResponse"> & {
     /**
      * @generated from field: optional sadoku.preview.v1.PullRequest pull_request = 1;
      */
@@ -59,9 +57,8 @@ export type GetSessionResponse =
  * Describes the message sadoku.preview.v1.GetSessionResponse.
  * Use `create(GetSessionResponseSchema)` to create a new message.
  */
-export const GetSessionResponseSchema: GenMessage<
-  GetSessionResponse
-> = /*@__PURE__*/
+export const GetSessionResponseSchema: GenMessage<GetSessionResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 1);
 
 /**
@@ -93,31 +90,29 @@ export type PullRequest = Message<"sadoku.preview.v1.PullRequest"> & {
  * Describes the message sadoku.preview.v1.PullRequest.
  * Use `create(PullRequestSchema)` to create a new message.
  */
-export const PullRequestSchema: GenMessage<PullRequest> = /*@__PURE__*/
+export const PullRequestSchema: GenMessage<PullRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 2);
 
 /**
  * @generated from message sadoku.preview.v1.GetStatisticsRequest
  */
 export type GetStatisticsRequest =
-  & Message<"sadoku.preview.v1.GetStatisticsRequest">
-  & {};
+  Message<"sadoku.preview.v1.GetStatisticsRequest"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.GetStatisticsRequest.
  * Use `create(GetStatisticsRequestSchema)` to create a new message.
  */
-export const GetStatisticsRequestSchema: GenMessage<
-  GetStatisticsRequest
-> = /*@__PURE__*/
+export const GetStatisticsRequestSchema: GenMessage<GetStatisticsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 3);
 
 /**
  * @generated from message sadoku.preview.v1.GetStatisticsResponse
  */
 export type GetStatisticsResponse =
-  & Message<"sadoku.preview.v1.GetStatisticsResponse">
-  & {
+  Message<"sadoku.preview.v1.GetStatisticsResponse"> & {
     /**
      * @generated from field: sadoku.preview.v1.CommentCount comment_count = 1;
      */
@@ -138,9 +133,8 @@ export type GetStatisticsResponse =
  * Describes the message sadoku.preview.v1.GetStatisticsResponse.
  * Use `create(GetStatisticsResponseSchema)` to create a new message.
  */
-export const GetStatisticsResponseSchema: GenMessage<
-  GetStatisticsResponse
-> = /*@__PURE__*/
+export const GetStatisticsResponseSchema: GenMessage<GetStatisticsResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 4);
 
 /**
@@ -162,7 +156,8 @@ export type CommentCount = Message<"sadoku.preview.v1.CommentCount"> & {
  * Describes the message sadoku.preview.v1.CommentCount.
  * Use `create(CommentCountSchema)` to create a new message.
  */
-export const CommentCountSchema: GenMessage<CommentCount> = /*@__PURE__*/
+export const CommentCountSchema: GenMessage<CommentCount> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 5);
 
 /**
@@ -189,7 +184,8 @@ export type Tag = Message<"sadoku.preview.v1.Tag"> & {
  * Describes the message sadoku.preview.v1.Tag.
  * Use `create(TagSchema)` to create a new message.
  */
-export const TagSchema: GenMessage<Tag> = /*@__PURE__*/
+export const TagSchema: GenMessage<Tag> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 6);
 
 /**
@@ -231,31 +227,29 @@ export type TagSummary = Message<"sadoku.preview.v1.TagSummary"> & {
  * Describes the message sadoku.preview.v1.TagSummary.
  * Use `create(TagSummarySchema)` to create a new message.
  */
-export const TagSummarySchema: GenMessage<TagSummary> = /*@__PURE__*/
+export const TagSummarySchema: GenMessage<TagSummary> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 7);
 
 /**
  * @generated from message sadoku.preview.v1.ListDocumentsRequest
  */
 export type ListDocumentsRequest =
-  & Message<"sadoku.preview.v1.ListDocumentsRequest">
-  & {};
+  Message<"sadoku.preview.v1.ListDocumentsRequest"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.ListDocumentsRequest.
  * Use `create(ListDocumentsRequestSchema)` to create a new message.
  */
-export const ListDocumentsRequestSchema: GenMessage<
-  ListDocumentsRequest
-> = /*@__PURE__*/
+export const ListDocumentsRequestSchema: GenMessage<ListDocumentsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 8);
 
 /**
  * @generated from message sadoku.preview.v1.ListDocumentsResponse
  */
 export type ListDocumentsResponse =
-  & Message<"sadoku.preview.v1.ListDocumentsResponse">
-  & {
+  Message<"sadoku.preview.v1.ListDocumentsResponse"> & {
     /**
      * @generated from field: repeated sadoku.preview.v1.DocumentSummary documents = 1;
      */
@@ -266,17 +260,15 @@ export type ListDocumentsResponse =
  * Describes the message sadoku.preview.v1.ListDocumentsResponse.
  * Use `create(ListDocumentsResponseSchema)` to create a new message.
  */
-export const ListDocumentsResponseSchema: GenMessage<
-  ListDocumentsResponse
-> = /*@__PURE__*/
+export const ListDocumentsResponseSchema: GenMessage<ListDocumentsResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 9);
 
 /**
  * @generated from message sadoku.preview.v1.CreateDocumentRequest
  */
 export type CreateDocumentRequest =
-  & Message<"sadoku.preview.v1.CreateDocumentRequest">
-  & {
+  Message<"sadoku.preview.v1.CreateDocumentRequest"> & {
     /**
      * @generated from field: string directory = 1;
      */
@@ -297,9 +289,8 @@ export type CreateDocumentRequest =
  * Describes the message sadoku.preview.v1.CreateDocumentRequest.
  * Use `create(CreateDocumentRequestSchema)` to create a new message.
  */
-export const CreateDocumentRequestSchema: GenMessage<
-  CreateDocumentRequest
-> = /*@__PURE__*/
+export const CreateDocumentRequestSchema: GenMessage<CreateDocumentRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 10);
 
 /**
@@ -341,15 +332,15 @@ export type DocumentSummary = Message<"sadoku.preview.v1.DocumentSummary"> & {
  * Describes the message sadoku.preview.v1.DocumentSummary.
  * Use `create(DocumentSummarySchema)` to create a new message.
  */
-export const DocumentSummarySchema: GenMessage<DocumentSummary> = /*@__PURE__*/
+export const DocumentSummarySchema: GenMessage<DocumentSummary> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 11);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateDocumentTitleRequest
  */
 export type UpdateDocumentTitleRequest =
-  & Message<"sadoku.preview.v1.UpdateDocumentTitleRequest">
-  & {
+  Message<"sadoku.preview.v1.UpdateDocumentTitleRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -365,17 +356,15 @@ export type UpdateDocumentTitleRequest =
  * Describes the message sadoku.preview.v1.UpdateDocumentTitleRequest.
  * Use `create(UpdateDocumentTitleRequestSchema)` to create a new message.
  */
-export const UpdateDocumentTitleRequestSchema: GenMessage<
-  UpdateDocumentTitleRequest
-> = /*@__PURE__*/
+export const UpdateDocumentTitleRequestSchema: GenMessage<UpdateDocumentTitleRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 12);
 
 /**
  * @generated from message sadoku.preview.v1.GetDocumentRequest
  */
 export type GetDocumentRequest =
-  & Message<"sadoku.preview.v1.GetDocumentRequest">
-  & {
+  Message<"sadoku.preview.v1.GetDocumentRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -386,17 +375,15 @@ export type GetDocumentRequest =
  * Describes the message sadoku.preview.v1.GetDocumentRequest.
  * Use `create(GetDocumentRequestSchema)` to create a new message.
  */
-export const GetDocumentRequestSchema: GenMessage<
-  GetDocumentRequest
-> = /*@__PURE__*/
+export const GetDocumentRequestSchema: GenMessage<GetDocumentRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 13);
 
 /**
  * @generated from message sadoku.preview.v1.DocumentRevisionSummary
  */
 export type DocumentRevisionSummary =
-  & Message<"sadoku.preview.v1.DocumentRevisionSummary">
-  & {
+  Message<"sadoku.preview.v1.DocumentRevisionSummary"> & {
     /**
      * @generated from field: uint64 id = 1;
      */
@@ -412,9 +399,8 @@ export type DocumentRevisionSummary =
  * Describes the message sadoku.preview.v1.DocumentRevisionSummary.
  * Use `create(DocumentRevisionSummarySchema)` to create a new message.
  */
-export const DocumentRevisionSummarySchema: GenMessage<
-  DocumentRevisionSummary
-> = /*@__PURE__*/
+export const DocumentRevisionSummarySchema: GenMessage<DocumentRevisionSummary> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 14);
 
 /**
@@ -446,17 +432,15 @@ export type DocumentRevision = Message<"sadoku.preview.v1.DocumentRevision"> & {
  * Describes the message sadoku.preview.v1.DocumentRevision.
  * Use `create(DocumentRevisionSchema)` to create a new message.
  */
-export const DocumentRevisionSchema: GenMessage<
-  DocumentRevision
-> = /*@__PURE__*/
+export const DocumentRevisionSchema: GenMessage<DocumentRevision> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 15);
 
 /**
  * @generated from message sadoku.preview.v1.ListDocumentRevisionsRequest
  */
 export type ListDocumentRevisionsRequest =
-  & Message<"sadoku.preview.v1.ListDocumentRevisionsRequest">
-  & {
+  Message<"sadoku.preview.v1.ListDocumentRevisionsRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -467,17 +451,15 @@ export type ListDocumentRevisionsRequest =
  * Describes the message sadoku.preview.v1.ListDocumentRevisionsRequest.
  * Use `create(ListDocumentRevisionsRequestSchema)` to create a new message.
  */
-export const ListDocumentRevisionsRequestSchema: GenMessage<
-  ListDocumentRevisionsRequest
-> = /*@__PURE__*/
+export const ListDocumentRevisionsRequestSchema: GenMessage<ListDocumentRevisionsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 16);
 
 /**
  * @generated from message sadoku.preview.v1.ListDocumentRevisionsResponse
  */
 export type ListDocumentRevisionsResponse =
-  & Message<"sadoku.preview.v1.ListDocumentRevisionsResponse">
-  & {
+  Message<"sadoku.preview.v1.ListDocumentRevisionsResponse"> & {
     /**
      * @generated from field: repeated sadoku.preview.v1.DocumentRevisionSummary revisions = 1;
      */
@@ -488,17 +470,15 @@ export type ListDocumentRevisionsResponse =
  * Describes the message sadoku.preview.v1.ListDocumentRevisionsResponse.
  * Use `create(ListDocumentRevisionsResponseSchema)` to create a new message.
  */
-export const ListDocumentRevisionsResponseSchema: GenMessage<
-  ListDocumentRevisionsResponse
-> = /*@__PURE__*/
+export const ListDocumentRevisionsResponseSchema: GenMessage<ListDocumentRevisionsResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 17);
 
 /**
  * @generated from message sadoku.preview.v1.GetDocumentRevisionRequest
  */
 export type GetDocumentRevisionRequest =
-  & Message<"sadoku.preview.v1.GetDocumentRevisionRequest">
-  & {
+  Message<"sadoku.preview.v1.GetDocumentRevisionRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -514,17 +494,15 @@ export type GetDocumentRevisionRequest =
  * Describes the message sadoku.preview.v1.GetDocumentRevisionRequest.
  * Use `create(GetDocumentRevisionRequestSchema)` to create a new message.
  */
-export const GetDocumentRevisionRequestSchema: GenMessage<
-  GetDocumentRevisionRequest
-> = /*@__PURE__*/
+export const GetDocumentRevisionRequestSchema: GenMessage<GetDocumentRevisionRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 18);
 
 /**
  * @generated from message sadoku.preview.v1.RestoreDocumentRevisionRequest
  */
 export type RestoreDocumentRevisionRequest =
-  & Message<"sadoku.preview.v1.RestoreDocumentRevisionRequest">
-  & {
+  Message<"sadoku.preview.v1.RestoreDocumentRevisionRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -545,33 +523,29 @@ export type RestoreDocumentRevisionRequest =
  * Describes the message sadoku.preview.v1.RestoreDocumentRevisionRequest.
  * Use `create(RestoreDocumentRevisionRequestSchema)` to create a new message.
  */
-export const RestoreDocumentRevisionRequestSchema: GenMessage<
-  RestoreDocumentRevisionRequest
-> = /*@__PURE__*/
+export const RestoreDocumentRevisionRequestSchema: GenMessage<RestoreDocumentRevisionRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 19);
 
 /**
  * @generated from message sadoku.preview.v1.RestoreDocumentRevisionResponse
  */
 export type RestoreDocumentRevisionResponse =
-  & Message<"sadoku.preview.v1.RestoreDocumentRevisionResponse">
-  & {};
+  Message<"sadoku.preview.v1.RestoreDocumentRevisionResponse"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.RestoreDocumentRevisionResponse.
  * Use `create(RestoreDocumentRevisionResponseSchema)` to create a new message.
  */
-export const RestoreDocumentRevisionResponseSchema: GenMessage<
-  RestoreDocumentRevisionResponse
-> = /*@__PURE__*/
+export const RestoreDocumentRevisionResponseSchema: GenMessage<RestoreDocumentRevisionResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 20);
 
 /**
  * @generated from message sadoku.preview.v1.GetDocumentResponse
  */
 export type GetDocumentResponse =
-  & Message<"sadoku.preview.v1.GetDocumentResponse">
-  & {
+  Message<"sadoku.preview.v1.GetDocumentResponse"> & {
     /**
      * @generated from field: string file_url = 1;
      */
@@ -622,33 +596,29 @@ export type GetDocumentResponse =
  * Describes the message sadoku.preview.v1.GetDocumentResponse.
  * Use `create(GetDocumentResponseSchema)` to create a new message.
  */
-export const GetDocumentResponseSchema: GenMessage<
-  GetDocumentResponse
-> = /*@__PURE__*/
+export const GetDocumentResponseSchema: GenMessage<GetDocumentResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 21);
 
 /**
  * @generated from message sadoku.preview.v1.GetDirectoryStatusRequest
  */
 export type GetDirectoryStatusRequest =
-  & Message<"sadoku.preview.v1.GetDirectoryStatusRequest">
-  & {};
+  Message<"sadoku.preview.v1.GetDirectoryStatusRequest"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.GetDirectoryStatusRequest.
  * Use `create(GetDirectoryStatusRequestSchema)` to create a new message.
  */
-export const GetDirectoryStatusRequestSchema: GenMessage<
-  GetDirectoryStatusRequest
-> = /*@__PURE__*/
+export const GetDirectoryStatusRequestSchema: GenMessage<GetDirectoryStatusRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 22);
 
 /**
  * @generated from message sadoku.preview.v1.GetDirectoryStatusResponse
  */
 export type GetDirectoryStatusResponse =
-  & Message<"sadoku.preview.v1.GetDirectoryStatusResponse">
-  & {
+  Message<"sadoku.preview.v1.GetDirectoryStatusResponse"> & {
     /**
      * @generated from field: string state = 1;
      */
@@ -674,9 +644,8 @@ export type GetDirectoryStatusResponse =
  * Describes the message sadoku.preview.v1.GetDirectoryStatusResponse.
  * Use `create(GetDirectoryStatusResponseSchema)` to create a new message.
  */
-export const GetDirectoryStatusResponseSchema: GenMessage<
-  GetDirectoryStatusResponse
-> = /*@__PURE__*/
+export const GetDirectoryStatusResponseSchema: GenMessage<GetDirectoryStatusResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 23);
 
 /**
@@ -698,23 +667,22 @@ export type DirectoryError = Message<"sadoku.preview.v1.DirectoryError"> & {
  * Describes the message sadoku.preview.v1.DirectoryError.
  * Use `create(DirectoryErrorSchema)` to create a new message.
  */
-export const DirectoryErrorSchema: GenMessage<DirectoryError> = /*@__PURE__*/
+export const DirectoryErrorSchema: GenMessage<DirectoryError> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 24);
 
 /**
  * @generated from message sadoku.preview.v1.GetSettingsRequest
  */
 export type GetSettingsRequest =
-  & Message<"sadoku.preview.v1.GetSettingsRequest">
-  & {};
+  Message<"sadoku.preview.v1.GetSettingsRequest"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.GetSettingsRequest.
  * Use `create(GetSettingsRequestSchema)` to create a new message.
  */
-export const GetSettingsRequestSchema: GenMessage<
-  GetSettingsRequest
-> = /*@__PURE__*/
+export const GetSettingsRequestSchema: GenMessage<GetSettingsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 25);
 
 /**
@@ -771,15 +739,15 @@ export type Settings = Message<"sadoku.preview.v1.Settings"> & {
  * Describes the message sadoku.preview.v1.Settings.
  * Use `create(SettingsSchema)` to create a new message.
  */
-export const SettingsSchema: GenMessage<Settings> = /*@__PURE__*/
+export const SettingsSchema: GenMessage<Settings> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 26);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateSettingsRequest
  */
 export type UpdateSettingsRequest =
-  & Message<"sadoku.preview.v1.UpdateSettingsRequest">
-  & {
+  Message<"sadoku.preview.v1.UpdateSettingsRequest"> & {
     /**
      * @generated from field: string theme = 1;
      */
@@ -830,33 +798,29 @@ export type UpdateSettingsRequest =
  * Describes the message sadoku.preview.v1.UpdateSettingsRequest.
  * Use `create(UpdateSettingsRequestSchema)` to create a new message.
  */
-export const UpdateSettingsRequestSchema: GenMessage<
-  UpdateSettingsRequest
-> = /*@__PURE__*/
+export const UpdateSettingsRequestSchema: GenMessage<UpdateSettingsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 27);
 
 /**
  * @generated from message sadoku.preview.v1.GetGitHubAccountRequest
  */
 export type GetGitHubAccountRequest =
-  & Message<"sadoku.preview.v1.GetGitHubAccountRequest">
-  & {};
+  Message<"sadoku.preview.v1.GetGitHubAccountRequest"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.GetGitHubAccountRequest.
  * Use `create(GetGitHubAccountRequestSchema)` to create a new message.
  */
-export const GetGitHubAccountRequestSchema: GenMessage<
-  GetGitHubAccountRequest
-> = /*@__PURE__*/
+export const GetGitHubAccountRequestSchema: GenMessage<GetGitHubAccountRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 28);
 
 /**
  * @generated from message sadoku.preview.v1.GetGitHubAccountResponse
  */
 export type GetGitHubAccountResponse =
-  & Message<"sadoku.preview.v1.GetGitHubAccountResponse">
-  & {
+  Message<"sadoku.preview.v1.GetGitHubAccountResponse"> & {
     /**
      * @generated from field: bool ok = 1;
      */
@@ -877,9 +841,8 @@ export type GetGitHubAccountResponse =
  * Describes the message sadoku.preview.v1.GetGitHubAccountResponse.
  * Use `create(GetGitHubAccountResponseSchema)` to create a new message.
  */
-export const GetGitHubAccountResponseSchema: GenMessage<
-  GetGitHubAccountResponse
-> = /*@__PURE__*/
+export const GetGitHubAccountResponseSchema: GenMessage<GetGitHubAccountResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 29);
 
 /**
@@ -906,7 +869,8 @@ export type GitHubAccount = Message<"sadoku.preview.v1.GitHubAccount"> & {
  * Describes the message sadoku.preview.v1.GitHubAccount.
  * Use `create(GitHubAccountSchema)` to create a new message.
  */
-export const GitHubAccountSchema: GenMessage<GitHubAccount> = /*@__PURE__*/
+export const GitHubAccountSchema: GenMessage<GitHubAccount> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 30);
 
 /**
@@ -918,7 +882,8 @@ export type ListTagsRequest = Message<"sadoku.preview.v1.ListTagsRequest"> & {};
  * Describes the message sadoku.preview.v1.ListTagsRequest.
  * Use `create(ListTagsRequestSchema)` to create a new message.
  */
-export const ListTagsRequestSchema: GenMessage<ListTagsRequest> = /*@__PURE__*/
+export const ListTagsRequestSchema: GenMessage<ListTagsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 31);
 
 /**
@@ -935,9 +900,8 @@ export type ListTagsResponse = Message<"sadoku.preview.v1.ListTagsResponse"> & {
  * Describes the message sadoku.preview.v1.ListTagsResponse.
  * Use `create(ListTagsResponseSchema)` to create a new message.
  */
-export const ListTagsResponseSchema: GenMessage<
-  ListTagsResponse
-> = /*@__PURE__*/
+export const ListTagsResponseSchema: GenMessage<ListTagsResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 32);
 
 /**
@@ -954,25 +918,22 @@ export type DeleteTagRequest = Message<"sadoku.preview.v1.DeleteTagRequest"> & {
  * Describes the message sadoku.preview.v1.DeleteTagRequest.
  * Use `create(DeleteTagRequestSchema)` to create a new message.
  */
-export const DeleteTagRequestSchema: GenMessage<
-  DeleteTagRequest
-> = /*@__PURE__*/
+export const DeleteTagRequestSchema: GenMessage<DeleteTagRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 33);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteTagResponse
  */
 export type DeleteTagResponse =
-  & Message<"sadoku.preview.v1.DeleteTagResponse">
-  & {};
+  Message<"sadoku.preview.v1.DeleteTagResponse"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.DeleteTagResponse.
  * Use `create(DeleteTagResponseSchema)` to create a new message.
  */
-export const DeleteTagResponseSchema: GenMessage<
-  DeleteTagResponse
-> = /*@__PURE__*/
+export const DeleteTagResponseSchema: GenMessage<DeleteTagResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 34);
 
 /**
@@ -999,9 +960,8 @@ export type UpdateTagRequest = Message<"sadoku.preview.v1.UpdateTagRequest"> & {
  * Describes the message sadoku.preview.v1.UpdateTagRequest.
  * Use `create(UpdateTagRequestSchema)` to create a new message.
  */
-export const UpdateTagRequestSchema: GenMessage<
-  UpdateTagRequest
-> = /*@__PURE__*/
+export const UpdateTagRequestSchema: GenMessage<UpdateTagRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 35);
 
 /**
@@ -1011,34 +971,37 @@ export type TagReference = Message<"sadoku.preview.v1.TagReference"> & {
   /**
    * @generated from oneof sadoku.preview.v1.TagReference.reference
    */
-  reference: {
-    /**
-     * @generated from field: uint64 id = 1;
-     */
-    value: bigint;
-    case: "id";
-  } | {
-    /**
-     * @generated from field: string name = 2;
-     */
-    value: string;
-    case: "name";
-  } | { case: undefined; value?: undefined };
+  reference:
+    | {
+        /**
+         * @generated from field: uint64 id = 1;
+         */
+        value: bigint;
+        case: "id";
+      }
+    | {
+        /**
+         * @generated from field: string name = 2;
+         */
+        value: string;
+        case: "name";
+      }
+    | { case: undefined; value?: undefined };
 };
 
 /**
  * Describes the message sadoku.preview.v1.TagReference.
  * Use `create(TagReferenceSchema)` to create a new message.
  */
-export const TagReferenceSchema: GenMessage<TagReference> = /*@__PURE__*/
+export const TagReferenceSchema: GenMessage<TagReference> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 36);
 
 /**
  * @generated from message sadoku.preview.v1.ReplaceDocumentTagsRequest
  */
 export type ReplaceDocumentTagsRequest =
-  & Message<"sadoku.preview.v1.ReplaceDocumentTagsRequest">
-  & {
+  Message<"sadoku.preview.v1.ReplaceDocumentTagsRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1054,17 +1017,15 @@ export type ReplaceDocumentTagsRequest =
  * Describes the message sadoku.preview.v1.ReplaceDocumentTagsRequest.
  * Use `create(ReplaceDocumentTagsRequestSchema)` to create a new message.
  */
-export const ReplaceDocumentTagsRequestSchema: GenMessage<
-  ReplaceDocumentTagsRequest
-> = /*@__PURE__*/
+export const ReplaceDocumentTagsRequestSchema: GenMessage<ReplaceDocumentTagsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 37);
 
 /**
  * @generated from message sadoku.preview.v1.ReplaceDocumentTagsResponse
  */
 export type ReplaceDocumentTagsResponse =
-  & Message<"sadoku.preview.v1.ReplaceDocumentTagsResponse">
-  & {
+  Message<"sadoku.preview.v1.ReplaceDocumentTagsResponse"> & {
     /**
      * @generated from field: repeated sadoku.preview.v1.Tag tags = 1;
      */
@@ -1075,9 +1036,8 @@ export type ReplaceDocumentTagsResponse =
  * Describes the message sadoku.preview.v1.ReplaceDocumentTagsResponse.
  * Use `create(ReplaceDocumentTagsResponseSchema)` to create a new message.
  */
-export const ReplaceDocumentTagsResponseSchema: GenMessage<
-  ReplaceDocumentTagsResponse
-> = /*@__PURE__*/
+export const ReplaceDocumentTagsResponseSchema: GenMessage<ReplaceDocumentTagsResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 38);
 
 /**
@@ -1109,15 +1069,15 @@ export type Instruction = Message<"sadoku.preview.v1.Instruction"> & {
  * Describes the message sadoku.preview.v1.Instruction.
  * Use `create(InstructionSchema)` to create a new message.
  */
-export const InstructionSchema: GenMessage<Instruction> = /*@__PURE__*/
+export const InstructionSchema: GenMessage<Instruction> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 39);
 
 /**
  * @generated from message sadoku.preview.v1.ListInstructionsRequest
  */
 export type ListInstructionsRequest =
-  & Message<"sadoku.preview.v1.ListInstructionsRequest">
-  & {
+  Message<"sadoku.preview.v1.ListInstructionsRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1128,17 +1088,15 @@ export type ListInstructionsRequest =
  * Describes the message sadoku.preview.v1.ListInstructionsRequest.
  * Use `create(ListInstructionsRequestSchema)` to create a new message.
  */
-export const ListInstructionsRequestSchema: GenMessage<
-  ListInstructionsRequest
-> = /*@__PURE__*/
+export const ListInstructionsRequestSchema: GenMessage<ListInstructionsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 40);
 
 /**
  * @generated from message sadoku.preview.v1.ListInstructionsResponse
  */
 export type ListInstructionsResponse =
-  & Message<"sadoku.preview.v1.ListInstructionsResponse">
-  & {
+  Message<"sadoku.preview.v1.ListInstructionsResponse"> & {
     /**
      * @generated from field: repeated sadoku.preview.v1.Instruction instructions = 1;
      */
@@ -1149,17 +1107,15 @@ export type ListInstructionsResponse =
  * Describes the message sadoku.preview.v1.ListInstructionsResponse.
  * Use `create(ListInstructionsResponseSchema)` to create a new message.
  */
-export const ListInstructionsResponseSchema: GenMessage<
-  ListInstructionsResponse
-> = /*@__PURE__*/
+export const ListInstructionsResponseSchema: GenMessage<ListInstructionsResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 41);
 
 /**
  * @generated from message sadoku.preview.v1.CreateInstructionRequest
  */
 export type CreateInstructionRequest =
-  & Message<"sadoku.preview.v1.CreateInstructionRequest">
-  & {
+  Message<"sadoku.preview.v1.CreateInstructionRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1175,17 +1131,15 @@ export type CreateInstructionRequest =
  * Describes the message sadoku.preview.v1.CreateInstructionRequest.
  * Use `create(CreateInstructionRequestSchema)` to create a new message.
  */
-export const CreateInstructionRequestSchema: GenMessage<
-  CreateInstructionRequest
-> = /*@__PURE__*/
+export const CreateInstructionRequestSchema: GenMessage<CreateInstructionRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 42);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateInstructionRequest
  */
 export type UpdateInstructionRequest =
-  & Message<"sadoku.preview.v1.UpdateInstructionRequest">
-  & {
+  Message<"sadoku.preview.v1.UpdateInstructionRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1206,17 +1160,15 @@ export type UpdateInstructionRequest =
  * Describes the message sadoku.preview.v1.UpdateInstructionRequest.
  * Use `create(UpdateInstructionRequestSchema)` to create a new message.
  */
-export const UpdateInstructionRequestSchema: GenMessage<
-  UpdateInstructionRequest
-> = /*@__PURE__*/
+export const UpdateInstructionRequestSchema: GenMessage<UpdateInstructionRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 43);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteInstructionRequest
  */
 export type DeleteInstructionRequest =
-  & Message<"sadoku.preview.v1.DeleteInstructionRequest">
-  & {
+  Message<"sadoku.preview.v1.DeleteInstructionRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1232,25 +1184,22 @@ export type DeleteInstructionRequest =
  * Describes the message sadoku.preview.v1.DeleteInstructionRequest.
  * Use `create(DeleteInstructionRequestSchema)` to create a new message.
  */
-export const DeleteInstructionRequestSchema: GenMessage<
-  DeleteInstructionRequest
-> = /*@__PURE__*/
+export const DeleteInstructionRequestSchema: GenMessage<DeleteInstructionRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 44);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteInstructionResponse
  */
 export type DeleteInstructionResponse =
-  & Message<"sadoku.preview.v1.DeleteInstructionResponse">
-  & {};
+  Message<"sadoku.preview.v1.DeleteInstructionResponse"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.DeleteInstructionResponse.
  * Use `create(DeleteInstructionResponseSchema)` to create a new message.
  */
-export const DeleteInstructionResponseSchema: GenMessage<
-  DeleteInstructionResponse
-> = /*@__PURE__*/
+export const DeleteInstructionResponseSchema: GenMessage<DeleteInstructionResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 45);
 
 /**
@@ -1287,15 +1236,15 @@ export type Memory = Message<"sadoku.preview.v1.Memory"> & {
  * Describes the message sadoku.preview.v1.Memory.
  * Use `create(MemorySchema)` to create a new message.
  */
-export const MemorySchema: GenMessage<Memory> = /*@__PURE__*/
+export const MemorySchema: GenMessage<Memory> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 46);
 
 /**
  * @generated from message sadoku.preview.v1.ListMemoriesRequest
  */
 export type ListMemoriesRequest =
-  & Message<"sadoku.preview.v1.ListMemoriesRequest">
-  & {
+  Message<"sadoku.preview.v1.ListMemoriesRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1306,17 +1255,15 @@ export type ListMemoriesRequest =
  * Describes the message sadoku.preview.v1.ListMemoriesRequest.
  * Use `create(ListMemoriesRequestSchema)` to create a new message.
  */
-export const ListMemoriesRequestSchema: GenMessage<
-  ListMemoriesRequest
-> = /*@__PURE__*/
+export const ListMemoriesRequestSchema: GenMessage<ListMemoriesRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 47);
 
 /**
  * @generated from message sadoku.preview.v1.ListMemoriesResponse
  */
 export type ListMemoriesResponse =
-  & Message<"sadoku.preview.v1.ListMemoriesResponse">
-  & {
+  Message<"sadoku.preview.v1.ListMemoriesResponse"> & {
     /**
      * @generated from field: repeated sadoku.preview.v1.Memory memories = 1;
      */
@@ -1327,17 +1274,15 @@ export type ListMemoriesResponse =
  * Describes the message sadoku.preview.v1.ListMemoriesResponse.
  * Use `create(ListMemoriesResponseSchema)` to create a new message.
  */
-export const ListMemoriesResponseSchema: GenMessage<
-  ListMemoriesResponse
-> = /*@__PURE__*/
+export const ListMemoriesResponseSchema: GenMessage<ListMemoriesResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 48);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteMemoryRequest
  */
 export type DeleteMemoryRequest =
-  & Message<"sadoku.preview.v1.DeleteMemoryRequest">
-  & {
+  Message<"sadoku.preview.v1.DeleteMemoryRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1353,25 +1298,22 @@ export type DeleteMemoryRequest =
  * Describes the message sadoku.preview.v1.DeleteMemoryRequest.
  * Use `create(DeleteMemoryRequestSchema)` to create a new message.
  */
-export const DeleteMemoryRequestSchema: GenMessage<
-  DeleteMemoryRequest
-> = /*@__PURE__*/
+export const DeleteMemoryRequestSchema: GenMessage<DeleteMemoryRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 49);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteMemoryResponse
  */
 export type DeleteMemoryResponse =
-  & Message<"sadoku.preview.v1.DeleteMemoryResponse">
-  & {};
+  Message<"sadoku.preview.v1.DeleteMemoryResponse"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.DeleteMemoryResponse.
  * Use `create(DeleteMemoryResponseSchema)` to create a new message.
  */
-export const DeleteMemoryResponseSchema: GenMessage<
-  DeleteMemoryResponse
-> = /*@__PURE__*/
+export const DeleteMemoryResponseSchema: GenMessage<DeleteMemoryResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 50);
 
 /**
@@ -1388,7 +1330,8 @@ export type CommentAuthor = Message<"sadoku.preview.v1.CommentAuthor"> & {
  * Describes the message sadoku.preview.v1.CommentAuthor.
  * Use `create(CommentAuthorSchema)` to create a new message.
  */
-export const CommentAuthorSchema: GenMessage<CommentAuthor> = /*@__PURE__*/
+export const CommentAuthorSchema: GenMessage<CommentAuthor> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 51);
 
 /**
@@ -1430,7 +1373,8 @@ export type CommentReply = Message<"sadoku.preview.v1.CommentReply"> & {
  * Describes the message sadoku.preview.v1.CommentReply.
  * Use `create(CommentReplySchema)` to create a new message.
  */
-export const CommentReplySchema: GenMessage<CommentReply> = /*@__PURE__*/
+export const CommentReplySchema: GenMessage<CommentReply> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 52);
 
 /**
@@ -1537,15 +1481,15 @@ export type Comment = Message<"sadoku.preview.v1.Comment"> & {
  * Describes the message sadoku.preview.v1.Comment.
  * Use `create(CommentSchema)` to create a new message.
  */
-export const CommentSchema: GenMessage<Comment> = /*@__PURE__*/
+export const CommentSchema: GenMessage<Comment> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 53);
 
 /**
  * @generated from message sadoku.preview.v1.ListCommentsRequest
  */
 export type ListCommentsRequest =
-  & Message<"sadoku.preview.v1.ListCommentsRequest">
-  & {
+  Message<"sadoku.preview.v1.ListCommentsRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1556,9 +1500,8 @@ export type ListCommentsRequest =
  * Describes the message sadoku.preview.v1.ListCommentsRequest.
  * Use `create(ListCommentsRequestSchema)` to create a new message.
  */
-export const ListCommentsRequestSchema: GenMessage<
-  ListCommentsRequest
-> = /*@__PURE__*/
+export const ListCommentsRequestSchema: GenMessage<ListCommentsRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 54);
 
 /**
@@ -1585,17 +1528,15 @@ export type CommentsDocument = Message<"sadoku.preview.v1.CommentsDocument"> & {
  * Describes the message sadoku.preview.v1.CommentsDocument.
  * Use `create(CommentsDocumentSchema)` to create a new message.
  */
-export const CommentsDocumentSchema: GenMessage<
-  CommentsDocument
-> = /*@__PURE__*/
+export const CommentsDocumentSchema: GenMessage<CommentsDocument> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 55);
 
 /**
  * @generated from message sadoku.preview.v1.CreateCommentRequest
  */
 export type CreateCommentRequest =
-  & Message<"sadoku.preview.v1.CreateCommentRequest">
-  & {
+  Message<"sadoku.preview.v1.CreateCommentRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1621,17 +1562,15 @@ export type CreateCommentRequest =
  * Describes the message sadoku.preview.v1.CreateCommentRequest.
  * Use `create(CreateCommentRequestSchema)` to create a new message.
  */
-export const CreateCommentRequestSchema: GenMessage<
-  CreateCommentRequest
-> = /*@__PURE__*/
+export const CreateCommentRequestSchema: GenMessage<CreateCommentRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 56);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateCommentRequest
  */
 export type UpdateCommentRequest =
-  & Message<"sadoku.preview.v1.UpdateCommentRequest">
-  & {
+  Message<"sadoku.preview.v1.UpdateCommentRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1652,17 +1591,15 @@ export type UpdateCommentRequest =
  * Describes the message sadoku.preview.v1.UpdateCommentRequest.
  * Use `create(UpdateCommentRequestSchema)` to create a new message.
  */
-export const UpdateCommentRequestSchema: GenMessage<
-  UpdateCommentRequest
-> = /*@__PURE__*/
+export const UpdateCommentRequestSchema: GenMessage<UpdateCommentRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 57);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteCommentRequest
  */
 export type DeleteCommentRequest =
-  & Message<"sadoku.preview.v1.DeleteCommentRequest">
-  & {
+  Message<"sadoku.preview.v1.DeleteCommentRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1678,33 +1615,29 @@ export type DeleteCommentRequest =
  * Describes the message sadoku.preview.v1.DeleteCommentRequest.
  * Use `create(DeleteCommentRequestSchema)` to create a new message.
  */
-export const DeleteCommentRequestSchema: GenMessage<
-  DeleteCommentRequest
-> = /*@__PURE__*/
+export const DeleteCommentRequestSchema: GenMessage<DeleteCommentRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 58);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteCommentResponse
  */
 export type DeleteCommentResponse =
-  & Message<"sadoku.preview.v1.DeleteCommentResponse">
-  & {};
+  Message<"sadoku.preview.v1.DeleteCommentResponse"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.DeleteCommentResponse.
  * Use `create(DeleteCommentResponseSchema)` to create a new message.
  */
-export const DeleteCommentResponseSchema: GenMessage<
-  DeleteCommentResponse
-> = /*@__PURE__*/
+export const DeleteCommentResponseSchema: GenMessage<DeleteCommentResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 59);
 
 /**
  * @generated from message sadoku.preview.v1.SetCommentResolutionRequest
  */
 export type SetCommentResolutionRequest =
-  & Message<"sadoku.preview.v1.SetCommentResolutionRequest">
-  & {
+  Message<"sadoku.preview.v1.SetCommentResolutionRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1725,17 +1658,15 @@ export type SetCommentResolutionRequest =
  * Describes the message sadoku.preview.v1.SetCommentResolutionRequest.
  * Use `create(SetCommentResolutionRequestSchema)` to create a new message.
  */
-export const SetCommentResolutionRequestSchema: GenMessage<
-  SetCommentResolutionRequest
-> = /*@__PURE__*/
+export const SetCommentResolutionRequestSchema: GenMessage<SetCommentResolutionRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 60);
 
 /**
  * @generated from message sadoku.preview.v1.CreateReplyRequest
  */
 export type CreateReplyRequest =
-  & Message<"sadoku.preview.v1.CreateReplyRequest">
-  & {
+  Message<"sadoku.preview.v1.CreateReplyRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1756,17 +1687,15 @@ export type CreateReplyRequest =
  * Describes the message sadoku.preview.v1.CreateReplyRequest.
  * Use `create(CreateReplyRequestSchema)` to create a new message.
  */
-export const CreateReplyRequestSchema: GenMessage<
-  CreateReplyRequest
-> = /*@__PURE__*/
+export const CreateReplyRequestSchema: GenMessage<CreateReplyRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 61);
 
 /**
  * @generated from message sadoku.preview.v1.UpdateReplyRequest
  */
 export type UpdateReplyRequest =
-  & Message<"sadoku.preview.v1.UpdateReplyRequest">
-  & {
+  Message<"sadoku.preview.v1.UpdateReplyRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1792,17 +1721,15 @@ export type UpdateReplyRequest =
  * Describes the message sadoku.preview.v1.UpdateReplyRequest.
  * Use `create(UpdateReplyRequestSchema)` to create a new message.
  */
-export const UpdateReplyRequestSchema: GenMessage<
-  UpdateReplyRequest
-> = /*@__PURE__*/
+export const UpdateReplyRequestSchema: GenMessage<UpdateReplyRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 62);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteReplyRequest
  */
 export type DeleteReplyRequest =
-  & Message<"sadoku.preview.v1.DeleteReplyRequest">
-  & {
+  Message<"sadoku.preview.v1.DeleteReplyRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1823,33 +1750,29 @@ export type DeleteReplyRequest =
  * Describes the message sadoku.preview.v1.DeleteReplyRequest.
  * Use `create(DeleteReplyRequestSchema)` to create a new message.
  */
-export const DeleteReplyRequestSchema: GenMessage<
-  DeleteReplyRequest
-> = /*@__PURE__*/
+export const DeleteReplyRequestSchema: GenMessage<DeleteReplyRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 63);
 
 /**
  * @generated from message sadoku.preview.v1.DeleteReplyResponse
  */
 export type DeleteReplyResponse =
-  & Message<"sadoku.preview.v1.DeleteReplyResponse">
-  & {};
+  Message<"sadoku.preview.v1.DeleteReplyResponse"> & {};
 
 /**
  * Describes the message sadoku.preview.v1.DeleteReplyResponse.
  * Use `create(DeleteReplyResponseSchema)` to create a new message.
  */
-export const DeleteReplyResponseSchema: GenMessage<
-  DeleteReplyResponse
-> = /*@__PURE__*/
+export const DeleteReplyResponseSchema: GenMessage<DeleteReplyResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 64);
 
 /**
  * @generated from message sadoku.preview.v1.ExportCommentToGitHubRequest
  */
 export type ExportCommentToGitHubRequest =
-  & Message<"sadoku.preview.v1.ExportCommentToGitHubRequest">
-  & {
+  Message<"sadoku.preview.v1.ExportCommentToGitHubRequest"> & {
     /**
      * @generated from field: uint64 document_id = 1;
      */
@@ -1895,17 +1818,15 @@ export type ExportCommentToGitHubRequest =
  * Describes the message sadoku.preview.v1.ExportCommentToGitHubRequest.
  * Use `create(ExportCommentToGitHubRequestSchema)` to create a new message.
  */
-export const ExportCommentToGitHubRequestSchema: GenMessage<
-  ExportCommentToGitHubRequest
-> = /*@__PURE__*/
+export const ExportCommentToGitHubRequestSchema: GenMessage<ExportCommentToGitHubRequest> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 65);
 
 /**
  * @generated from message sadoku.preview.v1.ExportCommentToGitHubResponse
  */
 export type ExportCommentToGitHubResponse =
-  & Message<"sadoku.preview.v1.ExportCommentToGitHubResponse">
-  & {
+  Message<"sadoku.preview.v1.ExportCommentToGitHubResponse"> & {
     /**
      * @generated from field: string url = 1;
      */
@@ -1921,9 +1842,8 @@ export type ExportCommentToGitHubResponse =
  * Describes the message sadoku.preview.v1.ExportCommentToGitHubResponse.
  * Use `create(ExportCommentToGitHubResponseSchema)` to create a new message.
  */
-export const ExportCommentToGitHubResponseSchema: GenMessage<
-  ExportCommentToGitHubResponse
-> = /*@__PURE__*/
+export const ExportCommentToGitHubResponseSchema: GenMessage<ExportCommentToGitHubResponse> =
+  /*@__PURE__*/
   messageDesc(file_sadoku_preview_v1_preview, 66);
 
 /**
@@ -2186,5 +2106,4 @@ export const PreviewService: GenService<{
     input: typeof ExportCommentToGitHubRequestSchema;
     output: typeof ExportCommentToGitHubResponseSchema;
   };
-}> = /*@__PURE__*/
-  serviceDesc(file_sadoku_preview_v1_preview, 0);
+}> = /*@__PURE__*/ serviceDesc(file_sadoku_preview_v1_preview, 0);
