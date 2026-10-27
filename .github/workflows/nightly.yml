@@ -29,17 +29,6 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Read Deno requirement
-        id: engines
-        run: |
-          deno_version="$(jq -er '.engines.deno' package.json)"
-          echo "deno=${deno_version}" >> "${GITHUB_OUTPUT}"
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: ${{ steps.engines.outputs.deno }}
-
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -56,14 +45,14 @@ jobs:
             src/preview/package-lock.json
 
       - name: Install dependencies
-        run: npm run install:deps
+        run: make deps
 
       - name: Build nightly artifacts
         run: |
           commit_timestamp="$(git show -s --format=%ct "${{ github.event.workflow_run.head_sha }}")"
           commit_date="$(date -u -d "@${commit_timestamp}" +%Y%m%d)"
           short_sha="$(git rev-parse --short=8 "${{ github.event.workflow_run.head_sha }}")"
-          deno task dist --version nightly --binary-version "nightly-${commit_date}-${short_sha}"
+          make dist VERSION=nightly BINARY_VERSION="nightly-${commit_date}-${short_sha}"
 
       - name: Move nightly tag
         run: |

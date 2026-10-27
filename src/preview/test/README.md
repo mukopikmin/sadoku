@@ -1,6 +1,6 @@
 # Client tests
 
-Run the full suite with `npm test` from the repository root. Vitest preserves
+Run the full suite with `make test-client` from the repository root. Vitest preserves
 isolation between files and runs up to two files in parallel locally. In CI it
 runs up to four, capped at the number of CPUs available to the process.
 

@@ -4,9 +4,10 @@ on:
   pull_request:
     paths:
       - .github/workflows/protobuf.yml
+      - Makefile
+      - .prettierrc.json
       - buf.gen.yaml
       - buf.yaml
-      - deno.json
       - package.json
       - package-lock.json
       - proto/**
@@ -19,9 +20,10 @@ on:
       - main
     paths:
       - .github/workflows/protobuf.yml
+      - Makefile
+      - .prettierrc.json
       - buf.gen.yaml
       - buf.yaml
-      - deno.json
       - package.json
       - package-lock.json
       - proto/**
@@ -42,17 +44,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Read Deno requirement
-        id: engines
-        run: |
-          deno_version="$(jq -er '.engines.deno' package.json)"
-          echo "deno=${deno_version}" >> "${GITHUB_OUTPUT}"
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: ${{ steps.engines.outputs.deno }}
-
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -67,10 +58,10 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Go protobuf generators
-        run: npm run proto:tools
+        run: make proto-tools
 
       - name: Install protobuf tools
-        run: npm ci --ignore-scripts
+        run: make deps
 
       - name: Check schema and generated code
-        run: npm run proto:check
+        run: make proto-check
