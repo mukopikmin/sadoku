@@ -3,9 +3,14 @@ name: Test
 on:
   workflow_call:
   pull_request:
+    paths-ignore: &proxy-paths
+      - "proxy/**"
+      - ".github/workflows/proxy_test.yml"
+      - ".github/workflows/cloud_run_proxy.yml"
   push:
     branches:
       - main
+    paths-ignore: *proxy-paths
 
 permissions:
   contents: read
@@ -45,9 +50,6 @@ jobs:
 
       - name: Vet Go server for native and cross-platform code
         run: make vet-cross
-
-      - name: Vet Go proxy
-        run: make vet-proxy
 
   client:
     name: Test client
@@ -151,16 +153,10 @@ jobs:
 
       - name: Check Go formatting
         if: runner.os == 'Linux'
-        run: make check-go-format check-proxy-format
+        run: make check-go-format
 
       - name: Test Go server
         run: make test-server
-
-      - name: Test Go proxy
-        run: make test-proxy
-
-      - name: Build Go proxy
-        run: make build-proxy
 
       - name: Compile
         run: >-
