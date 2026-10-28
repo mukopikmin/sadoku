@@ -3,6 +3,7 @@ SHELL := sh
 
 GO ?= go
 NPM ?= npm
+export CGO_ENABLED := 1
 VERSION ?= 0.0.0-dev
 OUTPUT ?=
 TARGET ?=
