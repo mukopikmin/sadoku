@@ -50,7 +50,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-15]
+    env:
+      CGO_ENABLED: "1"
     defaults:
       run:
         shell: bash
@@ -66,6 +68,17 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: choco install make --version=4.4.1 --yes --no-progress
+
+      - name: Select C compiler
+        run: |
+          if [[ "${RUNNER_OS}" == Windows ]]; then
+            echo 'C:/msys64/mingw64/bin' >> "${GITHUB_PATH}"
+            echo 'CC=C:/msys64/mingw64/bin/gcc.exe' >> "${GITHUB_ENV}"
+          elif [[ "${RUNNER_OS}" == macOS ]]; then
+            echo 'CC=clang' >> "${GITHUB_ENV}"
+          else
+            echo 'CC=gcc' >> "${GITHUB_ENV}"
+          fi
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -116,8 +129,8 @@ jobs:
           make build OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os ==
           'Windows' && '.exe' || '' }}"
 
-      - name: Test Linux installer
-        if: runner.os == 'Linux'
+      - name: Test source installer
+        if: runner.os != 'Windows'
         run: make test-install
 
       - name: Test Windows installer
