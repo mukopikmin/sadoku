@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 )
 
@@ -90,7 +91,17 @@ func dist(version, binaryVersion string, selected []string) error {
 	if !binaryVersionPattern.MatchString(binaryVersion) {
 		return fmt.Errorf("invalid binary version: %s", binaryVersion)
 	}
-	chosen := targets
+	var chosen []target
+	if len(selected) == 0 {
+		for _, t := range targets {
+			if t.OS == runtime.GOOS && t.Arch == runtime.GOARCH {
+				chosen = append(chosen, t)
+			}
+		}
+		if len(chosen) == 0 {
+			return fmt.Errorf("no release target for %s/%s; specify --target and a target C compiler", runtime.GOOS, runtime.GOARCH)
+		}
+	}
 	if len(selected) > 0 {
 		chosen = nil
 		seen := map[string]bool{}
