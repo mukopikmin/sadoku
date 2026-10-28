@@ -16,7 +16,7 @@ func TestMigrationCompatibility(t *testing.T) {
 		t.Fatal(err)
 	}
 	var count int
-	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 12 {
+	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 13 {
 		t.Fatalf("migration count %d: %v", count, err)
 	}
 	_, err = database.Exec("INSERT INTO comment_document(file_path,created_at,updated_at,title) VALUES('old.md',?,?,'Old title')", Now(), Now())
@@ -60,6 +60,43 @@ func TestOriginalMigrationsRetainTheirChecksums(t *testing.T) {
 	}
 }
 
+func TestUpgradeAddsGlobalInstructionsWithoutMovingDocumentContext(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "existing.sqlite3")
+	database, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Reproduce the schema and ledger immediately before global instructions.
+	for _, statement := range []string{
+		"DROP TABLE global_instruction",
+		"DELETE FROM schema_migration WHERE version='0013'",
+		"INSERT INTO comment_document(id,file_path,created_at,updated_at) VALUES(1,'doc.md','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
+		"INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(1,'Local instruction','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
+		"INSERT INTO document_memory(document_id,content,created_at,updated_at) VALUES(1,'Local memory','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
+	} {
+		if _, err := database.Exec(statement); err != nil {
+			database.Close()
+			t.Fatal(err)
+		}
+	}
+	database.Close()
+	database, err = Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	for table, expected := range map[string]string{"document_instruction": "Local instruction", "document_memory": "Local memory"} {
+		var content string
+		if err := database.QueryRow("SELECT content FROM " + table + " WHERE document_id=1").Scan(&content); err != nil || content != expected {
+			t.Fatalf("%s: %q %v", table, content, err)
+		}
+	}
+	var count int
+	if err := database.QueryRow("SELECT COUNT(*) FROM global_instruction").Scan(&count); err != nil || count != 0 {
+		t.Fatalf("global instructions: %d %v", count, err)
+	}
+}
+
 func TestMigrationLedgerRejectsInterruptedOrUnknownHistory(t *testing.T) {
 	for _, test := range []struct{ name, statement string }{
 		{"failed", `UPDATE schema_migration SET state='failed' WHERE version='0001'`},
@@ -91,7 +128,7 @@ func TestUpgradeLegacySnapshots(t *testing.T) {
 	}
 	defer database.Close()
 	// Recreate a pre-0012 database using the original, immutable statements.
-	for _, table := range []string{"comment_reply", "comment", "document_tag_link", "document_tag", "document_memory", "document_instruction", "comment_document", "document_revision", "schema_migration"} {
+	for _, table := range []string{"global_instruction", "comment_reply", "comment", "document_tag_link", "document_tag", "document_memory", "document_instruction", "comment_document", "document_revision", "schema_migration"} {
 		if _, err = database.Exec("DROP TABLE " + table); err != nil {
 			t.Fatal(err)
 		}

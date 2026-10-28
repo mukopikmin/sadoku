@@ -161,9 +161,32 @@ listing and inspection include `tags`, containing each tag's `id`, `name`, and
 read-only through the CLI.
 
 Use `sadoku --help` for document, tag, comment, instruction, and memory
-commands. Instructions and memories provide document-specific context for
-agents; memories can be reviewed and deleted in the preview, but are added and
-updated through the CLI.
+commands. Instructions provide guidance for agents; memories provide
+document-specific background context and are added and updated through the CLI.
+
+Global instructions apply to all documents sharing the same `sadoku.sqlite3`,
+including local files, URLs, and GitHub PR files. Manage them under
+**Settings → Global instructions**, or through the CLI without registering a
+document:
+
+```sh
+sadoku instruction list --global
+sadoku instruction add --global --content "Keep explanations concise."
+sadoku instruction update <instruction-id> --global --content "Use concrete examples."
+sadoku instruction delete <instruction-id> --global
+```
+
+Choose exactly one of `--global`, `--document <id>`, or `--source <file.md|url>`.
+Global listing returns `{ "instructions": [...] }` without a document; entries
+have `id`, `content`, `createdAt`, and `updatedAt`. Existing document-specific
+commands and output remain unchanged. Global instructions are stored separately
+and survive document deletion.
+
+The document instructions dialog shows both global guidance and instructions
+for that document. Apply both; document instructions take precedence when they
+directly conflict with global instructions. Agents must retrieve both scopes;
+Sadoku does not inject instructions into unrelated agent sessions. The
+`sadoku-review` skill retrieves global instructions at the start of a review.
 
 For compatible coding agents, install the `sadoku-review` skill with
 [Agent Package Manager](https://github.com/microsoft/apm):

@@ -54,6 +54,10 @@ export const PreviewDialogHost = ({
       <>
         <DocumentInstructionsDialog
           documentId={documentId}
+          onOpenGlobalInstructions={() => {
+            documentInstructions.setOpen(false);
+            settingsDialog.setOpen(true);
+          }}
           onOpenChange={documentInstructions.setOpen}
           open={documentInstructions.open}
         />

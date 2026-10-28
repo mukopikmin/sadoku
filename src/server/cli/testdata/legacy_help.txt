@@ -8,10 +8,10 @@ Usage:
   sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
-  sadoku instruction list (--document <id> | --source <file.md|url>)
-  sadoku instruction add (--document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction update <instruction-id> (--document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction delete <instruction-id> (--document <id> | --source <file.md|url>)
+  sadoku instruction list (--global | --document <id> | --source <file.md|url>)
+  sadoku instruction add (--global | --document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction update <instruction-id> (--global | --document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction delete <instruction-id> (--global | --document <id> | --source <file.md|url>)
   sadoku memory list (--document <id> | --source <file.md|url>)
   sadoku memory add (--document <id> | --source <file.md|url>) --content <text>
   sadoku memory update <memory-id> (--document <id> | --source <file.md|url>) --content <text>
@@ -31,6 +31,7 @@ Options:
   --create          Create a new local Markdown file and register it (document add only).
   --title           Display title (document add only).
   --name            Tag name (tag add only).
+  --global          Apply to all documents in this database (instruction commands only).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
   --ensure-document Register --source when it is not in the database (comment add only).

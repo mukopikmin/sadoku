@@ -55,3 +55,34 @@ describe("instruction API", () => {
       ]);
   });
 });
+
+it("manages global instructions without a document ID", async () => {
+  const instruction = {
+    id: 1,
+    content: "Shared",
+    createdAt: "created",
+    updatedAt: "updated",
+  };
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce(Response.json({ instructions: [instruction] }))
+    .mockResolvedValueOnce(Response.json(instruction))
+    .mockResolvedValueOnce(Response.json(instruction))
+    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetchMock);
+  await expect(loadInstructions("global")).resolves.toEqual([instruction]);
+  await createInstruction("global", "Shared");
+  await updateInstruction("global", 1, "Shared");
+  await deleteInstruction("global", 1);
+  expect(
+    fetchMock.mock.calls.map(([url, init]) => [url, init?.method ?? "GET"]),
+  )
+    .toEqual([
+      ["/__sadoku/global-instructions", "GET"],
+      ["/__sadoku/global-instructions", "POST"],
+      ["/__sadoku/global-instructions/1", "PUT"],
+      ["/__sadoku/global-instructions/1", "DELETE"],
+    ]);
+  expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+    content: "Shared",
+  });
+});

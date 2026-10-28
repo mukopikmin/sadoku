@@ -71,6 +71,12 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 	}
 	methods := pb.File_sadoku_preview_v1_preview_proto.Services().ByName("PreviewService").Methods()
 	for i := 0; i < methods.Len(); i++ {
+		// Added after the legacy capture; JSON and binary behavior is covered by
+		// TestGlobalInstructionsConnect rather than fabricated legacy responses.
+		switch string(methods.Get(i).Name()) {
+		case "ListGlobalInstructions", "CreateGlobalInstruction", "UpdateGlobalInstruction", "DeleteGlobalInstruction":
+			continue
+		}
 		if !covered[string(methods.Get(i).Name())] {
 			t.Errorf("missing legacy RPC transcript: %s", methods.Get(i).Name())
 		}
