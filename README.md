@@ -265,10 +265,10 @@ Japanese text uses bundled Noto Sans JP with no external font service. See the
 
 ## Development
 
-Use GNU Make as the entry point for repository tasks. Go 1.26 runs the backend,
-CLI, build, and notice tools. Release validation and notes run in GitHub Actions
-using Bash, Git, GitHub CLI, and jq. Node.js runs the preview client and npm
-tooling; its required version is specified in `package.json`.
+Use GNU Make as the entry point for repository tasks. Go 1.26.10 or later runs
+the backend, CLI, build, and notice tools. Release validation and notes run in
+GitHub Actions using Bash, Git, GitHub CLI, and jq. Node.js runs the preview
+client and npm tooling; its required version is specified in `package.json`.
 
 ```sh
 make deps
