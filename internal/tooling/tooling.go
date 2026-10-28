@@ -92,13 +92,22 @@ func build(version, output string, t *target) error {
 	if !binaryVersionPattern.MatchString(version) {
 		return fmt.Errorf("invalid binary version: %s", version)
 	}
-	cmd := exec.Command("go", "build", "-trimpath", "-ldflags", "-s -w -X github.com/mukopikmin/sadoku/src/server/cli.Version="+version, "-o", output, "./cmd/sadoku")
 	// Explicitly select the host for installs, even when the caller has GOOS/GOARCH set.
 	osName, arch := runtime.GOOS, runtime.GOARCH
 	if t != nil {
 		osName, arch = t.OS, t.Arch
 	}
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS="+osName, "GOARCH="+arch)
+	if (osName != runtime.GOOS || arch != runtime.GOARCH) && os.Getenv("CC") == "" {
+		return fmt.Errorf("CGO cross-compilation for %s/%s requires a target C compiler; set CC or build on the target platform", osName, arch)
+	}
+	linkFlags := "-s -w -X github.com/mukopikmin/sadoku/src/server/cli.Version=" + version
+	if osName == "linux" {
+		linkFlags += " -extldflags=-static"
+	}
+	// Keep Go's resolver/user lookup behavior and avoid dlopen dependencies in
+	// static Linux binaries. SQLite itself is bundled by the CGO driver.
+	cmd := exec.Command("go", "build", "-trimpath", "-tags", "netgo,osusergo,sqlite_omit_load_extension", "-ldflags", linkFlags, "-o", output, "./cmd/sadoku")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=1", "GOOS="+osName, "GOARCH="+arch)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

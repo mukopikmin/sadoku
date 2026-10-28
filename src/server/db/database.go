@@ -6,12 +6,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-	_ "github.com/ncruces/go-sqlite3/driver"
-	_ "github.com/ncruces/go-sqlite3/embed"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 //go:embed migrations/legacy.json
@@ -28,14 +29,23 @@ func Open(path string) (*sql.DB, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return nil, err
 	}
-	database, err := sql.Open("sqlite3", path)
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	uriPath := filepath.ToSlash(absolute)
+	if !strings.HasPrefix(uriPath, "/") {
+		uriPath = "/" + uriPath
+	}
+	// URI parameters configure every connection, including replacements created
+	// by database/sql. Escape the path so filenames containing ? or # stay literal.
+	uri := url.URL{Scheme: "file", Path: uriPath, RawQuery: "_foreign_keys=on&_busy_timeout=5000"}
+	database, err := sql.Open("sqlite3", uri.String())
 	if err != nil {
 		return nil, err
 	}
 	database.SetMaxOpenConns(1)
-	if _, err = database.Exec("PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000"); err == nil {
-		err = Migrate(database)
-	}
+	err = Migrate(database)
 	if err != nil {
 		database.Close()
 		return nil, err

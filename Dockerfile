@@ -7,7 +7,7 @@ COPY --from=go-toolchain /usr/local/go /usr/local/go
 COPY --from=go-toolchain /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 ENV PATH="/usr/local/go/bin:${PATH}"
 
-RUN apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends make gcc libc6-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
