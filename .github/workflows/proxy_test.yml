@@ -45,6 +45,7 @@ jobs:
           cache: false
 
       - name: Check formatting
+        if: runner.os == 'Linux'
         run: make check-proxy-format
 
       - name: Vet
