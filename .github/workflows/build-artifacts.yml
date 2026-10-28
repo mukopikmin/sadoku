@@ -57,8 +57,10 @@ jobs:
       - name: Select C compiler
         run: |
           if [[ "${RUNNER_OS}" == Windows ]]; then
-            echo 'C:/msys64/mingw64/bin' >> "${GITHUB_PATH}"
-            echo 'CC=C:/msys64/mingw64/bin/gcc.exe' >> "${GITHUB_ENV}"
+            compiler="$(cygpath -m "$(command -v gcc)")"
+            echo "$(dirname "${compiler}")" >> "${GITHUB_PATH}"
+            echo "CC=${compiler}" >> "${GITHUB_ENV}"
+            "${compiler}" --version
           elif [[ "${RUNNER_OS}" == macOS ]]; then
             echo 'CC=clang' >> "${GITHUB_ENV}"
           else
