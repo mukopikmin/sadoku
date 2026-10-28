@@ -6,14 +6,17 @@ description: Review changes, propose a semantic version, obtain approval for the
 # Sadoku Release
 
 The skill handles release judgment, user approval, tag operations, and
-reporting. The `Release` workflow in `.github/workflows/release.yml` enforces
-every required machine check, builds and attests artifacts, generates notes, and
-publishes the GitHub release. Communicate in the user's language.
+reporting. The `Release` workflow in `.github/workflows/release.yml` validates
+the approved tag, calls the reusable Test workflow on that exact commit, and
+builds artifacts with read-only permissions. A separate job attests and publishes
+that build's immutable artifact without executing repository code. Communicate
+in the user's language.
 
 ## Safety Rules
 
 - Release only the exact tested tip of `main`. Local inspection is advisory;
-  GitHub Actions validates it again before building and publishing.
+  GitHub Actions validates the tip once, then tests and builds that fixed commit.
+  Later `main` updates do not invalidate an accepted release run.
 - Never delete, stash, commit, or overwrite user changes to obtain a clean tree.
   Do not switch branches or require local `HEAD` to match the release target.
 - Never force, move, delete, or reuse a stable release tag.
@@ -91,8 +94,10 @@ one of the reviewed inputs changes.
 
 The `Previous-Stable-Tag` trailer must contain the approved comparison tag
 (`release-notes-baseline` only for a confirmed first stable release). Actions
-reads this immutable approval input at every validation and notes step. Missing
-or duplicate trailers fail validation; never modify an existing release tag.
+reads this approval input once; the baseline must still be current when notes
+are generated. Both tag objects must remain unchanged through publication.
+Missing or duplicate trailers fail validation; never modify an existing release
+tag.
 
 3. Use the user's authorized Git credentials. A tag pushed with the repository's
    `GITHUB_TOKEN` does not trigger another workflow; use an authorized user or
@@ -107,13 +112,14 @@ or duplicate trailers fail validation; never modify an existing release tag.
    completion.
 2. On failure, report the run URL, failing step, and relevant logs. Leave the
    tag and any partial release intact. Do not move the tag or overwrite assets.
-3. On success, inspect the workflow verification and release metadata. Confirm
+3. On success, inspect the workflow result and release metadata. Confirm
    it is stable and latest, uses the approved target and notes range, contains
    the expected merged pull requests, and omits open pull requests.
 4. Confirm all three platform archives, their individual SHA-256 files, and
-   `checksums.txt` are attached. Actions verifies checksums and provenance for
-   this workflow and the tagged source commit before publication. Local artifact
-   downloads or local attestation verification are not required.
+   `checksums.txt` are attached. The publish job uses the build job's immutable
+   artifact ID and generates provenance for this workflow and tagged source
+   commit. Local artifact downloads or local attestation verification are not
+   required.
 5. Report the release URL, tag, full SHA, notes range, assets, verification
    results, and omitted open pull requests.
 
