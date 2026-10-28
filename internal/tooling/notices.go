@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 type notice struct{ Name, Version, License, Source, LicenseText string }
@@ -111,7 +113,8 @@ func goNotices() ([]notice, error) {
 	if err != nil {
 		return nil, err
 	}
-	notices = append(notices, notice{"Go runtime", version, "BSD-3-Clause", "https://go.dev", string(text)}, notice{"SQLite", "3.51.1", "Public Domain", "https://sqlite.org/copyright.html", ""})
+	sqliteVersion, _, _ := sqlite3.Version()
+	notices = append(notices, notice{"Go runtime", version, "BSD-3-Clause", "https://go.dev", string(text)}, notice{"SQLite", sqliteVersion, "Public Domain", "https://sqlite.org/copyright.html", ""})
 	return notices, nil
 }
 func renderNotices(notices []notice) string {
