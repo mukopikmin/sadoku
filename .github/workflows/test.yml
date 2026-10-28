@@ -1,6 +1,7 @@
 name: Test
 
 on:
+  workflow_call:
   pull_request:
     paths-ignore: &proxy-paths
       - "proxy/**"
@@ -15,18 +16,63 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Server
-    runs-on: ubuntu-latest
+  vet:
+    name: Vet (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install GNU Make
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install make --version=4.4.1 --yes --no-progress
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          check-latest: true
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
+
+      - name: Install dependencies
+        run: make deps
+
+      - name: Vet Go server
+        run: make vet
+
+  client:
+    name: Test client
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -44,34 +90,51 @@ jobs:
       - name: Check formatting
         run: make check-client-format
 
-      - name: Build client assets
-        run: make build-client
+      - name: Test client
+        run: make test-client
 
-      - name: Test repository tooling
-        run: make test-tools
-
-      - name: Check Go formatting
-        run: make check-go-format
-
-      - name: Vet Go server
-        run: make vet
-
-      - name: Test Go server
-        run: make test-server
-
-      - name: Compile
-        run: make build OUTPUT=/tmp/sadoku-ci
-
-      - name: Test Linux installer
-        run: make test-install
-
-  client:
-    name: Node
-    runs-on: ubuntu-latest
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-15]
+    env:
+      CGO_ENABLED: "1"
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install GNU Make
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install make --version=4.4.1 --yes --no-progress
+
+      - name: Select C compiler
+        run: |
+          if [[ "${RUNNER_OS}" == Windows ]]; then
+            compiler="$(cygpath -m "$(command -v gcc)")"
+            echo "$(dirname "${compiler}")" >> "${GITHUB_PATH}"
+            echo "CC=${compiler}" >> "${GITHUB_ENV}"
+            "${compiler}" --version
+          elif [[ "${RUNNER_OS}" == macOS ]]; then
+            echo 'CC=clang' >> "${GITHUB_ENV}"
+          else
+            echo 'CC=gcc' >> "${GITHUB_ENV}"
+          fi
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -86,47 +149,30 @@ jobs:
       - name: Install dependencies
         run: make deps
 
-      - name: Test client
-        run: make test-client
-
-  windows-installer:
-    name: Windows installer
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Install GNU Make
-        shell: powershell
-        run: choco install make --version=4.4.1 --yes --no-progress
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: package.json
-          check-latest: true
-
-      - name: Install dependencies
-        run: make deps
-
       - name: Build client assets
         run: make build-client
 
-      - name: Test Go backend on Windows
-        run: make test-server GO_TEST_FLAGS="-count=1 -timeout=120s"
+      - name: Test repository tooling
+        if: runner.os == 'Linux'
+        run: make test-tools
 
-      - name: Build Windows binary
-        run: make build OUTPUT=sadoku.exe
+      - name: Check Go formatting
+        if: runner.os == 'Linux'
+        run: make check-go-format
+
+      - name: Test Go server
+        run: make test-server
+
+      - name: Compile
+        run: >-
+          make build OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os ==
+          'Windows' && '.exe' || '' }}"
+
+      - name: Test source installer
+        if: runner.os != 'Windows'
+        run: make test-install
 
       - name: Test Windows installer
+        if: runner.os == 'Windows'
         shell: powershell
         run: .\scripts\install_windows_test.ps1

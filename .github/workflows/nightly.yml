@@ -10,18 +10,52 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: nightly-release
   cancel-in-progress: true
 
 jobs:
-  release:
-    name: Build and publish nightly release
+  prepare:
+    name: Prepare nightly version
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    outputs:
+      binary-version: ${{ steps.version.outputs.binary-version }}
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
+      - name: Calculate nightly version
+        id: version
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          commit_timestamp="$(git show -s --format=%ct "${TESTED_SHA}")"
+          commit_date="$(date -u -d "@${commit_timestamp}" +%Y%m%d)"
+          short_sha="$(git rev-parse --short=8 "${TESTED_SHA}")"
+          echo "binary-version=nightly-${commit_date}-${short_sha}" >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build nightly artifacts
+    needs: prepare
+    uses: ./.github/workflows/build-artifacts.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha }}
+      version: nightly
+      binary-version: ${{ needs.prepare.outputs.binary-version }}
+      artifact-name: nightly-dist-${{ github.run_attempt }}
+
+  release:
+    name: Publish nightly release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout tested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,30 +63,12 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - name: Download nightly artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          go-version-file: go.mod
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: package.json
-          check-latest: true
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            src/preview/package-lock.json
-
-      - name: Install dependencies
-        run: make deps
-
-      - name: Build nightly artifacts
-        run: |
-          commit_timestamp="$(git show -s --format=%ct "${{ github.event.workflow_run.head_sha }}")"
-          commit_date="$(date -u -d "@${commit_timestamp}" +%Y%m%d)"
-          short_sha="$(git rev-parse --short=8 "${{ github.event.workflow_run.head_sha }}")"
-          make dist VERSION=nightly BINARY_VERSION="nightly-${commit_date}-${short_sha}"
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          merge-multiple: true
+          path: dist
 
       - name: Move nightly tag
         run: |

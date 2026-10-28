@@ -1,0 +1,153 @@
+name: Build native artifacts
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      binary-version:
+        default: ""
+        type: string
+      artifact-name:
+        required: true
+        type: string
+    outputs:
+      artifact-id:
+        value: ${{ jobs.collect.outputs.artifact-id }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: linux-x64
+          - os: windows-latest
+            target: windows-x64
+          - os: macos-15
+            target: darwin-arm64
+    defaults:
+      run:
+        shell: bash
+    env:
+      CGO_ENABLED: "1"
+
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Install GNU Make
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install make --version=4.4.1 --yes --no-progress
+
+      - name: Select C compiler
+        run: |
+          if [[ "${RUNNER_OS}" == Windows ]]; then
+            compiler="$(cygpath -m "$(command -v gcc)")"
+            echo "$(dirname "${compiler}")" >> "${GITHUB_PATH}"
+            echo "CC=${compiler}" >> "${GITHUB_ENV}"
+            "${compiler}" --version
+          elif [[ "${RUNNER_OS}" == macOS ]]; then
+            echo 'CC=clang' >> "${GITHUB_ENV}"
+          else
+            echo 'CC=gcc' >> "${GITHUB_ENV}"
+          fi
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          check-latest: true
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
+
+      - name: Install dependencies
+        run: make deps
+
+      - name: Build platform archive
+        env:
+          VERSION: ${{ inputs.version }}
+          BINARY_VERSION: ${{ inputs.binary-version || inputs.version }}
+          TARGET: ${{ matrix.target }}
+        run: make dist VERSION="${VERSION}" BINARY_VERSION="${BINARY_VERSION}" TARGET="${TARGET}"
+
+      - name: Smoke test packaged SQLite
+        run: |
+          set -euo pipefail
+          package_dir="${RUNNER_TEMP}/sadoku-package"
+          mkdir "${package_dir}"
+          if [[ "${RUNNER_OS}" == Windows ]]; then
+            unzip -q dist/*.zip -d "${package_dir}"
+            binary="$(find "${package_dir}" -name sadoku.exe -type f)"
+          else
+            tar -xzf dist/*.tar.gz -C "${package_dir}"
+            binary="$(find "${package_dir}" -name sadoku -type f)"
+          fi
+          export SADOKU_COMMENTS_DIR="${package_dir}/comments"
+          file="${package_dir}/smoke.md"
+          printf '# Release smoke test\n' > "${file}"
+          "${binary}" --version
+          "${binary}" document add "${file}" > /dev/null
+          "${binary}" comment add --source "${file}" --start-line 1 --body 'Packaged SQLite works' > /dev/null
+          "${binary}" comment list --source "${file}" > "${package_dir}/comments.json"
+          node -e 'const x = require(process.argv[1]); if (x.comments.length !== 1 || x.comments[0].body !== "Packaged SQLite works") process.exit(1)' "${package_dir}/comments.json"
+
+      - name: Upload platform archive
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.artifact-name }}-${{ matrix.target }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  collect:
+    name: Collect release artifacts
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-id: ${{ steps.artifact.outputs.artifact-id }}
+    steps:
+      - name: Download platform archives
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: ${{ inputs.artifact-name }}-*
+          path: platform-artifacts
+
+      - name: Combine and verify checksums
+        run: |
+          set -euo pipefail
+          mkdir dist
+          find platform-artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name '*.sha256' \) -exec cp '{}' dist/ \;
+          cat platform-artifacts/*/checksums.txt | LC_ALL=C sort > dist/checksums.txt
+          test "$(wc -l < dist/checksums.txt)" -eq 3
+          (cd dist && sha256sum --check checksums.txt)
+
+      - name: Upload release artifacts
+        id: artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
