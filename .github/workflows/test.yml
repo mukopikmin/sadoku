@@ -11,6 +11,39 @@ permissions:
   contents: read
 
 jobs:
+  client:
+    name: Test client
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          check-latest: true
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
+
+      - name: Install dependencies
+        run: make deps
+
+      - name: Check formatting
+        run: make check-client-format
+
+      - name: Test client
+        run: make test-client
+
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -52,10 +85,6 @@ jobs:
       - name: Install dependencies
         run: make deps
 
-      - name: Check formatting
-        if: runner.os == 'Linux'
-        run: make check-client-format
-
       - name: Build client assets
         run: make build-client
 
@@ -73,9 +102,6 @@ jobs:
       - name: Test Go server
         run: make test-server
 
-      - name: Test client
-        run: make test-client
-
       - name: Vet Go proxy
         run: make vet-proxy
 
@@ -86,7 +112,9 @@ jobs:
         run: make build-proxy
 
       - name: Compile
-        run: make build OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os == 'Windows' && '.exe' || '' }}"
+        run: >-
+          make build OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os ==
+          'Windows' && '.exe' || '' }}"
 
       - name: Test Linux installer
         if: runner.os == 'Linux'
