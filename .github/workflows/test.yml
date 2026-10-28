@@ -11,6 +11,53 @@ permissions:
   contents: read
 
 jobs:
+  vet:
+    name: Vet (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install GNU Make
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install make --version=4.4.1 --yes --no-progress
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          check-latest: true
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            src/preview/package-lock.json
+
+      - name: Install dependencies
+        run: make deps
+
+      - name: Vet Go server
+        run: make vet
+
+      - name: Vet Go proxy
+        run: make vet-proxy
+
   client:
     name: Test client
     runs-on: ubuntu-latest
@@ -111,14 +158,8 @@ jobs:
         if: runner.os == 'Linux'
         run: make check-go-format check-proxy-format
 
-      - name: Vet Go server
-        run: make vet
-
       - name: Test Go server
         run: make test-server
-
-      - name: Vet Go proxy
-        run: make vet-proxy
 
       - name: Test Go proxy
         run: make test-proxy
