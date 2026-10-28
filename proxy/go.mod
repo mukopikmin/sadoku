@@ -1,3 +1,3 @@
 module github.com/mukopikmin/sadoku/proxy
 
-go 1.26.0
+go 1.26.10
