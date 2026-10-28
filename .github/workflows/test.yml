@@ -97,10 +97,15 @@ jobs:
         run: make check-go-format check-proxy-format
 
       - name: Vet Go server
-        run: make vet
+        run: make --assume-old=build-client vet
 
       - name: Test Go server
-        run: make test-server
+        # Keep race detection on Linux; run the full suite normally on Windows.
+        env:
+          GO_TEST_FLAGS:
+            ${{ runner.os == 'Windows' && '-count=1 -timeout=120s' || '-race
+            -count=1 -timeout=120s' }}
+        run: make --assume-old=build-client test-server
 
       - name: Vet Go proxy
         run: make vet-proxy
@@ -113,12 +118,12 @@ jobs:
 
       - name: Compile
         run: >-
-          make build OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os ==
-          'Windows' && '.exe' || '' }}"
+          make --assume-old=build-client build OUTPUT="${{ runner.temp
+          }}/sadoku-ci${{ runner.os == 'Windows' && '.exe' || '' }}"
 
       - name: Test Linux installer
         if: runner.os == 'Linux'
-        run: make test-install
+        run: make --assume-old=build-client test-install
 
       - name: Test Windows installer
         if: runner.os == 'Windows'
