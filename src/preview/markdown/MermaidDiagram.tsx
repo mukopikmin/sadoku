@@ -3,9 +3,12 @@ import {
   Button,
   CloseButton,
   Dialog,
+  HStack,
+  IconButton,
   Portal,
   VisuallyHidden,
 } from "@chakra-ui/react";
+import { Minus, Plus } from "lucide-react";
 import { type RefObject, useLayoutEffect, useRef, useState } from "react";
 import { Tooltip } from "../components/ui/tooltip";
 import { initializeMermaidPinchZoom } from "./mermaidPinchZoom";
@@ -28,27 +31,54 @@ const useMermaidZoom = (sourceRef: RefObject<HTMLPreElement | null>) => {
     };
   }, [sourceRef]);
 
-  return { viewportRef, fit: () => zoomRef.current?.fit() };
+  return {
+    viewportRef,
+    fit: () => zoomRef.current?.fit(),
+    zoomIn: () => zoomRef.current?.zoomIn(),
+    zoomOut: () => zoomRef.current?.zoomOut(),
+  };
 };
 
 const MermaidZoomContent = (
   { sourceRef }: { sourceRef: RefObject<HTMLPreElement | null> },
 ) => {
-  const { viewportRef, fit } = useMermaidZoom(sourceRef);
+  const { viewportRef, fit, zoomIn, zoomOut } = useMermaidZoom(sourceRef);
   return (
     <>
       <Dialog.Header>
         <Dialog.Title asChild>
           <VisuallyHidden>Zoomed Mermaid diagram</VisuallyHidden>
         </Dialog.Title>
-        <Button
-          aria-label="Fit Mermaid diagram to view"
-          onClick={fit}
-          size="sm"
-          variant="outline"
-        >
-          Fit to view
-        </Button>
+        <HStack gap="2" flexWrap="wrap" pe="8">
+          <Tooltip content="Zoom out">
+            <IconButton
+              aria-label="Zoom out Mermaid diagram"
+              onClick={zoomOut}
+              size="sm"
+              variant="outline"
+            >
+              <Minus />
+            </IconButton>
+          </Tooltip>
+          <Tooltip content="Zoom in">
+            <IconButton
+              aria-label="Zoom in Mermaid diagram"
+              onClick={zoomIn}
+              size="sm"
+              variant="outline"
+            >
+              <Plus />
+            </IconButton>
+          </Tooltip>
+          <Button
+            aria-label="Fit Mermaid diagram to view"
+            onClick={fit}
+            size="sm"
+            variant="outline"
+          >
+            Fit to view
+          </Button>
+        </HStack>
       </Dialog.Header>
       <Dialog.CloseTrigger asChild>
         <CloseButton aria-label="Close Mermaid diagram zoom" size="sm" />

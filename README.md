@@ -66,8 +66,8 @@ Run `sadoku --help` for all commands and options.
   optional title appears above the document without changing its Markdown. Use
   **Set title** or **Edit title** to change it, or clear it to remove it.
   Existing files are never overwritten.
-- Use **Zoom** on a Mermaid diagram to enlarge it. Pinch to zoom, scroll to
-  move, and choose **Fit to view** to reset.
+- Use **Zoom** on a Mermaid diagram to enlarge it. Use the **+** and **−**
+  buttons or pinch to zoom, scroll to move, and choose **Fit to view** to reset.
 - Open **Revisions** in the document action bar to view the current document or
   choose from its latest 20 saved revisions, listed newest first with recording
   times. Each selected revision shows changes from its immediately preceding
@@ -249,7 +249,7 @@ token. Avoid putting secrets in comments, instructions, or memories.
 | Tables and strikethrough                             | Supported     | GitHub Flavored Markdown syntax is supported.                  |
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
 | Single-newline line breaks in comments and replies   | Supported     | GitHub-style line breaks in comments and replies only.         |
-| Mermaid diagrams                                     | Supported     | Local rendering; trackpad pinch zoom in the zoom dialog.       |
+| Mermaid diagrams                                     | Supported     | Local rendering; zoom buttons and trackpad pinch in the dialog. |
 | HTML comments                                        | Supported     | Commentable plain-text cards; visible by default (Settings).   |
 | Agent-file front matter                              | Supported     | Displayed as a safe data list in recognized instruction files. |
 | Generated table of contents                          | Supported     | Available from the document action menu.                       |

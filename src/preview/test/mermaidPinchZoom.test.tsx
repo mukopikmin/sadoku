@@ -94,6 +94,36 @@ describe("Mermaid zoom dialog trackpad pinch zoom", () => {
     expect(viewport.scrollTop).toBeCloseTo(110);
   });
 
+  it("zooms with controls around the viewed center, including after scrolling", () => {
+    const { viewport, controller } = createViewport();
+    controller.zoomIn();
+    expect(diagramSize(viewport)).toEqual({ width: 300, height: 150 });
+    expect(viewport.scrollLeft).toBeCloseTo(30);
+    expect(viewport.scrollTop).toBeCloseTo(5);
+
+    viewport.scrollLeft = 45;
+    viewport.scrollTop = 10;
+    controller.zoomIn();
+    expect(viewport.scrollLeft).toBeCloseTo(86.25);
+    expect(viewport.scrollTop).toBeCloseTo(30);
+    controller.zoomOut();
+    expect(diagramSize(viewport)).toEqual({ width: 300, height: 150 });
+    expect(viewport.scrollLeft).toBeCloseTo(45);
+    expect(viewport.scrollTop).toBeCloseTo(10);
+  });
+
+  it("applies the same zoom limits to controls and resets with fit", () => {
+    const { viewport, controller } = createViewport();
+    for (let i = 0; i < 12; i++) controller.zoomIn();
+    expect(diagramSize(viewport)).toEqual({ width: 960, height: 480 });
+    for (let i = 0; i < 24; i++) controller.zoomOut();
+    expect(diagramSize(viewport)).toEqual({ width: 60, height: 30 });
+    expect(viewport.scrollLeft).toBe(0);
+    expect(viewport.scrollTop).toBe(0);
+    controller.fit();
+    expect(diagramSize(viewport)).toEqual({ width: 240, height: 120 });
+  });
+
   it("leaves ordinary scrolling and pinches outside the viewport untouched", () => {
     const { viewport } = createViewport();
     const outside = document.createElement("div");
