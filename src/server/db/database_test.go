@@ -1,13 +1,144 @@
 package db
 
 import (
+	"compress/gzip"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
+	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
+
+func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
+	names := []string{"comments # % 日本語.sqlite3"}
+	if runtime.GOOS != "windows" {
+		names = append(names, "comments ? query.sqlite3")
+	}
+	t.Chdir(t.TempDir())
+	for _, name := range names {
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join("nested", name)
+			database, err := Open(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err = database.Close(); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = os.Stat(path); err != nil {
+				t.Fatalf("database was not created at its literal path: %v", err)
+			}
+			database, err = Open(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer database.Close()
+			var count int
+			if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 12 {
+				t.Fatalf("reopened database migrations: %d, %v", count, err)
+			}
+		})
+	}
+}
+
+func TestReplacementConnectionsPreserveConstraints(t *testing.T) {
+	database, err := Open(filepath.Join(t.TempDir(), "app.sqlite3"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	// Force each operation to use a new connection instead of the one that ran
+	// migrations. Foreign keys and busy handling must survive pool replacement.
+	database.SetMaxIdleConns(0)
+	var timeout int
+	if err = database.QueryRow("PRAGMA busy_timeout").Scan(&timeout); err != nil || timeout != 5000 {
+		t.Fatalf("replacement connection busy timeout: %d, %v", timeout, err)
+	}
+	if _, err = database.Exec("INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(999,'orphan',?,?)", Now(), Now()); err == nil {
+		t.Fatal("replacement connection accepted an orphan instruction")
+	}
+	if _, err = database.Exec("INSERT INTO comment_document(id,file_path,created_at,updated_at) VALUES(1,'doc.md',?,?)", Now(), Now()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = database.Exec("INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(1,'instruction',?,?)", Now(), Now()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = database.Exec("DELETE FROM comment_document WHERE id=1"); err != nil {
+		t.Fatal(err)
+	}
+	var count int
+	if err = database.QueryRow("SELECT COUNT(*) FROM document_instruction").Scan(&count); err != nil || count != 0 {
+		t.Fatalf("replacement connection did not cascade deletion: %d, %v", count, err)
+	}
+}
+
+func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
+	fixture, err := os.Open("testdata/wasm.sqlite3.gz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fixture.Close()
+	reader, err := gzip.NewReader(fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "legacy.sqlite3")
+	if err = os.WriteFile(path, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	for attempt := range 2 {
+		database, err := Open(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer database.Close()
+		var count int
+		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 12 {
+			t.Fatalf("legacy migrations: %d, %v", count, err)
+		}
+		want := []string{"legacy.md", "WASM 文書", "既存のコメント", "返信", "# 保存済み", "指示", "メモリー", "タグ"}
+		if attempt == 1 {
+			want[2] = "CGO で更新"
+		}
+		got := make([]string, len(want))
+		dest := make([]any, len(got))
+		for i := range got {
+			dest[i] = &got[i]
+		}
+		err = database.QueryRow(`SELECT d.file_path,d.title,c.body,r.body,v.markdown,i.content,m.content,t.name
+			FROM comment_document d
+			JOIN comment c ON c.document_id=d.id
+			JOIN comment_reply r ON r.comment_id=c.id
+			JOIN document_revision v ON v.id=d.source_revision_id
+			JOIN document_instruction i ON i.document_id=d.id
+			JOIN document_memory m ON m.document_id=d.id
+			JOIN document_tag_link l ON l.document_id=d.id
+			JOIN document_tag t ON t.id=l.tag_id`).Scan(dest...)
+		if err != nil || !reflect.DeepEqual(got, want) {
+			t.Fatalf("legacy data: %q, %v; want %q", got, err, want)
+		}
+		if _, err = database.Exec("UPDATE comment SET body='CGO で更新' WHERE id=1"); err != nil {
+			t.Fatal(err)
+		}
+		var integrity string
+		if err = database.QueryRow("PRAGMA integrity_check").Scan(&integrity); err != nil || integrity != "ok" {
+			t.Fatalf("legacy database integrity: %q, %v", integrity, err)
+		}
+		if err = database.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
 
 func TestMigrationCompatibility(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "app.sqlite3")

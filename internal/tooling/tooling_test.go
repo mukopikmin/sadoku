@@ -146,6 +146,19 @@ func TestBuildValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestCrossBuildRequiresTargetCompiler(t *testing.T) {
+	t.Setenv("CC", "")
+	for _, target := range targets {
+		if target.OS == runtime.GOOS && target.Arch == runtime.GOARCH {
+			continue
+		}
+		err := Run([]string{"build", "--target", target.ID, "--output", filepath.Join(t.TempDir(), "sadoku")})
+		if err == nil || !strings.Contains(err.Error(), "requires a target C compiler") {
+			t.Fatalf("cross-build %s: %v", target.ID, err)
+		}
+	}
+}
 func TestCloudRunEntrypoint(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX entrypoint")
