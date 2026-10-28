@@ -49,7 +49,9 @@ them when making changes.
   embeds the generated client. Never commit client build outputs.
 - Validate Go changes with `make check-go-format`, `make vet`, and `make test-server`.
   Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
-- Keep `go.mod` and `go.sum` consistent. Use `CGO_ENABLED=0` for release builds.
+- Keep `go.mod` and `go.sum` consistent. SQLite uses `mattn/go-sqlite3` and
+  requires `CGO_ENABLED=1` and a C compiler. Build release binaries on their
+  target OS/architecture; cross-compilation requires a target C toolchain.
 - `src/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
@@ -77,8 +79,8 @@ them when making changes.
 ## 3. Repository Tooling
 
 - Build, source installation, and notice tools use Go under `internal/tooling/`,
-  with the entry point `cmd/sadoku-tools/`. Release validation and note generation
-  use Bash, Git, GitHub CLI, and jq in `scripts/release.sh`.
+  with the entry point `cmd/sadoku-tools/`. Stable release validation, testing,
+  attestation, note generation, and publication belong to the Release workflow.
 - Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
   scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
 - Keep release validation and approval gates when changing those tools.
