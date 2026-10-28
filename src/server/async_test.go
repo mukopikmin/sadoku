@@ -22,7 +22,6 @@ import (
 	"github.com/mukopikmin/sadoku/src/server/session"
 	"github.com/mukopikmin/sadoku/src/server/storage"
 	u "github.com/mukopikmin/sadoku/src/server/usecase"
-	"github.com/ncruces/go-sqlite3"
 )
 
 func startAsyncTest(t *testing.T, start func(context.Context, io.Writer) error) (string, func()) {
@@ -81,9 +80,6 @@ func assertShell(t *testing.T, url string) {
 	}
 }
 func TestServerStartsBeforeRemoteSnapshotFetchAndCancelsIt(t *testing.T) {
-	if err := sqlite3.Initialize(); err != nil {
-		t.Fatal(err)
-	}
 	root := t.TempDir()
 	t.Setenv("SADOKU_COMMENTS_DIR", filepath.Join(root, "comments"))
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(root, "config"))
@@ -152,9 +148,6 @@ func (r *gatedDirectoryRepository) DocumentsContext(ctx context.Context) ([]u.Do
 	return r.Repository.DocumentsContext(ctx)
 }
 func TestDirectoryPreparationServesProgressReadyErrorsAndCancellation(t *testing.T) {
-	if err := sqlite3.Initialize(); err != nil {
-		t.Fatal(err)
-	}
 	for _, outcome := range []string{"ready", "error", "cancelled"} {
 		t.Run(outcome, func(t *testing.T) {
 			root := t.TempDir()
