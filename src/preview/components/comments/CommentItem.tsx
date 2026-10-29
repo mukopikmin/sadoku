@@ -99,39 +99,41 @@ export const CommentItem = ({
                 </CommentMarkdown>
               </Box>
             )}
-          {(comment.replies ?? []).length > 0 && (
-            <Stack gap="3" mt="3">
-              {(comment.replies ?? []).map((reply) => (
-                <ReplyItem
-                  commentId={comment.id}
+          <Stack gap="2">
+            {(comment.replies ?? []).length > 0 && (
+              <Stack gap="3" mt="3">
+                {(comment.replies ?? []).map((reply) => (
+                  <ReplyItem
+                    commentId={comment.id}
+                    disabled={isDisabled}
+                    key={reply.id}
+                    onDelete={onDeleteReply}
+                    onUpdate={onUpdateReply}
+                    reportError={reportError}
+                    reply={reply}
+                    sourceText={comment.sourceText}
+                    runAction={runAction}
+                  />
+                ))}
+              </Stack>
+            )}
+            <ReplyComposer
+              commentId={comment.id}
+              disabled={isDisabled}
+              onReply={onReplyComment}
+              runAction={runAction}
+              showTrigger={!isEditing}
+              trailingAction={
+                <CommentResolutionButton
+                  comment={comment}
                   disabled={isDisabled}
-                  key={reply.id}
-                  onDelete={onDeleteReply}
-                  onUpdate={onUpdateReply}
-                  reportError={reportError}
-                  reply={reply}
-                  sourceText={comment.sourceText}
+                  onReopen={onReopenComment}
+                  onResolve={onResolveComment}
                   runAction={runAction}
                 />
-              ))}
-            </Stack>
-          )}
-          <ReplyComposer
-            commentId={comment.id}
-            disabled={isDisabled}
-            onReply={onReplyComment}
-            runAction={runAction}
-            showTrigger={!isEditing}
-            trailingAction={
-              <CommentResolutionButton
-                comment={comment}
-                disabled={isDisabled}
-                onReopen={onReopenComment}
-                onResolve={onResolveComment}
-                runAction={runAction}
-              />
-            }
-          />
+              }
+            />
+          </Stack>
           {error && <Text color="red.500" fontSize="sm">{error}</Text>}
         </Box>
       </Box>
