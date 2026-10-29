@@ -45,6 +45,7 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
     const viewportHeight = viewport.clientHeight;
     if (!dimensions || viewportWidth <= 0 || viewportHeight <= 0) return false;
     const fitScale = Math.min(
+      1,
       viewportWidth / dimensions.width,
       viewportHeight / dimensions.height,
     );
