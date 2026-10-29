@@ -15,6 +15,8 @@ import { useDocumentRevisions } from "../hooks/useDocumentRevisions";
 import { useDocumentRestore } from "../hooks/useDocumentRestore";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ReadOnlyMarkdownPreview } from "../pages/markdown/ReadOnlyMarkdownPreview";
+import { ThemeSelect } from "./settings/ThemeSelect";
+import type { ThemeMode } from "../models/theme";
 
 type Props = {
   canRestore?: boolean;
@@ -26,6 +28,7 @@ type Props = {
   open: boolean;
   showHtmlComments: boolean;
   theme: "dark" | "default";
+  onThemeModeChange: (theme: ThemeMode) => void;
 };
 
 const RevisionContent = (
@@ -36,6 +39,7 @@ const RevisionContent = (
     | "markdown"
     | "showHtmlComments"
     | "theme"
+    | "onThemeModeChange"
     | "canRestore"
     | "deleted"
     | "onOpenChange"
@@ -116,6 +120,10 @@ const RevisionContent = (
             </Select.Content>
           </Select.Positioner>
         </Select.Root>
+        <ThemeSelect
+          value={props.theme === "dark" ? "dark" : "light"}
+          onChange={props.onThemeModeChange}
+        />
         {changes && (
           <Flex align="center" gap="3" wrap="wrap" flex={{ md: "1" }}>
             {hasChanges
@@ -271,7 +279,7 @@ export const DocumentRevisionsDialog = (
     onOpenChange={({ open }) => onOpenChange(open)}
     open={open}
     scrollBehavior="inside"
-    size="cover"
+    size="xl"
   >
     <Portal>
       <Dialog.Backdrop />

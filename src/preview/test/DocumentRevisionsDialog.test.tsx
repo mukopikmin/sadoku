@@ -8,12 +8,14 @@ import {
   within,
 } from "./testUtils";
 import { DocumentRevisionsDialog } from "../components/DocumentRevisionsDialog";
+import { measureRevisionHighlightLayouts } from "../markdown/useRevisionHighlightLayout";
 
 const recordedAt = "2026-10-22T00:00:00.000Z";
 const props = {
   documentId: 7,
   open: true,
   onOpenChange: vi.fn(),
+  onThemeModeChange: vi.fn(),
   markdown: "# Current\n\n**New content**",
   showHtmlComments: true,
   theme: "default" as const,
@@ -174,8 +176,8 @@ it("keeps the current document visible when there is no saved history", async ()
   expect(await screen.findByText("No saved revisions are available.")).not
     .toBeNull();
   expect(screen.getByRole("heading", { name: "Current" })).not.toBeNull();
-  fireEvent.click(screen.getByRole("combobox", { name: "Revision" }));
-  expect(await screen.findAllByRole("option")).toHaveLength(1);
+  await chooseRevision("Current");
+  expect(screen.getByRole("combobox", { name: "Revision" }).textContent).toBe("Current");
 });
 
 it("shows only Current for a newly initialized file and keeps its first snapshot stored", async () => {
@@ -193,9 +195,13 @@ it("shows only Current for a newly initialized file and keeps its first snapshot
   render(<DocumentRevisionsDialog {...props} />);
   await screen.findByText("No previous revision is available for comparison.");
   fireEvent.click(screen.getByRole("combobox", { name: "Revision" }));
-  const options = await screen.findAllByRole("option");
-  expect(options).toHaveLength(1);
-  expect(options[0].textContent).toBe("Current");
+  await waitFor(() => {
+    const options = screen.getAllByRole("option").filter((option) =>
+      option.closest('[role="listbox"]')
+    );
+    expect(options).toHaveLength(1);
+    expect(options[0].textContent).toBe("Current");
+  });
 });
 
 it("does not fetch while closed and refreshes the list with Current selected when reopened", async () => {
@@ -257,6 +263,7 @@ const selectComparison = async (
   markdown: string,
   saved: string,
   documentPath?: string,
+  showHtmlComments = true,
 ) => {
   vi.stubGlobal(
     "fetch",
@@ -274,6 +281,7 @@ const selectComparison = async (
       {...props}
       markdown="# Live document"
       documentPath={documentPath}
+      showHtmlComments={showHtmlComments}
     />,
   );
   await chooseRevision(/Saved snapshot/);
@@ -343,6 +351,73 @@ it("preserves nested list, table and code highlighting against a saved revision"
   expect(screen.getByText("New child").closest("ins")).not.toBeNull();
   expect(screen.getByRole("table").closest("ins")).not.toBeNull();
   expect((await screen.findByText("new code")).closest("ins")).not.toBeNull();
+});
+
+it("keeps unchanged paragraphs inside loose list items outside revision highlights", async () => {
+  await selectComparison(
+    "- New paragraph\n\n  Kept paragraph\n\n  - Kept child\n  - New child",
+    "- Old paragraph\n\n  Kept paragraph\n\n  - Kept child\n  - Old child",
+  );
+  expect(screen.getByText("New paragraph").closest("ins")).not.toBeNull();
+  expect(screen.getByText("Kept paragraph").closest("ins")).toBeNull();
+  expect(screen.getByText("Kept child").closest("ins")).toBeNull();
+  expect(screen.getByText("New child").closest("ins")).not.toBeNull();
+});
+
+it("joins changed paragraphs across hidden HTML comments", async () => {
+  await selectComparison(
+    "First change\n\n<!-- Kept comment -->\n\nSecond change",
+    "First original\n\n<!-- Kept comment -->\n\nSecond original",
+    undefined,
+    false,
+  );
+  expect(screen.queryByText(/Kept comment/)).toBeNull();
+  const preview = screen.getByText("First change").closest<HTMLElement>(".markdown-preview")!;
+  expect(measureRevisionHighlightLayouts(preview)).toEqual([
+    { kind: "addition", top: 0, bottom: 0 },
+  ]);
+});
+
+it("switches the shared theme without losing the chosen revision or scroll position", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input, init) => {
+      const request = new Request(input, init);
+      return Response.json(
+        request.url.endsWith("/ListDocumentRevisions")
+          ? { revisions: [{ id: "1", recordedAt }] }
+          : {
+              id: "1",
+              recordedAt,
+              markdown: "# Saved",
+              previousMarkdown: "# Older",
+            },
+      );
+    }),
+  );
+  const { rerender } = render(<DocumentRevisionsDialog {...props} />);
+  await chooseRevision(/Saved snapshot/);
+  await screen.findByRole("heading", { name: "Saved" });
+  const content = screen.getByRole("region", { name: "Revision content" });
+  const scrollContainer = content.parentElement!;
+  scrollContainer.scrollTop = 120;
+  fireEvent.change(screen.getByRole("combobox", { name: "Theme" }), {
+    target: { value: "dark" },
+  });
+  expect(props.onThemeModeChange).toHaveBeenCalledWith("dark");
+  rerender(<DocumentRevisionsDialog {...props} theme="dark" />);
+  expect(screen.getByRole("combobox", { name: "Theme" })).toHaveProperty(
+    "value",
+    "dark",
+  );
+  expect(
+    screen.getByRole("combobox", { name: "Revision" }).textContent,
+  ).toMatch(/Saved snapshot/);
+  expect(screen.getByRole("heading", { name: "Saved" })).not.toBeNull();
+  expect(screen.getByRole("region", { name: "Revision content" })).toBe(
+    content,
+  );
+  expect(scrollContainer.scrollTop).toBe(120);
 });
 
 it("compares front matter without shifting body line numbers", async () => {

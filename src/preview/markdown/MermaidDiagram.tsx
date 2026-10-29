@@ -9,9 +9,16 @@ import {
   VisuallyHidden,
 } from "@chakra-ui/react";
 import { Minus, Plus } from "lucide-react";
-import { type RefObject, useLayoutEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Tooltip } from "../components/ui/tooltip";
 import { initializeMermaidPinchZoom } from "./mermaidPinchZoom";
+import { MarkdownThemeContext } from "./MarkdownThemeContext";
 
 const useMermaidZoom = (sourceRef: RefObject<HTMLPreElement | null>) => {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -100,6 +107,7 @@ const MermaidZoomContent = (
 };
 
 export const MermaidDiagram = ({ source }: { source: string }) => {
+  const theme = useContext(MarkdownThemeContext);
   const sourceRef = useRef<HTMLPreElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -115,7 +123,7 @@ export const MermaidDiagram = ({ source }: { source: string }) => {
     >
       <Box className="mermaid-container" py="2">
         <Box position="relative">
-          <pre className="mermaid" ref={sourceRef}>{source}</pre>
+          <pre className="mermaid" key={theme} ref={sourceRef}>{source}</pre>
           <Tooltip content="Zoom Mermaid diagram">
             <Dialog.Trigger asChild>
               <Button
