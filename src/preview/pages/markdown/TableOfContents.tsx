@@ -40,7 +40,10 @@ export const extractTableOfContents = (
     });
 };
 
-export const TableOfContents = ({ markdown }: { markdown: string }) => {
+export const TableOfContents = ({ markdown, variant = "outline" }: {
+  markdown: string;
+  variant?: "outline" | "subtle";
+}) => {
   const items = useMemo(() => extractTableOfContents(markdown), [markdown]);
   const [open, setOpen] = useState(false);
 
@@ -58,7 +61,7 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
               aria-label="Table of contents"
               size="sm"
               type="button"
-              variant="outline"
+              variant={variant}
             >
               <ListIcon aria-hidden="true" />
             </IconButton>

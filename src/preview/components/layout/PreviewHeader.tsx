@@ -84,35 +84,45 @@ export const PreviewHeader = ({
         src={previewPath("/assets/icon-512.png")}
         w="8"
       />
-      {collapsedDocument
-        ? (
-          <Text
-            minW="0"
-            truncate
-            fontWeight="semibold"
-            title={collapsedDocument.title}
-          >
-            {fileUrl
-              ? (
-                <Link href={fileUrl} color="fg">{collapsedDocument.title}</Link>
-              )
-              : collapsedDocument.title}
-          </Text>
-        )
-        : fileUrl
-        ? (
-          <Text as="div" minW="0" truncate title={title}>
-            Previewing{" "}
-            <Link href={fileUrl} color="fg" fontWeight="semibold">
+      <Flex direction="column" gap="1" minW="0" flex="1">
+        {fileUrl
+          ? (
+            <Text as="div" minW="0" truncate title={title}>
+              Previewing{" "}
+              <Link href={fileUrl} color="fg" fontWeight="semibold">
+                {title}
+              </Link>.
+            </Text>
+          )
+          : (
+            <Text minW="0" truncate fontWeight="semibold" title={title}>
               {title}
-            </Link>.
-          </Text>
-        )
-        : (
-          <Text minW="0" truncate fontWeight="semibold" title={title}>
-            {title}
-          </Text>
+            </Text>
+          )}
+        {collapsedDocument && (
+          <Flex
+            as="nav"
+            aria-label="Document navigation"
+            alignItems="center"
+            gap="2"
+            minW="0"
+          >
+            <Text
+              minW="0"
+              truncate
+              color="fg"
+              fontWeight="semibold"
+              title={collapsedDocument.title}
+            >
+              {collapsedDocument.title}
+            </Text>
+            <TableOfContents
+              markdown={collapsedDocument.markdown}
+              variant="subtle"
+            />
+          </Flex>
         )}
+      </Flex>
     </Flex>
     <Flex
       as="nav"
@@ -123,9 +133,6 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
-      {collapsedDocument && (
-        <TableOfContents markdown={collapsedDocument.markdown} />
-      )}
       {connectionLost && (
         <Badge
           colorPalette="red"

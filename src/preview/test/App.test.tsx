@@ -113,8 +113,21 @@ describe("App", () => {
       await header.findByRole("button", { name: "Table of contents" }),
     );
     expect(
-      header.getByRole("link", { name: "Reading guide" }).getAttribute("href"),
+      header.getByRole("link", { name: "guide.md" }).getAttribute("href"),
     ).toBe("file:///tmp/guide.md");
+    const documentNavigation = header.getByRole("navigation", {
+      name: "Document navigation",
+    });
+    expect(within(documentNavigation).getByText("Reading guide")).not.toBeNull();
+    expect(
+      within(documentNavigation).getByRole("button", {
+        name: "Table of contents",
+      }),
+    ).not.toBeNull();
+    expect(
+      within(header.getByRole("navigation", { name: "Application actions" }))
+        .queryByRole("button", { name: "Table of contents" }),
+    ).toBeNull();
     const toc = await screen.findByRole("navigation", {
       name: "Table of contents",
     });
@@ -137,6 +150,8 @@ describe("App", () => {
         .toBeNull()
     );
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
+    expect(header.queryByRole("navigation", { name: "Document navigation" }))
+      .toBeNull();
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
