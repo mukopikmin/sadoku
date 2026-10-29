@@ -21,6 +21,10 @@ export type MermaidOptions = {
   theme?: "dark" | "default";
 };
 
+// Mermaid has shared rendering state. Nested previews must not render the same
+// diagram concurrently or initialize the renderer during another draw.
+let renderQueue: Promise<void> = Promise.resolve();
+
 export const initializeMermaid = async (
   {
     document = globalThis.document,
@@ -31,19 +35,30 @@ export const initializeMermaid = async (
     theme,
   }: MermaidOptions = {},
 ): Promise<void> => {
-  const nodes = Array.from(
-    root.querySelectorAll<HTMLElement>(".mermaid"),
-  ).filter((node) => node.dataset.processed !== "true");
-  if (nodes.length === 0) return;
+  const rendering = renderQueue.then(async () => {
+    const candidates = Array.from(
+      root.querySelectorAll<HTMLElement>(".mermaid"),
+    ).filter((node) => node.dataset.processed !== "true");
+    if (candidates.length === 0) return;
 
-  const { default: mermaid } = await importMermaid();
-  const fontScale = Number(
-    document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
-  ) || 1;
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: theme ?? (prefersDark() ? "dark" : "default"),
-    themeVariables: { fontSize: `${fontScale}rem`, useGradient: false },
+    const { default: mermaid } = await importMermaid();
+    const nodes = candidates.filter((node) => node.isConnected);
+    if (nodes.length === 0) return;
+    const fontScale = Number(
+      document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
+    ) || 1;
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: theme ?? (prefersDark() ? "dark" : "default"),
+      themeVariables: { fontSize: `${fontScale}rem`, useGradient: false },
+    });
+    try {
+      await mermaid.run({ nodes });
+    } catch (error) {
+      // Switching views can remove a preview while its async draw is running.
+      if (nodes.some((node) => node.isConnected)) throw error;
+    }
   });
-  await mermaid.run({ nodes });
+  renderQueue = rendering.catch(() => {});
+  await rendering;
 };
