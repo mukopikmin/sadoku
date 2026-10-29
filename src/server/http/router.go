@@ -253,10 +253,33 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 			if method == "GET" {
 				operation = "GetGitHubAccount"
 			}
+		case "global-instructions":
+			if method == "GET" {
+				operation = "ListGlobalInstructions"
+			}
+			if method == "POST" {
+				operation = "CreateGlobalInstruction"
+				status = 201
+			}
 		case "tags":
 			if method == "GET" {
 				operation = "ListTags"
 			}
+		}
+	}
+	if len(parts) == 2 && parts[0] == "global-instructions" {
+		n, err := parseRESTResourceID(parts[1])
+		if err != nil || u.PositiveID(n) != nil {
+			respondError(w, u.Fail("not_found", "Instruction not found."))
+			return
+		}
+		input.InstructionID = session.ID(n)
+		if method == "PUT" {
+			operation = "UpdateGlobalInstruction"
+		}
+		if method == "DELETE" {
+			operation = "DeleteGlobalInstruction"
+			status = 204
 		}
 	}
 	if len(parts) == 2 && parts[0] == "tags" {
@@ -364,7 +387,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if operation == "" {
-		known := len(parts) > 0 && (parts[0] == "settings" || parts[0] == "tags" || parts[0] == "documents" || parts[0] == "github-account" || parts[0] == "directory-status")
+		known := len(parts) > 0 && (parts[0] == "global-instructions" || parts[0] == "settings" || parts[0] == "tags" || parts[0] == "documents" || parts[0] == "github-account" || parts[0] == "directory-status")
 		if known {
 			textError(w, "Method not allowed.", 405)
 		} else {

@@ -24,6 +24,9 @@ func validate(o Options) error {
 		}
 		return n, nil
 	}
+	if o.Flags["global"] && word(0) != "instruction" {
+		return usageError("--global is only accepted by instruction commands.")
+	}
 	if (o.Flags["create"] || has("title")) && !(word(0) == "document" && word(1) == "add") {
 		return usageError("--create and --title are only accepted by document add.")
 	}
@@ -171,7 +174,11 @@ func validate(o Options) error {
 		if has("body") || has("comment") || has("start-line") || has("end-line") || o.Flags["as-bot"] || o.Flags["ensure-document"] || o.Flags["request-review"] {
 			return usageError("%s commands do not accept comment options or --ensure-document.", kind)
 		}
-		if err := target(); err != nil {
+		if o.Flags["global"] {
+			if has("document") || has("source") {
+				return usageError("Specify exactly one of --global, --document, or --source.")
+			}
+		} else if err := target(); err != nil {
 			return err
 		}
 		if word(1) == "list" && len(o.Words) == 2 {

@@ -10,8 +10,9 @@ import {
   Separator,
   Text,
 } from "@chakra-ui/react";
-import { Database, RefreshCw, Settings, Tag } from "lucide-react";
+import { Database, RefreshCw, ScrollText, Settings, Tag } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
+import { Tooltip } from "../ui/tooltip";
 import { TableOfContents } from "../../pages/markdown/TableOfContents";
 
 export const PreviewShell = ({ children, headerRef }: {
@@ -51,6 +52,8 @@ type PreviewHeaderProps = {
   collapsedDocument?: { title: string; markdown: string };
   connectionLost: boolean;
   fileUrl?: string;
+  globalInstructionsTriggerRef?: RefObject<HTMLButtonElement | null>;
+  onOpenGlobalInstructions: () => void;
   headerRef?: RefObject<HTMLDivElement | null>;
   onReloadPreview: () => void;
   onOpenTags: () => void;
@@ -66,6 +69,8 @@ export const PreviewHeader = ({
   collapsedDocument,
   connectionLost,
   fileUrl,
+  globalInstructionsTriggerRef,
+  onOpenGlobalInstructions,
   headerRef,
   onReloadPreview,
   onOpenSettings,
@@ -147,6 +152,18 @@ export const PreviewHeader = ({
       >
         <Tag aria-hidden="true" />
       </IconButton>
+      <Tooltip content="Global instructions">
+        <IconButton
+          aria-label="Open global instructions"
+          onClick={onOpenGlobalInstructions}
+          ref={globalInstructionsTriggerRef}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <ScrollText aria-hidden="true" />
+        </IconButton>
+      </Tooltip>
       <IconButton
         aria-label="Open database statistics"
         onClick={onOpenStatistics}
