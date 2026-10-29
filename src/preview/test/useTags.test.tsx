@@ -16,76 +16,93 @@ afterEach(() => {
 });
 
 const tag = { backgroundColor: "#123456", id: 7, name: "reviewed" };
+const keys = [
+  tagsQueryKey,
+  documentsQueryKey,
+  previewDocumentQueryKey(42),
+  previewDocumentQueryKey(8),
+];
+
+const setup = () => {
+  const client = createPreviewQueryClient();
+  for (const key of keys) client.setQueryData(key, "cached");
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  const invalidated = () =>
+    keys.map((key) => client.getQueryState(key)?.isInvalidated);
+  return { wrapper, invalidated };
+};
 
 describe("tag hooks", () => {
   it.each([
     {
-      name: "update-all",
+      operation: "update",
       useAction: () => {
         const mutation = useUpdateTag();
-        return async () => {
-          await mutation.mutateAsync(tag);
-        };
+        return () => mutation.mutateAsync(tag);
       },
-      response: () => Response.json(tag),
-      previewKey: ["preview-document"],
+      response: tag,
+      allPreviews: true,
     },
     {
-      name: "replace-document-42",
+      operation: "replace",
       useAction: () => {
-        const mutation = useTagActions(42);
-        return async () => {
-          await mutation.replace([{ id: tag.id }]);
-        };
+        const actions = useTagActions(42);
+        return () => actions.replace([{ id: tag.id }]);
       },
-      response: () => Response.json([tag]),
-      previewKey: previewDocumentQueryKey(42),
+      response: [tag],
+      allPreviews: false,
     },
     {
-      name: "delete-all",
+      operation: "delete",
       useAction: () => {
         const mutation = useDeleteTag();
-        return async () => {
-          await mutation.mutateAsync(7);
-        };
+        return () => mutation.mutateAsync(tag.id);
       },
-      response: () => new Response(null, { status: 204 }),
-      previewKey: ["preview-document"],
+      response: undefined,
+      allPreviews: true,
     },
   ])(
-    "refreshes dependent caches only after successful $name",
-    async ({ name, useAction, response, previewKey }) => {
-      const fetchMock = vi.fn(async () => response());
-      vi.stubGlobal("fetch", fetchMock);
-      const queryClient = createPreviewQueryClient();
-      const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-      const wrapper = ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+    "$operation invalidates tags, documents, and the affected previews",
+    async ({ operation, useAction, response, allPreviews }) => {
+      const fetchMock = vi.fn(async () =>
+        response === undefined
+          ? new Response(null, { status: 204 })
+          : Response.json(response)
       );
-      const { result } = renderHook(useAction, { wrapper });
+      vi.stubGlobal("fetch", fetchMock);
+      const { wrapper, invalidated } = setup();
+      const { result } = renderHook<() => Promise<unknown>, unknown>(
+        useAction,
+        { wrapper },
+      );
 
       await act(() => result.current());
 
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: tagsQueryKey });
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: documentsQueryKey });
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: previewKey });
-      if (name === "delete-all") {
+      expect(invalidated()).toEqual([true, true, true, allPreviews]);
+      if (operation === "delete") {
         expect(fetchMock).toHaveBeenCalledWith("/__sadoku/tags/7", {
           method: "DELETE",
         });
-        invalidate.mockClear();
-        fetchMock.mockImplementation(async () =>
-          new Response("Could not delete tag.", { status: 500 })
-        );
-        await act(async () => {
-          await expect(result.current()).rejects.toThrow(
-            "Could not delete tag.",
-          );
-        });
-        expect(invalidate).not.toHaveBeenCalled();
       }
     },
   );
+
+  it("leaves every tag consumer valid when deletion fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("Could not delete tag.", { status: 500 })),
+    );
+    const { wrapper, invalidated } = setup();
+    const { result } = renderHook(() => useDeleteTag(), { wrapper });
+
+    await act(async () => {
+      await expect(result.current.mutateAsync(tag.id)).rejects.toThrow(
+        "Could not delete tag.",
+      );
+    });
+
+    expect(invalidated()).toEqual([false, false, false, false]);
+  });
 });

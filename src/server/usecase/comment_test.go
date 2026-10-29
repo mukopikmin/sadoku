@@ -97,6 +97,8 @@ func TestLegacyCommentSearchBoundaries(t *testing.T) {
 		stale                     bool
 	}{
 		{"unchanged", "# Title\n\nBody\n", "Body", 3, 3, 3, false},
+		{"single-line moved", "# Title\n\ninserted\nBody\n", "Body", 3, 3, 4, false},
+		{"single-line ambiguous", "Body\nBody\n", "Body", 3, 3, 3, true},
 		{"multi-line moved", "intro\nalpha\nbeta\noutro", "alpha\nbeta", 1, 2, 2, false},
 		{"ambiguous range", "alpha\nbeta\nchanged\nalpha\nbeta", "alpha\nbeta", 1, 2, 1, true},
 		{"deleted", "# Title\n\nremoved\n", "Body", 3, 3, 3, true},

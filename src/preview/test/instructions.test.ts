@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createInstruction,
   deleteInstruction,
@@ -6,52 +6,75 @@ import {
   updateInstruction,
 } from "../api/instructions";
 
+beforeEach(() => vi.stubGlobal("__sadokuConnectTestFetch", undefined));
 afterEach(() => vi.unstubAllGlobals());
 
+const instruction = {
+  id: 2,
+  content: "Instruction",
+  createdAt: "created",
+  updatedAt: "updated",
+};
+
+const requestFrom = (fetchMock: ReturnType<typeof vi.fn>) => {
+  expect(fetchMock).toHaveBeenCalledOnce();
+  const [input, init] = fetchMock.mock.calls[0];
+  const request = new Request(input, init);
+  expect(request.method).toBe("POST");
+  return request;
+};
+
 describe("instruction API", () => {
-  it("loads and validates document instructions", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        Response.json({
-          instructions: [{
-            id: 1,
-            content: "Keep APIs stable.",
-            createdAt: "created",
-            updatedAt: "updated",
-          }],
-        }),
-      ),
+  it("loads and converts document instructions through Connect", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ instructions: [{ ...instruction, id: "2" }] })
     );
-    await expect(loadInstructions(7)).resolves.toEqual([{
-      id: 1,
-      content: "Keep APIs stable.",
-      createdAt: "created",
-      updatedAt: "updated",
-    }]);
-    expect(fetch).toHaveBeenCalledWith("/__sadoku/documents/7/instructions");
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(loadInstructions(7)).resolves.toEqual([instruction]);
+
+    const request = requestFrom(fetchMock);
+    expect(new URL(request.url).pathname).toBe(
+      "/sadoku.preview.v1.PreviewService/ListInstructions",
+    );
+    expect(await request.json()).toEqual({ documentId: "7" });
   });
 
-  it("uses the document instruction CRUD endpoints", async () => {
-    const instruction = {
-      id: 2,
-      content: "Instruction",
-      createdAt: "created",
-      updatedAt: "updated",
-    };
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(Response.json(instruction, { status: 201 }))
-      .mockResolvedValueOnce(Response.json(instruction))
-      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+  it.each([
+    {
+      method: "CreateInstruction",
+      invoke: () => createInstruction(7, instruction.content),
+      body: { documentId: "7", content: instruction.content },
+      result: instruction,
+    },
+    {
+      method: "UpdateInstruction",
+      invoke: () => updateInstruction(7, instruction.id, instruction.content),
+      body: {
+        documentId: "7",
+        instructionId: "2",
+        content: instruction.content,
+      },
+      result: instruction,
+    },
+    {
+      method: "DeleteInstruction",
+      invoke: () => deleteInstruction(7, instruction.id),
+      body: { documentId: "7", instructionId: "2" },
+      result: undefined,
+    },
+  ])("uses the $method RPC and document-scoped payload", async (test) => {
+    const fetchMock = vi.fn(async () =>
+      Response.json(test.result ? { ...test.result, id: "2" } : {})
+    );
     vi.stubGlobal("fetch", fetchMock);
-    await createInstruction(7, "Instruction");
-    await updateInstruction(7, 2, "Instruction");
-    await deleteInstruction(7, 2);
-    expect(fetchMock.mock.calls.map(([url, options]) => [url, options.method]))
-      .toEqual([
-        ["/__sadoku/documents/7/instructions", "POST"],
-        ["/__sadoku/documents/7/instructions/2", "PUT"],
-        ["/__sadoku/documents/7/instructions/2", "DELETE"],
-      ]);
+
+    await expect(test.invoke()).resolves.toEqual(test.result);
+
+    const request = requestFrom(fetchMock);
+    expect(new URL(request.url).pathname).toBe(
+      "/sadoku.preview.v1.PreviewService/" + test.method,
+    );
+    expect(await request.json()).toEqual(test.body);
   });
 });

@@ -147,9 +147,9 @@ jobs:
       - name: Build client assets
         run: make build-client
 
-      - name: Test repository tooling
+      - name: Test workflow action
         if: runner.os == 'Linux'
-        run: make test-tools
+        run: make test-actions
 
       - name: Check Go formatting
         if: runner.os == 'Linux'
