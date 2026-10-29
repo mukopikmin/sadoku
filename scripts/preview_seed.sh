@@ -114,10 +114,53 @@ awk '
     next
   }
   $0 == "- Edit this line to confirm document-scoped hot reload works." { next }
+  $0 == "Reviewers authenticate with workspace API keys." {
+    print "Reviewers authenticate with OAuth for each review session."
+    next
+  }
+  $0 == "API keys expire after 30 days and are rotated manually." {
+    print "Access tokens expire after 60 minutes and are refreshed automatically."
+    next
+  }
+  $0 == "| Authentication | API key |" {
+    print "| Authentication | OAuth |"
+    next
+  }
+  $0 == "| Lifetime | 30 days |" {
+    print "| Lifetime | 60 minutes |"
+    next
+  }
+  $0 == "const authentication = \"api-key\";" {
+    print "const authentication = \"oauth\";"
+    next
+  }
+  $0 == "const tokenLifetime = \"30d\";" {
+    print "const tokenLifetime = \"60m\";"
+    next
+  }
+  $0 == "  Request --> APIKey[API key]" {
+    print "  Request --> OAuth[OAuth token]"
+    next
+  }
+  $0 == "  APIKey --> Review[Review]" {
+    print "  OAuth --> Review[Review]"
+    next
+  }
+  $0 == "Legacy API keys may be reused across review sessions." { next }
+  $0 == "Review decisions are saved with the document." {
+    print "Each review session receives its own short-lived token."
+    print ""
+    print "Reviewers sign in again when their token expires."
+    print ""
+  }
   { print }
 ' "$changes" > "$changes.updated"
 mv "$changes.updated" "$changes"
 sadoku comment list --source "$changes" >/dev/null
+add_comment "$changes" 'Reviewers authenticate with OAuth for each review session.' \
+  'Changed paragraph: turn on Changes and check that the comment outline remains distinct from the added-content background.'
+add_comment "$changes" '| Authentication | OAuth |' \
+  'Changed table: compare the old and new settings while reviewing this comment.' --as-bot
 
 archived="$documents/guides/overview.md"
 add_comment "$archived" 'This document is a first-level nested fixture for directory preview mode.' \
