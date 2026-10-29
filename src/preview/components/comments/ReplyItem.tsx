@@ -80,7 +80,8 @@ export const ReplyItem = ({
       pl="2"
       pr="1"
       position="relative"
-      py="1"
+      pb="1"
+      pt="2"
     >
       <Icon
         asChild
@@ -100,7 +101,7 @@ export const ReplyItem = ({
           color="fg.muted"
           fontSize="xs"
           fontWeight="semibold"
-          my="2"
+          mb="2"
           pr="8"
         >
           <Badge colorPalette="purple" variant="subtle">Bot</Badge>
