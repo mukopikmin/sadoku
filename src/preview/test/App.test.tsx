@@ -250,6 +250,14 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByRole("treeitem", { name: "guide.md" }));
     await screen.findByRole("heading", { name: "Reading guide" });
+    const titleActions = within(
+      screen.getByRole("region", { name: "Document header" }),
+    ).getByRole("group", { name: "Document title actions" });
+    expect(within(titleActions).getByRole("button", { name: "Edit title" }))
+      .not.toBeNull();
+    expect(
+      within(titleActions).getByRole("button", { name: "Table of contents" }),
+    ).not.toBeNull();
     const header = within(screen.getByRole("banner"));
     expect(header.queryByRole("button", { name: "Table of contents" }))
       .toBeNull();
@@ -716,7 +724,12 @@ describe("App", () => {
     const documentHeader = screen.getByRole("region", {
       name: "Document header",
     });
-    const tableOfContentsButton = within(documentHeader).getByRole("button", {
+    const titleActions = within(documentHeader).getByRole("group", {
+      name: "Document title actions",
+    });
+    expect(within(titleActions).getByRole("button", { name: "Set title" }))
+      .not.toBeNull();
+    const tableOfContentsButton = within(titleActions).getByRole("button", {
       name: "Table of contents",
     });
     expect(

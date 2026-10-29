@@ -78,9 +78,9 @@ export const DocumentPreviewPage = (
               key={documentId}
               documentId={documentId}
               title={document.displayTitle}
+              trailingAction={<TableOfContents markdown={document.markdown} />}
             />
           </Box>
-          <TableOfContents markdown={document.markdown} />
         </Flex>
       )}
       <DocumentActionBar
