@@ -18,6 +18,9 @@ export const DocumentDiffBlock = ({
     position="relative"
     ps="3"
     css={{
+      [`& + .document-diff-${kind} > [data-diff-marker]`]: {
+        display: "none",
+      },
       [`&:has(+ .document-diff-${kind})::after`]: {
         content: '""',
         position: "absolute",
@@ -34,6 +37,7 @@ export const DocumentDiffBlock = ({
   >
     <Box
       as="span"
+      data-diff-marker=""
       aria-hidden="true"
       position="absolute"
       insetInlineStart="0"
