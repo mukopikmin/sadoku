@@ -95,13 +95,13 @@ describe("MermaidDiagram", () => {
       within(dialog).getByRole("button", { name: "Zoom in Mermaid diagram" }),
     );
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
-      "1500px",
+      "500px",
     );
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Zoom out Mermaid diagram" }),
     );
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
-      "1200px",
+      "400px",
     );
     expect(pinch(viewport, 0.5).defaultPrevented).toBe(true);
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
@@ -111,7 +111,7 @@ describe("MermaidDiagram", () => {
       within(dialog).getByRole("button", { name: "Zoom out Mermaid diagram" }),
     );
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
-      "480px",
+      "160px",
     );
     fireEvent.click(
       within(dialog).getByRole("button", {
