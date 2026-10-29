@@ -8,7 +8,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const createViewport = (diagramWidth = 200, diagramHeight = 100) => {
+const createViewport = (diagramWidth = 400, diagramHeight = 200) => {
   const viewport = document.createElement("div");
   viewport.innerHTML =
     `<svg viewBox="0 0 ${diagramWidth} ${diagramHeight}"></svg>`;
@@ -59,7 +59,8 @@ const doubleScaleDelta = -Math.log(2) / 0.01;
 
 describe("Mermaid zoom dialog trackpad pinch zoom", () => {
   it.each([
-    [200, 100, 240, 120],
+    [200, 100, 200, 100],
+    [240, 120, 240, 120],
     [100, 1000, 14, 140],
     [1000, 100, 240, 24],
   ])(
@@ -72,6 +73,24 @@ describe("Mermaid zoom dialog trackpad pinch zoom", () => {
       expect(viewport.scrollTop).toBe(0);
     },
   );
+
+  it("allows manual zoom beyond natural size and resets to natural size", () => {
+    const { viewport, controller } = createViewport(200, 100);
+    pinch(viewport, doubleScaleDelta);
+    expect(diagramSize(viewport)).toEqual({ width: 400, height: 200 });
+    controller.fit();
+    expect(diagramSize(viewport)).toEqual({ width: 200, height: 100 });
+    expect(viewport.scrollLeft).toBe(0);
+    expect(viewport.scrollTop).toBe(0);
+  });
+
+  it("caps the fitted size when the viewport grows beyond natural size", () => {
+    const { viewport, resize } = createViewport();
+    resize(800, 600);
+    expect(diagramSize(viewport)).toEqual({ width: 400, height: 200 });
+    resize(160, 200);
+    expect(diagramSize(viewport)).toEqual({ width: 160, height: 80 });
+  });
 
   it("zooms in and out relative to the fitted diagram", () => {
     const { viewport } = createViewport();
@@ -92,6 +111,36 @@ describe("Mermaid zoom dialog trackpad pinch zoom", () => {
     pinch(viewport, doubleScaleDelta);
     expect(viewport.scrollLeft).toBeCloseTo(200);
     expect(viewport.scrollTop).toBeCloseTo(110);
+  });
+
+  it("zooms with controls around the viewed center, including after scrolling", () => {
+    const { viewport, controller } = createViewport();
+    controller.zoomIn();
+    expect(diagramSize(viewport)).toEqual({ width: 300, height: 150 });
+    expect(viewport.scrollLeft).toBeCloseTo(30);
+    expect(viewport.scrollTop).toBeCloseTo(5);
+
+    viewport.scrollLeft = 45;
+    viewport.scrollTop = 10;
+    controller.zoomIn();
+    expect(viewport.scrollLeft).toBeCloseTo(86.25);
+    expect(viewport.scrollTop).toBeCloseTo(30);
+    controller.zoomOut();
+    expect(diagramSize(viewport)).toEqual({ width: 300, height: 150 });
+    expect(viewport.scrollLeft).toBeCloseTo(45);
+    expect(viewport.scrollTop).toBeCloseTo(10);
+  });
+
+  it("applies the same zoom limits to controls and resets with fit", () => {
+    const { viewport, controller } = createViewport();
+    for (let i = 0; i < 12; i++) controller.zoomIn();
+    expect(diagramSize(viewport)).toEqual({ width: 960, height: 480 });
+    for (let i = 0; i < 24; i++) controller.zoomOut();
+    expect(diagramSize(viewport)).toEqual({ width: 60, height: 30 });
+    expect(viewport.scrollLeft).toBe(0);
+    expect(viewport.scrollTop).toBe(0);
+    controller.fit();
+    expect(diagramSize(viewport)).toEqual({ width: 240, height: 120 });
   });
 
   it("leaves ordinary scrolling and pinches outside the viewport untouched", () => {

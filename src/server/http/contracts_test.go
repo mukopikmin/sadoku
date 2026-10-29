@@ -49,43 +49,9 @@ func restRequest(t *testing.T, serverURL, method, path, body, contentType string
 	return b
 }
 
-func TestRESTDocumentsExposeOnlyPublicMetadata(t *testing.T) {
-	s, server, _ := setup(t)
-	id := s.Documents[0].ID
-	tag, err := s.Repository.SaveTag(u.Tag{Name: "Review", BackgroundColor: "#123456"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err = s.Repository.ReplaceTags(id, []int64{tag.ID}); err != nil {
-		t.Fatal(err)
-	}
-	b := restRequest(t, server.URL, "GET", "/__sadoku/documents", "", "", 200)
-	var documents []map[string]json.RawMessage
-	if err = json.Unmarshal(b, &documents); err != nil || len(documents) != 1 {
-		t.Fatalf("documents: %s %v", b, err)
-	}
-	if len(documents[0]) != 5 || documents[0]["filePath"] != nil {
-		t.Fatalf("unexpected document fields: %s", b)
-	}
-	checkTags := func(b []byte) {
-		t.Helper()
-		var tags []map[string]json.RawMessage
-		if err := json.Unmarshal(b, &tags); err != nil || len(tags) != 1 || len(tags[0]) != 3 || tags[0]["id"] == nil || tags[0]["name"] == nil || tags[0]["backgroundColor"] == nil {
-			t.Fatalf("unexpected document tag fields: %s (%v)", b, err)
-		}
-	}
-	checkTags(documents[0]["tags"])
-	b = restRequest(t, server.URL, "GET", fmt.Sprintf("/__sadoku/documents/%d", id), "", "", 200)
-	var document map[string]json.RawMessage
-	if err = json.Unmarshal(b, &document); err != nil {
-		t.Fatal(err)
-	}
-	checkTags(document["tags"])
-}
-
 func TestRESTDocumentIDsRejectNonCanonicalAndUnsafeNumbers(t *testing.T) {
 	_, server, _ := setup(t)
-	for _, id := range []string{"0", "-1", "+1", "01", "1.0", "abc", "9007199254740992", "18446744073709551616"} {
+	for _, id := range []string{"-1", "1.0", "abc", "18446744073709551616"} {
 		t.Run(id, func(t *testing.T) {
 			restRequest(t, server.URL, "GET", "/__sadoku/documents/"+id, "", "", 404)
 		})

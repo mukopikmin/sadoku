@@ -85,24 +85,41 @@ describe("MermaidDiagram", () => {
       "0 0 200 100",
     );
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
-      "600px",
+      "200px",
     );
     expect(pinch(viewport).defaultPrevented).toBe(true);
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
-      "1200px",
+      "400px",
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Zoom in Mermaid diagram" }),
+    );
+    expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "500px",
+    );
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Zoom out Mermaid diagram" }),
+    );
+    expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "400px",
     );
     expect(pinch(viewport, 0.5).defaultPrevented).toBe(true);
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
-      "600px",
+      "200px",
     );
-    pinch(viewport);
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Zoom out Mermaid diagram" }),
+    );
+    expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
+      "160px",
+    );
     fireEvent.click(
       within(dialog).getByRole("button", {
         name: "Fit Mermaid diagram to view",
       }),
     );
     expect(viewport.style.getPropertyValue("--mermaid-pinch-width")).toBe(
-      "600px",
+      "200px",
     );
     expect(viewport.scrollLeft).toBe(0);
     expect(viewport.scrollTop).toBe(0);
@@ -133,7 +150,7 @@ describe("MermaidDiagram", () => {
     fireEvent.click(trigger);
     const reopened = await screen.findByRole("dialog");
     expect(reopened.querySelector<HTMLElement>(".mermaid-zoom-scroller")!
-      .style.getPropertyValue("--mermaid-pinch-width")).toBe("600px");
+      .style.getPropertyValue("--mermaid-pinch-width")).toBe("200px");
   });
 
   it("uses the standard Escape behavior", async () => {

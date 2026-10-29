@@ -226,8 +226,8 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 						}
 						createdAt = comment.CreatedAt
 					}
-					if response.Code != expected.Status || strings.ToLower(response.Header().Get("Content-Type")) != expected.ContentType || (response.Header().Get("Cache-Control") != expected.CacheControl && !(expected.CacheControl == "" && response.Header().Get("Cache-Control") == "no-store")) {
-						t.Errorf("metadata: got %d %q %q; want %d %q %q", response.Code, response.Header().Get("Content-Type"), response.Header().Get("Cache-Control"), expected.Status, expected.ContentType, expected.CacheControl)
+					if response.Code != expected.Status || strings.ToLower(response.Header().Get("Content-Type")) != expected.ContentType || response.Header().Get("Cache-Control") != "no-store" {
+						t.Errorf("metadata: got %d %q %q; want %d %q %q", response.Code, response.Header().Get("Content-Type"), response.Header().Get("Cache-Control"), expected.Status, expected.ContentType, "no-store")
 					}
 					if expected.JSON != nil {
 						var got, want any

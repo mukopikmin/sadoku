@@ -7,15 +7,21 @@ import {
   IconButton,
   Image,
   Link,
+  Separator,
   Text,
 } from "@chakra-ui/react";
 import { Database, RefreshCw, ScrollText, Settings, Tag } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 import { Tooltip } from "../ui/tooltip";
+import { TableOfContents } from "../../pages/markdown/TableOfContents";
 
-export const PreviewShell = ({ children }: { children: ReactNode }) => (
+export const PreviewShell = ({ children, headerRef }: {
+  children: ReactNode;
+  headerRef?: RefObject<HTMLDivElement | null>;
+}) => (
   <Flex
     as="header"
+    ref={headerRef}
     position="sticky"
     top="0"
     zIndex="10"
@@ -43,10 +49,12 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 );
 
 type PreviewHeaderProps = {
+  collapsedDocument?: { title: string; markdown: string };
   connectionLost: boolean;
   fileUrl?: string;
   globalInstructionsTriggerRef?: RefObject<HTMLButtonElement | null>;
   onOpenGlobalInstructions: () => void;
+  headerRef?: RefObject<HTMLDivElement | null>;
   onReloadPreview: () => void;
   onOpenTags: () => void;
   onOpenSettings: () => void;
@@ -58,10 +66,12 @@ type PreviewHeaderProps = {
 };
 
 export const PreviewHeader = ({
+  collapsedDocument,
   connectionLost,
   fileUrl,
   globalInstructionsTriggerRef,
   onOpenGlobalInstructions,
+  headerRef,
   onReloadPreview,
   onOpenSettings,
   onOpenStatistics,
@@ -71,7 +81,7 @@ export const PreviewHeader = ({
   tagsTriggerRef,
   title,
 }: PreviewHeaderProps) => (
-  <PreviewShell>
+  <PreviewShell headerRef={headerRef}>
     <Flex alignItems="center" flex="1 1 16rem" gap="3" minW="0">
       <Image
         alt="Sadoku"
@@ -80,16 +90,33 @@ export const PreviewHeader = ({
         src={previewPath("/assets/icon-512.png")}
         w="8"
       />
-      {fileUrl
-        ? (
-          <Text as="div" minW="0">
-            Previewing{" "}
-            <Link href={fileUrl} color="fg" fontWeight="semibold">
+      <Flex direction="column" gap="1" minW="0" flex="1">
+        {fileUrl
+          ? (
+            <Text as="div" minW="0" truncate title={title}>
+              Previewing{" "}
+              <Link href={fileUrl} color="fg" fontWeight="semibold">
+                {title}
+              </Link>.
+            </Text>
+          )
+          : (
+            <Text minW="0" truncate fontWeight="semibold" title={title}>
               {title}
-            </Link>.
+            </Text>
+          )}
+        {collapsedDocument && (
+          <Text
+            minW="0"
+            truncate
+            color="fg"
+            fontWeight="semibold"
+            title={collapsedDocument.title}
+          >
+            {collapsedDocument.title}
           </Text>
-        )
-        : <Text fontWeight="semibold">{title}</Text>}
+        )}
+      </Flex>
     </Flex>
     <Flex
       as="nav"
@@ -100,6 +127,12 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
+      {collapsedDocument && (
+        <Flex alignItems="center" gap="3" flexShrink="0">
+          <TableOfContents markdown={collapsedDocument.markdown} />
+          <Separator orientation="vertical" h="6" borderColor="border.muted" />
+        </Flex>
+      )}
       {connectionLost && (
         <Badge
           colorPalette="red"
