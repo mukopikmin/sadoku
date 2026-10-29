@@ -65,7 +65,7 @@ export const DocumentInstructionsDialog = (
                     variant="outline"
                     onClick={onOpenGlobalInstructions}
                   >
-                    Manage global instructions in Settings
+                    Manage global instructions
                   </Button>
                 )}
                 <Text fontWeight="semibold">This document</Text>

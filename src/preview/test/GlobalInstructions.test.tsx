@@ -7,19 +7,8 @@ import {
   waitFor,
   within,
 } from "./testUtils";
-import { SettingsDialog } from "../components/SettingsDialog";
+import { GlobalInstructionsDialog } from "../components/GlobalInstructionsDialog";
 import { DocumentInstructionsDialog } from "../components/DocumentInstructionsDialog";
-const settings = {
-  codeWrap: "scroll",
-  theme: "light",
-  showHtmlComments: true,
-  excludedDirectories: [".git", "node_modules"],
-  fontScale: 1,
-  maxDepth: 2,
-  maxFiles: 20,
-  markdownExtensions: [".md"],
-} as const;
-
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -60,13 +49,13 @@ it("shows global guidance separately from editable document instructions", async
     .toHaveLength(1);
   fireEvent.click(
     screen.getByRole("button", {
-      name: "Manage global instructions in Settings",
+      name: "Manage global instructions",
     }),
   );
   expect(manage).toHaveBeenCalledOnce();
 });
 
-it("creates, edits, and deletes shared guidance from Settings", async () => {
+it("creates, edits, and deletes shared guidance in its own dialog", async () => {
   let instructions: ReturnType<typeof note>[] = [];
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -86,25 +75,13 @@ it("creates, edits, and deletes shared guidance from Settings", async () => {
   );
   vi.stubGlobal("fetch", fetchMock);
   render(
-    <SettingsDialog
+    <GlobalInstructionsDialog
       open
       onOpenChange={() => {}}
-      settings={{
-        ...settings,
-        excludedDirectories: [...settings.excludedDirectories],
-        markdownExtensions: [...settings.markdownExtensions],
-      }}
-      onCodeWrapModeChange={() => {}}
-      onDirectoryLimitsChange={() => {}}
-      onExcludedDirectoriesChange={() => {}}
-      onFontScaleChange={() => {}}
-      onMarkdownExtensionsChange={() => {}}
-      onShowHtmlCommentsChange={() => {}}
-      onThemeModeChange={() => {}}
     />,
   );
   const section = within(
-    screen.getByRole("region", { name: "Global instructions" }),
+    screen.getByRole("dialog", { name: "Global instructions" }),
   );
   await section.findByText("No instructions have been added.");
   expect(section.getByText(/Changes affect every document/)).not.toBeNull();

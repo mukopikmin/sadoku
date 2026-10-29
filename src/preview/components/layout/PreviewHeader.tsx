@@ -9,8 +9,9 @@ import {
   Link,
   Text,
 } from "@chakra-ui/react";
-import { Database, RefreshCw, Settings, Tag } from "lucide-react";
+import { Database, RefreshCw, ScrollText, Settings, Tag } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
+import { Tooltip } from "../ui/tooltip";
 
 export const PreviewShell = ({ children }: { children: ReactNode }) => (
   <Flex
@@ -44,6 +45,8 @@ export const PreviewShell = ({ children }: { children: ReactNode }) => (
 type PreviewHeaderProps = {
   connectionLost: boolean;
   fileUrl?: string;
+  globalInstructionsTriggerRef?: RefObject<HTMLButtonElement | null>;
+  onOpenGlobalInstructions: () => void;
   onReloadPreview: () => void;
   onOpenTags: () => void;
   onOpenSettings: () => void;
@@ -57,6 +60,8 @@ type PreviewHeaderProps = {
 export const PreviewHeader = ({
   connectionLost,
   fileUrl,
+  globalInstructionsTriggerRef,
+  onOpenGlobalInstructions,
   onReloadPreview,
   onOpenSettings,
   onOpenStatistics,
@@ -114,6 +119,18 @@ export const PreviewHeader = ({
       >
         <Tag aria-hidden="true" />
       </IconButton>
+      <Tooltip content="Global instructions">
+        <IconButton
+          aria-label="Open global instructions"
+          onClick={onOpenGlobalInstructions}
+          ref={globalInstructionsTriggerRef}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <ScrollText aria-hidden="true" />
+        </IconButton>
+      </Tooltip>
       <IconButton
         aria-label="Open database statistics"
         onClick={onOpenStatistics}

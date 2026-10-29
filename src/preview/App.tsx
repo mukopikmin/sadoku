@@ -28,6 +28,7 @@ import { CreateDocumentDialog } from "./components/CreateDocumentDialog";
 
 export const App = () => {
   const tagsTriggerRef = useRef<HTMLButtonElement>(null);
+  const globalInstructionsTriggerRef = useRef<HTMLButtonElement>(null);
   const {
     documentId: selectedDocumentId,
     isDocumentList,
@@ -74,6 +75,7 @@ export const App = () => {
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
+  const globalInstructionsDisclosure = useDisclosure();
   const memoriesDisclosure = useDisclosure();
   const tagsDisclosure = useDisclosure();
   const documentTagsDisclosure = useDisclosure();
@@ -160,6 +162,8 @@ export const App = () => {
   }, [directoryStatus?.state]);
 
   const dialogProps = {
+    globalInstructions: globalInstructionsDisclosure,
+    globalInstructionsTriggerRef,
     documentInstructions: instructionsDisclosure,
     documentMemories: memoriesDisclosure,
     documentTagsDialog: documentTagsDisclosure,
@@ -172,6 +176,8 @@ export const App = () => {
   };
   const headerActions = {
     connectionLost,
+    onOpenGlobalInstructions: globalInstructionsDisclosure.onOpen,
+    globalInstructionsTriggerRef,
     onOpenSettings: settingsDisclosure.onOpen,
     onOpenStatistics: statisticsDisclosure.onOpen,
     onOpenTags: tagsDisclosure.onOpen,

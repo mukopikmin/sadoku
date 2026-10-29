@@ -47,6 +47,151 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("manages global instructions from the header without a selected document", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/__sadoku/documents") return Response.json([]);
+      if (url === "/__sadoku/directory-status") {
+        return Response.json({ state: "ready" });
+      }
+      if (url === "/__sadoku/global-instructions") {
+        return Response.json({
+          instructions: [
+            {
+              id: 1,
+              content: "Shared review guidance",
+              createdAt: "created",
+              updatedAt: "updated",
+            },
+            {
+              id: 2,
+              content: "Another shared instruction",
+              createdAt: "created",
+              updatedAt: "updated",
+            },
+          ],
+        });
+      }
+      return new Response("Not found.", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    const trigger = await screen.findByRole("button", {
+      name: "Open global instructions",
+    });
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        String(url) === "/__sadoku/global-instructions"
+      ),
+    ).toBe(false);
+    fireEvent.click(trigger);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Global instructions",
+    });
+    expect(await within(dialog).findByText("Shared review guidance")).not
+      .toBeNull();
+    expect(within(dialog).getByText("Another shared instruction")).not
+      .toBeNull();
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Global instructions" }))
+        .toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const settings = await screen.findByRole("dialog", { name: "Settings" });
+    expect(within(settings).queryByText("Global instructions")).toBeNull();
+    expect(within(settings).queryByRole("button", { name: "Add Instruction" }))
+      .toBeNull();
+  });
+
+  it("opens the same global manager from document instructions and returns focus to the header", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Response.json([{
+            id: 1,
+            relativePath: "test.md",
+            title: "test.md",
+          }]);
+        }
+        if (url === "/__sadoku/directory-status") {
+          return Response.json({ state: "ready" });
+        }
+        if (url === "/__sadoku/documents/1") {
+          return Response.json({
+            fileUrl: "file:///tmp/test.md",
+            markdown: "# Test",
+            title: "test.md",
+          });
+        }
+        if (url === "/__sadoku/documents/1/comments") {
+          return Response.json({ comments: [], filePath: "/tmp/test.md" });
+        }
+        if (url === "/__sadoku/documents/1/instructions") {
+          return Response.json({ instructions: [] });
+        }
+        if (url === "/__sadoku/documents/1/memories") {
+          return Response.json({ memories: [] });
+        }
+        if (url === "/__sadoku/global-instructions") {
+          return Response.json({
+            instructions: [
+              {
+                id: 1,
+                content: "Shared review guidance",
+                createdAt: "created",
+                updatedAt: "updated",
+              },
+            ],
+          });
+        }
+        return new Response("Not found.", { status: 404 });
+      }),
+    );
+    render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Instructions" }),
+    );
+    const documentDialog = await screen.findByRole("dialog", {
+      name: "Document instructions",
+    });
+    await within(documentDialog).findByText("Shared review guidance");
+    fireEvent.click(
+      within(documentDialog).getByRole("button", {
+        name: "Manage global instructions",
+      }),
+    );
+    const manager = await screen.findByRole("dialog", {
+      name: "Global instructions",
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Document instructions" }))
+        .toBeNull()
+    );
+    expect(within(manager).getByText("Shared review guidance")).not.toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull();
+    fireEvent.click(
+      within(manager).getByRole("button", {
+        name: "Close global instructions",
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Global instructions" }))
+        .toBeNull()
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Open global instructions" }),
+      )
+    );
+  });
+
   it("opens the tags dialog and restores focus to the header button", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(

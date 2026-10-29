@@ -166,8 +166,8 @@ document-specific background context and are added and updated through the CLI.
 
 Global instructions apply to all documents sharing the same `sadoku.sqlite3`,
 including local files, URLs, and GitHub PR files. Manage them under
-**Settings → Global instructions**, or through the CLI without registering a
-document:
+**Global instructions** in the application header, or through the CLI without
+registering a document:
 
 ```sh
 sadoku instruction list --global
@@ -183,7 +183,8 @@ commands and output remain unchanged. Global instructions are stored separately
 and survive document deletion.
 
 The document instructions dialog shows both global guidance and instructions
-for that document. Apply both; document instructions take precedence when they
+for that document. Choose **Manage global instructions** there to open the same
+management dialog. Apply both; document instructions take precedence when they
 directly conflict with global instructions. Agents must retrieve both scopes;
 Sadoku does not inject instructions into unrelated agent sessions. The
 `sadoku-review` skill retrieves global instructions at the start of a review.

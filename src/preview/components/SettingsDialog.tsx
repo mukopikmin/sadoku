@@ -1,5 +1,4 @@
-import { CloseButton, Dialog, Flex, Portal, Text } from "@chakra-ui/react";
-import { InstructionsPanel } from "./InstructionsPanel";
+import { CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
 import { useRef } from "react";
 import type {
   CodeWrapMode,
@@ -47,20 +46,6 @@ export const SettingsDialog = (
             </Dialog.Header>
             <Dialog.Body>
               <Flex direction="column" gap="4">
-                <Flex
-                  direction="column"
-                  gap="3"
-                  as="section"
-                  aria-label="Global instructions"
-                >
-                  <Text fontWeight="semibold">Global instructions</Text>
-                  <Text color="fg.muted" fontSize="sm">
-                    These instructions apply to all documents in this database.
-                    Changes affect every document. Document instructions take
-                    precedence when they directly conflict.
-                  </Text>
-                  <InstructionsPanel documentId="global" open={open} />
-                </Flex>
                 <GitHubAccountSettings enabled={open} />
                 <AppearanceSettings
                   codeWrapMode={settings.codeWrap}
