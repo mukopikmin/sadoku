@@ -22,9 +22,39 @@ it("measures changed block heights relative to the document regardless of indent
   blocks[2].getBoundingClientRect = () => new DOMRect(70, 240, 770, 50);
 
   expect(measureRevisionHighlightLayouts(preview)).toEqual([
-    { kind: "addition", top: 20, bottom: 50 },
-    { kind: "addition", top: 80, bottom: 120 },
+    { kind: "addition", top: 20, bottom: 120 },
     { kind: "deletion", top: 140, bottom: 190 },
+  ]);
+});
+
+it("connects consecutive changed blocks across gaps but stops at unchanged nested content", () => {
+  const preview = document.createElement("div");
+  preview.innerHTML = `
+    <ins data-revision-block data-revision-kind="addition">Heading</ins>
+    <ins data-revision-block data-revision-kind="addition">Paragraph</ins>
+    <ul>
+      <li><div data-revision-block>Unchanged parent</div>
+        <ul>
+          <li><ins data-revision-block data-revision-kind="addition">Changed child</ins></li>
+          <li><div data-revision-block>Unchanged child</div></li>
+          <li><ins data-revision-block data-revision-kind="addition">Next change</ins></li>
+        </ul>
+      </li>
+    </ul>
+    <del data-revision-block data-revision-kind="deletion">Removed</del>
+  `;
+  preview.getBoundingClientRect = () => new DOMRect(40, 100, 800, 500);
+  preview
+    .querySelectorAll<HTMLElement>("[data-revision-block]")
+    .forEach((block, index) => {
+      block.getBoundingClientRect = () =>
+        new DOMRect(80, 120 + index * 50, 700, 30);
+    });
+  expect(measureRevisionHighlightLayouts(preview)).toEqual([
+    { kind: "addition", top: 20, bottom: 100 },
+    { kind: "addition", top: 170, bottom: 200 },
+    { kind: "addition", top: 270, bottom: 300 },
+    { kind: "deletion", top: 320, bottom: 350 },
   ]);
 });
 
