@@ -713,6 +713,9 @@ describe("App", () => {
     const firstActionBar = await screen.findByRole("dialog", {
       name: "Document actions",
     });
+    expect(screen.getByRole("main").lastElementChild).toBe(
+      screen.getByTestId("action-bar-spacer"),
+    );
     const firstInstructionsButton = within(firstActionBar).getByRole("button", {
       name: "Instructions",
     });
@@ -756,6 +759,9 @@ describe("App", () => {
         .not.toBeNull();
       expect(within(actionBar).getByRole("button", { name: "Revisions" }))
         .not.toBeNull();
+      expect(screen.getByRole("main").lastElementChild).toBe(
+        screen.getByTestId("action-bar-spacer"),
+      );
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull();
     });

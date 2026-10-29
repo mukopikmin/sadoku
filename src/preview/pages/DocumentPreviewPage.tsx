@@ -56,7 +56,7 @@ export const DocumentPreviewPage = (
   const documentPath = selectedDocument?.relativePath ?? document.fileUrl ??
     document.title;
   return (
-    <Container as="main" maxW="980px" px="8" pt="0" pb="16">
+    <Container as="main" maxW="980px" px="8" pt="0" pb="8">
       {documents && selectedDocument && (
         <DocumentBreadcrumb
           document={selectedDocument}
@@ -83,20 +83,6 @@ export const DocumentPreviewPage = (
           </Box>
         </Flex>
       )}
-      <DocumentActionBar
-        instructionCount={instructionCount}
-        memoryCount={memoryCount}
-        onChangeView={onChangeView}
-        onOpenInstructions={onOpenInstructions}
-        onOpenMemories={onOpenMemories}
-        onOpenRevisions={() => setRevisionsOpen(true)}
-        tagCount={document.tags.length}
-        onOpenTags={onOpenTags}
-        tags={document.tags}
-        staleCommentCount={staleCommentCount}
-        unresolvedCommentCount={unresolvedCommentCount}
-        view={view}
-      />
       <DocumentRevisionsDialog
         canRestore={document.canRestore}
         deleted={document.deleted}
@@ -138,6 +124,20 @@ export const DocumentPreviewPage = (
             documentDeleted={document.deleted}
           />
         )}
+      <DocumentActionBar
+        instructionCount={instructionCount}
+        memoryCount={memoryCount}
+        onChangeView={onChangeView}
+        onOpenInstructions={onOpenInstructions}
+        onOpenMemories={onOpenMemories}
+        onOpenRevisions={() => setRevisionsOpen(true)}
+        tagCount={document.tags.length}
+        onOpenTags={onOpenTags}
+        tags={document.tags}
+        staleCommentCount={staleCommentCount}
+        unresolvedCommentCount={unresolvedCommentCount}
+        view={view}
+      />
     </Container>
   );
 };
