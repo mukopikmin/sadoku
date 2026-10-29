@@ -41,7 +41,7 @@ export const CommentSourcePreview = ({ comment }: { comment: Comment }) => {
     >
       {changed && (
         <Flex>
-          <Badge variant="subtle">Changed</Badge>
+          <Badge py="1" variant="subtle">Changed</Badge>
         </Flex>
       )}
       {original !== undefined && (

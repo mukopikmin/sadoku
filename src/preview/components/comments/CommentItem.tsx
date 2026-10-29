@@ -59,13 +59,15 @@ export const CommentItem = ({
             (showState && comment.state !== "active")) && (
             <Flex align="center" gap="1.5" mb="0.5" pr="8">
               {comment.author.type === "bot" && (
-                <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+                <Badge colorPalette="purple" py="1" variant="subtle">Bot</Badge>
               )}
               {showState && comment.state === "resolved" && (
-                <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
+                <Badge colorPalette="yellow" py="1" variant="outline">
+                  Resolved
+                </Badge>
               )}
               {showState && comment.state === "stale" && (
-                <Badge colorPalette="yellow" variant="outline">Stale</Badge>
+                <Badge colorPalette="yellow" py="1" variant="outline">Stale</Badge>
               )}
             </Flex>
           )}
