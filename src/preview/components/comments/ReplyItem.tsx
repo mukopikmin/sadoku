@@ -84,10 +84,11 @@ export const ReplyItem = ({
     >
       <Icon
         asChild
-        color="accent"
+        boxSize="1em"
+        color="border.default"
+        fontSize="comment"
         left="-6"
         position="absolute"
-        size="4"
         top="2"
       >
         <CornerDownRight aria-hidden="true" />
