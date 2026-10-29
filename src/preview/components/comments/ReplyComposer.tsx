@@ -1,4 +1,4 @@
-import { Box, Flex } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { Reply } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { CommentActionButton, CommentForm } from "./CommentForm";
@@ -41,7 +41,7 @@ export const ReplyComposer = ({
   if (!isReplying) {
     return showTrigger
       ? (
-        <Flex align="center" justify="space-between" gap="2" my="2">
+        <Flex align="center" justify="space-between" gap="2">
           <CommentActionButton
             disabled={disabled}
             onClick={() => setIsReplying(true)}
@@ -57,17 +57,15 @@ export const ReplyComposer = ({
   }
 
   return (
-    <Box mt="2">
-      <CommentForm
-        disabled={disabled}
-        onCancel={close}
-        onChange={setDraft}
-        onSubmit={() => void handleSubmit()}
-        placeholder="Write a reply..."
-        submitLabel="Add reply"
-        textareaAriaLabel="Reply body"
-        value={draft}
-      />
-    </Box>
+    <CommentForm
+      disabled={disabled}
+      onCancel={close}
+      onChange={setDraft}
+      onSubmit={() => void handleSubmit()}
+      placeholder="Write a reply..."
+      submitLabel="Add reply"
+      textareaAriaLabel="Reply body"
+      value={draft}
+    />
   );
 };
