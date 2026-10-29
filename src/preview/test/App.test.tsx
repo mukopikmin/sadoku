@@ -405,9 +405,15 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
 
     TestEventSource.instances[0]?.dispatchEvent(new Event("error"));
-    expect((await screen.findByRole("status")).textContent).toContain(
+    const connectionStatus = await screen.findByRole("status");
+    expect(connectionStatus.textContent).toContain("Connection lost");
+    expect(connectionStatus.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    fireEvent.pointerEnter(connectionStatus);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
       "Connection lost",
     );
+    fireEvent.pointerLeave(connectionStatus);
 
     TestEventSource.instances[0]?.dispatchEvent(new Event("open"));
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
