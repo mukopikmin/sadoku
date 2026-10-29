@@ -7,6 +7,7 @@ import {
   IconButton,
   Image,
   Link,
+  Separator,
   Text,
 } from "@chakra-ui/react";
 import { Database, RefreshCw, Settings, Tag } from "lucide-react";
@@ -100,27 +101,15 @@ export const PreviewHeader = ({
             </Text>
           )}
         {collapsedDocument && (
-          <Flex
-            as="nav"
-            aria-label="Document navigation"
-            alignItems="center"
-            gap="2"
+          <Text
             minW="0"
+            truncate
+            color="fg"
+            fontWeight="semibold"
+            title={collapsedDocument.title}
           >
-            <Text
-              minW="0"
-              truncate
-              color="fg"
-              fontWeight="semibold"
-              title={collapsedDocument.title}
-            >
-              {collapsedDocument.title}
-            </Text>
-            <TableOfContents
-              markdown={collapsedDocument.markdown}
-              variant="subtle"
-            />
-          </Flex>
+            {collapsedDocument.title}
+          </Text>
         )}
       </Flex>
     </Flex>
@@ -133,6 +122,12 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
+      {collapsedDocument && (
+        <Flex alignItems="center" gap="3" flexShrink="0">
+          <TableOfContents markdown={collapsedDocument.markdown} />
+          <Separator orientation="vertical" h="6" borderColor="border.muted" />
+        </Flex>
+      )}
       {connectionLost && (
         <Badge
           colorPalette="red"

@@ -105,6 +105,7 @@ describe("App", () => {
     const header = within(screen.getByRole("banner"));
     expect(header.queryByRole("button", { name: "Table of contents" }))
       .toBeNull();
+    expect(header.queryByRole("separator")).toBeNull();
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
 
     documentBottom = 64;
@@ -115,19 +116,19 @@ describe("App", () => {
     expect(
       header.getByRole("link", { name: "guide.md" }).getAttribute("href"),
     ).toBe("file:///tmp/guide.md");
-    const documentNavigation = header.getByRole("navigation", {
-      name: "Document navigation",
+    expect(header.getByText("Reading guide")).not.toBeNull();
+    const applicationActions = header.getByRole("navigation", {
+      name: "Application actions",
     });
-    expect(within(documentNavigation).getByText("Reading guide")).not.toBeNull();
     expect(
-      within(documentNavigation).getByRole("button", {
+      within(applicationActions).getByRole("button", {
         name: "Table of contents",
       }),
     ).not.toBeNull();
     expect(
-      within(header.getByRole("navigation", { name: "Application actions" }))
-        .queryByRole("button", { name: "Table of contents" }),
-    ).toBeNull();
+      within(applicationActions).getByRole("separator")
+        .getAttribute("aria-orientation"),
+    ).toBe("vertical");
     const toc = await screen.findByRole("navigation", {
       name: "Table of contents",
     });
@@ -150,8 +151,8 @@ describe("App", () => {
         .toBeNull()
     );
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
-    expect(header.queryByRole("navigation", { name: "Document navigation" }))
-      .toBeNull();
+    expect(header.queryByText("Reading guide")).toBeNull();
+    expect(header.queryByRole("separator")).toBeNull();
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
