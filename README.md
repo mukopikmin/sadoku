@@ -70,7 +70,7 @@ Run `sadoku --help` for all commands and options.
   buttons or pinch to zoom, scroll to move, and choose **Fit to view** to reset.
 - Toggle **Changes** in the document action bar to compare the rendered document
   with its previous saved snapshot. Removed blocks appear in red before added
-  blocks in green, with `−` and `+` markers. Tables, lists, and code blocks are
+  blocks in green, with colored gutters. Tables, lists, and code blocks are
   compared as whole blocks. Current content remains commentable; removed content
   is read-only. Comment ranges use outlines while changes are shown. The option
   is off initially and unavailable when no comparison data exists. The baseline
