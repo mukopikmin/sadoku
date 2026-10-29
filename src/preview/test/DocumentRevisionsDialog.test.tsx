@@ -15,7 +15,6 @@ const props = {
   documentId: 7,
   open: true,
   onOpenChange: vi.fn(),
-  onThemeModeChange: vi.fn(),
   markdown: "# Current\n\n**New content**",
   showHtmlComments: true,
   theme: "default" as const,
@@ -378,7 +377,7 @@ it("joins changed paragraphs across hidden HTML comments", async () => {
   ]);
 });
 
-it("switches the shared theme without losing the chosen revision or scroll position", async () => {
+it("preserves the chosen revision when the application theme changes without offering a theme control", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input, init) => {
@@ -401,15 +400,9 @@ it("switches the shared theme without losing the chosen revision or scroll posit
   const content = screen.getByRole("region", { name: "Revision content" });
   const scrollContainer = content.parentElement!;
   scrollContainer.scrollTop = 120;
-  fireEvent.change(screen.getByRole("combobox", { name: "Theme" }), {
-    target: { value: "dark" },
-  });
-  expect(props.onThemeModeChange).toHaveBeenCalledWith("dark");
+  expect(screen.queryByRole("combobox", { name: "Theme" })).toBeNull();
   rerender(<DocumentRevisionsDialog {...props} theme="dark" />);
-  expect(screen.getByRole("combobox", { name: "Theme" })).toHaveProperty(
-    "value",
-    "dark",
-  );
+  expect(screen.queryByRole("combobox", { name: "Theme" })).toBeNull();
   expect(
     screen.getByRole("combobox", { name: "Revision" }).textContent,
   ).toMatch(/Saved snapshot/);

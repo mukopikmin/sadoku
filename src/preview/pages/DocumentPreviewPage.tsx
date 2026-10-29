@@ -8,7 +8,7 @@ import { DocumentActionBar } from "../components/DocumentActionBar";
 import { DocumentRevisionsDialog } from "../components/DocumentRevisionsDialog";
 import { DocumentBreadcrumb } from "../components/DocumentBreadcrumb";
 import type { DocumentSummary, PreviewDocument } from "../models/document";
-import type { ResolvedPreviewSettings, ThemeMode } from "../models/theme";
+import type { ResolvedPreviewSettings } from "../models/theme";
 import type { PreviewView } from "../models/previewView";
 
 type Props = {
@@ -23,7 +23,6 @@ type Props = {
   onOpenTags: () => void;
   onSelectDocument: (id: number) => void;
   onSelectDocuments: () => void;
-  onThemeModeChange: (theme: ThemeMode) => void;
   selectedDocument?: DocumentSummary;
   settings: ResolvedPreviewSettings;
   staleCommentCount: number;
@@ -43,7 +42,6 @@ export const DocumentPreviewPage = (
     onOpenTags,
     onSelectDocument,
     onSelectDocuments,
-    onThemeModeChange,
     selectedDocument,
     settings,
     staleCommentCount,
@@ -99,7 +97,6 @@ export const DocumentPreviewPage = (
         key={`revisions-${documentId}`}
         markdown={document.markdown}
         onOpenChange={setRevisionsOpen}
-        onThemeModeChange={onThemeModeChange}
         open={revisionsOpen}
         showHtmlComments={showHtmlComments}
         theme={settings.theme === "dark" ? "dark" : "default"}

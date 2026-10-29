@@ -303,7 +303,6 @@ export const App = () => {
         onSelectDocument={selectDocument}
         onSelectDocuments={selectDocuments}
         selectedDocument={selectedDocument}
-        onThemeModeChange={changeThemeMode}
         settings={settings}
         staleCommentCount={staleCommentCount}
         unresolvedCommentCount={unresolvedCommentCount}

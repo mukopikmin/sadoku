@@ -1,7 +1,6 @@
-import { Flex, IconButton, Switch, Text } from "@chakra-ui/react";
+import { Flex, IconButton, NativeSelect, Switch, Text } from "@chakra-ui/react";
 import type { CodeWrapMode, ThemeMode } from "../../models/theme";
 import { FONT_SCALES, getAdjacentFontScales } from "./settingsValidation";
-import { ThemeSelect } from "./ThemeSelect";
 
 type AppearanceSettingsProps = {
   codeWrapMode: CodeWrapMode;
@@ -29,7 +28,21 @@ export const AppearanceSettings = (
   const { decrease, increase } = getAdjacentFontScales(fontScale);
   return (
     <>
-      <ThemeSelect value={themeMode} onChange={onThemeModeChange} />
+      <Flex alignItems="center" justifyContent="space-between" gap="4">
+        <Text as="label" htmlFor="theme-mode" fontWeight="medium">Theme</Text>
+        <NativeSelect.Root width="40">
+          <NativeSelect.Field
+            id="theme-mode"
+            onChange={(event) =>
+              onThemeModeChange(event.currentTarget.value as ThemeMode)}
+            value={themeMode}
+          >
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </NativeSelect.Field>
+          <NativeSelect.Indicator />
+        </NativeSelect.Root>
+      </Flex>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
         <Text as="div">
           <Text fontWeight="medium">Text size</Text>
