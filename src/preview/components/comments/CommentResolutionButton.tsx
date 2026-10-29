@@ -51,7 +51,7 @@ export const CommentResolutionButton = ({
         void (comment.state === "resolved" ? handleReopen() : handleResolve());
       }}
       type="button"
-      variant={comment.state === "resolved" ? "outline" : "subtle"}
+      variant="outline"
     >
       {comment.state === "resolved"
         ? <RotateCcw aria-hidden="true" />

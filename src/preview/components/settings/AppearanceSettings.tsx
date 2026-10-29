@@ -57,7 +57,7 @@ export const AppearanceSettings = (
           onValueChange={({ items }) => {
             if (items[0]) onThemeModeChange(items[0].value);
           }}
-          positioning={{ strategy: "fixed" }}
+          positioning={{ strategy: "fixed", sameWidth: true }}
           size="sm"
           value={[themeMode]}
           width="40"

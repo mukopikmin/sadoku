@@ -237,7 +237,7 @@ export const CommentList = ({
                     selectedCategory === "resolved" ? "reopen" : "resolve",
                   )}
                 size="sm"
-                variant={selectedCategory === "resolved" ? "outline" : "subtle"}
+                variant="outline"
               >
                 {selectedCategory === "resolved"
                   ? "Reopen selected"
