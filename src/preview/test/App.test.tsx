@@ -339,10 +339,11 @@ describe("App", () => {
     const tagsButton = await screen.findByRole("button", { name: "Open tags" });
     fireEvent.click(tagsButton);
 
-    expect(await screen.findByRole("dialog", { name: "Tags" })).not.toBeNull();
-    fireEvent.keyDown(screen.getByRole("dialog", { name: "Tags" }), {
-      key: "Escape",
-    });
+    const dialog = await screen.findByRole("dialog", { name: "Tags" });
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true)
+    );
+    fireEvent.keyDown(dialog, { key: "Escape" });
 
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Tags" })).toBeNull()
