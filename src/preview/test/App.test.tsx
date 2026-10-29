@@ -200,13 +200,13 @@ describe("App", () => {
     );
   });
 
-  it("integrates the document title and a working table of contents into the header while scrolled", async () => {
-    vi.stubGlobal("EventSource", TestEventSource);
-    const scrollIntoView = vi.fn();
-    HTMLElement.prototype.scrollIntoView = scrollIntoView;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((input: RequestInfo | URL) => {
+  it.each(["Reading guide", undefined, ""])(
+    "integrates the filename, optional title %s, and table of contents into the header while scrolled",
+    async (displayTitle) => {
+      vi.stubGlobal("EventSource", TestEventSource);
+      const scrollIntoView = vi.fn();
+      HTMLElement.prototype.scrollIntoView = scrollIntoView;
+      vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
         if (url === "/__sadoku/documents") {
           return Promise.resolve(Response.json([
@@ -217,7 +217,7 @@ describe("App", () => {
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/guide.md",
             title: "guide.md",
-            displayTitle: "Reading guide",
+            displayTitle,
             markdown: "# Introduction\n\nBody\n\n## Details\n\nMore text",
           }));
         }
@@ -225,98 +225,100 @@ describe("App", () => {
           return Promise.resolve(Response.json({ comments: [] }));
         }
         return Promise.resolve(new Response("Not found.", { status: 404 }));
-      }),
-    );
-    let documentBottom = 180;
-    const originalRect = HTMLElement.prototype.getBoundingClientRect;
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function () {
-        const original = originalRect.call(this);
-        if (this.tagName === "HEADER") {
-          return { ...original, top: 0, bottom: 64, height: 64 };
-        }
-        if (this.getAttribute("aria-label") === "Document header") {
-          return {
-            ...original,
-            top: documentBottom - 100,
-            bottom: documentBottom,
-            height: 100,
-          };
-        }
-        return original;
-      },
-    );
+      }));
+      let documentBottom = 180;
+      const originalRect = HTMLElement.prototype.getBoundingClientRect;
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+        function () {
+          const original = originalRect.call(this);
+          if (this.tagName === "HEADER") {
+            return { ...original, top: 0, bottom: 64, height: 64 };
+          }
+          if (this.getAttribute("aria-label") === "Document header") {
+            return {
+              ...original,
+              top: documentBottom - 100,
+              bottom: documentBottom,
+              height: 100,
+            };
+          }
+          return original;
+        },
+      );
 
-    render(<App />);
-    fireEvent.click(await screen.findByRole("treeitem", { name: "guide.md" }));
-    await screen.findByRole("heading", { name: "Reading guide" });
-    const header = within(screen.getByRole("banner"));
-    expect(header.queryByRole("button", { name: "Table of contents" }))
-      .toBeNull();
-    expect(header.queryByRole("separator")).toBeNull();
-    expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
-
-    documentBottom = 64;
-    fireEvent.scroll(globalThis);
-    fireEvent.click(
-      await header.findByRole("button", { name: "Table of contents" }),
-    );
-    expect(
-      header.getByRole("link", { name: "guide.md" }).getAttribute("href"),
-    ).toBe("file:///tmp/guide.md");
-    expect(header.getByText("Reading guide")).not.toBeNull();
-    const applicationActions = header.getByRole("navigation", {
-      name: "Application actions",
-    });
-    expect(
-      within(applicationActions).getByRole("button", {
-        name: "Table of contents",
-      }),
-    ).not.toBeNull();
-    expect(
-      within(applicationActions).getByRole("separator")
-        .getAttribute("aria-orientation"),
-    ).toBe("vertical");
-    const toc = await screen.findByRole("navigation", {
-      name: "Table of contents",
-    });
-    const details = within(toc).getByRole("link", { name: "Details" });
-    expect(details.getAttribute("href")).toBe("#details");
-    fireEvent.click(details);
-    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
-    expect(scrollIntoView.mock.instances.at(-1)).toBe(
-      screen.getByRole("heading", { name: "Details" }),
-    );
-    await waitFor(() =>
-      expect(screen.queryByRole("navigation", { name: "Table of contents" }))
-        .toBeNull()
-    );
-
-    documentBottom = 180;
-    fireEvent.scroll(globalThis);
-    await waitFor(() =>
+      render(<App />);
+      fireEvent.click(await screen.findByRole("treeitem", { name: "guide.md" }));
+      await screen.findByRole("button", {
+        name: displayTitle ? "Edit title" : "Set title",
+      });
+      const header = within(screen.getByRole("banner"));
       expect(header.queryByRole("button", { name: "Table of contents" }))
-        .toBeNull()
-    );
-    expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
-    expect(header.queryByText("Reading guide")).toBeNull();
-    expect(header.queryByRole("separator")).toBeNull();
+        .toBeNull();
+      expect(header.queryByRole("separator")).toBeNull();
+      expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
 
-    documentBottom = 20;
-    fireEvent.scroll(globalThis);
-    await header.findByRole("button", { name: "Table of contents" });
-    fireEvent.click(
-      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
-    );
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Table of contents" }))
-        .toBeNull()
-    );
-    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
-    await screen.findByRole("treeitem", { name: "guide.md" });
-    expect(screen.queryByRole("button", { name: "Table of contents" }))
-      .toBeNull();
-  });
+      documentBottom = 64;
+      fireEvent.scroll(globalThis);
+      fireEvent.click(
+        await header.findByRole("button", { name: "Table of contents" }),
+      );
+      expect(
+        header.getByRole("link", { name: "guide.md" }).getAttribute("href"),
+      ).toBe("file:///tmp/guide.md");
+      if (displayTitle) {
+        expect(header.getByText(displayTitle)).not.toBeNull();
+      }
+      expect(header.getAllByText("guide.md")).toHaveLength(1);
+      const applicationActions = header.getByRole("navigation", {
+        name: "Application actions",
+      });
+      expect(
+        within(applicationActions).getByRole("button", {
+          name: "Table of contents",
+        }),
+      ).not.toBeNull();
+      expect(
+        within(applicationActions).getByRole("separator")
+          .getAttribute("aria-orientation"),
+      ).toBe("vertical");
+      const toc = await screen.findByRole("navigation", {
+        name: "Table of contents",
+      });
+      const details = within(toc).getByRole("link", { name: "Details" });
+      expect(details.getAttribute("href")).toBe("#details");
+      fireEvent.click(details);
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+      expect(scrollIntoView.mock.instances.at(-1)).toBe(
+        screen.getByRole("heading", { name: "Details" }),
+      );
+      await waitFor(() =>
+        expect(screen.queryByRole("navigation", { name: "Table of contents" }))
+          .toBeNull()
+      );
+
+      documentBottom = 180;
+      fireEvent.scroll(globalThis);
+      await waitFor(() =>
+        expect(header.queryByRole("button", { name: "Table of contents" }))
+          .toBeNull()
+      );
+      expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
+      expect(header.queryByText("Reading guide")).toBeNull();
+      expect(header.queryByRole("separator")).toBeNull();
+
+      documentBottom = 20;
+      fireEvent.scroll(globalThis);
+      await header.findByRole("button", { name: "Table of contents" });
+      fireEvent.click(screen.getByRole("tab", { name: "Comments, 0 unresolved" }));
+      await waitFor(() =>
+        expect(screen.queryByRole("button", { name: "Table of contents" }))
+          .toBeNull()
+      );
+      fireEvent.click(screen.getByRole("link", { name: "Documents" }));
+      await screen.findByRole("treeitem", { name: "guide.md" });
+      expect(screen.queryByRole("button", { name: "Table of contents" })).toBeNull();
+    },
+  );
 
   it("opens the tags dialog and restores focus to the header button", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
