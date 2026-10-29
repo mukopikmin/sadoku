@@ -47,7 +47,7 @@ export const AppearanceSettings = (
           as="label"
           htmlFor="theme-mode"
           id="theme-mode-label"
-          fontWeight="medium"
+          textStyle="label"
         >
           Theme
         </Text>
@@ -85,7 +85,7 @@ export const AppearanceSettings = (
       </Flex>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
         <Text as="div">
-          <Text fontWeight="medium">Text size</Text>
+          <Text textStyle="label">Text size</Text>
           <Text color="fg.muted" fontSize="sm">
             Adjust text throughout the preview
           </Text>
@@ -121,7 +121,7 @@ export const AppearanceSettings = (
       </Flex>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
         <Text as="div">
-          <Text fontWeight="medium">Wrap code blocks</Text>
+          <Text textStyle="label">Wrap code blocks</Text>
           <Text color="fg.muted" fontSize="sm">
             Allow long lines to wrap instead of scrolling horizontally
           </Text>
@@ -139,7 +139,7 @@ export const AppearanceSettings = (
         </Switch.Root>
       </Flex>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
-        <Text fontWeight="medium">Show HTML comments</Text>
+        <Text textStyle="label">Show HTML comments</Text>
         <Switch.Root
           checked={showHtmlComments}
           onCheckedChange={({ checked }) => onShowHtmlCommentsChange(checked)}

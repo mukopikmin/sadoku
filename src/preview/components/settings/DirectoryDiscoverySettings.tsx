@@ -23,7 +23,7 @@ export const DirectoryDiscoverySettings = (
   return (
     <Flex direction="column" gap="3">
       <Text as="div">
-        <Text id="directory-discovery-label" fontWeight="medium">
+        <Text id="directory-discovery-label" textStyle="label">
           Directory discovery
         </Text>
         <Text
@@ -43,7 +43,9 @@ export const DirectoryDiscoverySettings = (
         role="group"
       >
         <Flex alignItems="center" justifyContent="space-between" gap="4">
-          <Text as="label" htmlFor="directory-max-depth">Maximum depth</Text>
+          <Text as="label" htmlFor="directory-max-depth" textStyle="label">
+            Maximum depth
+          </Text>
           <Input
             id="directory-max-depth"
             min="0"
@@ -60,7 +62,9 @@ export const DirectoryDiscoverySettings = (
           />
         </Flex>
         <Flex alignItems="center" justifyContent="space-between" gap="4">
-          <Text as="label" htmlFor="directory-max-files">Maximum files</Text>
+          <Text as="label" htmlFor="directory-max-files" textStyle="label">
+            Maximum files
+          </Text>
           <Input
             id="directory-max-files"
             min="1"
@@ -97,7 +101,12 @@ export const DirectoryDiscoverySettings = (
             isValidExcludedDirectory(inputValue.trim())}
           value={props.excludedDirectories}
         >
-          <TagsInput.Label alignItems="center" display="flex" minH="10">
+          <TagsInput.Label
+            alignItems="center"
+            display="flex"
+            minH="10"
+            textStyle="label"
+          >
             Excluded directories
           </TagsInput.Label>
           <Flex direction="column" gap="1" minW="0">
@@ -141,7 +150,12 @@ export const DirectoryDiscoverySettings = (
             isValidMarkdownExtension(inputValue.trim())}
           value={props.markdownExtensions}
         >
-          <TagsInput.Label alignItems="center" display="flex" minH="10">
+          <TagsInput.Label
+            alignItems="center"
+            display="flex"
+            minH="10"
+            textStyle="label"
+          >
             Markdown extensions
           </TagsInput.Label>
           <Flex direction="column" gap="1" minW="0">
