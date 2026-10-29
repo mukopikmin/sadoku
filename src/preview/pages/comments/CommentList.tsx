@@ -225,6 +225,7 @@ export const CommentList = ({
                 {bulk.selectedIds.length} selected
               </Text>
               <Button
+                colorPalette={selectedCategory === "resolved" ? "gray" : "green"}
                 disabled={bulk.isPending || bulk.selectedIds.length === 0}
                 loading={bulk.state.status === "pending" &&
                   bulk.state.operation !== "delete"}
@@ -236,7 +237,7 @@ export const CommentList = ({
                     selectedCategory === "resolved" ? "reopen" : "resolve",
                   )}
                 size="sm"
-                variant="outline"
+                variant={selectedCategory === "resolved" ? "outline" : "subtle"}
               >
                 {selectedCategory === "resolved"
                   ? "Reopen selected"

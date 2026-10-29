@@ -1,6 +1,20 @@
-import { Flex, IconButton, NativeSelect, Switch, Text } from "@chakra-ui/react";
+import {
+  createListCollection,
+  Flex,
+  IconButton,
+  Select,
+  Switch,
+  Text,
+} from "@chakra-ui/react";
 import type { CodeWrapMode, ThemeMode } from "../../models/theme";
 import { FONT_SCALES, getAdjacentFontScales } from "./settingsValidation";
+
+const themes = createListCollection<{ label: string; value: ThemeMode }>({
+  items: [
+    { label: "Light", value: "light" },
+    { label: "Dark", value: "dark" },
+  ],
+});
 
 type AppearanceSettingsProps = {
   codeWrapMode: CodeWrapMode;
@@ -29,19 +43,45 @@ export const AppearanceSettings = (
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
-        <Text as="label" htmlFor="theme-mode" fontWeight="medium">Theme</Text>
-        <NativeSelect.Root width="40">
-          <NativeSelect.Field
-            id="theme-mode"
-            onChange={(event) =>
-              onThemeModeChange(event.currentTarget.value as ThemeMode)}
-            value={themeMode}
-          >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </NativeSelect.Field>
-          <NativeSelect.Indicator />
-        </NativeSelect.Root>
+        <Text
+          as="label"
+          htmlFor="theme-mode"
+          id="theme-mode-label"
+          fontWeight="medium"
+        >
+          Theme
+        </Text>
+        <Select.Root
+          collection={themes}
+          ids={{ trigger: "theme-mode" }}
+          onValueChange={({ items }) => {
+            if (items[0]) onThemeModeChange(items[0].value);
+          }}
+          positioning={{ strategy: "fixed" }}
+          size="sm"
+          value={[themeMode]}
+          width="40"
+        >
+          <Select.HiddenSelect />
+          <Select.Control>
+            <Select.Trigger aria-labelledby="theme-mode-label">
+              <Select.ValueText />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              <Select.Indicator />
+            </Select.IndicatorGroup>
+          </Select.Control>
+          <Select.Positioner>
+            <Select.Content>
+              {themes.items.map((theme) => (
+                <Select.Item item={theme} key={theme.value}>
+                  <Select.ItemText>{theme.label}</Select.ItemText>
+                  <Select.ItemIndicator />
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Positioner>
+        </Select.Root>
       </Flex>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
         <Text as="div">

@@ -914,7 +914,7 @@ describe("App", () => {
     expect(await screen.findByRole("dialog", { name: "Settings" })).not
       .toBeNull();
     const themeSelect = screen.getByRole("combobox", { name: "Theme" });
-    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    expect(themeSelect.textContent).toBe("Light");
     await waitFor(() =>
       expect(document.activeElement).toBe(
         screen.getByRole("dialog", { name: "Settings" }),
@@ -1017,12 +1017,15 @@ describe("App", () => {
       })
     );
 
-    fireEvent.change(themeSelect, { target: { value: "dark" } });
-    expect(document.documentElement.dataset.theme).toBe("dark");
+    fireEvent.click(themeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Dark" }));
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("dark")
+    );
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(document.documentElement.style.colorScheme).toBe("dark");
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
-    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
+    expect(themeSelect.textContent).toBe("Dark");
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
@@ -1041,8 +1044,11 @@ describe("App", () => {
       method: "PUT",
     });
 
-    fireEvent.change(themeSelect, { target: { value: "light" } });
-    expect(document.documentElement.dataset.theme).toBe("light");
+    fireEvent.click(themeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Light" }));
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("light")
+    );
     expect(document.documentElement.classList.contains("light")).toBe(true);
     expect(document.documentElement.style.colorScheme).toBe("light");
     await waitFor(() =>
@@ -1146,10 +1152,13 @@ describe("App", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
     const themeSelect = await screen.findByRole("combobox", { name: "Theme" });
-    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
-    fireEvent.change(themeSelect, { target: { value: "light" } });
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    expect(themeSelect.textContent).toBe("Dark");
+    fireEvent.click(themeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Light" }));
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("light")
+    );
+    expect(themeSelect.textContent).toBe("Light");
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 

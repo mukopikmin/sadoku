@@ -45,11 +45,13 @@ export const CommentResolutionButton = ({
 
   return (
     <CommentActionButton
+      colorPalette={comment.state === "resolved" ? "gray" : "green"}
       disabled={disabled}
       onClick={() => {
         void (comment.state === "resolved" ? handleReopen() : handleResolve());
       }}
       type="button"
+      variant={comment.state === "resolved" ? "outline" : "subtle"}
     >
       {comment.state === "resolved"
         ? <RotateCcw aria-hidden="true" />
