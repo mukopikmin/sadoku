@@ -6,7 +6,6 @@ import { DocumentInstructionsDialog } from "./DocumentInstructionsDialog";
 import { DocumentMemoriesDialog } from "./DocumentMemoriesDialog";
 import { DocumentTagsDialog } from "./DocumentTagsDialog";
 import { SettingsDialog } from "./SettingsDialog";
-import { StatisticsDialog } from "./StatisticsDialog";
 import { TagsDialog } from "./TagsDialog";
 
 type Disclosure = { open: boolean; setOpen: (open: boolean) => void };
@@ -22,7 +21,6 @@ type PreviewDialogHostProps = {
     "open" | "onOpenChange" | "settings"
   >;
   settingsDialog: Disclosure;
-  statisticsDialog: Disclosure;
   tagsDialog: Disclosure;
   tagsTriggerRef: RefObject<HTMLButtonElement | null>;
 };
@@ -36,15 +34,10 @@ export const PreviewDialogHost = ({
   settings,
   settingsActions,
   settingsDialog,
-  statisticsDialog,
   tagsDialog,
   tagsTriggerRef,
 }: PreviewDialogHostProps) => (
   <>
-    <StatisticsDialog
-      onOpenChange={statisticsDialog.setOpen}
-      open={statisticsDialog.open}
-    />
     <TagsDialog
       finalFocusRef={tagsTriggerRef}
       onOpenChange={tagsDialog.setOpen}

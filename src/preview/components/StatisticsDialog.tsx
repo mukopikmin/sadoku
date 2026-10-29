@@ -6,6 +6,7 @@ import {
   Spinner,
   Text,
 } from "@chakra-ui/react";
+import type { RefObject } from "react";
 import { useStatisticsQuery } from "../hooks/useStatistics";
 
 const formatSize = (bytes: number): string => {
@@ -21,19 +22,18 @@ const formatSize = (bytes: number): string => {
 };
 
 export const StatisticsDialog = ({
+  finalFocusRef,
   onOpenChange,
   open,
 }: {
+  finalFocusRef?: RefObject<HTMLButtonElement | null>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) => {
   const statistics = useStatisticsQuery(open);
   return (
     <Dialog.Root
-      finalFocusEl={() =>
-        document.querySelector<HTMLButtonElement>(
-          'button[aria-label="Open database statistics"]',
-        )}
+      finalFocusEl={() => finalFocusRef?.current ?? null}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
     >

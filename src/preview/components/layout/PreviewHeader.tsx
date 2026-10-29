@@ -9,7 +9,7 @@ import {
   Link,
   Text,
 } from "@chakra-ui/react";
-import { Database, RefreshCw, Settings, Tag } from "lucide-react";
+import { RefreshCw, Settings, Tag } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 
 export const PreviewShell = ({ children }: { children: ReactNode }) => (
@@ -47,7 +47,6 @@ type PreviewHeaderProps = {
   onReloadPreview: () => void;
   onOpenTags: () => void;
   onOpenSettings: () => void;
-  onOpenStatistics: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
   tagsTriggerRef?: RefObject<HTMLButtonElement | null>;
@@ -59,7 +58,6 @@ export const PreviewHeader = ({
   fileUrl,
   onReloadPreview,
   onOpenSettings,
-  onOpenStatistics,
   onOpenTags,
   reloadAvailable,
   reloading,
@@ -113,15 +111,6 @@ export const PreviewHeader = ({
         ref={tagsTriggerRef}
       >
         <Tag aria-hidden="true" />
-      </IconButton>
-      <IconButton
-        aria-label="Open database statistics"
-        onClick={onOpenStatistics}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        <Database aria-hidden="true" />
       </IconButton>
       <IconButton
         aria-label="Open settings"

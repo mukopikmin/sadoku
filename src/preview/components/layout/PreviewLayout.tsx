@@ -19,7 +19,6 @@ type Props = {
       "open" | "onOpenChange" | "settings"
     >;
     settingsDialog: Disclosure;
-    statisticsDialog: Disclosure;
     tagsDialog: Disclosure;
     tagsTriggerRef: RefObject<HTMLButtonElement | null>;
   };

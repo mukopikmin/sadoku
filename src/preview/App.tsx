@@ -72,7 +72,6 @@ export const App = () => {
     Boolean(documentQuery.data && commentsQuery.data),
   );
   const settingsDisclosure = useDisclosure();
-  const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
   const memoriesDisclosure = useDisclosure();
   const tagsDisclosure = useDisclosure();
@@ -166,14 +165,12 @@ export const App = () => {
     settings,
     settingsActions,
     settingsDialog: settingsDisclosure,
-    statisticsDialog: statisticsDisclosure,
     tagsDialog: tagsDisclosure,
     tagsTriggerRef,
   };
   const headerActions = {
     connectionLost,
     onOpenSettings: settingsDisclosure.onOpen,
-    onOpenStatistics: statisticsDisclosure.onOpen,
     onOpenTags: tagsDisclosure.onOpen,
     onReloadPreview: reloadPreview,
     tagsTriggerRef,

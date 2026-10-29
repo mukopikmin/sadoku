@@ -47,6 +47,97 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("opens statistics from settings and restores focus without closing settings", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const statisticsRequests = vi.fn(() =>
+      Response.json({
+        commentCount: { bot: "4", human: "12" },
+        databaseSize: "1536",
+        documentCount: "3",
+      })
+    );
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(Response.json([]));
+      }
+      if (url === "/__sadoku/directory-status") {
+        return Promise.resolve(Response.json({ state: "ready" }));
+      }
+      if (url === "/__sadoku/github-account") {
+        return Promise.resolve(Response.json({ ok: false }));
+      }
+      if (url.endsWith("/GetStatistics")) {
+        return Promise.resolve(statisticsRequests());
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    }));
+
+    render(<App />);
+    const settingsButton = await screen.findByRole("button", {
+      name: "Open settings",
+    });
+    const navigation = screen.getByRole("navigation", {
+      name: "Application actions",
+    });
+    expect(within(navigation).queryByRole("button", {
+      name: /statistics/i,
+    })).toBeNull();
+    expect(statisticsRequests).not.toHaveBeenCalled();
+
+    fireEvent.click(settingsButton);
+    const settings = await screen.findByRole("dialog", { name: "Settings" });
+    const statisticsButton = within(settings).getByRole("button", {
+      name: "Database statistics",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(settings));
+    expect(statisticsRequests).not.toHaveBeenCalled();
+    const directoryInput = within(settings).getByPlaceholderText(
+      "Add a directory",
+    );
+    fireEvent.change(directoryInput, { target: { value: "draft" } });
+
+    for (const closeWithEscape of [false, true]) {
+      fireEvent.click(statisticsButton);
+      const statistics = await screen.findByRole("dialog", {
+        name: "Database statistics",
+      });
+      expect(await within(statistics).findByText("1.5 KB")).not.toBeNull();
+      await waitFor(() =>
+        expect(statistics.contains(document.activeElement)).toBe(true)
+      );
+      if (closeWithEscape) {
+        fireEvent.keyDown(statistics, { key: "Escape" });
+      } else {
+        fireEvent.click(within(statistics).getByRole("button", {
+          name: "Close database statistics",
+        }));
+      }
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", {
+          name: "Database statistics",
+        })).toBeNull()
+      );
+      expect(screen.getByRole("dialog", { name: "Settings" })).toBe(settings);
+      expect((directoryInput as HTMLInputElement).value).toBe("draft");
+      await waitFor(() => expect(document.activeElement).toBe(statisticsButton));
+    }
+    expect(statisticsRequests).toHaveBeenCalledTimes(2);
+
+    fireEvent.keyDown(settings, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", {
+        name: "Settings",
+      })).toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(settingsButton));
+    fireEvent.click(settingsButton);
+    await screen.findByRole("dialog", { name: "Settings" });
+    expect(screen.queryByRole("dialog", { name: "Database statistics" }))
+      .toBeNull();
+    expect(statisticsRequests).toHaveBeenCalledTimes(2);
+  });
+
   it("opens the tags dialog and restores focus to the header button", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
