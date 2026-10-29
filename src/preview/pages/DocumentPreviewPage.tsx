@@ -1,6 +1,7 @@
 import { DocumentTitle } from "../components/DocumentTitle";
-import { Alert, Box, Container, Flex } from "@chakra-ui/react";
+import { Alert, Box, Container, Flex, Text } from "@chakra-ui/react";
 import { useState } from "react";
+import { useDocumentDiff } from "../hooks/useDocumentDiff";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
 import { TableOfContents } from "./markdown/TableOfContents";
@@ -51,6 +52,11 @@ export const DocumentPreviewPage = (
 ) => {
   const { showHtmlComments } = settings;
   const [revisionsOpen, setRevisionsOpen] = useState(false);
+  const diff = useDocumentDiff(
+    documentId,
+    document.markdown,
+    document.previousMarkdown,
+  );
   const documentPath = selectedDocument?.relativePath ?? document.fileUrl ??
     document.title;
   return (
@@ -76,6 +82,7 @@ export const DocumentPreviewPage = (
         </Flex>
       )}
       <DocumentActionBar
+        diff={diff}
         instructionCount={instructionCount}
         memoryCount={memoryCount}
         onChangeView={onChangeView}
@@ -113,6 +120,18 @@ export const DocumentPreviewPage = (
           </Alert.Content>
         </Alert.Root>
       )}
+      {view === "preview" && diff.changes && (
+        <Text
+          role="status"
+          aria-label={`Changes since previous snapshot: ${diff.changes.current.size} added lines, ${diff.changes.previous.size} removed lines`}
+          fontSize="sm"
+          color="fg.muted"
+          mb="4"
+        >
+          Changes since previous snapshot: +{diff.changes.current.size} / −
+          {diff.changes.previous.size} lines
+        </Text>
+      )}
       {view === "preview"
         ? (
           <MarkdownPreviewPage
@@ -120,6 +139,7 @@ export const DocumentPreviewPage = (
             documentPath={documentPath}
             key={`${documentId}-${settings.theme}-${settings.fontScale}`}
             markdown={document.markdown}
+            previousMarkdown={diff.enabled ? document.previousMarkdown : undefined}
             showHtmlComments={showHtmlComments}
             theme={settings.theme === "dark" ? "dark" : "default"}
           />

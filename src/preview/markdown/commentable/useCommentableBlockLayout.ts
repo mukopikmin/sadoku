@@ -10,8 +10,14 @@ export type RangeHighlightLayout = RangeHighlight & {
   top: number;
 };
 
-export const commentableBlockSelector =
-  ":scope > .commentable-block, :scope > .comment-markdown-list .commentable-block";
+export const commentableBlockSelector = [
+  ":scope > .commentable-block",
+  ":scope > .comment-markdown-list .commentable-block",
+  ":scope > .document-diff-addition > .commentable-block",
+  ":scope > .document-diff-addition > .comment-markdown-list .commentable-block",
+  ":scope > .document-diff-addition > dl .commentable-block",
+  ":scope > dl .commentable-block",
+].join(", ");
 
 export const getCommentableLines = (preview: Element): number[] =>
   [...preview.querySelectorAll<HTMLElement>(commentableBlockSelector)]
@@ -27,7 +33,7 @@ export const measureRangeHighlightLayouts = (
     commentableBlockSelector,
   )];
 
-  return measureHighlightGroups(preview, rangeHighlights.map((range) => {
+  return measureHighlightGroups(preview, rangeHighlights.flatMap((range) => {
     const contents = blocks.filter((block) => {
       const startLine = Number(block.dataset.sourceLine);
       const endLine = Number(block.dataset.sourceEndLine ?? startLine);
@@ -35,7 +41,10 @@ export const measureRangeHighlightLayouts = (
     }).map((block) =>
       block.querySelector<HTMLElement>(":scope > .commentable-content")
     ).filter((content): content is HTMLElement => content !== null);
-    return { range, elements: contents };
+    // Keep range outlines on current content, without spanning deleted blocks.
+    return preview.hasAttribute("data-document-diff")
+      ? contents.map((content) => ({ range, elements: [content] }))
+      : [{ range, elements: contents }];
   }));
 };
 

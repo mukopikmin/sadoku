@@ -164,6 +164,51 @@ export const markdownStyles = `
     margin-left: calc(0em - var(--comment-indent-offset, 0em));
   }
 
+  .document-diff-addition,
+  .document-diff-deletion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--chakra-spacing-3);
+  }
+
+  .document-diff-addition {
+    background: var(--chakra-colors-highlight-addition-bg);
+  }
+
+  .document-diff-deletion {
+    background: var(--chakra-colors-highlight-deletion-bg);
+  }
+
+  [data-document-diff] .comment-thread {
+    background: var(--chakra-colors-canvas);
+  }
+
+  /* Diff colors belong to the content; comment and selection colors use outlines. */
+  [data-document-diff] .commentable-block:is(:hover, :focus-within, .commentable-block-selected, .commentable-block-continuous-highlight, :has(.comment-thread)) > .commentable-content::before,
+  [data-document-diff] .commentable-block:is(:hover, :focus-within, .commentable-block-selected, .commentable-block-continuous-highlight, :has(.comment-thread)) > .commentable-content pre {
+    background: transparent;
+  }
+
+  [data-document-diff] .commentable-block-comment-highlight > .commentable-content::before,
+  [data-document-diff] .markdown-range-highlight-comment {
+    background: transparent;
+    outline: 1px solid var(--chakra-colors-selection-comment);
+    outline-offset: -1px;
+  }
+
+  [data-document-diff] .commentable-block-range-selected > .commentable-content::before,
+  [data-document-diff] .commentable-block:hover > .commentable-content::before,
+  [data-document-diff] .commentable-block:focus-within > .commentable-content::before,
+  [data-document-diff] .markdown-range-highlight-selection {
+    background: transparent;
+    outline: 2px solid var(--chakra-colors-accent);
+    outline-offset: -2px;
+  }
+
+  [data-document-diff] > .markdown-range-highlights {
+    z-index: 1;
+  }
+
   .mermaid-container .mermaid {
     margin-bottom: 0;
   }

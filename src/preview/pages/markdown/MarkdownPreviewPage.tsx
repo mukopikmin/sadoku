@@ -5,7 +5,7 @@ import { MarkdownPreview, type MarkdownPreviewProps } from "./MarkdownPreview";
 type MarkdownPreviewPageProps =
   & Pick<
     MarkdownPreviewProps,
-    "documentPath" | "markdown" | "showHtmlComments" | "theme"
+    "documentPath" | "markdown" | "previousMarkdown" | "showHtmlComments" | "theme"
   >
   & { documentId?: number };
 
@@ -13,6 +13,7 @@ export const MarkdownPreviewPage = ({
   documentId,
   documentPath,
   markdown,
+  previousMarkdown,
   showHtmlComments,
   theme,
 }: MarkdownPreviewPageProps) => {
@@ -29,6 +30,7 @@ export const MarkdownPreviewPage = ({
       comments={activeComments}
       documentPath={documentPath}
       markdown={markdown}
+      previousMarkdown={previousMarkdown}
       showHtmlComments={showHtmlComments}
       theme={theme}
     />

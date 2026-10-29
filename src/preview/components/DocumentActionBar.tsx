@@ -1,6 +1,7 @@
 import {
   ActionBar,
   Badge,
+  Box,
   Button,
   Flex,
   HoverCard,
@@ -8,7 +9,7 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { Brain, FileText, History, Tag } from "lucide-react";
+import { Brain, FileDiff, FileText, History, Tag } from "lucide-react";
 import type { DocumentTag } from "../models/document";
 import type { PreviewView } from "../models/previewView";
 import { DocumentViewSwitch } from "./DocumentViewSwitch";
@@ -16,6 +17,7 @@ import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
+  diff?: { available: boolean; enabled: boolean; onToggle: () => void };
   instructionCount: number;
   memoryCount: number;
   onChangeView: (view: PreviewView) => void;
@@ -32,6 +34,7 @@ type DocumentActionBarProps = {
 
 export const DocumentActionBar = (
   {
+    diff,
     instructionCount,
     memoryCount,
     onChangeView,
@@ -61,6 +64,34 @@ export const DocumentActionBar = (
             unresolvedCommentCount={unresolvedCommentCount}
             view={view}
           />
+          {view === "preview" && diff && (
+            <Tooltip
+              content={
+                diff.available
+                  ? "Show changes since previous saved snapshot"
+                  : "No previous comparison is available"
+              }
+            >
+              <Box as="span" display="inline-flex">
+                <Button
+                  aria-label="Changes since previous snapshot"
+                  aria-description={
+                    !diff.available
+                      ? "No previous comparison is available"
+                      : undefined
+                  }
+                  aria-pressed={diff.enabled}
+                  disabled={!diff.available}
+                  onClick={diff.onToggle}
+                  size="sm"
+                  variant={diff.enabled ? "solid" : "outline"}
+                >
+                  <FileDiff aria-hidden="true" />
+                  Changes
+                </Button>
+              </Box>
+            </Tooltip>
+          )}
           <ActionBar.Separator hideBelow="md" />
           <Flex alignItems="center" gap="3" wrap="wrap">
             <HoverCard.Root

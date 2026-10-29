@@ -53,6 +53,7 @@ export const getCommentableBlockProps = (
   const {
     commentsByLine,
     commentHighlightsByLine,
+    drafts: _drafts,
     markdown: _,
     ...props
   } = context;
