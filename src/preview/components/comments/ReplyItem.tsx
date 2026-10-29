@@ -89,12 +89,12 @@ export const ReplyItem = ({
           color="fg.muted"
           fontSize="xs"
           fontWeight="semibold"
-          mb="0.5"
+          my="2"
           pr="8"
         >
-          <Badge colorPalette="purple" py="1" variant="subtle">Bot</Badge>
+          <Badge colorPalette="purple" variant="subtle">Bot</Badge>
           {reply.reviewRequested && (
-            <Badge colorPalette="blue" py="1" variant="subtle">
+            <Badge colorPalette="blue" variant="subtle">
               Review requested
             </Badge>
           )}
