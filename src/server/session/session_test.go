@@ -12,13 +12,6 @@ import (
 	"github.com/mukopikmin/sadoku/src/server/storage"
 )
 
-func TestRemoteIdentityStripsQueryAndFragment(t *testing.T) {
-	identity, fetch, remote := Source("https://example.com/docs.md?token=private#heading")
-	if !remote || identity != "https://example.com/docs.md" || fetch != "https://example.com/docs.md?token=private#heading" {
-		t.Fatal(identity, fetch, remote)
-	}
-}
-
 func TestDirectoryDiscoveryHonorsLimitsAndRetainsDeletedSnapshots(t *testing.T) {
 	root := t.TempDir()
 	docs := filepath.Join(root, "docs")

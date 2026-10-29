@@ -18,70 +18,74 @@ afterEach(() => {
 const tag = { backgroundColor: "#123456", id: 7, name: "reviewed" };
 
 describe("tag hooks", () => {
-  it("refreshes tags, documents, and every preview document after updating a tag", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(Response.json(tag))));
-    const queryClient = createPreviewQueryClient();
-    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    const { result } = renderHook(() => useUpdateTag(), { wrapper });
+  it.each([
+    {
+      name: "update-all",
+      useAction: () => {
+        const mutation = useUpdateTag();
+        return async () => {
+          await mutation.mutateAsync(tag);
+        };
+      },
+      response: () => Response.json(tag),
+      previewKey: ["preview-document"],
+    },
+    {
+      name: "replace-document-42",
+      useAction: () => {
+        const mutation = useTagActions(42);
+        return async () => {
+          await mutation.replace([{ id: tag.id }]);
+        };
+      },
+      response: () => Response.json([tag]),
+      previewKey: previewDocumentQueryKey(42),
+    },
+    {
+      name: "delete-all",
+      useAction: () => {
+        const mutation = useDeleteTag();
+        return async () => {
+          await mutation.mutateAsync(7);
+        };
+      },
+      response: () => new Response(null, { status: 204 }),
+      previewKey: ["preview-document"],
+    },
+  ])(
+    "refreshes dependent caches only after successful $name",
+    async ({ name, useAction, response, previewKey }) => {
+      const fetchMock = vi.fn(async () => response());
+      vi.stubGlobal("fetch", fetchMock);
+      const queryClient = createPreviewQueryClient();
+      const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      );
+      const { result } = renderHook(useAction, { wrapper });
 
-    await act(() => result.current.mutateAsync(tag));
+      await act(() => result.current());
 
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: tagsQueryKey });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: documentsQueryKey });
-    expect(invalidate).toHaveBeenCalledWith({
-      queryKey: ["preview-document"],
-    });
-  });
-
-  it("refreshes the selected document, document list, and tags after replacing document tags", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(() => Promise.resolve(Response.json([tag]))),
-    );
-    const queryClient = createPreviewQueryClient();
-    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    const { result } = renderHook(() => useTagActions(42), { wrapper });
-
-    await act(() => result.current.replace([{ id: tag.id }]));
-
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: tagsQueryKey });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: documentsQueryKey });
-    expect(invalidate).toHaveBeenCalledWith({
-      queryKey: previewDocumentQueryKey(42),
-    });
-  });
-});
-
-it("refreshes all tag consumers only after successful deletion", async () => {
-  const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
-  vi.stubGlobal("fetch", fetchMock);
-  const queryClient = createPreviewQueryClient();
-  const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: tagsQueryKey });
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: documentsQueryKey });
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: previewKey });
+      if (name === "delete-all") {
+        expect(fetchMock).toHaveBeenCalledWith("/__sadoku/tags/7", {
+          method: "DELETE",
+        });
+        invalidate.mockClear();
+        fetchMock.mockImplementation(async () =>
+          new Response("Could not delete tag.", { status: 500 })
+        );
+        await act(async () => {
+          await expect(result.current()).rejects.toThrow(
+            "Could not delete tag.",
+          );
+        });
+        expect(invalidate).not.toHaveBeenCalled();
+      }
+    },
   );
-  const { result } = renderHook(() => useDeleteTag(), { wrapper });
-  await act(() => result.current.mutateAsync(7));
-  expect(fetchMock).toHaveBeenCalledWith("/__sadoku/tags/7", {
-    method: "DELETE",
-  });
-  expect(invalidate).toHaveBeenCalledWith({ queryKey: tagsQueryKey });
-  expect(invalidate).toHaveBeenCalledWith({ queryKey: documentsQueryKey });
-  expect(invalidate).toHaveBeenCalledWith({ queryKey: ["preview-document"] });
-  invalidate.mockClear();
-  fetchMock.mockImplementation(async () =>
-    new Response("Could not delete tag.", { status: 500 })
-  );
-  await act(async () => {
-    await expect(result.current.mutateAsync(7)).rejects.toThrow(
-      "Could not delete tag.",
-    );
-  });
-  expect(invalidate).not.toHaveBeenCalled();
 });
