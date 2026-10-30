@@ -35,7 +35,7 @@ export const DocumentListPage = (
       <>
         <Heading
           as="h1"
-          fontSize="calc(1.8rem * var(--sadoku-font-scale, 1))"
+          fontSize="3xl"
           fontWeight="semibold"
           lineHeight="1.25"
         >

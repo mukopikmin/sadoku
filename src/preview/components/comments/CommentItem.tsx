@@ -133,7 +133,7 @@ export const CommentItem = ({
               />
             }
           />
-          {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+          {error && <Text color="fg.error" fontSize="sm">{error}</Text>}
         </Stack>
       </Box>
     </>
