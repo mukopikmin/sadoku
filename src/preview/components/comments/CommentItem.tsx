@@ -50,57 +50,58 @@ export const CommentItem = ({
         borderLeftColor="accent"
         borderLeftWidth="3px"
         className="comment-root-thread"
-        pb="1px"
         pl="3"
-        pt="2"
+        py="2"
       >
-        <Box position="relative">
-          {(comment.author.type === "bot" ||
-            (showState && comment.state !== "active")) && (
-            <Flex align="center" gap="1.5" mb="0.5" pr="8">
-              {comment.author.type === "bot" && (
-                <Badge colorPalette="purple" variant="subtle">Bot</Badge>
-              )}
-              {showState && comment.state === "resolved" && (
-                <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
-              )}
-              {showState && comment.state === "stale" && (
-                <Badge colorPalette="yellow" variant="outline">Stale</Badge>
-              )}
-            </Flex>
-          )}
-          {!isEditing && (
-            <CommentActionMenu
-              comment={comment}
-              disabled={isDisabled}
-              lineLabel={lineLabel}
-              onDelete={onDeleteComment}
-              onExport={actions.onExportComment}
-              onEdit={() => setIsEditing(true)}
-              reportError={reportError}
-              runAction={runAction}
-            />
-          )}
-          {isEditing
-            ? (
-              <CommentEditor
-                body={comment.body}
-                commentId={comment.id}
+        <Stack gap="4" position="relative">
+          <Stack gap="2">
+            {(comment.author.type === "bot" ||
+              (showState && comment.state !== "active")) && (
+              <Flex align="center" gap="1.5" pr="8">
+                {comment.author.type === "bot" && (
+                  <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+                )}
+                {showState && comment.state === "resolved" && (
+                  <Badge colorPalette="yellow" variant="outline">Resolved</Badge>
+                )}
+                {showState && comment.state === "stale" && (
+                  <Badge colorPalette="yellow" variant="outline">Stale</Badge>
+                )}
+              </Flex>
+            )}
+            {!isEditing && (
+              <CommentActionMenu
+                comment={comment}
                 disabled={isDisabled}
-                onClose={() => setIsEditing(false)}
-                onUpdate={onUpdateComment}
+                lineLabel={lineLabel}
+                onDelete={onDeleteComment}
+                onExport={actions.onExportComment}
+                onEdit={() => setIsEditing(true)}
+                reportError={reportError}
                 runAction={runAction}
               />
-            )
-            : (
-              <Box pr="8">
-                <CommentMarkdown sourceText={comment.sourceText}>
-                  {comment.body}
-                </CommentMarkdown>
-              </Box>
             )}
+            {isEditing
+              ? (
+                <CommentEditor
+                  body={comment.body}
+                  commentId={comment.id}
+                  disabled={isDisabled}
+                  onClose={() => setIsEditing(false)}
+                  onUpdate={onUpdateComment}
+                  runAction={runAction}
+                />
+              )
+              : (
+                <Box pr="8">
+                  <CommentMarkdown sourceText={comment.sourceText}>
+                    {comment.body}
+                  </CommentMarkdown>
+                </Box>
+              )}
+          </Stack>
           {(comment.replies ?? []).length > 0 && (
-            <Stack gap="3" mt="3">
+            <Stack gap="3">
               {(comment.replies ?? []).map((reply) => (
                 <ReplyItem
                   commentId={comment.id}
@@ -133,7 +134,7 @@ export const CommentItem = ({
             }
           />
           {error && <Text color="red.500" fontSize="sm">{error}</Text>}
-        </Box>
+        </Stack>
       </Box>
     </>
   );

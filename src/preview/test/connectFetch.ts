@@ -76,9 +76,9 @@ const route = (
       return [
         `/__sadoku/documents/${documentId}/tags`,
         json("PUT", {
-          tags: (body.tags as Array<Record<string, unknown>>).map((tag) =>
-            tag.id === undefined ? tag : { id: Number(tag.id) }
-          ),
+          tags: ((body.tags ?? []) as Array<Record<string, unknown>>).map((
+            tag,
+          ) => tag.id === undefined ? tag : { id: Number(tag.id) }),
         }),
         (tags) => ({ tags }),
       ];

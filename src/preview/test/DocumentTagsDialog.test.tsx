@@ -76,7 +76,7 @@ describe("DocumentTagsDialog", () => {
     expect(await screen.findByRole("option", { name: "api" })).not.toBeNull();
     expect(screen.queryByRole("option", { name: "API" })).toBeNull();
     fireEvent.click(screen.getByRole("option", { name: "api" }));
-    await screen.findByRole("button", { name: "api ×" });
+    await screen.findByRole("button", { name: "Remove api tag" });
     expect(fetch).toHaveBeenCalledWith(
       "/__sadoku/documents/7/tags",
       expect.objectContaining({
@@ -105,7 +105,7 @@ describe("DocumentTagsDialog", () => {
     expect(await screen.findByRole("option", { name: "API" })).not.toBeNull();
     expect(screen.getByRole("option", { name: "api" })).not.toBeNull();
     fireEvent.click(screen.getByRole("option", { name: "Create “Api”" }));
-    await screen.findByRole("button", { name: "Api ×" });
+    await screen.findByRole("button", { name: "Remove Api tag" });
     expect(fetch).toHaveBeenCalledWith(
       "/__sadoku/documents/7/tags",
       expect.objectContaining({
@@ -122,12 +122,12 @@ describe("DocumentTagsDialog", () => {
     expect(await screen.findByRole("option", { name: "API" })).not.toBeNull();
     expect(screen.queryByRole("option", { name: "Create “API”" })).toBeNull();
     fireEvent.keyDown(input, { key: "Enter" });
-    await screen.findByRole("button", { name: "API ×" });
+    await screen.findByRole("button", { name: "Remove API tag" });
     await readyInput();
     fireEvent.change(input, { target: { value: "new" } });
     await screen.findByRole("option", { name: "Create “new”" });
     fireEvent.keyDown(input, { key: "Enter" });
-    await screen.findByRole("button", { name: "new ×" });
+    await screen.findByRole("button", { name: "Remove new tag" });
     expect(fetch).toHaveBeenCalledWith(
       "/__sadoku/documents/7/tags",
       expect.objectContaining({
@@ -135,9 +135,10 @@ describe("DocumentTagsDialog", () => {
         method: "PUT",
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "API ×" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove API tag" }));
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "API ×" })).toBeNull()
+      expect(screen.queryByRole("button", { name: "Remove API tag" }))
+        .toBeNull()
     );
     expect(fetch).toHaveBeenCalledWith(
       "/__sadoku/documents/7/tags",
@@ -158,8 +159,8 @@ describe("DocumentTagsDialog", () => {
       expect(input.getAttribute("aria-activedescendant")).toBeTruthy()
     );
     fireEvent.keyDown(input, { key: "Enter" });
-    await screen.findByRole("button", { name: "api ×" });
-    expect(screen.queryByRole("button", { name: "ap ×" })).toBeNull();
+    await screen.findByRole("button", { name: "Remove api tag" });
+    expect(screen.queryByRole("button", { name: "Remove ap tag" })).toBeNull();
   });
 
   it("does not create a tag when Enter confirms IME composition", async () => {
@@ -182,7 +183,7 @@ describe("DocumentTagsDialog", () => {
     fireEvent.click(
       await screen.findByRole("option", { name: "Create “First tag”" }),
     );
-    await screen.findByRole("button", { name: "First tag ×" });
+    await screen.findByRole("button", { name: "Remove First tag tag" });
   });
 
   it("disables dropdown choices and prevents Enter from exceeding the tag limit", async () => {
@@ -224,13 +225,39 @@ describe("DocumentTagsDialog", () => {
       "Could not save tags",
     );
     expect((input as HTMLInputElement).value).toBe("new");
-    expect(screen.queryByRole("button", { name: "new ×" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Remove new tag" })).toBeNull();
     await readyInput();
     fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
     fireEvent.click(
       await screen.findByRole("option", { name: "Create “new”" }),
     );
-    await screen.findByRole("button", { name: "new ×" });
+    await screen.findByRole("button", { name: "Remove new tag" });
     expect((input as HTMLInputElement).value).toBe("");
+  });
+
+  it("keeps a selected tag when removal fails and allows retry", async () => {
+    renderDialog([{ id: 1, name: "API", backgroundColor: "#ffffff" }]);
+    await readyInput();
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response("Could not remove tag", { status: 500 }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Remove API tag" }));
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Could not remove tag",
+    );
+    await readyInput();
+    fireEvent.click(screen.getByRole("button", { name: "Remove API tag" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Remove API tag" }))
+        .toBeNull();
+      expect(screen.queryByRole("status")).toBeNull();
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      "/__sadoku/documents/7/tags",
+      expect.objectContaining({
+        body: JSON.stringify({ tags: [] }),
+        method: "PUT",
+      }),
+    );
   });
 });

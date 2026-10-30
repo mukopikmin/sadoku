@@ -1,16 +1,23 @@
 import { previewPath } from "../../api/basePath";
 
 import {
-  Badge,
   Container,
   Flex,
+  Icon,
   IconButton,
   Image,
   Link,
   Separator,
   Text,
 } from "@chakra-ui/react";
-import { Database, RefreshCw, ScrollText, Settings, Tag } from "lucide-react";
+import {
+  Database,
+  RefreshCw,
+  ScrollText,
+  Settings,
+  Tag,
+  WifiOff,
+} from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 import { Tooltip } from "../ui/tooltip";
 import { TableOfContents } from "../../pages/markdown/TableOfContents";
@@ -134,13 +141,20 @@ export const PreviewHeader = ({
         </Flex>
       )}
       {connectionLost && (
-        <Badge
-          colorPalette="red"
-          role="status"
-          variant="solid"
-        >
-          Connection lost
-        </Badge>
+        <Tooltip content="Connection lost">
+          <Flex
+            as="span"
+            alignItems="center"
+            color="fg.error"
+            role="status"
+            tabIndex={0}
+          >
+            <Icon asChild size="5">
+              <WifiOff aria-hidden="true" />
+            </Icon>
+            <Text srOnly>Connection lost</Text>
+          </Flex>
+        </Tooltip>
       )}
       <IconButton
         aria-label="Open tags"
