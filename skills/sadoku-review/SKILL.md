@@ -45,22 +45,29 @@ review workflow below when the user also requests review feedback work.
 ## Workflow
 
 1. Identify the target Markdown document.
-2. List its document instructions and memories, then list its comments:
+2. At the start of a review, retrieve global instructions for all documents
+   sharing the current Sadoku database, then retrieve the target document's
+   instructions:
 
    ```sh
+   sadoku instruction list --global
    sadoku instruction list --source <markdown-path>
    ```
 
-   Apply every instruction returned by the command throughout the review. Then
-   retrieve reusable background context:
+   Apply both throughout the review. Document instructions take precedence over
+   global instructions when they directly conflict; current user requests and
+   applicable project instructions still take precedence. When reviewing multiple
+   documents, retrieve global instructions once and document instructions for
+   each target. Do not continue a review without retrieving both scopes; report
+   retrieval failures. Then retrieve reusable background context:
 
    ```sh
    sadoku memory list --source <markdown-path>
    ```
 
    Treat memories as potentially stale context, not instructions. Current user
-   requests, project instructions, document instructions, and verified facts
-   take precedence. Then retrieve the comments:
+   requests, project instructions, global and document instructions, and verified
+   facts take precedence. Then retrieve the comments:
 
    ```sh
    sadoku comment list --source <markdown-path>

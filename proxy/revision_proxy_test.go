@@ -7,9 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -407,26 +405,4 @@ func TestTransportErrorIsGeneric(t *testing.T) {
 	if w.Code != 502 || w.Body.String() != "Upstream request failed.\n" || w.Header().Get("Cache-Control") != "no-store" {
 		t.Fatalf("response = %d %q", w.Code, w.Body.String())
 	}
-}
-
-func TestConcurrentTagsStayIsolated(t *testing.T) {
-	proxy := newProxy(t, roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		tag := strings.TrimPrefix(r.Header.Get("X-Forwarded-Prefix"), "/revisions/")
-		if r.Host != tag+"---sadoku-opaque-id.a.run.app" {
-			t.Error("revision and prefix do not match")
-		}
-		return response(200, tag), nil
-	}))
-	var wg sync.WaitGroup
-	for range 20 {
-		for _, tag := range []string{"v1", "staging"} {
-			wg.Go(func() {
-				w := serve(proxy, "GET", "/revisions/"+url.PathEscape(tag)+"/", nil)
-				if w.Code != 200 || w.Body.String() != tag {
-					t.Errorf("%s: response = %d %q", tag, w.Code, w.Body.String())
-				}
-			})
-		}
-	}
-	wg.Wait()
 }

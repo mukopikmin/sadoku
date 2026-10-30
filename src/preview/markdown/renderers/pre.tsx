@@ -3,6 +3,7 @@ import { Code, FilePenLine } from "lucide-react";
 import { Children, isValidElement } from "react";
 import type React from "react";
 import { MermaidDiagram } from "../MermaidDiagram";
+import { MarkdownCodeBlock } from "../MarkdownCodeBlock";
 import type {
   MarkdownComponentProps,
   MarkdownElementProps,
@@ -125,12 +126,9 @@ export const renderMarkdownPre = (
 
   return (
     <Box py="2">
-      <ChakraCodeBlock.Root
+      <MarkdownCodeBlock
         code={getCodeBlockText(children).replace(/\n$/, "")}
         language={language ?? "plaintext"}
-        defaultColorScheme={document.documentElement.dataset.theme === "dark"
-          ? "dark"
-          : "light"}
         borderColor="border.muted"
         borderRadius="sm"
         bg="canvas.subtle"
@@ -158,7 +156,7 @@ export const renderMarkdownPre = (
             />
           </ChakraCodeBlock.Code>
         </ChakraCodeBlock.Content>
-      </ChakraCodeBlock.Root>
+      </MarkdownCodeBlock>
     </Box>
   );
 };

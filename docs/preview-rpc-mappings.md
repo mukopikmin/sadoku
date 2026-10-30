@@ -13,6 +13,15 @@ timestamps and document count. REST responses keep numeric IDs. Connect JSON
 represents `uint64` IDs as strings, which the generated browser client converts
 to `bigint`; the Go handlers also support the binary Protobuf codec.
 
+Global instructions use `ListGlobalInstructions`, `CreateGlobalInstruction`,
+`UpdateGlobalInstruction`, and `DeleteGlobalInstruction`. These RPCs do not take
+a document ID and return the same `Instruction` fields as document instructions.
+The REST collection is `/__sadoku/global-instructions`, with `GET` and `POST`;
+`PUT` and `DELETE` use `/__sadoku/global-instructions/<id>`. Listing returns
+`{ "instructions": [...] }`. Existing document endpoints remain document-only;
+zero document IDs never select the global scope. Global and document instruction
+IDs are independent, so the same numeric ID can exist in both scopes.
+
 Generated messages define field names and scalar representations, but
 application validation remains necessary:
 

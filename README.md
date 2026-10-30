@@ -66,8 +66,8 @@ Run `sadoku --help` for all commands and options.
   optional title appears above the document without changing its Markdown. Use
   **Set title** or **Edit title** to change it, or clear it to remove it.
   Existing files are never overwritten.
-- Use **Zoom** on a Mermaid diagram to enlarge it. Pinch to zoom, scroll to
-  move, and choose **Fit to view** to reset.
+- Use **Zoom** on a Mermaid diagram to enlarge it. Use the **+** and **−**
+  buttons or pinch to zoom, scroll to move, and choose **Fit to view** to reset.
 - Open **Revisions** in the document action bar to view the current document or
   choose from its latest 20 saved revisions, listed newest first with recording
   times. Each selected revision shows changes from its immediately preceding
@@ -161,9 +161,33 @@ listing and inspection include `tags`, containing each tag's `id`, `name`, and
 read-only through the CLI.
 
 Use `sadoku --help` for document, tag, comment, instruction, and memory
-commands. Instructions and memories provide document-specific context for
-agents; memories can be reviewed and deleted in the preview, but are added and
-updated through the CLI.
+commands. Instructions provide guidance for agents; memories provide
+document-specific background context and are added and updated through the CLI.
+
+Global instructions apply to all documents sharing the same `sadoku.sqlite3`,
+including local files, URLs, and GitHub PR files. Manage them under
+**Global instructions** in the application header, or through the CLI without
+registering a document:
+
+```sh
+sadoku instruction list --global
+sadoku instruction add --global --content "Keep explanations concise."
+sadoku instruction update <instruction-id> --global --content "Use concrete examples."
+sadoku instruction delete <instruction-id> --global
+```
+
+Choose exactly one of `--global`, `--document <id>`, or `--source <file.md|url>`.
+Global listing returns `{ "instructions": [...] }` without a document; entries
+have `id`, `content`, `createdAt`, and `updatedAt`. Existing document-specific
+commands and output remain unchanged. Global instructions are stored separately
+and survive document deletion.
+
+The document instructions dialog shows both global guidance and instructions
+for that document. Choose **Manage global instructions** there to open the same
+management dialog. Apply both; document instructions take precedence when they
+directly conflict with global instructions. Agents must retrieve both scopes;
+Sadoku does not inject instructions into unrelated agent sessions. The
+`sadoku-review` skill retrieves global instructions at the start of a review.
 
 For compatible coding agents, install the `sadoku-review` skill with
 [Agent Package Manager](https://github.com/microsoft/apm):
@@ -249,7 +273,7 @@ token. Avoid putting secrets in comments, instructions, or memories.
 | Tables and strikethrough                             | Supported     | GitHub Flavored Markdown syntax is supported.                  |
 | Hard line breaks, escapes, and HTML entities         | Supported     |                                                                |
 | Single-newline line breaks in comments and replies   | Supported     | GitHub-style line breaks in comments and replies only.         |
-| Mermaid diagrams                                     | Supported     | Local rendering; trackpad pinch zoom in the zoom dialog.       |
+| Mermaid diagrams                                     | Supported     | Local rendering; zoom buttons and trackpad pinch in the dialog. |
 | HTML comments                                        | Supported     | Commentable plain-text cards; visible by default (Settings).   |
 | Agent-file front matter                              | Supported     | Displayed as a safe data list in recognized instruction files. |
 | Generated table of contents                          | Supported     | Available from the document action menu.                       |

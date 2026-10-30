@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -11,9 +12,62 @@ import { useState } from "react";
 import { DocumentActionBar } from "../components/DocumentActionBar";
 import type { PreviewView } from "../models/previewView";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("DocumentActionBar", () => {
+  it("reserves space for the measured bar height and follows wrapping changes", () => {
+    const measurements = new Set<() => void>();
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(readonly callback: ResizeObserverCallback) {}
+      notify = () => this.callback([], this as unknown as ResizeObserver);
+      observe(target: Element) {
+        if (target.getAttribute("aria-label") === "Document actions") {
+          measurements.add(this.notify);
+        }
+      }
+      unobserve() {
+        measurements.delete(this.notify);
+      }
+      disconnect() {
+        measurements.delete(this.notify);
+      }
+    });
+    const { unmount } = render(
+      <DocumentActionBar
+        instructionCount={0}
+        memoryCount={0}
+        onChangeView={() => {}}
+        onOpenInstructions={() => {}}
+        onOpenMemories={() => {}}
+        onOpenRevisions={() => {}}
+        onOpenTags={() => {}}
+        staleCommentCount={0}
+        tagCount={0}
+        tags={[]}
+        unresolvedCommentCount={0}
+        view="preview"
+      />,
+    );
+    const bar = screen.getByRole("dialog", { name: "Document actions" });
+    const spacer = screen.getByTestId("action-bar-spacer");
+    let height = 56;
+    vi.spyOn(bar, "getBoundingClientRect").mockImplementation(() =>
+      new DOMRect(0, 0, 420, height)
+    );
+    expect(measurements.size).toBeGreaterThan(0);
+    for (const nextHeight of [56, 112, 148, 56]) {
+      height = nextHeight;
+      act(() => measurements.forEach((notify) => notify()));
+      expect(getComputedStyle(spacer).height).toBe(`${height}px`);
+    }
+    unmount();
+    expect(measurements.size).toBe(0);
+  });
+
   it("keeps the view switch and shared actions available in both views", async () => {
     const Actions = () => {
       const [view, setView] = useState<PreviewView>("preview");

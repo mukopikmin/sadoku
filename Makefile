@@ -13,7 +13,7 @@ GO_TEST_FLAGS ?= -race -count=1 -timeout=120s
 GO_SOURCES := cmd internal src/server src/preview/assets.go gen/go test/integration
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \
- build install dist notices run start test test-server test-tools test-install check vet \
+ build install dist notices run start test test-server test-tools test-install check vet vet-cross \
  fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
  check-proxy-format vet-proxy test-proxy build-proxy run-proxy
 
@@ -73,6 +73,11 @@ check: fmt-check vet vet-proxy
 
 vet: build-client
 	$(GO) vet ./...
+
+# Repository tooling needs native SQLite CGO APIs; cross-check application Go code.
+vet-cross: vet
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) vet ./cmd/sadoku ./src/... ./gen/go/... ./test/integration/...
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) vet ./cmd/sadoku ./src/... ./gen/go/... ./test/integration/...
 
 fmt: fmt-go fmt-client
 

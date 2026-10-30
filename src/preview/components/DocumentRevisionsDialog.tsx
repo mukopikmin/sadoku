@@ -271,7 +271,7 @@ export const DocumentRevisionsDialog = (
     onOpenChange={({ open }) => onOpenChange(open)}
     open={open}
     scrollBehavior="inside"
-    size="cover"
+    size="xl"
   >
     <Portal>
       <Dialog.Backdrop />
