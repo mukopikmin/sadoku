@@ -8,7 +8,9 @@ import {
   IconButton,
   Portal,
   Text,
+  useElementRect,
 } from "@chakra-ui/react";
+import { useCallback } from "react";
 import { Brain, FileDiff, FileText, History, Tag } from "lucide-react";
 import type { DocumentTag } from "../models/document";
 import type { PreviewView } from "../models/previewView";
@@ -32,103 +34,119 @@ type DocumentActionBarProps = {
   view: PreviewView;
 };
 
-export const DocumentActionBar = (
-  {
-    diff,
-    instructionCount,
-    memoryCount,
-    onChangeView,
-    onOpenInstructions,
-    onOpenMemories,
-    onOpenRevisions,
-    onOpenTags,
-    tagCount,
-    tags,
-    staleCommentCount,
-    unresolvedCommentCount,
-    view,
-  }: DocumentActionBarProps,
-) => (
-  <ActionBar.Root open>
-    <Portal>
-      <ActionBar.Positioner>
-        <ActionBar.Content
-          aria-label="Document actions"
-          alignItems={{ base: "stretch", md: "center" }}
-          flexDirection={{ base: "column", md: "row" }}
-          maxW="calc(100vw - 2rem)"
-        >
-          <DocumentViewSwitch
-            onChangeView={onChangeView}
-            staleCommentCount={staleCommentCount}
-            unresolvedCommentCount={unresolvedCommentCount}
-            view={view}
-          />
-          {view === "preview" && diff && (
-            <Tooltip
-              content={
-                diff.available
-                  ? "Show changes since previous saved snapshot"
-                  : "No previous comparison is available"
-              }
-            >
-              <Box as="span" display="inline-flex">
-                <Button
-                  aria-label="Changes since previous snapshot"
-                  aria-description={
-                    !diff.available
-                      ? "No previous comparison is available"
-                      : undefined
-                  }
-                  aria-pressed={diff.enabled}
-                  disabled={!diff.available}
-                  onClick={diff.onToggle}
-                  size="sm"
-                  variant={diff.enabled ? "solid" : "outline"}
-                >
-                  <FileDiff aria-hidden="true" />
-                  Changes
-                </Button>
-              </Box>
-            </Tooltip>
-          )}
-          <ActionBar.Separator hideBelow="md" />
-          <Flex alignItems="center" gap="3" wrap="wrap">
-            <HoverCard.Root
-              closeDelay={100}
-              openDelay={200}
-              positioning={{ placement: "top-start" }}
-              size="sm"
-            >
-              <Tooltip content="Tags">
-                <HoverCard.Trigger asChild>
+export const DocumentActionBar = ({
+  diff,
+  instructionCount,
+  memoryCount,
+  onChangeView,
+  onOpenInstructions,
+  onOpenMemories,
+  onOpenRevisions,
+  onOpenTags,
+  tagCount,
+  tags,
+  staleCommentCount,
+  unresolvedCommentCount,
+  view,
+}: DocumentActionBarProps) => {
+  const { ref, rect } = useElementRect();
+  const contentRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      ref.current = node;
+    },
+    [ref],
+  );
+
+  return (
+    <ActionBar.Root open>
+      <Box
+        aria-hidden="true"
+        data-testid="action-bar-spacer"
+        h={`${rect?.height ?? 0}px`}
+        mb="env(safe-area-inset-bottom, 0px)"
+      />
+      <Portal>
+        <ActionBar.Positioner>
+          <ActionBar.Content
+            ref={contentRef}
+            aria-label="Document actions"
+            alignItems={{ base: "stretch", md: "center" }}
+            flexDirection={{ base: "column", md: "row" }}
+            maxW="calc(100vw - 2rem)"
+          >
+            <DocumentViewSwitch
+              onChangeView={onChangeView}
+              staleCommentCount={staleCommentCount}
+              unresolvedCommentCount={unresolvedCommentCount}
+              view={view}
+            />
+            {view === "preview" && diff && (
+              <Tooltip
+                content={
+                  diff.available
+                    ? "Show changes since previous saved snapshot"
+                    : "No previous comparison is available"
+                }
+              >
+                <Box as="span" display="inline-flex">
                   <Button
-                    aria-label="Tags"
-                    onClick={onOpenTags}
-                    px={tagCount === 0 ? "0" : undefined}
+                    aria-label="Changes since previous snapshot"
+                    aria-description={
+                      !diff.available
+                        ? "No previous comparison is available"
+                        : undefined
+                    }
+                    aria-pressed={diff.enabled}
+                    disabled={!diff.available}
+                    onClick={diff.onToggle}
                     size="sm"
-                    type="button"
-                    variant="outline"
+                    variant={diff.enabled ? "solid" : "outline"}
                   >
-                    <Tag aria-hidden="true" />
-                    {tagCount > 0 && (
-                      <Badge aria-hidden="true" size="sm" variant="solid">
-                        {tagCount}
-                      </Badge>
-                    )}
+                    <FileDiff aria-hidden="true" />
+                    Changes
                   </Button>
-                </HoverCard.Trigger>
+                </Box>
               </Tooltip>
-              <Portal>
-                <HoverCard.Positioner>
-                  <HoverCard.Content>
-                    <HoverCard.Arrow>
-                      <HoverCard.ArrowTip />
-                    </HoverCard.Arrow>
-                    <Text fontWeight="semibold">Document tags</Text>
-                    {tags.length === 0
-                      ? <Text color="fg.muted" pt="2">No tags added.</Text>
-                      : (
+            )}
+            <ActionBar.Separator hideBelow="md" />
+            <Flex alignItems="center" gap="3" wrap="wrap">
+              <HoverCard.Root
+                closeDelay={100}
+                openDelay={200}
+                positioning={{ placement: "top-start" }}
+                size="sm"
+              >
+                <Tooltip content="Tags">
+                  <HoverCard.Trigger asChild>
+                    <Button
+                      aria-label="Tags"
+                      onClick={onOpenTags}
+                      px={tagCount === 0 ? "0" : undefined}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Tag aria-hidden="true" />
+                      {tagCount > 0 && (
+                        <Badge aria-hidden="true" size="sm" variant="solid">
+                          {tagCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </HoverCard.Trigger>
+                </Tooltip>
+                <Portal>
+                  <HoverCard.Positioner>
+                    <HoverCard.Content>
+                      <HoverCard.Arrow>
+                        <HoverCard.ArrowTip />
+                      </HoverCard.Arrow>
+                      <Text fontWeight="semibold">Document tags</Text>
+                      {tags.length === 0 ? (
+                        <Text color="fg.muted" pt="2">
+                          No tags added.
+                        </Text>
+                      ) : (
                         <Flex gap="2" pt="2" wrap="wrap">
                           {tags.map((tag) => (
                             <TagLabel
@@ -139,58 +157,59 @@ export const DocumentActionBar = (
                           ))}
                         </Flex>
                       )}
-                  </HoverCard.Content>
-                </HoverCard.Positioner>
-              </Portal>
-            </HoverCard.Root>
-            <Tooltip content="Instructions">
-              <Button
-                aria-label="Instructions"
-                onClick={onOpenInstructions}
-                px={instructionCount === 0 ? "0" : undefined}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                <FileText aria-hidden="true" />
-                {instructionCount > 0 && (
-                  <Badge aria-hidden="true" size="sm" variant="solid">
-                    {instructionCount}
-                  </Badge>
-                )}
-              </Button>
-            </Tooltip>
-            <Tooltip content="Memories">
-              <Button
-                aria-label="Memories"
-                onClick={onOpenMemories}
-                px={memoryCount === 0 ? "0" : undefined}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                <Brain aria-hidden="true" />
-                {memoryCount > 0 && (
-                  <Badge aria-hidden="true" size="sm" variant="solid">
-                    {memoryCount}
-                  </Badge>
-                )}
-              </Button>
-            </Tooltip>
-            <Tooltip content="Revisions">
-              <IconButton
-                aria-label="Revisions"
-                onClick={onOpenRevisions}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                <History aria-hidden="true" />
-              </IconButton>
-            </Tooltip>
-          </Flex>
-        </ActionBar.Content>
-      </ActionBar.Positioner>
-    </Portal>
-  </ActionBar.Root>
-);
+                    </HoverCard.Content>
+                  </HoverCard.Positioner>
+                </Portal>
+              </HoverCard.Root>
+              <Tooltip content="Instructions">
+                <Button
+                  aria-label="Instructions"
+                  onClick={onOpenInstructions}
+                  px={instructionCount === 0 ? "0" : undefined}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <FileText aria-hidden="true" />
+                  {instructionCount > 0 && (
+                    <Badge aria-hidden="true" size="sm" variant="solid">
+                      {instructionCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Tooltip>
+              <Tooltip content="Memories">
+                <Button
+                  aria-label="Memories"
+                  onClick={onOpenMemories}
+                  px={memoryCount === 0 ? "0" : undefined}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <Brain aria-hidden="true" />
+                  {memoryCount > 0 && (
+                    <Badge aria-hidden="true" size="sm" variant="solid">
+                      {memoryCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Tooltip>
+              <Tooltip content="Revisions">
+                <IconButton
+                  aria-label="Revisions"
+                  onClick={onOpenRevisions}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <History aria-hidden="true" />
+                </IconButton>
+              </Tooltip>
+            </Flex>
+          </ActionBar.Content>
+        </ActionBar.Positioner>
+      </Portal>
+    </ActionBar.Root>
+  );
+};

@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import { initializeMermaid } from "../markdown/mermaid";
 
+const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
 }));
@@ -36,6 +38,12 @@ const createTestStorage = (initial: Record<string, string> = {}) => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
+  if (originalScrollIntoView) {
+    HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  } else {
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+  }
   document.documentElement.className = "";
   document.documentElement.removeAttribute("data-theme");
   document.documentElement.removeAttribute("data-code-wrap");
@@ -47,6 +55,277 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("manages global instructions from the header without a selected document", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/__sadoku/documents") return Response.json([]);
+      if (url === "/__sadoku/directory-status") {
+        return Response.json({ state: "ready" });
+      }
+      if (url === "/__sadoku/global-instructions") {
+        return Response.json({
+          instructions: [
+            {
+              id: 1,
+              content: "Shared review guidance",
+              createdAt: "created",
+              updatedAt: "updated",
+            },
+            {
+              id: 2,
+              content: "Another shared instruction",
+              createdAt: "created",
+              updatedAt: "updated",
+            },
+          ],
+        });
+      }
+      return new Response("Not found.", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    const trigger = await screen.findByRole("button", {
+      name: "Open global instructions",
+    });
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        String(url) === "/__sadoku/global-instructions"
+      ),
+    ).toBe(false);
+    fireEvent.click(trigger);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Global instructions",
+    });
+    expect(await within(dialog).findByText("Shared review guidance")).not
+      .toBeNull();
+    expect(within(dialog).getByText("Another shared instruction")).not
+      .toBeNull();
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Global instructions" }))
+        .toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    const settings = await screen.findByRole("dialog", { name: "Settings" });
+    expect(within(settings).queryByText("Global instructions")).toBeNull();
+    expect(within(settings).queryByRole("button", { name: "Add Instruction" }))
+      .toBeNull();
+  });
+
+  it("opens the same global manager from document instructions and returns focus to the header", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Response.json([{
+            id: 1,
+            relativePath: "test.md",
+            title: "test.md",
+          }]);
+        }
+        if (url === "/__sadoku/directory-status") {
+          return Response.json({ state: "ready" });
+        }
+        if (url === "/__sadoku/documents/1") {
+          return Response.json({
+            fileUrl: "file:///tmp/test.md",
+            markdown: "# Test",
+            title: "test.md",
+          });
+        }
+        if (url === "/__sadoku/documents/1/comments") {
+          return Response.json({ comments: [], filePath: "/tmp/test.md" });
+        }
+        if (url === "/__sadoku/documents/1/instructions") {
+          return Response.json({ instructions: [] });
+        }
+        if (url === "/__sadoku/documents/1/memories") {
+          return Response.json({ memories: [] });
+        }
+        if (url === "/__sadoku/global-instructions") {
+          return Response.json({
+            instructions: [
+              {
+                id: 1,
+                content: "Shared review guidance",
+                createdAt: "created",
+                updatedAt: "updated",
+              },
+            ],
+          });
+        }
+        return new Response("Not found.", { status: 404 });
+      }),
+    );
+    render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Instructions" }),
+    );
+    const documentDialog = await screen.findByRole("dialog", {
+      name: "Document instructions",
+    });
+    await within(documentDialog).findByText("Shared review guidance");
+    fireEvent.click(
+      within(documentDialog).getByRole("button", {
+        name: "Manage global instructions",
+      }),
+    );
+    const manager = await screen.findByRole("dialog", {
+      name: "Global instructions",
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Document instructions" }))
+        .toBeNull()
+    );
+    expect(within(manager).getByText("Shared review guidance")).not.toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull();
+    fireEvent.click(
+      within(manager).getByRole("button", {
+        name: "Close global instructions",
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Global instructions" }))
+        .toBeNull()
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Open global instructions" }),
+      )
+    );
+  });
+
+  it("integrates the document title and a working table of contents into the header while scrolled", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const scrollIntoView = vi.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([
+            { id: 1, relativePath: "guide.md", title: "guide.md" },
+          ]));
+        }
+        if (url === "/__sadoku/documents/1") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/guide.md",
+            title: "guide.md",
+            displayTitle: "Reading guide",
+            markdown: "# Introduction\n\nBody\n\n## Details\n\nMore text",
+          }));
+        }
+        if (url === "/__sadoku/documents/1/comments") {
+          return Promise.resolve(Response.json({ comments: [] }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+    let documentBottom = 180;
+    const originalRect = HTMLElement.prototype.getBoundingClientRect;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function () {
+        const original = originalRect.call(this);
+        if (this.tagName === "HEADER") {
+          return { ...original, top: 0, bottom: 64, height: 64 };
+        }
+        if (this.getAttribute("aria-label") === "Document header") {
+          return {
+            ...original,
+            top: documentBottom - 100,
+            bottom: documentBottom,
+            height: 100,
+          };
+        }
+        return original;
+      },
+    );
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "guide.md" }));
+    await screen.findByRole("heading", { name: "Reading guide" });
+    const titleActions = within(
+      screen.getByRole("region", { name: "Document header" }),
+    ).getByRole("group", { name: "Document title actions" });
+    expect(within(titleActions).getByRole("button", { name: "Edit title" }))
+      .not.toBeNull();
+    expect(
+      within(titleActions).getByRole("button", { name: "Table of contents" }),
+    ).not.toBeNull();
+    const header = within(screen.getByRole("banner"));
+    expect(header.queryByRole("button", { name: "Table of contents" }))
+      .toBeNull();
+    expect(header.queryByRole("separator")).toBeNull();
+    expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
+
+    documentBottom = 64;
+    fireEvent.scroll(globalThis);
+    fireEvent.click(
+      await header.findByRole("button", { name: "Table of contents" }),
+    );
+    expect(
+      header.getByRole("link", { name: "guide.md" }).getAttribute("href"),
+    ).toBe("file:///tmp/guide.md");
+    expect(header.getByText("Reading guide")).not.toBeNull();
+    const applicationActions = header.getByRole("navigation", {
+      name: "Application actions",
+    });
+    expect(
+      within(applicationActions).getByRole("button", {
+        name: "Table of contents",
+      }),
+    ).not.toBeNull();
+    expect(
+      within(applicationActions).getByRole("separator")
+        .getAttribute("aria-orientation"),
+    ).toBe("vertical");
+    const toc = await screen.findByRole("navigation", {
+      name: "Table of contents",
+    });
+    const details = within(toc).getByRole("link", { name: "Details" });
+    expect(details.getAttribute("href")).toBe("#details");
+    fireEvent.click(details);
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    expect(scrollIntoView.mock.instances.at(-1)).toBe(
+      screen.getByRole("heading", { name: "Details" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("navigation", { name: "Table of contents" }))
+        .toBeNull()
+    );
+
+    documentBottom = 180;
+    fireEvent.scroll(globalThis);
+    await waitFor(() =>
+      expect(header.queryByRole("button", { name: "Table of contents" }))
+        .toBeNull()
+    );
+    expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
+    expect(header.queryByText("Reading guide")).toBeNull();
+    expect(header.queryByRole("separator")).toBeNull();
+
+    documentBottom = 20;
+    fireEvent.scroll(globalThis);
+    await header.findByRole("button", { name: "Table of contents" });
+    fireEvent.click(
+      screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Table of contents" }))
+        .toBeNull()
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Documents" }));
+    await screen.findByRole("treeitem", { name: "guide.md" });
+    expect(screen.queryByRole("button", { name: "Table of contents" }))
+      .toBeNull();
+  });
+
   it("opens the tags dialog and restores focus to the header button", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
@@ -68,10 +347,11 @@ describe("App", () => {
     const tagsButton = await screen.findByRole("button", { name: "Open tags" });
     fireEvent.click(tagsButton);
 
-    expect(await screen.findByRole("dialog", { name: "Tags" })).not.toBeNull();
-    fireEvent.keyDown(screen.getByRole("dialog", { name: "Tags" }), {
-      key: "Escape",
-    });
+    const dialog = await screen.findByRole("dialog", { name: "Tags" });
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true)
+    );
+    fireEvent.keyDown(dialog, { key: "Escape" });
 
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Tags" })).toBeNull()
@@ -133,9 +413,15 @@ describe("App", () => {
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));
 
     TestEventSource.instances[0]?.dispatchEvent(new Event("error"));
-    expect((await screen.findByRole("status")).textContent).toContain(
+    const connectionStatus = await screen.findByRole("status");
+    expect(connectionStatus.textContent).toContain("Connection lost");
+    expect(connectionStatus.querySelector('svg[aria-hidden="true"]')).not
+      .toBeNull();
+    fireEvent.pointerEnter(connectionStatus);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
       "Connection lost",
     );
+    fireEvent.pointerLeave(connectionStatus);
 
     TestEventSource.instances[0]?.dispatchEvent(new Event("open"));
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
@@ -427,6 +713,9 @@ describe("App", () => {
     const firstActionBar = await screen.findByRole("dialog", {
       name: "Document actions",
     });
+    expect(screen.getByRole("main").lastElementChild).toBe(
+      screen.getByTestId("action-bar-spacer"),
+    );
     const firstInstructionsButton = within(firstActionBar).getByRole("button", {
       name: "Instructions",
     });
@@ -438,7 +727,12 @@ describe("App", () => {
     const documentHeader = screen.getByRole("region", {
       name: "Document header",
     });
-    const tableOfContentsButton = within(documentHeader).getByRole("button", {
+    const titleActions = within(documentHeader).getByRole("group", {
+      name: "Document title actions",
+    });
+    expect(within(titleActions).getByRole("button", { name: "Set title" }))
+      .not.toBeNull();
+    const tableOfContentsButton = within(titleActions).getByRole("button", {
       name: "Table of contents",
     });
     expect(
@@ -465,6 +759,9 @@ describe("App", () => {
         .not.toBeNull();
       expect(within(actionBar).getByRole("button", { name: "Revisions" }))
         .not.toBeNull();
+      expect(screen.getByRole("main").lastElementChild).toBe(
+        screen.getByTestId("action-bar-spacer"),
+      );
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull();
     });
@@ -643,7 +940,7 @@ describe("App", () => {
     expect(await screen.findByRole("dialog", { name: "Settings" })).not
       .toBeNull();
     const themeSelect = screen.getByRole("combobox", { name: "Theme" });
-    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    expect(themeSelect.textContent).toBe("Light");
     await waitFor(() =>
       expect(document.activeElement).toBe(
         screen.getByRole("dialog", { name: "Settings" }),
@@ -746,12 +1043,15 @@ describe("App", () => {
       })
     );
 
-    fireEvent.change(themeSelect, { target: { value: "dark" } });
-    expect(document.documentElement.dataset.theme).toBe("dark");
+    fireEvent.click(themeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Dark" }));
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("dark")
+    );
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(document.documentElement.style.colorScheme).toBe("dark");
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
-    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
+    expect(themeSelect.textContent).toBe("Dark");
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "dark" })
     );
@@ -770,8 +1070,11 @@ describe("App", () => {
       method: "PUT",
     });
 
-    fireEvent.change(themeSelect, { target: { value: "light" } });
-    expect(document.documentElement.dataset.theme).toBe("light");
+    fireEvent.click(themeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Light" }));
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("light")
+    );
     expect(document.documentElement.classList.contains("light")).toBe(true);
     expect(document.documentElement.style.colorScheme).toBe("light");
     await waitFor(() =>
@@ -875,10 +1178,13 @@ describe("App", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
     const themeSelect = await screen.findByRole("combobox", { name: "Theme" });
-    expect((themeSelect as HTMLSelectElement).value).toBe("dark");
-    fireEvent.change(themeSelect, { target: { value: "light" } });
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect((themeSelect as HTMLSelectElement).value).toBe("light");
+    expect(themeSelect.textContent).toBe("Dark");
+    fireEvent.click(themeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Light" }));
+    await waitFor(() =>
+      expect(document.documentElement.dataset.theme).toBe("light")
+    );
+    expect(themeSelect.textContent).toBe("Light");
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 

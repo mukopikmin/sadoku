@@ -294,3 +294,43 @@ func (s *Service) ExportCommentToGitHub(ctx context.Context, req *connect.Reques
 	res.Header().Set("Cache-Control", "no-store")
 	return res, nil
 }
+
+func (s *Service) ListGlobalInstructions(ctx context.Context, req *connect.Request[pb.ListGlobalInstructionsRequest]) (*connect.Response[pb.ListGlobalInstructionsResponse], error) {
+	out := new(pb.ListGlobalInstructionsResponse)
+	if err := invoke(ctx, s, "ListGlobalInstructions", req.Msg, out); err != nil {
+		return nil, err
+	}
+	res := connect.NewResponse(out)
+	res.Header().Set("Cache-Control", "no-store")
+	return res, nil
+}
+
+func (s *Service) CreateGlobalInstruction(ctx context.Context, req *connect.Request[pb.CreateGlobalInstructionRequest]) (*connect.Response[pb.Instruction], error) {
+	out := new(pb.Instruction)
+	if err := invoke(ctx, s, "CreateGlobalInstruction", req.Msg, out); err != nil {
+		return nil, err
+	}
+	res := connect.NewResponse(out)
+	res.Header().Set("Cache-Control", "no-store")
+	return res, nil
+}
+
+func (s *Service) UpdateGlobalInstruction(ctx context.Context, req *connect.Request[pb.UpdateGlobalInstructionRequest]) (*connect.Response[pb.Instruction], error) {
+	out := new(pb.Instruction)
+	if err := invoke(ctx, s, "UpdateGlobalInstruction", req.Msg, out); err != nil {
+		return nil, err
+	}
+	res := connect.NewResponse(out)
+	res.Header().Set("Cache-Control", "no-store")
+	return res, nil
+}
+
+func (s *Service) DeleteGlobalInstruction(ctx context.Context, req *connect.Request[pb.DeleteGlobalInstructionRequest]) (*connect.Response[pb.DeleteGlobalInstructionResponse], error) {
+	out := new(pb.DeleteGlobalInstructionResponse)
+	if err := invoke(ctx, s, "DeleteGlobalInstruction", req.Msg, out); err != nil {
+		return nil, err
+	}
+	res := connect.NewResponse(out)
+	res.Header().Set("Cache-Control", "no-store")
+	return res, nil
+}

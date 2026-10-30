@@ -16,6 +16,7 @@ import { useInstructionsQuery } from "./hooks/useInstructions";
 import { useMemoriesQuery } from "./hooks/useMemories";
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { useScrollPosition } from "./hooks/useScrollPosition";
+import { useCollapsedDocumentHeader } from "./hooks/useCollapsedDocumentHeader";
 import { DocumentListPage } from "./pages/DocumentListPage";
 import { DocumentLoadingPage } from "./pages/DocumentLoadingPage";
 import { DocumentPreviewPage } from "./pages/DocumentPreviewPage";
@@ -28,6 +29,7 @@ import { CreateDocumentDialog } from "./components/CreateDocumentDialog";
 
 export const App = () => {
   const tagsTriggerRef = useRef<HTMLButtonElement>(null);
+  const globalInstructionsTriggerRef = useRef<HTMLButtonElement>(null);
   const {
     documentId: selectedDocumentId,
     isDocumentList,
@@ -71,9 +73,14 @@ export const App = () => {
     view,
     Boolean(documentQuery.data && commentsQuery.data),
   );
+  const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
+    selectedDocumentId,
+    view === "preview" && Boolean(documentQuery.data && commentsQuery.data),
+  );
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
+  const globalInstructionsDisclosure = useDisclosure();
   const memoriesDisclosure = useDisclosure();
   const tagsDisclosure = useDisclosure();
   const documentTagsDisclosure = useDisclosure();
@@ -160,6 +167,8 @@ export const App = () => {
   }, [directoryStatus?.state]);
 
   const dialogProps = {
+    globalInstructions: globalInstructionsDisclosure,
+    globalInstructionsTriggerRef,
     documentInstructions: instructionsDisclosure,
     documentMemories: memoriesDisclosure,
     documentTagsDialog: documentTagsDisclosure,
@@ -172,6 +181,8 @@ export const App = () => {
   };
   const headerActions = {
     connectionLost,
+    onOpenGlobalInstructions: globalInstructionsDisclosure.onOpen,
+    globalInstructionsTriggerRef,
     onOpenSettings: settingsDisclosure.onOpen,
     onOpenStatistics: statisticsDisclosure.onOpen,
     onOpenTags: tagsDisclosure.onOpen,
@@ -284,7 +295,14 @@ export const App = () => {
       }}
       header={{
         ...headerActions,
+        collapsedDocument: collapsed
+          ? {
+            title: document.displayTitle ?? document.title,
+            markdown: document.markdown,
+          }
+          : undefined,
         fileUrl: document.fileUrl,
+        headerRef,
         reloadAvailable,
         reloading: documentQuery.isFetching || commentsQuery.isFetching,
         title: document.title,
@@ -293,6 +311,7 @@ export const App = () => {
       <DocumentPreviewPage
         document={document}
         documentId={selectedDocumentId}
+        documentHeaderRef={documentHeaderRef}
         documents={documents}
         instructionCount={instructionsQuery.data?.length ?? 0}
         memoryCount={memoriesQuery.data?.length ?? 0}

@@ -1,6 +1,6 @@
 import { DocumentTitle } from "../components/DocumentTitle";
 import { Alert, Box, Container, Flex, Text } from "@chakra-ui/react";
-import { useState } from "react";
+import { type RefObject, useState } from "react";
 import { useDocumentDiff } from "../hooks/useDocumentDiff";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
@@ -15,6 +15,7 @@ import type { PreviewView } from "../models/previewView";
 type Props = {
   document: PreviewDocument;
   documentId: number;
+  documentHeaderRef?: RefObject<HTMLDivElement | null>;
   documents?: DocumentSummary[] | null;
   instructionCount: number;
   memoryCount: number;
@@ -30,26 +31,25 @@ type Props = {
   unresolvedCommentCount: number;
   view: PreviewView;
 };
-export const DocumentPreviewPage = (
-  {
-    document,
-    documentId,
-    documents,
-    instructionCount,
-    memoryCount,
-    onChangeView,
-    onOpenInstructions,
-    onOpenMemories,
-    onOpenTags,
-    onSelectDocument,
-    onSelectDocuments,
-    selectedDocument,
-    settings,
-    staleCommentCount,
-    unresolvedCommentCount,
-    view,
-  }: Props,
-) => {
+export const DocumentPreviewPage = ({
+  document,
+  documentId,
+  documentHeaderRef,
+  documents,
+  instructionCount,
+  memoryCount,
+  onChangeView,
+  onOpenInstructions,
+  onOpenMemories,
+  onOpenTags,
+  onSelectDocument,
+  onSelectDocuments,
+  selectedDocument,
+  settings,
+  staleCommentCount,
+  unresolvedCommentCount,
+  view,
+}: Props) => {
   const { showHtmlComments } = settings;
   const [revisionsOpen, setRevisionsOpen] = useState(false);
   const diff = useDocumentDiff(
@@ -57,10 +57,10 @@ export const DocumentPreviewPage = (
     document.markdown,
     document.previousMarkdown,
   );
-  const documentPath = selectedDocument?.relativePath ?? document.fileUrl ??
-    document.title;
+  const documentPath =
+    selectedDocument?.relativePath ?? document.fileUrl ?? document.title;
   return (
-    <Container as="main" maxW="980px" px="8" pt="0" pb="16">
+    <Container as="main" maxW="980px" px="8" pt="0" pb="8">
       {documents && selectedDocument && (
         <DocumentBreadcrumb
           document={selectedDocument}
@@ -70,32 +70,24 @@ export const DocumentPreviewPage = (
         />
       )}
       {view === "preview" && (
-        <Flex as="section" aria-label="Document header" align="start" gap="3">
+        <Flex
+          as="section"
+          aria-label="Document header"
+          ref={documentHeaderRef}
+          align="start"
+          gap="3"
+        >
           <Box flex="1" minW="0">
             <DocumentTitle
               key={documentId}
               documentId={documentId}
               title={document.displayTitle}
+              trailingAction={<TableOfContents markdown={document.markdown} />}
             />
           </Box>
-          <TableOfContents markdown={document.markdown} />
         </Flex>
       )}
-      <DocumentActionBar
-        diff={diff}
-        instructionCount={instructionCount}
-        memoryCount={memoryCount}
-        onChangeView={onChangeView}
-        onOpenInstructions={onOpenInstructions}
-        onOpenMemories={onOpenMemories}
-        onOpenRevisions={() => setRevisionsOpen(true)}
-        tagCount={document.tags.length}
-        onOpenTags={onOpenTags}
-        tags={document.tags}
-        staleCommentCount={staleCommentCount}
-        unresolvedCommentCount={unresolvedCommentCount}
-        view={view}
-      />
+
       <DocumentRevisionsDialog
         canRestore={document.canRestore}
         deleted={document.deleted}
@@ -132,24 +124,39 @@ export const DocumentPreviewPage = (
           {diff.changes.previous.size} lines
         </Text>
       )}
-      {view === "preview"
-        ? (
-          <MarkdownPreviewPage
-            documentId={documentId}
-            documentPath={documentPath}
-            key={`${documentId}-${settings.theme}-${settings.fontScale}`}
-            markdown={document.markdown}
-            previousMarkdown={diff.enabled ? document.previousMarkdown : undefined}
-            showHtmlComments={showHtmlComments}
-            theme={settings.theme === "dark" ? "dark" : "default"}
-          />
-        )
-        : (
-          <CommentListPage
-            documentId={documentId}
-            documentDeleted={document.deleted}
-          />
-        )}
+      {view === "preview" ? (
+        <MarkdownPreviewPage
+          documentId={documentId}
+          documentPath={documentPath}
+          key={`${documentId}-${settings.theme}-${settings.fontScale}`}
+          markdown={document.markdown}
+          previousMarkdown={
+            diff.enabled ? document.previousMarkdown : undefined
+          }
+          showHtmlComments={showHtmlComments}
+          theme={settings.theme === "dark" ? "dark" : "default"}
+        />
+      ) : (
+        <CommentListPage
+          documentId={documentId}
+          documentDeleted={document.deleted}
+        />
+      )}
+      <DocumentActionBar
+        diff={diff}
+        instructionCount={instructionCount}
+        memoryCount={memoryCount}
+        onChangeView={onChangeView}
+        onOpenInstructions={onOpenInstructions}
+        onOpenMemories={onOpenMemories}
+        onOpenRevisions={() => setRevisionsOpen(true)}
+        tagCount={document.tags.length}
+        onOpenTags={onOpenTags}
+        tags={document.tags}
+        staleCommentCount={staleCommentCount}
+        unresolvedCommentCount={unresolvedCommentCount}
+        view={view}
+      />
     </Container>
   );
 };
