@@ -92,6 +92,7 @@ export const MarkdownPreview = ({
     commentsByLine,
     commentHighlightsByLine,
     markdown,
+    rangeHighlights,
     onCloseCommentForm: closeCommentForm,
     onOpenCommentForm: openCommentForm,
     onOpenRawMarkdown: setRawMarkdownRange,
@@ -106,6 +107,7 @@ export const MarkdownPreview = ({
     commentsByLine,
     markdown,
     openCommentForm,
+    rangeHighlights,
     selectCommentRange,
     selectedRange,
   ]);
