@@ -267,7 +267,7 @@ export const CommentableBlock = ({
               borderLeftColor="accent"
               borderLeftWidth="3px"
               mb="1.5"
-              pb="1px"
+              pb="0.5"
               pl="3"
               pt="2"
             >
@@ -331,7 +331,7 @@ export const CommentableBlock = ({
               </Flex>
             </Box>
           )}
-          {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+          {error && <Text color="fg.error" fontSize="sm">{error}</Text>}
         </Stack>
       )}
     </Box>

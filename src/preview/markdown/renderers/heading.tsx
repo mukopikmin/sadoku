@@ -6,12 +6,12 @@ import type {
 } from "../rendererTypes";
 
 const headingSizes = {
-  h1: "calc(1.8rem * var(--sadoku-font-scale, 1))",
-  h2: "calc(1.4rem * var(--sadoku-font-scale, 1))",
-  h3: "calc(1.15rem * var(--sadoku-font-scale, 1))",
-  h4: "calc(0.95rem * var(--sadoku-font-scale, 1))",
-  h5: "calc(0.8rem * var(--sadoku-font-scale, 1))",
-  h6: "calc(0.8rem * var(--sadoku-font-scale, 1))",
+  h1: "3xl",
+  h2: "2xl",
+  h3: "xl",
+  h4: "md",
+  h5: "sm",
+  h6: "sm",
 } as const;
 
 type HeadingTagName = keyof typeof headingSizes;
@@ -30,8 +30,8 @@ export const renderMarkdownHeading = (
     fontWeight="semibold"
     lineHeight="1.25"
     m="0"
-    pt="0.75em"
-    pb="0.4em"
+    pt="3"
+    pb="1.5"
     {...elementProps}
   >
     {children}

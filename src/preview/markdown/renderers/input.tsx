@@ -20,9 +20,9 @@ export const MarkdownInput = ({
       className={className}
       disabled={disabled}
       display="inline-flex"
-      mb="0.2em"
-      me="0.5em"
-      ms="-1.5em"
+      mb="1"
+      me="2"
+      ms="-6"
       verticalAlign="middle"
     >
       <Checkbox.HiddenInput {...props} />

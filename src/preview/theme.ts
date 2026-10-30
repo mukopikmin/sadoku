@@ -18,9 +18,6 @@ export const sadokuChakraSystem = createSystem(
     },
     theme: {
       tokens: {
-        // Keep spacing and palette values aligned with Chakra's built-in tokens.
-        spacing: defaultConfig.theme?.tokens?.spacing,
-        colors: defaultConfig.theme?.tokens?.colors,
         fontSizes: {
           "2xs": { value: "calc(0.625rem * var(--sadoku-font-scale, 1))" },
           xs: { value: "calc(0.75rem * var(--sadoku-font-scale, 1))" },
