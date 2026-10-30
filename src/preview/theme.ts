@@ -58,9 +58,6 @@ export const sadokuChakraSystem = createSystem(
             },
           },
           border: {
-            control: {
-              value: { _dark: "{colors.gray.400}", base: "{colors.gray.400}" },
-            },
             default: {
               value: { _dark: "{colors.gray.700}", base: "{colors.gray.300}" },
             },

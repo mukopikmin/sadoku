@@ -43,10 +43,10 @@ export const ReplyComposer = ({
       ? (
         <Flex align="center" justify="space-between" gap="2">
           <CommentActionButton
-            borderColor="border.control"
             disabled={disabled}
             onClick={() => setIsReplying(true)}
             type="button"
+            variant="surface"
           >
             <Reply aria-hidden="true" />
             Reply
