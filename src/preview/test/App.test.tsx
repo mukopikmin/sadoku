@@ -760,7 +760,7 @@ describe("App", () => {
     expect(commentsButton.getAttribute("aria-selected")).toBe("false");
   });
 
-  it("opens instructions for the selected document from its action bar", async () => {
+  it("loads instructions only when opening the selected document dialog", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const instructionRequests: string[] = [];
     vi.stubGlobal(
@@ -785,6 +785,16 @@ describe("App", () => {
         }
         if (/^\/__sadoku\/documents\/[12]\/instructions$/.test(url)) {
           instructionRequests.push(url);
+          return Promise.resolve(Response.json({
+            instructions: [{
+              id: 1,
+              content: "Saved document guidance",
+              createdAt: "created",
+              updatedAt: "updated",
+            }],
+          }));
+        }
+        if (url === "/__sadoku/global-instructions") {
           return Promise.resolve(Response.json({ instructions: [] }));
         }
         return Promise.resolve(new Response("Not found.", { status: 404 }));
@@ -809,6 +819,8 @@ describe("App", () => {
         "aria-hidden",
       ),
     ).toBe("true");
+    expect(firstInstructionsButton.textContent).toBe("");
+    expect(instructionRequests).toEqual([]);
     const documentHeader = screen.getByRole("region", {
       name: "Document header",
     });
@@ -855,6 +867,7 @@ describe("App", () => {
     expect(await screen.findByRole("button", { name: "Table of contents" }))
       .not.toBeNull();
 
+    expect(instructionRequests).toEqual([]);
     fireEvent.click(
       await screen.findByRole("button", {
         name: "Instructions",
@@ -876,8 +889,15 @@ describe("App", () => {
       expect(screen.queryByRole("dialog", { name: "Document instructions" }))
         .toBeNull()
     );
+    expect(screen.getByRole("button", { name: "Instructions" }).textContent)
+      .toBe("");
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     fireEvent.click(await screen.findByRole("treeitem", { name: "second.md" }));
+    const secondInstructionsButton = await screen.findByRole("button", {
+      name: "Instructions",
+    });
+    expect(secondInstructionsButton.textContent).toBe("");
+    expect(instructionRequests).toEqual(["/__sadoku/documents/1/instructions"]);
     fireEvent.click(
       await screen.findByRole("button", { name: "Instructions" }),
     );

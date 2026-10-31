@@ -12,7 +12,6 @@ import {
   useDocumentsQuery,
   usePreviewDocumentQuery,
 } from "./hooks/useDocuments";
-import { useInstructionsQuery } from "./hooks/useInstructions";
 import { useMemoriesQuery } from "./hooks/useMemories";
 import { usePreviewSettings } from "./hooks/usePreviewSettings";
 import { useScrollPosition } from "./hooks/useScrollPosition";
@@ -57,10 +56,6 @@ export const App = () => {
     shouldLoadDocument,
   );
   const commentsQuery = useCommentsQuery(
-    selectedDocumentId,
-    shouldLoadDocument,
-  );
-  const instructionsQuery = useInstructionsQuery(
     selectedDocumentId,
     shouldLoadDocument,
   );
@@ -312,7 +307,6 @@ export const App = () => {
         documentId={selectedDocumentId}
         documentHeaderRef={documentHeaderRef}
         documents={documents}
-        instructionCount={instructionsQuery.data?.length ?? 0}
         memoryCount={memoriesQuery.data?.length ?? 0}
         onChangeView={changeView}
         onOpenInstructions={instructionsDisclosure.onOpen}

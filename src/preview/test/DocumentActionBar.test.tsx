@@ -38,7 +38,6 @@ describe("DocumentActionBar", () => {
     });
     const { unmount } = render(
       <DocumentActionBar
-        instructionCount={0}
         memoryCount={0}
         onChangeView={() => {}}
         onOpenInstructions={() => {}}
@@ -73,7 +72,6 @@ describe("DocumentActionBar", () => {
       const [view, setView] = useState<PreviewView>("preview");
       return (
         <DocumentActionBar
-          instructionCount={0}
           memoryCount={0}
           onChangeView={setView}
           onOpenInstructions={() => {}}
@@ -152,7 +150,6 @@ describe("DocumentActionBar", () => {
         staleCommentCount={0}
         unresolvedCommentCount={0}
         view="preview"
-        instructionCount={3}
         memoryCount={4}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -176,7 +173,7 @@ describe("DocumentActionBar", () => {
     expect(tagsButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(tagsButton.textContent).toBe("2");
     expect(screen.getByRole("button", { name: "Instructions" }).textContent)
-      .toBe("3");
+      .toBe("");
     expect(screen.getByRole("button", { name: "Memories" }).textContent).toBe(
       "4",
     );
@@ -199,7 +196,6 @@ describe("DocumentActionBar", () => {
         staleCommentCount={0}
         unresolvedCommentCount={0}
         view="preview"
-        instructionCount={0}
         memoryCount={0}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -233,7 +229,6 @@ describe("DocumentActionBar", () => {
         staleCommentCount={0}
         unresolvedCommentCount={0}
         view="preview"
-        instructionCount={0}
         memoryCount={12}
         onOpenInstructions={onOpenInstructions}
         onOpenMemories={onOpenMemories}
