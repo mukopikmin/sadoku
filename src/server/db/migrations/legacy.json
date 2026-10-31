@@ -114,5 +114,13 @@
       "ALTER TABLE comment_document DROP COLUMN previous_source_snapshot",
       "ALTER TABLE comment_document DROP COLUMN source_snapshot"
     ]
+  },
+  {
+    "version": "0013",
+    "name": "create_global_instructions",
+    "checksum": "sha256:fbfb9fe2487affc6fd856b13d26df278249dea9cd58f072a3056e7d4c1eb825b",
+    "statements": [
+      "CREATE TABLE global_instruction ( id INTEGER PRIMARY KEY, content TEXT NOT NULL CHECK (length(trim(content)) > 0), created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z') )"
+    ]
   }
 ]

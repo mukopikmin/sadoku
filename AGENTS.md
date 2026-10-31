@@ -104,15 +104,39 @@ them when making changes.
   states explicitly instead of interpreting combinations of booleans and
   optional values.
 - Build preview UI with Chakra UI components and existing Sadoku semantic
-  tokens. Prefer Chakra layout and style props over new ad hoc CSS. Add reusable
-  colors to `src/preview/theme.ts` as semantic tokens with both light and dark
-  values; do not hard-code theme-specific colors in feature components. Reuse
-  components under `src/preview/components/ui/` before introducing a new dialog,
-  notification, or common control implementation.
-- Prefer toolkit defaults, responsive component recipes, semantic tokens, and
-  component props such as `size` over explicit values or custom code. Add an
-  override only when a product requirement cannot be expressed by the toolkit's
-  existing API.
+  tokens. Reuse components under `src/preview/components/ui/` before introducing
+  a new dialog, notification, or common control implementation.
+- For appearance changes, first choose Chakra's built-in `variant`,
+  `colorPalette`, `size`, and `textStyle`. Prefer the nearest suitable built-in
+  style over an exact visual match implemented with custom CSS, recipes, or
+  one-off color tokens. For example, try `surface` for a more visible neutral
+  button before overriding an `outline` border. Keep related controls on a
+  common toolkit size, and use `textStyle="label"` for settings labels.
+- When controls look different in size, compare their rendered dimensions, text
+  and icon sizes, label widths, padding, and contrast in both themes before
+  changing a shared size. Distinguish actual size differences from perceived
+  differences caused by color or contrast.
+- Add an override only for a concrete product requirement that cannot be met
+  with the toolkit's existing API. Explain the unmet requirement and why the
+  built-in options are insufficient in the pull request. If a new reusable color
+  is necessary, define it in `src/preview/theme.ts` as a semantic token with
+  both light and dark values; do not hard-code theme-specific colors in feature
+  components. Remove unused overrides and tokens when returning to a built-in
+  style.
+- Let parent `Stack` or `Flex` components own spacing between UI sections with
+  fixed `gap` values. Avoid combining that gap with child `mt`, `mb`, or `my`
+  spacing, and remove wrappers used only to add such margins. Render optional
+  badges and replies as optional children so gaps occur only between present
+  items; do not branch on their presence to adjust margins or padding or reserve
+  an empty badge row. Keep container padding consistent.
+- Distinguish spacing around a control from padding inside it. Requests for
+  space around badges should normally change the containing layout's gap, rather
+  than the badges' internal padding or text size.
+- Prefer toolkit-provided layout hooks, such as `useElementRect`, before adding
+  custom measurement logic. Reserve the actual height of fixed controls such as
+  the ActionBar in document flow, including safe-area space, and let
+  measurements follow wrapping and font-size changes instead of guessing heights
+  for each breakpoint.
 - Lay out Markdown document blocks as a stack with a consistent `gap`. Do not
   create block-to-block spacing with margins on individual Markdown elements.
 - When a Markdown element needs additional vertical breathing room, add padding

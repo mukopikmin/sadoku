@@ -36,6 +36,7 @@ export const SettingsDialog = (
       initialFocusEl={() => contentRef.current}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
+      scrollBehavior="inside"
       size="lg"
     >
       <Portal>

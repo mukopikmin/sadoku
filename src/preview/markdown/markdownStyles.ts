@@ -71,16 +71,20 @@ export const markdownStyles = `
     right: calc(-1 * var(--chakra-spacing-2));
   }
 
-  .markdown-range-highlight-comment {
-    background: color-mix(in srgb, var(--chakra-colors-selection-comment) 18%, var(--chakra-colors-canvas));
+  .markdown-preview [data-revision-kind="addition"] {
+    --markdown-highlight-bg: var(--chakra-colors-highlight-addition-bg);
   }
 
-  .markdown-range-highlight-selection {
-    background: color-mix(
-      in srgb,
-      var(--chakra-colors-accent) 18%,
-      var(--chakra-colors-canvas)
-    );
+  .markdown-preview [data-revision-kind="deletion"] {
+    --markdown-highlight-bg: var(--chakra-colors-highlight-deletion-bg);
+  }
+
+  .markdown-preview [data-revision-kind] :where([data-markdown-code-block], pre.mermaid) {
+    background: var(--markdown-highlight-bg);
+  }
+
+  .markdown-preview [data-revision-kind] pre.mermaid > svg {
+    background-color: transparent !important;
   }
 
   .commentable-content {

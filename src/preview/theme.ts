@@ -81,6 +81,38 @@ export const sadokuChakraSystem = createSystem(
               value: { _dark: "{colors.gray.400}", base: "{colors.gray.600}" },
             },
           },
+          highlight: {
+            addition: {
+              bg: {
+                value: {
+                  _dark:
+                    "color-mix(in srgb, {colors.green.400} 24%, {colors.canvas})",
+                  base: "{colors.green.100}",
+                },
+              },
+            },
+            deletion: {
+              bg: {
+                value: {
+                  _dark:
+                    "color-mix(in srgb, {colors.red.400} 24%, {colors.canvas})",
+                  base: "{colors.red.100}",
+                },
+              },
+            },
+            comment: {
+              bg: {
+                value:
+                  "color-mix(in srgb, {colors.selection.comment} 18%, {colors.canvas})",
+              },
+            },
+            selection: {
+              bg: {
+                value:
+                  "color-mix(in srgb, {colors.accent} 18%, {colors.canvas})",
+              },
+            },
+          },
           link: {
             value: { _dark: "{colors.blue.400}", base: "{colors.blue.600}" },
           },

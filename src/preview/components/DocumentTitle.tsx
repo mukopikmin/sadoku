@@ -2,6 +2,7 @@ import {
   Button,
   Dialog,
   Field,
+  Flex,
   Heading,
   Input,
   Portal,
@@ -9,12 +10,13 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Pencil } from "lucide-react";
-import { useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export const DocumentTitle = ({ documentId, title }: {
+export const DocumentTitle = ({ documentId, title, trailingAction }: {
   documentId: number;
   title?: string;
+  trailingAction?: ReactNode;
 }) => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -25,19 +27,27 @@ export const DocumentTitle = ({ documentId, title }: {
       {title && (
         <Heading as="h1" size="3xl" overflowWrap="anywhere">{title}</Heading>
       )}
-      <Button
-        size="sm"
-        variant="ghost"
-        alignSelf="start"
-        onClick={() => {
-          setDraft(title ?? "");
-          mutation.reset();
-          setOpen(true);
-        }}
+      <Flex
+        align="center"
+        aria-label="Document title actions"
+        gap="3"
+        justify="space-between"
+        role="group"
       >
-        {title && <Pencil aria-hidden="true" />}
-        {title ? "Edit title" : "Set title"}
-      </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setDraft(title ?? "");
+            mutation.reset();
+            setOpen(true);
+          }}
+        >
+          {title && <Pencil aria-hidden="true" />}
+          {title ? "Edit title" : "Set title"}
+        </Button>
+        {trailingAction}
+      </Flex>
       <Dialog.Root
         open={open}
         onOpenChange={({ open }) => {

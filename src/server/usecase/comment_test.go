@@ -68,20 +68,6 @@ func TestRebaseComments(t *testing.T) {
 		t.Fatalf("deleted: %+v", c)
 	}
 }
-func TestLegacyCommentMatching(t *testing.T) {
-	text := "Body"
-	hash := HashSource(text)
-	c := Comment{StartLine: 3, EndLine: 3, SourceText: &text, SourceHash: &hash}
-	doc := ResolveComments(Comments{Comments: []Comment{c}}, "# Title\n\ninserted\nBody\n")
-	if doc.Comments[0].StartLine != 4 || doc.Comments[0].Stale {
-		t.Fatal(doc.Comments[0])
-	}
-	doc = ResolveComments(Comments{Comments: []Comment{c}}, "Body\nBody\n")
-	if !doc.Comments[0].Stale {
-		t.Fatal("ambiguous source accepted")
-	}
-}
-
 func TestSourceRangesAndStableHashes(t *testing.T) {
 	for _, test := range []struct {
 		start, end int
@@ -111,6 +97,8 @@ func TestLegacyCommentSearchBoundaries(t *testing.T) {
 		stale                     bool
 	}{
 		{"unchanged", "# Title\n\nBody\n", "Body", 3, 3, 3, false},
+		{"single-line moved", "# Title\n\ninserted\nBody\n", "Body", 3, 3, 4, false},
+		{"single-line ambiguous", "Body\nBody\n", "Body", 3, 3, 3, true},
 		{"multi-line moved", "intro\nalpha\nbeta\noutro", "alpha\nbeta", 1, 2, 2, false},
 		{"ambiguous range", "alpha\nbeta\nchanged\nalpha\nbeta", "alpha\nbeta", 1, 2, 1, true},
 		{"deleted", "# Title\n\nremoved\n", "Body", 3, 3, 3, true},

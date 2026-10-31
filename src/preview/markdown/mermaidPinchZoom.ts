@@ -45,6 +45,7 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
     const viewportHeight = viewport.clientHeight;
     if (!dimensions || viewportWidth <= 0 || viewportHeight <= 0) return false;
     const fitScale = Math.min(
+      1,
       viewportWidth / dimensions.width,
       viewportHeight / dimensions.height,
     );
@@ -117,6 +118,15 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
     return true;
   };
 
+  const zoomBy = (factor: number) => {
+    const bounds = viewport.getBoundingClientRect();
+    zoomTo(
+      scale * factor,
+      bounds.left + viewport.clientLeft + viewport.clientWidth / 2,
+      bounds.top + viewport.clientTop + viewport.clientHeight / 2,
+    );
+  };
+
   // Chromium and Firefox report trackpad pinches as Ctrl+wheel events.
   const onWheel = (event: WheelEvent) => {
     if (!event.ctrlKey || (!layout && !updateLayout())) return;
@@ -175,6 +185,8 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
 
   return {
     fit,
+    zoomIn: () => zoomBy(1.25),
+    zoomOut: () => zoomBy(1 / 1.25),
     destroy: () => {
       observer?.disconnect();
       view.removeEventListener("resize", resize);

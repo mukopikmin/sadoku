@@ -1,3 +1,5 @@
+export type InstructionScope = number | "global";
+
 export type DocumentInstruction = {
   content: string;
   createdAt: string;

@@ -1,0 +1,58 @@
+name: Proxy Test
+
+on:
+  pull_request:
+    paths: &proxy-paths
+      - "proxy/**"
+      - ".github/workflows/proxy_test.yml"
+  push:
+    branches:
+      - main
+    paths: *proxy-paths
+
+permissions:
+  contents: read
+
+jobs:
+  go-proxy:
+    name: Go proxy (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-15]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install GNU Make
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install make --version=4.4.1 --yes --no-progress
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: proxy/go.mod
+          cache: false
+
+      - name: Check formatting
+        if: runner.os == 'Linux'
+        run: make check-proxy-format
+
+      - name: Vet
+        run: make vet-proxy
+
+      - name: Test
+        run: make test-proxy
+
+      - name: Build
+        run: make build-proxy
