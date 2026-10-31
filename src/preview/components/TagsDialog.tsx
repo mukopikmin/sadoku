@@ -12,6 +12,7 @@ import {
   Spinner,
   Table,
   Text,
+  useToken,
 } from "@chakra-ui/react";
 import { Pencil, Trash2 } from "lucide-react";
 import { type RefObject, useEffect, useState } from "react";
@@ -26,6 +27,7 @@ type Props = {
 };
 
 export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
+  const swatchColors = useToken("colors", ["gray.500", "blue.500", "green.500"]);
   const tags = useTagsQuery(open);
   const update = useUpdateTag();
   const remove = useDeleteTag();
@@ -37,7 +39,7 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
   }, [open]);
   const [editingId, setEditingId] = useState<number>();
   const [name, setName] = useState("");
-  const [backgroundColor, setBackgroundColor] = useState("#718096");
+  const [backgroundColor, setBackgroundColor] = useState(swatchColors[0]);
   const [message, setMessage] = useState("");
 
   const startEditing = (
@@ -174,7 +176,7 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                                           </ColorPicker.ChannelSlider>
                                         </ColorPicker.Sliders>
                                         <ColorPicker.SwatchGroup>
-                                          {["#718096", "#123456", "#abcdef"]
+                                          {swatchColors
                                             .map((color) => (
                                               <ColorPicker.SwatchTrigger
                                                 aria-label={`Select ${color}`}

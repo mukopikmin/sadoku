@@ -11,12 +11,12 @@ export const MarkdownCode = ({
     <Code
       className={className}
       borderRadius="sm"
-      px="0.4em"
-      py="0.2em"
+      px="1.5"
+      py="0.5"
       bg="code.bg"
       color="fg"
       fontFamily="mono"
-      fontSize="0.8em"
+      fontSize="sm"
       {...props}
     >
       {children}
