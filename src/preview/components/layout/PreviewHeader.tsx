@@ -11,7 +11,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 import {
-  Database,
   RefreshCw,
   ScrollText,
   Settings,
@@ -65,7 +64,6 @@ type PreviewHeaderProps = {
   onReloadPreview: () => void;
   onOpenTags: () => void;
   onOpenSettings: () => void;
-  onOpenStatistics: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
   tagsTriggerRef?: RefObject<HTMLButtonElement | null>;
@@ -81,7 +79,6 @@ export const PreviewHeader = ({
   headerRef,
   onReloadPreview,
   onOpenSettings,
-  onOpenStatistics,
   onOpenTags,
   reloadAvailable,
   reloading,
@@ -178,15 +175,6 @@ export const PreviewHeader = ({
           <ScrollText aria-hidden="true" />
         </IconButton>
       </Tooltip>
-      <IconButton
-        aria-label="Open database statistics"
-        onClick={onOpenStatistics}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        <Database aria-hidden="true" />
-      </IconButton>
       <IconButton
         aria-label="Open settings"
         onClick={onOpenSettings}

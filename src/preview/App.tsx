@@ -78,7 +78,6 @@ export const App = () => {
     view === "preview" && Boolean(documentQuery.data && commentsQuery.data),
   );
   const settingsDisclosure = useDisclosure();
-  const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
   const globalInstructionsDisclosure = useDisclosure();
   const memoriesDisclosure = useDisclosure();
@@ -175,7 +174,6 @@ export const App = () => {
     settings,
     settingsActions,
     settingsDialog: settingsDisclosure,
-    statisticsDialog: statisticsDisclosure,
     tagsDialog: tagsDisclosure,
     tagsTriggerRef,
   };
@@ -184,7 +182,6 @@ export const App = () => {
     onOpenGlobalInstructions: globalInstructionsDisclosure.onOpen,
     globalInstructionsTriggerRef,
     onOpenSettings: settingsDisclosure.onOpen,
-    onOpenStatistics: statisticsDisclosure.onOpen,
     onOpenTags: tagsDisclosure.onOpen,
     onReloadPreview: reloadPreview,
     tagsTriggerRef,
