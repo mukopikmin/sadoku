@@ -7,8 +7,8 @@ export const markdownStyles = `
     list-style-type: none;
   }
 
-  .markdown-preview .comment-markdown-list > li + li > .commentable-list-item > .commentable-content {
-    padding-top: var(--chakra-spacing-1);
+  .markdown-preview .commentable-list-item > .commentable-content {
+    padding-block: calc(var(--chakra-spacing-1) / 2);
   }
 
   .markdown-code-block {
