@@ -82,6 +82,13 @@ add_comment "$review" 'const state: PreviewState = "ready";' \
   'Code comment: consider how failures should be represented.'
 add_comment "$review" '## Mermaid Diagrams' \
   'Diagram comment: check Mermaid rendering and zoom controls.'
+# Remove a commented passage so the main sample also exercises the Stale filter.
+printf '\n%s\n' 'Temporary review note: confirm the previous workflow before release.' >> "$review"
+add_comment "$review" 'Temporary review note: confirm the previous workflow before release.' \
+  'Stale comment: this passage was removed. Use the Stale filter to find this thread and compare its saved quote.'
+cp "$fixture_dir/comprehensive.md" "$review.updated"
+mv "$review.updated" "$review"
+sadoku comment list --source "$review" >/dev/null
 sadoku instruction add --source "$review" \
   --content 'Check that the document explains the workflow clearly enough for users to follow.' >/dev/null
 sadoku instruction add --source "$review" \
