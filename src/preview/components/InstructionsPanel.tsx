@@ -115,7 +115,7 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
                       <Button
                         colorPalette="red"
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         disabled={editor.pending || actions.pending}
                         onClick={() =>
                           setDeletion({ id: instruction.id, error: "" })}
