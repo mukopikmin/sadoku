@@ -256,6 +256,10 @@ commentsDirectory = "/path/to/sadoku/comments"
 theme_mode = "dark"
 ```
 
+Enable **Settings → Show highlight boundaries** to outline commentable blocks,
+range highlights, and revision highlights for spacing inspection. This setting
+is off by default and is saved as `show_highlight_boundaries` in `config.toml`.
+
 Remote URL query strings and fragments are excluded from stored document
 identities. Sadoku uses `gh` for PR access without reading or storing a GitHub
 token. Avoid putting secrets in comments, instructions, or memories.

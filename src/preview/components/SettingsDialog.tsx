@@ -17,6 +17,7 @@ export type SettingsDialogProps = {
   onFontScaleChange: (value: number) => void;
   onMarkdownExtensionsChange: (value: string[]) => void;
   onOpenChange: (open: boolean) => void;
+  onShowHighlightBoundariesChange: (value: boolean) => void;
   onShowHtmlCommentsChange: (value: boolean) => void;
   onThemeModeChange: (value: ThemeMode) => void;
   open: boolean;
@@ -61,6 +62,9 @@ export const SettingsDialog = (
                   onFontScaleChange={actions.onFontScaleChange}
                   onThemeModeChange={actions.onThemeModeChange}
                   onShowHtmlCommentsChange={actions.onShowHtmlCommentsChange}
+                  onShowHighlightBoundariesChange={actions
+                    .onShowHighlightBoundariesChange}
+                  showHighlightBoundaries={settings.showHighlightBoundaries}
                   showHtmlComments={settings.showHtmlComments}
                   themeMode={settings.theme}
                 />

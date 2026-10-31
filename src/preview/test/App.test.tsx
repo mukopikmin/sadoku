@@ -47,6 +47,7 @@ afterEach(() => {
   document.documentElement.className = "";
   document.documentElement.removeAttribute("data-theme");
   document.documentElement.removeAttribute("data-code-wrap");
+  document.documentElement.removeAttribute("data-show-highlight-boundaries");
   document.documentElement.removeAttribute("style");
   globalThis.localStorage?.clear?.();
   TestEventSource.instances = [];
@@ -895,6 +896,82 @@ describe("App", () => {
     );
   });
 
+  it("defaults highlight boundaries off and saves and restores the toggle", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    let savedSettings: Record<string, unknown> = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/__sadoku/settings") {
+          if (init?.method === "PUT") {
+            savedSettings = JSON.parse(String(init.body));
+          }
+          return Promise.resolve(Response.json(savedSettings));
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([
+            { id: 1, relativePath: "test.md", title: "test.md" },
+          ]));
+        }
+        if (url === "/__sadoku/documents/1") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/test.md",
+            markdown: "# Title\n\nBody",
+            title: "test.md",
+          }));
+        }
+        if (url.endsWith("/comments")) {
+          return Promise.resolve(Response.json({ comments: [] }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+    const app = render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
+    await screen.findByText("Body");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open settings" }),
+    );
+    const toggle = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show highlight boundaries",
+    });
+    expect(toggle.checked).toBe(false);
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "false",
+    );
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(savedSettings.showHighlightBoundaries).toBe(true)
+    );
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "true",
+    );
+    app.unmount();
+
+    render(<App />);
+    await screen.findByText("Body");
+    await waitFor(() =>
+      expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+        "true",
+      )
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open settings" }),
+    );
+    const restored = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show highlight boundaries",
+    });
+    expect(restored.checked).toBe(true);
+    fireEvent.click(restored);
+    await waitFor(() =>
+      expect(savedSettings.showHighlightBoundaries).toBe(false)
+    );
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "false",
+    );
+  });
+
   it("saves HTML comment visibility globally and restores it after remounting", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     let savedSettings: Record<string, unknown> = {};
@@ -1067,6 +1144,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 2,
           maxFiles: 20,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1108,6 +1186,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 20,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1126,6 +1205,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1154,6 +1234,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "dark",
       }),
@@ -1179,6 +1260,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "light",
       }),
@@ -1204,6 +1286,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1349,6 +1432,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 2,
         maxFiles: 20,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "light",
       }),
