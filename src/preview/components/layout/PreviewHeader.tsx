@@ -55,7 +55,7 @@ export const PreviewShell = ({ children, headerRef }: {
 );
 
 type PreviewHeaderProps = {
-  collapsedDocument?: { title: string; markdown: string };
+  collapsedDocument?: { title?: string; markdown: string };
   connectionLost: boolean;
   fileUrl?: string;
   globalInstructionsTriggerRef?: RefObject<HTMLButtonElement | null>;
@@ -109,7 +109,7 @@ export const PreviewHeader = ({
               {title}
             </Text>
           )}
-        {collapsedDocument && (
+        {collapsedDocument?.title && (
           <Text
             minW="0"
             truncate

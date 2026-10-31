@@ -296,7 +296,7 @@ export const App = () => {
         ...headerActions,
         collapsedDocument: collapsed
           ? {
-            title: document.displayTitle ?? document.title,
+            title: document.displayTitle,
             markdown: document.markdown,
           }
           : undefined,
