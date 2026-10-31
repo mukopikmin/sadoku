@@ -14,6 +14,7 @@ import { Tooltip } from "./ui/tooltip";
 
 type Props = {
   onChangeView: (view: PreviewView) => void;
+  showLabels?: boolean;
   staleCommentCount: number;
   unresolvedCommentCount: number;
   view: PreviewView;
@@ -49,6 +50,7 @@ const ViewButton = ({
 
 export const DocumentViewSwitch = ({
   onChangeView,
+  showLabels = false,
   staleCommentCount,
   unresolvedCommentCount,
   view,
@@ -68,16 +70,18 @@ export const DocumentViewSwitch = ({
         <ButtonGroup attached size="sm" variant="outline">
           <ViewButton
             aria-label="Preview"
-            px="0"
+            px={showLabels ? undefined : "0"}
             tooltip="Preview"
             triggerId={triggerId("preview")}
             value="preview"
           >
             <BookOpen aria-hidden="true" />
+            {showLabels && "Preview"}
           </ViewButton>
           <ViewButton
             aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
-            px={unresolvedCommentCount === 0 && staleCommentCount === 0
+            px={!showLabels && unresolvedCommentCount === 0 &&
+                staleCommentCount === 0
               ? "0"
               : undefined}
             tooltip={`Comments, ${unresolvedCommentCount} unresolved${
@@ -87,6 +91,7 @@ export const DocumentViewSwitch = ({
             value="comments"
           >
             <MessagesSquare aria-hidden="true" />
+            {showLabels && "Comments"}
             {unresolvedCommentCount > 0 && (
               <Badge aria-hidden="true" size="sm" variant="solid">
                 {unresolvedCommentCount}

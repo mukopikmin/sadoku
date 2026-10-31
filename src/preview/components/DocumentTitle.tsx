@@ -32,6 +32,7 @@ export const DocumentTitle = ({ documentId, title, trailingAction }: {
         aria-label="Document title actions"
         gap="3"
         justify="space-between"
+        wrap="wrap"
         role="group"
       >
         <Button

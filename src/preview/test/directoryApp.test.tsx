@@ -412,13 +412,15 @@ describe("directory preview", () => {
     expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
-    const actionBar = screen.getByRole("dialog", { name: "Document actions" });
+    const header = screen.getByRole("region", { name: "Document header" });
+    expect(within(screen.getByRole("banner")).queryByRole("tablist"))
+      .toBeNull();
     expect(
-      within(actionBar).getByRole("tab", {
+      within(header).getByRole("tab", {
         name: "Comments, 0 unresolved",
       }).getAttribute("aria-selected"),
     ).toBe("true");
-    fireEvent.click(within(actionBar).getByRole("tab", { name: "Preview" }));
+    fireEvent.click(within(header).getByRole("tab", { name: "Preview" }));
     expect(await screen.findByRole("heading", { name: "Document 2" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2");

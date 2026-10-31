@@ -18,9 +18,9 @@ import {
   Tag,
   WifiOff,
 } from "lucide-react";
-import type { ReactNode, RefObject } from "react";
+import type { ComponentProps, ReactNode, RefObject } from "react";
 import { Tooltip } from "../ui/tooltip";
-import { TableOfContents } from "../../pages/markdown/TableOfContents";
+import { DocumentNavigation } from "../DocumentNavigation";
 
 export const PreviewShell = ({ children, headerRef }: {
   children: ReactNode;
@@ -56,7 +56,8 @@ export const PreviewShell = ({ children, headerRef }: {
 );
 
 type PreviewHeaderProps = {
-  collapsedDocument?: { title: string; markdown: string };
+  collapsedDocument?: { title: string };
+  documentNavigation?: ComponentProps<typeof DocumentNavigation>;
   connectionLost: boolean;
   fileUrl?: string;
   globalInstructionsTriggerRef?: RefObject<HTMLButtonElement | null>;
@@ -74,6 +75,7 @@ type PreviewHeaderProps = {
 
 export const PreviewHeader = ({
   collapsedDocument,
+  documentNavigation,
   connectionLost,
   fileUrl,
   globalInstructionsTriggerRef,
@@ -134,9 +136,9 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
-      {collapsedDocument && (
+      {documentNavigation && (
         <Flex alignItems="center" gap="3" flexShrink="0">
-          <TableOfContents markdown={collapsedDocument.markdown} />
+          <DocumentNavigation {...documentNavigation} />
           <Separator orientation="vertical" h="6" borderColor="border.muted" />
         </Flex>
       )}
