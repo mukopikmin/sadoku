@@ -15,6 +15,7 @@ import (
 
 // Captured from 368b47e (the last TypeScript server). Only timestamps and the
 // temporary root are normalized; whitespace, field order and stderr are exact.
+// Historical instruction commands assert generic invalid-command errors.
 func TestLegacyCLITranscripts(t *testing.T) {
 	data, err := os.ReadFile("testdata/legacy_cli.json")
 	if err != nil {
@@ -54,6 +55,12 @@ func TestLegacyCLITranscripts(t *testing.T) {
 		return timestamp.ReplaceAllString(s, "$$TIME")
 	}
 	for i, tc := range cases {
+		// Preserve historical captures while checking the current command set.
+		if len(tc.Args) > 0 && tc.Args[0] == "instruction" {
+			tc.Stdout = ""
+			tc.Stderr = "Invalid instruction command.\n$HELP"
+			tc.Code = 1
+		}
 		t.Run(fmt.Sprintf("%03d_%s", i, strings.Join(tc.Args, " ")), func(t *testing.T) {
 			for name, body := range tc.Files {
 				if err := os.WriteFile(filepath.Join(root, name), []byte(body), 0600); err != nil {

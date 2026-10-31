@@ -25,14 +25,11 @@ func (r *Repository) GlobalInstructions() ([]u.Note, error) {
 func (r *Repository) SaveGlobalInstruction(n u.Note) (u.Note, error) {
 	now := db.Now()
 	if n.ID == 0 {
-		res, err := r.DB.Exec("INSERT INTO global_instruction(content,created_at,updated_at) VALUES(?,?,?)", n.Content, now, now)
-		if err != nil {
-			return n, err
-		}
-		n.ID, err = res.LastInsertId()
-		if err != nil {
-			return n, err
-		}
+		err := r.DB.QueryRow(`INSERT INTO global_instruction(content,created_at,updated_at) VALUES(?,?,?)
+			ON CONFLICT DO UPDATE SET content=excluded.content,updated_at=excluded.updated_at
+			RETURNING id,content,created_at,updated_at`, n.Content, now, now).
+			Scan(&n.ID, &n.Content, &n.CreatedAt, &n.UpdatedAt)
+		return n, err
 	} else {
 		res, err := r.DB.Exec("UPDATE global_instruction SET content=?,updated_at=? WHERE id=?", n.Content, now, n.ID)
 		if err != nil {

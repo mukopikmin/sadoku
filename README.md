@@ -170,17 +170,27 @@ including local files, URLs, and GitHub PR files. Manage them under
 registering a document:
 
 ```sh
-sadoku instruction list --global
-sadoku instruction add --global --content "Keep explanations concise."
-sadoku instruction update <instruction-id> --global --content "Use concrete examples."
-sadoku instruction delete <instruction-id> --global
+sadoku instruction get --global
+sadoku instruction set --global --content "Keep explanations concise."
+sadoku instruction set --global --content ""
+sadoku instruction set --source document.md --content "Use concrete examples."
 ```
 
 Choose exactly one of `--global`, `--document <id>`, or `--source <file.md|url>`.
-Global listing returns `{ "instructions": [...] }` without a document; entries
-have `id`, `content`, `createdAt`, and `updatedAt`. Existing document-specific
-commands and output remain unchanged. Global instructions are stored separately
-and survive document deletion.
+Each scope stores a single instruction text: one shared value for the database
+and one value per document. `get` and `set` return `{ "content": "..." }`;
+an unset value is an empty string. `set` replaces the whole text, and setting an
+explicitly empty string (`--content ""`) clears it. Omitting `--content` or
+providing only whitespace is an error. In the UI, edit the text and save;
+leave it empty and save to clear it.
+
+Existing databases automatically merge multiple instructions within each scope
+in ID order, separated by blank lines. Instruction commands are `get` and `set`;
+instruction IDs are not accepted.
+Use `set` to explicitly replace the complete text; there is no append operation.
+The existing API response shapes remain available for compatibility. Global
+instructions remain separate from document instructions and memories. Memories
+continue to support multiple entries.
 
 The document instructions dialog shows both global guidance and instructions
 for that document. Choose **Manage global instructions** there to open the same

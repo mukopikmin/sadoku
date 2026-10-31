@@ -16,7 +16,6 @@ type Props = {
   documentId: number;
   documentHeaderRef?: RefObject<HTMLDivElement | null>;
   documents?: DocumentSummary[] | null;
-  instructionCount: number;
   memoryCount: number;
   onChangeView: (view: PreviewView) => void;
   onOpenInstructions: () => void;
@@ -36,7 +35,6 @@ export const DocumentPreviewPage = (
     documentId,
     documentHeaderRef,
     documents,
-    instructionCount,
     memoryCount,
     onChangeView,
     onOpenInstructions,
@@ -125,7 +123,6 @@ export const DocumentPreviewPage = (
           />
         )}
       <DocumentActionBar
-        instructionCount={instructionCount}
         memoryCount={memoryCount}
         onChangeView={onChangeView}
         onOpenInstructions={onOpenInstructions}

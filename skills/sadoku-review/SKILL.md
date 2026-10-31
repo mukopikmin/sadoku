@@ -50,8 +50,8 @@ review workflow below when the user also requests review feedback work.
    instructions:
 
    ```sh
-   sadoku instruction list --global
-   sadoku instruction list --source <markdown-path>
+   sadoku instruction get --global
+   sadoku instruction get --source <markdown-path>
    ```
 
    Apply both throughout the review. Document instructions take precedence over
