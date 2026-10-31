@@ -16,7 +16,7 @@ export const GlobalInstructionsDialog = (
     onOpenChange={({ open }) => onOpenChange(open)}
     open={open}
     scrollBehavior="inside"
-    size="xl"
+    size="lg"
   >
     <Portal>
       <Dialog.Backdrop />
