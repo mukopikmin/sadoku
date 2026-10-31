@@ -13,40 +13,30 @@ import {
 import { useCallback } from "react";
 import { Brain, FileText, History, Tag } from "lucide-react";
 import type { DocumentTag } from "../models/document";
-import type { PreviewView } from "../models/previewView";
-import { DocumentViewSwitch } from "./DocumentViewSwitch";
 import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
   instructionCount: number;
   memoryCount: number;
-  onChangeView: (view: PreviewView) => void;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
   onOpenRevisions: () => void;
   tagCount: number;
   onOpenTags: () => void;
   tags: DocumentTag[];
-  staleCommentCount: number;
-  unresolvedCommentCount: number;
-  view: PreviewView;
 };
 
 export const DocumentActionBar = (
   {
     instructionCount,
     memoryCount,
-    onChangeView,
     onOpenInstructions,
     onOpenMemories,
     onOpenRevisions,
     onOpenTags,
     tagCount,
     tags,
-    staleCommentCount,
-    unresolvedCommentCount,
-    view,
   }: DocumentActionBarProps,
 ) => {
   const { ref, rect } = useElementRect();
@@ -67,17 +57,8 @@ export const DocumentActionBar = (
           <ActionBar.Content
             ref={contentRef}
             aria-label="Document actions"
-            alignItems={{ base: "stretch", md: "center" }}
-            flexDirection={{ base: "column", md: "row" }}
             maxW="calc(100vw - 2rem)"
           >
-            <DocumentViewSwitch
-              onChangeView={onChangeView}
-              staleCommentCount={staleCommentCount}
-              unresolvedCommentCount={unresolvedCommentCount}
-              view={view}
-            />
-            <ActionBar.Separator hideBelow="md" />
             <Flex alignItems="center" gap="3" wrap="wrap">
               <HoverCard.Root
                 closeDelay={100}

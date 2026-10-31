@@ -298,10 +298,18 @@ export const App = () => {
         collapsedDocument: collapsed
           ? {
             title: document.displayTitle ?? document.title,
-            markdown: document.markdown,
           }
           : undefined,
         fileUrl: document.fileUrl,
+        documentNavigation: collapsed || view === "comments"
+          ? {
+            markdown: document.markdown,
+            onChangeView: changeView,
+            staleCommentCount,
+            unresolvedCommentCount,
+            view,
+          }
+          : undefined,
         headerRef,
         reloadAvailable,
         reloading: documentQuery.isFetching || commentsQuery.isFetching,
@@ -312,6 +320,7 @@ export const App = () => {
         document={document}
         documentId={selectedDocumentId}
         documentHeaderRef={documentHeaderRef}
+        documentNavigationInHeader={collapsed}
         documents={documents}
         instructionCount={instructionsQuery.data?.length ?? 0}
         memoryCount={memoriesQuery.data?.length ?? 0}

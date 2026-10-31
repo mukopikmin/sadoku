@@ -3,7 +3,7 @@ import { Alert, Box, Container, Flex } from "@chakra-ui/react";
 import { type RefObject, useState } from "react";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
-import { TableOfContents } from "./markdown/TableOfContents";
+import { DocumentNavigation } from "../components/DocumentNavigation";
 import { DocumentActionBar } from "../components/DocumentActionBar";
 import { DocumentRevisionsDialog } from "../components/DocumentRevisionsDialog";
 import { DocumentBreadcrumb } from "../components/DocumentBreadcrumb";
@@ -15,6 +15,7 @@ type Props = {
   document: PreviewDocument;
   documentId: number;
   documentHeaderRef?: RefObject<HTMLDivElement | null>;
+  documentNavigationInHeader: boolean;
   documents?: DocumentSummary[] | null;
   instructionCount: number;
   memoryCount: number;
@@ -35,6 +36,7 @@ export const DocumentPreviewPage = (
     document,
     documentId,
     documentHeaderRef,
+    documentNavigationInHeader,
     documents,
     instructionCount,
     memoryCount,
@@ -78,7 +80,22 @@ export const DocumentPreviewPage = (
               key={documentId}
               documentId={documentId}
               title={document.displayTitle}
-              trailingAction={<TableOfContents markdown={document.markdown} />}
+              trailingAction={
+                // Preserve the measured title area when controls move to the header.
+                <Box
+                  maxW="full"
+                  visibility={documentNavigationInHeader ? "hidden" : "visible"}
+                >
+                  <DocumentNavigation
+                    markdown={document.markdown}
+                    onChangeView={onChangeView}
+                    showLabels
+                    staleCommentCount={staleCommentCount}
+                    unresolvedCommentCount={unresolvedCommentCount}
+                    view={view}
+                  />
+                </Box>
+              }
             />
           </Box>
         </Flex>
@@ -127,16 +144,12 @@ export const DocumentPreviewPage = (
       <DocumentActionBar
         instructionCount={instructionCount}
         memoryCount={memoryCount}
-        onChangeView={onChangeView}
         onOpenInstructions={onOpenInstructions}
         onOpenMemories={onOpenMemories}
         onOpenRevisions={() => setRevisionsOpen(true)}
         tagCount={document.tags.length}
         onOpenTags={onOpenTags}
         tags={document.tags}
-        staleCommentCount={staleCommentCount}
-        unresolvedCommentCount={unresolvedCommentCount}
-        view={view}
       />
     </Container>
   );
