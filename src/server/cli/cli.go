@@ -28,11 +28,6 @@ const Usage = `Usage:
   sadoku tag list
   sadoku instruction get (--global | --document <id> | --source <file.md|url>)
   sadoku instruction set (--global | --document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction clear (--global | --document <id> | --source <file.md|url>)
-  sadoku instruction list (--global | --document <id> | --source <file.md|url>)
-  sadoku instruction add (--global | --document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction update <instruction-id> (--global | --document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction delete <instruction-id> (--global | --document <id> | --source <file.md|url>)
   sadoku memory list (--document <id> | --source <file.md|url>)
   sadoku memory add (--document <id> | --source <file.md|url>) --content <text>
   sadoku memory update <memory-id> (--document <id> | --source <file.md|url>) --content <text>
@@ -87,6 +82,7 @@ var valueOptions = map[string]bool{"port": true, "host": true, "max-depth": true
 func Parse(args []string) (Options, error) {
 	o := Options{Values: map[string]string{}, Flags: map[string]bool{}}
 	// Expand short aliases, including clusters such as -hv and attached -p3334.
+	missingContent := false
 	expanded := []string{}
 	for i, arg := range args {
 		if arg == "--" {
@@ -146,11 +142,18 @@ func Parse(args []string) (Options, error) {
 		if !valueOptions[name] {
 			return o, usageError("Unknown option: %s", a)
 		}
-		if !hasValue && i+1 < len(expanded) && expanded[i+1] != "" && !strings.HasPrefix(expanded[i+1], "-") {
+		if !hasValue && i+1 < len(expanded) && (expanded[i+1] != "" || name == "content") && !strings.HasPrefix(expanded[i+1], "-") {
 			i++
 			value = expanded[i]
+			hasValue = true
+		}
+		if name == "content" {
+			missingContent = !hasValue
 		}
 		o.Values[name] = value
+	}
+	if missingContent && len(o.Words) >= 2 && o.Words[0] == "instruction" && o.Words[1] == "set" {
+		return o, usageError("--content requires a value. Pass --content \"\" to clear the instruction.")
 	}
 	return o, nil
 }
@@ -386,10 +389,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		return fmt.Errorf("invalid command: %s", command)
 	}
 	if command == "instruction" && o.Flags["global"] {
-		if operation == "get" || operation == "set" || operation == "clear" {
-			return executeInstructionValue(repo, 0, o, out)
-		}
-		return executeGlobalInstructions(ctx, &session.Session{Repository: repo}, o, out)
+		return executeInstructionValue(repo, 0, o, out)
 	}
 	source, hasSource := o.Values["source"]
 	document, hasDocument := o.Values["document"]
@@ -482,22 +482,14 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			in.Tags = append(in.Tags, session.TagReference{ID: session.ID(id)})
 		}
 		op = "ReplaceDocumentTags"
-	} else if command == "instruction" || command == "memory" {
-		if command == "instruction" && (operation == "get" || operation == "set" || operation == "clear") {
-			return executeInstructionValue(repo, selected.ID, o, out)
-		}
-		kind := "Instruction"
-		if command == "memory" {
-			kind = "Memory"
-		}
+	} else if command == "instruction" {
+		return executeInstructionValue(repo, selected.ID, o, out)
+	} else if command == "memory" {
 		switch operation {
 		case "list":
-			op = "ListInstructions"
-			if kind == "Memory" {
-				op = "ListMemories"
-			}
+			op = "ListMemories"
 		case "add":
-			op = "Create" + kind
+			op = "CreateMemory"
 		case "update", "delete":
 			if len(words) != 3 {
 				return fmt.Errorf("operation requires one ID")
@@ -506,22 +498,21 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			if e != nil {
 				return e
 			}
-			in.InstructionID = session.ID(id)
 			in.MemoryID = session.ID(id)
-			op = strings.ToUpper(operation[:1]) + operation[1:] + kind
+			op = strings.ToUpper(operation[:1]) + operation[1:] + "Memory"
 		default:
 			return fmt.Errorf("invalid note operation")
 		}
 	} else {
 		return executeComments(ctx, s, o, out)
 	}
-	if (command == "instruction" || command == "memory") && (operation == "add" || operation == "update") {
+	if command == "memory" && (operation == "add" || operation == "update") {
 		content := strings.ReplaceAll(strings.ReplaceAll(in.Content, "\r\n", "\n"), "\r", "\n")
 		content = strings.TrimRight(content, "\n")
 		if u.TrimSpace(content) == "" {
 			return commandError(command, fmt.Errorf("Content must not be empty."))
 		}
-		n, err := repo.SaveNote(command, u.Note{ID: int64(in.InstructionID), DocumentID: selected.ID, Content: content})
+		n, err := repo.SaveNote(command, u.Note{ID: int64(in.MemoryID), DocumentID: selected.ID, Content: content})
 		if err != nil {
 			return commandError(command, err)
 		}
@@ -531,16 +522,12 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	if err != nil {
 		return commandError(command, err)
 	}
-	if op == "ListInstructions" || op == "ListMemories" {
-		key := "instructions"
-		if command == "memory" {
-			key = "memories"
-		}
+	if op == "ListMemories" {
 		notes := []object{}
-		for _, n := range result.(map[string]any)[key].([]u.Note) {
+		for _, n := range result.(map[string]any)["memories"].([]u.Note) {
 			notes = append(notes, noteOutput(n))
 		}
-		return printJSON(object{{"document", documentOutput(*selected, false)}, {key, notes}})
+		return printJSON(object{{"document", documentOutput(*selected, false)}, {"memories", notes}})
 	}
 	if op == "ReplaceDocumentTags" {
 		tags := []object{}
@@ -550,7 +537,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		return printJSON(tags)
 	}
 	if operation == "delete" {
-		_, err = fmt.Fprintf(out, "Deleted %s %d.\n", command, in.InstructionID)
+		_, err = fmt.Fprintf(out, "Deleted %s %d.\n", command, in.MemoryID)
 		return err
 	}
 	return printJSON(noteOutput(result.(u.Note)))

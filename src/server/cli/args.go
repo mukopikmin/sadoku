@@ -5,6 +5,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	u "github.com/mukopikmin/sadoku/src/server/usecase"
 )
 
 // Validate in the original CLI's order so ambiguous mistakes retain their
@@ -168,6 +170,20 @@ func validate(o Options) error {
 		return usageError("Invalid document command.")
 	case "instruction", "memory":
 		kind := word(0)
+		if kind == "instruction" {
+			replacement := ""
+			switch word(1) {
+			case "list":
+				replacement = "get"
+			case "add", "update":
+				replacement = "set --content <text>"
+			case "delete", "clear":
+				replacement = "set --content \"\""
+			}
+			if replacement != "" {
+				return usageError("instruction %s is no longer supported. Use instruction %s instead.", word(1), replacement)
+			}
+		}
 		if has("channel") {
 			return usageError("--channel is only accepted by update.")
 		}
@@ -181,9 +197,12 @@ func validate(o Options) error {
 		} else if err := target(); err != nil {
 			return err
 		}
-		if kind == "instruction" && len(o.Words) == 2 {
+		if kind == "instruction" {
+			if len(o.Words) != 2 {
+				return usageError("instruction commands accept no instruction ID or extra arguments.")
+			}
 			switch word(1) {
-			case "get", "clear":
+			case "get":
 				if content {
 					return usageError("instruction %s does not accept --content.", word(1))
 				}
@@ -192,7 +211,12 @@ func validate(o Options) error {
 				if !content {
 					return usageError("--content is required.")
 				}
+				if o.Values["content"] != "" && u.TrimSpace(o.Values["content"]) == "" {
+					return usageError("Instruction content must not contain only whitespace. Use --content \"\" to clear it.")
+				}
 				return nil
+			default:
+				return usageError("Invalid instruction command. Use get or set.")
 			}
 		}
 		if word(1) == "list" && len(o.Words) == 2 {

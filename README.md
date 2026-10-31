@@ -172,21 +172,24 @@ registering a document:
 ```sh
 sadoku instruction get --global
 sadoku instruction set --global --content "Keep explanations concise."
-sadoku instruction clear --global
+sadoku instruction set --global --content ""
 sadoku instruction set --source document.md --content "Use concrete examples."
 ```
 
 Choose exactly one of `--global`, `--document <id>`, or `--source <file.md|url>`.
 Each scope stores a single instruction text: one shared value for the database
-and one value per document. `get`, `set`, and `clear` return `{ "content": "..." }`;
+and one value per document. `get` and `set` return `{ "content": "..." }`;
 an unset value is an empty string. `set` replaces the whole text, and setting an
-empty or whitespace-only value clears it. In the UI, edit the text and save;
+explicitly empty string (`--content ""`) clears it. Omitting `--content` or
+providing only whitespace is an error. In the UI, edit the text and save;
 leave it empty and save to clear it.
 
 Existing databases automatically merge multiple instructions within each scope
-in ID order, separated by blank lines. Existing `list`, `add`, `update`, and
-`delete` commands and API response shapes remain available for compatibility;
-`list` returns at most one entry and `add` replaces the current text. Global
+in ID order, separated by blank lines. Instruction commands are `get` and `set`;
+instruction IDs are not accepted. The former `list`, `add`, `update`, `delete`,
+and `clear` commands fail with guidance to use `get` or `set` instead.
+Use `set` to explicitly replace the complete text; there is no append operation.
+The existing API response shapes remain available for compatibility. Global
 instructions remain separate from document instructions and memories. Memories
 continue to support multiple entries.
 
