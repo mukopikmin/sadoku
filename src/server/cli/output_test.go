@@ -15,7 +15,7 @@ import (
 
 // Captured from 368b47e (the last TypeScript server). Only timestamps and the
 // temporary root are normalized; whitespace, field order and stderr are exact.
-// Retired instruction commands assert their documented migration errors.
+// Historical instruction commands assert generic invalid-command errors.
 func TestLegacyCLITranscripts(t *testing.T) {
 	data, err := os.ReadFile("testdata/legacy_cli.json")
 	if err != nil {
@@ -55,18 +55,11 @@ func TestLegacyCLITranscripts(t *testing.T) {
 		return timestamp.ReplaceAllString(s, "$$TIME")
 	}
 	for i, tc := range cases {
-		// Instruction CRUD commands were intentionally replaced by get/set.
-		// Keep the historical captures intact and verify their migration errors.
-		if len(tc.Args) > 1 && tc.Args[0] == "instruction" {
-			replacement := map[string]string{
-				"list": "get", "add": "set --content <text>",
-				"update": "set --content <text>", "delete": "set --content \"\"",
-			}[tc.Args[1]]
-			if replacement != "" {
-				tc.Stdout = ""
-				tc.Stderr = fmt.Sprintf("instruction %s is no longer supported. Use instruction %s instead.\n$HELP", tc.Args[1], replacement)
-				tc.Code = 1
-			}
+		// Preserve historical captures while checking the current command set.
+		if len(tc.Args) > 0 && tc.Args[0] == "instruction" {
+			tc.Stdout = ""
+			tc.Stderr = "Invalid instruction command.\n$HELP"
+			tc.Code = 1
 		}
 		t.Run(fmt.Sprintf("%03d_%s", i, strings.Join(tc.Args, " ")), func(t *testing.T) {
 			for name, body := range tc.Files {

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -127,36 +126,31 @@ func TestInstructionValueRejectsInvalidOptions(t *testing.T) {
 	}
 }
 
-func TestRetiredInstructionCommandsDoNotWrite(t *testing.T) {
+func TestUnknownInstructionCommandsDoNotWrite(t *testing.T) {
 	root := t.TempDir()
 	comments := filepath.Join(root, "comments")
 	t.Setenv("SADOKU_COMMENTS_DIR", comments)
-	cases := []struct {
-		words       []string
-		replacement string
-	}{
-		{[]string{"list"}, "instruction get"},
-		{[]string{"add", "--content", "Replacement"}, "instruction set --content <text>"},
-		{[]string{"update", "1", "--content", "Replacement"}, "instruction set --content <text>"},
-		{[]string{"delete", "1"}, "instruction set --content \"\""},
-		{[]string{"clear"}, "instruction set --content \"\""},
+	cases := [][]string{
+		{"unknown"},
+		{"unknown", "1"},
+		{"unknown", "--content", "Unwanted"},
 	}
-	reject := func(words, scope []string, replacement string) {
+	reject := func(words, scope []string) {
 		t.Helper()
 		args := append([]string{"instruction"}, words...)
 		args = append(args, scope...)
 		var out bytes.Buffer
 		err := Execute(context.Background(), args, &out, nil)
-		if err == nil || !strings.Contains(err.Error(), "Use "+replacement+" instead.") || out.Len() != 0 {
-			t.Fatalf("retired command %v: output=%q error=%v", args, out.String(), err)
+		if err == nil || err.Error() != "Invalid instruction command." || out.Len() != 0 {
+			t.Fatalf("unknown command %v: output=%q error=%v", args, out.String(), err)
 		}
 	}
 	// Rejected commands must fail before opening or migrating the database.
 	for _, c := range cases {
-		reject(c.words, []string{"--global"}, c.replacement)
+		reject(c, []string{"--global"})
 	}
 	if _, err := os.Stat(comments); !os.IsNotExist(err) {
-		t.Fatalf("retired command created database directory: %v", err)
+		t.Fatalf("unknown command created database directory: %v", err)
 	}
 	source := filepath.Join(root, "doc.md")
 	if err := Execute(context.Background(), []string{"document", "add", source, "--create"}, &bytes.Buffer{}, nil); err != nil {
@@ -168,7 +162,7 @@ func TestRetiredInstructionCommandsDoNotWrite(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, c := range cases {
-			reject(c.words, scope, c.replacement)
+			reject(c, scope)
 			var out bytes.Buffer
 			args = append([]string{"instruction", "get"}, scope...)
 			if err := Execute(context.Background(), args, &out, nil); err != nil {
@@ -176,7 +170,7 @@ func TestRetiredInstructionCommandsDoNotWrite(t *testing.T) {
 			}
 			var got map[string]string
 			if err := json.Unmarshal(out.Bytes(), &got); err != nil || got["content"] != "Keep this guidance" {
-				t.Fatalf("retired command changed guidance: %s %v", out.String(), err)
+				t.Fatalf("unknown command changed guidance: %s %v", out.String(), err)
 			}
 		}
 	}

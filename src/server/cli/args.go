@@ -170,19 +170,8 @@ func validate(o Options) error {
 		return usageError("Invalid document command.")
 	case "instruction", "memory":
 		kind := word(0)
-		if kind == "instruction" {
-			replacement := ""
-			switch word(1) {
-			case "list":
-				replacement = "get"
-			case "add", "update":
-				replacement = "set --content <text>"
-			case "delete", "clear":
-				replacement = "set --content \"\""
-			}
-			if replacement != "" {
-				return usageError("instruction %s is no longer supported. Use instruction %s instead.", word(1), replacement)
-			}
+		if kind == "instruction" && word(1) != "get" && word(1) != "set" {
+			return usageError("Invalid instruction command.")
 		}
 		if has("channel") {
 			return usageError("--channel is only accepted by update.")
@@ -216,7 +205,7 @@ func validate(o Options) error {
 				}
 				return nil
 			default:
-				return usageError("Invalid instruction command. Use get or set.")
+				return usageError("Invalid instruction command.")
 			}
 		}
 		if word(1) == "list" && len(o.Words) == 2 {

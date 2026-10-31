@@ -186,8 +186,7 @@ leave it empty and save to clear it.
 
 Existing databases automatically merge multiple instructions within each scope
 in ID order, separated by blank lines. Instruction commands are `get` and `set`;
-instruction IDs are not accepted. The former `list`, `add`, `update`, `delete`,
-and `clear` commands fail with guidance to use `get` or `set` instead.
+instruction IDs are not accepted.
 Use `set` to explicitly replace the complete text; there is no append operation.
 The existing API response shapes remain available for compatibility. Global
 instructions remain separate from document instructions and memories. Memories
