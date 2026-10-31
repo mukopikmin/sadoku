@@ -1,5 +1,5 @@
 import { Box, DataList } from "@chakra-ui/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentableBlock } from "../../markdown/commentable/CommentableBlock";
 import { CommentableMarkdown } from "../../markdown/commentable/CommentableMarkdown";
@@ -22,12 +22,15 @@ import { useHeadingHashNavigation } from "../../markdown/useHeadingHashNavigatio
 import type { ActiveComment } from "../../models/comment";
 import { extractAgentFrontMatter } from "./frontMatter";
 import { RawMarkdownDialog } from "./RawMarkdownDialog";
+import { DocumentDiffBlock } from "../../markdown/DocumentDiffBlock";
+import { ReadOnlyMarkdownPreview } from "./ReadOnlyMarkdownPreview";
 
 export type MarkdownPreviewProps = {
   actions: CommentActions;
   comments: ActiveComment[];
   documentPath?: string;
   markdown: string;
+  previousMarkdown?: string;
   showHtmlComments: boolean;
   theme: "dark" | "default";
 };
@@ -37,6 +40,7 @@ export const MarkdownPreview = ({
   comments,
   documentPath,
   markdown,
+  previousMarkdown,
   showHtmlComments,
   theme,
 }: MarkdownPreviewProps) => {
@@ -44,9 +48,23 @@ export const MarkdownPreview = ({
     () => extractAgentFrontMatter(markdown, documentPath),
     [documentPath, markdown],
   );
+  const previousFrontMatter = useMemo(
+    () =>
+      previousMarkdown === undefined
+        ? undefined
+        : extractAgentFrontMatter(previousMarkdown, documentPath),
+    [documentPath, previousMarkdown],
+  );
+  const frontMatterChanged =
+    previousMarkdown !== undefined &&
+    JSON.stringify(frontMatter?.items.map(({ key, value }) => [key, value])) !==
+      JSON.stringify(
+        previousFrontMatter?.items.map(({ key, value }) => [key, value]),
+      );
   const renderedMarkdown = frontMatter?.bodyMarkdown ?? markdown;
   const previewRef = useRef<HTMLDivElement>(null);
   const [rawMarkdownRange, setRawMarkdownRange] = useState<CommentRange>();
+  const [drafts] = useState(() => new Map<number, string>());
   const {
     activeCommentLine,
     activeRange,
@@ -80,35 +98,41 @@ export const MarkdownPreview = ({
     activeCommentLine,
     comments,
     markdown,
+    previousMarkdown,
     selectedRange,
     showHtmlComments,
     theme,
   ]);
 
-  const commentRenderingContext = useMemo<CommentRenderingContextValue>(() => ({
-    actions,
-    activeCommentLine,
-    activeRange,
-    commentsByLine,
-    commentHighlightsByLine,
-    markdown,
-    onCloseCommentForm: closeCommentForm,
-    onOpenCommentForm: openCommentForm,
-    onOpenRawMarkdown: setRawMarkdownRange,
-    onSelectCommentRange: selectCommentRange,
-    selectedRange,
-  }), [
-    actions,
-    activeCommentLine,
-    activeRange,
-    closeCommentForm,
-    commentHighlightsByLine,
-    commentsByLine,
-    markdown,
-    openCommentForm,
-    selectCommentRange,
-    selectedRange,
-  ]);
+  const commentRenderingContext = useMemo<CommentRenderingContextValue>(
+    () => ({
+      actions,
+      activeCommentLine,
+      activeRange,
+      commentsByLine,
+      commentHighlightsByLine,
+      drafts,
+      markdown,
+      onCloseCommentForm: closeCommentForm,
+      onOpenCommentForm: openCommentForm,
+      onOpenRawMarkdown: setRawMarkdownRange,
+      onSelectCommentRange: selectCommentRange,
+      selectedRange,
+    }),
+    [
+      actions,
+      activeCommentLine,
+      activeRange,
+      closeCommentForm,
+      commentHighlightsByLine,
+      commentsByLine,
+      drafts,
+      markdown,
+      openCommentForm,
+      selectCommentRange,
+      selectedRange,
+    ],
+  );
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
@@ -120,45 +144,84 @@ export const MarkdownPreview = ({
         open={rawMarkdownRange !== undefined}
         range={rawMarkdownRange}
       />
-      <Box className="markdown-preview" ref={previewRef}>
+      <Box
+        className="markdown-preview"
+        data-document-diff={previousMarkdown !== undefined ? "" : undefined}
+        ref={previewRef}
+      >
         <HighlightOverlay layouts={rangeHighlightLayouts} />
-        {frontMatter && (
-          <DataList.Root
-            orientation={{ base: "vertical", md: "horizontal" }}
-            gap="0"
-          >
-            {frontMatter.items.map((item) => (
-              <CommentableBlock
-                {...getCommentableBlockProps(commentRenderingContext, {
-                  startLine: item.startLine,
-                  endLine: item.endLine,
-                })}
-                key={`${item.key}-${item.startLine}`}
-              >
-                <DataList.Item
-                  alignItems="start"
-                  gap={{ base: "1", md: "2" }}
-                  py="1"
-                >
-                  <DataList.ItemLabel minW={{ md: "auto" }}>
-                    {item.key}
-                  </DataList.ItemLabel>
-                  <DataList.ItemValue
-                    minW="0"
-                    overflowWrap="anywhere"
-                    whiteSpace="pre-wrap"
-                  >
-                    {item.value}
-                  </DataList.ItemValue>
-                </DataList.Item>
-              </CommentableBlock>
-            ))}
-          </DataList.Root>
+        {frontMatterChanged && previousFrontMatter && (
+          <DocumentDiffBlock kind="deletion">
+            <ReadOnlyMarkdownPreview
+              documentPath={documentPath}
+              markdown={previousMarkdown!
+                .split(/\r?\n/)
+                .slice(0, previousFrontMatter.endLine)
+                .join("\n")}
+              showHtmlComments={showHtmlComments}
+              theme={theme}
+            />
+          </DocumentDiffBlock>
         )}
-        <CommentableMarkdown showHtmlComments={showHtmlComments}>
+        {frontMatter && (
+          <FrontMatterDiff changed={frontMatterChanged}>
+            <DataList.Root
+              orientation={{ base: "vertical", md: "horizontal" }}
+              gap="0"
+            >
+              {frontMatter.items.map((item) => (
+                <CommentableBlock
+                  {...getCommentableBlockProps(commentRenderingContext, {
+                    startLine: item.startLine,
+                    endLine: item.endLine,
+                  })}
+                  key={`${item.key}-${item.startLine}`}
+                >
+                  <DataList.Item
+                    alignItems="start"
+                    gap={{ base: "1", md: "2" }}
+                    py="1"
+                  >
+                    <DataList.ItemLabel minW={{ md: "auto" }}>
+                      {item.key}
+                    </DataList.ItemLabel>
+                    <DataList.ItemValue
+                      minW="0"
+                      overflowWrap="anywhere"
+                      whiteSpace="pre-wrap"
+                    >
+                      {item.value}
+                    </DataList.ItemValue>
+                  </DataList.Item>
+                </CommentableBlock>
+              ))}
+            </DataList.Root>
+          </FrontMatterDiff>
+        )}
+        <CommentableMarkdown
+          documentPath={documentPath}
+          previousMarkdown={
+            previousFrontMatter?.bodyMarkdown ?? previousMarkdown
+          }
+          showHtmlComments={showHtmlComments}
+          theme={theme}
+        >
           {renderedMarkdown}
         </CommentableMarkdown>
       </Box>
     </CommentRenderingContext.Provider>
   );
 };
+
+const FrontMatterDiff = ({
+  changed,
+  children,
+}: {
+  changed: boolean;
+  children: ReactNode;
+}) =>
+  changed ? (
+    <DocumentDiffBlock kind="addition">{children}</DocumentDiffBlock>
+  ) : (
+    children
+  );

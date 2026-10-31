@@ -105,4 +105,122 @@ describe("initializeMermaid", () => {
     expect(loaded).toBe(false);
     expect(document.querySelector(".mermaid svg")).not.toBeNull();
   });
+
+  it("serializes overlapping previews and renders each diagram only once", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><section><pre class="mermaid">graph TD; A-->B;</pre></section><pre class="mermaid">graph TD; A-->C;</pre></main>',
+      "text/html",
+    );
+    let release!: () => void;
+    const drawing = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const initialize = vi.fn();
+    const run = vi.fn(async ({ nodes }: { nodes: HTMLElement[] }) => {
+      await drawing;
+      for (const node of nodes) node.dataset.processed = "true";
+    });
+    const importMermaid = async () => ({ default: { initialize, run } });
+    const nested = initializeMermaid({
+      document,
+      root: document.querySelector("section")!,
+      importMermaid,
+    });
+    const parent = initializeMermaid({ document, importMermaid });
+    try {
+      await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
+      expect(initialize).toHaveBeenCalledOnce();
+    } finally {
+      release();
+      await Promise.all([nested, parent]);
+    }
+    expect(run.mock.calls.map(([{ nodes }]) => nodes)).toEqual(
+      [...document.querySelectorAll<HTMLElement>(".mermaid")].map((node) => [node]),
+    );
+  });
+
+  it("allows later renders after a failed initialization", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
+      "text/html",
+    );
+    const run = vi.fn(async () => {});
+    const importMermaid = vi.fn()
+      .mockRejectedValueOnce(new Error("Mermaid load failed"))
+      .mockResolvedValue({ default: { initialize: vi.fn(), run } });
+    await expect(initializeMermaid({ document, importMermaid }))
+      .rejects.toThrow("Mermaid load failed");
+    await initializeMermaid({ document, importMermaid });
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it("skips diagrams removed while Mermaid is loading", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
+      "text/html",
+    );
+    let release!: () => void;
+    const loading = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const initialize = vi.fn();
+    const run = vi.fn(async () => {});
+    const importMermaid = vi.fn(async () => {
+      await loading;
+      return { default: { initialize, run } };
+    });
+    const rendering = initializeMermaid({ document, importMermaid });
+    try {
+      await vi.waitFor(() => expect(importMermaid).toHaveBeenCalledOnce());
+      document.querySelector(".mermaid")!.remove();
+    } finally {
+      release();
+      await rendering;
+    }
+    expect(initialize).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("treats a preview removed during drawing as canceled", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
+      "text/html",
+    );
+    let release!: () => void;
+    const drawing = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const run = vi.fn(async () => {
+      await drawing;
+      throw new Error("Preview was removed");
+    });
+    const rendering = initializeMermaid({
+      document,
+      importMermaid: async () => ({ default: { initialize: vi.fn(), run } }),
+    });
+    try {
+      await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
+      document.querySelector(".mermaid")!.remove();
+    } finally {
+      release();
+      await expect(rendering).resolves.toBeUndefined();
+    }
+  });
+
+  it("propagates drawing failures for diagrams that are still attached", async () => {
+    const document = new DOMParser().parseFromString(
+      '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
+      "text/html",
+    );
+    const importMermaid = async () => ({
+      default: {
+        initialize: vi.fn(),
+        run: async () => {
+          throw new Error("Invalid diagram");
+        },
+      },
+    });
+    await expect(initializeMermaid({ document, importMermaid }))
+      .rejects.toThrow("Invalid diagram");
+  });
 });
