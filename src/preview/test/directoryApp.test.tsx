@@ -412,7 +412,9 @@ describe("directory preview", () => {
     expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
-    const header = screen.getByRole("banner");
+    const header = screen.getByRole("region", { name: "Document header" });
+    expect(within(screen.getByRole("banner")).queryByRole("tablist"))
+      .toBeNull();
     expect(
       within(header).getByRole("tab", {
         name: "Comments, 0 unresolved",

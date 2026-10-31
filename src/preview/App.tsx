@@ -75,7 +75,8 @@ export const App = () => {
   );
   const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
     selectedDocumentId,
-    view === "preview" && Boolean(documentQuery.data && commentsQuery.data),
+    Boolean(documentQuery.data && commentsQuery.data),
+    view,
   );
   const settingsDisclosure = useDisclosure();
   const statisticsDisclosure = useDisclosure();
@@ -301,7 +302,7 @@ export const App = () => {
           }
           : undefined,
         fileUrl: document.fileUrl,
-        documentNavigation: collapsed || view === "comments"
+        documentNavigation: collapsed
           ? {
             markdown: document.markdown,
             onChangeView: changeView,

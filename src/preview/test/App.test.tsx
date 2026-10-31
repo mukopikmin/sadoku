@@ -348,6 +348,34 @@ describe("App", () => {
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull()
     );
+    expect(screen.getByRole("heading", { name: "Reading guide" }))
+      .not.toBeNull();
+    expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
+      .getAttribute("aria-selected")).toBe("true");
+
+    documentBottom = 180;
+    fireEvent.scroll(globalThis);
+    await waitFor(() => expect(header.queryByRole("tablist")).toBeNull());
+    const commentsTitleActions = within(
+      screen.getByRole("region", { name: "Document header" }),
+    );
+    expect(commentsTitleActions.getByRole("button", { name: "Edit title" }))
+      .not.toBeNull();
+    expect(commentsTitleActions.getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(commentsTitleActions.getByRole("tab", {
+      name: "Comments, 0 unresolved",
+    }).textContent).toBe("Comments");
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
+
+    documentBottom = 20;
+    fireEvent.scroll(globalThis);
+    const commentsPreview = await header.findByRole("tab", { name: "Preview" });
+    expect(commentsPreview.textContent).toBe("");
+    expect(header.getByText("Reading guide")).not.toBeNull();
+    fireEvent.click(commentsPreview);
+    await header.findByRole("button", { name: "Table of contents" });
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "guide.md" });
     expect(screen.queryByRole("button", { name: "Table of contents" }))
@@ -780,7 +808,7 @@ describe("App", () => {
         name: "Document actions",
       });
       expect(
-        within(screen.getByRole("banner")).getByRole("tab", {
+        within(documentHeader).getByRole("tab", {
           name: "Comments, 0 unresolved",
         }).getAttribute("aria-selected"),
       ).toBe("true");

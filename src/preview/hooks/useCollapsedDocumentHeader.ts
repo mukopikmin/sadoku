@@ -1,8 +1,10 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import type { PreviewView } from "../models/previewView";
 
 export const useCollapsedDocumentHeader = (
   documentId: number | undefined,
   enabled: boolean,
+  view: PreviewView = "preview",
 ) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const documentHeaderRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,7 @@ export const useCollapsedDocumentHeader = (
       observer?.disconnect();
       if (frame !== undefined) globalThis.cancelAnimationFrame(frame);
     };
-  }, [documentId, enabled]);
+  }, [documentId, enabled, view]);
 
   return {
     collapsed: enabled && placement === "header",

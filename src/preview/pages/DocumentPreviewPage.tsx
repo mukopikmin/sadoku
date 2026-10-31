@@ -67,39 +67,37 @@ export const DocumentPreviewPage = (
           onSelectDocuments={onSelectDocuments}
         />
       )}
-      {view === "preview" && (
-        <Flex
-          as="section"
-          aria-label="Document header"
-          ref={documentHeaderRef}
-          align="start"
-          gap="3"
-        >
-          <Box flex="1" minW="0">
-            <DocumentTitle
-              key={documentId}
-              documentId={documentId}
-              title={document.displayTitle}
-              trailingAction={
-                // Preserve the measured title area when controls move to the header.
-                <Box
-                  maxW="full"
-                  visibility={documentNavigationInHeader ? "hidden" : "visible"}
-                >
-                  <DocumentNavigation
-                    markdown={document.markdown}
-                    onChangeView={onChangeView}
-                    showLabels
-                    staleCommentCount={staleCommentCount}
-                    unresolvedCommentCount={unresolvedCommentCount}
-                    view={view}
-                  />
-                </Box>
-              }
-            />
-          </Box>
-        </Flex>
-      )}
+      <Flex
+        as="section"
+        aria-label="Document header"
+        ref={documentHeaderRef}
+        align="start"
+        gap="3"
+      >
+        <Box flex="1" minW="0">
+          <DocumentTitle
+            key={documentId}
+            documentId={documentId}
+            title={document.displayTitle}
+            trailingAction={
+              // Preserve the measured title area when controls move to the header.
+              <Box
+                maxW="full"
+                visibility={documentNavigationInHeader ? "hidden" : "visible"}
+              >
+                <DocumentNavigation
+                  markdown={document.markdown}
+                  onChangeView={onChangeView}
+                  showLabels
+                  staleCommentCount={staleCommentCount}
+                  unresolvedCommentCount={unresolvedCommentCount}
+                  view={view}
+                />
+              </Box>
+            }
+          />
+        </Box>
+      </Flex>
       <DocumentRevisionsDialog
         canRestore={document.canRestore}
         deleted={document.deleted}
