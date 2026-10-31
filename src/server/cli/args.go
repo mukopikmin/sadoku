@@ -181,6 +181,20 @@ func validate(o Options) error {
 		} else if err := target(); err != nil {
 			return err
 		}
+		if kind == "instruction" && len(o.Words) == 2 {
+			switch word(1) {
+			case "get", "clear":
+				if content {
+					return usageError("instruction %s does not accept --content.", word(1))
+				}
+				return nil
+			case "set":
+				if !content {
+					return usageError("--content is required.")
+				}
+				return nil
+			}
+		}
 		if word(1) == "list" && len(o.Words) == 2 {
 			if content {
 				return usageError("%s list does not accept --content.", kind)

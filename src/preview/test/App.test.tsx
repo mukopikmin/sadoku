@@ -160,13 +160,7 @@ describe("App", () => {
           instructions: [
             {
               id: 1,
-              content: "Shared review guidance",
-              createdAt: "created",
-              updatedAt: "updated",
-            },
-            {
-              id: 2,
-              content: "Another shared instruction",
+              content: "Shared review guidance\n\nAnother shared instruction",
               createdAt: "created",
               updatedAt: "updated",
             },
@@ -189,10 +183,9 @@ describe("App", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Global instructions",
     });
-    expect(await within(dialog).findByText("Shared review guidance")).not
-      .toBeNull();
-    expect(within(dialog).getByText("Another shared instruction")).not
-      .toBeNull();
+    const input = await within(dialog).findByRole("textbox", { name: "Instruction" });
+    expect((input as HTMLTextAreaElement).value)
+      .toBe("Shared review guidance\n\nAnother shared instruction");
     fireEvent.keyDown(dialog, { key: "Escape" });
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Global instructions" }))

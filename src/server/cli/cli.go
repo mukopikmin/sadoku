@@ -26,6 +26,9 @@ const Usage = `Usage:
   sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
+  sadoku instruction get (--global | --document <id> | --source <file.md|url>)
+  sadoku instruction set (--global | --document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction clear (--global | --document <id> | --source <file.md|url>)
   sadoku instruction list (--global | --document <id> | --source <file.md|url>)
   sadoku instruction add (--global | --document <id> | --source <file.md|url>) --content <text>
   sadoku instruction update <instruction-id> (--global | --document <id> | --source <file.md|url>) --content <text>
@@ -383,6 +386,9 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		return fmt.Errorf("invalid command: %s", command)
 	}
 	if command == "instruction" && o.Flags["global"] {
+		if operation == "get" || operation == "set" || operation == "clear" {
+			return executeInstructionValue(repo, 0, o, out)
+		}
 		return executeGlobalInstructions(ctx, &session.Session{Repository: repo}, o, out)
 	}
 	source, hasSource := o.Values["source"]
@@ -477,6 +483,9 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		}
 		op = "ReplaceDocumentTags"
 	} else if command == "instruction" || command == "memory" {
+		if command == "instruction" && (operation == "get" || operation == "set" || operation == "clear") {
+			return executeInstructionValue(repo, selected.ID, o, out)
+		}
 		kind := "Instruction"
 		if command == "memory" {
 			kind = "Memory"

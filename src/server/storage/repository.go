@@ -429,6 +429,13 @@ func (r *Repository) Notes(kind string, id int64) ([]u.Note, error) {
 }
 func (r *Repository) SaveNote(kind string, n u.Note) (u.Note, error) {
 	now := db.Now()
+	if kind == "instruction" && n.ID == 0 {
+		err := r.DB.QueryRow(`INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(?,?,?,?)
+			ON CONFLICT(document_id) DO UPDATE SET content=excluded.content,updated_at=excluded.updated_at
+			RETURNING id,document_id,content,created_at,updated_at`, n.DocumentID, n.Content, now, now).
+			Scan(&n.ID, &n.DocumentID, &n.Content, &n.CreatedAt, &n.UpdatedAt)
+		return n, err
+	}
 	var err error
 	var res sql.Result
 	if n.ID == 0 {
