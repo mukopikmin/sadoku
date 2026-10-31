@@ -5,6 +5,7 @@ import type { SettingsDialogProps } from "./SettingsDialog";
 import { DocumentInstructionsDialog } from "./DocumentInstructionsDialog";
 import { DocumentMemoriesDialog } from "./DocumentMemoriesDialog";
 import { DocumentTagsDialog } from "./DocumentTagsDialog";
+import { GlobalInstructionsDialog } from "./GlobalInstructionsDialog";
 import { SettingsDialog } from "./SettingsDialog";
 import { TagsDialog } from "./TagsDialog";
 
@@ -15,6 +16,8 @@ type PreviewDialogHostProps = {
   documentInstructions: Disclosure;
   documentMemories: Disclosure;
   documentTagsDialog: Disclosure;
+  globalInstructions: Disclosure;
+  globalInstructionsTriggerRef: RefObject<HTMLButtonElement | null>;
   settings: ResolvedPreviewSettings;
   settingsActions: Omit<
     SettingsDialogProps,
@@ -31,6 +34,8 @@ export const PreviewDialogHost = ({
   documentInstructions,
   documentMemories,
   documentTagsDialog,
+  globalInstructions,
+  globalInstructionsTriggerRef,
   settings,
   settingsActions,
   settingsDialog,
@@ -38,6 +43,11 @@ export const PreviewDialogHost = ({
   tagsTriggerRef,
 }: PreviewDialogHostProps) => (
   <>
+    <GlobalInstructionsDialog
+      finalFocusRef={globalInstructionsTriggerRef}
+      onOpenChange={globalInstructions.setOpen}
+      open={globalInstructions.open}
+    />
     <TagsDialog
       finalFocusRef={tagsTriggerRef}
       onOpenChange={tagsDialog.setOpen}
@@ -47,6 +57,10 @@ export const PreviewDialogHost = ({
       <>
         <DocumentInstructionsDialog
           documentId={documentId}
+          onOpenGlobalInstructions={() => {
+            documentInstructions.setOpen(false);
+            globalInstructions.setOpen(true);
+          }}
           onOpenChange={documentInstructions.setOpen}
           open={documentInstructions.open}
         />

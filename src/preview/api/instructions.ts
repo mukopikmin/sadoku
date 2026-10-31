@@ -1,4 +1,7 @@
-import type { DocumentInstruction } from "../models/instruction";
+import type {
+  DocumentInstruction,
+  InstructionScope,
+} from "../models/instruction";
 import { connectHttpStatus, previewClient } from "./connect";
 
 type InstructionResponse = {
@@ -44,10 +47,12 @@ const toInstruction = (value: unknown): DocumentInstruction => {
 };
 
 export const loadInstructions = async (
-  documentId: number,
+  documentId: InstructionScope,
 ): Promise<DocumentInstruction[]> => {
-  const body = await instructionRequest(
-    previewClient.listInstructions({ documentId: BigInt(documentId) }),
+  const body = await instructionRequest<InstructionsResponse>(
+    documentId === "global"
+      ? previewClient.listGlobalInstructions({})
+      : previewClient.listInstructions({ documentId: BigInt(documentId) }),
     "load instructions",
   );
   if (!Array.isArray(body.instructions)) {
@@ -57,46 +62,57 @@ export const loadInstructions = async (
 };
 
 export const createInstruction = async (
-  documentId: number,
+  documentId: InstructionScope,
   content: string,
 ) => {
   return toInstruction(
     await instructionRequest(
-      previewClient.createInstruction({
-        documentId: BigInt(documentId),
-        content,
-      }),
+      documentId === "global"
+        ? previewClient.createGlobalInstruction({ content })
+        : previewClient.createInstruction({
+          documentId: BigInt(documentId),
+          content,
+        }),
       "create instruction",
     ),
   );
 };
 
 export const updateInstruction = async (
-  documentId: number,
+  documentId: InstructionScope,
   instructionId: number,
   content: string,
 ) => {
   return toInstruction(
     await instructionRequest(
-      previewClient.updateInstruction({
-        documentId: BigInt(documentId),
-        instructionId: BigInt(instructionId),
-        content,
-      }),
+      documentId === "global"
+        ? previewClient.updateGlobalInstruction({
+          instructionId: BigInt(instructionId),
+          content,
+        })
+        : previewClient.updateInstruction({
+          documentId: BigInt(documentId),
+          instructionId: BigInt(instructionId),
+          content,
+        }),
       "update instruction",
     ),
   );
 };
 
 export const deleteInstruction = async (
-  documentId: number,
+  documentId: InstructionScope,
   instructionId: number,
 ): Promise<void> => {
-  await instructionRequest(
-    previewClient.deleteInstruction({
-      documentId: BigInt(documentId),
-      instructionId: BigInt(instructionId),
-    }),
+  await instructionRequest<unknown>(
+    documentId === "global"
+      ? previewClient.deleteGlobalInstruction({
+        instructionId: BigInt(instructionId),
+      })
+      : previewClient.deleteInstruction({
+        documentId: BigInt(documentId),
+        instructionId: BigInt(instructionId),
+      }),
     "delete instruction",
   );
 };

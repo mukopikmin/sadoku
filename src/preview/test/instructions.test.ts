@@ -78,3 +78,41 @@ describe("instruction API", () => {
     expect(await request.json()).toEqual(test.body);
   });
 });
+
+it("manages global instructions through Connect without a document ID", async () => {
+  const instruction = {
+    id: 1,
+    content: "Shared",
+    createdAt: "created",
+    updatedAt: "updated",
+  };
+  const response = { ...instruction, id: "1" };
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce(Response.json({ instructions: [response] }))
+    .mockResolvedValueOnce(Response.json(response))
+    .mockResolvedValueOnce(Response.json(response))
+    .mockResolvedValueOnce(Response.json({}));
+  vi.stubGlobal("fetch", fetchMock);
+  await expect(loadInstructions("global")).resolves.toEqual([instruction]);
+  await createInstruction("global", "Shared");
+  await updateInstruction("global", 1, "Shared");
+  await deleteInstruction("global", 1);
+  const requests = fetchMock.mock.calls.map(([input, init]) =>
+    new Request(input, init)
+  );
+  expect(
+    requests.map((request) => [new URL(request.url).pathname, request.method]),
+  )
+    .toEqual([
+      ["/sadoku.preview.v1.PreviewService/ListGlobalInstructions", "POST"],
+      ["/sadoku.preview.v1.PreviewService/CreateGlobalInstruction", "POST"],
+      ["/sadoku.preview.v1.PreviewService/UpdateGlobalInstruction", "POST"],
+      ["/sadoku.preview.v1.PreviewService/DeleteGlobalInstruction", "POST"],
+    ]);
+  expect(await Promise.all(requests.map((request) => request.json()))).toEqual([
+    {},
+    { content: "Shared" },
+    { instructionId: "1", content: "Shared" },
+    { instructionId: "1" },
+  ]);
+});

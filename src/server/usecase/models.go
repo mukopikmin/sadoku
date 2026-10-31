@@ -112,6 +112,9 @@ type Repository interface {
 	Notes(string, int64) ([]Note, error)
 	SaveNote(string, Note) (Note, error)
 	DeleteNote(string, int64, int64) error
+	GlobalInstructions() ([]Note, error)
+	SaveGlobalInstruction(Note) (Note, error)
+	DeleteGlobalInstruction(int64) error
 	Statistics() (any, error)
 }
 
