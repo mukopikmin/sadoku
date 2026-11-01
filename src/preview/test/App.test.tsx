@@ -896,21 +896,14 @@ describe("App", () => {
       name: "Comments, 0 unresolved",
     }));
     await waitFor(() => {
-      const actionBar = screen.getByRole("dialog", {
-        name: "Document actions",
-      });
-      expect(
-        within(documentHeader).getByRole("tab", {
-          name: "Comments, 0 unresolved",
-        }).getAttribute("aria-selected"),
-      ).toBe("true");
-      expect(within(actionBar).getByRole("button", { name: "Instructions" }))
-        .not.toBeNull();
-      expect(within(actionBar).getByRole("button", { name: "Revisions" }))
-        .not.toBeNull();
-      expect(screen.getByRole("main").lastElementChild).toBe(
-        screen.getByTestId("action-bar-spacer"),
-      );
+      expect(screen.queryByRole("dialog", { name: "Document actions" }))
+        .toBeNull();
+      expect(screen.getByRole("tab", {
+        name: "Comments, 0 unresolved",
+      }).getAttribute("aria-selected")).toBe("true");
+      expect(screen.queryByRole("button", { name: "Instructions" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Revisions" })).toBeNull();
+      expect(screen.queryByTestId("action-bar-spacer")).toBeNull();
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull();
     });

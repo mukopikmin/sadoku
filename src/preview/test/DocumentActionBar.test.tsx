@@ -5,7 +5,6 @@ import {
   render,
   screen,
   waitFor,
-  within,
 } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DocumentActionBar } from "../components/DocumentActionBar";

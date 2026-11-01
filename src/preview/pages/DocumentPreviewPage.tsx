@@ -156,17 +156,19 @@ export const DocumentPreviewPage = ({
           documentDeleted={document.deleted}
         />
       )}
-      <DocumentActionBar
-        diff={view === "preview" ? diff : undefined}
-        instructionCount={instructionCount}
-        memoryCount={memoryCount}
-        onOpenInstructions={onOpenInstructions}
-        onOpenMemories={onOpenMemories}
-        onOpenRevisions={() => setRevisionsOpen(true)}
-        tagCount={document.tags.length}
-        onOpenTags={onOpenTags}
-        tags={document.tags}
-      />
+      {view === "preview" && (
+        <DocumentActionBar
+          diff={diff}
+          instructionCount={instructionCount}
+          memoryCount={memoryCount}
+          onOpenInstructions={onOpenInstructions}
+          onOpenMemories={onOpenMemories}
+          onOpenRevisions={() => setRevisionsOpen(true)}
+          tagCount={document.tags.length}
+          onOpenTags={onOpenTags}
+          tags={document.tags}
+        />
+      )}
     </Container>
   );
 };

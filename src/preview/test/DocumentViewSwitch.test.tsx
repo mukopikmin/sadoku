@@ -1,17 +1,20 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "./testUtils";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "./testUtils";
+import { afterEach, describe, expect, it } from "vitest";
 import { useState } from "react";
 import { DocumentViewSwitch } from "../components/DocumentViewSwitch";
 import type { PreviewView } from "../models/previewView";
 
-afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
+afterEach(cleanup);
 
 describe("DocumentViewSwitch", () => {
-  it("switches views and preserves accessible badges and tooltips", async () => {
+  it("switches views with accessible labels, badges, and tooltips", async () => {
     const Actions = () => {
       const [view, setView] = useState<PreviewView>("preview");
       return (
@@ -65,5 +68,22 @@ describe("DocumentViewSwitch", () => {
     await waitFor(() =>
       expect(preview.getAttribute("aria-selected")).toBe("true")
     );
+  });
+
+  it("omits comment badges when there are no unresolved or stale comments", () => {
+    render(
+      <DocumentViewSwitch
+        onChangeView={() => {}}
+        staleCommentCount={0}
+        unresolvedCommentCount={0}
+        view="preview"
+      />,
+    );
+    const comments = screen.getByRole("tab", {
+      name: "Comments, 0 unresolved",
+    });
+    expect(comments.textContent).toBe("");
+    expect(comments.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    expect(within(comments).queryByRole("img")).toBeNull();
   });
 });
