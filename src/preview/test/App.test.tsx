@@ -47,6 +47,7 @@ afterEach(() => {
   document.documentElement.className = "";
   document.documentElement.removeAttribute("data-theme");
   document.documentElement.removeAttribute("data-code-wrap");
+  document.documentElement.removeAttribute("data-show-highlight-boundaries");
   document.documentElement.removeAttribute("style");
   globalThis.localStorage?.clear?.();
   TestEventSource.instances = [];
@@ -55,6 +56,97 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("opens statistics from settings and restores focus without closing settings", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const statisticsRequests = vi.fn(() =>
+      Response.json({
+        commentCount: { bot: "4", human: "12" },
+        databaseSize: "1536",
+        documentCount: "3",
+      })
+    );
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(Response.json([]));
+      }
+      if (url === "/__sadoku/directory-status") {
+        return Promise.resolve(Response.json({ state: "ready" }));
+      }
+      if (url === "/__sadoku/github-account") {
+        return Promise.resolve(Response.json({ ok: false }));
+      }
+      if (url.endsWith("/GetStatistics")) {
+        return Promise.resolve(statisticsRequests());
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    }));
+
+    render(<App />);
+    const settingsButton = await screen.findByRole("button", {
+      name: "Open settings",
+    });
+    const navigation = screen.getByRole("navigation", {
+      name: "Application actions",
+    });
+    expect(within(navigation).queryByRole("button", {
+      name: /statistics/i,
+    })).toBeNull();
+    expect(statisticsRequests).not.toHaveBeenCalled();
+
+    fireEvent.click(settingsButton);
+    const settings = await screen.findByRole("dialog", { name: "Settings" });
+    const statisticsButton = within(settings).getByRole("button", {
+      name: "Database statistics",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(settings));
+    expect(statisticsRequests).not.toHaveBeenCalled();
+    const directoryInput = within(settings).getByPlaceholderText(
+      "Add a directory",
+    );
+    fireEvent.change(directoryInput, { target: { value: "draft" } });
+
+    for (const closeWithEscape of [false, true]) {
+      fireEvent.click(statisticsButton);
+      const statistics = await screen.findByRole("dialog", {
+        name: "Database statistics",
+      });
+      expect(await within(statistics).findByText("1.5 KB")).not.toBeNull();
+      await waitFor(() =>
+        expect(statistics.contains(document.activeElement)).toBe(true)
+      );
+      if (closeWithEscape) {
+        fireEvent.keyDown(statistics, { key: "Escape" });
+      } else {
+        fireEvent.click(within(statistics).getByRole("button", {
+          name: "Close database statistics",
+        }));
+      }
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", {
+          name: "Database statistics",
+        })).toBeNull()
+      );
+      expect(screen.getByRole("dialog", { name: "Settings" })).toBe(settings);
+      expect((directoryInput as HTMLInputElement).value).toBe("draft");
+      await waitFor(() => expect(document.activeElement).toBe(statisticsButton));
+    }
+    expect(statisticsRequests).toHaveBeenCalledTimes(2);
+
+    fireEvent.keyDown(settings, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", {
+        name: "Settings",
+      })).toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(settingsButton));
+    fireEvent.click(settingsButton);
+    await screen.findByRole("dialog", { name: "Settings" });
+    expect(screen.queryByRole("dialog", { name: "Database statistics" }))
+      .toBeNull();
+    expect(statisticsRequests).toHaveBeenCalledTimes(2);
+  });
+
   it("manages global instructions from the header without a selected document", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
@@ -861,6 +953,82 @@ describe("App", () => {
     );
   });
 
+  it("defaults highlight boundaries off and saves and restores the toggle", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    let savedSettings: Record<string, unknown> = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/__sadoku/settings") {
+          if (init?.method === "PUT") {
+            savedSettings = JSON.parse(String(init.body));
+          }
+          return Promise.resolve(Response.json(savedSettings));
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([
+            { id: 1, relativePath: "test.md", title: "test.md" },
+          ]));
+        }
+        if (url === "/__sadoku/documents/1") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/test.md",
+            markdown: "# Title\n\nBody",
+            title: "test.md",
+          }));
+        }
+        if (url.endsWith("/comments")) {
+          return Promise.resolve(Response.json({ comments: [] }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+    const app = render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
+    await screen.findByText("Body");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open settings" }),
+    );
+    const toggle = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show highlight boundaries",
+    });
+    expect(toggle.checked).toBe(false);
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "false",
+    );
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(savedSettings.showHighlightBoundaries).toBe(true)
+    );
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "true",
+    );
+    app.unmount();
+
+    render(<App />);
+    await screen.findByText("Body");
+    await waitFor(() =>
+      expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+        "true",
+      )
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open settings" }),
+    );
+    const restored = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show highlight boundaries",
+    });
+    expect(restored.checked).toBe(true);
+    fireEvent.click(restored);
+    await waitFor(() =>
+      expect(savedSettings.showHighlightBoundaries).toBe(false)
+    );
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "false",
+    );
+  });
+
   it("saves HTML comment visibility globally and restores it after remounting", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     let savedSettings: Record<string, unknown> = {};
@@ -1033,6 +1201,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 2,
           maxFiles: 20,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1074,6 +1243,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 20,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1092,6 +1262,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1120,6 +1291,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "dark",
       }),
@@ -1145,6 +1317,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "light",
       }),
@@ -1170,6 +1343,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1315,6 +1489,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 2,
         maxFiles: 20,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "light",
       }),

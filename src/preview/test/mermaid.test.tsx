@@ -105,4 +105,30 @@ describe("initializeMermaid", () => {
     expect(loaded).toBe(false);
     expect(document.querySelector(".mermaid svg")).not.toBeNull();
   });
+
+  it("passes the resolved theme font size to Mermaid without scaling it twice", async () => {
+    const diagram = document.createElement("pre");
+    diagram.className = "mermaid";
+    diagram.textContent = "graph TD; A-->B;";
+    document.body.append(diagram);
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      fontSize: "24px",
+    } as CSSStyleDeclaration);
+
+    try {
+      await initializeMermaid({
+        root: document.body,
+        prefersDark: () => false,
+      });
+
+      expect(bundledMermaid.initialize).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          themeVariables: { fontSize: "24px", useGradient: false },
+        }),
+      );
+      expect(bundledMermaid.run).toHaveBeenLastCalledWith({ nodes: [diagram] });
+    } finally {
+      diagram.remove();
+    }
+  });
 });

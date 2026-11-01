@@ -79,7 +79,6 @@ export const App = () => {
     view,
   );
   const settingsDisclosure = useDisclosure();
-  const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
   const globalInstructionsDisclosure = useDisclosure();
   const memoriesDisclosure = useDisclosure();
@@ -92,6 +91,7 @@ export const App = () => {
     changeExcludedDirectories,
     changeFontScale,
     changeMarkdownExtensions,
+    changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
     settings,
@@ -105,6 +105,7 @@ export const App = () => {
     onExcludedDirectoriesChange: changeExcludedDirectories,
     onFontScaleChange: changeFontScale,
     onMarkdownExtensionsChange: changeMarkdownExtensions,
+    onShowHighlightBoundariesChange: changeShowHighlightBoundaries,
     onShowHtmlCommentsChange: changeShowHtmlComments,
     onThemeModeChange: changeThemeMode,
   };
@@ -176,7 +177,6 @@ export const App = () => {
     settings,
     settingsActions,
     settingsDialog: settingsDisclosure,
-    statisticsDialog: statisticsDisclosure,
     tagsDialog: tagsDisclosure,
     tagsTriggerRef,
   };
@@ -185,7 +185,6 @@ export const App = () => {
     onOpenGlobalInstructions: globalInstructionsDisclosure.onOpen,
     globalInstructionsTriggerRef,
     onOpenSettings: settingsDisclosure.onOpen,
-    onOpenStatistics: statisticsDisclosure.onOpen,
     onOpenTags: tagsDisclosure.onOpen,
     onReloadPreview: reloadPreview,
     tagsTriggerRef,

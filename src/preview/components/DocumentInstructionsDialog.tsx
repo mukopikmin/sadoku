@@ -24,6 +24,7 @@ export const DocumentInstructionsDialog = (
     <Dialog.Root
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
+      scrollBehavior="inside"
       size="lg"
     >
       <Portal>
