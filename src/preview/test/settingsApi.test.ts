@@ -10,6 +10,30 @@ afterEach(() => vi.resetAllMocks());
 
 describe("settings API", () => {
   it.each([undefined, true, false])(
+    "converts highlight boundary visibility %s with a disabled default",
+    async (showHighlightBoundaries) => {
+      vi.mocked(previewClient.getSettings).mockResolvedValue(
+        { showHighlightBoundaries } as never,
+      );
+      expect((await loadSettings()).showHighlightBoundaries).toBe(
+        showHighlightBoundaries ?? false,
+      );
+    },
+  );
+
+  it.each([null, "false", 0])(
+    "rejects invalid highlight boundary visibility %s",
+    async (showHighlightBoundaries) => {
+      vi.mocked(previewClient.getSettings).mockResolvedValue(
+        { showHighlightBoundaries } as never,
+      );
+      await expect(loadSettings()).rejects.toThrow(
+        "invalid highlight boundary visibility",
+      );
+    },
+  );
+
+  it.each([undefined, true, false])(
     "converts HTML comment visibility %s",
     async (showHtmlComments) => {
       vi.mocked(previewClient.getSettings).mockResolvedValue(
@@ -42,6 +66,7 @@ describe("settings API", () => {
       maxFiles: 20,
       markdownExtensions: [".md"],
       theme: "light" as const,
+      showHighlightBoundaries: false,
       showHtmlComments: false,
     };
     vi.mocked(previewClient.updateSettings).mockResolvedValue(update as never);

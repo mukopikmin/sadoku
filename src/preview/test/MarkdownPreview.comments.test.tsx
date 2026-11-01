@@ -11,6 +11,40 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview comments", () => {
+  it("selects a range from a table header through a rendered Mermaid diagram", async () => {
+    vi.mocked(initializeMermaid).mockImplementation(async () => {
+      const diagram = document.querySelector("pre.mermaid");
+      if (diagram && !diagram.querySelector("svg")) {
+        diagram.innerHTML =
+          '<svg role="img" aria-label="Example diagram"><rect width="100" height="50" /></svg>';
+      }
+    });
+    const { container } = renderMarkdown(
+      "| Header |\n| --- |\n| Value |\n\n```mermaid\ngraph TD; A --> B\n```\n",
+    );
+    const header = screen.getByRole("columnheader", { name: "Header" });
+    const diagram = await screen.findByRole("img", { name: "Example diagram" });
+
+    fireEvent.click(header);
+    expect(screen.getByRole("button", { name: "Add comment on lines 1-3" }))
+      .not.toBeNull();
+    fireEvent.click(diagram.querySelector("rect")!, { shiftKey: true });
+    expect(screen.getByRole("button", { name: "Add comment on lines 1-7" }))
+      .not.toBeNull();
+    expect(
+      container.querySelector(".markdown-range-highlight-selection")
+        ?.getAttribute("data-end-line"),
+    ).toBe("7");
+    expect(screen.getByRole("img", { name: "Example diagram" })).toBe(diagram);
+
+    fireEvent.click(diagram.querySelector("rect")!);
+    expect(screen.getByRole("button", { name: "Add comment on lines 5-7" }))
+      .not.toBeNull();
+    fireEvent.click(diagram.querySelector("rect")!);
+    expect(screen.queryByRole("button", { name: "Add comment on lines 5-7" }))
+      .toBeNull();
+  });
+
   it("submits a new comment with command or control enter", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown("# Title\n\nBody\n", [], {

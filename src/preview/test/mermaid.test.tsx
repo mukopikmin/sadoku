@@ -42,16 +42,14 @@ describe("initializeMermaid", () => {
     expect(loaded).toBe(false);
   });
 
-  it.each(
-    [
-      { name: "implicit dark theme", theme: undefined, expectedTheme: "dark" },
-      {
-        name: "explicit default theme",
-        theme: "default",
-        expectedTheme: "default",
-      },
-    ] as const,
-  )(
+  it.each([
+    { name: "implicit dark theme", theme: undefined, expectedTheme: "dark" },
+    {
+      name: "explicit default theme",
+      theme: "default",
+      expectedTheme: "default",
+    },
+  ] as const)(
     "initializes and renders diagrams with $name",
     async ({ theme, expectedTheme }) => {
       const document = new DOMParser().parseFromString(
@@ -135,7 +133,9 @@ describe("initializeMermaid", () => {
       await Promise.all([nested, parent]);
     }
     expect(run.mock.calls.map(([{ nodes }]) => nodes)).toEqual(
-      [...document.querySelectorAll<HTMLElement>(".mermaid")].map((node) => [node]),
+      [...document.querySelectorAll<HTMLElement>(".mermaid")].map((node) => [
+        node,
+      ]),
     );
   });
 
@@ -145,11 +145,13 @@ describe("initializeMermaid", () => {
       "text/html",
     );
     const run = vi.fn(async () => {});
-    const importMermaid = vi.fn()
+    const importMermaid = vi
+      .fn()
       .mockRejectedValueOnce(new Error("Mermaid load failed"))
       .mockResolvedValue({ default: { initialize: vi.fn(), run } });
-    await expect(initializeMermaid({ document, importMermaid }))
-      .rejects.toThrow("Mermaid load failed");
+    await expect(
+      initializeMermaid({ document, importMermaid }),
+    ).rejects.toThrow("Mermaid load failed");
     await initializeMermaid({ document, importMermaid });
     expect(run).toHaveBeenCalledOnce();
   });
@@ -220,7 +222,34 @@ describe("initializeMermaid", () => {
         },
       },
     });
-    await expect(initializeMermaid({ document, importMermaid }))
-      .rejects.toThrow("Invalid diagram");
+    await expect(
+      initializeMermaid({ document, importMermaid }),
+    ).rejects.toThrow("Invalid diagram");
+  });
+
+  it("passes the resolved theme font size to Mermaid without scaling it twice", async () => {
+    const diagram = document.createElement("pre");
+    diagram.className = "mermaid";
+    diagram.textContent = "graph TD; A-->B;";
+    document.body.append(diagram);
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      fontSize: "24px",
+    } as CSSStyleDeclaration);
+
+    try {
+      await initializeMermaid({
+        root: document.body,
+        prefersDark: () => false,
+      });
+
+      expect(bundledMermaid.initialize).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          themeVariables: { fontSize: "24px", useGradient: false },
+        }),
+      );
+      expect(bundledMermaid.run).toHaveBeenLastCalledWith({ nodes: [diagram] });
+    } finally {
+      diagram.remove();
+    }
   });
 });

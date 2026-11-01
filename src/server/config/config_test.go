@@ -7,6 +7,35 @@ import (
 	"testing"
 )
 
+func TestHighlightBoundaryConfiguration(t *testing.T) {
+	for _, test := range []struct {
+		name, contents   string
+		enabled, invalid bool
+	}{
+		{name: "default"},
+		{name: "enabled", contents: "show_highlight_boundaries = true", enabled: true},
+		{name: "disabled", contents: "show_highlight_boundaries = false"},
+		{name: "string", contents: "show_highlight_boundaries = 'false'", invalid: true},
+		{name: "number", contents: "show_highlight_boundaries = 1", invalid: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+			t.Setenv("APPDATA", "")
+			if err := AtomicWrite(Path(), []byte(test.contents), 0600); err != nil {
+				t.Fatal(err)
+			}
+			settings, _, err := Read()
+			if test.invalid {
+				if err == nil || err.Error() != "show_highlight_boundaries in Sadoku config must be a boolean." {
+					t.Fatalf("invalid highlight boundaries: %v", err)
+				}
+			} else if err != nil || settings.ShowHighlightBoundaries != test.enabled {
+				t.Fatalf("highlight boundaries: %+v %v", settings, err)
+			}
+		})
+	}
+}
+
 func TestSettingsPreserveExistingConfiguration(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv("APPDATA", "")

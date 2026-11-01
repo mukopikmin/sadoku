@@ -1,11 +1,11 @@
+import { defaultSystem } from "@chakra-ui/react";
+
 type MermaidApi = {
-  initialize: (
-    options: {
-      startOnLoad: boolean;
-      theme: "dark" | "default";
-      themeVariables: { fontSize: string; useGradient: boolean };
-    },
-  ) => void;
+  initialize: (options: {
+    startOnLoad: boolean;
+    theme: "dark" | "default";
+    themeVariables: { fontSize: string; useGradient: boolean };
+  }) => void;
   run: (options: { nodes: HTMLElement[] }) => Promise<void>;
 };
 
@@ -25,16 +25,14 @@ export type MermaidOptions = {
 // diagram concurrently or initialize the renderer during another draw.
 let renderQueue: Promise<void> = Promise.resolve();
 
-export const initializeMermaid = async (
-  {
-    document = globalThis.document,
-    importMermaid = () => import("mermaid"),
-    prefersDark = () =>
-      globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
-    root = document,
-    theme,
-  }: MermaidOptions = {},
-): Promise<void> => {
+export const initializeMermaid = async ({
+  document = globalThis.document,
+  importMermaid = () => import("mermaid"),
+  prefersDark = () =>
+    globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
+  root = document,
+  theme,
+}: MermaidOptions = {}): Promise<void> => {
   const rendering = renderQueue.then(async () => {
     const candidates = Array.from(
       root.querySelectorAll<HTMLElement>(".mermaid"),
@@ -44,13 +42,14 @@ export const initializeMermaid = async (
     const { default: mermaid } = await importMermaid();
     const nodes = candidates.filter((node) => node.isConnected);
     if (nodes.length === 0) return;
-    const fontScale = Number(
-      document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
-    ) || 1;
+    // Mermaid measures text using a concrete font size, rather than a CSS token.
+    const fontSize =
+      document.defaultView?.getComputedStyle(document.body).fontSize ||
+      defaultSystem.token("fontSizes.md");
     mermaid.initialize({
       startOnLoad: false,
       theme: theme ?? (prefersDark() ? "dark" : "default"),
-      themeVariables: { fontSize: `${fontScale}rem`, useGradient: false },
+      themeVariables: { fontSize, useGradient: false },
     });
     try {
       await mermaid.run({ nodes });

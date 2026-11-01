@@ -47,6 +47,7 @@ afterEach(() => {
   document.documentElement.className = "";
   document.documentElement.removeAttribute("data-theme");
   document.documentElement.removeAttribute("data-code-wrap");
+  document.documentElement.removeAttribute("data-show-highlight-boundaries");
   document.documentElement.removeAttribute("style");
   globalThis.localStorage?.clear?.();
   TestEventSource.instances = [];
@@ -55,6 +56,97 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("opens statistics from settings and restores focus without closing settings", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    const statisticsRequests = vi.fn(() =>
+      Response.json({
+        commentCount: { bot: "4", human: "12" },
+        databaseSize: "1536",
+        documentCount: "3",
+      })
+    );
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(Response.json([]));
+      }
+      if (url === "/__sadoku/directory-status") {
+        return Promise.resolve(Response.json({ state: "ready" }));
+      }
+      if (url === "/__sadoku/github-account") {
+        return Promise.resolve(Response.json({ ok: false }));
+      }
+      if (url.endsWith("/GetStatistics")) {
+        return Promise.resolve(statisticsRequests());
+      }
+      return Promise.resolve(new Response("Not found.", { status: 404 }));
+    }));
+
+    render(<App />);
+    const settingsButton = await screen.findByRole("button", {
+      name: "Open settings",
+    });
+    const navigation = screen.getByRole("navigation", {
+      name: "Application actions",
+    });
+    expect(within(navigation).queryByRole("button", {
+      name: /statistics/i,
+    })).toBeNull();
+    expect(statisticsRequests).not.toHaveBeenCalled();
+
+    fireEvent.click(settingsButton);
+    const settings = await screen.findByRole("dialog", { name: "Settings" });
+    const statisticsButton = within(settings).getByRole("button", {
+      name: "Database statistics",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(settings));
+    expect(statisticsRequests).not.toHaveBeenCalled();
+    const directoryInput = within(settings).getByPlaceholderText(
+      "Add a directory",
+    );
+    fireEvent.change(directoryInput, { target: { value: "draft" } });
+
+    for (const closeWithEscape of [false, true]) {
+      fireEvent.click(statisticsButton);
+      const statistics = await screen.findByRole("dialog", {
+        name: "Database statistics",
+      });
+      expect(await within(statistics).findByText("1.5 KB")).not.toBeNull();
+      await waitFor(() =>
+        expect(statistics.contains(document.activeElement)).toBe(true)
+      );
+      if (closeWithEscape) {
+        fireEvent.keyDown(statistics, { key: "Escape" });
+      } else {
+        fireEvent.click(within(statistics).getByRole("button", {
+          name: "Close database statistics",
+        }));
+      }
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", {
+          name: "Database statistics",
+        })).toBeNull()
+      );
+      expect(screen.getByRole("dialog", { name: "Settings" })).toBe(settings);
+      expect((directoryInput as HTMLInputElement).value).toBe("draft");
+      await waitFor(() => expect(document.activeElement).toBe(statisticsButton));
+    }
+    expect(statisticsRequests).toHaveBeenCalledTimes(2);
+
+    fireEvent.keyDown(settings, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", {
+        name: "Settings",
+      })).toBeNull()
+    );
+    await waitFor(() => expect(document.activeElement).toBe(settingsButton));
+    fireEvent.click(settingsButton);
+    await screen.findByRole("dialog", { name: "Settings" });
+    expect(screen.queryByRole("dialog", { name: "Database statistics" }))
+      .toBeNull();
+    expect(statisticsRequests).toHaveBeenCalledTimes(2);
+  });
+
   it("manages global instructions from the header without a selected document", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
@@ -261,6 +353,16 @@ describe("App", () => {
     const header = within(screen.getByRole("banner"));
     expect(header.queryByRole("button", { name: "Table of contents" }))
       .toBeNull();
+    expect(within(titleActions).getByRole("tablist", { name: "Preview views" }))
+      .not.toBeNull();
+    expect(within(titleActions).getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(
+      within(titleActions).getByRole("tab", { name: "Comments, 0 unresolved" })
+        .textContent,
+    ).toBe("Comments");
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
     expect(header.queryByRole("separator")).toBeNull();
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
 
@@ -277,6 +379,13 @@ describe("App", () => {
       name: "Application actions",
     });
     expect(
+      within(applicationActions).getByRole("tab", { name: "Preview" }).textContent,
+    ).toBe("");
+    expect(
+      within(applicationActions).getByRole("tab", { name: "Comments, 0 unresolved" })
+        .textContent,
+    ).toBe("");
+    expect(
       within(applicationActions).getByRole("button", {
         name: "Table of contents",
       }),
@@ -285,6 +394,11 @@ describe("App", () => {
       within(applicationActions).getByRole("separator")
         .getAttribute("aria-orientation"),
     ).toBe("vertical");
+    expect(
+      within(applicationActions).getByRole("tablist", { name: "Preview views" }),
+    ).not.toBeNull();
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
     const toc = await screen.findByRole("navigation", {
       name: "Table of contents",
     });
@@ -309,6 +423,12 @@ describe("App", () => {
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
     expect(header.queryByText("Reading guide")).toBeNull();
     expect(header.queryByRole("separator")).toBeNull();
+    expect(within(titleActions).getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(within(titleActions).getByRole("tablist", { name: "Preview views" }))
+      .not.toBeNull();
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
@@ -320,6 +440,34 @@ describe("App", () => {
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull()
     );
+    expect(screen.getByRole("heading", { name: "Reading guide" }))
+      .not.toBeNull();
+    expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
+      .getAttribute("aria-selected")).toBe("true");
+
+    documentBottom = 180;
+    fireEvent.scroll(globalThis);
+    await waitFor(() => expect(header.queryByRole("tablist")).toBeNull());
+    const commentsTitleActions = within(
+      screen.getByRole("region", { name: "Document header" }),
+    );
+    expect(commentsTitleActions.getByRole("button", { name: "Edit title" }))
+      .not.toBeNull();
+    expect(commentsTitleActions.getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(commentsTitleActions.getByRole("tab", {
+      name: "Comments, 0 unresolved",
+    }).textContent).toBe("Comments");
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
+
+    documentBottom = 20;
+    fireEvent.scroll(globalThis);
+    const commentsPreview = await header.findByRole("tab", { name: "Preview" });
+    expect(commentsPreview.textContent).toBe("");
+    expect(header.getByText("Reading guide")).not.toBeNull();
+    fireEvent.click(commentsPreview);
+    await header.findByRole("button", { name: "Table of contents" });
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "guide.md" });
     expect(screen.queryByRole("button", { name: "Table of contents" }))
@@ -663,7 +811,8 @@ describe("App", () => {
 
     expect(within(header).queryByRole("tablist")).toBeNull();
     const actionBar = screen.getByRole("dialog", { name: "Document actions" });
-    const tabs = within(actionBar).getByRole("tablist", {
+    expect(within(actionBar).queryByRole("tablist")).toBeNull();
+    const tabs = within(main).getByRole("tablist", {
       name: "Preview views",
     });
     const previewButton = within(tabs).getByRole("tab", { name: "Preview" });
@@ -751,7 +900,7 @@ describe("App", () => {
         name: "Document actions",
       });
       expect(
-        within(actionBar).getByRole("tab", {
+        within(documentHeader).getByRole("tab", {
           name: "Comments, 0 unresolved",
         }).getAttribute("aria-selected"),
       ).toBe("true");
@@ -801,6 +950,82 @@ describe("App", () => {
         "/__sadoku/documents/1/instructions",
         "/__sadoku/documents/2/instructions",
       ])
+    );
+  });
+
+  it("defaults highlight boundaries off and saves and restores the toggle", async () => {
+    vi.stubGlobal("EventSource", TestEventSource);
+    let savedSettings: Record<string, unknown> = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/__sadoku/settings") {
+          if (init?.method === "PUT") {
+            savedSettings = JSON.parse(String(init.body));
+          }
+          return Promise.resolve(Response.json(savedSettings));
+        }
+        if (url === "/__sadoku/documents") {
+          return Promise.resolve(Response.json([
+            { id: 1, relativePath: "test.md", title: "test.md" },
+          ]));
+        }
+        if (url === "/__sadoku/documents/1") {
+          return Promise.resolve(Response.json({
+            fileUrl: "file:///tmp/test.md",
+            markdown: "# Title\n\nBody",
+            title: "test.md",
+          }));
+        }
+        if (url.endsWith("/comments")) {
+          return Promise.resolve(Response.json({ comments: [] }));
+        }
+        return Promise.resolve(new Response("Not found.", { status: 404 }));
+      }),
+    );
+    const app = render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
+    await screen.findByText("Body");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open settings" }),
+    );
+    const toggle = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show highlight boundaries",
+    });
+    expect(toggle.checked).toBe(false);
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "false",
+    );
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(savedSettings.showHighlightBoundaries).toBe(true)
+    );
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "true",
+    );
+    app.unmount();
+
+    render(<App />);
+    await screen.findByText("Body");
+    await waitFor(() =>
+      expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+        "true",
+      )
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open settings" }),
+    );
+    const restored = await screen.findByRole<HTMLInputElement>("checkbox", {
+      name: "Show highlight boundaries",
+    });
+    expect(restored.checked).toBe(true);
+    fireEvent.click(restored);
+    await waitFor(() =>
+      expect(savedSettings.showHighlightBoundaries).toBe(false)
+    );
+    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
+      "false",
     );
   });
 
@@ -976,6 +1201,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 2,
           maxFiles: 20,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1017,6 +1243,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 20,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1035,6 +1262,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1063,6 +1291,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "dark",
       }),
@@ -1088,6 +1317,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 4,
         maxFiles: 100,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "light",
       }),
@@ -1113,6 +1343,7 @@ describe("App", () => {
           markdownExtensions: [".md", ".markdown"],
           maxDepth: 4,
           maxFiles: 100,
+          showHighlightBoundaries: false,
           showHtmlComments: true,
           theme: "light",
         }),
@@ -1258,6 +1489,7 @@ describe("App", () => {
         markdownExtensions: [".md", ".markdown"],
         maxDepth: 2,
         maxFiles: 20,
+        showHighlightBoundaries: false,
         showHtmlComments: true,
         theme: "light",
       }),

@@ -75,10 +75,10 @@ export const App = () => {
   );
   const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
     selectedDocumentId,
-    view === "preview" && Boolean(documentQuery.data && commentsQuery.data),
+    Boolean(documentQuery.data && commentsQuery.data),
+    view,
   );
   const settingsDisclosure = useDisclosure();
-  const statisticsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
   const globalInstructionsDisclosure = useDisclosure();
   const memoriesDisclosure = useDisclosure();
@@ -91,6 +91,7 @@ export const App = () => {
     changeExcludedDirectories,
     changeFontScale,
     changeMarkdownExtensions,
+    changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
     settings,
@@ -104,6 +105,7 @@ export const App = () => {
     onExcludedDirectoriesChange: changeExcludedDirectories,
     onFontScaleChange: changeFontScale,
     onMarkdownExtensionsChange: changeMarkdownExtensions,
+    onShowHighlightBoundariesChange: changeShowHighlightBoundaries,
     onShowHtmlCommentsChange: changeShowHtmlComments,
     onThemeModeChange: changeThemeMode,
   };
@@ -175,7 +177,6 @@ export const App = () => {
     settings,
     settingsActions,
     settingsDialog: settingsDisclosure,
-    statisticsDialog: statisticsDisclosure,
     tagsDialog: tagsDisclosure,
     tagsTriggerRef,
   };
@@ -184,7 +185,6 @@ export const App = () => {
     onOpenGlobalInstructions: globalInstructionsDisclosure.onOpen,
     globalInstructionsTriggerRef,
     onOpenSettings: settingsDisclosure.onOpen,
-    onOpenStatistics: statisticsDisclosure.onOpen,
     onOpenTags: tagsDisclosure.onOpen,
     onReloadPreview: reloadPreview,
     tagsTriggerRef,
@@ -298,10 +298,18 @@ export const App = () => {
         collapsedDocument: collapsed
           ? {
             title: document.displayTitle ?? document.title,
-            markdown: document.markdown,
           }
           : undefined,
         fileUrl: document.fileUrl,
+        documentNavigation: collapsed
+          ? {
+            markdown: document.markdown,
+            onChangeView: changeView,
+            staleCommentCount,
+            unresolvedCommentCount,
+            view,
+          }
+          : undefined,
         headerRef,
         reloadAvailable,
         reloading: documentQuery.isFetching || commentsQuery.isFetching,
@@ -312,6 +320,7 @@ export const App = () => {
         document={document}
         documentId={selectedDocumentId}
         documentHeaderRef={documentHeaderRef}
+        documentNavigationInHeader={collapsed}
         documents={documents}
         instructionCount={instructionsQuery.data?.length ?? 0}
         memoryCount={memoriesQuery.data?.length ?? 0}

@@ -1,5 +1,5 @@
-import { CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
-import { useRef } from "react";
+import { Button, CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
 import type {
   CodeWrapMode,
   ResolvedPreviewSettings,
@@ -8,6 +8,7 @@ import type {
 import { AppearanceSettings } from "./settings/AppearanceSettings";
 import { DirectoryDiscoverySettings } from "./settings/DirectoryDiscoverySettings";
 import { GitHubAccountSettings } from "./settings/GitHubAccountSettings";
+import { StatisticsDialog } from "./StatisticsDialog";
 
 export type SettingsDialogProps = {
   onCodeWrapModeChange: (value: CodeWrapMode) => void;
@@ -16,6 +17,7 @@ export type SettingsDialogProps = {
   onFontScaleChange: (value: number) => void;
   onMarkdownExtensionsChange: (value: string[]) => void;
   onOpenChange: (open: boolean) => void;
+  onShowHighlightBoundariesChange: (value: boolean) => void;
   onShowHtmlCommentsChange: (value: boolean) => void;
   onThemeModeChange: (value: ThemeMode) => void;
   open: boolean;
@@ -26,6 +28,11 @@ export const SettingsDialog = (
   { open, onOpenChange, settings, ...actions }: SettingsDialogProps,
 ) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const statisticsTriggerRef = useRef<HTMLButtonElement>(null);
+  const [statisticsOpen, setStatisticsOpen] = useState(false);
+  useEffect(() => {
+    if (!open) setStatisticsOpen(false);
+  }, [open]);
   return (
     <Dialog.Root
       finalFocusEl={() =>
@@ -55,6 +62,9 @@ export const SettingsDialog = (
                   onFontScaleChange={actions.onFontScaleChange}
                   onThemeModeChange={actions.onThemeModeChange}
                   onShowHtmlCommentsChange={actions.onShowHtmlCommentsChange}
+                  onShowHighlightBoundariesChange={actions
+                    .onShowHighlightBoundariesChange}
+                  showHighlightBoundaries={settings.showHighlightBoundaries}
                   showHtmlComments={settings.showHtmlComments}
                   themeMode={settings.theme}
                 />
@@ -68,6 +78,20 @@ export const SettingsDialog = (
                     .onExcludedDirectoriesChange}
                   onMarkdownExtensionsChange={actions
                     .onMarkdownExtensionsChange}
+                />
+                <Button
+                  alignSelf="start"
+                  onClick={() => setStatisticsOpen(true)}
+                  ref={statisticsTriggerRef}
+                  type="button"
+                  variant="outline"
+                >
+                  Database statistics
+                </Button>
+                <StatisticsDialog
+                  finalFocusRef={statisticsTriggerRef}
+                  onOpenChange={setStatisticsOpen}
+                  open={open && statisticsOpen}
                 />
               </Flex>
             </Dialog.Body>

@@ -28,6 +28,7 @@ const page = (previousMarkdown?: string) => (
       tags: [],
     }}
     documentId={1}
+    documentNavigationInHeader={false}
     instructionCount={0}
     memoryCount={0}
     onChangeView={() => {}}
@@ -40,6 +41,7 @@ const page = (previousMarkdown?: string) => (
       codeWrap: "scroll",
       excludedDirectories: [],
       fontScale: 1,
+      showHighlightBoundaries: false,
       markdownExtensions: [".md"],
       maxDepth: 2,
       maxFiles: 20,
