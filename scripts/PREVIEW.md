@@ -23,14 +23,14 @@ configured `SADOKU_COMMENTS_DIR`. An unset or empty source enables preparation.
 
 All sample Markdown comes from `test/integration/fixtures/`, copied with its
 directory structure into the temporary directory. The copies provide five
-documents (one deleted) and fifteen comments, including human and bot authors,
+documents (one deleted) and seventeen comments, including human and bot authors,
 replies, review requests, resolved comments, instructions, memories, and tags.
 Seeded comments, replies, instructions, memories, and tag names are in English.
 
 | Fixture                 | Preview state                                                                      |
 | ----------------------- | ---------------------------------------------------------------------------------- |
 | `comprehensive.md`      | 25 saved revisions, Markdown rendering, seven comments, instructions, and memories |
-| `second.md`             | Source diff, moved comment, deleted passage, resolved comment                      |
+| `second.md`             | Rendered diff bands, changed table/code/Mermaid, overlapping comments, moved/deleted comments |
 | `japanese.md`           | Japanese rendering and two comments                                                |
 | `guides/overview.md`    | Deleted document with a saved snapshot, comments, and memory                       |
 | `guides/setup/local.md` | Nested path and empty comment, instruction, and memory state                       |
@@ -46,7 +46,16 @@ comments are added to the final text.
 
 The seed script changes the copied `second.md` after adding comments and deletes
 the copied `guides/overview.md`. The original fixtures remain available to the
-existing integration tests. Tags are created and attached through
+existing integration tests. On `second.md`, toggle **Changes** to compare API-key
+access with OAuth. Consecutive paragraphs, a table, a TypeScript block, and a
+Mermaid diagram form continuous removed and added bands. Unchanged review notes
+separate a removed-only paragraph from two added-only paragraphs. Active human
+and bot comments on the changed paragraph and table exercise comment outlines
+over the diff background. The document has six comments, including the existing
+moved, deleted, and resolved examples. `guides/setup/local.md` has no previous
+snapshot to compare, so its **Changes** option is unavailable.
+
+Tags are created and attached through
 `sadoku tag add` and `sadoku document tag add`:
 
 | Tag            | Documents                         |
