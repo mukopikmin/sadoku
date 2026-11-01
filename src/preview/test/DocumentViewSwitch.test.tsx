@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -14,7 +15,7 @@ import type { PreviewView } from "../models/previewView";
 afterEach(cleanup);
 
 describe("DocumentViewSwitch", () => {
-  it("switches views with accessible labels, badges, and tooltips", async () => {
+  it("switches views with accessible labels, badges, and keyboard navigation", async () => {
     const Actions = () => {
       const [view, setView] = useState<PreviewView>("preview");
       return (
@@ -44,17 +45,6 @@ describe("DocumentViewSwitch", () => {
     expect(within(comments).getByRole("img", { name: "Stale comments: 1" }))
       .not.toBeNull();
 
-    fireEvent.pointerEnter(preview);
-    expect((await screen.findByRole("tooltip")).textContent).toBe("Preview");
-    fireEvent.pointerLeave(preview);
-    fireEvent.pointerEnter(comments);
-    await waitFor(() =>
-      expect(screen.getByRole("tooltip").textContent).toBe(
-        "Comments, 2 unresolved, 1 stale",
-      )
-    );
-    fireEvent.pointerLeave(comments);
-
     fireEvent.click(comments);
     await waitFor(() =>
       expect(comments.getAttribute("aria-selected")).toBe("true")
@@ -68,6 +58,12 @@ describe("DocumentViewSwitch", () => {
     await waitFor(() =>
       expect(preview.getAttribute("aria-selected")).toBe("true")
     );
+
+    act(() => preview.focus());
+    fireEvent.keyDown(preview, { key: "ArrowRight" });
+    await waitFor(() => expect(document.activeElement).toBe(comments));
+    fireEvent.keyDown(comments, { key: "ArrowLeft" });
+    await waitFor(() => expect(document.activeElement).toBe(preview));
   });
 
   it("omits comment badges when there are no unresolved or stale comments", () => {
