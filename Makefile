@@ -13,7 +13,7 @@ GO_TEST_FLAGS ?= -race -count=1 -timeout=120s
 GO_SOURCES := cmd internal src/server src/preview/assets.go gen/go test/integration
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \
- build install dist notices run start test test-server test-tools test-install check vet vet-cross \
+ build build-server install dist notices run start test test-server test-tools test-install check vet vet-cross \
  fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
  check-proxy-format vet-proxy test-proxy build-proxy run-proxy
 
@@ -36,6 +36,10 @@ check-client-format:
 	$(NPM) run fmt:check
 
 build: build-client
+	$(MAKE) build-server
+
+# Client assets must already exist; container builds supply them from a separate stage.
+build-server:
 	$(GO) run ./cmd/sadoku-tools build --version "$(VERSION)" $(foreach target,$(TARGET),--target "$(target)") $(if $(OUTPUT),--output "$(OUTPUT)")
 
 install: build-client
