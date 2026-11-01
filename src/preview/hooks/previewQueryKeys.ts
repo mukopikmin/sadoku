@@ -10,7 +10,7 @@ export const documentRevisionQueryKey = (
 ) => ["document-revision", documentId, revisionId] as const;
 export const commentsQueryKey = (documentId?: number) =>
   ["comments", documentId] as const;
-export const instructionsQueryKey = (documentId?: number) =>
+export const instructionsQueryKey = (documentId?: number | "global") =>
   ["instructions", documentId] as const;
 export const tagsQueryKey = ["tags"] as const;
 export const memoriesQueryKey = (documentId?: number) =>

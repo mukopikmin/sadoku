@@ -8,6 +8,7 @@ import {
   Tabs,
   Text,
 } from "@chakra-ui/react";
+import { Check, RotateCcw, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -204,7 +205,14 @@ export const CommentList = ({
           emptyText={selectedSection.emptyText}
         >
           {selectedSection.comments.length > 0 && (
-            <Flex align="center" gap="3" mb="4" wrap="wrap">
+            <Flex
+              align="center"
+              aria-label="Bulk comment actions"
+              gap="3"
+              mb="4"
+              role="group"
+              wrap="wrap"
+            >
               <Checkbox.Root
                 checked={bulk.selectedIds.length ===
                     selectedSection.comments.length
@@ -225,6 +233,7 @@ export const CommentList = ({
                 {bulk.selectedIds.length} selected
               </Text>
               <Button
+                colorPalette={selectedCategory === "resolved" ? "gray" : "green"}
                 disabled={bulk.isPending || bulk.selectedIds.length === 0}
                 loading={bulk.state.status === "pending" &&
                   bulk.state.operation !== "delete"}
@@ -239,8 +248,9 @@ export const CommentList = ({
                 variant="outline"
               >
                 {selectedCategory === "resolved"
-                  ? "Reopen selected"
-                  : "Resolve selected"}
+                  ? <RotateCcw aria-hidden="true" />
+                  : <Check aria-hidden="true" />}
+                {selectedCategory === "resolved" ? "Reopen" : "Resolve"}
               </Button>
               <Button
                 colorPalette="red"
@@ -250,7 +260,8 @@ export const CommentList = ({
                 size="sm"
                 variant="outline"
               >
-                Delete selected
+                <Trash2 aria-hidden="true" />
+                Delete
               </Button>
             </Flex>
           )}

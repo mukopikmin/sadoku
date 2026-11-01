@@ -13,7 +13,7 @@ func validateRESTFields(operation string, fields map[string]json.RawMessage) err
 	invalid := func(message string) error { return u.Fail("invalid_argument", message) }
 	value := func(name string) any { var result any; json.Unmarshal(fields[name], &result); return result }
 	switch operation {
-	case "CreateInstruction", "UpdateInstruction":
+	case "CreateInstruction", "UpdateInstruction", "CreateGlobalInstruction", "UpdateGlobalInstruction":
 		if _, ok := value("content").(string); !ok {
 			return invalid("Request body must contain an instruction content string.")
 		}
@@ -72,7 +72,7 @@ func decodeRESTInput(operation string, fields map[string]json.RawMessage, target
 		names = []string{"name", "backgroundColor"}
 	case "ReplaceDocumentTags":
 		names = []string{"tags"}
-	case "CreateInstruction", "UpdateInstruction":
+	case "CreateInstruction", "UpdateInstruction", "CreateGlobalInstruction", "UpdateGlobalInstruction":
 		names = []string{"content"}
 	case "CreateComment":
 		names = []string{"body", "startLine", "endLine"}

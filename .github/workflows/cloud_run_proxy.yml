@@ -3,6 +3,9 @@ name: Cloud Run Revision Proxy
 on:
   push:
     branches: [main]
+    paths:
+      - "proxy/**"
+      - ".github/workflows/cloud_run_proxy.yml"
   workflow_dispatch:
 
 permissions:

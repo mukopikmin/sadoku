@@ -20,13 +20,40 @@ env:
   PREVIEW_TAG: ${{ github.event_name == 'push' && 'main' || format('pr-{0}', github.event.pull_request.number) }}
 
 jobs:
-  build:
-    name: Build preview image
+  changes:
+    name: Detect application changes
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'pull_request' && github.event.action != 'closed' &&
       github.event.pull_request.user.login != 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      application: ${{ steps.filter.outputs.application }}
+    steps:
+      - name: Checkout pushed commit
+        if: github.event_name == 'push'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check changed files
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          predicate-quantifier: every
+          filters: |
+            application:
+              - '**'
+              - '!proxy/**'
+              - '!.github/workflows/proxy_test.yml'
+              - '!.github/workflows/cloud_run_proxy.yml'
+
+  build:
+    name: Build preview image
+    needs: changes
+    if: needs.changes.outputs.application == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

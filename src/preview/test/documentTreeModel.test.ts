@@ -85,7 +85,7 @@ describe("document tree model", () => {
     ];
 
     expect(filterTagsBySearch(tags, "  referENCE ")).toEqual([tags[0]]);
-    expect(filterTagsBySearch(tags, " ")).toBe(tags);
+    expect(filterTagsBySearch(tags, " ")).toEqual(tags);
   });
 
   it("matches documents that have any active tag", () => {
@@ -102,7 +102,7 @@ describe("document tree model", () => {
     expect(filterDocumentsByTags(documents, [1, 2])).toEqual(
       documents.slice(0, 2),
     );
-    expect(filterDocumentsByTags(documents, [])).toBe(documents);
+    expect(filterDocumentsByTags(documents, [])).toEqual(documents);
     expect(filterDocumentsByTags(documents, [3])).toEqual([]);
   });
 

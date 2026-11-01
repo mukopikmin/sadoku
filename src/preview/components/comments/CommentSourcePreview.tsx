@@ -40,7 +40,7 @@ export const CommentSourcePreview = ({ comment }: { comment: Comment }) => {
       aria-label="Target line"
     >
       {changed && (
-        <Flex>
+        <Flex my="2">
           <Badge variant="subtle">Changed</Badge>
         </Flex>
       )}

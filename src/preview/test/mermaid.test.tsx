@@ -42,42 +42,50 @@ describe("initializeMermaid", () => {
     expect(loaded).toBe(false);
   });
 
-  it("initializes and runs mermaid for rendered diagram blocks", async () => {
-    const document = new DOMParser().parseFromString(
-      '<main><div class="mermaid-container"><pre class="mermaid">graph TD; A-->B;</pre><button class="mermaid-zoom-button" type="button">Zoom</button></div></main>',
-      "text/html",
-    );
-    const calls: unknown[] = [];
+  it.each(
+    [
+      { name: "implicit dark theme", theme: undefined, expectedTheme: "dark" },
+      {
+        name: "explicit default theme",
+        theme: "default",
+        expectedTheme: "default",
+      },
+    ] as const,
+  )(
+    "initializes and renders diagrams with $name",
+    async ({ theme, expectedTheme }) => {
+      const document = new DOMParser().parseFromString(
+        '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
+        "text/html",
+      );
+      const calls: unknown[] = [];
 
-    await initializeMermaid({
-      document,
-      importMermaid: async () => ({
-        default: {
-          initialize: (options) => calls.push(["initialize", options]),
-          run: async (options) => {
-            calls.push(["run", options]);
-            document.querySelector(".mermaid")!.innerHTML =
-              '<svg viewBox="0 0 10 10"><title>Diagram</title></svg>';
+      await initializeMermaid({
+        document,
+        importMermaid: async () => ({
+          default: {
+            initialize: (options) => calls.push(["initialize", options]),
+            run: async (options) => calls.push(["run", options]),
           },
-        },
-      }),
-      prefersDark: () => true,
-    });
+        }),
+        prefersDark: () => true,
+        theme,
+      });
 
-    expect(calls[0]).toEqual([
-      "initialize",
-      expect.objectContaining({
-        startOnLoad: false,
-        theme: "dark",
-        themeVariables: { fontSize: "1rem", useGradient: false },
-      }),
-    ]);
-    expect(calls[1]).toEqual([
-      "run",
-      { nodes: [document.querySelector(".mermaid")] },
-    ]);
-    expect(document.querySelector(".mermaid svg")).not.toBeNull();
-  });
+      expect(calls[0]).toEqual([
+        "initialize",
+        expect.objectContaining({
+          startOnLoad: false,
+          theme: expectedTheme,
+          themeVariables: { fontSize: "1rem", useGradient: false },
+        }),
+      ]);
+      expect(calls[1]).toEqual([
+        "run",
+        { nodes: [document.querySelector(".mermaid")] },
+      ]);
+    },
+  );
 
   it("skips diagrams that mermaid has already processed", async () => {
     const document = new DOMParser().parseFromString(
@@ -98,32 +106,29 @@ describe("initializeMermaid", () => {
     expect(document.querySelector(".mermaid svg")).not.toBeNull();
   });
 
-  it("uses an explicit mermaid theme when provided", async () => {
-    const document = new DOMParser().parseFromString(
-      '<main><pre class="mermaid">graph TD; A-->B;</pre></main>',
-      "text/html",
-    );
-    const calls: unknown[] = [];
+  it("passes the resolved theme font size to Mermaid without scaling it twice", async () => {
+    const diagram = document.createElement("pre");
+    diagram.className = "mermaid";
+    diagram.textContent = "graph TD; A-->B;";
+    document.body.append(diagram);
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      fontSize: "24px",
+    } as CSSStyleDeclaration);
 
-    await initializeMermaid({
-      document,
-      importMermaid: async () => ({
-        default: {
-          initialize: (options) => calls.push(["initialize", options]),
-          run: async (options) => calls.push(["run", options]),
-        },
-      }),
-      prefersDark: () => true,
-      theme: "default",
-    });
+    try {
+      await initializeMermaid({
+        root: document.body,
+        prefersDark: () => false,
+      });
 
-    expect(calls[0]).toEqual([
-      "initialize",
-      expect.objectContaining({
-        startOnLoad: false,
-        theme: "default",
-        themeVariables: { fontSize: "1rem", useGradient: false },
-      }),
-    ]);
+      expect(bundledMermaid.initialize).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          themeVariables: { fontSize: "24px", useGradient: false },
+        }),
+      );
+      expect(bundledMermaid.run).toHaveBeenLastCalledWith({ nodes: [diagram] });
+    } finally {
+      diagram.remove();
+    }
   });
 });

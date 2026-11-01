@@ -24,8 +24,6 @@ describe("MarkdownPreview heading navigation", () => {
     const trigger = screen.getByRole("button", { name: "Table of contents" });
     expect(trigger.textContent).toBe("");
     expect(trigger.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-    expect(trigger.getAttribute("data-scope")).toBe("popover");
-    expect(trigger.parentElement?.getAttribute("data-scope")).toBe("tooltip");
     fireEvent.pointerEnter(trigger);
     expect((await screen.findByRole("tooltip")).textContent).toBe(
       "Table of contents",

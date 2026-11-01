@@ -13,7 +13,7 @@ export const GitHubAccountSettings = ({ enabled }: { enabled: boolean }) => {
   return (
     <Flex alignItems="center" justifyContent="space-between" gap="4">
       <Text as="div">
-        <Text fontWeight="medium">GitHub account</Text>
+        <Text textStyle="label">GitHub account</Text>
         <Text color="fg.muted" fontSize="sm">
           Account authenticated with GitHub CLI
         </Text>

@@ -15,6 +15,9 @@ describe("DocumentInstructionsDialog", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        if (String(_input) === "/__sadoku/global-instructions") {
+          return Response.json({ instructions: [] });
+        }
         if (init?.method === "POST" || init?.method === "PUT") {
           const instruction = {
             id: 1,

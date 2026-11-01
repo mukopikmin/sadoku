@@ -12,6 +12,8 @@ import { rehypeRevisionHighlights } from "../../markdown/rehypeRevisionHighlight
 import { RevisionHighlight } from "../../markdown/RevisionHighlight";
 import { containsChangedLine } from "../../markdown/revisionDiff";
 import { useRevisionHighlightLayout } from "../../markdown/useRevisionHighlightLayout";
+import { HighlightOverlay } from "../../markdown/HighlightOverlay";
+import { MarkdownThemeContext } from "../../markdown/MarkdownThemeContext";
 
 export const ReadOnlyMarkdownPreview = ({
   documentPath,
@@ -48,65 +50,62 @@ export const ReadOnlyMarkdownPreview = ({
   const components = useMemo(() => ({
     ...sharedMarkdownComponents,
     ...(!showHtmlComments ? { "html-comment": () => null } : {}),
-    "revision-highlight": ({ children }: { children?: ReactNode }) => (
-      <RevisionHighlight kind={highlightKind ?? "addition"}>
+    "revision-highlight": ({ children, "data-revision-changed": changed }: {
+      children?: ReactNode;
+      "data-revision-changed"?: string;
+    }) => (
+      <RevisionHighlight kind={changed === "true" ? highlightKind : undefined}>
         {children}
       </RevisionHighlight>
     ),
   }), [highlightKind, showHtmlComments]);
 
   return (
-    <Box className="markdown-preview" ref={root}>
-      <Box aria-hidden="true" className="markdown-range-highlights">
-        {highlightLayouts.map((layout, index) => (
-          <Box
-            className="markdown-range-highlight"
-            bg={`syntax.${layout.kind}.bg`}
-            height={`${Math.max(0, layout.bottom - layout.top)}px`}
-            key={index}
-            top={`${layout.top}px`}
-          />
-        ))}
-      </Box>
-      {frontMatter && (
-        <DataList.Root orientation={{ base: "vertical", md: "horizontal" }}>
-          {frontMatter.items.map((item) => {
-            const changed = revisionHighlight && containsChangedLine(
-              revisionHighlight.lines,
-              item.startLine,
-              item.endLine,
-            );
-            return (
-              <DataList.Item
-                key={`${item.key}-${item.startLine}`}
-                data-revision-kind={changed
-                  ? revisionHighlight.kind
-                  : undefined}
-                title={changed ? "Changed revision metadata" : undefined}
-              >
-                <DataList.ItemLabel>{item.key}</DataList.ItemLabel>
-                <DataList.ItemValue
-                  whiteSpace="pre-wrap"
-                  overflowWrap="anywhere"
+    <MarkdownThemeContext.Provider value={theme}>
+      <Box className="markdown-preview" ref={root}>
+        <HighlightOverlay layouts={highlightLayouts} />
+        {frontMatter && (
+          <DataList.Root orientation={{ base: "vertical", md: "horizontal" }}>
+            {frontMatter.items.map((item) => {
+              const changed = revisionHighlight && containsChangedLine(
+                revisionHighlight.lines,
+                item.startLine,
+                item.endLine,
+              );
+              return (
+                <DataList.Item
+                  key={`${item.key}-${item.startLine}`}
+                  data-revision-block=""
+                  data-revision-kind={changed
+                    ? revisionHighlight.kind
+                    : undefined}
+                  title={changed ? "Changed revision metadata" : undefined}
                 >
-                  {item.value}
-                </DataList.ItemValue>
-              </DataList.Item>
-            );
-          })}
-        </DataList.Root>
-      )}
-      <ReactMarkdown
-        components={components}
-        rehypePlugins={revisionHighlight
-          ? [...sharedMarkdownRehypePlugins, [rehypeRevisionHighlights, {
-            changedLines: revisionHighlight.lines,
-          }]]
-          : sharedMarkdownRehypePlugins}
-        remarkPlugins={sharedMarkdownRemarkPlugins}
-      >
-        {frontMatter?.bodyMarkdown ?? markdown}
-      </ReactMarkdown>
-    </Box>
+                  <DataList.ItemLabel>{item.key}</DataList.ItemLabel>
+                  <DataList.ItemValue
+                    whiteSpace="pre-wrap"
+                    overflowWrap="anywhere"
+                  >
+                    {item.value}
+                  </DataList.ItemValue>
+                </DataList.Item>
+              );
+            })}
+          </DataList.Root>
+        )}
+        <ReactMarkdown
+          components={components}
+          rehypePlugins={revisionHighlight
+            ? [...sharedMarkdownRehypePlugins, [rehypeRevisionHighlights, {
+              changedLines: revisionHighlight.lines,
+              showHtmlComments,
+            }]]
+            : sharedMarkdownRehypePlugins}
+          remarkPlugins={sharedMarkdownRemarkPlugins}
+        >
+          {frontMatter?.bodyMarkdown ?? markdown}
+        </ReactMarkdown>
+      </Box>
+    </MarkdownThemeContext.Provider>
   );
 };

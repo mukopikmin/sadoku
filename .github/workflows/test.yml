@@ -3,21 +3,22 @@ name: Test
 on:
   workflow_call:
   pull_request:
+    paths-ignore: &proxy-paths
+      - "proxy/**"
+      - ".github/workflows/proxy_test.yml"
+      - ".github/workflows/cloud_run_proxy.yml"
   push:
     branches:
       - main
+    paths-ignore: *proxy-paths
 
 permissions:
   contents: read
 
 jobs:
   vet:
-    name: Vet (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    name: Vet
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -28,11 +29,6 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-
-      - name: Install GNU Make
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: choco install make --version=4.4.1 --yes --no-progress
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -52,11 +48,8 @@ jobs:
       - name: Install dependencies
         run: make deps
 
-      - name: Vet Go server
-        run: make vet
-
-      - name: Vet Go proxy
-        run: make vet-proxy
+      - name: Vet Go server for native and cross-platform code
+        run: make vet-cross
 
   client:
     name: Test client
@@ -97,7 +90,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-15]
+        # Pull requests use Linux; main pushes and release callers cover all platforms.
+        os:
+          ${{ fromJSON(github.event_name == 'pull_request' &&
+          '["ubuntu-latest"]' ||
+          '["ubuntu-latest","windows-latest","macos-15"]') }}
     env:
       CGO_ENABLED: "1"
     defaults:
@@ -150,22 +147,16 @@ jobs:
       - name: Build client assets
         run: make build-client
 
-      - name: Test repository tooling
+      - name: Test workflow action
         if: runner.os == 'Linux'
-        run: make test-tools
+        run: make test-actions
 
       - name: Check Go formatting
         if: runner.os == 'Linux'
-        run: make check-go-format check-proxy-format
+        run: make check-go-format
 
       - name: Test Go server
         run: make test-server
-
-      - name: Test Go proxy
-        run: make test-proxy
-
-      - name: Build Go proxy
-        run: make build-proxy
 
       - name: Compile
         run: >-

@@ -5,16 +5,20 @@ import {
   loadInstructions,
   updateInstruction,
 } from "../api/instructions";
+import type { InstructionScope } from "../models/instruction";
 import { instructionsQueryKey } from "./previewQueryKeys";
 
-export const useInstructionsQuery = (documentId?: number, enabled = true) =>
+export const useInstructionsQuery = (
+  documentId?: InstructionScope,
+  enabled = true,
+) =>
   useQuery({
-    enabled,
+    enabled: enabled && documentId !== undefined,
     queryFn: () => loadInstructions(documentId!),
     queryKey: instructionsQueryKey(documentId),
   });
 
-export const useInstructionActions = (documentId: number) => {
+export const useInstructionActions = (documentId: InstructionScope) => {
   const queryClient = useQueryClient();
   const refresh = () =>
     queryClient.invalidateQueries({

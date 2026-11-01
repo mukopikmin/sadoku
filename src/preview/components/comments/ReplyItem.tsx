@@ -1,5 +1,14 @@
-import { Badge, Box, Flex, IconButton, Menu, Portal } from "@chakra-ui/react";
-import { Ellipsis } from "lucide-react";
+import {
+  Badge,
+  Box,
+  Flex,
+  Icon,
+  IconButton,
+  Menu,
+  Portal,
+  Stack,
+} from "@chakra-ui/react";
+import { CornerDownRight, Ellipsis } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
@@ -69,12 +78,13 @@ export const ReplyItem = ({
   };
 
   return (
-    <Box
+    <Stack
       aria-label="Reply"
       as="article"
-      borderColor="border.default"
-      borderLeftWidth="1px"
+      borderLeftColor="border.default"
+      borderLeftWidth="2px"
       className="comment-reply"
+      gap="2"
       minW="0"
       ml="6"
       pl="2"
@@ -82,6 +92,17 @@ export const ReplyItem = ({
       position="relative"
       py="1"
     >
+      <Icon
+        asChild
+        boxSize="1em"
+        color="border.default"
+        fontSize="comment"
+        left="-6"
+        position="absolute"
+        top="2"
+      >
+        <CornerDownRight aria-hidden="true" />
+      </Icon>
       {reply.author.type === "bot" && (
         <Flex
           align="center"
@@ -89,7 +110,6 @@ export const ReplyItem = ({
           color="fg.muted"
           fontSize="xs"
           fontWeight="semibold"
-          mb="0.5"
           pr="8"
         >
           <Badge colorPalette="purple" variant="subtle">Bot</Badge>
@@ -173,6 +193,6 @@ export const ReplyItem = ({
             </CommentMarkdown>
           </Box>
         )}
-    </Box>
+    </Stack>
   );
 };

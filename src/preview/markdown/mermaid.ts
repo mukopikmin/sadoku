@@ -1,3 +1,5 @@
+import { defaultSystem } from "@chakra-ui/react";
+
 type MermaidApi = {
   initialize: (
     options: {
@@ -37,13 +39,13 @@ export const initializeMermaid = async (
   if (nodes.length === 0) return;
 
   const { default: mermaid } = await importMermaid();
-  const fontScale = Number(
-    document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
-  ) || 1;
+  // Mermaid measures text using a concrete font size, rather than a CSS token.
+  const fontSize = document.defaultView?.getComputedStyle(document.body).fontSize ||
+    defaultSystem.token("fontSizes.md");
   mermaid.initialize({
     startOnLoad: false,
     theme: theme ?? (prefersDark() ? "dark" : "default"),
-    themeVariables: { fontSize: `${fontScale}rem`, useGradient: false },
+    themeVariables: { fontSize, useGradient: false },
   });
   await mermaid.run({ nodes });
 };

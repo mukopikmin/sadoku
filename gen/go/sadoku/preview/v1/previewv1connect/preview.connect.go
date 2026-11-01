@@ -83,6 +83,18 @@ const (
 	// PreviewServiceReplaceDocumentTagsProcedure is the fully-qualified name of the PreviewService's
 	// ReplaceDocumentTags RPC.
 	PreviewServiceReplaceDocumentTagsProcedure = "/sadoku.preview.v1.PreviewService/ReplaceDocumentTags"
+	// PreviewServiceListGlobalInstructionsProcedure is the fully-qualified name of the PreviewService's
+	// ListGlobalInstructions RPC.
+	PreviewServiceListGlobalInstructionsProcedure = "/sadoku.preview.v1.PreviewService/ListGlobalInstructions"
+	// PreviewServiceCreateGlobalInstructionProcedure is the fully-qualified name of the
+	// PreviewService's CreateGlobalInstruction RPC.
+	PreviewServiceCreateGlobalInstructionProcedure = "/sadoku.preview.v1.PreviewService/CreateGlobalInstruction"
+	// PreviewServiceUpdateGlobalInstructionProcedure is the fully-qualified name of the
+	// PreviewService's UpdateGlobalInstruction RPC.
+	PreviewServiceUpdateGlobalInstructionProcedure = "/sadoku.preview.v1.PreviewService/UpdateGlobalInstruction"
+	// PreviewServiceDeleteGlobalInstructionProcedure is the fully-qualified name of the
+	// PreviewService's DeleteGlobalInstruction RPC.
+	PreviewServiceDeleteGlobalInstructionProcedure = "/sadoku.preview.v1.PreviewService/DeleteGlobalInstruction"
 	// PreviewServiceListInstructionsProcedure is the fully-qualified name of the PreviewService's
 	// ListInstructions RPC.
 	PreviewServiceListInstructionsProcedure = "/sadoku.preview.v1.PreviewService/ListInstructions"
@@ -149,6 +161,10 @@ type PreviewServiceClient interface {
 	UpdateTag(context.Context, *connect.Request[v1.UpdateTagRequest]) (*connect.Response[v1.Tag], error)
 	DeleteTag(context.Context, *connect.Request[v1.DeleteTagRequest]) (*connect.Response[v1.DeleteTagResponse], error)
 	ReplaceDocumentTags(context.Context, *connect.Request[v1.ReplaceDocumentTagsRequest]) (*connect.Response[v1.ReplaceDocumentTagsResponse], error)
+	ListGlobalInstructions(context.Context, *connect.Request[v1.ListGlobalInstructionsRequest]) (*connect.Response[v1.ListGlobalInstructionsResponse], error)
+	CreateGlobalInstruction(context.Context, *connect.Request[v1.CreateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error)
+	UpdateGlobalInstruction(context.Context, *connect.Request[v1.UpdateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error)
+	DeleteGlobalInstruction(context.Context, *connect.Request[v1.DeleteGlobalInstructionRequest]) (*connect.Response[v1.DeleteGlobalInstructionResponse], error)
 	ListInstructions(context.Context, *connect.Request[v1.ListInstructionsRequest]) (*connect.Response[v1.ListInstructionsResponse], error)
 	CreateInstruction(context.Context, *connect.Request[v1.CreateInstructionRequest]) (*connect.Response[v1.Instruction], error)
 	UpdateInstruction(context.Context, *connect.Request[v1.UpdateInstructionRequest]) (*connect.Response[v1.Instruction], error)
@@ -279,6 +295,30 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("ReplaceDocumentTags")),
 			connect.WithClientOptions(opts...),
 		),
+		listGlobalInstructions: connect.NewClient[v1.ListGlobalInstructionsRequest, v1.ListGlobalInstructionsResponse](
+			httpClient,
+			baseURL+PreviewServiceListGlobalInstructionsProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("ListGlobalInstructions")),
+			connect.WithClientOptions(opts...),
+		),
+		createGlobalInstruction: connect.NewClient[v1.CreateGlobalInstructionRequest, v1.Instruction](
+			httpClient,
+			baseURL+PreviewServiceCreateGlobalInstructionProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("CreateGlobalInstruction")),
+			connect.WithClientOptions(opts...),
+		),
+		updateGlobalInstruction: connect.NewClient[v1.UpdateGlobalInstructionRequest, v1.Instruction](
+			httpClient,
+			baseURL+PreviewServiceUpdateGlobalInstructionProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("UpdateGlobalInstruction")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteGlobalInstruction: connect.NewClient[v1.DeleteGlobalInstructionRequest, v1.DeleteGlobalInstructionResponse](
+			httpClient,
+			baseURL+PreviewServiceDeleteGlobalInstructionProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("DeleteGlobalInstruction")),
+			connect.WithClientOptions(opts...),
+		),
 		listInstructions: connect.NewClient[v1.ListInstructionsRequest, v1.ListInstructionsResponse](
 			httpClient,
 			baseURL+PreviewServiceListInstructionsProcedure,
@@ -391,6 +431,10 @@ type previewServiceClient struct {
 	updateTag               *connect.Client[v1.UpdateTagRequest, v1.Tag]
 	deleteTag               *connect.Client[v1.DeleteTagRequest, v1.DeleteTagResponse]
 	replaceDocumentTags     *connect.Client[v1.ReplaceDocumentTagsRequest, v1.ReplaceDocumentTagsResponse]
+	listGlobalInstructions  *connect.Client[v1.ListGlobalInstructionsRequest, v1.ListGlobalInstructionsResponse]
+	createGlobalInstruction *connect.Client[v1.CreateGlobalInstructionRequest, v1.Instruction]
+	updateGlobalInstruction *connect.Client[v1.UpdateGlobalInstructionRequest, v1.Instruction]
+	deleteGlobalInstruction *connect.Client[v1.DeleteGlobalInstructionRequest, v1.DeleteGlobalInstructionResponse]
 	listInstructions        *connect.Client[v1.ListInstructionsRequest, v1.ListInstructionsResponse]
 	createInstruction       *connect.Client[v1.CreateInstructionRequest, v1.Instruction]
 	updateInstruction       *connect.Client[v1.UpdateInstructionRequest, v1.Instruction]
@@ -493,6 +537,26 @@ func (c *previewServiceClient) ReplaceDocumentTags(ctx context.Context, req *con
 	return c.replaceDocumentTags.CallUnary(ctx, req)
 }
 
+// ListGlobalInstructions calls sadoku.preview.v1.PreviewService.ListGlobalInstructions.
+func (c *previewServiceClient) ListGlobalInstructions(ctx context.Context, req *connect.Request[v1.ListGlobalInstructionsRequest]) (*connect.Response[v1.ListGlobalInstructionsResponse], error) {
+	return c.listGlobalInstructions.CallUnary(ctx, req)
+}
+
+// CreateGlobalInstruction calls sadoku.preview.v1.PreviewService.CreateGlobalInstruction.
+func (c *previewServiceClient) CreateGlobalInstruction(ctx context.Context, req *connect.Request[v1.CreateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error) {
+	return c.createGlobalInstruction.CallUnary(ctx, req)
+}
+
+// UpdateGlobalInstruction calls sadoku.preview.v1.PreviewService.UpdateGlobalInstruction.
+func (c *previewServiceClient) UpdateGlobalInstruction(ctx context.Context, req *connect.Request[v1.UpdateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error) {
+	return c.updateGlobalInstruction.CallUnary(ctx, req)
+}
+
+// DeleteGlobalInstruction calls sadoku.preview.v1.PreviewService.DeleteGlobalInstruction.
+func (c *previewServiceClient) DeleteGlobalInstruction(ctx context.Context, req *connect.Request[v1.DeleteGlobalInstructionRequest]) (*connect.Response[v1.DeleteGlobalInstructionResponse], error) {
+	return c.deleteGlobalInstruction.CallUnary(ctx, req)
+}
+
 // ListInstructions calls sadoku.preview.v1.PreviewService.ListInstructions.
 func (c *previewServiceClient) ListInstructions(ctx context.Context, req *connect.Request[v1.ListInstructionsRequest]) (*connect.Response[v1.ListInstructionsResponse], error) {
 	return c.listInstructions.CallUnary(ctx, req)
@@ -587,6 +651,10 @@ type PreviewServiceHandler interface {
 	UpdateTag(context.Context, *connect.Request[v1.UpdateTagRequest]) (*connect.Response[v1.Tag], error)
 	DeleteTag(context.Context, *connect.Request[v1.DeleteTagRequest]) (*connect.Response[v1.DeleteTagResponse], error)
 	ReplaceDocumentTags(context.Context, *connect.Request[v1.ReplaceDocumentTagsRequest]) (*connect.Response[v1.ReplaceDocumentTagsResponse], error)
+	ListGlobalInstructions(context.Context, *connect.Request[v1.ListGlobalInstructionsRequest]) (*connect.Response[v1.ListGlobalInstructionsResponse], error)
+	CreateGlobalInstruction(context.Context, *connect.Request[v1.CreateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error)
+	UpdateGlobalInstruction(context.Context, *connect.Request[v1.UpdateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error)
+	DeleteGlobalInstruction(context.Context, *connect.Request[v1.DeleteGlobalInstructionRequest]) (*connect.Response[v1.DeleteGlobalInstructionResponse], error)
 	ListInstructions(context.Context, *connect.Request[v1.ListInstructionsRequest]) (*connect.Response[v1.ListInstructionsResponse], error)
 	CreateInstruction(context.Context, *connect.Request[v1.CreateInstructionRequest]) (*connect.Response[v1.Instruction], error)
 	UpdateInstruction(context.Context, *connect.Request[v1.UpdateInstructionRequest]) (*connect.Response[v1.Instruction], error)
@@ -711,6 +779,30 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		PreviewServiceReplaceDocumentTagsProcedure,
 		svc.ReplaceDocumentTags,
 		connect.WithSchema(previewServiceMethods.ByName("ReplaceDocumentTags")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceListGlobalInstructionsHandler := connect.NewUnaryHandler(
+		PreviewServiceListGlobalInstructionsProcedure,
+		svc.ListGlobalInstructions,
+		connect.WithSchema(previewServiceMethods.ByName("ListGlobalInstructions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceCreateGlobalInstructionHandler := connect.NewUnaryHandler(
+		PreviewServiceCreateGlobalInstructionProcedure,
+		svc.CreateGlobalInstruction,
+		connect.WithSchema(previewServiceMethods.ByName("CreateGlobalInstruction")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceUpdateGlobalInstructionHandler := connect.NewUnaryHandler(
+		PreviewServiceUpdateGlobalInstructionProcedure,
+		svc.UpdateGlobalInstruction,
+		connect.WithSchema(previewServiceMethods.ByName("UpdateGlobalInstruction")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceDeleteGlobalInstructionHandler := connect.NewUnaryHandler(
+		PreviewServiceDeleteGlobalInstructionProcedure,
+		svc.DeleteGlobalInstruction,
+		connect.WithSchema(previewServiceMethods.ByName("DeleteGlobalInstruction")),
 		connect.WithHandlerOptions(opts...),
 	)
 	previewServiceListInstructionsHandler := connect.NewUnaryHandler(
@@ -839,6 +931,14 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceDeleteTagHandler.ServeHTTP(w, r)
 		case PreviewServiceReplaceDocumentTagsProcedure:
 			previewServiceReplaceDocumentTagsHandler.ServeHTTP(w, r)
+		case PreviewServiceListGlobalInstructionsProcedure:
+			previewServiceListGlobalInstructionsHandler.ServeHTTP(w, r)
+		case PreviewServiceCreateGlobalInstructionProcedure:
+			previewServiceCreateGlobalInstructionHandler.ServeHTTP(w, r)
+		case PreviewServiceUpdateGlobalInstructionProcedure:
+			previewServiceUpdateGlobalInstructionHandler.ServeHTTP(w, r)
+		case PreviewServiceDeleteGlobalInstructionProcedure:
+			previewServiceDeleteGlobalInstructionHandler.ServeHTTP(w, r)
 		case PreviewServiceListInstructionsProcedure:
 			previewServiceListInstructionsHandler.ServeHTTP(w, r)
 		case PreviewServiceCreateInstructionProcedure:
@@ -944,6 +1044,22 @@ func (UnimplementedPreviewServiceHandler) DeleteTag(context.Context, *connect.Re
 
 func (UnimplementedPreviewServiceHandler) ReplaceDocumentTags(context.Context, *connect.Request[v1.ReplaceDocumentTagsRequest]) (*connect.Response[v1.ReplaceDocumentTagsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.ReplaceDocumentTags is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) ListGlobalInstructions(context.Context, *connect.Request[v1.ListGlobalInstructionsRequest]) (*connect.Response[v1.ListGlobalInstructionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.ListGlobalInstructions is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) CreateGlobalInstruction(context.Context, *connect.Request[v1.CreateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.CreateGlobalInstruction is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) UpdateGlobalInstruction(context.Context, *connect.Request[v1.UpdateGlobalInstructionRequest]) (*connect.Response[v1.Instruction], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.UpdateGlobalInstruction is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) DeleteGlobalInstruction(context.Context, *connect.Request[v1.DeleteGlobalInstructionRequest]) (*connect.Response[v1.DeleteGlobalInstructionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.DeleteGlobalInstruction is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) ListInstructions(context.Context, *connect.Request[v1.ListInstructionsRequest]) (*connect.Response[v1.ListInstructionsResponse], error) {

@@ -26,9 +26,8 @@ describe("AppearanceSettings", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Theme"), {
-      target: { value: "dark" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: "Theme" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Dark" }));
     fireEvent.click(screen.getByRole("button", { name: "Increase text size" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Wrap code blocks" }));
 

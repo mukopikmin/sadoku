@@ -151,6 +151,27 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			err = u.Fail("not_found", fmt.Sprintf("Tag %d not found.", in.ID))
 		}
 		return struct{}{}, err
+	case "ListGlobalInstructions":
+		notes, err := r.GlobalInstructions()
+		return map[string]any{"instructions": notes}, err
+	case "CreateGlobalInstruction", "UpdateGlobalInstruction", "DeleteGlobalInstruction":
+		noteID := int64(in.InstructionID)
+		if operation != "CreateGlobalInstruction" {
+			if err := u.PositiveID(noteID); err != nil {
+				return nil, noteFailure("instruction", u.Fail("not_found", "Note not found."))
+			}
+		}
+		if operation == "DeleteGlobalInstruction" {
+			return struct{}{}, noteFailure("instruction", r.DeleteGlobalInstruction(noteID))
+		}
+		if u.TrimSpace(in.Content) == "" {
+			return nil, noteFailure("instruction", u.Fail("invalid_argument", "Content must not be empty."))
+		}
+		if operation == "CreateGlobalInstruction" {
+			noteID = 0
+		}
+		note, err := r.SaveGlobalInstruction(u.Note{ID: noteID, Content: in.Content})
+		return note, noteFailure("instruction", err)
 	case "CreateDocument":
 		return s.createDocument(in)
 	}

@@ -213,6 +213,10 @@ func TestResponseCachePolicy(t *testing.T) {
 func TestResponsePoliciesStayIsolatedAcrossConcurrentTags(t *testing.T) {
 	proxy := newProxy(t, roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		prefix := r.Header.Get("X-Forwarded-Prefix")
+		tag := strings.TrimPrefix(prefix, "/revisions/")
+		if r.Host != tag+"---sadoku-opaque-id.a.run.app" {
+			t.Error("revision and prefix do not match")
+		}
 		res := response(302, prefix)
 		res.Header.Set("Location", "/documents")
 		res.Header.Set("Cache-Control", "public, max-age=3600")

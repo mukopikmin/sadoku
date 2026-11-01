@@ -77,6 +77,9 @@ plain text
       ),
     ).toEqual([true, true]);
     expect(container.querySelector("code.language-plaintext")).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Zoom Mermaid diagram" }),
+    ).toBeNull();
   });
 
   it("highlights Kotlin code fences", async () => {
@@ -258,17 +261,6 @@ graph LR
       "graph LR\n  C --> D",
     ]);
     expect(initializeMermaid).toHaveBeenLastCalledWith({ theme: "default" });
-  });
-
-  it("does not render Mermaid zoom buttons for regular code fences", () => {
-    renderMarkdown(`\`\`\`ts
-const value = 1;
-\`\`\`
-`);
-
-    expect(
-      screen.queryByRole("button", { name: "Zoom Mermaid diagram" }),
-    ).toBeNull();
   });
 
   it("renders longer code fences without treating nested shorter fences as blocks", async () => {

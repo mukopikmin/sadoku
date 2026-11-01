@@ -1,16 +1,34 @@
 # Cloud Run previews
 
+Application CI (`Test`) runs on pull requests and pushes to `main`, except when
+all changes are under `proxy/` or in the proxy CI/deployment workflows. The
+`Proxy Test` workflow runs only for changes under `proxy/` or to its own
+workflow. Nightly application releases follow successful `Test` runs, so
+proxy-only changes do not publish application releases. Stable tag releases
+remain explicit.
+
+Preview builds use `dorny/paths-filter` with the same application/proxy
+boundary, checking the full pull request diff or the commits in a push to
+`main`. Proxy-only changes skip image builds and deployment. Closing a pull
+request still runs tag cleanup, even if application changes were reverted before
+closing it. The change check runs without cloud credentials and only needs read
+access to pull request files.
+
+Proxy deployment runs on pushes to `main` that change `proxy/` or
+`.github/workflows/cloud_run_proxy.yml`. It can also be started manually on
+`main` with `workflow_dispatch`.
+
 Pull requests authored by `dependabot[bot]` skip all preview jobs, including
 image builds, deployments, and tag cleanup, even when a person reruns the
 workflow.
 
 The `cloud_run_preview.yml` workflow deploys same-repository pull requests with
-a `pr-<number>` revision tag and every push to `main`, including merged pull
-requests, with a stable `main` revision tag. Main deployments build the pushed
-commit, including the merge result. Closing a pull request removes only its PR
-tag; the `main` tag remains available. Runs for each PR and `main` queue in
-separate concurrency groups without canceling an in-progress run, so a new
-commit or PR closure cannot interrupt a Cloud Run update. Image builds for
+a `pr-<number>` revision tag and application changes pushed to `main`, including
+merged pull requests, with a stable `main` revision tag. Main deployments build
+the pushed commit, including the merge result. Closing a pull request removes
+only its PR tag; the `main` tag remains available. Runs for each PR and `main`
+queue in separate concurrency groups without canceling an in-progress run, so a
+new commit or PR closure cannot interrupt a Cloud Run update. Image builds for
 different PRs and `main` can run in parallel.
 
 Deployment and tag cleanup share the `cloud-run-preview-service` job concurrency

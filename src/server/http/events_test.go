@@ -47,8 +47,18 @@ func eventStream(t *testing.T, serverURL, path string) (<-chan streamEvent, func
 	go func() {
 		defer close(done)
 		scanner := bufio.NewScanner(response.Body)
+		name := ""
 		for scanner.Scan() {
-			data, ok := strings.CutPrefix(scanner.Text(), "data: ")
+			line := scanner.Text()
+			if line == "" {
+				name = ""
+				continue
+			}
+			if value, ok := strings.CutPrefix(line, "event: "); ok {
+				name = value
+				continue
+			}
+			data, ok := strings.CutPrefix(line, "data: ")
 			if !ok {
 				continue
 			}
@@ -56,6 +66,9 @@ func eventStream(t *testing.T, serverURL, path string) (<-chan streamEvent, func
 				Resources []string `json:"resources"`
 			}
 			err := json.Unmarshal([]byte(data), &event)
+			if err == nil && name != "invalidate" {
+				err = fmt.Errorf("unexpected SSE event %q; want invalidate", name)
+			}
 			select {
 			case events <- streamEvent{event.Resources, err}:
 			case <-ctx.Done():

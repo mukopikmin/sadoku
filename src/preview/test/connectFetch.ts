@@ -77,12 +77,28 @@ const route = (
       return [
         `/__sadoku/documents/${documentId}/tags`,
         json("PUT", {
-          tags: (body.tags as Array<Record<string, unknown>>).map((tag) =>
-            tag.id === undefined ? tag : { id: Number(tag.id) }
-          ),
+          tags: ((body.tags ?? []) as Array<Record<string, unknown>>).map((
+            tag,
+          ) => tag.id === undefined ? tag : { id: Number(tag.id) }),
         }),
         (tags) => ({ tags }),
       ];
+    case "ListGlobalInstructions":
+      return ["/__sadoku/global-instructions", undefined];
+    case "CreateGlobalInstruction":
+      return [
+        "/__sadoku/global-instructions",
+        json("POST", { content: body.content }),
+      ];
+    case "UpdateGlobalInstruction":
+      return [
+        `/__sadoku/global-instructions/${instructionId}`,
+        json("PUT", { content: body.content }),
+      ];
+    case "DeleteGlobalInstruction":
+      return [`/__sadoku/global-instructions/${instructionId}`, {
+        method: "DELETE",
+      }];
     case "ListInstructions":
       return [`/__sadoku/documents/${documentId}/instructions`, undefined];
     case "CreateInstruction":

@@ -5,8 +5,8 @@ import type { SettingsDialogProps } from "./SettingsDialog";
 import { DocumentInstructionsDialog } from "./DocumentInstructionsDialog";
 import { DocumentMemoriesDialog } from "./DocumentMemoriesDialog";
 import { DocumentTagsDialog } from "./DocumentTagsDialog";
+import { GlobalInstructionsDialog } from "./GlobalInstructionsDialog";
 import { SettingsDialog } from "./SettingsDialog";
-import { StatisticsDialog } from "./StatisticsDialog";
 import { TagsDialog } from "./TagsDialog";
 
 type Disclosure = { open: boolean; setOpen: (open: boolean) => void };
@@ -16,13 +16,14 @@ type PreviewDialogHostProps = {
   documentInstructions: Disclosure;
   documentMemories: Disclosure;
   documentTagsDialog: Disclosure;
+  globalInstructions: Disclosure;
+  globalInstructionsTriggerRef: RefObject<HTMLButtonElement | null>;
   settings: ResolvedPreviewSettings;
   settingsActions: Omit<
     SettingsDialogProps,
     "open" | "onOpenChange" | "settings"
   >;
   settingsDialog: Disclosure;
-  statisticsDialog: Disclosure;
   tagsDialog: Disclosure;
   tagsTriggerRef: RefObject<HTMLButtonElement | null>;
 };
@@ -33,17 +34,19 @@ export const PreviewDialogHost = ({
   documentInstructions,
   documentMemories,
   documentTagsDialog,
+  globalInstructions,
+  globalInstructionsTriggerRef,
   settings,
   settingsActions,
   settingsDialog,
-  statisticsDialog,
   tagsDialog,
   tagsTriggerRef,
 }: PreviewDialogHostProps) => (
   <>
-    <StatisticsDialog
-      onOpenChange={statisticsDialog.setOpen}
-      open={statisticsDialog.open}
+    <GlobalInstructionsDialog
+      finalFocusRef={globalInstructionsTriggerRef}
+      onOpenChange={globalInstructions.setOpen}
+      open={globalInstructions.open}
     />
     <TagsDialog
       finalFocusRef={tagsTriggerRef}
@@ -54,6 +57,10 @@ export const PreviewDialogHost = ({
       <>
         <DocumentInstructionsDialog
           documentId={documentId}
+          onOpenGlobalInstructions={() => {
+            documentInstructions.setOpen(false);
+            globalInstructions.setOpen(true);
+          }}
           onOpenChange={documentInstructions.setOpen}
           open={documentInstructions.open}
         />

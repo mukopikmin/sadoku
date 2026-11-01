@@ -3,14 +3,15 @@ import type { ReactNode } from "react";
 
 export const RevisionHighlight = ({ children, kind }: {
   children?: ReactNode;
-  kind: "addition" | "deletion";
+  kind?: "addition" | "deletion";
 }) => (
   <Box
-    as={kind === "addition" ? "ins" : "del"}
+    as={kind === undefined ? "div" : kind === "addition" ? "ins" : "del"}
+    data-revision-block=""
     data-revision-kind={kind}
     display="block"
     textDecoration="none"
-    title={kind === "addition"
+    title={kind === undefined ? undefined : kind === "addition"
       ? "Added or changed since previous revision"
       : "Removed or changed in current revision"}
   >

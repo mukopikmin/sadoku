@@ -202,17 +202,7 @@ console.log("<ok>");
     expect(code.textContent).toContain('console.log("<ok>")');
   });
 
-  it("escapes raw html", () => {
-    const { container } = renderMarkdown("<script>alert(1)</script>");
-
-    expect(container.querySelector("script")).toBeNull();
-    expect(container.querySelector(".commentable-content")?.textContent).toBe(
-      "<script>alert(1)</script>",
-    );
-    expect(container.querySelector('[data-source-line="1"]')).not.toBeNull();
-  });
-
-  it("keeps unsupported syntax samples selectable", () => {
+  it("escapes raw HTML and keeps unsupported syntax samples selectable", () => {
     const { container } = renderMarkdown(`Raw HTML:
 
 <script>alert("nope")</script>
@@ -222,7 +212,11 @@ Footnote-looking text stays plain.[^note]
 [^note]: Footnote definitions are not enabled.
 `);
 
-    expect(container.textContent).toContain('<script>alert("nope")</script>');
+    expect(container.querySelector("script")).toBeNull();
+    expect(
+      container.querySelector('[data-source-line="3"] .commentable-content')
+        ?.textContent,
+    ).toBe('<script>alert("nope")</script>');
     expect(container.querySelector('[data-source-line="3"]')).not.toBeNull();
     expect(container.querySelector('[data-source-line="5"]')).not.toBeNull();
     expect(container.querySelector('[data-source-line="7"]')).not.toBeNull();

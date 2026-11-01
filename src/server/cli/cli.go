@@ -26,10 +26,10 @@ const Usage = `Usage:
   sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
-  sadoku instruction list (--document <id> | --source <file.md|url>)
-  sadoku instruction add (--document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction update <instruction-id> (--document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction delete <instruction-id> (--document <id> | --source <file.md|url>)
+  sadoku instruction list (--global | --document <id> | --source <file.md|url>)
+  sadoku instruction add (--global | --document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction update <instruction-id> (--global | --document <id> | --source <file.md|url>) --content <text>
+  sadoku instruction delete <instruction-id> (--global | --document <id> | --source <file.md|url>)
   sadoku memory list (--document <id> | --source <file.md|url>)
   sadoku memory add (--document <id> | --source <file.md|url>) --content <text>
   sadoku memory update <memory-id> (--document <id> | --source <file.md|url>) --content <text>
@@ -49,6 +49,7 @@ Options:
   --create          Create a new local Markdown file and register it (document add only).
   --title           Display title (document add only).
   --name            Tag name (tag add only).
+  --global          Apply to all documents in this database (instruction commands only).
   --document        Existing document ID.
   --source          Existing Markdown file or URL.
   --ensure-document Register --source when it is not in the database (comment add only).
@@ -77,7 +78,7 @@ type Options struct {
 	Flags  map[string]bool
 }
 
-var booleanOptions = map[string]bool{"help": true, "version": true, "no-open": true, "keep-alive": true, "create": true, "as-bot": true, "ensure-document": true, "request-review": true, "trust-forwarded-prefix": true}
+var booleanOptions = map[string]bool{"global": true, "help": true, "version": true, "no-open": true, "keep-alive": true, "create": true, "as-bot": true, "ensure-document": true, "request-review": true, "trust-forwarded-prefix": true}
 var valueOptions = map[string]bool{"port": true, "host": true, "max-depth": true, "max-files": true, "source": true, "document": true, "title": true, "name": true, "body": true, "content": true, "comment": true, "start-line": true, "end-line": true, "channel": true}
 
 func Parse(args []string) (Options, error) {
@@ -380,6 +381,9 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	}
 	if command != "comment" && command != "instruction" && command != "memory" && !(command == "document" && operation == "tag") {
 		return fmt.Errorf("invalid command: %s", command)
+	}
+	if command == "instruction" && o.Flags["global"] {
+		return executeGlobalInstructions(ctx, &session.Session{Repository: repo}, o, out)
 	}
 	source, hasSource := o.Values["source"]
 	document, hasDocument := o.Values["document"]

@@ -20,6 +20,10 @@ service PreviewService {
   rpc UpdateTag(UpdateTagRequest) returns (Tag);
   rpc DeleteTag(DeleteTagRequest) returns (DeleteTagResponse);
   rpc ReplaceDocumentTags(ReplaceDocumentTagsRequest) returns (ReplaceDocumentTagsResponse);
+  rpc ListGlobalInstructions(ListGlobalInstructionsRequest) returns (ListGlobalInstructionsResponse);
+  rpc CreateGlobalInstruction(CreateGlobalInstructionRequest) returns (Instruction);
+  rpc UpdateGlobalInstruction(UpdateGlobalInstructionRequest) returns (Instruction);
+  rpc DeleteGlobalInstruction(DeleteGlobalInstructionRequest) returns (DeleteGlobalInstructionResponse);
   rpc ListInstructions(ListInstructionsRequest) returns (ListInstructionsResponse);
   rpc CreateInstruction(CreateInstructionRequest) returns (Instruction);
   rpc UpdateInstruction(UpdateInstructionRequest) returns (Instruction);
@@ -189,6 +193,13 @@ message Instruction {
   string created_at = 3;
   string updated_at = 4;
 }
+message ListGlobalInstructionsRequest {}
+message ListGlobalInstructionsResponse { repeated Instruction instructions = 1; }
+message CreateGlobalInstructionRequest { string content = 1; }
+message UpdateGlobalInstructionRequest { uint64 instruction_id = 1; string content = 2; }
+message DeleteGlobalInstructionRequest { uint64 instruction_id = 1; }
+message DeleteGlobalInstructionResponse {}
+
 message ListInstructionsRequest { uint64 document_id = 1; }
 message ListInstructionsResponse { repeated Instruction instructions = 1; }
 message CreateInstructionRequest { uint64 document_id = 1; string content = 2; }

@@ -71,6 +71,12 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 	}
 	methods := pb.File_sadoku_preview_v1_preview_proto.Services().ByName("PreviewService").Methods()
 	for i := 0; i < methods.Len(); i++ {
+		// Added after the legacy capture; JSON and binary behavior is covered by
+		// TestGlobalInstructionsConnect rather than fabricated legacy responses.
+		switch string(methods.Get(i).Name()) {
+		case "ListGlobalInstructions", "CreateGlobalInstruction", "UpdateGlobalInstruction", "DeleteGlobalInstruction":
+			continue
+		}
 		if !covered[string(methods.Get(i).Name())] {
 			t.Errorf("missing legacy RPC transcript: %s", methods.Get(i).Name())
 		}
@@ -220,8 +226,8 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 						}
 						createdAt = comment.CreatedAt
 					}
-					if response.Code != expected.Status || strings.ToLower(response.Header().Get("Content-Type")) != expected.ContentType || (response.Header().Get("Cache-Control") != expected.CacheControl && !(expected.CacheControl == "" && response.Header().Get("Cache-Control") == "no-store")) {
-						t.Errorf("metadata: got %d %q %q; want %d %q %q", response.Code, response.Header().Get("Content-Type"), response.Header().Get("Cache-Control"), expected.Status, expected.ContentType, expected.CacheControl)
+					if response.Code != expected.Status || strings.ToLower(response.Header().Get("Content-Type")) != expected.ContentType || response.Header().Get("Cache-Control") != "no-store" {
+						t.Errorf("metadata: got %d %q %q; want %d %q %q", response.Code, response.Header().Get("Content-Type"), response.Header().Get("Cache-Control"), expected.Status, expected.ContentType, "no-store")
 					}
 					if expected.JSON != nil {
 						var got, want any

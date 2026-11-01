@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"connectrpc.com/connect"
 	pb "github.com/mukopikmin/sadoku/gen/go/sadoku/preview/v1"
@@ -177,8 +176,8 @@ func TestConnectWorkflow(t *testing.T) {
 		})
 	}
 }
-func TestHTTPAssetsValidationAndSSE(t *testing.T) {
-	_, server, file := setup(t)
+func TestHTTPAssetsAndValidation(t *testing.T) {
+	_, server, _ := setup(t)
 	request := func(method, path, body string) *http.Response {
 		t.Helper()
 		req, _ := http.NewRequest(method, server.URL+path, strings.NewReader(body))
@@ -222,22 +221,5 @@ func TestHTTPAssetsValidationAndSSE(t *testing.T) {
 	res = request("POST", "/sadoku.preview.v1.PreviewService/CreateComment", `{"documentId":"1","startLine":0,"endLine":0,"body":"bad"}`)
 	if res.StatusCode != 400 {
 		t.Fatalf("invalid range %d", res.StatusCode)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-	defer cancel()
-	req, _ = http.NewRequestWithContext(ctx, "GET", server.URL+"/__sadoku/documents/1/events", nil)
-	res, err = server.Client().Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer res.Body.Close()
-	time.Sleep(500 * time.Millisecond)
-	if err = os.WriteFile(file, []byte("updated\n"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	buffer := make([]byte, 1024)
-	n, err := res.Body.Read(buffer)
-	if err != nil || !bytes.Contains(buffer[:n], []byte("event: invalidate")) {
-		t.Fatalf("SSE %s %v", buffer[:n], err)
 	}
 }

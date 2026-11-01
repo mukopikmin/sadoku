@@ -1,5 +1,6 @@
 import { Box, CodeBlock as ChakraCodeBlock, Text } from "@chakra-ui/react";
 import { MessageSquareText } from "lucide-react";
+import { MarkdownCodeBlock } from "../MarkdownCodeBlock";
 import type React from "react";
 import type {
   MarkdownComponentProps,
@@ -11,7 +12,7 @@ export const renderMarkdownHtmlComment = (
   children: React.ReactNode,
 ) => (
   <Box py="2">
-    <ChakraCodeBlock.Root
+    <MarkdownCodeBlock
       bg="canvas.subtle"
       borderColor="border.muted"
       borderRadius="sm"
@@ -20,9 +21,6 @@ export const renderMarkdownHtmlComment = (
       borderLeftStyle="solid"
       borderLeftWidth="4px"
       code={typeof children === "string" ? children : ""}
-      defaultColorScheme={document.documentElement.dataset.theme === "dark"
-        ? "dark"
-        : "light"}
       language="plaintext"
       m="0"
       overflow="hidden"
@@ -50,7 +48,7 @@ export const renderMarkdownHtmlComment = (
           {children}
         </Text>
       </ChakraCodeBlock.Content>
-    </ChakraCodeBlock.Root>
+    </MarkdownCodeBlock>
   </Box>
 );
 

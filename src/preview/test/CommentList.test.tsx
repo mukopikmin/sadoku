@@ -18,6 +18,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const getBulkButton = (name: string) =>
+  within(screen.getByRole("group", { name: "Bulk comment actions" }))
+    .getByRole("button", { name });
+
 describe("CommentList", () => {
   it("locks controls during bulk actions and keeps failed comments selected", async () => {
     let reject!: (error: Error) => void;
@@ -32,11 +36,16 @@ describe("CommentList", () => {
         comments={[createComment(), createComment({ id: 2 })]}
       />,
     );
+    for (const action of ["Resolve", "Delete"]) {
+      const button = getBulkButton(action);
+      expect(button).toHaveTextContent(new RegExp(`^${action}$`));
+      expect(button.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    }
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent("2 selected")
     );
-    fireEvent.click(screen.getByRole("button", { name: "Resolve selected" }));
+    fireEvent.click(getBulkButton("Resolve"));
     for (const checkbox of screen.getAllByRole("checkbox")) {
       expect(checkbox).toBeDisabled();
     }
@@ -52,8 +61,7 @@ describe("CommentList", () => {
       .toBeChecked();
     expect(screen.getByRole("checkbox", { name: /Select comment 2:/ })).not
       .toBeChecked();
-    expect(screen.getByRole("button", { name: "Resolve selected" }))
-      .toBeEnabled();
+    expect(getBulkButton("Resolve")).toBeEnabled();
   });
 
   it("selects comments within the current tab and reopens selected comments", async () => {
@@ -68,8 +76,7 @@ describe("CommentList", () => {
         ]}
       />,
     );
-    expect(screen.getByRole("button", { name: "Resolve selected" }))
-      .toBeDisabled();
+    expect(getBulkButton("Resolve")).toBeDisabled();
     fireEvent.click(
       screen.getByRole("checkbox", { name: /Select comment 1:/ }),
     );
@@ -87,10 +94,9 @@ describe("CommentList", () => {
     expect(screen.getByRole("status")).toHaveTextContent("0 selected");
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Reopen selected" }))
-        .toBeEnabled()
+      expect(getBulkButton("Reopen")).toBeEnabled()
     );
-    fireEvent.click(screen.getByRole("button", { name: "Reopen selected" }));
+    fireEvent.click(getBulkButton("Reopen"));
     await waitFor(() => expect(onReopenComment.mock.calls).toEqual([[3]]));
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent("0 selected")
@@ -109,7 +115,7 @@ describe("CommentList", () => {
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent("2 selected")
     );
-    fireEvent.click(screen.getByRole("button", { name: "Delete selected" }));
+    fireEvent.click(getBulkButton("Delete"));
     const dialog = await screen.findByRole("alertdialog", {
       name: "Delete selected comments?",
     });
@@ -122,7 +128,7 @@ describe("CommentList", () => {
     expect(onDeleteComment).not.toHaveBeenCalled();
     expect(screen.getByRole("status")).toHaveTextContent("2 selected");
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete selected" }));
+    fireEvent.click(getBulkButton("Delete"));
     fireEvent.click(
       within(await screen.findByRole("alertdialog")).getByRole("button", {
         name: "Delete",
@@ -156,10 +162,9 @@ describe("CommentList", () => {
       await screen.findByRole("checkbox", { name: "Select all" }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Resolve selected" }))
-        .toBeEnabled()
+      expect(getBulkButton("Resolve")).toBeEnabled()
     );
-    fireEvent.click(screen.getByRole("button", { name: "Resolve selected" }));
+    fireEvent.click(getBulkButton("Resolve"));
     expect(await screen.findByText("No unresolved comments."))
       .toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));

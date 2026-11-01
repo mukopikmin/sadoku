@@ -4,7 +4,7 @@ import { submitCommentOnShortcut } from "./commentShortcuts";
 
 export const CommentActionButton = (
   props: ComponentProps<typeof Button>,
-) => <Button size="xs" variant="outline" {...props} />;
+) => <Button size="sm" variant="outline" {...props} />;
 
 type CommentFormProps = {
   cancelAriaLabel?: string;

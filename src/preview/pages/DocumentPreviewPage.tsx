@@ -1,6 +1,6 @@
 import { DocumentTitle } from "../components/DocumentTitle";
 import { Alert, Box, Container, Flex } from "@chakra-ui/react";
-import { useState } from "react";
+import { type RefObject, useState } from "react";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
 import { TableOfContents } from "./markdown/TableOfContents";
@@ -14,6 +14,7 @@ import type { PreviewView } from "../models/previewView";
 type Props = {
   document: PreviewDocument;
   documentId: number;
+  documentHeaderRef?: RefObject<HTMLDivElement | null>;
   documents?: DocumentSummary[] | null;
   instructionCount: number;
   memoryCount: number;
@@ -33,6 +34,7 @@ export const DocumentPreviewPage = (
   {
     document,
     documentId,
+    documentHeaderRef,
     documents,
     instructionCount,
     memoryCount,
@@ -54,7 +56,7 @@ export const DocumentPreviewPage = (
   const documentPath = selectedDocument?.relativePath ?? document.fileUrl ??
     document.title;
   return (
-    <Container as="main" maxW="980px" px="8" pt="0" pb="16">
+    <Container as="main" maxW="980px" px="8" pt="0" pb="8">
       {documents && selectedDocument && (
         <DocumentBreadcrumb
           document={selectedDocument}
@@ -64,31 +66,23 @@ export const DocumentPreviewPage = (
         />
       )}
       {view === "preview" && (
-        <Flex as="section" aria-label="Document header" align="start" gap="3">
+        <Flex
+          as="section"
+          aria-label="Document header"
+          ref={documentHeaderRef}
+          align="start"
+          gap="3"
+        >
           <Box flex="1" minW="0">
             <DocumentTitle
               key={documentId}
               documentId={documentId}
               title={document.displayTitle}
+              trailingAction={<TableOfContents markdown={document.markdown} />}
             />
           </Box>
-          <TableOfContents markdown={document.markdown} />
         </Flex>
       )}
-      <DocumentActionBar
-        instructionCount={instructionCount}
-        memoryCount={memoryCount}
-        onChangeView={onChangeView}
-        onOpenInstructions={onOpenInstructions}
-        onOpenMemories={onOpenMemories}
-        onOpenRevisions={() => setRevisionsOpen(true)}
-        tagCount={document.tags.length}
-        onOpenTags={onOpenTags}
-        tags={document.tags}
-        staleCommentCount={staleCommentCount}
-        unresolvedCommentCount={unresolvedCommentCount}
-        view={view}
-      />
       <DocumentRevisionsDialog
         canRestore={document.canRestore}
         deleted={document.deleted}
@@ -130,6 +124,20 @@ export const DocumentPreviewPage = (
             documentDeleted={document.deleted}
           />
         )}
+      <DocumentActionBar
+        instructionCount={instructionCount}
+        memoryCount={memoryCount}
+        onChangeView={onChangeView}
+        onOpenInstructions={onOpenInstructions}
+        onOpenMemories={onOpenMemories}
+        onOpenRevisions={() => setRevisionsOpen(true)}
+        tagCount={document.tags.length}
+        onOpenTags={onOpenTags}
+        tags={document.tags}
+        staleCommentCount={staleCommentCount}
+        unresolvedCommentCount={unresolvedCommentCount}
+        view={view}
+      />
     </Container>
   );
 };

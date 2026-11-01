@@ -17,6 +17,7 @@ import {
 import { useCommentableBlockLayout } from "../../markdown/commentable/useCommentableBlockLayout";
 import { useCommentSelection } from "../../markdown/commentable/useCommentSelection";
 import { initializeMermaid } from "../../markdown/mermaid";
+import { HighlightOverlay } from "../../markdown/HighlightOverlay";
 import { useHeadingHashNavigation } from "../../markdown/useHeadingHashNavigation";
 import type { ActiveComment } from "../../models/comment";
 import { extractAgentFrontMatter } from "./frontMatter";
@@ -120,18 +121,7 @@ export const MarkdownPreview = ({
         range={rawMarkdownRange}
       />
       <Box className="markdown-preview" ref={previewRef}>
-        <Box aria-hidden="true" className="markdown-range-highlights">
-          {rangeHighlightLayouts.map((layout) => (
-            <Box
-              className={`markdown-range-highlight markdown-range-highlight-${layout.kind}`}
-              data-end-line={layout.endLine}
-              data-start-line={layout.startLine}
-              height={`${Math.max(0, layout.bottom - layout.top - 2)}px`}
-              key={`${layout.kind}-${layout.startLine}-${layout.endLine}`}
-              top={`${layout.top + 1}px`}
-            />
-          ))}
-        </Box>
+        <HighlightOverlay layouts={rangeHighlightLayouts} />
         {frontMatter && (
           <DataList.Root
             orientation={{ base: "vertical", md: "horizontal" }}

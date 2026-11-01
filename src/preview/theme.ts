@@ -19,21 +19,21 @@ export const sadokuChakraSystem = createSystem(
     theme: {
       tokens: {
         fontSizes: {
-          "2xs": { value: "calc(0.55rem * var(--sadoku-font-scale, 1))" },
-          xs: { value: "calc(0.7rem * var(--sadoku-font-scale, 1))" },
-          sm: { value: "calc(0.8rem * var(--sadoku-font-scale, 1))" },
-          comment: { value: "calc(0.9rem * var(--sadoku-font-scale, 1))" },
+          "2xs": { value: "calc(0.625rem * var(--sadoku-font-scale, 1))" },
+          xs: { value: "calc(0.75rem * var(--sadoku-font-scale, 1))" },
+          sm: { value: "calc(0.875rem * var(--sadoku-font-scale, 1))" },
+          comment: { value: "{fontSizes.sm}" },
           md: { value: "calc(1rem * var(--sadoku-font-scale, 1))" },
-          lg: { value: "calc(1rem * var(--sadoku-font-scale, 1))" },
-          xl: { value: "calc(1.1rem * var(--sadoku-font-scale, 1))" },
-          "2xl": { value: "calc(1.35rem * var(--sadoku-font-scale, 1))" },
-          "3xl": { value: "calc(1.65rem * var(--sadoku-font-scale, 1))" },
-          "4xl": { value: "calc(2rem * var(--sadoku-font-scale, 1))" },
-          "5xl": { value: "calc(2.7rem * var(--sadoku-font-scale, 1))" },
-          "6xl": { value: "calc(3.4rem * var(--sadoku-font-scale, 1))" },
-          "7xl": { value: "calc(4rem * var(--sadoku-font-scale, 1))" },
-          "8xl": { value: "calc(5.4rem * var(--sadoku-font-scale, 1))" },
-          "9xl": { value: "calc(7.2rem * var(--sadoku-font-scale, 1))" },
+          lg: { value: "calc(1.125rem * var(--sadoku-font-scale, 1))" },
+          xl: { value: "calc(1.25rem * var(--sadoku-font-scale, 1))" },
+          "2xl": { value: "calc(1.5rem * var(--sadoku-font-scale, 1))" },
+          "3xl": { value: "calc(1.875rem * var(--sadoku-font-scale, 1))" },
+          "4xl": { value: "calc(2.25rem * var(--sadoku-font-scale, 1))" },
+          "5xl": { value: "calc(3rem * var(--sadoku-font-scale, 1))" },
+          "6xl": { value: "calc(3.75rem * var(--sadoku-font-scale, 1))" },
+          "7xl": { value: "calc(4.5rem * var(--sadoku-font-scale, 1))" },
+          "8xl": { value: "calc(6rem * var(--sadoku-font-scale, 1))" },
+          "9xl": { value: "calc(8rem * var(--sadoku-font-scale, 1))" },
         },
         fonts: {
           body: { value: bodyFont },
@@ -81,8 +81,40 @@ export const sadokuChakraSystem = createSystem(
               value: { _dark: "{colors.gray.400}", base: "{colors.gray.600}" },
             },
           },
+          highlight: {
+            addition: {
+              bg: {
+                value: {
+                  _dark:
+                    "color-mix(in srgb, {colors.green.400} 24%, {colors.canvas})",
+                  base: "{colors.green.100}",
+                },
+              },
+            },
+            deletion: {
+              bg: {
+                value: {
+                  _dark:
+                    "color-mix(in srgb, {colors.red.400} 24%, {colors.canvas})",
+                  base: "{colors.red.100}",
+                },
+              },
+            },
+            comment: {
+              bg: {
+                value:
+                  "color-mix(in srgb, {colors.selection.comment} 18%, {colors.canvas})",
+              },
+            },
+            selection: {
+              bg: {
+                value:
+                  "color-mix(in srgb, {colors.accent} 18%, {colors.canvas})",
+              },
+            },
+          },
           link: {
-            value: { _dark: "{colors.blue.400}", base: "{colors.blue.600}" },
+            value: "{colors.accent}",
           },
           overlay: {
             backdrop: { value: "{colors.blackAlpha.600}" },

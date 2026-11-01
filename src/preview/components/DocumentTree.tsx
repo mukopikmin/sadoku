@@ -1,4 +1,4 @@
-import { Button, Text, VStack } from "@chakra-ui/react";
+import { Text, VStack } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
 import {
@@ -41,6 +41,10 @@ export const DocumentTree = (
         <DocumentTagFilter
           documentCount={documents.length}
           filteredDocumentCount={filteredDocuments.length}
+          onClearFilters={() => {
+            setSelectedTagIds([]);
+            setTagSearch("");
+          }}
           onSearchChange={setTagSearch}
           onSelectedTagIdsChange={setSelectedTagIds}
           searchValue={tagSearch}
@@ -58,16 +62,6 @@ export const DocumentTree = (
             p="6"
           >
             <Text color="fg.muted">No documents match the selected tags.</Text>
-            <Button
-              onClick={() => {
-                setSelectedTagIds([]);
-                setTagSearch("");
-              }}
-              size="sm"
-              variant="outline"
-            >
-              Clear filters
-            </Button>
           </VStack>
         )
         : (
