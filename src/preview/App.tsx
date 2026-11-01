@@ -75,7 +75,7 @@ export const App = () => {
   );
   const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
     selectedDocumentId,
-    view === "preview" && Boolean(documentQuery.data && commentsQuery.data),
+    Boolean(documentQuery.data && commentsQuery.data),
   );
   const settingsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();

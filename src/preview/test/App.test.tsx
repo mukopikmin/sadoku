@@ -404,14 +404,20 @@ describe("App", () => {
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
-    await header.findByRole("button", { name: "Table of contents" });
+    const collapsedToc = await header.findByRole("button", {
+      name: "Table of contents",
+    });
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Table of contents" }))
-        .toBeNull()
+      expect(screen.getByRole("tab", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-selected")).toBe("true")
     );
+    expect(header.getByRole("button", { name: "Table of contents" })).toBe(
+      collapsedToc,
+    );
+    expect(header.getByText("Reading guide")).not.toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "guide.md" });
     expect(screen.queryByRole("button", { name: "Table of contents" }))
@@ -854,13 +860,24 @@ describe("App", () => {
       expect(screen.getByRole("main").lastElementChild).toBe(
         screen.getByTestId("action-bar-spacer"),
       );
-      expect(screen.queryByRole("button", { name: "Table of contents" }))
-        .toBeNull();
+      expect(screen.getByRole("region", { name: "Document header" })).toBe(
+        documentHeader,
+      );
+      expect(screen.getByRole("group", { name: "Document title actions" })).toBe(
+        titleActions,
+      );
+      expect(screen.getByRole("button", { name: "Table of contents" })).toBe(
+        tableOfContentsButton,
+      );
     });
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
-    expect(await screen.findByRole("button", { name: "Table of contents" }))
-      .not.toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Preview" })
+        .getAttribute("aria-selected")).toBe("true")
+    );
+    expect(screen.getByRole("button", { name: "Table of contents" }))
+      .toBe(tableOfContentsButton);
 
     fireEvent.click(
       await screen.findByRole("button", {

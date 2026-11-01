@@ -1,9 +1,8 @@
-import { DocumentTitle } from "../components/DocumentTitle";
-import { Alert, Box, Container, Flex } from "@chakra-ui/react";
+import { DocumentHeader } from "../components/DocumentHeader";
+import { Alert, Container } from "@chakra-ui/react";
 import { type RefObject, useState } from "react";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
-import { TableOfContents } from "./markdown/TableOfContents";
 import { DocumentActionBar } from "../components/DocumentActionBar";
 import { DocumentRevisionsDialog } from "../components/DocumentRevisionsDialog";
 import { DocumentBreadcrumb } from "../components/DocumentBreadcrumb";
@@ -65,24 +64,12 @@ export const DocumentPreviewPage = (
           onSelectDocuments={onSelectDocuments}
         />
       )}
-      {view === "preview" && (
-        <Flex
-          as="section"
-          aria-label="Document header"
-          ref={documentHeaderRef}
-          align="start"
-          gap="3"
-        >
-          <Box flex="1" minW="0">
-            <DocumentTitle
-              key={documentId}
-              documentId={documentId}
-              title={document.displayTitle}
-              trailingAction={<TableOfContents markdown={document.markdown} />}
-            />
-          </Box>
-        </Flex>
-      )}
+      <DocumentHeader
+        documentId={documentId}
+        headerRef={documentHeaderRef}
+        markdown={document.markdown}
+        title={document.displayTitle}
+      />
       <DocumentRevisionsDialog
         canRestore={document.canRestore}
         deleted={document.deleted}
