@@ -4,6 +4,7 @@ import { type RefObject, useState } from "react";
 import { CommentListPage } from "./comments/CommentList";
 import { MarkdownPreviewPage } from "./markdown/MarkdownPreviewPage";
 import { TableOfContents } from "./markdown/TableOfContents";
+import { DocumentViewSwitch } from "../components/DocumentViewSwitch";
 import { DocumentActionBar } from "../components/DocumentActionBar";
 import { DocumentRevisionsDialog } from "../components/DocumentRevisionsDialog";
 import { DocumentBreadcrumb } from "../components/DocumentBreadcrumb";
@@ -65,6 +66,12 @@ export const DocumentPreviewPage = (
           onSelectDocuments={onSelectDocuments}
         />
       )}
+      <DocumentViewSwitch
+        onChangeView={onChangeView}
+        staleCommentCount={staleCommentCount}
+        unresolvedCommentCount={unresolvedCommentCount}
+        view={view}
+      />
       {view === "preview" && (
         <Flex
           as="section"
@@ -124,20 +131,18 @@ export const DocumentPreviewPage = (
             documentDeleted={document.deleted}
           />
         )}
-      <DocumentActionBar
-        instructionCount={instructionCount}
-        memoryCount={memoryCount}
-        onChangeView={onChangeView}
-        onOpenInstructions={onOpenInstructions}
-        onOpenMemories={onOpenMemories}
-        onOpenRevisions={() => setRevisionsOpen(true)}
-        tagCount={document.tags.length}
-        onOpenTags={onOpenTags}
-        tags={document.tags}
-        staleCommentCount={staleCommentCount}
-        unresolvedCommentCount={unresolvedCommentCount}
-        view={view}
-      />
+      {view === "preview" && (
+        <DocumentActionBar
+          instructionCount={instructionCount}
+          memoryCount={memoryCount}
+          onOpenInstructions={onOpenInstructions}
+          onOpenMemories={onOpenMemories}
+          onOpenRevisions={() => setRevisionsOpen(true)}
+          tagCount={document.tags.length}
+          onOpenTags={onOpenTags}
+          tags={document.tags}
+        />
+      )}
     </Container>
   );
 };
