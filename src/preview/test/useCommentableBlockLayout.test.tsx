@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getCommentableLines,
+  measureRangeHighlightLayouts,
   useCommentableBlockLayout,
 } from "../markdown/commentable/useCommentableBlockLayout";
 import type { RangeHighlight } from "../markdown/commentable/commentRanges";
@@ -83,6 +84,28 @@ describe("commentable block layout", () => {
     `;
 
     expect(getCommentableLines(preview)).toEqual([3, 7]);
+  });
+
+  it("outlines current blocks separately in diff mode, excluding removed content", () => {
+    const preview = document.createElement("div");
+    preview.setAttribute("data-document-diff", "");
+    preview.innerHTML = `
+      <div class="commentable-block" data-source-line="1"><div class="commentable-content"></div></div>
+      <div class="document-diff-deletion">Removed content</div>
+      <div class="document-diff-addition">
+        <div class="commentable-block" data-source-line="3"><div class="commentable-content"></div></div>
+      </div>
+    `;
+    preview.getBoundingClientRect = () => mockRect(100, 400);
+    const contents = preview.querySelectorAll<HTMLElement>(".commentable-content");
+    contents[0].getBoundingClientRect = () => mockRect(110, 140);
+    contents[1].getBoundingClientRect = () => mockRect(300, 340);
+    expect(getCommentableLines(preview)).toEqual([1, 3]);
+    expect(measureRangeHighlightLayouts(preview, [{ startLine: 1, endLine: 3, kind: "comment" }]))
+      .toEqual([
+        { startLine: 1, endLine: 3, kind: "comment", top: 10, bottom: 40 },
+        { startLine: 1, endLine: 3, kind: "comment", top: 200, bottom: 240 },
+      ]);
   });
 
   it("measures range highlights again when the preview is resized", async () => {
