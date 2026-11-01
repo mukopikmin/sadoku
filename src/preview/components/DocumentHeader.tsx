@@ -1,17 +1,16 @@
 import { Box, Flex } from "@chakra-ui/react";
-import { memo, type RefObject } from "react";
+import { memo, type ReactNode, type RefObject } from "react";
 import { DocumentTitle } from "./DocumentTitle";
-import { TableOfContents } from "../pages/markdown/TableOfContents";
 
 export const DocumentHeader = memo(function DocumentHeader({
   documentId,
   headerRef,
-  markdown,
+  trailingAction,
   title,
 }: {
   documentId: number;
   headerRef?: RefObject<HTMLDivElement | null>;
-  markdown: string;
+  trailingAction?: ReactNode;
   title?: string;
 }) {
   return (
@@ -27,7 +26,7 @@ export const DocumentHeader = memo(function DocumentHeader({
           key={documentId}
           documentId={documentId}
           title={title}
-          trailingAction={<TableOfContents markdown={markdown} />}
+          trailingAction={trailingAction}
         />
       </Box>
     </Flex>
