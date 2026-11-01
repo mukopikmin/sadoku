@@ -70,7 +70,8 @@ export const App = () => {
   );
   const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
     selectedDocumentId,
-    view === "preview" && Boolean(documentQuery.data && commentsQuery.data),
+    Boolean(documentQuery.data && commentsQuery.data),
+    view,
   );
   const settingsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
@@ -292,10 +293,18 @@ export const App = () => {
         collapsedDocument: collapsed
           ? {
             title: document.displayTitle ?? document.title,
-            markdown: document.markdown,
           }
           : undefined,
         fileUrl: document.fileUrl,
+        documentNavigation: collapsed
+          ? {
+            markdown: document.markdown,
+            onChangeView: changeView,
+            staleCommentCount,
+            unresolvedCommentCount,
+            view,
+          }
+          : undefined,
         headerRef,
         reloadAvailable,
         reloading: documentQuery.isFetching || commentsQuery.isFetching,
@@ -306,6 +315,7 @@ export const App = () => {
         document={document}
         documentId={selectedDocumentId}
         documentHeaderRef={documentHeaderRef}
+        documentNavigationInHeader={collapsed}
         documents={documents}
         memoryCount={memoriesQuery.data?.length ?? 0}
         onChangeView={changeView}

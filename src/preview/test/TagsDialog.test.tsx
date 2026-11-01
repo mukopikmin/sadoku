@@ -8,6 +8,7 @@ import {
   within,
 } from "./testUtils";
 import { TagsDialog } from "../components/TagsDialog";
+import { sadokuChakraSystem } from "../theme";
 
 beforeEach(() => {
   vi.stubGlobal("scrollTo", vi.fn());
@@ -76,6 +77,7 @@ describe("TagsDialog", () => {
   });
 
   it("edits a tag name and color and refreshes the list", async () => {
+    const selectedColor = sadokuChakraSystem.token("colors.blue.500");
     const tag = {
       id: 1,
       name: "API",
@@ -89,7 +91,7 @@ describe("TagsDialog", () => {
       init?: RequestInit,
     ) =>
       init?.method === "PATCH"
-        ? Response.json({ id: 1, name: "Backend", backgroundColor: "#abcdef" })
+        ? Response.json({ id: 1, name: "Backend", backgroundColor: selectedColor })
         : Response.json([{ ...tag, name: "Platform API" }])
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -111,14 +113,14 @@ describe("TagsDialog", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Background color" }));
     fireEvent.click(
-      await screen.findByRole("button", { name: "Select #abcdef" }),
+      await screen.findByRole("button", { name: `Select ${selectedColor}` }),
     );
     await waitFor(() =>
       expect(
         (screen.getByLabelText(
           "Background color for Platform API",
         ) as HTMLInputElement).value.toLowerCase(),
-      ).toBe("#abcdef")
+      ).toBe(selectedColor)
     );
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -127,7 +129,10 @@ describe("TagsDialog", () => {
         "/__sadoku/tags/1",
         expect.objectContaining({
           method: "PATCH",
-          body: JSON.stringify({ name: "Backend", backgroundColor: "#abcdef" }),
+          body: JSON.stringify({
+            name: "Backend",
+            backgroundColor: selectedColor,
+          }),
         }),
       )
     );
