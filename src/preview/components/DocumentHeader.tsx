@@ -1,8 +1,8 @@
-import { Box, Flex } from "@chakra-ui/react";
-import { memo, type ReactNode, type RefObject } from "react";
+import { Grid } from "@chakra-ui/react";
+import { type ReactNode, type RefObject } from "react";
 import { DocumentTitle } from "./DocumentTitle";
 
-export const DocumentHeader = memo(function DocumentHeader({
+export const DocumentHeader = ({
   documentId,
   headerRef,
   trailingAction,
@@ -12,23 +12,25 @@ export const DocumentHeader = memo(function DocumentHeader({
   headerRef?: RefObject<HTMLDivElement | null>;
   trailingAction?: ReactNode;
   title?: string;
-}) {
+}) => {
   return (
-    <Flex
+    <Grid
       as="section"
       aria-label="Document header"
       ref={headerRef}
-      align="start"
+      mb="6"
       gap="3"
     >
-      <Box flex="1" minW="0">
-        <DocumentTitle
-          key={documentId}
-          documentId={documentId}
-          title={title}
-          trailingAction={trailingAction}
-        />
-      </Box>
-    </Flex>
+      <Grid
+        role="group"
+        aria-label="Document title actions"
+        templateColumns="minmax(0, 1fr) auto"
+        alignItems="center"
+        gap="3"
+      >
+        <DocumentTitle key={documentId} documentId={documentId} title={title} />
+        {trailingAction}
+      </Grid>
+    </Grid>
   );
-});
+};

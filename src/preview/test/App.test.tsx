@@ -432,19 +432,24 @@ describe("App", () => {
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
-    await header.findByRole("button", { name: "Table of contents" });
+    const collapsedToc = await header.findByRole("button", {
+      name: "Table of contents",
+    });
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Table of contents" }))
-        .toBeNull()
+      expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
+        .getAttribute("aria-selected")).toBe("true")
     );
     expect(screen.getByRole("heading", { name: "Reading guide" }))
       .not.toBeNull();
     expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
       .getAttribute("aria-selected")).toBe("true");
 
+    expect(header.getByRole("button", { name: "Table of contents" })).toBe(
+      collapsedToc,
+    );
     documentBottom = 180;
     fireEvent.scroll(globalThis);
     await waitFor(() => expect(header.queryByRole("tablist")).toBeNull());
@@ -917,8 +922,9 @@ describe("App", () => {
       expect(screen.getByRole("group", { name: "Document title actions" })).toBe(
         titleActions,
       );
-      expect(screen.queryByRole("button", { name: "Table of contents" }))
-        .toBeNull();
+      expect(screen.getByRole("button", { name: "Table of contents" })).toBe(
+        tableOfContentsButton,
+      );
     });
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 

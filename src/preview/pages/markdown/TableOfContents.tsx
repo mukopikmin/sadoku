@@ -10,7 +10,7 @@ import {
 import { List as ListIcon } from "lucide-react";
 import GithubSlugger from "github-slugger";
 import type { Heading, Root } from "mdast";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { toString } from "mdast-util-to-string";
 import { Tooltip } from "../../components/ui/tooltip";
 import remarkParse from "remark-parse";
@@ -27,9 +27,8 @@ export const extractTableOfContents = (
 ): TableOfContentsItem[] => {
   const tree = unified().use(remarkParse).parse(markdown) as Root;
   const slugger = new GithubSlugger();
-  return tree.children.filter((node): node is Heading =>
-    node.type === "heading"
-  )
+  return tree.children
+    .filter((node): node is Heading => node.type === "heading")
     .map((heading) => {
       const text = toString(heading);
       return {
@@ -40,7 +39,11 @@ export const extractTableOfContents = (
     });
 };
 
-export const TableOfContents = ({ markdown }: { markdown: string }) => {
+export const TableOfContents = memo(function TableOfContents({
+  markdown,
+}: {
+  markdown: string;
+}) {
   const items = useMemo(() => extractTableOfContents(markdown), [markdown]);
   const [open, setOpen] = useState(false);
 
@@ -77,7 +80,9 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
             </Popover.Arrow>
             <Popover.Body>
               <Text fontWeight="semibold">Table of contents</Text>
-              {items.length === 0 ? <Text pt="2">No headings</Text> : (
+              {items.length === 0 ? (
+                <Text pt="2">No headings</Text>
+              ) : (
                 <Box
                   as="nav"
                   aria-label="Table of contents"
@@ -108,4 +113,4 @@ export const TableOfContents = ({ markdown }: { markdown: string }) => {
       </Portal>
     </Popover.Root>
   );
-};
+});

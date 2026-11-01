@@ -7,7 +7,7 @@ type Props = ComponentProps<typeof DocumentViewSwitch> & { markdown: string };
 
 export const DocumentNavigation = ({ markdown, ...viewProps }: Props) => (
   <Flex align="center" gap="3" flexShrink="0" wrap="wrap">
-    {viewProps.view === "preview" && <TableOfContents markdown={markdown} />}
+    <TableOfContents markdown={markdown} />
     <DocumentViewSwitch {...viewProps} />
   </Flex>
 );
