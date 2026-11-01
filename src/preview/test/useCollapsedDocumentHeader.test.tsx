@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useCollapsedDocumentHeader } from "../hooks/useCollapsedDocumentHeader";
+import type { PreviewView } from "../models/previewView";
 import { act, cleanup, fireEvent, render, screen } from "./domTestUtils";
 
 let headerBottom: number;
@@ -20,10 +21,11 @@ const rect = (bottom: number, height: number): DOMRect => ({
   toJSON: () => ({}),
 });
 
-const Harness = ({ documentId = 1, enabled = true }) => {
+const Harness = ({ documentId = 1, enabled = true, view = "preview" as PreviewView }) => {
   const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
     documentId,
     enabled,
+    view,
   );
   return (
     <>
@@ -114,6 +116,19 @@ describe("useCollapsedDocumentHeader", () => {
     expect(screen.getByRole("status").textContent).toBe("document");
     rerender(<Harness documentId={2} />);
     expect(screen.getByRole("status").textContent).toBe("header");
+
+    documentBottom = 180;
+    rerender(<Harness documentId={2} view="comments" />);
+    expect(screen.getByRole("status").textContent).toBe("document");
+
+    documentBottom = 30;
+    fireEvent.scroll(globalThis);
+    flushFrames();
+    expect(screen.getByRole("status").textContent).toBe("header");
+
+    documentBottom = 180;
+    rerender(<Harness documentId={2} />);
+    expect(screen.getByRole("status").textContent).toBe("document");
   });
 
   it("remeasures header and title area size changes", () => {

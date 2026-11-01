@@ -353,6 +353,16 @@ describe("App", () => {
     const header = within(screen.getByRole("banner"));
     expect(header.queryByRole("button", { name: "Table of contents" }))
       .toBeNull();
+    expect(within(titleActions).getByRole("tablist", { name: "Preview views" }))
+      .not.toBeNull();
+    expect(within(titleActions).getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(
+      within(titleActions).getByRole("tab", { name: "Comments, 0 unresolved" })
+        .textContent,
+    ).toBe("Comments");
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
     expect(header.queryByRole("separator")).toBeNull();
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
 
@@ -369,6 +379,13 @@ describe("App", () => {
       name: "Application actions",
     });
     expect(
+      within(applicationActions).getByRole("tab", { name: "Preview" }).textContent,
+    ).toBe("");
+    expect(
+      within(applicationActions).getByRole("tab", { name: "Comments, 0 unresolved" })
+        .textContent,
+    ).toBe("");
+    expect(
       within(applicationActions).getByRole("button", {
         name: "Table of contents",
       }),
@@ -377,6 +394,11 @@ describe("App", () => {
       within(applicationActions).getByRole("separator")
         .getAttribute("aria-orientation"),
     ).toBe("vertical");
+    expect(
+      within(applicationActions).getByRole("tablist", { name: "Preview views" }),
+    ).not.toBeNull();
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
     const toc = await screen.findByRole("navigation", {
       name: "Table of contents",
     });
@@ -401,6 +423,12 @@ describe("App", () => {
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
     expect(header.queryByText("Reading guide")).toBeNull();
     expect(header.queryByRole("separator")).toBeNull();
+    expect(within(titleActions).getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(within(titleActions).getByRole("tablist", { name: "Preview views" }))
+      .not.toBeNull();
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
@@ -412,6 +440,34 @@ describe("App", () => {
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull()
     );
+    expect(screen.getByRole("heading", { name: "Reading guide" }))
+      .not.toBeNull();
+    expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
+      .getAttribute("aria-selected")).toBe("true");
+
+    documentBottom = 180;
+    fireEvent.scroll(globalThis);
+    await waitFor(() => expect(header.queryByRole("tablist")).toBeNull());
+    const commentsTitleActions = within(
+      screen.getByRole("region", { name: "Document header" }),
+    );
+    expect(commentsTitleActions.getByRole("button", { name: "Edit title" }))
+      .not.toBeNull();
+    expect(commentsTitleActions.getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(commentsTitleActions.getByRole("tab", {
+      name: "Comments, 0 unresolved",
+    }).textContent).toBe("Comments");
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
+
+    documentBottom = 20;
+    fireEvent.scroll(globalThis);
+    const commentsPreview = await header.findByRole("tab", { name: "Preview" });
+    expect(commentsPreview.textContent).toBe("");
+    expect(header.getByText("Reading guide")).not.toBeNull();
+    fireEvent.click(commentsPreview);
+    await header.findByRole("button", { name: "Table of contents" });
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "guide.md" });
     expect(screen.queryByRole("button", { name: "Table of contents" }))
@@ -755,7 +811,8 @@ describe("App", () => {
 
     expect(within(header).queryByRole("tablist")).toBeNull();
     const actionBar = screen.getByRole("dialog", { name: "Document actions" });
-    const tabs = within(actionBar).getByRole("tablist", {
+    expect(within(actionBar).queryByRole("tablist")).toBeNull();
+    const tabs = within(main).getByRole("tablist", {
       name: "Preview views",
     });
     const previewButton = within(tabs).getByRole("tab", { name: "Preview" });
@@ -843,7 +900,7 @@ describe("App", () => {
         name: "Document actions",
       });
       expect(
-        within(actionBar).getByRole("tab", {
+        within(documentHeader).getByRole("tab", {
           name: "Comments, 0 unresolved",
         }).getAttribute("aria-selected"),
       ).toBe("true");
