@@ -85,7 +85,6 @@ export const DocumentPreviewPage = ({
             <DocumentNavigation
               markdown={document.markdown}
               onChangeView={onChangeView}
-              showLabels
               staleCommentCount={staleCommentCount}
               unresolvedCommentCount={unresolvedCommentCount}
               view={view}

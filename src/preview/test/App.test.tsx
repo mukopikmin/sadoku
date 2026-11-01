@@ -380,11 +380,11 @@ describe("App", () => {
     });
     expect(
       within(applicationActions).getByRole("tab", { name: "Preview" }).textContent,
-    ).toBe("");
+    ).toBe("Preview");
     expect(
       within(applicationActions).getByRole("tab", { name: "Comments, 0 unresolved" })
         .textContent,
-    ).toBe("");
+    ).toBe("Comments");
     expect(
       within(applicationActions).getByRole("button", {
         name: "Table of contents",
@@ -469,7 +469,7 @@ describe("App", () => {
     documentBottom = 20;
     fireEvent.scroll(globalThis);
     const commentsPreview = await header.findByRole("tab", { name: "Preview" });
-    expect(commentsPreview.textContent).toBe("");
+    expect(commentsPreview.textContent).toBe("Preview");
     expect(header.getByText("Reading guide")).not.toBeNull();
     fireEvent.click(commentsPreview);
     await header.findByRole("button", { name: "Table of contents" });

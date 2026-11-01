@@ -38,8 +38,8 @@ describe("DocumentViewSwitch", () => {
       preview.getAttribute("aria-controls")!,
     );
     expect(previewPanel?.getAttribute("aria-labelledby")).toBe(preview.id);
-    expect(preview.textContent).toBe("");
-    expect(comments.textContent).toBe("2");
+    expect(preview.textContent).toBe("Preview");
+    expect(comments.textContent).toBe("Comments2");
     expect(within(comments).getByText("2")).not.toBeNull();
     expect(within(comments).getByRole("img", { name: "Stale comments: 1" }))
       .not.toBeNull();
@@ -82,7 +82,7 @@ describe("DocumentViewSwitch", () => {
     const comments = screen.getByRole("tab", {
       name: "Comments, 0 unresolved",
     });
-    expect(comments.textContent).toBe("");
+    expect(comments.textContent).toBe("Comments");
     expect(comments.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(within(comments).queryByRole("img")).toBeNull();
   });

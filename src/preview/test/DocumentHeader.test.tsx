@@ -34,7 +34,6 @@ it("updates view controls without rendering the title or table of contents again
         <DocumentNavigation
           markdown={markdown}
           onChangeView={() => {}}
-          showLabels
           staleCommentCount={0}
           unresolvedCommentCount={0}
           view={view}
