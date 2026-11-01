@@ -55,6 +55,12 @@ them when making changes.
 - `src/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
+- Add new database migrations to `src/server/db/migrations/current.json`. For
+  constraints SQLite cannot add with ALTER TABLE, use a transactional table
+  rebuild with the original table name, IDs, foreign keys, defaults, and indexes
+  preserved. Follow `src/server/db/migrations/README.md`; verify fresh/upgrade
+  schema equality, repeat execution, rollback, and related-data preservation.
+  Reject missing historical metadata rather than inventing replacement values.
 - Generate Go and TypeScript RPC bindings together using
   `make proto-generate`.
 - Keep routing and API adaptation under `http/`, session preparation under

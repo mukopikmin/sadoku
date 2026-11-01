@@ -3,6 +3,7 @@ package db
 import (
 	"compress/gzip"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,7 +40,7 @@ func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
 			}
 			defer database.Close()
 			var count int
-			if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 13 {
+			if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 15 {
 				t.Fatalf("reopened database migrations: %d, %v", count, err)
 			}
 		})
@@ -96,6 +97,24 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 	if err = os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
 	}
+	// The original fixture predates mandatory source metadata. Reject it without
+	// inventing original text, then simulate an operator restoring that metadata.
+	if database, err := Open(path); err == nil {
+		database.Close()
+		t.Fatal("accepted legacy comments without source metadata")
+	} else if !strings.Contains(err.Error(), "migration 0015") {
+		t.Fatal(err)
+	}
+	repair, err := sql.Open("sqlite3", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repair.Exec("UPDATE comment SET source_text='operator restored original',source_hash='restored'"); err != nil {
+		t.Fatal(err)
+	}
+	if err := repair.Close(); err != nil {
+		t.Fatal(err)
+	}
 	for attempt := range 2 {
 		database, err := Open(path)
 		if err != nil {
@@ -103,7 +122,7 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		}
 		defer database.Close()
 		var count int
-		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 13 {
+		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 15 {
 			t.Fatalf("legacy migrations: %d, %v", count, err)
 		}
 		want := []string{"legacy.md", "WASM 文書", "既存のコメント", "返信", "# 保存済み", "指示", "メモリー", "タグ"}
@@ -147,7 +166,7 @@ func TestMigrationCompatibility(t *testing.T) {
 		t.Fatal(err)
 	}
 	var count int
-	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 13 {
+	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 15 {
 		t.Fatalf("migration count %d: %v", count, err)
 	}
 	_, err = database.Exec("INSERT INTO comment_document(file_path,created_at,updated_at,title) VALUES('old.md',?,?,'Old title')", Now(), Now())
@@ -177,6 +196,11 @@ func TestOriginalMigrationsRetainTheirChecksums(t *testing.T) {
 	if err := json.Unmarshal(legacy, &migrations); err != nil {
 		t.Fatal(err)
 	}
+	var additions []migration
+	if err := json.Unmarshal(current, &additions); err != nil {
+		t.Fatal(err)
+	}
+	migrations = append(migrations, additions...)
 	for _, m := range migrations {
 		source := strings.Join(m.Statements, ";\n")
 		// Version 0007 originally hashed this explicit description rather than

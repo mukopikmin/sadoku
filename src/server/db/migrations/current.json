@@ -1,0 +1,28 @@
+[
+  {
+    "version": "0014",
+    "name": "require_migration_version",
+    "checksum": "sha256:ddc94ff4808fa058d000160ff07f2bff4c688301af3b260c64f985ccbedfa142",
+    "rebuild": true,
+    "statements": [
+      "CREATE TABLE schema_migration_new (version TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, checksum TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('running','applied','failed')), started_at TEXT NOT NULL CHECK(started_at GLOB '????-??-??T??:??:??.???Z'), finished_at TEXT CHECK(finished_at IS NULL OR finished_at GLOB '????-??-??T??:??:??.???Z'), error_message TEXT)",
+      "INSERT INTO schema_migration_new SELECT version,name,checksum,state,started_at,finished_at,error_message FROM schema_migration",
+      "DROP TABLE schema_migration",
+      "ALTER TABLE schema_migration_new RENAME TO schema_migration"
+    ]
+  },
+  {
+    "version": "0015",
+    "name": "require_comment_source_and_resolution",
+    "checksum": "sha256:e95e6e71e109f82841f9a9828eb9278743b9e97f042d53e7b2782a33a82753d3",
+    "rebuild": true,
+    "statements": [
+      "CREATE TABLE comment_new ( id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL, local_id INTEGER NOT NULL, start_line INTEGER NOT NULL, end_line INTEGER NOT NULL, original_start_line INTEGER NOT NULL, original_end_line INTEGER NOT NULL, body TEXT NOT NULL, resolved INTEGER NOT NULL DEFAULT 0 CHECK (resolved IN (0, 1)), resolved_at TEXT CHECK (resolved_at IS NULL OR resolved_at GLOB '????-??-??T??:??:??.???Z'), source_hash TEXT NOT NULL, source_text TEXT NOT NULL, stale INTEGER NOT NULL DEFAULT 0 CHECK (stale IN (0, 1)), created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z'), author_type TEXT NOT NULL DEFAULT 'human' CHECK (author_type IN ('human', 'bot')), resolved_by_type TEXT CHECK (resolved_by_type IN ('human', 'bot')), source_deleted INTEGER NOT NULL DEFAULT 0 CHECK (source_deleted IN (0, 1)), FOREIGN KEY (document_id) REFERENCES comment_document(id) ON DELETE CASCADE, UNIQUE (document_id, local_id) , CHECK ((resolved = 0 AND resolved_at IS NULL AND resolved_by_type IS NULL) OR (resolved = 1 AND resolved_at IS NOT NULL AND resolved_by_type IS NOT NULL)))",
+      "INSERT INTO comment_new (id,document_id,local_id,start_line,end_line,original_start_line,original_end_line,body,resolved,resolved_at,source_hash,source_text,stale,created_at,updated_at,author_type,resolved_by_type,source_deleted) SELECT id,document_id,local_id,start_line,end_line,original_start_line,original_end_line,body,resolved,resolved_at,source_hash,source_text,stale,created_at,updated_at,author_type,resolved_by_type,source_deleted FROM comment",
+      "DROP TABLE comment",
+      "ALTER TABLE comment_new RENAME TO comment",
+      "CREATE INDEX idx_comment_document_id ON comment(document_id)",
+      "CREATE INDEX idx_comment_document_start_line ON comment(document_id, start_line)"
+    ]
+  }
+]
