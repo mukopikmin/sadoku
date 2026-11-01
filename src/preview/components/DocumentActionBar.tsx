@@ -71,7 +71,7 @@ export const DocumentActionBar = ({
                 }
               >
                 <Box as="span" display="inline-flex">
-                  <Button
+                  <IconButton
                     aria-label="Changes since previous snapshot"
                     aria-description={
                       !diff.available
@@ -85,8 +85,7 @@ export const DocumentActionBar = ({
                     variant={diff.enabled ? "solid" : "outline"}
                   >
                     <FileDiff aria-hidden="true" />
-                    Changes
-                  </Button>
+                  </IconButton>
                 </Box>
               </Tooltip>
             )}
