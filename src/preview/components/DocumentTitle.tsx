@@ -25,12 +25,18 @@ export const DocumentTitle = memo(function DocumentTitle({
   return (
     <>
       {title && (
-        <Heading as="h1" size="3xl" gridColumn="1 / -1" overflowWrap="anywhere">
+        <Heading
+          as="h1"
+          size="3xl"
+          flexBasis="full"
+          minW="0"
+          overflowWrap="anywhere"
+        >
           {title}
         </Heading>
       )}
       <Button
-        justifySelf="start"
+        flexShrink="0"
         size="sm"
         variant="ghost"
         onClick={() => {

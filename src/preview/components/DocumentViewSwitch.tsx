@@ -60,14 +60,21 @@ export const DocumentViewSwitch = ({
   const triggerId = (value: string) => `${id}-${value}`;
   return (
     <Tabs.Root
-      flexShrink="0"
+      minW="0"
+      maxW="full"
       ids={{ trigger: triggerId }}
       onValueChange={({ value }) => onChangeView(value as PreviewView)}
       unstyled
       value={view}
     >
       <Tabs.List aria-label="Preview views" asChild>
-        <ButtonGroup attached size="sm" variant="outline">
+        <ButtonGroup
+          attached
+          size="sm"
+          variant="outline"
+          flexWrap="wrap"
+          rowGap="3"
+        >
           <ViewButton
             aria-label="Preview"
             px={showLabels ? undefined : "0"}
@@ -76,14 +83,21 @@ export const DocumentViewSwitch = ({
             value="preview"
           >
             <BookOpen aria-hidden="true" />
-            {showLabels && "Preview"}
+            {showLabels && (
+              <Box as="span" hideBelow="sm">
+                Preview
+              </Box>
+            )}
           </ViewButton>
           <ViewButton
             aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
-            px={!showLabels && unresolvedCommentCount === 0 &&
-                staleCommentCount === 0
-              ? "0"
-              : undefined}
+            px={
+              !showLabels &&
+              unresolvedCommentCount === 0 &&
+              staleCommentCount === 0
+                ? "0"
+                : undefined
+            }
             tooltip={`Comments, ${unresolvedCommentCount} unresolved${
               staleCommentCount > 0 ? `, ${staleCommentCount} stale` : ""
             }`}
@@ -91,7 +105,11 @@ export const DocumentViewSwitch = ({
             value="comments"
           >
             <MessagesSquare aria-hidden="true" />
-            {showLabels && "Comments"}
+            {showLabels && (
+              <Box as="span" hideBelow="sm">
+                Comments
+              </Box>
+            )}
             {unresolvedCommentCount > 0 && (
               <Badge aria-hidden="true" size="sm" variant="solid">
                 {unresolvedCommentCount}

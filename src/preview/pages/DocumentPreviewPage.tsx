@@ -78,6 +78,7 @@ export const DocumentPreviewPage = ({
         trailingAction={
           // Preserve the measured title area when controls move to the header.
           <Box
+            minW="0"
             maxW="full"
             visibility={documentNavigationInHeader ? "hidden" : "visible"}
           >
