@@ -2,20 +2,18 @@
 
 FROM node:bookworm-slim AS client
 
-RUN apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /workspace
 
-COPY Makefile package.json package-lock.json ./
+COPY package.json package-lock.json ./
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
 # Optional CA for builds behind a TLS proxy; never stored in an image layer.
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
-    npm_config_engine_strict=true make deps
+    npm_config_engine_strict=true npm run install:deps
 
 COPY src/preview/ ./src/preview/
 COPY gen/ts/ ./gen/ts/
-RUN make build-client
+RUN npm run build:client
 
 FROM golang:1.26.10-bookworm AS go-toolchain
 
