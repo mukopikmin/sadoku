@@ -22,7 +22,14 @@ migrations. Do not run migrations concurrently with application writes.
 
 `comment.source_text` and `comment.source_hash` are required. Unresolved comments
 must have no resolver or resolution timestamp; resolved comments require both.
-The migration rejects incompatible data rather than inventing missing history.
+Missing source text/hash values are copied as empty strings using COALESCE;
+existing non-NULL values are preserved. An empty hash cannot match a computed
+source hash, so fallback source matching marks the comment stale. This differs
+from actual empty source text, whose computed hash is `811c9dc5`. Snapshot-based
+line mapping remains available when a snapshot exists. No runtime changes or
+additional status column are required.
+
+Inconsistent resolution metadata still fails migration.
 Back up the database before operator repairs, with the application stopped.
 Find affected records using:
 
@@ -30,12 +37,11 @@ Find affected records using:
 SELECT id, document_id, local_id, source_text, source_hash,
        resolved, resolved_at, resolved_by_type
 FROM comment
-WHERE source_text IS NULL OR source_hash IS NULL
-   OR (resolved = 0 AND (resolved_at IS NOT NULL OR resolved_by_type IS NOT NULL))
+WHERE (resolved = 0 AND (resolved_at IS NOT NULL OR resolved_by_type IS NOT NULL))
    OR (resolved = 1 AND (resolved_at IS NULL OR resolved_by_type IS NULL));
 ```
 
-Restore missing values from trusted historical records. The source hash uses
+Restore resolution metadata from trusted historical records. The source hash uses
 `usecase.HashSource`, FNV-1a over UTF-16 code units, rather than UTF-8 bytes. Do not
 substitute the current document text for an unknown original or invent a resolver
 or timestamp. If trusted records are unavailable, keep the original database and
@@ -49,4 +55,4 @@ The database tests cover fresh-versus-upgraded schema equality, reopening and
 reapplying migrations, original checksums, preservation of comment/reply IDs,
 constraints and cascade behavior, foreign-key validation, rollback, and retry
 following an explicit operator repair. The old WASM fixture stays unchanged; its
-incomplete metadata is intentionally rejected before a test-only repair.
+missing source metadata is backfilled without operator repair.

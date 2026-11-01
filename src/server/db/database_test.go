@@ -3,7 +3,6 @@ package db
 import (
 	"compress/gzip"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -97,24 +96,6 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 	if err = os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	// The original fixture predates mandatory source metadata. Reject it without
-	// inventing original text, then simulate an operator restoring that metadata.
-	if database, err := Open(path); err == nil {
-		database.Close()
-		t.Fatal("accepted legacy comments without source metadata")
-	} else if !strings.Contains(err.Error(), "migration 0015") {
-		t.Fatal(err)
-	}
-	repair, err := sql.Open("sqlite3", path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := repair.Exec("UPDATE comment SET source_text='operator restored original',source_hash='restored'"); err != nil {
-		t.Fatal(err)
-	}
-	if err := repair.Close(); err != nil {
-		t.Fatal(err)
-	}
 	for attempt := range 2 {
 		database, err := Open(path)
 		if err != nil {
@@ -124,6 +105,10 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		var count int
 		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 15 {
 			t.Fatalf("legacy migrations: %d, %v", count, err)
+		}
+		var sourceText, sourceHash string
+		if err := database.QueryRow("SELECT source_text,source_hash FROM comment WHERE id=1").Scan(&sourceText, &sourceHash); err != nil || sourceText != "" || sourceHash != "" {
+			t.Fatalf("legacy source placeholders: %q %q %v", sourceText, sourceHash, err)
 		}
 		want := []string{"legacy.md", "WASM 文書", "既存のコメント", "返信", "# 保存済み", "指示", "メモリー", "タグ"}
 		if attempt == 1 {

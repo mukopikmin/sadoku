@@ -145,9 +145,7 @@ func applyMigration(database *sql.DB, m migration) (result error) {
 	defer tx.Rollback()
 	for _, statement := range m.Statements {
 		if _, err := tx.Exec(statement); err != nil {
-			if m.Version == "0015" {
-				return fmt.Errorf("comment source metadata or resolution is incomplete; restore source_text/source_hash and resolution metadata from trusted records before retrying: %w", err)
-			}
+
 			return err
 		}
 	}

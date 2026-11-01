@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"encoding/json"
+	u "github.com/mukopikmin/sadoku/src/server/usecase"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -118,7 +119,7 @@ func TestRebuildPreservesDataAndMatchesFreshSchema(t *testing.T) {
 }
 
 func TestRebuildFailureRollsBackAndCanRetry(t *testing.T) {
-	for _, invalid := range []string{`source_text=NULL`, `source_hash=NULL`, `resolved=1`, `resolved_by_type='bot'`} {
+	for _, invalid := range []string{`resolved=1`, `resolved_by_type='bot'`} {
 		t.Run(invalid, func(t *testing.T) {
 			database, _ := legacyDatabase(t)
 			if _, err := database.Exec("UPDATE comment SET " + invalid); err != nil {
@@ -160,5 +161,40 @@ func TestRebuildRejectsForeignKeyViolations(t *testing.T) {
 	var parent int
 	if err := database.QueryRow("SELECT comment_id FROM comment_reply WHERE id=9").Scan(&parent); err != nil || parent != 7 {
 		t.Fatalf("failed rebuild changed data: %d %v", parent, err)
+	}
+}
+
+func TestRebuildFillsOnlyMissingSourceValues(t *testing.T) {
+	for _, test := range []struct{ name, assignment, text, hash string }{
+		{"both missing", "source_text=NULL,source_hash=NULL", "", ""},
+		{"text missing", "source_text=NULL", "", "hash"},
+		{"hash missing", "source_hash=NULL", "original", ""},
+		{"present", "source_text='original'", "original", "hash"},
+		{"real empty text", "source_text='',source_hash='811c9dc5'", "", "811c9dc5"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			database, _ := legacyDatabase(t)
+			if _, err := database.Exec("UPDATE comment SET " + test.assignment); err != nil {
+				t.Fatal(err)
+			}
+			for range 2 {
+				if err := Migrate(database); err != nil {
+					t.Fatal(err)
+				}
+				var text, hash string
+				if err := database.QueryRow("SELECT source_text,source_hash FROM comment WHERE id=7").Scan(&text, &hash); err != nil {
+					t.Fatal(err)
+				}
+				if text != test.text || hash != test.hash {
+					t.Fatalf("source values: %q %q", text, hash)
+				}
+				if hash == "" {
+					doc := u.ResolveComments(u.Comments{Comments: []u.Comment{{StartLine: 1, EndLine: 1, SourceText: &text, SourceHash: &hash}}}, "\noriginal")
+					if !doc.Comments[0].Stale {
+						t.Fatal("placeholder matched a source line")
+					}
+				}
+			}
+		})
 	}
 }

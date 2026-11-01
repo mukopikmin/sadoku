@@ -60,7 +60,8 @@ them when making changes.
   rebuild with the original table name, IDs, foreign keys, defaults, and indexes
   preserved. Follow `src/server/db/migrations/README.md`; verify fresh/upgrade
   schema equality, repeat execution, rollback, and related-data preservation.
-  Reject missing historical metadata rather than inventing replacement values.
+  Document explicit backfill policies for missing historical metadata; never
+  infer unknown original text from the current document.
 - Generate Go and TypeScript RPC bindings together using
   `make proto-generate`.
 - Keep routing and API adaptation under `http/`, session preparation under
