@@ -372,7 +372,7 @@ describe("directory preview", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     await waitFor(() => expect(scrollY).toBe(120));
-    setScrollY(scrollY);
+    setScrollY(240);
 
     history.back();
     await waitFor(() =>
@@ -380,9 +380,13 @@ describe("directory preview", () => {
     );
     await waitFor(() => expect(scrollY).toBe(340));
 
+    setScrollY(460);
     history.forward();
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
-    await waitFor(() => expect(scrollY).toBe(120));
+    await waitFor(() => expect(scrollY).toBe(240));
+    history.back();
+    await waitFor(() => expect(location.pathname).toBe("/documents/1/comments"));
+    await waitFor(() => expect(scrollY).toBe(460));
 
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     fireEvent.click(

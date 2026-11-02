@@ -62,7 +62,7 @@ export const DocumentPreviewPage = ({
   const documentPath =
     selectedDocument?.relativePath ?? document.fileUrl ?? document.title;
   return (
-    <Container as="main" maxW="980px" px="8" pt="0" pb="8">
+    <Container as="main" overflowAnchor="none" maxW="980px" px="8" pt="0" pb="8">
       {documents && selectedDocument && (
         <DocumentBreadcrumb
           document={selectedDocument}
