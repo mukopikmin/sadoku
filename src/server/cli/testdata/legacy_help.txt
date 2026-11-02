@@ -8,10 +8,8 @@ Usage:
   sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
-  sadoku instruction list (--global | --document <id> | --source <file.md|url>)
-  sadoku instruction add (--global | --document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction update <instruction-id> (--global | --document <id> | --source <file.md|url>) --content <text>
-  sadoku instruction delete <instruction-id> (--global | --document <id> | --source <file.md|url>)
+  sadoku instruction get (--global | --document <id> | --source <file.md|url>)
+  sadoku instruction set (--global | --document <id> | --source <file.md|url>) --content <text>
   sadoku memory list (--document <id> | --source <file.md|url>)
   sadoku memory add (--document <id> | --source <file.md|url>) --content <text>
   sadoku memory update <memory-id> (--document <id> | --source <file.md|url>) --content <text>

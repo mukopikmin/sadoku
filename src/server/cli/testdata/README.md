@@ -24,3 +24,8 @@ command, help/version output, invalid arguments and missing resources, repeated
 options, short options, source edits, resolved/stale comments, and Unicode text.
 Startup logs and self-update output have separate tests because they require a
 running server or controlled GitHub responses.
+
+The historical instruction transcripts remain unchanged in `legacy_cli.json`;
+the test harness checks generic invalid-command errors for these cases. Supported
+instruction behavior is covered in `instructions_test.go`. The help fixture lists
+the current command set.

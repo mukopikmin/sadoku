@@ -160,13 +160,7 @@ describe("App", () => {
           instructions: [
             {
               id: 1,
-              content: "Shared review guidance",
-              createdAt: "created",
-              updatedAt: "updated",
-            },
-            {
-              id: 2,
-              content: "Another shared instruction",
+              content: "Shared review guidance\n\nAnother shared instruction",
               createdAt: "created",
               updatedAt: "updated",
             },
@@ -189,10 +183,9 @@ describe("App", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Global instructions",
     });
-    expect(await within(dialog).findByText("Shared review guidance")).not
-      .toBeNull();
-    expect(within(dialog).getByText("Another shared instruction")).not
-      .toBeNull();
+    const input = await within(dialog).findByRole("textbox", { name: "Instruction" });
+    expect((input as HTMLTextAreaElement).value)
+      .toBe("Shared review guidance\n\nAnother shared instruction");
     fireEvent.keyDown(dialog, { key: "Escape" });
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Global instructions" }))
@@ -353,6 +346,16 @@ describe("App", () => {
     const header = within(screen.getByRole("banner"));
     expect(header.queryByRole("button", { name: "Table of contents" }))
       .toBeNull();
+    expect(within(titleActions).getByRole("tablist", { name: "Preview views" }))
+      .not.toBeNull();
+    expect(within(titleActions).getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(
+      within(titleActions).getByRole("tab", { name: "Comments, 0 unresolved" })
+        .textContent,
+    ).toBe("Comments");
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
     expect(header.queryByRole("separator")).toBeNull();
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
 
@@ -369,6 +372,13 @@ describe("App", () => {
       name: "Application actions",
     });
     expect(
+      within(applicationActions).getByRole("tab", { name: "Preview" }).textContent,
+    ).toBe("");
+    expect(
+      within(applicationActions).getByRole("tab", { name: "Comments, 0 unresolved" })
+        .textContent,
+    ).toBe("");
+    expect(
       within(applicationActions).getByRole("button", {
         name: "Table of contents",
       }),
@@ -377,6 +387,11 @@ describe("App", () => {
       within(applicationActions).getByRole("separator")
         .getAttribute("aria-orientation"),
     ).toBe("vertical");
+    expect(
+      within(applicationActions).getByRole("tablist", { name: "Preview views" }),
+    ).not.toBeNull();
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
     const toc = await screen.findByRole("navigation", {
       name: "Table of contents",
     });
@@ -401,6 +416,12 @@ describe("App", () => {
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
     expect(header.queryByText("Reading guide")).toBeNull();
     expect(header.queryByRole("separator")).toBeNull();
+    expect(within(titleActions).getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(within(titleActions).getByRole("tablist", { name: "Preview views" }))
+      .not.toBeNull();
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
@@ -412,6 +433,34 @@ describe("App", () => {
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull()
     );
+    expect(screen.getByRole("heading", { name: "Reading guide" }))
+      .not.toBeNull();
+    expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
+      .getAttribute("aria-selected")).toBe("true");
+
+    documentBottom = 180;
+    fireEvent.scroll(globalThis);
+    await waitFor(() => expect(header.queryByRole("tablist")).toBeNull());
+    const commentsTitleActions = within(
+      screen.getByRole("region", { name: "Document header" }),
+    );
+    expect(commentsTitleActions.getByRole("button", { name: "Edit title" }))
+      .not.toBeNull();
+    expect(commentsTitleActions.getByRole("tab", { name: "Preview" }).textContent)
+      .toBe("Preview");
+    expect(commentsTitleActions.getByRole("tab", {
+      name: "Comments, 0 unresolved",
+    }).textContent).toBe("Comments");
+    expect(screen.getAllByRole("tablist", { name: "Preview views" }))
+      .toHaveLength(1);
+
+    documentBottom = 20;
+    fireEvent.scroll(globalThis);
+    const commentsPreview = await header.findByRole("tab", { name: "Preview" });
+    expect(commentsPreview.textContent).toBe("");
+    expect(header.getByText("Reading guide")).not.toBeNull();
+    fireEvent.click(commentsPreview);
+    await header.findByRole("button", { name: "Table of contents" });
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "guide.md" });
     expect(screen.queryByRole("button", { name: "Table of contents" }))
@@ -755,7 +804,8 @@ describe("App", () => {
 
     expect(within(header).queryByRole("tablist")).toBeNull();
     const actionBar = screen.getByRole("dialog", { name: "Document actions" });
-    const tabs = within(actionBar).getByRole("tablist", {
+    expect(within(actionBar).queryByRole("tablist")).toBeNull();
+    const tabs = within(main).getByRole("tablist", {
       name: "Preview views",
     });
     const previewButton = within(tabs).getByRole("tab", { name: "Preview" });
@@ -767,7 +817,7 @@ describe("App", () => {
     expect(commentsButton.getAttribute("aria-selected")).toBe("false");
   });
 
-  it("opens instructions for the selected document from its action bar", async () => {
+  it("loads instructions only when opening the selected document dialog", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const instructionRequests: string[] = [];
     vi.stubGlobal(
@@ -792,6 +842,16 @@ describe("App", () => {
         }
         if (/^\/__sadoku\/documents\/[12]\/instructions$/.test(url)) {
           instructionRequests.push(url);
+          return Promise.resolve(Response.json({
+            instructions: [{
+              id: 1,
+              content: "Saved document guidance",
+              createdAt: "created",
+              updatedAt: "updated",
+            }],
+          }));
+        }
+        if (url === "/__sadoku/global-instructions") {
           return Promise.resolve(Response.json({ instructions: [] }));
         }
         return Promise.resolve(new Response("Not found.", { status: 404 }));
@@ -816,6 +876,8 @@ describe("App", () => {
         "aria-hidden",
       ),
     ).toBe("true");
+    expect(firstInstructionsButton.textContent).toBe("");
+    expect(instructionRequests).toEqual([]);
     const documentHeader = screen.getByRole("region", {
       name: "Document header",
     });
@@ -839,21 +901,14 @@ describe("App", () => {
       name: "Comments, 0 unresolved",
     }));
     await waitFor(() => {
-      const actionBar = screen.getByRole("dialog", {
-        name: "Document actions",
-      });
-      expect(
-        within(actionBar).getByRole("tab", {
-          name: "Comments, 0 unresolved",
-        }).getAttribute("aria-selected"),
-      ).toBe("true");
-      expect(within(actionBar).getByRole("button", { name: "Instructions" }))
-        .not.toBeNull();
-      expect(within(actionBar).getByRole("button", { name: "Revisions" }))
-        .not.toBeNull();
-      expect(screen.getByRole("main").lastElementChild).toBe(
-        screen.getByTestId("action-bar-spacer"),
-      );
+      expect(screen.queryByRole("dialog", { name: "Document actions" }))
+        .toBeNull();
+      expect(screen.getByRole("tab", {
+        name: "Comments, 0 unresolved",
+      }).getAttribute("aria-selected")).toBe("true");
+      expect(screen.queryByRole("button", { name: "Instructions" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Revisions" })).toBeNull();
+      expect(screen.queryByTestId("action-bar-spacer")).toBeNull();
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull();
     });
@@ -862,6 +917,7 @@ describe("App", () => {
     expect(await screen.findByRole("button", { name: "Table of contents" }))
       .not.toBeNull();
 
+    expect(instructionRequests).toEqual([]);
     fireEvent.click(
       await screen.findByRole("button", {
         name: "Instructions",
@@ -883,8 +939,15 @@ describe("App", () => {
       expect(screen.queryByRole("dialog", { name: "Document instructions" }))
         .toBeNull()
     );
+    expect(screen.getByRole("button", { name: "Instructions" }).textContent)
+      .toBe("");
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     fireEvent.click(await screen.findByRole("treeitem", { name: "second.md" }));
+    const secondInstructionsButton = await screen.findByRole("button", {
+      name: "Instructions",
+    });
+    expect(secondInstructionsButton.textContent).toBe("");
+    expect(instructionRequests).toEqual(["/__sadoku/documents/1/instructions"]);
     fireEvent.click(
       await screen.findByRole("button", { name: "Instructions" }),
     );

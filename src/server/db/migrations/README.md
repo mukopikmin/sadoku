@@ -18,7 +18,7 @@ failure. A failed migration rolls back its schema, copied data, and ledger entry
 earlier completed migrations remain applied. Reopening retries unapplied
 migrations. Do not run migrations concurrently with application writes.
 
-## Strict comment metadata (0015)
+## Strict comment metadata (0016)
 
 `comment.source_text` and `comment.source_hash` are required. Unresolved comments
 must have no resolver or resolution timestamp; resolved comments require both.
@@ -46,7 +46,7 @@ Restore resolution metadata from trusted historical records. The source hash use
 substitute the current document text for an unknown original or invent a resolver
 or timestamp. If trusted records are unavailable, keep the original database and
 use the previous application version until the records can be restored. After
-repair, reopen with the new version to retry migration 0015.
+repair, reopen with the new version to retry migration 0016.
 
 ## Reproducibility
 

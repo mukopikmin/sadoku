@@ -126,7 +126,7 @@ func TestRebuildFailureRollsBackAndCanRetry(t *testing.T) {
 				t.Fatal(err)
 			}
 			err := Migrate(database)
-			if err == nil || !strings.Contains(err.Error(), "migration 0015") {
+			if err == nil || !strings.Contains(err.Error(), "migration 0016") {
 				t.Fatalf("expected actionable migration error: %v", err)
 			}
 			var enabled, count int
@@ -139,7 +139,7 @@ func TestRebuildFailureRollsBackAndCanRetry(t *testing.T) {
 			if err := database.QueryRow("SELECT count(*) FROM sqlite_schema WHERE name='comment_new'").Scan(&count); err != nil || count != 0 {
 				t.Fatalf("temporary table survived: %d %v", count, err)
 			}
-			if err := database.QueryRow("SELECT count(*) FROM schema_migration WHERE version='0015'").Scan(&count); err != nil || count != 0 {
+			if err := database.QueryRow("SELECT count(*) FROM schema_migration WHERE version='0016'").Scan(&count); err != nil || count != 0 {
 				t.Fatalf("failed migration recorded: %d %v", count, err)
 			}
 			if _, err := database.Exec(`UPDATE comment SET source_text='original',source_hash='hash',resolved=0,resolved_at=NULL,resolved_by_type=NULL`); err != nil {
