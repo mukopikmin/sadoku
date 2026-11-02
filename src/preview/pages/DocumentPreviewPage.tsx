@@ -18,7 +18,6 @@ type Props = {
   documentHeaderRef?: RefObject<HTMLDivElement | null>;
   documentNavigationInHeader: boolean;
   documents?: DocumentSummary[] | null;
-  instructionCount: number;
   memoryCount: number;
   onChangeView: (view: PreviewView) => void;
   onOpenInstructions: () => void;
@@ -38,7 +37,6 @@ export const DocumentPreviewPage = ({
   documentHeaderRef,
   documentNavigationInHeader,
   documents,
-  instructionCount,
   memoryCount,
   onChangeView,
   onOpenInstructions,
@@ -148,7 +146,6 @@ export const DocumentPreviewPage = ({
       <DocumentActionBar
         markdown={document.markdown}
         diff={diff}
-        instructionCount={instructionCount}
         memoryCount={memoryCount}
         onOpenInstructions={onOpenInstructions}
         onOpenMemories={onOpenMemories}

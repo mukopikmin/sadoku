@@ -29,7 +29,6 @@ const page = (previousMarkdown?: string) => (
     }}
     documentId={1}
     documentNavigationInHeader={false}
-    instructionCount={0}
     memoryCount={0}
     onChangeView={() => {}}
     onOpenInstructions={() => {}}

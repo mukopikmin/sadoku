@@ -49,3 +49,56 @@ func TestGlobalInstructionsRemainIndependentOfDocuments(t *testing.T) {
 		t.Fatal("update recreated deleted instruction")
 	}
 }
+
+func TestSavingInstructionReplacesOnlyItsScope(t *testing.T) {
+	r := testRepository(t)
+	one, err := r.Ensure("one.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	two, err := r.Ensure("two.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	save := func(docID int64, content string) u.Note {
+		t.Helper()
+		var n u.Note
+		var err error
+		if docID == 0 {
+			n, err = r.SaveGlobalInstruction(u.Note{Content: content})
+		} else {
+			n, err = r.SaveNote("instruction", u.Note{DocumentID: docID, Content: content})
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	for _, docID := range []int64{0, one.ID, two.ID} {
+		first := save(docID, "First")
+		updated := save(docID, "Replacement")
+		if updated.ID != first.ID || updated.CreatedAt != first.CreatedAt || updated.Content != "Replacement" {
+			t.Fatalf("replacement: %+v %+v", first, updated)
+		}
+	}
+	for _, docID := range []int64{0, one.ID, two.ID} {
+		var notes []u.Note
+		if docID == 0 {
+			notes, err = r.GlobalInstructions()
+		} else {
+			notes, err = r.Notes("instruction", docID)
+		}
+		if err != nil || len(notes) != 1 || notes[0].Content != "Replacement" {
+			t.Fatalf("scope %d: %+v %v", docID, notes, err)
+		}
+	}
+	for _, content := range []string{"First memory", "Second memory"} {
+		if _, err := r.SaveNote("memory", u.Note{DocumentID: one.ID, Content: content}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	notes, err := r.Notes("memory", one.ID)
+	if err != nil || len(notes) != 2 {
+		t.Fatalf("memories: %+v %v", notes, err)
+	}
+}
