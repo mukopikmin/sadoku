@@ -23,7 +23,7 @@ export const DocumentViewSwitch = ({
       maxW="full"
       onValueChange={({ value }) => onChangeView(value as PreviewView)}
       size="sm"
-      variant="enclosed"
+      variant="subtle"
       value={view}
     >
       <Tabs.List aria-label="Preview views" flexWrap="wrap" maxW="full" gap="1">
@@ -35,7 +35,7 @@ export const DocumentViewSwitch = ({
           minH="9"
           flexWrap="wrap"
         >
-          <BookOpen aria-hidden="true" />
+          <Icon as={BookOpen} size="sm" aria-hidden="true" />
           {showLabels && "Preview"}
         </Tabs.Trigger>
         <Tabs.Trigger
@@ -46,7 +46,7 @@ export const DocumentViewSwitch = ({
           minH="9"
           flexWrap="wrap"
         >
-          <MessagesSquare aria-hidden="true" />
+          <Icon as={MessagesSquare} size="sm" aria-hidden="true" />
           {showLabels && "Comments"}
           {unresolvedCommentCount > 0 && (
             <Badge aria-hidden="true" size="sm" variant="solid">
