@@ -64,8 +64,18 @@ proxy URL for comments, deployment environment links, and its summary. It
 queries the backend Cloud Run API only to verify the tag and revision readiness.
 
 The preview image includes the selected commit's repository contents under
-`/app`, subject to `.dockerignore`. Its Docker `ENTRYPOINT` selects the
-platform-neutral `scripts/preview_entrypoint.sh`. Docker `CMD` supplies
+`/app`, subject to `.dockerignore`. Its runtime uses Alpine, a statically linked
+Sadoku binary, and the build image's CA bundle; Node, Go, and compilers remain in
+build stages. Repository files are copied with their final ownership to avoid a
+second layer that changes ownership of the entire tree.
+
+Client assets and the Go binary build in separate stages, with npm and Go module
+downloads in layers preceding their source files. CI does not import or export
+shared build caches. Buildx exports the final image directly as the Docker tar artifact consumed by the
+deployment job, without first loading it into the build runner's Docker daemon.
+
+The Docker `ENTRYPOINT` selects the platform-neutral
+`scripts/preview_entrypoint.sh`. Docker `CMD` supplies
 `/bin/sh /app/scripts/cloud_run_entrypoint.sh` as the command to execute after
 preparation. The launcher has no dependency on Cloud Run; the ordinary Cloud Run
 entrypoint keeps its existing server arguments and does not prepare sample data.
