@@ -1,9 +1,25 @@
-FROM golang:1.26-bookworm AS go-toolchain
+# syntax=docker/dockerfile:1
 
-FROM node:bookworm-slim AS builder
+FROM node:bookworm-slim AS client
+
+WORKDIR /workspace
+
+COPY package.json package-lock.json ./
+COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
+# Optional CA for builds behind a TLS proxy; never stored in an image layer.
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    npm_config_engine_strict=true npm run install:deps
+
+COPY src/preview/ ./src/preview/
+COPY gen/ts/ ./gen/ts/
+RUN npm run build:client
+
+FROM golang:1.26.10-bookworm AS go-toolchain
+
+FROM debian:bookworm-slim AS builder
 
 COPY --from=go-toolchain /usr/local/go /usr/local/go
-# Go module downloads use system roots rather than Node's bundled CA store.
 COPY --from=go-toolchain /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 ENV PATH="/usr/local/go/bin:${PATH}"
 
@@ -11,16 +27,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends make gcc libc6-
 
 WORKDIR /workspace
 
-COPY Makefile package.json package-lock.json ./
-COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-RUN npm_config_engine_strict=true make deps
+COPY go.mod go.sum ./
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
+    go mod download
 
-COPY . .
-RUN make build
+COPY Makefile ./
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
+COPY src/server/ ./src/server/
+COPY gen/go/ ./gen/go/
+COPY src/preview/assets.go ./src/preview/assets.go
+COPY --from=client /workspace/src/preview/dist/ ./src/preview/dist/
+RUN make build-server
 
-FROM debian:bookworm-slim
+# The Linux binary is statically linked, including SQLite. Alpine supplies the
+# shell and utilities used by the preview launcher without a Debian runtime.
+FROM alpine:3.23
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 ENV HOME=/tmp/sadoku-home \
     SADOKU_COMMENTS_DIR=/tmp/sadoku-comments
@@ -28,11 +53,9 @@ ENV HOME=/tmp/sadoku-home \
 WORKDIR /app
 
 COPY --from=builder /workspace/sadoku /usr/local/bin/sadoku
-COPY . /app/
+COPY --chown=65534:65534 . /app/
 
-RUN chown -R nobody:nogroup /app
-
-USER nobody:nogroup
+USER 65534:65534
 
 EXPOSE 8080
 
