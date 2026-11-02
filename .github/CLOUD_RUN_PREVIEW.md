@@ -70,12 +70,8 @@ build stages. Repository files are copied with their final ownership to avoid a
 second layer that changes ownership of the entire tree.
 
 Client assets and the Go binary build in separate stages, with npm and Go module
-downloads in layers preceding their source files. Buildx imports and exports all
-build-stage layers through the GitHub Actions cache with scope `sadoku-preview`.
-GitHub's cache branch restrictions apply: pull request builds can reuse the
-default branch's cache, while caches written by a pull request remain scoped to
-its merge ref. Go's mutable compiler cache is not exported separately. Buildx
-exports the final image directly as the Docker tar artifact consumed by the
+downloads in layers preceding their source files. CI does not import or export
+shared build caches. Buildx exports the final image directly as the Docker tar artifact consumed by the
 deployment job, without first loading it into the build runner's Docker daemon.
 
 The Docker `ENTRYPOINT` selects the platform-neutral
