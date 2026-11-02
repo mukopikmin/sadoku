@@ -3,6 +3,7 @@ import { BookOpen, MessagesSquare, TriangleAlert } from "lucide-react";
 import type { PreviewView } from "../models/previewView";
 
 type Props = {
+  showLabels?: boolean;
   onChangeView: (view: PreviewView) => void;
   staleCommentCount: number;
   unresolvedCommentCount: number;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export const DocumentViewSwitch = ({
+  showLabels = true,
   onChangeView,
   staleCommentCount,
   unresolvedCommentCount,
@@ -34,7 +36,7 @@ export const DocumentViewSwitch = ({
           flexWrap="wrap"
         >
           <BookOpen aria-hidden="true" />
-          Preview
+          {showLabels && "Preview"}
         </Tabs.Trigger>
         <Tabs.Trigger
           aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
@@ -45,7 +47,7 @@ export const DocumentViewSwitch = ({
           flexWrap="wrap"
         >
           <MessagesSquare aria-hidden="true" />
-          Comments
+          {showLabels && "Comments"}
           {unresolvedCommentCount > 0 && (
             <Badge aria-hidden="true" size="sm" variant="solid">
               {unresolvedCommentCount}

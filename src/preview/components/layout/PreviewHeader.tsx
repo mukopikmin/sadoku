@@ -135,7 +135,7 @@ export const PreviewHeader = ({
     >
       {documentNavigation && (
         <Flex alignItems="center" gap="3" flexShrink="0">
-          <DocumentNavigation {...documentNavigation} />
+          <DocumentNavigation {...documentNavigation} showLabels={false} />
           <Separator orientation="vertical" h="6" borderColor="border.muted" />
         </Flex>
       )}

@@ -380,11 +380,11 @@ describe("App", () => {
     });
     expect(
       within(applicationActions).getByRole("tab", { name: "Preview" }).textContent,
-    ).toBe("Preview");
+    ).toBe("");
     expect(
       within(applicationActions).getByRole("tab", { name: "Comments, 0 unresolved" })
         .textContent,
-    ).toBe("Comments");
+    ).toBe("");
     expect(
       within(applicationActions).queryByRole("button", {
         name: "Table of contents",
@@ -462,7 +462,7 @@ describe("App", () => {
     documentBottom = 20;
     fireEvent.scroll(globalThis);
     const commentsPreview = await header.findByRole("tab", { name: "Preview" });
-    expect(commentsPreview.textContent).toBe("Preview");
+    expect(commentsPreview.textContent).toBe("");
     expect(header.getByText("Reading guide")).not.toBeNull();
     fireEvent.click(commentsPreview);
     await waitFor(() => expect(header.getByRole("tab", {name:"Preview"}).getAttribute("aria-selected")).toBe("true"));

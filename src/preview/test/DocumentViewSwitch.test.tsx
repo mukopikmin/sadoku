@@ -83,3 +83,16 @@ describe("DocumentViewSwitch", () => {
     expect(within(comments).queryByRole("img")).toBeNull();
   });
 });
+
+
+it("omits visible labels in the header while retaining accessible names and counts", () => {
+  const props = { onChangeView: () => {}, staleCommentCount: 1, unresolvedCommentCount: 2, view: "preview" as PreviewView };
+  const { rerender } = render(<DocumentViewSwitch {...props} showLabels={false} />);
+  expect(screen.getByRole("tab", { name: "Preview" }).textContent).toBe("");
+  const comments = screen.getByRole("tab", { name: "Comments, 2 unresolved" });
+  expect(comments.textContent).toBe("2");
+  expect(within(comments).getByRole("img", { name: "Stale comments: 1" })).not.toBeNull();
+  rerender(<DocumentViewSwitch {...props} />);
+  expect(screen.getByRole("tab", { name: "Preview" }).textContent).toBe("Preview");
+  expect(comments.textContent).toBe("Comments2");
+});
