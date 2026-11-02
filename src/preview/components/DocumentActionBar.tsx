@@ -18,7 +18,6 @@ import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
   diff?: { available: boolean; enabled: boolean; onToggle: () => void };
-  instructionCount: number;
   memoryCount: number;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
@@ -30,7 +29,6 @@ type DocumentActionBarProps = {
 
 export const DocumentActionBar = ({
   diff,
-  instructionCount,
   memoryCount,
   onOpenInstructions,
   onOpenMemories,
@@ -142,21 +140,15 @@ export const DocumentActionBar = ({
                 </Portal>
               </HoverCard.Root>
               <Tooltip content="Instructions">
-                <Button
+                <IconButton
                   aria-label="Instructions"
                   onClick={onOpenInstructions}
-                  px={instructionCount === 0 ? "0" : undefined}
                   size="sm"
                   type="button"
                   variant="outline"
                 >
                   <FileText aria-hidden="true" />
-                  {instructionCount > 0 && (
-                    <Badge aria-hidden="true" size="sm" variant="solid">
-                      {instructionCount}
-                    </Badge>
-                  )}
-                </Button>
+                </IconButton>
               </Tooltip>
               <Tooltip content="Memories">
                 <Button

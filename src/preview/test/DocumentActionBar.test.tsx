@@ -35,7 +35,6 @@ describe("DocumentActionBar", () => {
     });
     const { unmount } = render(
       <DocumentActionBar
-        instructionCount={0}
         memoryCount={0}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -65,7 +64,6 @@ describe("DocumentActionBar", () => {
     const onOpenTags = vi.fn();
     const { rerender } = render(
       <DocumentActionBar
-        instructionCount={3}
         memoryCount={4}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -83,7 +81,7 @@ describe("DocumentActionBar", () => {
     expect(tagsButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(tagsButton.textContent).toBe("2");
     expect(screen.getByRole("button", { name: "Instructions" }).textContent)
-      .toBe("3");
+      .toBe("");
     expect(screen.getByRole("button", { name: "Memories" }).textContent).toBe(
       "4",
     );
@@ -102,7 +100,6 @@ describe("DocumentActionBar", () => {
     fireEvent.pointerLeave(tagsButton);
     rerender(
       <DocumentActionBar
-        instructionCount={0}
         memoryCount={0}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -132,7 +129,6 @@ describe("DocumentActionBar", () => {
     const onOpenRevisions = vi.fn();
     render(
       <DocumentActionBar
-        instructionCount={0}
         memoryCount={12}
         onOpenInstructions={onOpenInstructions}
         onOpenMemories={onOpenMemories}

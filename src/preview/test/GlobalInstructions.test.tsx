@@ -26,11 +26,13 @@ it("shows global guidance separately from editable document instructions", async
     "fetch",
     vi.fn(async (input: RequestInfo | URL) =>
       Response.json({
-        instructions: [note(
-          String(input) === "/__sadoku/global-instructions"
-            ? "Shared guidance"
-            : "Document guidance",
-        )],
+        instructions: [
+          note(
+            String(input) === "/__sadoku/global-instructions"
+              ? "Shared guidance"
+              : "Document guidance",
+          ),
+        ],
       })
     ),
   );
@@ -44,9 +46,14 @@ it("shows global guidance separately from editable document instructions", async
     />,
   );
   expect(await screen.findByText("Shared guidance")).not.toBeNull();
-  expect(await screen.findByText("Document guidance")).not.toBeNull();
-  expect(screen.getAllByRole("button", { name: "Edit" }))
-    .toHaveLength(1);
+  expect(
+    (
+      (await screen.findByRole("textbox", {
+        name: "Instruction",
+      })) as HTMLTextAreaElement
+    ).value,
+  ).toBe("Document guidance");
+  expect(screen.getAllByRole("textbox")).toHaveLength(1);
   fireEvent.click(
     screen.getByRole("button", {
       name: "Manage global instructions",
@@ -55,7 +62,7 @@ it("shows global guidance separately from editable document instructions", async
   expect(manage).toHaveBeenCalledOnce();
 });
 
-it("creates, edits, and deletes shared guidance in its own dialog", async () => {
+it("saves and clears a single shared instruction in its own dialog", async () => {
   let instructions: ReturnType<typeof note>[] = [];
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -74,52 +81,35 @@ it("creates, edits, and deletes shared guidance in its own dialog", async () => 
     },
   );
   vi.stubGlobal("fetch", fetchMock);
-  render(
-    <GlobalInstructionsDialog
-      open
-      onOpenChange={() => {}}
-    />,
-  );
+  render(<GlobalInstructionsDialog open onOpenChange={() => {}} />);
   const section = within(
     screen.getByRole("dialog", { name: "Global instructions" }),
   );
-  await section.findByText("No instructions have been added.");
+  const input = (await section.findByRole("textbox", {
+    name: "Instruction",
+  })) as HTMLTextAreaElement;
+  const save = () => section.getByRole("button", { name: "Save instruction" });
+  expect(input.value).toBe("");
   expect(section.getByText(/Changes affect every document/)).not.toBeNull();
-  fireEvent.click(section.getByRole("button", { name: "Add Instruction" }));
-  fireEvent.change(section.getByRole("textbox", { name: "Instruction" }), {
-    target: { value: "Shared guidance" },
-  });
-  fireEvent.click(section.getByRole("button", { name: "Save instruction" }));
-  await section.findByText("Shared guidance");
-  await waitFor(() => expect(section.queryByRole("textbox")).toBeNull());
-  fireEvent.click(section.getByRole("button", { name: "Edit" }));
-  fireEvent.change(section.getByRole("textbox", { name: "Instruction" }), {
-    target: { value: "Updated shared guidance" },
-  });
-  fireEvent.click(section.getByRole("button", { name: "Save instruction" }));
-  await section.findByText("Updated shared guidance");
-  await waitFor(() => expect(section.queryByRole("textbox")).toBeNull());
-  fireEvent.click(section.getByRole("button", { name: "Delete" }));
-  const confirm = await screen.findByRole("alertdialog", {
-    name: "Delete instruction?",
-  });
-  expect(within(confirm).getByText(/deleted for all documents/)).not.toBeNull();
-  expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "DELETE"))
-    .toHaveLength(0);
-  fireEvent.click(
-    within(confirm).getByRole("button", {
-      name: "Delete instruction",
-    }),
-  );
-  await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
-  await section.findByText("No instructions have been added.");
+  fireEvent.change(input, { target: { value: "Shared guidance" } });
+  fireEvent.click(save());
+  await waitFor(() => expect(save().hasAttribute("disabled")).toBe(true));
+  expect(input.value).toBe("Shared guidance");
+  fireEvent.change(input, { target: { value: "Updated shared guidance" } });
+  fireEvent.click(save());
+  await waitFor(() => expect(save().hasAttribute("disabled")).toBe(true));
+  expect(input.value).toBe("Updated shared guidance");
+  fireEvent.change(input, { target: { value: "" } });
+  fireEvent.click(save());
+  await waitFor(() => expect(save().hasAttribute("disabled")).toBe(true));
+  expect(input.value).toBe("");
   expect(
-    fetchMock.mock.calls.filter(([, init]) => init?.method).map((
-      [url, init],
-    ) => [url, init?.method]),
-  )
-    .toEqual([["/__sadoku/global-instructions", "POST"], [
-      "/__sadoku/global-instructions/1",
-      "PUT",
-    ], ["/__sadoku/global-instructions/1", "DELETE"]]);
+    fetchMock.mock.calls
+      .filter(([, init]) => init?.method)
+      .map(([url, init]) => [url, init?.method]),
+  ).toEqual([
+    ["/__sadoku/global-instructions", "POST"],
+    ["/__sadoku/global-instructions/1", "PUT"],
+    ["/__sadoku/global-instructions/1", "DELETE"],
+  ]);
 });

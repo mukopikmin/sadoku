@@ -82,10 +82,10 @@ add_comment "$review" 'const state: PreviewState = "ready";' \
   'Code comment: consider how failures should be represented.'
 add_comment "$review" '## Mermaid Diagrams' \
   'Diagram comment: check Mermaid rendering and zoom controls.'
-sadoku instruction add --source "$review" \
-  --content 'Check that the document explains the workflow clearly enough for users to follow.' >/dev/null
-sadoku instruction add --source "$review" \
-  --content 'Include a reason and a concrete example with each suggestion.' >/dev/null
+sadoku instruction set --source "$review" \
+  --content 'Check that the document explains the workflow clearly enough for users to follow.
+
+Include a reason and a concrete example with each suggestion.' >/dev/null
 sadoku memory add --source "$review" \
   --content 'This document is for preview checks. Try editing, replying to, and resolving comments.' >/dev/null
 sadoku memory add --source "$review" \
