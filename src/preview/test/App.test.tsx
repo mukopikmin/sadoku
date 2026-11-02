@@ -292,7 +292,7 @@ describe("App", () => {
     );
   });
 
-  it("integrates the document title and a working table of contents into the header while scrolled", async () => {
+  it("keeps the action bar table of contents stable while document navigation moves on scroll", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const scrollIntoView = vi.fn();
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
@@ -348,7 +348,7 @@ describe("App", () => {
     expect(within(titleActions).getByRole("button", { name: "Edit title" }))
       .not.toBeNull();
     expect(
-      within(titleActions).getByRole("button", { name: "Table of contents" }),
+      within(screen.getByRole("dialog", {name:"Document actions"})).getByRole("button", { name: "Table of contents" }),
     ).not.toBeNull();
     const header = within(screen.getByRole("banner"));
     expect(header.queryByRole("button", { name: "Table of contents" }))
@@ -366,11 +366,11 @@ describe("App", () => {
     expect(header.queryByRole("separator")).toBeNull();
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
 
+    const tocButton = screen.getByRole("button", {name:"Table of contents"});
     documentBottom = 64;
     fireEvent.scroll(globalThis);
-    fireEvent.click(
-      await header.findByRole("button", { name: "Table of contents" }),
-    );
+    await header.findByText("Reading guide");
+    fireEvent.click(tocButton);
     expect(
       header.getByRole("link", { name: "guide.md" }).getAttribute("href"),
     ).toBe("file:///tmp/guide.md");
@@ -386,10 +386,10 @@ describe("App", () => {
         .textContent,
     ).toBe("Comments");
     expect(
-      within(applicationActions).getByRole("button", {
+      within(applicationActions).queryByRole("button", {
         name: "Table of contents",
       }),
-    ).not.toBeNull();
+    ).toBeNull();
     expect(
       within(applicationActions).getByRole("separator")
         .getAttribute("aria-orientation"),
@@ -416,10 +416,7 @@ describe("App", () => {
 
     documentBottom = 180;
     fireEvent.scroll(globalThis);
-    await waitFor(() =>
-      expect(header.queryByRole("button", { name: "Table of contents" }))
-        .toBeNull()
-    );
+    await waitFor(() => expect(header.queryByText("Reading guide")).toBeNull());
     expect(header.getByRole("link", { name: "guide.md" })).not.toBeNull();
     expect(header.queryByText("Reading guide")).toBeNull();
     expect(header.queryByRole("separator")).toBeNull();
@@ -432,9 +429,7 @@ describe("App", () => {
 
     documentBottom = 20;
     fireEvent.scroll(globalThis);
-    const collapsedToc = await header.findByRole("button", {
-      name: "Table of contents",
-    });
+    await header.findByRole("tab", {name:"Preview"});
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
@@ -447,9 +442,7 @@ describe("App", () => {
     expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
       .getAttribute("aria-selected")).toBe("true");
 
-    expect(header.getByRole("button", { name: "Table of contents" })).toBe(
-      collapsedToc,
-    );
+    expect(screen.getByRole("button", { name: "Table of contents" })).toBe(tocButton);
     documentBottom = 180;
     fireEvent.scroll(globalThis);
     await waitFor(() => expect(header.queryByRole("tablist")).toBeNull());
@@ -472,7 +465,7 @@ describe("App", () => {
     expect(commentsPreview.textContent).toBe("Preview");
     expect(header.getByText("Reading guide")).not.toBeNull();
     fireEvent.click(commentsPreview);
-    await header.findByRole("button", { name: "Table of contents" });
+    await waitFor(() => expect(header.getByRole("tab", {name:"Preview"}).getAttribute("aria-selected")).toBe("true"));
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await screen.findByRole("treeitem", { name: "guide.md" });
     expect(screen.queryByRole("button", { name: "Table of contents" }))
@@ -886,7 +879,7 @@ describe("App", () => {
     });
     expect(within(titleActions).getByRole("button", { name: "Set title" }))
       .not.toBeNull();
-    const tableOfContentsButton = within(titleActions).getByRole("button", {
+    const tableOfContentsButton = within(firstActionBar).getByRole("button", {
       name: "Table of contents",
     });
     expect(
@@ -901,14 +894,13 @@ describe("App", () => {
       name: "Comments, 0 unresolved",
     }));
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "Document actions" }))
-        .toBeNull();
+      expect(screen.getByRole("dialog", { name: "Document actions" })).toBe(firstActionBar);
       expect(screen.getByRole("tab", {
         name: "Comments, 0 unresolved",
       }).getAttribute("aria-selected")).toBe("true");
-      expect(screen.queryByRole("button", { name: "Instructions" })).toBeNull();
-      expect(screen.queryByRole("button", { name: "Revisions" })).toBeNull();
-      expect(screen.queryByTestId("action-bar-spacer")).toBeNull();
+      expect(screen.getByRole("button", { name: "Instructions" })).not.toBeNull();
+      expect(screen.getByRole("button", { name: "Revisions" })).not.toBeNull();
+      expect(screen.getByTestId("action-bar-spacer")).not.toBeNull();
       expect(screen.getByRole("region", { name: "Document header" })).toBe(documentHeader);
       expect(screen.getByRole("group", { name: "Document title actions" })).toBe(titleActions);
       expect(screen.getByRole("button", { name: "Table of contents" })).toBe(tableOfContentsButton);

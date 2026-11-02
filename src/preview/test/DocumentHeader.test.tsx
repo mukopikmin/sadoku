@@ -1,5 +1,6 @@
 import type { ComponentProps, FunctionComponent } from "react";
 import { afterEach, expect, it, vi } from "vitest";
+import { DocumentActionBar } from "../components/DocumentActionBar";
 import { DocumentHeader } from "../components/DocumentHeader";
 import { DocumentNavigation } from "../components/DocumentNavigation";
 import { DocumentTitle } from "../components/DocumentTitle";
@@ -27,19 +28,31 @@ it("updates view controls without rendering the title or table of contents again
     title = "Guide",
     markdown = "# Introduction",
   ) => (
-    <DocumentHeader
-      documentId={1}
-      title={title}
-      trailingAction={
-        <DocumentNavigation
-          markdown={markdown}
-          onChangeView={() => {}}
-          staleCommentCount={0}
-          unresolvedCommentCount={0}
-          view={view}
-        />
-      }
-    />
+    <>
+      <DocumentHeader
+        documentId={1}
+        title={title}
+        trailingAction={
+          <DocumentNavigation
+            onChangeView={() => {}}
+            staleCommentCount={0}
+            unresolvedCommentCount={0}
+            view={view}
+          />
+        }
+      />
+      <DocumentActionBar
+        markdown={markdown}
+        instructionCount={0}
+        memoryCount={0}
+        onOpenInstructions={() => {}}
+        onOpenMemories={() => {}}
+        onOpenRevisions={() => {}}
+        onOpenTags={() => {}}
+        tagCount={0}
+        tags={[]}
+      />
+    </>
   );
   const { rerender } = render(header("preview"));
   const titleCalls = titleRender.mock.calls.length;

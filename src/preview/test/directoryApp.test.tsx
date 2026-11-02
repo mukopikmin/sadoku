@@ -400,7 +400,7 @@ describe("directory preview", () => {
     expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
-    expect(screen.queryByRole("dialog", { name: "Document actions" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Document actions" })).not.toBeNull();
     expect(
       screen.getByRole("tab", {
         name: "Comments, 0 unresolved",

@@ -83,7 +83,6 @@ export const DocumentPreviewPage = ({
             visibility={documentNavigationInHeader ? "hidden" : "visible"}
           >
             <DocumentNavigation
-              markdown={document.markdown}
               onChangeView={onChangeView}
               staleCommentCount={staleCommentCount}
               unresolvedCommentCount={unresolvedCommentCount}
@@ -146,19 +145,18 @@ export const DocumentPreviewPage = ({
           documentDeleted={document.deleted}
         />
       )}
-      {view === "preview" && (
-        <DocumentActionBar
-          diff={diff}
-          instructionCount={instructionCount}
-          memoryCount={memoryCount}
-          onOpenInstructions={onOpenInstructions}
-          onOpenMemories={onOpenMemories}
-          onOpenRevisions={() => setRevisionsOpen(true)}
-          tagCount={document.tags.length}
-          onOpenTags={onOpenTags}
-          tags={document.tags}
-        />
-      )}
+      <DocumentActionBar
+        markdown={document.markdown}
+        diff={diff}
+        instructionCount={instructionCount}
+        memoryCount={memoryCount}
+        onOpenInstructions={onOpenInstructions}
+        onOpenMemories={onOpenMemories}
+        onOpenRevisions={() => setRevisionsOpen(true)}
+        tagCount={document.tags.length}
+        onOpenTags={onOpenTags}
+        tags={document.tags}
+      />
     </Container>
   );
 };

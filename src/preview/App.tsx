@@ -303,7 +303,6 @@ export const App = () => {
         fileUrl: document.fileUrl,
         documentNavigation: collapsed
           ? {
-            markdown: document.markdown,
             onChangeView: changeView,
             staleCommentCount,
             unresolvedCommentCount,

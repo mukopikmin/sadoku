@@ -10,6 +10,7 @@ import {
   Text,
   useElementRect,
 } from "@chakra-ui/react";
+import { TableOfContents } from "../pages/markdown/TableOfContents";
 import { useCallback } from "react";
 import { Brain, FileDiff, FileText, History, Tag } from "lucide-react";
 import type { DocumentTag } from "../models/document";
@@ -17,6 +18,7 @@ import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
+  markdown: string;
   diff?: { available: boolean; enabled: boolean; onToggle: () => void };
   instructionCount: number;
   memoryCount: number;
@@ -29,6 +31,7 @@ type DocumentActionBarProps = {
 };
 
 export const DocumentActionBar = ({
+  markdown,
   diff,
   instructionCount,
   memoryCount,
@@ -61,7 +64,9 @@ export const DocumentActionBar = ({
             ref={contentRef}
             aria-label="Document actions"
             maxW="calc(100vw - 2rem)"
+            flexWrap="wrap"
           >
+            <TableOfContents markdown={markdown} />
             {diff && (
               <Tooltip
                 content={
