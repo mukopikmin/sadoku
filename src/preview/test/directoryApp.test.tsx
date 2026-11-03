@@ -135,9 +135,9 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
-  it.each(["preview", "comments"])(
-    "opens revisions from the %s view and switches the rendered content",
-    async (view) => {
+  it(
+    "opens revisions from the document view and switches the rendered content",
+    async () => {
       vi.stubGlobal("EventSource", DirectoryEventSource);
       installFetch();
       render(<App />);
@@ -145,12 +145,6 @@ describe("directory preview", () => {
         await screen.findByRole("treeitem", { name: "alpha.md" }),
       );
       await screen.findByRole("heading", { name: "Document 1" });
-      if (view === "comments") {
-        fireEvent.click(
-          screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
-        );
-        await screen.findByRole("tabpanel", { name: "Unresolved" });
-      }
       fireEvent.click(await screen.findByRole("button", { name: "Revisions" }));
       const dialog = within(
         await screen.findByRole("dialog", { name: "Document revisions" }),
@@ -170,18 +164,12 @@ describe("directory preview", () => {
         expect(screen.queryByRole("dialog", { name: "Document revisions" }))
           .toBeNull()
       );
-      const selectedView = view === "comments"
-        ? "Comments, 0 unresolved"
-        : "Preview";
       expect(
-        screen.getByRole("tab", { name: selectedView }).getAttribute(
+        screen.getByRole("tab", { name: "Preview" }).getAttribute(
           "aria-selected",
         ),
-      )
-        .toBe("true");
-      expect(location.pathname).toBe(
-        view === "comments" ? "/documents/1/comments" : "/documents/1",
-      );
+      ).toBe("true");
+      expect(location.pathname).toBe("/documents/1");
     },
   );
   it("shows pull request metadata above the document tree", async () => {
@@ -412,13 +400,13 @@ describe("directory preview", () => {
     expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
-    const actionBar = screen.getByRole("dialog", { name: "Document actions" });
+    expect(screen.queryByRole("dialog", { name: "Document actions" })).toBeNull();
     expect(
-      within(actionBar).getByRole("tab", {
+      screen.getByRole("tab", {
         name: "Comments, 0 unresolved",
       }).getAttribute("aria-selected"),
     ).toBe("true");
-    fireEvent.click(within(actionBar).getByRole("tab", { name: "Preview" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     expect(await screen.findByRole("heading", { name: "Document 2" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2");

@@ -88,3 +88,44 @@ func TestGlobalInstructionsREST(t *testing.T) {
 	restRequest(t, server.URL, "DELETE", idPath, "", "", 404)
 	restRequest(t, server.URL, "PUT", path+"/0", `{"content":"bad"}`, "application/json", 404)
 }
+
+func TestInstructionAPISavesSingleValuePerScope(t *testing.T) {
+	for _, jsonCodec := range []bool{true, false} {
+		t.Run(fmt.Sprint(jsonCodec), func(t *testing.T) {
+			s, server, _ := setup(t)
+			options := []connect.ClientOption{}
+			if jsonCodec {
+				options = append(options, connect.WithProtoJSON())
+			}
+			client := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL, options...)
+			ctx := context.Background()
+			docID := uint64(s.Documents[0].ID)
+			var globalID, localID uint64
+			for _, content := range []string{"First", "Replacement"} {
+				global, err := client.CreateGlobalInstruction(ctx, connect.NewRequest(&pb.CreateGlobalInstructionRequest{Content: "Global " + content}))
+				if err != nil {
+					t.Fatal(err)
+				}
+				local, err := client.CreateInstruction(ctx, connect.NewRequest(&pb.CreateInstructionRequest{DocumentId: docID, Content: "Local " + content}))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if globalID != 0 && globalID != global.Msg.Id {
+					t.Fatal("replaced global ID")
+				}
+				if localID != 0 && localID != local.Msg.Id {
+					t.Fatal("replaced local ID")
+				}
+				globalID, localID = global.Msg.Id, local.Msg.Id
+			}
+			global, err := client.ListGlobalInstructions(ctx, connect.NewRequest(&pb.ListGlobalInstructionsRequest{}))
+			if err != nil || len(global.Msg.Instructions) != 1 || global.Msg.Instructions[0].Content != "Global Replacement" {
+				t.Fatalf("global: %v %v", global, err)
+			}
+			local, err := client.ListInstructions(ctx, connect.NewRequest(&pb.ListInstructionsRequest{DocumentId: docID}))
+			if err != nil || len(local.Msg.Instructions) != 1 || local.Msg.Instructions[0].Content != "Local Replacement" {
+				t.Fatalf("local: %v %v", local, err)
+			}
+		})
+	}
+}

@@ -23,6 +23,8 @@ type AppearanceSettingsProps = {
   onFontScaleChange: (value: number) => void;
   onThemeModeChange: (value: ThemeMode) => void;
   onShowHtmlCommentsChange: (value: boolean) => void;
+  onShowHighlightBoundariesChange: (value: boolean) => void;
+  showHighlightBoundaries: boolean;
   showHtmlComments: boolean;
   themeMode: ThemeMode;
 };
@@ -35,6 +37,8 @@ export const AppearanceSettings = (
     onFontScaleChange,
     onThemeModeChange,
     onShowHtmlCommentsChange,
+    onShowHighlightBoundariesChange,
+    showHighlightBoundaries,
     showHtmlComments,
     themeMode,
   }: AppearanceSettingsProps,
@@ -149,6 +153,25 @@ export const AppearanceSettings = (
             <Switch.Thumb />
           </Switch.Control>
           <Switch.Label srOnly>Show HTML comments</Switch.Label>
+        </Switch.Root>
+      </Flex>
+      <Flex alignItems="center" justifyContent="space-between" gap="4">
+        <Text as="div">
+          <Text fontWeight="medium">Show highlight boundaries</Text>
+          <Text color="fg.muted" fontSize="sm">
+            Outline all highlight regions to inspect their spacing
+          </Text>
+        </Text>
+        <Switch.Root
+          checked={showHighlightBoundaries}
+          onCheckedChange={({ checked }) =>
+            onShowHighlightBoundariesChange(checked)}
+        >
+          <Switch.HiddenInput />
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+          <Switch.Label srOnly>Show highlight boundaries</Switch.Label>
         </Switch.Root>
       </Flex>
     </>
