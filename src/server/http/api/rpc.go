@@ -36,7 +36,9 @@ func invoke(ctx context.Context, s *Service, operation string, in, out proto.Mes
 		if _, ok := fields["showHtmlComments"]; !ok {
 			input.ShowHTMLComments = current.ShowHTMLComments
 		}
-
+		if _, ok := fields["showHighlightBoundaries"]; !ok {
+			input.ShowHighlightBoundaries = current.ShowHighlightBoundaries
+		}
 	}
 	result, err := s.Session.Invoke(ctx, operation, input)
 	if err != nil {

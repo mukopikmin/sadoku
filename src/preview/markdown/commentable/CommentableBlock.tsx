@@ -69,7 +69,17 @@ export const CommentableBlock = ({
   onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
-  const [draft, setDraft] = useState("");
+  const { markdown, drafts } = useCommentRenderingContext();
+  const [draft, setDraftState] = useState(
+    () => drafts?.get(sourceRange.startLine) ?? "",
+  );
+  // Diff mode can reparent a block. Keep an unfinished comment across that remount.
+  const setDraft = (value: React.SetStateAction<string>) => {
+    const next = typeof value === "function" ? value(draft) : value;
+    if (next) drafts?.set(sourceRange.startLine, next);
+    else drafts?.delete(sourceRange.startLine);
+    setDraftState(next);
+  };
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const pendingRange: CommentRange = activeRange ?? selectedRange ?? {
@@ -88,7 +98,6 @@ export const CommentableBlock = ({
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
 
-  const { markdown } = useCommentRenderingContext();
   const selectedSource = useMemo(() =>
     markdown.split(/\r?\n/).slice(
       pendingRange.startLine - 1,
@@ -267,7 +276,7 @@ export const CommentableBlock = ({
               borderLeftColor="accent"
               borderLeftWidth="3px"
               mb="1.5"
-              pb="1px"
+              pb="0.5"
               pl="3"
               pt="2"
             >
@@ -331,7 +340,7 @@ export const CommentableBlock = ({
               </Flex>
             </Box>
           )}
-          {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+          {error && <Text color="fg.error" fontSize="sm">{error}</Text>}
         </Stack>
       )}
     </Box>

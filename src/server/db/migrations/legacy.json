@@ -122,5 +122,22 @@
     "statements": [
       "CREATE TABLE global_instruction ( id INTEGER PRIMARY KEY, content TEXT NOT NULL CHECK (length(trim(content)) > 0), created_at TEXT NOT NULL CHECK (created_at GLOB '????-??-??T??:??:??.???Z'), updated_at TEXT NOT NULL CHECK (updated_at GLOB '????-??-??T??:??:??.???Z') )"
     ]
+  },
+  {
+    "version": "0014",
+    "name": "single_instruction_per_scope",
+    "checksum": "sha256:6b4339196cf872f27f46238734eff50462b7359ba444bbe2046d2d151c9f09a4",
+    "statements": [
+      "CREATE TEMP TABLE merged_document_instruction AS SELECT document_id, MIN(id) AS id, group_concat(content, char(10) || char(10)) AS content, MIN(created_at) AS created_at, MAX(updated_at) AS updated_at FROM (SELECT * FROM document_instruction ORDER BY id) GROUP BY document_id",
+      "DELETE FROM document_instruction",
+      "INSERT INTO document_instruction(id,document_id,content,created_at,updated_at) SELECT id,document_id,content,created_at,updated_at FROM merged_document_instruction",
+      "DROP TABLE merged_document_instruction",
+      "CREATE UNIQUE INDEX idx_document_instruction_singleton ON document_instruction(document_id)",
+      "CREATE TEMP TABLE merged_global_instruction AS SELECT MIN(id) AS id, group_concat(content, char(10) || char(10)) AS content, MIN(created_at) AS created_at, MAX(updated_at) AS updated_at FROM (SELECT * FROM global_instruction ORDER BY id) HAVING COUNT(*) > 0",
+      "DELETE FROM global_instruction",
+      "INSERT INTO global_instruction(id,content,created_at,updated_at) SELECT id,content,created_at,updated_at FROM merged_global_instruction",
+      "DROP TABLE merged_global_instruction",
+      "CREATE UNIQUE INDEX idx_global_instruction_singleton ON global_instruction((1))"
+    ]
   }
 ]

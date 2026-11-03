@@ -68,6 +68,13 @@ Run `sadoku --help` for all commands and options.
   Existing files are never overwritten.
 - Use **Zoom** on a Mermaid diagram to enlarge it. Use the **+** and **−**
   buttons or pinch to zoom, scroll to move, and choose **Fit to view** to reset.
+- Toggle **Changes** in the document action bar to compare the rendered document
+  with its previous saved snapshot. Removed blocks appear in red before added
+  blocks in green, with colored gutters. Tables, lists, and code blocks are
+  compared as whole blocks. Current content remains commentable; removed content
+  is read-only. Comment ranges use outlines while changes are shown. The option
+  is off initially and unavailable when no comparison data exists. The baseline
+  is a saved snapshot, not the last time you viewed the document.
 - Open **Revisions** in the document action bar to view the current document or
   choose from its latest 20 saved revisions, listed newest first with recording
   times. Each selected revision shows changes from its immediately preceding
@@ -170,17 +177,27 @@ including local files, URLs, and GitHub PR files. Manage them under
 registering a document:
 
 ```sh
-sadoku instruction list --global
-sadoku instruction add --global --content "Keep explanations concise."
-sadoku instruction update <instruction-id> --global --content "Use concrete examples."
-sadoku instruction delete <instruction-id> --global
+sadoku instruction get --global
+sadoku instruction set --global --content "Keep explanations concise."
+sadoku instruction set --global --content ""
+sadoku instruction set --source document.md --content "Use concrete examples."
 ```
 
 Choose exactly one of `--global`, `--document <id>`, or `--source <file.md|url>`.
-Global listing returns `{ "instructions": [...] }` without a document; entries
-have `id`, `content`, `createdAt`, and `updatedAt`. Existing document-specific
-commands and output remain unchanged. Global instructions are stored separately
-and survive document deletion.
+Each scope stores a single instruction text: one shared value for the database
+and one value per document. `get` and `set` return `{ "content": "..." }`;
+an unset value is an empty string. `set` replaces the whole text, and setting an
+explicitly empty string (`--content ""`) clears it. Omitting `--content` or
+providing only whitespace is an error. In the UI, edit the text and save;
+leave it empty and save to clear it.
+
+Existing databases automatically merge multiple instructions within each scope
+in ID order, separated by blank lines. Instruction commands are `get` and `set`;
+instruction IDs are not accepted.
+Use `set` to explicitly replace the complete text; there is no append operation.
+The existing API response shapes remain available for compatibility. Global
+instructions remain separate from document instructions and memories. Memories
+continue to support multiple entries.
 
 The document instructions dialog shows both global guidance and instructions
 for that document. Choose **Manage global instructions** there to open the same
@@ -255,6 +272,10 @@ macOS and Linux, and `%APPDATA%\sadoku\config.toml` on Windows. For example:
 commentsDirectory = "/path/to/sadoku/comments"
 theme_mode = "dark"
 ```
+
+Enable **Settings → Show highlight boundaries** to outline commentable blocks,
+range highlights, and revision highlights for spacing inspection. This setting
+is off by default and is saved as `show_highlight_boundaries` in `config.toml`.
 
 Remote URL query strings and fragments are excluded from stored document
 identities. Sadoku uses `gh` for PR access without reading or storing a GitHub

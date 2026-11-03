@@ -11,48 +11,39 @@ import {
   useElementRect,
 } from "@chakra-ui/react";
 import { useCallback } from "react";
-import { Brain, FileText, History, Tag } from "lucide-react";
+import { Brain, FileDiff, FileText, History, Tag } from "lucide-react";
 import type { DocumentTag } from "../models/document";
-import type { PreviewView } from "../models/previewView";
-import { DocumentViewSwitch } from "./DocumentViewSwitch";
 import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
-  instructionCount: number;
+  diff?: { available: boolean; enabled: boolean; onToggle: () => void };
   memoryCount: number;
-  onChangeView: (view: PreviewView) => void;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
   onOpenRevisions: () => void;
   tagCount: number;
   onOpenTags: () => void;
   tags: DocumentTag[];
-  staleCommentCount: number;
-  unresolvedCommentCount: number;
-  view: PreviewView;
 };
 
-export const DocumentActionBar = (
-  {
-    instructionCount,
-    memoryCount,
-    onChangeView,
-    onOpenInstructions,
-    onOpenMemories,
-    onOpenRevisions,
-    onOpenTags,
-    tagCount,
-    tags,
-    staleCommentCount,
-    unresolvedCommentCount,
-    view,
-  }: DocumentActionBarProps,
-) => {
+export const DocumentActionBar = ({
+  diff,
+  memoryCount,
+  onOpenInstructions,
+  onOpenMemories,
+  onOpenRevisions,
+  onOpenTags,
+  tagCount,
+  tags,
+}: DocumentActionBarProps) => {
   const { ref, rect } = useElementRect();
-  const contentRef = useCallback((node: HTMLDivElement | null) => {
-    ref.current = node;
-  }, [ref]);
+  const contentRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      ref.current = node;
+    },
+    [ref],
+  );
 
   return (
     <ActionBar.Root open>
@@ -67,17 +58,35 @@ export const DocumentActionBar = (
           <ActionBar.Content
             ref={contentRef}
             aria-label="Document actions"
-            alignItems={{ base: "stretch", md: "center" }}
-            flexDirection={{ base: "column", md: "row" }}
             maxW="calc(100vw - 2rem)"
           >
-            <DocumentViewSwitch
-              onChangeView={onChangeView}
-              staleCommentCount={staleCommentCount}
-              unresolvedCommentCount={unresolvedCommentCount}
-              view={view}
-            />
-            <ActionBar.Separator hideBelow="md" />
+            {diff && (
+              <Tooltip
+                content={
+                  diff.available
+                    ? "Show changes since previous saved snapshot"
+                    : "No previous comparison is available"
+                }
+              >
+                <Box as="span" display="inline-flex">
+                  <IconButton
+                    aria-label="Changes since previous snapshot"
+                    aria-description={
+                      !diff.available
+                        ? "No previous comparison is available"
+                        : undefined
+                    }
+                    aria-pressed={diff.enabled}
+                    disabled={!diff.available}
+                    onClick={diff.onToggle}
+                    size="sm"
+                    variant={diff.enabled ? "solid" : "outline"}
+                  >
+                    <FileDiff aria-hidden="true" />
+                  </IconButton>
+                </Box>
+              </Tooltip>
+            )}
             <Flex alignItems="center" gap="3" wrap="wrap">
               <HoverCard.Root
                 closeDelay={100}
@@ -111,39 +120,35 @@ export const DocumentActionBar = (
                         <HoverCard.ArrowTip />
                       </HoverCard.Arrow>
                       <Text fontWeight="semibold">Document tags</Text>
-                      {tags.length === 0
-                        ? <Text color="fg.muted" pt="2">No tags added.</Text>
-                        : (
-                          <Flex gap="2" pt="2" wrap="wrap">
-                            {tags.map((tag) => (
-                              <TagLabel
-                                backgroundColor={tag.backgroundColor}
-                                key={tag.id}
-                                name={tag.name}
-                              />
-                            ))}
-                          </Flex>
-                        )}
+                      {tags.length === 0 ? (
+                        <Text color="fg.muted" pt="2">
+                          No tags added.
+                        </Text>
+                      ) : (
+                        <Flex gap="2" pt="2" wrap="wrap">
+                          {tags.map((tag) => (
+                            <TagLabel
+                              backgroundColor={tag.backgroundColor}
+                              key={tag.id}
+                              name={tag.name}
+                            />
+                          ))}
+                        </Flex>
+                      )}
                     </HoverCard.Content>
                   </HoverCard.Positioner>
                 </Portal>
               </HoverCard.Root>
               <Tooltip content="Instructions">
-                <Button
+                <IconButton
                   aria-label="Instructions"
                   onClick={onOpenInstructions}
-                  px={instructionCount === 0 ? "0" : undefined}
                   size="sm"
                   type="button"
                   variant="outline"
                 >
                   <FileText aria-hidden="true" />
-                  {instructionCount > 0 && (
-                    <Badge aria-hidden="true" size="sm" variant="solid">
-                      {instructionCount}
-                    </Badge>
-                  )}
-                </Button>
+                </IconButton>
               </Tooltip>
               <Tooltip content="Memories">
                 <Button

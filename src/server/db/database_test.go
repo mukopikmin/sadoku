@@ -39,7 +39,7 @@ func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
 			}
 			defer database.Close()
 			var count int
-			if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 13 {
+			if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 14 {
 				t.Fatalf("reopened database migrations: %d, %v", count, err)
 			}
 		})
@@ -103,7 +103,7 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		}
 		defer database.Close()
 		var count int
-		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 13 {
+		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 14 {
 			t.Fatalf("legacy migrations: %d, %v", count, err)
 		}
 		want := []string{"legacy.md", "WASM 文書", "既存のコメント", "返信", "# 保存済み", "指示", "メモリー", "タグ"}
@@ -147,7 +147,7 @@ func TestMigrationCompatibility(t *testing.T) {
 		t.Fatal(err)
 	}
 	var count int
-	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 13 {
+	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 14 {
 		t.Fatalf("migration count %d: %v", count, err)
 	}
 	_, err = database.Exec("INSERT INTO comment_document(file_path,created_at,updated_at,title) VALUES('old.md',?,?,'Old title')", Now(), Now())
@@ -199,6 +199,8 @@ func TestUpgradeAddsGlobalInstructionsWithoutMovingDocumentContext(t *testing.T)
 	}
 	// Reproduce the schema and ledger immediately before global instructions.
 	for _, statement := range []string{
+		"DROP INDEX idx_document_instruction_singleton",
+		"DELETE FROM schema_migration WHERE version='0014'",
 		"DROP TABLE global_instruction",
 		"DELETE FROM schema_migration WHERE version='0013'",
 		"INSERT INTO comment_document(id,file_path,created_at,updated_at) VALUES(1,'doc.md','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",

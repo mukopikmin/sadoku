@@ -7,8 +7,8 @@ export const markdownStyles = `
     list-style-type: none;
   }
 
-  .markdown-preview .comment-markdown-list > li + li > .commentable-list-item > .commentable-content {
-    padding-top: var(--chakra-spacing-1);
+  .markdown-preview .commentable-list-item > .commentable-content {
+    padding-block: calc(var(--chakra-spacing-1) / 2);
   }
 
   .markdown-code-block {
@@ -56,6 +56,12 @@ export const markdownStyles = `
     pointer-events: none;
     position: absolute;
     z-index: -1;
+  }
+
+  :root[data-show-highlight-boundaries="true"] .markdown-range-highlight,
+  :root[data-show-highlight-boundaries="true"] .commentable-content::before {
+    outline: 1px solid var(--chakra-colors-accent);
+    outline-offset: -1px;
   }
 
   .markdown-range-highlight {
@@ -129,17 +135,8 @@ export const markdownStyles = `
     background: color-mix(in srgb, var(--chakra-colors-accent) 8%, var(--chakra-colors-canvas));
   }
 
-  .commentable-block:not(.commentable-block-selected):not(.commentable-block-continuous-highlight):has(.comment-thread) > .commentable-content pre {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 8%, var(--chakra-colors-canvas));
-  }
-
   .commentable-block:not(.commentable-block-selected):hover > .commentable-content::before,
   .commentable-block:not(.commentable-block-selected):focus-within > .commentable-content::before {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-canvas));
-  }
-
-  .commentable-block:not(.commentable-block-selected):hover > .commentable-content pre,
-  .commentable-block:not(.commentable-block-selected):focus-within > .commentable-content pre {
     background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-canvas));
   }
 
@@ -151,17 +148,66 @@ export const markdownStyles = `
     background: color-mix(in srgb, var(--chakra-colors-accent) 18%, var(--chakra-colors-canvas));
   }
 
-  .commentable-block-comment-highlight > .commentable-content pre {
-    background: color-mix(in srgb, var(--chakra-colors-selection-comment) 18%, var(--chakra-colors-canvas));
-  }
-
-  .commentable-block-range-selected > .commentable-content pre {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 18%, var(--chakra-colors-canvas));
+  /* Let the shared block/range highlight show through opaque Markdown surfaces. */
+  .markdown-preview :is(
+    .commentable-block:hover > .commentable-content,
+    .commentable-block:focus-within > .commentable-content,
+    .commentable-block-selected > .commentable-content,
+    .commentable-block-continuous-highlight > .commentable-content,
+    .commentable-block:has(.comment-thread) > .commentable-content,
+    [data-revision-kind]
+  ) :is(thead, pre, .code-block__root) {
+    background: transparent;
   }
 
   .comment-thread {
     margin: var(--chakra-spacing-2) 0 var(--chakra-spacing-3);
     margin-left: calc(0em - var(--comment-indent-offset, 0em));
+  }
+
+  .document-diff-addition,
+  .document-diff-deletion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--chakra-spacing-3);
+  }
+
+  .document-diff-addition {
+    background: var(--chakra-colors-highlight-addition-bg);
+  }
+
+  .document-diff-deletion {
+    background: var(--chakra-colors-highlight-deletion-bg);
+  }
+
+  [data-document-diff] .comment-thread {
+    background: var(--chakra-colors-canvas);
+  }
+
+  /* Diff colors belong to the content; comment and selection colors use outlines. */
+  [data-document-diff] .commentable-block:is(:hover, :focus-within, .commentable-block-selected, .commentable-block-continuous-highlight, :has(.comment-thread)) > .commentable-content::before,
+  [data-document-diff] .commentable-block:is(:hover, :focus-within, .commentable-block-selected, .commentable-block-continuous-highlight, :has(.comment-thread)) > .commentable-content pre {
+    background: transparent;
+  }
+
+  [data-document-diff] .commentable-block-comment-highlight > .commentable-content::before,
+  [data-document-diff] .markdown-range-highlight-comment {
+    background: transparent;
+    outline: 1px solid var(--chakra-colors-selection-comment);
+    outline-offset: -1px;
+  }
+
+  [data-document-diff] .commentable-block-range-selected > .commentable-content::before,
+  [data-document-diff] .commentable-block:hover > .commentable-content::before,
+  [data-document-diff] .commentable-block:focus-within > .commentable-content::before,
+  [data-document-diff] .markdown-range-highlight-selection {
+    background: transparent;
+    outline: 2px solid var(--chakra-colors-accent);
+    outline-offset: -2px;
+  }
+
+  [data-document-diff] > .markdown-range-highlights {
+    z-index: 1;
   }
 
   .mermaid-container .mermaid {
@@ -175,6 +221,11 @@ export const markdownStyles = `
     padding: var(--chakra-spacing-4);
     background: var(--chakra-colors-canvas-subtle);
     color: var(--chakra-colors-fg);
+  }
+
+  /* Mermaid sets an inline SVG background; use its highlighted container instead. */
+  .mermaid > svg {
+    background: inherit !important;
   }
 
   .mermaid-zoom-stage {

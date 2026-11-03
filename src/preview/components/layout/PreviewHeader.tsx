@@ -11,16 +11,15 @@ import {
   Text,
 } from "@chakra-ui/react";
 import {
-  Database,
   RefreshCw,
   ScrollText,
   Settings,
   Tag,
   WifiOff,
 } from "lucide-react";
-import type { ReactNode, RefObject } from "react";
+import type { ComponentProps, ReactNode, RefObject } from "react";
 import { Tooltip } from "../ui/tooltip";
-import { TableOfContents } from "../../pages/markdown/TableOfContents";
+import { DocumentNavigation } from "../DocumentNavigation";
 
 export const PreviewShell = ({ children, headerRef }: {
   children: ReactNode;
@@ -56,7 +55,8 @@ export const PreviewShell = ({ children, headerRef }: {
 );
 
 type PreviewHeaderProps = {
-  collapsedDocument?: { title?: string; markdown: string };
+  collapsedDocument?: { title?: string };
+  documentNavigation?: ComponentProps<typeof DocumentNavigation>;
   connectionLost: boolean;
   fileUrl?: string;
   globalInstructionsTriggerRef?: RefObject<HTMLButtonElement | null>;
@@ -65,7 +65,6 @@ type PreviewHeaderProps = {
   onReloadPreview: () => void;
   onOpenTags: () => void;
   onOpenSettings: () => void;
-  onOpenStatistics: () => void;
   reloadAvailable: boolean;
   reloading: boolean;
   tagsTriggerRef?: RefObject<HTMLButtonElement | null>;
@@ -74,6 +73,7 @@ type PreviewHeaderProps = {
 
 export const PreviewHeader = ({
   collapsedDocument,
+  documentNavigation,
   connectionLost,
   fileUrl,
   globalInstructionsTriggerRef,
@@ -81,7 +81,6 @@ export const PreviewHeader = ({
   headerRef,
   onReloadPreview,
   onOpenSettings,
-  onOpenStatistics,
   onOpenTags,
   reloadAvailable,
   reloading,
@@ -134,9 +133,9 @@ export const PreviewHeader = ({
       wrap="wrap"
       gap="2"
     >
-      {collapsedDocument && (
+      {documentNavigation && (
         <Flex alignItems="center" gap="3" flexShrink="0">
-          <TableOfContents markdown={collapsedDocument.markdown} />
+          <DocumentNavigation {...documentNavigation} />
           <Separator orientation="vertical" h="6" borderColor="border.muted" />
         </Flex>
       )}
@@ -178,15 +177,6 @@ export const PreviewHeader = ({
           <ScrollText aria-hidden="true" />
         </IconButton>
       </Tooltip>
-      <IconButton
-        aria-label="Open database statistics"
-        onClick={onOpenStatistics}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        <Database aria-hidden="true" />
-      </IconButton>
       <IconButton
         aria-label="Open settings"
         onClick={onOpenSettings}

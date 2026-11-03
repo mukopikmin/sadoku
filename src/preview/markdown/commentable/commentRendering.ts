@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { ActiveComment } from "../../models/comment";
 import type { MarkdownElementProps } from "../markdownRenderers";
-import type { CommentRange } from "./commentRanges";
+import type { CommentRange, RangeHighlight } from "./commentRanges";
 
 export type CommentRangeSelectionOptions = {
   extend: boolean;
@@ -40,9 +40,11 @@ export type CommentControlProps = {
 };
 
 export type CommentRenderingContextValue = CommentControlProps & {
+  drafts?: Map<number, string>;
   commentsByLine: Map<number, ActiveComment[]>;
   commentHighlightsByLine: Set<number>;
   markdown: string;
+  rangeHighlights: readonly RangeHighlight[];
 };
 
 export const SourceLineContext = createContext<ReadonlySet<number>>(new Set());
