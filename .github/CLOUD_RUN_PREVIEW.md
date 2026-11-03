@@ -78,7 +78,11 @@ The Docker `ENTRYPOINT` selects the platform-neutral
 `scripts/preview_entrypoint.sh`. Docker `CMD` supplies
 `/bin/sh /app/scripts/cloud_run_entrypoint.sh` as the command to execute after
 preparation. The launcher has no dependency on Cloud Run; the ordinary Cloud Run
-entrypoint keeps its existing server arguments and does not prepare sample data.
+entrypoint starts Sadoku with `--no-sync` and does not prepare sample data.
+Both PR and main previews disable SSE connections to avoid keeping Cloud Run
+requests open while a tab is idle. Use **Reload preview** to fetch external
+changes manually; comment saving continues to work. The server stays running
+without requiring `--keep-alive`.
 See [Preview sample data](../scripts/PREVIEW.md) for sample contents, lifecycle,
 and usage outside this deployment.
 

@@ -17,7 +17,7 @@ import (
 var Version = "0.0.0-dev"
 
 const Usage = `Usage:
-  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--trust-forwarded-prefix]
+  sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--no-sync] [--trust-forwarded-prefix]
   sadoku document add <file.md|url> [--create] [--title <text>]
   sadoku document inspect <document-id>
   sadoku document list
@@ -62,6 +62,8 @@ Options:
   --host            Preview host. Defaults to 127.0.0.1.
   --no-open         Do not open the preview automatically.
   --keep-alive      Keep the server running after the browser tab closes.
+  --no-sync         Disable automatic external updates; keep running until Ctrl+C.
+                    Comments are still saved.
   --trust-forwarded-prefix Accept X-Forwarded-Prefix from a trusted reverse proxy.
   --max-depth       Maximum directory depth to scan. Defaults to 2 (0 scans only the root).
   --max-files       Maximum number of Markdown files to load. Defaults to 20.
@@ -76,7 +78,7 @@ type Options struct {
 	Flags  map[string]bool
 }
 
-var booleanOptions = map[string]bool{"global": true, "help": true, "version": true, "no-open": true, "keep-alive": true, "create": true, "as-bot": true, "ensure-document": true, "request-review": true, "trust-forwarded-prefix": true}
+var booleanOptions = map[string]bool{"global": true, "help": true, "version": true, "no-open": true, "keep-alive": true, "no-sync": true, "create": true, "as-bot": true, "ensure-document": true, "request-review": true, "trust-forwarded-prefix": true}
 var valueOptions = map[string]bool{"port": true, "host": true, "max-depth": true, "max-files": true, "source": true, "document": true, "title": true, "name": true, "body": true, "content": true, "comment": true, "start-line": true, "end-line": true, "channel": true}
 
 func Parse(args []string) (Options, error) {
@@ -166,10 +168,10 @@ func number(value, name string, min int64) (int64, error) {
 }
 
 type StartOptions struct {
-	Source, Host                          string
-	Port                                  int
-	Open, KeepAlive, TrustForwardedPrefix bool
-	MaxDepth, MaxFiles                    *int
+	Source, Host                                  string
+	Port                                          int
+	Open, KeepAlive, NoSync, TrustForwardedPrefix bool
+	MaxDepth, MaxFiles                            *int
 }
 type Start func(context.Context, StartOptions) error
 
@@ -198,7 +200,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		if len(words) != 2 {
 			return usageError("Missing Markdown file or directory.")
 		}
-		options := StartOptions{Source: words[1], Host: "127.0.0.1", Port: 3334, Open: !o.Flags["no-open"], KeepAlive: o.Flags["keep-alive"], TrustForwardedPrefix: o.Flags["trust-forwarded-prefix"]}
+		options := StartOptions{Source: words[1], Host: "127.0.0.1", Port: 3334, Open: !o.Flags["no-open"], KeepAlive: o.Flags["keep-alive"], NoSync: o.Flags["no-sync"], TrustForwardedPrefix: o.Flags["trust-forwarded-prefix"]}
 		if v := o.Values["host"]; v != "" {
 			options.Host = v
 		}

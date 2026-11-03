@@ -1,16 +1,27 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Code, ConnectError, createClient } from "@connectrpc/connect";
 import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb";
+import { reportConnection } from "./connection";
 import { readPreviewBasePath } from "./basePath";
 
 export const createPreviewTransport = (basePath = readPreviewBasePath()) =>
   createConnectTransport({
     baseUrl: `${globalThis.location?.origin ?? "http://127.0.0.1"}${basePath}`,
-    fetch: (input, init) => {
-      const testFetch = (globalThis as typeof globalThis & {
-        __sadokuConnectTestFetch?: typeof fetch;
-      }).__sadokuConnectTestFetch;
-      return (testFetch ?? globalThis.fetch)(input, init);
+    fetch: async (input, init) => {
+      const testFetch = (
+        globalThis as typeof globalThis & {
+          __sadokuConnectTestFetch?: typeof fetch;
+        }
+      ).__sadokuConnectTestFetch;
+      try {
+        const response = await (testFetch ?? globalThis.fetch)(input, init);
+        reportConnection(false);
+        return response;
+      } catch (error) {
+        if (!(error instanceof Error && error.name === "AbortError"))
+          reportConnection(true);
+        throw error;
+      }
     },
     useBinaryFormat: false,
     useHttpGet: false,

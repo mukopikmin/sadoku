@@ -38,6 +38,7 @@ const createTestStorage = (initial: Record<string, string> = {}) => {
 
 afterEach(() => {
   cleanup();
+  document.getElementById("sadoku-client-root")?.remove();
   vi.restoreAllMocks();
   if (originalScrollIntoView) {
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
@@ -285,7 +286,7 @@ describe("App", () => {
     );
   });
 
-  it("integrates the document title and a working table of contents into the header while scrolled", async () => {
+  it.each(["Reading guide", undefined, ""])("integrates optional title %s and a working table of contents into the header while scrolled", async (displayTitle) => {
     vi.stubGlobal("EventSource", TestEventSource);
     const scrollIntoView = vi.fn();
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
@@ -302,7 +303,7 @@ describe("App", () => {
           return Promise.resolve(Response.json({
             fileUrl: "file:///tmp/guide.md",
             title: "guide.md",
-            displayTitle: "Reading guide",
+            displayTitle,
             markdown: "# Introduction\n\nBody\n\n## Details\n\nMore text",
           }));
         }
@@ -334,11 +335,11 @@ describe("App", () => {
 
     render(<App />);
     fireEvent.click(await screen.findByRole("treeitem", { name: "guide.md" }));
-    await screen.findByRole("heading", { name: "Reading guide" });
+    await screen.findByRole("button", { name: displayTitle ? "Edit title" : "Set title" });
     const titleActions = within(
       screen.getByRole("region", { name: "Document header" }),
     ).getByRole("group", { name: "Document title actions" });
-    expect(within(titleActions).getByRole("button", { name: "Edit title" }))
+    expect(within(titleActions).getByRole("button", { name: displayTitle ? "Edit title" : "Set title" }))
       .not.toBeNull();
     expect(
       within(titleActions).getByRole("button", { name: "Table of contents" }),
@@ -367,7 +368,8 @@ describe("App", () => {
     expect(
       header.getByRole("link", { name: "guide.md" }).getAttribute("href"),
     ).toBe("file:///tmp/guide.md");
-    expect(header.getByText("Reading guide")).not.toBeNull();
+    if (displayTitle) expect(header.getByText(displayTitle)).not.toBeNull();
+    expect(header.getAllByText("guide.md")).toHaveLength(1);
     const applicationActions = header.getByRole("navigation", {
       name: "Application actions",
     });
@@ -433,8 +435,7 @@ describe("App", () => {
       expect(screen.queryByRole("button", { name: "Table of contents" }))
         .toBeNull()
     );
-    expect(screen.getByRole("heading", { name: "Reading guide" }))
-      .not.toBeNull();
+    if (displayTitle) expect(screen.getByRole("heading", { name: displayTitle })).not.toBeNull();
     expect(header.getByRole("tab", { name: "Comments, 0 unresolved" })
       .getAttribute("aria-selected")).toBe("true");
 
@@ -444,7 +445,7 @@ describe("App", () => {
     const commentsTitleActions = within(
       screen.getByRole("region", { name: "Document header" }),
     );
-    expect(commentsTitleActions.getByRole("button", { name: "Edit title" }))
+    expect(commentsTitleActions.getByRole("button", { name: displayTitle ? "Edit title" : "Set title" }))
       .not.toBeNull();
     expect(commentsTitleActions.getByRole("tab", { name: "Preview" }).textContent)
       .toBe("Preview");
@@ -458,7 +459,8 @@ describe("App", () => {
     fireEvent.scroll(globalThis);
     const commentsPreview = await header.findByRole("tab", { name: "Preview" });
     expect(commentsPreview.textContent).toBe("");
-    expect(header.getByText("Reading guide")).not.toBeNull();
+    if (displayTitle) expect(header.getByText(displayTitle)).not.toBeNull();
+    expect(header.getAllByText("guide.md")).toHaveLength(1);
     fireEvent.click(commentsPreview);
     await header.findByRole("button", { name: "Table of contents" });
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
@@ -568,7 +570,11 @@ describe("App", () => {
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
 
-  it("reloads the Markdown and comments without changing views", async () => {
+  it.each([true, false])("reloads the Markdown and comments without changing views (sync=%s)", async (syncEnabled) => {
+    const root = document.createElement("div");
+    root.id = "sadoku-client-root";
+    root.dataset.syncEnabled = String(syncEnabled);
+    document.body.append(root);
     let documentRequests = 0;
     let commentRequests = 0;
     vi.stubGlobal("EventSource", TestEventSource);
@@ -631,13 +637,16 @@ describe("App", () => {
       ).toBe("true")
     );
 
-    expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
-
-    TestEventSource.instances.at(-1)?.dispatchEvent(
-      new MessageEvent("invalidate", {
-        data: JSON.stringify({ resources: ["document", "comments"] }),
-      }),
-    );
+    if (syncEnabled) {
+      expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
+      TestEventSource.instances.at(-1)?.dispatchEvent(
+        new MessageEvent("invalidate", {
+          data: JSON.stringify({ resources: ["document", "comments"] }),
+        }),
+      );
+    } else {
+      expect(TestEventSource.instances).toHaveLength(0);
+    }
 
     const reloadButton = await screen.findByRole("button", {
       name: "Reload preview",
