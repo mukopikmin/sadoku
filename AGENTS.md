@@ -142,8 +142,8 @@ them when making changes.
 - When a Markdown element needs additional vertical breathing room, add padding
   inside that element's commentable content instead. The padding must be
   included in the selectable comment-highlight area.
-- Keep Markdown feature support aligned with the table in
-  `docs/user-guide.md`. Update the table and tests when support changes.
+- Keep the Markdown support summary in `README.md` aligned with supported
+  behavior. Update the summary and tests when support changes.
 - `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
   generated outputs and MUST NOT be committed.
 - Build client assets with `make build-client`; do not edit generated files
@@ -206,21 +206,17 @@ them when making changes.
 
 ## 8. Documentation Scope
 
-- Keep the root `README.md` a short entry point (aim for 100 lines or fewer):
-  product purpose, core capabilities, installation, a minimal usage example,
-  and prerequisites plus build/test commands for developers.
-- A new feature does not automatically need a README addition. Update the
-  relevant guide first; change the README only when the core capabilities or
-  getting-started steps change. Do not append feature-by-feature UI instructions,
-  exhaustive CLI options, implementation details, or release history there.
-- Keep detailed review operations, settings, storage, and the Markdown support
-  table in `docs/user-guide.md`; CLI and agent workflows in
-  `docs/cli-and-agents.md`; build and tooling details in `docs/development.md`;
-  and stable release operations in `docs/releases.md`. Update existing sections
-  rather than appending duplicate explanations. Keep CLI help as the reference
-  for the full command and option list.
-- Link to detailed documentation instead of copying it into the README. When
-  moving documentation, fix relative links and references in contributor rules.
-- During review, check that README changes stay within this scope and that
-  linked guides remain reachable. Keep documentation proportional to the change;
-  do not document every internal behavior or repeat information across guides.
+- Keep user-facing essentials together in the root `README.md`: what Sadoku
+  does, installation, basic review usage, meaningful limitations, settings and
+  storage, and developer prerequisites plus build/test commands.
+- Judge documentation by usefulness and duplication, not line counts. Do not
+  split basic usage into a separate user guide merely to shorten the README.
+- A new feature does not automatically need new documentation. Update an existing
+  summary when it changes what users can do or need to know to get started.
+  Omit exhaustive UI steps, internal behavior, and feature-by-feature histories.
+- Keep specialized CLI and agent workflows in `docs/cli-and-agents.md`, build
+  and tooling details in `docs/development.md`, and stable release operations
+  in `docs/releases.md`. Use CLI help for the full command and option list.
+- During review, remove repetition, keep explanations proportional to the task,
+  and check links when moving or deleting documentation. Link to specialized
+  references where needed without duplicating their contents.

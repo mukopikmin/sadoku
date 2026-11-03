@@ -4,11 +4,6 @@ Sadoku is a local Markdown review tool. Open a file, directory, or URL in your
 browser, read the rendered Markdown, and leave comments without changing the
 source document. Comments are saved locally.
 
-- Review Markdown with tables, syntax highlighting, and offline Mermaid diagrams.
-- Add comments and replies, resolve discussions, and manage them from the CLI.
-- Compare saved revisions and restore local files.
-- Review Markdown in GitHub pull requests and save comments to a pending review.
-
 ## Install
 
 **Linux x64 / macOS arm64:**
@@ -36,13 +31,49 @@ sadoku start https://github.com/<owner>/<repo>/pull/<number>
 ```
 
 Sadoku opens your browser at `127.0.0.1:3334` (or the next available port).
-Use the **+** button beside a document block to leave a comment.
-GitHub PRs require the [GitHub CLI](https://cli.github.com/) and `gh auth login`.
-Run `sadoku --help` for commands and options.
+Use `--no-open` to start without opening a browser, or `--port 4000` to choose
+the starting port. `--no-sync` disables automatic external updates; use **Reload
+preview** to fetch updates manually. The server then runs until Ctrl+C.
+Run `sadoku --help` for all commands and options.
 
-See the [user guide](docs/user-guide.md) for review operations, settings, storage,
-and supported Markdown, or [CLI and coding agents](docs/cli-and-agents.md) for
-terminal commands and the `sadoku-review` skill.
+### Review
+
+- Use the **+** button beside a document block to comment. Comments support
+  Markdown and replies; discussions can be resolved and reopened.
+- Use **Changes** to compare with the previous saved snapshot, or **Revisions**
+  to browse history and restore a local file. Remote documents are read-only.
+- Directory previews let you browse and create Markdown files. Discovery limits
+  can be changed in **Settings → Directory discovery**.
+- For GitHub PRs, install the [GitHub CLI](https://cli.github.com/) and run
+  `gh auth login`. **Save to GitHub review** adds a comment to your pending review;
+  finish or discard it on GitHub. Nothing is submitted automatically.
+  See [GitHub export details](docs/github-comment-export.md) for limitations.
+
+Comments can also be managed from the terminal and coding agents. See
+[CLI and coding agents](docs/cli-and-agents.md) for commands and the
+`sadoku-review` skill.
+
+### Markdown
+
+Supports GitHub Flavored Markdown, including tables, task lists, and syntax
+highlighting, plus Mermaid diagrams rendered offline. Raw HTML is escaped;
+footnotes, definition lists, and math/LaTeX are not supported.
+Comments and replies support Markdown with GitHub-style line breaks;
+Mermaid diagrams render only in documents.
+Japanese fonts are bundled; see [font licenses](src/preview/public/fonts/noto-sans-jp/README.md).
+
+### Settings and storage
+
+Appearance and review settings are available under **Settings**. Comments,
+instructions, and memories are saved in `sadoku.sqlite3` under:
+
+- macOS: `~/Library/Application Support/sadoku/comments`
+- Linux: `$XDG_DATA_HOME/sadoku/comments` or `~/.local/share/sadoku/comments`
+- Windows: `%APPDATA%\sadoku\comments`
+
+Set `SADOKU_COMMENTS_DIR` to change the storage directory. Settings are stored in
+`$XDG_CONFIG_HOME/sadoku/config.toml` (default `~/.config/sadoku/config.toml`) on
+macOS/Linux, or `%APPDATA%\sadoku\config.toml` on Windows.
 
 ## Development
 
