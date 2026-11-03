@@ -94,6 +94,7 @@ export const useCommentableBlockLayout = (
   interactionRange?: CommentRange,
 ) => {
   const [commentableLines, setCommentableLines] = useState<number[]>([]);
+  const [deletedRanges, setDeletedRanges] = useState<CommentRange[]>([]);
   const measure = useCallback(
     (preview: HTMLElement) => {
       return measureRangeHighlightLayouts(preview, [
@@ -117,7 +118,25 @@ export const useCommentableBlockLayout = (
         ? current
         : lines,
     );
+    const ranges = [
+      ...preview.querySelectorAll<HTMLElement>(
+        ":scope > .document-diff-deletion[data-previous-source-line]",
+      ),
+    ].map((block) => ({
+      startLine: Number(block.dataset.previousSourceLine),
+      endLine: Number(block.dataset.previousSourceEndLine),
+    }));
+    setDeletedRanges((current) =>
+      arraysEqual(
+        current,
+        ranges,
+        (left, right) =>
+          left.startLine === right.startLine && left.endLine === right.endLine,
+      )
+        ? current
+        : ranges,
+    );
   });
 
-  return { commentableLines, rangeHighlightLayouts };
+  return { commentableLines, deletedRanges, rangeHighlightLayouts };
 };

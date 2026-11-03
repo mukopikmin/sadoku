@@ -142,8 +142,8 @@ them when making changes.
 - When a Markdown element needs additional vertical breathing room, add padding
   inside that element's commentable content instead. The padding must be
   included in the selectable comment-highlight area.
-- Keep Markdown feature support aligned with the table in `README.md`. Update
-  the table and tests when support changes.
+- Keep the Markdown support summary in `README.md` aligned with supported
+  behavior. Update the summary and tests when support changes.
 - `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
   generated outputs and MUST NOT be committed.
 - Build client assets with `make build-client`; do not edit generated files
@@ -203,3 +203,20 @@ them when making changes.
 - Treat Git remote authentication for operations such as `git push` as
   independent from GitHub CLI authentication.
 - Do not modify or revert unrelated working-tree changes.
+
+## 8. Documentation Scope
+
+- Keep user-facing essentials together in the root `README.md`: what Sadoku
+  does, installation, basic review usage, meaningful limitations, settings and
+  storage, and developer prerequisites plus build/test commands.
+- Judge documentation by usefulness and duplication, not line counts. Do not
+  split basic usage into a separate user guide merely to shorten the README.
+- A new feature does not automatically need new documentation. Update an existing
+  summary when it changes what users can do or need to know to get started.
+  Omit exhaustive UI steps, internal behavior, and feature-by-feature histories.
+- Keep specialized CLI and agent workflows in `docs/cli-and-agents.md`, build
+  and tooling details in `docs/development.md`, and stable release operations
+  in `docs/releases.md`. Use CLI help for the full command and option list.
+- During review, remove repetition, keep explanations proportional to the task,
+  and check links when moving or deleting documentation. Link to specialized
+  references where needed without duplicating their contents.
