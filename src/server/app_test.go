@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -150,5 +151,56 @@ func TestPreviewCommandOutput(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNoSyncKeepsServerRunningWithoutKeepAlive(t *testing.T) {
+	root := t.TempDir()
+	file := filepath.Join(root, "doc.md")
+	if err := os.WriteFile(file, []byte("# Test\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("SADOKU_COMMENTS_DIR", filepath.Join(root, "comments"))
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(root, "config"))
+	t.Setenv("APPDATA", "")
+	output := &previewOutput{ready: make(chan string, 1)}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- Start(ctx, cli.StartOptions{Source: file, Host: "127.0.0.1", NoSync: true}, output) }()
+	defer func() {
+		cancel()
+		select {
+		case err := <-done:
+			if err != nil {
+				t.Error(err)
+			}
+		case <-time.After(10 * time.Second):
+			t.Error("server did not stop")
+		}
+	}()
+	var url string
+	select {
+	case url = <-output.ready:
+	case <-time.After(10 * time.Second):
+		t.Fatal("server did not start")
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	response, err := client.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	select {
+	case <-ctx.Done():
+		t.Fatal("server stopped")
+	case <-time.After(3200 * time.Millisecond):
+	}
+	response, err = client.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if response.StatusCode != 200 {
+		t.Fatalf("status: %d", response.StatusCode)
 	}
 }

@@ -1,5 +1,9 @@
 import { previewPath } from "./basePath";
 
+export const isSyncEnabled = (): boolean =>
+  globalThis.document?.getElementById("sadoku-client-root")?.dataset
+    .syncEnabled !== "false";
+
 type EventSourceConstructor = new (url: string) => EventSource;
 
 export type PreviewKeepAliveOptions = {
@@ -17,13 +21,12 @@ export type HotReloadOptions = {
 
 type InvalidationData = { resources?: unknown };
 
-export const connectPreviewKeepAlive = (
-  {
-    EventSourceCtor = globalThis.EventSource,
-    onConnectionLost = () => {},
-    onConnectionRestored = () => {},
-  }: PreviewKeepAliveOptions = {},
-): () => void => {
+export const connectPreviewKeepAlive = ({
+  EventSourceCtor = globalThis.EventSource,
+  onConnectionLost = () => {},
+  onConnectionRestored = () => {},
+}: PreviewKeepAliveOptions = {}): (() => void) => {
+  if (!isSyncEnabled()) return () => {};
   const events = new EventSourceCtor(previewPath("/__sadoku/events"));
   events.addEventListener("error", onConnectionLost);
   events.addEventListener("open", onConnectionRestored);
@@ -35,14 +38,13 @@ export const connectPreviewKeepAlive = (
   };
 };
 
-export const connectHotReload = (
-  {
-    documentId,
-    EventSourceCtor = globalThis.EventSource,
-    onReloadAvailable = () => {},
-    onCommentsChanged = () => {},
-  }: HotReloadOptions,
-): () => void => {
+export const connectHotReload = ({
+  documentId,
+  EventSourceCtor = globalThis.EventSource,
+  onReloadAvailable = () => {},
+  onCommentsChanged = () => {},
+}: HotReloadOptions): (() => void) => {
+  if (!isSyncEnabled()) return () => {};
   const events = new EventSourceCtor(
     previewPath(`/__sadoku/documents/${documentId}/events`),
   );

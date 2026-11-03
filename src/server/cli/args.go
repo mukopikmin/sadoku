@@ -62,7 +62,7 @@ func validate(o Options) error {
 	if has("name") && word(0) != "tag" {
 		return usageError("--name is only accepted by tag add.")
 	}
-	preview := (has("host") && o.Values["host"] != "127.0.0.1") || port != 3334 || o.Flags["no-open"] || o.Flags["keep-alive"] || o.Flags["trust-forwarded-prefix"] || has("max-depth") || has("max-files")
+	preview := (has("host") && o.Values["host"] != "127.0.0.1") || port != 3334 || o.Flags["no-open"] || o.Flags["keep-alive"] || o.Flags["no-sync"] || o.Flags["trust-forwarded-prefix"] || has("max-depth") || has("max-files")
 	if word(0) == "start" || len(o.Words) == 0 {
 		if commentOptions || content || has("channel") {
 			return usageError("Preview commands do not accept document, comment, or update options.")

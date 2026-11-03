@@ -85,7 +85,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 	var mu sync.Mutex
 	streams := 0
 	var timer *time.Timer
-	handler, err := httpadapter.New(s, httpadapter.Options{TrustForwardedPrefix: options.TrustForwardedPrefix, Log: log, OnStreamOpen: func() {
+	handler, err := httpadapter.New(s, httpadapter.Options{NoSync: options.NoSync, TrustForwardedPrefix: options.TrustForwardedPrefix, Log: log, OnStreamOpen: func() {
 		mu.Lock()
 		defer mu.Unlock()
 		streams++
@@ -97,7 +97,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 		mu.Lock()
 		defer mu.Unlock()
 		streams--
-		if streams == 0 && !options.KeepAlive {
+		if streams == 0 && !options.KeepAlive && !options.NoSync {
 			timer = time.AfterFunc(3*time.Second, func() {
 				mu.Lock()
 				defer mu.Unlock()
@@ -132,6 +132,9 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 		pathname = fmt.Sprintf("/documents/%d", s.Documents[0].ID)
 	}
 	previewURL := "http://" + listener.Addr().String() + pathname
+	if options.NoSync {
+		log("Automatic sync disabled. Refresh manually; press Ctrl+C to stop.")
+	}
 	log("Serving " + source)
 	log("Preview: " + previewURL)
 
