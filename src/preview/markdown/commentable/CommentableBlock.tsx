@@ -32,8 +32,7 @@ type CommentableBlockProps = CommentControlProps & {
   children: React.ReactNode;
   className?: string;
   comments: ActiveComment[];
-  hasCommentHighlight: boolean;
-  hasContinuousHighlight: boolean;
+  hasRangeHighlight: boolean;
   headingId?: string;
   isAdding: boolean;
   isRangeActionLine: boolean;
@@ -56,8 +55,7 @@ export const CommentableBlock = ({
   children,
   className,
   comments,
-  hasCommentHighlight,
-  hasContinuousHighlight,
+  hasRangeHighlight,
   headingId,
   isAdding,
   isRangeActionLine,
@@ -157,13 +155,12 @@ export const CommentableBlock = ({
     <Box
       className={[
         "commentable-block",
-        isSelected || hasCommentHighlight
+        isSelected
           ? "commentable-block-selected"
           : undefined,
         isSelected ? "commentable-block-range-selected" : undefined,
-        hasCommentHighlight ? "commentable-block-comment-highlight" : undefined,
-        hasContinuousHighlight
-          ? "commentable-block-continuous-highlight"
+        hasRangeHighlight
+          ? "commentable-block-highlighted"
           : undefined,
         className,
       ].filter(Boolean).join(" ")}

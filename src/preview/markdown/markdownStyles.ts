@@ -117,6 +117,7 @@ export const markdownStyles = `
     display: contents;
   }
 
+  /* Individual block bounds are shown only by the boundary debug setting. */
   .commentable-content::before {
     content: "";
     position: absolute;
@@ -128,24 +129,6 @@ export const markdownStyles = `
     border-radius: var(--chakra-radii-sm);
     background: var(--chakra-colors-transparent);
     pointer-events: none;
-    transition: background-color 120ms ease;
-  }
-
-  .commentable-block:not(.commentable-block-selected):not(.commentable-block-continuous-highlight):has(.comment-thread) > .commentable-content::before {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 8%, var(--chakra-colors-canvas));
-  }
-
-  .commentable-block:not(.commentable-block-selected):hover > .commentable-content::before,
-  .commentable-block:not(.commentable-block-selected):focus-within > .commentable-content::before {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-canvas));
-  }
-
-  .commentable-block-comment-highlight > .commentable-content::before {
-    background: color-mix(in srgb, var(--chakra-colors-selection-comment) 18%, var(--chakra-colors-canvas));
-  }
-
-  .commentable-block-range-selected > .commentable-content::before {
-    background: color-mix(in srgb, var(--chakra-colors-accent) 18%, var(--chakra-colors-canvas));
   }
 
   /* Let the shared block/range highlight show through opaque Markdown surfaces. */
@@ -153,7 +136,7 @@ export const markdownStyles = `
     .commentable-block:hover > .commentable-content,
     .commentable-block:focus-within > .commentable-content,
     .commentable-block-selected > .commentable-content,
-    .commentable-block-continuous-highlight > .commentable-content,
+    .commentable-block-highlighted > .commentable-content,
     .commentable-block:has(.comment-thread) > .commentable-content,
     [data-revision-kind]
   ) :is(thead, pre, .code-block__root) {
@@ -184,23 +167,15 @@ export const markdownStyles = `
     background: var(--chakra-colors-canvas);
   }
 
-  /* Diff colors belong to the content; comment and selection colors use outlines. */
-  [data-document-diff] .commentable-block:is(:hover, :focus-within, .commentable-block-selected, .commentable-block-continuous-highlight, :has(.comment-thread)) > .commentable-content::before,
-  [data-document-diff] .commentable-block:is(:hover, :focus-within, .commentable-block-selected, .commentable-block-continuous-highlight, :has(.comment-thread)) > .commentable-content pre {
-    background: transparent;
-  }
-
-  [data-document-diff] .commentable-block-comment-highlight:not(.commentable-block-continuous-highlight) > .commentable-content::before,
+  /* All interaction states share the padding-inclusive overlay geometry. */
   [data-document-diff] .markdown-range-highlight-comment {
     background: transparent;
     outline: 1px solid var(--chakra-colors-selection-comment);
     outline-offset: -1px;
   }
 
-  [data-document-diff] .commentable-block-range-selected:not(.commentable-block-continuous-highlight) > .commentable-content::before,
-  [data-document-diff] .commentable-block:not(.commentable-block-continuous-highlight):hover > .commentable-content::before,
-  [data-document-diff] .commentable-block:not(.commentable-block-continuous-highlight):focus-within > .commentable-content::before,
-  [data-document-diff] .markdown-range-highlight-selection {
+  [data-document-diff] .markdown-range-highlight-selection,
+  [data-document-diff] .markdown-range-highlight-hover {
     background: transparent;
     outline: 2px solid var(--chakra-colors-accent);
     outline-offset: -2px;

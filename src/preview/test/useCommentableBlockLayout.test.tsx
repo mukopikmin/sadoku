@@ -73,6 +73,45 @@ afterEach(() => {
 });
 
 describe("commentable block layout", () => {
+  it.each(["hover", "comment", "selection"] as const)(
+    "uses the full padded content bounds for %s, including indented diff blocks",
+    (kind) => {
+      const preview = document.createElement("div");
+      preview.setAttribute("data-document-diff", "");
+      preview.innerHTML = `
+        <div class="document-diff-addition">
+          <div class="commentable-block" data-source-line="3" data-source-end-line="5">
+            <div class="commentable-content" style="padding: 12px">Content</div>
+          </div>
+        </div>`;
+      preview.getBoundingClientRect = () => new DOMRect(40, 100, 800, 400);
+      preview.querySelector(".commentable-content")!.getBoundingClientRect =
+        () => new DOMRect(55, 120, 785, 64);
+      expect(
+        measureRangeHighlightLayouts(preview, [
+          { startLine: 3, endLine: 5, kind },
+        ]),
+      ).toEqual([{ startLine: 3, endLine: 5, kind, top: 20, bottom: 84 }]);
+      const overlapping = ["hover", "comment", "selection"]
+        .slice(0, ["hover", "comment", "selection"].indexOf(kind) + 1)
+        .map((state) => ({
+          startLine: 4,
+          endLine: 4,
+          kind: state as RangeHighlight["kind"],
+        }));
+      expect(measureRangeHighlightLayouts(preview, overlapping)).toEqual([
+        { startLine: 4, endLine: 4, kind, top: 20, bottom: 84 },
+      ]);
+      if (kind === "comment") {
+        expect(
+          measureRangeHighlightLayouts(preview, [
+            { startLine: 2, endLine: 2, kind },
+          ]),
+        ).toEqual([{ startLine: 2, endLine: 2, kind, top: 20, bottom: 84 }]);
+      }
+    },
+  );
+
   it("collects direct and list-nested commentable source lines", () => {
     const preview = document.createElement("div");
     preview.innerHTML = `

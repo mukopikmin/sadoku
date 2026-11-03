@@ -162,6 +162,9 @@ describe("rendered document diff", () => {
     const { container, rerender } = render(
       preview(markdown, "# Title\n\nEnd"),
     );
+    fireEvent.mouseOver(screen.getByText("First addition"));
+    expect(container.querySelector(".markdown-range-highlight-hover")
+      ?.getAttribute("data-start-line")).toBe("3");
     fireEvent.click(screen.getByRole("heading", { name: "Title" }));
     fireEvent.click(screen.getByText("End"), { shiftKey: true });
 
@@ -169,6 +172,7 @@ describe("rendered document diff", () => {
       ".markdown-range-highlight-selection",
     );
     expect(highlights()).toHaveLength(1);
+    expect(container.querySelector(".markdown-range-highlight-hover")).toBeNull();
     expect(highlights()[0].dataset.startLine).toBe("1");
     expect(highlights()[0].dataset.endLine).toBe("7");
     expect(screen.getByRole("button", { name: "Add comment on lines 1-7" }))

@@ -82,6 +82,14 @@ export const sadokuChakraSystem = createSystem(
             },
           },
           highlight: {
+            hover: {
+              bg: {
+                value: {
+                  base: "color-mix(in srgb, {colors.accent} 14%, {colors.canvas})",
+                  _dark: "color-mix(in srgb, {colors.accent} 14%, {colors.canvas})",
+                },
+              },
+            },
             addition: {
               bg: {
                 value: {

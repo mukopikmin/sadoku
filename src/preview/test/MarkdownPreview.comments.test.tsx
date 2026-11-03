@@ -184,7 +184,7 @@ describe("MarkdownPreview comments", () => {
       .not.toBeNull();
     expect(
       container.querySelector('[data-source-line="3"]')?.classList.contains(
-        "commentable-block-continuous-highlight",
+        "commentable-block-highlighted",
       ),
     ).toBe(true);
   });

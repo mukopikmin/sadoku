@@ -42,7 +42,6 @@ export type CommentControlProps = {
 export type CommentRenderingContextValue = CommentControlProps & {
   drafts?: Map<number, string>;
   commentsByLine: Map<number, ActiveComment[]>;
-  commentHighlightsByLine: Set<number>;
   markdown: string;
   rangeHighlights: readonly RangeHighlight[];
 };

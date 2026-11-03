@@ -3,7 +3,7 @@ import type { ActiveComment } from "../../models/comment";
 export type CommentRange = { endLine: number; startLine: number };
 
 export type RangeHighlight = CommentRange & {
-  kind: "comment" | "selection";
+  kind: "comment" | "selection" | "hover";
 };
 
 export type CommentRangeSelection = {
@@ -103,33 +103,18 @@ export const deriveRangeHighlights = (
   comments: readonly CommentRange[],
   selectedRange?: CommentRange,
 ): RangeHighlight[] => {
-  const continuousCommentRanges = mergeCommentRanges(
-    comments.filter((comment) => comment.startLine < comment.endLine),
-  );
-  const continuousSelectedRange = selectedRange &&
-      selectedRange.startLine < selectedRange.endLine
-    ? selectedRange
-    : undefined;
+  const commentRanges = mergeCommentRanges(comments);
 
   return [
     ...subtractCommentRange(
-      continuousCommentRanges,
-      continuousSelectedRange,
+      commentRanges,
+      selectedRange,
     ).map((range) => ({ ...range, kind: "comment" as const })),
-    ...(continuousSelectedRange
-      ? [{ ...continuousSelectedRange, kind: "selection" as const }]
+    ...(selectedRange
+      ? [{ ...selectedRange, kind: "selection" as const }]
       : []),
   ];
 };
-
-export const getSingleLineCommentHighlights = (
-  comments: readonly CommentRange[],
-): Set<number> =>
-  new Set(
-    comments.filter((comment) => comment.startLine === comment.endLine).map(
-      (comment) => comment.startLine,
-    ),
-  );
 
 export const resolveCommentRangeSelection = (
   currentRange: CommentRange | undefined,

@@ -52,7 +52,6 @@ export const getCommentableBlockProps = (
 ) => {
   const {
     commentsByLine,
-    commentHighlightsByLine,
     drafts: _drafts,
     markdown: _,
     rangeHighlights,
@@ -65,10 +64,7 @@ export const getCommentableBlockProps = (
   return {
     ...props,
     comments,
-    hasCommentHighlight: [...commentHighlightsByLine].some((line) =>
-      line >= startLine && line <= endLine
-    ),
-    hasContinuousHighlight: rangeHighlights.some((range) =>
+    hasRangeHighlight: rangeHighlights.some((range) =>
       range.endLine >= startLine && range.startLine <= endLine
     ),
     isAdding: props.activeCommentLine !== undefined &&
