@@ -169,6 +169,10 @@ sadoku comment add --source "$changes" \
   --start-line "$(awk '/^Review notes remain attached/ { print NR; exit }' "$changes")" \
   --end-line "$(awk '/^Reviewers sign in again/ { print NR; exit }' "$changes")" \
   --body 'Range across a deletion: Changes should split the outline at the removed paragraph and join the adjacent current blocks. Click the first review note, then Shift-click the final sign-in paragraph to try this selection.' --as-bot >/dev/null
+sadoku comment add --source "$changes" \
+  --start-line "$(awk '/^\| Setting \| Value \|/ { print NR; exit }' "$changes")" \
+  --end-line "$(awk '/^  OAuth --> Review/ { print NR + 1; exit }' "$changes")" \
+  --body 'Overlapping range: this table, code, and Mermaid diagram partially overlap the earlier paragraph-to-code comment. The shared table and code should have one highlight, extending through the diagram. Select the code block to check selection priority inside the overlap.' --as-bot >/dev/null
 
 archived="$documents/guides/overview.md"
 add_comment "$archived" 'This document is a first-level nested fixture for directory preview mode.' \

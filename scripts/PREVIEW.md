@@ -23,7 +23,7 @@ configured `SADOKU_COMMENTS_DIR`. An unset or empty source enables preparation.
 
 All sample Markdown comes from `test/integration/fixtures/`, copied with its
 directory structure into the temporary directory. The copies provide five
-documents (one deleted) and nineteen comments, including human and bot authors,
+documents (one deleted) and twenty comments, including human and bot authors,
 replies, review requests, resolved comments, instructions, memories, and tags.
 Seeded comments, replies, instructions, memories, and tag names are in English.
 
@@ -56,7 +56,12 @@ the table and code, and review notes spanning a deletion. Toggle **Changes** to
 check that adjacent selected blocks share one outline while removed content
 splits it. Click the first paragraph of either range, then Shift-click its last
 block to try multiple-block selection; toggle **Changes** off and on to check
-that the selection persists. The document has eight comments, including the existing
+that the selection persists. A third range runs from the table through the Mermaid
+diagram, partially overlapping the paragraph-to-code range. Their shared table
+and code should have a single highlight, with the combined highlight extending
+from the first paragraph through the diagram. Select the code block to check
+selection priority within the overlap. Both threads remain available at their
+respective code and diagram endpoints. The document has nine comments, including the existing
 moved, deleted, and resolved examples. `guides/setup/local.md` has no previous
 snapshot to compare, so its **Changes** option is unavailable.
 
