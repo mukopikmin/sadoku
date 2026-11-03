@@ -38,6 +38,7 @@ const createTestStorage = (initial: Record<string, string> = {}) => {
 
 afterEach(() => {
   cleanup();
+  document.getElementById("sadoku-client-root")?.remove();
   vi.restoreAllMocks();
   if (originalScrollIntoView) {
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
@@ -569,7 +570,11 @@ describe("App", () => {
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
 
-  it("reloads the Markdown and comments without changing views", async () => {
+  it.each([true, false])("reloads the Markdown and comments without changing views (sync=%s)", async (syncEnabled) => {
+    const root = document.createElement("div");
+    root.id = "sadoku-client-root";
+    root.dataset.syncEnabled = String(syncEnabled);
+    document.body.append(root);
     let documentRequests = 0;
     let commentRequests = 0;
     vi.stubGlobal("EventSource", TestEventSource);
@@ -632,13 +637,16 @@ describe("App", () => {
       ).toBe("true")
     );
 
-    expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
-
-    TestEventSource.instances.at(-1)?.dispatchEvent(
-      new MessageEvent("invalidate", {
-        data: JSON.stringify({ resources: ["document", "comments"] }),
-      }),
-    );
+    if (syncEnabled) {
+      expect(screen.queryByRole("button", { name: "Reload preview" })).toBeNull();
+      TestEventSource.instances.at(-1)?.dispatchEvent(
+        new MessageEvent("invalidate", {
+          data: JSON.stringify({ resources: ["document", "comments"] }),
+        }),
+      );
+    } else {
+      expect(TestEventSource.instances).toHaveLength(0);
+    }
 
     const reloadButton = await screen.findByRole("button", {
       name: "Reload preview",

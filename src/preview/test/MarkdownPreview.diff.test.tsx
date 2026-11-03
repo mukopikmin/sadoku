@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ActiveComment } from "../models/comment";
+import type { ActiveComment, UnresolvedComment } from "../models/comment";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import {
   cleanup,
@@ -34,6 +34,52 @@ const preview = (
 );
 
 describe("rendered document diff", () => {
+  it.each([
+    ["# Title\n\nOld text", "# Title", "Old text", 3, undefined],
+    ["- Keep\n- Removed", "- Keep", "- Removed", 2, undefined],
+    ["---\nname: Old\n---\n\nBody", "Body", "name: Old", 2, "SKILL.md"],
+  ])(
+    "attaches stale threads to removed content and preserves their actions",
+    async (previousMarkdown, markdown, sourceText, line, documentPath) => {
+      const onResolveComment = vi.fn(async () => {});
+      const comments = [
+        createComment({
+          state: "stale",
+          body: "Review deleted content",
+          startLine: line,
+          endLine: line,
+          sourceText,
+        }),
+      ];
+      const props = {
+        actions: createCommentActions({ onResolveComment }),
+        comments: comments as UnresolvedComment[],
+        markdown,
+        documentPath,
+        showHtmlComments: true,
+        theme: "default" as const,
+      };
+      const { rerender } = render(
+        <MarkdownPreview {...props} previousMarkdown={previousMarkdown} />,
+      );
+      const removed = screen.getByRole("group", { name: "Removed content" });
+      expect(
+        within(removed).getByText("Review deleted content"),
+      ).not.toBeNull();
+      expect(within(removed).getByText("Stale")).not.toBeNull();
+      fireEvent.click(
+        within(removed).getByRole("button", { name: "Resolve", exact: true }),
+      );
+      await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
+      rerender(<MarkdownPreview {...props} />);
+      expect(screen.queryByText("Review deleted content")).toBeNull();
+      rerender(
+        <MarkdownPreview {...props} previousMarkdown={previousMarkdown} />,
+      );
+      expect(screen.getAllByText("Review deleted content")).toHaveLength(1);
+    },
+  );
+
   it("shows old content before new content at the change, leaving context unchanged", () => {
     const { container, rerender } = render(
       preview("# Title\n\nNew text\n\nEnd", "# Title\n\nOld text\n\nEnd"),
@@ -192,6 +238,23 @@ describe("rendered document diff", () => {
             endLine: 3,
             body: "Existing comment",
           }) as ActiveComment,
+          createComment({
+            id: 2,
+            state: "stale",
+            startLine: 3,
+            endLine: 3,
+            sourceText: "Old text",
+            body: "Comment on old text",
+            replies: [
+              {
+                id: 1,
+                author: { type: "human" },
+                body: "Previous reply",
+                createdAt: "2026-06-05T00:00:00.000Z",
+                updatedAt: "2026-06-05T00:00:00.000Z",
+              },
+            ],
+          }) as UnresolvedComment,
         ]}
         markdown={"# Title\n\nNew text"}
         previousMarkdown={"# Title\n\nOld text"}
@@ -201,6 +264,14 @@ describe("rendered document diff", () => {
     );
     expect(screen.getByText("Existing comment")).not.toBeNull();
     const removed = screen.getByRole("group", { name: "Removed content" });
+    expect(within(removed).getByText("Comment on old text")).not.toBeNull();
+    expect(within(removed).getByText("Previous reply")).not.toBeNull();
+    expect(within(removed).queryByText("Existing comment")).toBeNull();
+    expect(
+      within(screen.getByRole("group", { name: "Added content" })).getByText(
+        "Existing comment",
+      ),
+    ).not.toBeNull();
     fireEvent.click(within(removed).getByText("Old text"));
     expect(screen.queryByRole("button", { name: /Add comment on/ })).toBeNull();
     fireEvent.click(container.querySelector('[data-source-line="3"] p')!);

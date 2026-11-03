@@ -223,3 +223,23 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 		t.Fatalf("invalid range %d", res.StatusCode)
 	}
 }
+
+func TestNoSyncDisablesEvents(t *testing.T) {
+	s, _, _ := setup(t)
+	handler, err := httpadapter.New(s, httpadapter.Options{NoSync: true, OnStreamOpen: func() { t.Fatal("opened stream") }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"/__sadoku/events", "/__sadoku/documents/1/events"} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest("GET", path, nil))
+		if response.Code != 404 {
+			t.Fatalf("%s: %d", path, response.Code)
+		}
+	}
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest("GET", "/", nil))
+	if !strings.Contains(response.Body.String(), `data-sync-enabled="false"`) {
+		t.Fatal("missing no-sync bootstrap")
+	}
+}

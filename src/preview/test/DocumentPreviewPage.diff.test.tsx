@@ -2,17 +2,39 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DocumentPreviewPage } from "../pages/DocumentPreviewPage";
 import {
   cleanup,
+  createComment,
   createCommentActions,
   fireEvent,
   render,
   screen,
+  within,
 } from "./testUtils";
 
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
 }));
 vi.mock("../hooks/useComments", () => ({
-  useCommentsQuery: () => ({ data: { comments: [] } }),
+  useCommentsQuery: () => ({
+    data: {
+      comments: [
+        createComment({
+          state: "stale",
+          startLine: 1,
+          endLine: 1,
+          sourceText: "Old text",
+          body: "Deleted text review",
+        }),
+        createComment({
+          id: 2,
+          state: "resolved",
+          startLine: 1,
+          endLine: 1,
+          sourceText: "Old text",
+          body: "Resolved review",
+        }),
+      ],
+    },
+  }),
   useCommentActions: () => createCommentActions(),
 }));
 afterEach(cleanup);
@@ -54,6 +76,20 @@ const page = (previousMarkdown?: string) => (
 );
 
 describe("document changes option", () => {
+  it("passes stale comments to the removed content when changes are shown", () => {
+    render(page("Old text"));
+    expect(screen.queryByText("Deleted text review")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Changes since previous snapshot" }),
+    );
+    expect(
+      within(screen.getByRole("group", { name: "Removed content" })).getByText(
+        "Deleted text review",
+      ),
+    ).not.toBeNull();
+    expect(screen.queryByText("Resolved review")).toBeNull();
+  });
+
   it("toggles the rendered diff and line counts from the document action bar", () => {
     render(page("Old text"));
     const toggle = screen.getByRole("button", {

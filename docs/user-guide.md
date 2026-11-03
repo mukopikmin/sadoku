@@ -22,8 +22,15 @@ sadoku start https://github.com/<owner>/<repo>/pull/<number>
 | ------------------------------- | ------------------------------------------------------------------- |
 | `--port 4000`                   | Choose the starting port.                                           |
 | `--no-open`                     | Start without opening a browser.                                    |
+| `--no-sync` | Disable automatic external updates and keep running until Ctrl+C. |
 | `--keep-alive`                  | Keep running after the browser tab closes.                          |
 | `--max-depth 4 --max-files 100` | Increase directory discovery limits (defaults: 2 levels, 20 files). |
+
+`--no-sync` disables SSE connections and external change notifications. Use **Reload preview**
+to fetch updates manually. Comments are still saved and your own edits appear immediately.
+The server stays running after tabs close; `--keep-alive` may also be specified.
+Connection failures use the same indicator in both modes; without automatic sync,
+connection status is checked on the next request or manual refresh.
 
 Directory previews skip symbolic links, `.git`, and `node_modules` by default.
 Discovery settings are also available under **Settings → Directory discovery**.
