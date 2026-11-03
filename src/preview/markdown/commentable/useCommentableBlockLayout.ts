@@ -1,5 +1,5 @@
 import { type RefObject, useCallback, useLayoutEffect, useState } from "react";
-import type { RangeHighlight } from "./commentRanges";
+import type { CommentRange, RangeHighlight } from "./commentRanges";
 import {
   measureHighlightGroups,
   useHighlightLayouts,
@@ -61,9 +61,13 @@ export const useCommentableBlockLayout = (
   rangeHighlights: readonly RangeHighlight[],
 ) => {
   const [commentableLines, setCommentableLines] = useState<number[]>([]);
-  const measure = useCallback((preview: HTMLElement) => {
-    return measureRangeHighlightLayouts(preview, rangeHighlights);
-  }, [rangeHighlights]);
+  const [deletedRanges, setDeletedRanges] = useState<CommentRange[]>([]);
+  const measure = useCallback(
+    (preview: HTMLElement) => {
+      return measureRangeHighlightLayouts(preview, rangeHighlights);
+    },
+    [rangeHighlights],
+  );
   const rangeHighlightLayouts = useHighlightLayouts(previewRef, measure);
 
   useLayoutEffect(() => {
@@ -74,9 +78,27 @@ export const useCommentableBlockLayout = (
     setCommentableLines((current) =>
       arraysEqual(current, lines, (left, right) => left === right)
         ? current
-        : lines
+        : lines,
+    );
+    const ranges = [
+      ...preview.querySelectorAll<HTMLElement>(
+        ":scope > .document-diff-deletion[data-previous-source-line]",
+      ),
+    ].map((block) => ({
+      startLine: Number(block.dataset.previousSourceLine),
+      endLine: Number(block.dataset.previousSourceEndLine),
+    }));
+    setDeletedRanges((current) =>
+      arraysEqual(
+        current,
+        ranges,
+        (left, right) =>
+          left.startLine === right.startLine && left.endLine === right.endLine,
+      )
+        ? current
+        : ranges,
     );
   });
 
-  return { commentableLines, rangeHighlightLayouts };
+  return { commentableLines, deletedRanges, rangeHighlightLayouts };
 };

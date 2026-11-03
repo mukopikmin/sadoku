@@ -10,7 +10,7 @@ const sourceOf = (node: RootContent, source: string) =>
   source.slice(node.position?.start.offset, node.position?.end.offset);
 
 // Compare complete Markdown blocks so tables, lists and fenced code stay valid.
-// Retain current node positions: comments always refer to the current source.
+// Keep old and current positions separate so comments use the correct source.
 export const remarkDocumentDiff =
   ({ previous, current }: { previous: string; current: string }) =>
   (tree: Root) => {
@@ -75,6 +75,8 @@ export const remarkDocumentDiff =
           data: {
             hName: "revision-deletion",
             hProperties: {
+              previousStartLine: node.position?.start.line,
+              previousEndLine: node.position?.end.line,
               markdown: [
                 sourceOf(node, previous),
                 ...previousDefinitions.map((definition) =>
