@@ -190,16 +190,16 @@ export const markdownStyles = `
     background: transparent;
   }
 
-  [data-document-diff] .commentable-block-comment-highlight > .commentable-content::before,
+  [data-document-diff] .commentable-block-comment-highlight:not(.commentable-block-continuous-highlight) > .commentable-content::before,
   [data-document-diff] .markdown-range-highlight-comment {
     background: transparent;
     outline: 1px solid var(--chakra-colors-selection-comment);
     outline-offset: -1px;
   }
 
-  [data-document-diff] .commentable-block-range-selected > .commentable-content::before,
-  [data-document-diff] .commentable-block:hover > .commentable-content::before,
-  [data-document-diff] .commentable-block:focus-within > .commentable-content::before,
+  [data-document-diff] .commentable-block-range-selected:not(.commentable-block-continuous-highlight) > .commentable-content::before,
+  [data-document-diff] .commentable-block:not(.commentable-block-continuous-highlight):hover > .commentable-content::before,
+  [data-document-diff] .commentable-block:not(.commentable-block-continuous-highlight):focus-within > .commentable-content::before,
   [data-document-diff] .markdown-range-highlight-selection {
     background: transparent;
     outline: 2px solid var(--chakra-colors-accent);

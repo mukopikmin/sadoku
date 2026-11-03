@@ -30,21 +30,28 @@ export const measureRangeHighlightLayouts = (
   rangeHighlights: readonly RangeHighlight[],
 ): RangeHighlightLayout[] => {
   const blocks = [...preview.querySelectorAll<HTMLElement>(
-    commentableBlockSelector,
+    `${commentableBlockSelector}, :scope > .document-diff-deletion`,
   )];
+  const isDiff = preview.hasAttribute("data-document-diff");
 
   return measureHighlightGroups(preview, rangeHighlights.flatMap((range) => {
-    const contents = blocks.filter((block) => {
+    const groups: HTMLElement[][] = [];
+    let contents: HTMLElement[] = [];
+    for (const block of blocks) {
       const startLine = Number(block.dataset.sourceLine);
       const endLine = Number(block.dataset.sourceEndLine ?? startLine);
-      return endLine >= range.startLine && startLine <= range.endLine;
-    }).map((block) =>
-      block.querySelector<HTMLElement>(":scope > .commentable-content")
-    ).filter((content): content is HTMLElement => content !== null);
-    // Keep range outlines on current content, without spanning deleted blocks.
-    return preview.hasAttribute("data-document-diff")
-      ? contents.map((content) => ({ range, elements: [content] }))
-      : [{ range, elements: contents }];
+      const content = endLine >= range.startLine && startLine <= range.endLine
+        ? block.querySelector<HTMLElement>(":scope > .commentable-content")
+        : null;
+      if (content) contents.push(content);
+      else if (isDiff && contents.length > 0) {
+        // A deletion or unselected block separates visible parts of the range.
+        groups.push(contents);
+        contents = [];
+      }
+    }
+    if (contents.length > 0) groups.push(contents);
+    return groups.map((elements) => ({ range, elements }));
   }));
 };
 

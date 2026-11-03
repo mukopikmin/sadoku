@@ -86,34 +86,87 @@ describe("commentable block layout", () => {
     expect(getCommentableLines(preview)).toEqual([3, 7]);
   });
 
-  it("outlines current blocks separately in diff mode, excluding removed content", () => {
-    const preview = document.createElement("div");
-    preview.setAttribute("data-document-diff", "");
-    preview.innerHTML = `
+  it.each(["comment", "selection"] as const)(
+    "joins adjacent %s blocks across diff boundaries",
+    (kind) => {
+      const preview = document.createElement("div");
+      preview.setAttribute("data-document-diff", "");
+      preview.innerHTML = `
+      <div class="commentable-block" data-source-line="1"><div class="commentable-content"></div></div>
+      <div class="document-diff-addition">
+        <div class="commentable-block" data-source-line="3"><div class="commentable-content"></div></div>
+      </div>
+      <div class="document-diff-addition">
+        <ul class="comment-markdown-list">
+          <li><div class="commentable-block" data-source-line="5"><div class="commentable-content"></div></div></li>
+        </ul>
+      </div>
+      <div class="commentable-block" data-source-line="7"><div class="commentable-content"></div></div>
+    `;
+      preview.getBoundingClientRect = () => mockRect(100, 400);
+      const contents = preview.querySelectorAll<HTMLElement>(
+        ".commentable-content",
+      );
+      contents.forEach((content, index) => {
+        content.getBoundingClientRect = () =>
+          mockRect(110 + index * 50, 140 + index * 50);
+      });
+
+      expect(
+        measureRangeHighlightLayouts(preview, [
+          { startLine: 1, endLine: 7, kind },
+        ]),
+      ).toEqual([{ startLine: 1, endLine: 7, kind, top: 10, bottom: 190 }]);
+      expect(
+        measureRangeHighlightLayouts(preview, [
+          { startLine: 1, endLine: 3, kind },
+          { startLine: 5, endLine: 7, kind },
+        ]),
+      ).toEqual([
+        { startLine: 1, endLine: 3, kind, top: 10, bottom: 90 },
+        { startLine: 5, endLine: 7, kind, top: 110, bottom: 190 },
+      ]);
+    },
+  );
+
+  it.each(["comment", "selection"] as const)(
+    "splits %s outlines at removed content in diff mode",
+    (kind) => {
+      const preview = document.createElement("div");
+      preview.setAttribute("data-document-diff", "");
+      preview.innerHTML = `
       <div class="commentable-block" data-source-line="1"><div class="commentable-content"></div></div>
       <div class="document-diff-deletion">Removed content</div>
       <div class="document-diff-addition">
         <div class="commentable-block" data-source-line="3"><div class="commentable-content"></div></div>
       </div>
     `;
-    preview.getBoundingClientRect = () => mockRect(100, 400);
-    const contents = preview.querySelectorAll<HTMLElement>(".commentable-content");
-    contents[0].getBoundingClientRect = () => mockRect(110, 140);
-    contents[1].getBoundingClientRect = () => mockRect(300, 340);
-    expect(getCommentableLines(preview)).toEqual([1, 3]);
-    expect(measureRangeHighlightLayouts(preview, [{ startLine: 1, endLine: 3, kind: "comment" }]))
-      .toEqual([
-        { startLine: 1, endLine: 3, kind: "comment", top: 10, bottom: 40 },
-        { startLine: 1, endLine: 3, kind: "comment", top: 200, bottom: 240 },
+      preview.getBoundingClientRect = () => mockRect(100, 400);
+      const contents = preview.querySelectorAll<HTMLElement>(
+        ".commentable-content",
+      );
+      contents[0].getBoundingClientRect = () => mockRect(110, 140);
+      contents[1].getBoundingClientRect = () => mockRect(300, 340);
+      expect(getCommentableLines(preview)).toEqual([1, 3]);
+      expect(
+        measureRangeHighlightLayouts(preview, [
+          { startLine: 1, endLine: 3, kind },
+        ]),
+      ).toEqual([
+        { startLine: 1, endLine: 3, kind, top: 10, bottom: 40 },
+        { startLine: 1, endLine: 3, kind, top: 200, bottom: 240 },
       ]);
-  });
+    },
+  );
 
   it("measures range highlights again when the preview is resized", async () => {
-    const ranges: RangeHighlight[] = [{
-      startLine: 1,
-      endLine: 4,
-      kind: "selection",
-    }];
+    const ranges: RangeHighlight[] = [
+      {
+        startLine: 1,
+        endLine: 4,
+        kind: "selection",
+      },
+    ];
     const { unmount } = render(<LayoutHarness ranges={ranges} />);
     const preview = screen.getByTestId("preview");
     const first = screen.getByTestId("first");
@@ -133,13 +186,15 @@ describe("commentable block layout", () => {
     });
 
     await waitFor(() =>
-      expect(JSON.parse(preview.dataset.layouts ?? "[]")).toEqual([{
-        startLine: 1,
-        endLine: 4,
-        kind: "selection",
-        top: 20,
-        bottom: 150,
-      }])
+      expect(JSON.parse(preview.dataset.layouts ?? "[]")).toEqual([
+        {
+          startLine: 1,
+          endLine: 4,
+          kind: "selection",
+          top: 20,
+          bottom: 150,
+        },
+      ]),
     );
 
     unmount();
