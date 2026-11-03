@@ -12,7 +12,6 @@ export const renderMarkdownTable = (
   <Box maxW="100%" overflowX="auto" py="2" w="fit-content">
     <Table.Root
       fontSize="inherit"
-      lineHeight="inherit"
       m="0"
       maxW="100%"
       size="sm"
