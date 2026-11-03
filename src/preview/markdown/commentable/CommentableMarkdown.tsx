@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import { DocumentDiffBlock } from "../DocumentDiffBlock";
 import { remarkDocumentDiff } from "../remarkDocumentDiff";
-import { ReadOnlyMarkdownPreview } from "../../pages/markdown/ReadOnlyMarkdownPreview";
+import { DeletedMarkdownBlock } from "./DeletedMarkdownBlock";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -37,15 +37,23 @@ export const CommentableMarkdown = ({
       "revision-addition": ({ children }: { children?: ReactNode }) => (
         <DocumentDiffBlock kind="addition">{children}</DocumentDiffBlock>
       ),
-      "revision-deletion": ({ markdown }: { markdown?: string }) => (
-        <DocumentDiffBlock kind="deletion">
-          <ReadOnlyMarkdownPreview
-            markdown={markdown ?? ""}
-            documentPath={documentPath}
-            showHtmlComments={showHtmlComments}
-            theme={theme}
-          />
-        </DocumentDiffBlock>
+      "revision-deletion": ({
+        markdown,
+        previousStartLine,
+        previousEndLine,
+      }: {
+        markdown?: string;
+        previousStartLine: number;
+        previousEndLine: number;
+      }) => (
+        <DeletedMarkdownBlock
+          markdown={markdown ?? ""}
+          previousStartLine={previousStartLine}
+          previousEndLine={previousEndLine}
+          documentPath={documentPath}
+          showHtmlComments={showHtmlComments}
+          theme={theme}
+        />
       ),
     };
   }, [documentPath, showHtmlComments, theme]);
