@@ -187,7 +187,7 @@ func TestCloudRunEntrypoint(t *testing.T) {
 			if port == "" {
 				port = "8080"
 			}
-			expected := []string{"start", source, "--host", "0.0.0.0", "--port", port, "--no-open", "--keep-alive"}
+			expected := []string{"start", source, "--host", "0.0.0.0", "--port", port, "--no-open", "--no-sync"}
 			if tc.trust == "true" {
 				expected = append(expected, "--trust-forwarded-prefix")
 			}
