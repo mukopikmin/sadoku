@@ -161,6 +161,14 @@ add_comment "$changes" 'Reviewers authenticate with OAuth for each review sessio
   'Changed paragraph: turn on Changes and check that the comment outline remains distinct from the added-content background.'
 add_comment "$changes" '| Authentication | OAuth |' \
   'Changed table: compare the old and new settings while reviewing this comment.' --as-bot
+sadoku comment add --source "$changes" \
+  --start-line "$(awk '/^Reviewers authenticate with OAuth/ { print NR; exit }' "$changes")" \
+  --end-line "$(awk '/^const tokenLifetime/ { print NR + 1; exit }' "$changes")" \
+  --body 'Continuous range: these paragraphs, table, and code should share one outline in Changes. Click the first paragraph, then Shift-click the code block to try selecting the same range.' >/dev/null
+sadoku comment add --source "$changes" \
+  --start-line "$(awk '/^Review notes remain attached/ { print NR; exit }' "$changes")" \
+  --end-line "$(awk '/^Reviewers sign in again/ { print NR; exit }' "$changes")" \
+  --body 'Range across a deletion: Changes should split the outline at the removed paragraph and join the adjacent current blocks. Click the first review note, then Shift-click the final sign-in paragraph to try this selection.' --as-bot >/dev/null
 
 archived="$documents/guides/overview.md"
 add_comment "$archived" 'This document is a first-level nested fixture for directory preview mode.' \

@@ -23,7 +23,7 @@ configured `SADOKU_COMMENTS_DIR`. An unset or empty source enables preparation.
 
 All sample Markdown comes from `test/integration/fixtures/`, copied with its
 directory structure into the temporary directory. The copies provide five
-documents (one deleted) and seventeen comments, including human and bot authors,
+documents (one deleted) and nineteen comments, including human and bot authors,
 replies, review requests, resolved comments, instructions, memories, and tags.
 Seeded comments, replies, instructions, memories, and tag names are in English.
 
@@ -51,7 +51,12 @@ access with OAuth. Consecutive paragraphs, a table, a TypeScript block, and a
 Mermaid diagram form continuous removed and added bands. Unchanged review notes
 separate a removed-only paragraph from two added-only paragraphs. Active human
 and bot comments on the changed paragraph and table exercise comment outlines
-over the diff background. The document has six comments, including the existing
+over the diff background. Two range comments cover consecutive changed paragraphs,
+the table and code, and review notes spanning a deletion. Toggle **Changes** to
+check that adjacent selected blocks share one outline while removed content
+splits it. Click the first paragraph of either range, then Shift-click its last
+block to try multiple-block selection; toggle **Changes** off and on to check
+that the selection persists. The document has eight comments, including the existing
 moved, deleted, and resolved examples. `guides/setup/local.md` has no previous
 snapshot to compare, so its **Changes** option is unavailable.
 
