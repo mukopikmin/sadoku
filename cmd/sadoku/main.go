@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	// Let the server shut down gracefully on interrupt or termination.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := server.Run(ctx, os.Args[1:], os.Stdout); err != nil {
