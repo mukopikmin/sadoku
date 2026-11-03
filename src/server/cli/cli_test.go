@@ -20,3 +20,22 @@ func TestCLIRejectsInvalidOptionsBeforeWriting(t *testing.T) {
 		t.Fatal("invalid command wrote a database", err)
 	}
 }
+
+func TestNoSyncStartOptions(t *testing.T) {
+	for _, flags := range [][]string{{"--no-sync"}, {"--no-sync", "--keep-alive"}} {
+		called := false
+		err := Execute(context.Background(), append([]string{"start", "README.md"}, flags...), &bytes.Buffer{}, func(_ context.Context, o StartOptions) error {
+			called = true
+			if !o.NoSync || o.KeepAlive != (len(flags) == 2) {
+				t.Fatalf("unexpected options: %+v", o)
+			}
+			return nil
+		})
+		if err != nil || !called {
+			t.Fatalf("start: %v", err)
+		}
+	}
+	if err := Execute(context.Background(), []string{"update", "--no-sync"}, &bytes.Buffer{}, nil); err == nil {
+		t.Fatal("accepted preview option on update")
+	}
+}
