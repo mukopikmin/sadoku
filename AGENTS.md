@@ -142,8 +142,8 @@ them when making changes.
 - When a Markdown element needs additional vertical breathing room, add padding
   inside that element's commentable content instead. The padding must be
   included in the selectable comment-highlight area.
-- Keep Markdown feature support aligned with the table in `README.md`. Update
-  the table and tests when support changes.
+- Keep Markdown feature support aligned with the table in
+  `docs/user-guide.md`. Update the table and tests when support changes.
 - `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
   generated outputs and MUST NOT be committed.
 - Build client assets with `make build-client`; do not edit generated files
@@ -203,3 +203,24 @@ them when making changes.
 - Treat Git remote authentication for operations such as `git push` as
   independent from GitHub CLI authentication.
 - Do not modify or revert unrelated working-tree changes.
+
+## 8. Documentation Scope
+
+- Keep the root `README.md` a short entry point (aim for 100 lines or fewer):
+  product purpose, core capabilities, installation, a minimal usage example,
+  and prerequisites plus build/test commands for developers.
+- A new feature does not automatically need a README addition. Update the
+  relevant guide first; change the README only when the core capabilities or
+  getting-started steps change. Do not append feature-by-feature UI instructions,
+  exhaustive CLI options, implementation details, or release history there.
+- Keep detailed review operations, settings, storage, and the Markdown support
+  table in `docs/user-guide.md`; CLI and agent workflows in
+  `docs/cli-and-agents.md`; build and tooling details in `docs/development.md`;
+  and stable release operations in `docs/releases.md`. Update existing sections
+  rather than appending duplicate explanations. Keep CLI help as the reference
+  for the full command and option list.
+- Link to detailed documentation instead of copying it into the README. When
+  moving documentation, fix relative links and references in contributor rules.
+- During review, check that README changes stay within this scope and that
+  linked guides remain reachable. Keep documentation proportional to the change;
+  do not document every internal behavior or repeat information across guides.
