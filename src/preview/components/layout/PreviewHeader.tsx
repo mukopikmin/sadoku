@@ -55,7 +55,7 @@ export const PreviewShell = ({ children, headerRef }: {
 );
 
 type PreviewHeaderProps = {
-  collapsedDocument?: { title: string };
+  collapsedDocument?: { title?: string };
   documentNavigation?: ComponentProps<typeof DocumentNavigation>;
   connectionLost: boolean;
   fileUrl?: string;
@@ -111,7 +111,7 @@ export const PreviewHeader = ({
               {title}
             </Text>
           )}
-        {collapsedDocument && (
+        {collapsedDocument?.title && (
           <Text
             minW="0"
             truncate

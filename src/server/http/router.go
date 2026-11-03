@@ -23,6 +23,7 @@ import (
 )
 
 type Options struct {
+	NoSync                      bool
 	TrustForwardedPrefix        bool
 	Log                         func(string)
 	OnStreamOpen, OnStreamClose func()
@@ -157,7 +158,7 @@ func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(&css, `<link rel="stylesheet" href="%s/assets/%s">`, prefix, html.EscapeString(file))
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<!doctype html><html lang="und"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="%s/assets/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="%s/assets/icon-512.png">%s<title>Sadoku</title></head><body><div id="sadoku-client-root" data-base-path="%s"></div><script type="module" src="%s/assets/%s"></script></body></html>`, prefix, prefix, css.String(), prefix, prefix, html.EscapeString(e.File))
+	fmt.Fprintf(w, `<!doctype html><html lang="und"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="%s/assets/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="%s/assets/icon-512.png">%s<title>Sadoku</title></head><body><div id="sadoku-client-root" data-base-path="%s" data-sync-enabled="%t"></div><script type="module" src="%s/assets/%s"></script></body></html>`, prefix, prefix, css.String(), prefix, !r.options.NoSync, prefix, html.EscapeString(e.File))
 }
 func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" && req.Method != "HEAD" {

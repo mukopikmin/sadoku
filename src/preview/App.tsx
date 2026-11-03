@@ -1,11 +1,13 @@
 import { Button, Container, Text, useDisclosure } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link as RouterLink, useNavigate } from "@tanstack/react-router";
 import { PreviewShell } from "./components/layout/PreviewHeader";
 import type { PreviewView } from "./models/previewView";
 import { markdownStyles } from "./markdown/markdownStyles";
 import { useHotReload } from "./hooks/useHotReload";
-import { connectPreviewKeepAlive } from "./api/hotReload";
+import { useConnection } from "./hooks/useConnection";
+import { reportConnection } from "./api/connection";
+import { isSyncEnabled, connectPreviewKeepAlive } from "./api/hotReload";
 import { useCommentsQuery } from "./hooks/useComments";
 import {
   useDirectoryStatusQuery,
@@ -49,7 +51,8 @@ export const App = () => {
   const directoryStatus = directoryStatusQuery.data;
   const documents = documentsQuery.data;
   const directoryMode = documents !== null && documents !== undefined;
-  const shouldLoadDocument = documentsQuery.isSuccess &&
+  const shouldLoadDocument =
+    documentsQuery.isSuccess &&
     (!directoryMode || selectedDocumentId !== undefined);
   const documentQuery = usePreviewDocumentQuery(
     selectedDocumentId,
@@ -68,18 +71,19 @@ export const App = () => {
     view,
     Boolean(documentQuery.data && commentsQuery.data),
   );
-  const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
-    selectedDocumentId,
-    Boolean(documentQuery.data && commentsQuery.data),
-    view,
-  );
+  const { collapsed, documentHeaderRef, headerRef } =
+    useCollapsedDocumentHeader(
+      selectedDocumentId,
+      Boolean(documentQuery.data && commentsQuery.data),
+      view,
+    );
   const settingsDisclosure = useDisclosure();
   const instructionsDisclosure = useDisclosure();
   const globalInstructionsDisclosure = useDisclosure();
   const memoriesDisclosure = useDisclosure();
   const tagsDisclosure = useDisclosure();
   const documentTagsDisclosure = useDisclosure();
-  const [connectionLost, setConnectionLost] = useState(false);
+  const connectionLost = useConnection();
   const {
     changeCodeWrapMode,
     changeDirectoryLimits,
@@ -91,9 +95,8 @@ export const App = () => {
     changeThemeMode,
     settings,
   } = usePreviewSettings();
-  const { clearReloadAvailable, reloadAvailable } = useHotReload(
-    selectedDocumentId,
-  );
+  const { clearReloadAvailable, reloadAvailable } =
+    useHotReload(selectedDocumentId);
   const settingsActions = {
     onCodeWrapModeChange: changeCodeWrapMode,
     onDirectoryLimitsChange: changeDirectoryLimits,
@@ -105,11 +108,14 @@ export const App = () => {
     onThemeModeChange: changeThemeMode,
   };
 
-  useEffect(() =>
-    connectPreviewKeepAlive({
-      onConnectionLost: () => setConnectionLost(true),
-      onConnectionRestored: () => setConnectionLost(false),
-    }), []);
+  useEffect(
+    () =>
+      connectPreviewKeepAlive({
+        onConnectionLost: () => reportConnection(true),
+        onConnectionRestored: () => reportConnection(false),
+      }),
+    [],
+  );
 
   useEffect(() => {
     clearReloadAvailable();
@@ -119,9 +125,10 @@ export const App = () => {
     if (nextView === view || selectedDocumentId === undefined) return;
     saveScrollPosition();
     void navigate({
-      to: nextView === "comments"
-        ? "/documents/$documentId/comments"
-        : "/documents/$documentId",
+      to:
+        nextView === "comments"
+          ? "/documents/$documentId/comments"
+          : "/documents/$documentId",
       params: { documentId: String(selectedDocumentId) },
     });
   };
@@ -140,6 +147,14 @@ export const App = () => {
   };
 
   const reloadPreview = async () => {
+    if (!isSyncEnabled()) {
+      await Promise.all([
+        documentsQuery.refetch(),
+        directoryStatusQuery.refetch(),
+        sessionQuery.refetch(),
+      ]);
+      if (selectedDocumentId === undefined) return;
+    }
     const [documentResult, commentsResult] = await Promise.all([
       documentQuery.refetch(),
       commentsQuery.refetch(),
@@ -153,9 +168,10 @@ export const App = () => {
     if (pathname === "/") {
       globalThis.document.title = "Documents — Sadoku";
     } else if (documentQuery.data) {
-      globalThis.document.title = view === "comments"
-        ? `Comments — ${documentQuery.data.title} — Sadoku`
-        : `${documentQuery.data.title} — Sadoku`;
+      globalThis.document.title =
+        view === "comments"
+          ? `Comments — ${documentQuery.data.title} — Sadoku`
+          : `${documentQuery.data.title} — Sadoku`;
     }
   }, [documentQuery.data, pathname, view]);
 
@@ -201,7 +217,8 @@ export const App = () => {
       </>
     );
   }
-  const selectedDocumentExists = selectedDocumentId !== undefined &&
+  const selectedDocumentExists =
+    selectedDocumentId !== undefined &&
     documents?.some((document) => document.id === selectedDocumentId);
   if (!isDocumentList && (!rawDocumentId || !selectedDocumentExists)) {
     globalThis.document.title = "Not Found — Sadoku";
@@ -225,8 +242,11 @@ export const App = () => {
         dialogs={dialogProps}
         header={{
           ...headerActions,
-          reloadAvailable: false,
-          reloading: false,
+          reloadAvailable: !isSyncEnabled(),
+          reloading:
+            documentsQuery.isFetching ||
+            directoryStatusQuery.isFetching ||
+            sessionQuery.isFetching,
           title: "Documents",
         }}
       >
@@ -235,11 +255,13 @@ export const App = () => {
           documents={documents!}
           onSelectDocument={selectDocument}
           pullRequest={sessionQuery.data?.pullRequest}
-          onCreateDocument={sessionQuery.data?.canCreateDocuments &&
-              directoryStatus?.state !== "loading" &&
-              directoryStatus?.state !== "error"
-            ? documentCreator.open
-            : undefined}
+          onCreateDocument={
+            sessionQuery.data?.canCreateDocuments &&
+            directoryStatus?.state !== "loading" &&
+            directoryStatus?.state !== "error"
+              ? documentCreator.open
+              : undefined
+          }
         />
         <CreateDocumentDialog creator={documentCreator} />
       </PreviewLayout>
@@ -248,16 +270,19 @@ export const App = () => {
 
   if (!documentQuery.data || !commentsQuery.data) {
     const error = documentQuery.error ?? commentsQuery.error;
-    const selectedDocument = documents?.find((item) =>
-      item.id === selectedDocumentId
+    const selectedDocument = documents?.find(
+      (item) => item.id === selectedDocumentId,
     );
     return (
       <PreviewLayout
         dialogs={dialogProps}
         header={{
           ...headerActions,
-          reloadAvailable: false,
-          reloading: false,
+          reloadAvailable: !isSyncEnabled(),
+          reloading:
+            documentsQuery.isFetching ||
+            directoryStatusQuery.isFetching ||
+            sessionQuery.isFetching,
           title: selectedDocument?.relativePath ?? "Preview",
         }}
       >
@@ -274,11 +299,12 @@ export const App = () => {
 
   const { comments } = commentsQuery.data;
   const document = documentQuery.data;
-  const selectedDocument = documents?.find((item) =>
-    item.id === selectedDocumentId
+  const selectedDocument = documents?.find(
+    (item) => item.id === selectedDocumentId,
   );
-  const staleCommentCount =
-    comments.filter((comment) => comment.state === "stale").length;
+  const staleCommentCount = comments.filter(
+    (comment) => comment.state === "stale",
+  ).length;
   const unresolvedCommentCount = comments.filter(isUnresolvedComment).length;
 
   return (
@@ -292,20 +318,20 @@ export const App = () => {
         ...headerActions,
         collapsedDocument: collapsed
           ? {
-            title: document.displayTitle ?? document.title,
-          }
+              title: document.displayTitle,
+            }
           : undefined,
         fileUrl: document.fileUrl,
         documentNavigation: collapsed
           ? {
-            onChangeView: changeView,
-            staleCommentCount,
-            unresolvedCommentCount,
-            view,
-          }
+              onChangeView: changeView,
+              staleCommentCount,
+              unresolvedCommentCount,
+              view,
+            }
           : undefined,
         headerRef,
-        reloadAvailable,
+        reloadAvailable: reloadAvailable || !isSyncEnabled(),
         reloading: documentQuery.isFetching || commentsQuery.isFetching,
         title: document.title,
       }}

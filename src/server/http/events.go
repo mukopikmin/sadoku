@@ -23,6 +23,10 @@ type watchTarget struct {
 // Watch parent directories, not file handles: editor saves commonly rename a
 // temporary file over the original, and a deleted file can later be recreated.
 func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
+	if r.options.NoSync {
+		http.NotFound(w, req)
+		return
+	}
 	updates, unsubscribe := r.session.SubscribeInvalidation()
 	defer unsubscribe()
 	targets := []watchTarget{}
