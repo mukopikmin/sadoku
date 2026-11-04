@@ -9,7 +9,10 @@ OUTPUT ?=
 TARGET ?=
 BINARY_VERSION ?= $(VERSION)
 ARGS ?=
-GO_TEST_FLAGS ?= -race -count=1 -timeout=120s
+# The timeout covers an entire package. Windows runners need more time for
+# SQLite migrations and other disk writes, especially with the race detector.
+GO_TEST_TIMEOUT ?= $(if $(filter Windows_NT,$(OS)),10m,120s)
+GO_TEST_FLAGS ?= -race -count=1 -timeout=$(GO_TEST_TIMEOUT)
 GO_SOURCES := src/cmd src/internal src/preview/assets.go src/gen/go src/test/integration
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \

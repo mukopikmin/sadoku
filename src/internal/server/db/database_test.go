@@ -3,6 +3,7 @@ package db
 import (
 	"compress/gzip"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -188,6 +189,42 @@ func TestOriginalMigrationsRetainTheirChecksums(t *testing.T) {
 		if actual != m.Checksum {
 			t.Errorf("migration %s changed: %s != %s", m.Version, actual, m.Checksum)
 		}
+	}
+}
+
+func TestFailedMigrationBatchRollsBackAndCanBeRetried(t *testing.T) {
+	database, err := sql.Open("sqlite3", filepath.Join(t.TempDir(), "app.sqlite3"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	database.SetMaxOpenConns(1)
+	// A pre-existing table makes migration 0006 fail after earlier versions ran.
+	if _, err = database.Exec("CREATE TABLE document_instruction (sentinel TEXT); INSERT INTO document_instruction VALUES ('preserved')"); err != nil {
+		t.Fatal(err)
+	}
+	if err = Migrate(database); err == nil || !strings.Contains(err.Error(), "migration 0006") {
+		t.Fatalf("expected migration 0006 failure: %v", err)
+	}
+	var count int
+	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 0 {
+		t.Fatalf("failed batch left migration records: %d, %v", count, err)
+	}
+	if err = database.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE name='comment_document'").Scan(&count); err != nil || count != 0 {
+		t.Fatalf("failed batch left schema changes: %d, %v", count, err)
+	}
+	var sentinel string
+	if err = database.QueryRow("SELECT sentinel FROM document_instruction").Scan(&sentinel); err != nil || sentinel != "preserved" {
+		t.Fatalf("failed batch changed existing data: %q, %v", sentinel, err)
+	}
+	if _, err = database.Exec("DROP TABLE document_instruction"); err != nil {
+		t.Fatal(err)
+	}
+	if err = Migrate(database); err != nil {
+		t.Fatalf("retry after removing the conflict: %v", err)
+	}
+	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 14 {
+		t.Fatalf("retried migrations: %d, %v", count, err)
 	}
 }
 

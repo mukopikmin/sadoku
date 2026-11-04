@@ -94,14 +94,23 @@ func Migrate(database *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	var pending []migration
 	for _, m := range migrations {
-		if applied[m.Version] {
-			continue
+		if !applied[m.Version] {
+			pending = append(pending, m)
 		}
-		tx, err := database.Begin()
-		if err != nil {
-			return err
-		}
+	}
+	if len(pending) == 0 {
+		return nil
+	}
+	// Commit pending migrations together to avoid a disk sync per version.
+	// A failed upgrade rolls back both schema changes and migration records.
+	tx, err := database.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	for _, m := range pending {
 		for _, statement := range m.Statements {
 			if _, err = tx.Exec(statement); err != nil {
 				break
@@ -111,12 +120,8 @@ func Migrate(database *sql.DB) error {
 			_, err = tx.Exec("INSERT INTO schema_migration VALUES (?, ?, ?, 'applied', ?, ?, NULL)", m.Version, m.Name, m.Checksum, Now(), Now())
 		}
 		if err != nil {
-			tx.Rollback()
 			return fmt.Errorf("migration %s: %w", m.Version, err)
 		}
-		if err = tx.Commit(); err != nil {
-			return err
-		}
 	}
-	return nil
+	return tx.Commit()
 }
