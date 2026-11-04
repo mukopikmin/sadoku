@@ -10,9 +10,9 @@ on:
       - buf.yaml
       - package.json
       - package-lock.json
-      - proto/**
-      - gen/ts/**
-      - gen/go/**
+      - src/proto/**
+      - src/gen/ts/**
+      - src/gen/go/**
       - go.mod
       - go.sum
   push:
@@ -26,9 +26,9 @@ on:
       - buf.yaml
       - package.json
       - package-lock.json
-      - proto/**
-      - gen/ts/**
-      - gen/go/**
+      - src/proto/**
+      - src/gen/ts/**
+      - src/gen/go/**
       - go.mod
       - go.sum
 

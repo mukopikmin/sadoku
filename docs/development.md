@@ -47,13 +47,13 @@ Nightly builds use
 
 Install the pinned Go protobuf generators with `make proto-tools` before
 `make proto-check`; ensure `$(go env GOPATH)/bin` is on `PATH`. Go and TypeScript
-bindings share `proto/sadoku/preview/v1/preview.proto`.
+bindings share `src/proto/sadoku/preview/v1/preview.proto`.
 
 Server and tooling tests use Go. The inline GitHub JavaScript action test uses
 Node's built-in test runner. Generated TypeScript bindings and the Node test use
 Prettier; Go formatting uses `gofmt`.
 
-See [contributor guidelines](../AGENTS.md), [proxy setup](../proxy/README.md), and the
+See [contributor guidelines](../AGENTS.md), [proxy setup](../src/proxy/README.md), and the
 [release workflow guide](../.agents/skills/sadoku-release/SKILL.md) for details.
 
 See [stable release operations](releases.md) for tag metadata and workflow safeguards.
@@ -62,3 +62,12 @@ See [stable release operations](releases.md) for tag metadata and workflow safeg
 
 For nightly builds, pass `--nightly` to `install.sh` or `-Nightly` to
 `install.ps1`; update with `sadoku update --channel nightly`.
+
+## Source layout
+
+Application code and tests live under `src/`: executable entry points in
+`cmd/`, private Go implementations in `internal/server/` and `internal/tooling/`,
+the browser client in `preview/`, protobuf definitions in `proto/`, generated
+bindings in `gen/`, and integration tests in `test/integration/`. The revision
+proxy remains an independent Go module under `src/proxy/`. Build configuration,
+scripts, and documentation stay at the repository root.

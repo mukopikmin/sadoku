@@ -1,6 +1,6 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Code, ConnectError, createClient } from "@connectrpc/connect";
-import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb";
+import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb";
 import { reportConnection } from "./connection";
 import { readPreviewBasePath } from "./basePath";
 

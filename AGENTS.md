@@ -39,9 +39,9 @@ them when making changes.
 
 ## 2. Production Go Backend
 
-- The production server and CLI are implemented in Go. `cmd/sadoku/main.go` is
-  the executable entry point and delegates to `src/server/app.go`.
-- Keep native code under the corresponding `src/server/` boundaries: `cli/`,
+- The production server and CLI are implemented in Go. `src/cmd/sadoku/main.go` is
+  the executable entry point and delegates to `src/internal/server/app.go`.
+- Keep native code under the corresponding `src/internal/server/` boundaries: `cli/`,
   `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
 - Use Go's standard library for runtime facilities. Keep domain operations as
   functions and plain data with explicit persistence ports.
@@ -52,7 +52,7 @@ them when making changes.
 - Keep `go.mod` and `go.sum` consistent. SQLite uses `mattn/go-sqlite3` and
   requires `CGO_ENABLED=1` and a C compiler. Build release binaries on their
   target OS/architecture; cross-compilation requires a target C toolchain.
-- `src/server/db/migrations/legacy.json` preserves the exact original migration
+- `src/internal/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
 - Generate Go and TypeScript RPC bindings together using
@@ -78,8 +78,8 @@ them when making changes.
 
 ## 3. Repository Tooling
 
-- Build, source installation, and notice tools use Go under `internal/tooling/`,
-  with the entry point `cmd/sadoku-tools/`. Stable release validation, testing,
+- Build, source installation, and notice tools use Go under `src/internal/tooling/`,
+  with the entry point `src/cmd/sadoku-tools/`. Stable release validation, testing,
   attestation, note generation, and publication belong to the Release workflow.
 - Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
   scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
@@ -153,7 +153,7 @@ them when making changes.
 ## 5. Testing Conventions
 
 - Co-locate server and tooling unit tests as `*_test.go`.
-- Put cross-module Go server workflows in `test/integration/`.
+- Put cross-module Go server workflows in `src/test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
 - Keep component tests to the minimum needed to verify rendering, accessibility,

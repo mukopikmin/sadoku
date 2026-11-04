@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "proxy/**"
+      - "src/proxy/**"
       - ".github/workflows/cloud_run_proxy.yml"
   workflow_dispatch:
 
@@ -27,7 +27,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: proxy/go.mod
+          go-version-file: src/proxy/go.mod
           cache: false
 
       - name: Check proxy
@@ -40,7 +40,7 @@ jobs:
           set -euo pipefail
           [[ "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]
           image="revision-proxy:${HEAD_SHA}"
-          docker build --platform linux/amd64 --tag "${image}" proxy
+          docker build --platform linux/amd64 --tag "${image}" src/proxy
           docker save --output "${RUNNER_TEMP}/proxy-image.tar" "${image}"
 
       - name: Upload image artifact

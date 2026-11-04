@@ -10,7 +10,7 @@ import { toDatabaseStatistics } from "../api/statistics";
 import {
   GetSessionResponseSchema,
   GetStatisticsResponseSchema,
-} from "../../../gen/ts/sadoku/preview/v1/preview_pb";
+} from "../../gen/ts/sadoku/preview/v1/preview_pb";
 
 afterEach(() => vi.unstubAllGlobals());
 
