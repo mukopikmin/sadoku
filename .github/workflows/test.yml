@@ -4,7 +4,7 @@ on:
   workflow_call:
   pull_request:
     paths-ignore: &proxy-paths
-      - "proxy/**"
+      - "src/proxy/**"
       - ".github/workflows/proxy_test.yml"
       - ".github/workflows/cloud_run_proxy.yml"
   push:
