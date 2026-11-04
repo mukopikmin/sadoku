@@ -71,6 +71,11 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
+          # Native release builds must not share a snapshot with Vet or generators.
+          cache-dependency-path: |
+            go.sum
+            Makefile
+            .github/workflows/build-artifacts.yml
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -90,7 +95,9 @@ jobs:
           VERSION: ${{ inputs.version }}
           BINARY_VERSION: ${{ inputs.binary-version || inputs.version }}
           TARGET: ${{ matrix.target }}
-        run: make dist VERSION="${VERSION}" BINARY_VERSION="${BINARY_VERSION}" TARGET="${TARGET}"
+        run:
+          make dist VERSION="${VERSION}" BINARY_VERSION="${BINARY_VERSION}"
+          TARGET="${TARGET}"
 
       - name: Smoke test packaged SQLite
         run: |

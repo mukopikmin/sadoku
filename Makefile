@@ -10,10 +10,11 @@ TARGET ?=
 BINARY_VERSION ?= $(VERSION)
 ARGS ?=
 GO_TEST_FLAGS ?= -race -count=1 -timeout=120s
-GO_SOURCES := cmd internal src/server src/preview/assets.go gen/go test/integration
+GO_SOURCES := src/cmd src/internal src/preview/assets.go src/gen/go src/test/integration
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \
- build build-server install dist notices run start test test-server test-tools test-install check vet vet-cross \
+ build build-server install dist notices run start test test-server test-server-with-assets \
+ test-tools test-install test-install-with-assets check vet vet-cross \
  fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
  check-proxy-format vet-proxy test-proxy build-proxy run-proxy
 
@@ -40,37 +41,45 @@ build: build-client
 
 # Client assets must already exist; container builds supply them from a separate stage.
 build-server:
-	$(GO) run ./cmd/sadoku-tools build --version "$(VERSION)" $(foreach target,$(TARGET),--target "$(target)") $(if $(OUTPUT),--output "$(OUTPUT)")
+	$(GO) run ./src/cmd/sadoku-tools build --version "$(VERSION)" $(foreach target,$(TARGET),--target "$(target)") $(if $(OUTPUT),--output "$(OUTPUT)")
 
 install: build-client
-	$(GO) run ./cmd/sadoku-tools install --version "$(VERSION)"
+	$(GO) run ./src/cmd/sadoku-tools install --version "$(VERSION)"
 
 dist: build-client
-	$(GO) run ./cmd/sadoku-tools dist --version "$(VERSION)" --binary-version "$(BINARY_VERSION)" $(foreach target,$(TARGET),--target "$(target)")
+	$(GO) run ./src/cmd/sadoku-tools dist --version "$(VERSION)" --binary-version "$(BINARY_VERSION)" $(foreach target,$(TARGET),--target "$(target)")
 
 notices: build-client
-	$(GO) run ./cmd/sadoku-tools notices
+	$(GO) run ./src/cmd/sadoku-tools notices
 
 run: build-client
-	$(GO) run ./cmd/sadoku $(ARGS)
+	$(GO) run ./src/cmd/sadoku $(ARGS)
 
 start: build-client
-	$(GO) run ./cmd/sadoku start $(ARGS)
+	$(GO) run ./src/cmd/sadoku start $(ARGS)
 
 test: test-server test-client test-actions test-proxy
 
 test-server: build-client
+	$(MAKE) test-server-with-assets
+
+# CI builds assets once before running these targets. Keep the default targets
+# building the client so local runs cannot silently use stale embedded assets.
+test-server-with-assets:
 	$(GO) test $(GO_TEST_FLAGS) ./...
 
 test-tools:
-	$(GO) test -race -count=1 ./internal/tooling
+	$(GO) test -race -count=1 ./src/internal/tooling
 	$(NPM) run test:actions
 
 test-install: build-client
+	$(MAKE) test-install-with-assets
+
+test-install-with-assets:
 	@set -eu; install_home=$$(mktemp -d); \
 	trap 'rm -rf "$$install_home"' EXIT; \
 	GOMODCACHE="$$($(GO) env GOMODCACHE)" GOCACHE="$$($(GO) env GOCACHE)" \
-	HOME="$$install_home" $(GO) run ./cmd/sadoku-tools install --version 0.0.0-ci; \
+	HOME="$$install_home" $(GO) run ./src/cmd/sadoku-tools install --version 0.0.0-ci; \
 	test "$$("$$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
 
 check: fmt-check vet vet-proxy
@@ -80,13 +89,13 @@ vet: build-client
 
 # Repository tooling needs native SQLite CGO APIs; cross-check application Go code.
 vet-cross: vet
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) vet ./cmd/sadoku ./src/... ./gen/go/... ./test/integration/...
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) vet ./cmd/sadoku ./src/... ./gen/go/... ./test/integration/...
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) vet ./src/cmd/sadoku ./src/internal/server/... ./src/preview/... ./src/gen/go/... ./src/test/integration/...
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) vet ./src/cmd/sadoku ./src/internal/server/... ./src/preview/... ./src/gen/go/... ./src/test/integration/...
 
 fmt: fmt-go fmt-client
 
 fmt-go:
-	gofmt -w $(GO_SOURCES) proxy
+	gofmt -w $(GO_SOURCES) src/proxy
 
 fmt-check: check-go-format check-client-format check-proxy-format
 
@@ -104,20 +113,20 @@ proto-generate:
 	$(NPM) run proto:generate
 
 proto-check: proto-lint proto-generate
-	git add --intent-to-add -- gen/ts gen/go
-	git diff --exit-code -- gen/ts gen/go
+	git add --intent-to-add -- src/gen/ts src/gen/go
+	git diff --exit-code -- src/gen/ts src/gen/go
 
 check-proxy-format:
-	test -z "$$(gofmt -l proxy)"
+	test -z "$$(gofmt -l src/proxy)"
 
 vet-proxy:
-	$(GO) -C proxy vet ./...
+	$(GO) -C src/proxy vet ./...
 
 test-proxy:
-	$(GO) -C proxy test -race -count=1 -timeout=60s ./...
+	$(GO) -C src/proxy test -race -count=1 -timeout=60s ./...
 
 build-proxy:
-	CGO_ENABLED=0 $(GO) -C proxy build ./...
+	CGO_ENABLED=0 $(GO) -C src/proxy build ./...
 
 run-proxy:
-	$(GO) -C proxy run ./cmd/revision-proxy
+	$(GO) -C src/proxy run ./cmd/revision-proxy

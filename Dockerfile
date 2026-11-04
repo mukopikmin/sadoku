@@ -12,7 +12,7 @@ RUN --mount=type=secret,id=proxy_ca \
     npm_config_engine_strict=true npm run install:deps
 
 COPY src/preview/ ./src/preview/
-COPY gen/ts/ ./gen/ts/
+COPY src/gen/ts/ ./src/gen/ts/
 RUN npm run build:client
 
 FROM golang:1.26.10-bookworm AS go-toolchain
@@ -33,10 +33,9 @@ RUN --mount=type=secret,id=proxy_ca \
     go mod download
 
 COPY Makefile ./
-COPY cmd/ ./cmd/
-COPY internal/ ./internal/
-COPY src/server/ ./src/server/
-COPY gen/go/ ./gen/go/
+COPY src/cmd/ ./src/cmd/
+COPY src/internal/ ./src/internal/
+COPY src/gen/go/ ./src/gen/go/
 COPY src/preview/assets.go ./src/preview/assets.go
 COPY --from=client /workspace/src/preview/dist/ ./src/preview/dist/
 RUN make build-server

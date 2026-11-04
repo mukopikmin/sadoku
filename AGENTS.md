@@ -39,9 +39,9 @@ them when making changes.
 
 ## 2. Production Go Backend
 
-- The production server and CLI are implemented in Go. `cmd/sadoku/main.go` is
-  the executable entry point and delegates to `src/server/app.go`.
-- Keep native code under the corresponding `src/server/` boundaries: `cli/`,
+- The production server and CLI are implemented in Go. `src/cmd/sadoku/main.go` is
+  the executable entry point and delegates to `src/internal/server/app.go`.
+- Keep native code under the corresponding `src/internal/server/` boundaries: `cli/`,
   `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
 - Use Go's standard library for runtime facilities. Keep domain operations as
   functions and plain data with explicit persistence ports.
@@ -52,13 +52,13 @@ them when making changes.
 - Keep `go.mod` and `go.sum` consistent. SQLite uses `mattn/go-sqlite3` and
   requires `CGO_ENABLED=1` and a C compiler. Build release binaries on their
   target OS/architecture; cross-compilation requires a target C toolchain.
-- `src/server/db/migrations/legacy.json` preserves the exact original migration
+- `src/internal/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
-- Add new database migrations to `src/server/db/migrations/current.json`. For
+- Add new database migrations to `src/internal/server/db/migrations/current.json`. For
   constraints SQLite cannot add with ALTER TABLE, use a transactional table
   rebuild with the original table name, IDs, foreign keys, defaults, and indexes
-  preserved. Follow `src/server/db/migrations/README.md`; verify fresh/upgrade
+  preserved. Follow `src/internal/server/db/migrations/README.md`; verify fresh/upgrade
   schema equality, repeat execution, rollback, and related-data preservation.
   Document explicit backfill policies for missing historical metadata; never
   infer unknown original text from the current document.
@@ -85,8 +85,8 @@ them when making changes.
 
 ## 3. Repository Tooling
 
-- Build, source installation, and notice tools use Go under `internal/tooling/`,
-  with the entry point `cmd/sadoku-tools/`. Stable release validation, testing,
+- Build, source installation, and notice tools use Go under `src/internal/tooling/`,
+  with the entry point `src/cmd/sadoku-tools/`. Stable release validation, testing,
   attestation, note generation, and publication belong to the Release workflow.
 - Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
   scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
@@ -149,8 +149,8 @@ them when making changes.
 - When a Markdown element needs additional vertical breathing room, add padding
   inside that element's commentable content instead. The padding must be
   included in the selectable comment-highlight area.
-- Keep Markdown feature support aligned with the table in `README.md`. Update
-  the table and tests when support changes.
+- Keep the Markdown support summary in `README.md` aligned with supported
+  behavior. Update the summary and tests when support changes.
 - `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
   generated outputs and MUST NOT be committed.
 - Build client assets with `make build-client`; do not edit generated files
@@ -160,7 +160,7 @@ them when making changes.
 ## 5. Testing Conventions
 
 - Co-locate server and tooling unit tests as `*_test.go`.
-- Put cross-module Go server workflows in `test/integration/`.
+- Put cross-module Go server workflows in `src/test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
 - Keep component tests to the minimum needed to verify rendering, accessibility,
@@ -210,3 +210,20 @@ them when making changes.
 - Treat Git remote authentication for operations such as `git push` as
   independent from GitHub CLI authentication.
 - Do not modify or revert unrelated working-tree changes.
+
+## 8. Documentation Scope
+
+- Keep user-facing essentials together in the root `README.md`: what Sadoku
+  does, installation, basic review usage, meaningful limitations, settings and
+  storage, and developer prerequisites plus build/test commands.
+- Judge documentation by usefulness and duplication, not line counts. Do not
+  split basic usage into a separate user guide merely to shorten the README.
+- A new feature does not automatically need new documentation. Update an existing
+  summary when it changes what users can do or need to know to get started.
+  Omit exhaustive UI steps, internal behavior, and feature-by-feature histories.
+- Keep specialized CLI and agent workflows in `docs/cli-and-agents.md`, build
+  and tooling details in `docs/development.md`, and stable release operations
+  in `docs/releases.md`. Use CLI help for the full command and option list.
+- During review, remove repetition, keep explanations proportional to the task,
+  and check links when moving or deleting documentation. Link to specialized
+  references where needed without duplicating their contents.

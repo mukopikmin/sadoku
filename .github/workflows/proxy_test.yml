@@ -3,7 +3,7 @@ name: Proxy Test
 on:
   pull_request:
     paths: &proxy-paths
-      - "proxy/**"
+      - "src/proxy/**"
       - ".github/workflows/proxy_test.yml"
   push:
     branches:
@@ -41,7 +41,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: proxy/go.mod
+          go-version-file: src/proxy/go.mod
           cache: false
 
       - name: Check formatting

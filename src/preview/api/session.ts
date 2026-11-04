@@ -1,5 +1,5 @@
 import type { PreviewSession, PullRequestMetadata } from "../models/session";
-import type { GetSessionResponse } from "../../../gen/ts/sadoku/preview/v1/preview_pb";
+import type { GetSessionResponse } from "../../gen/ts/sadoku/preview/v1/preview_pb";
 
 const parsePullRequest = (value: unknown): PullRequestMetadata => {
   if (typeof value !== "object" || value === null) {

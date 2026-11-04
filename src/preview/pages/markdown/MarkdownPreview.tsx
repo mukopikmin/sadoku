@@ -19,15 +19,19 @@ import { useCommentSelection } from "../../markdown/commentable/useCommentSelect
 import { initializeMermaid } from "../../markdown/mermaid";
 import { HighlightOverlay } from "../../markdown/HighlightOverlay";
 import { useHeadingHashNavigation } from "../../markdown/useHeadingHashNavigation";
-import type { ActiveComment } from "../../models/comment";
+import type { UnresolvedComment } from "../../models/comment";
 import { extractAgentFrontMatter } from "./frontMatter";
 import { RawMarkdownDialog } from "./RawMarkdownDialog";
 import { DocumentDiffBlock } from "../../markdown/DocumentDiffBlock";
-import { ReadOnlyMarkdownPreview } from "./ReadOnlyMarkdownPreview";
+import {
+  DeletedCommentsContext,
+  DeletedMarkdownBlock,
+} from "../../markdown/commentable/DeletedMarkdownBlock";
+import { groupDeletedComments } from "../../markdown/commentable/deletedComments";
 
 export type MarkdownPreviewProps = {
   actions: CommentActions;
-  comments: ActiveComment[];
+  comments: UnresolvedComment[];
   documentPath?: string;
   markdown: string;
   previousMarkdown?: string;
@@ -44,6 +48,10 @@ export const MarkdownPreview = ({
   showHtmlComments,
   theme,
 }: MarkdownPreviewProps) => {
+  const activeComments = useMemo(
+    () => comments.filter((comment) => comment.state === "active"),
+    [comments],
+  );
   const frontMatter = useMemo(
     () => extractAgentFrontMatter(markdown, documentPath),
     [documentPath, markdown],
@@ -74,20 +82,27 @@ export const MarkdownPreview = ({
     selectedRange,
   } = useCommentSelection();
   const rangeHighlights = useMemo(
-    () => deriveRangeHighlights(comments, selectedRange),
-    [comments, selectedRange],
+    () => deriveRangeHighlights(activeComments, selectedRange),
+    [activeComments, selectedRange],
   );
-  const { commentableLines, rangeHighlightLayouts } = useCommentableBlockLayout(
-    previewRef,
-    rangeHighlights,
-  );
+  const { commentableLines, deletedRanges, rangeHighlightLayouts } =
+    useCommentableBlockLayout(previewRef, rangeHighlights);
   const commentsByLine = useMemo(
-    () => groupCommentsByAnchorLine(comments, commentableLines),
-    [commentableLines, comments],
+    () => groupCommentsByAnchorLine(activeComments, commentableLines),
+    [commentableLines, activeComments],
   );
   const commentHighlightsByLine = useMemo(
-    () => getSingleLineCommentHighlights(comments),
-    [comments],
+    () => getSingleLineCommentHighlights(activeComments),
+    [activeComments],
+  );
+  const deletedCommentsByLine = useMemo(
+    () =>
+      groupDeletedComments(
+        comments.filter((comment) => comment.state === "stale"),
+        previousMarkdown ?? "",
+        deletedRanges,
+      ),
+    [comments, previousMarkdown, deletedRanges],
   );
 
   useHeadingHashNavigation(previewRef, markdown);
@@ -138,23 +153,25 @@ export const MarkdownPreview = ({
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
-      <RawMarkdownDialog
-        markdown={markdown}
-        onOpenChange={(open) => {
-          if (!open) setRawMarkdownRange(undefined);
-        }}
-        open={rawMarkdownRange !== undefined}
-        range={rawMarkdownRange}
-      />
-      <Box
-        className="markdown-preview"
-        data-document-diff={previousMarkdown !== undefined ? "" : undefined}
-        ref={previewRef}
-      >
-        <HighlightOverlay layouts={rangeHighlightLayouts} />
-        {frontMatterChanged && previousFrontMatter && (
-          <DocumentDiffBlock kind="deletion">
-            <ReadOnlyMarkdownPreview
+      <DeletedCommentsContext.Provider value={deletedCommentsByLine}>
+        <RawMarkdownDialog
+          markdown={markdown}
+          onOpenChange={(open) => {
+            if (!open) setRawMarkdownRange(undefined);
+          }}
+          open={rawMarkdownRange !== undefined}
+          range={rawMarkdownRange}
+        />
+        <Box
+          className="markdown-preview"
+          data-document-diff={previousMarkdown !== undefined ? "" : undefined}
+          ref={previewRef}
+        >
+          <HighlightOverlay layouts={rangeHighlightLayouts} />
+          {frontMatterChanged && previousFrontMatter && (
+            <DeletedMarkdownBlock
+              previousStartLine={1}
+              previousEndLine={previousFrontMatter.endLine}
               documentPath={documentPath}
               markdown={previousMarkdown!
                 .split(/\r?\n/)
@@ -163,54 +180,54 @@ export const MarkdownPreview = ({
               showHtmlComments={showHtmlComments}
               theme={theme}
             />
-          </DocumentDiffBlock>
-        )}
-        {frontMatter && (
-          <FrontMatterDiff changed={frontMatterChanged}>
-            <DataList.Root
-              orientation={{ base: "vertical", md: "horizontal" }}
-              gap="0"
-            >
-              {frontMatter.items.map((item) => (
-                <CommentableBlock
-                  {...getCommentableBlockProps(commentRenderingContext, {
-                    startLine: item.startLine,
-                    endLine: item.endLine,
-                  })}
-                  key={`${item.key}-${item.startLine}`}
-                >
-                  <DataList.Item
-                    alignItems="start"
-                    gap={{ base: "1", md: "2" }}
-                    py="1"
+          )}
+          {frontMatter && (
+            <FrontMatterDiff changed={frontMatterChanged}>
+              <DataList.Root
+                orientation={{ base: "vertical", md: "horizontal" }}
+                gap="0"
+              >
+                {frontMatter.items.map((item) => (
+                  <CommentableBlock
+                    {...getCommentableBlockProps(commentRenderingContext, {
+                      startLine: item.startLine,
+                      endLine: item.endLine,
+                    })}
+                    key={`${item.key}-${item.startLine}`}
                   >
-                    <DataList.ItemLabel minW={{ md: "auto" }}>
-                      {item.key}
-                    </DataList.ItemLabel>
-                    <DataList.ItemValue
-                      minW="0"
-                      overflowWrap="anywhere"
-                      whiteSpace="pre-wrap"
+                    <DataList.Item
+                      alignItems="start"
+                      gap={{ base: "1", md: "2" }}
+                      py="1"
                     >
-                      {item.value}
-                    </DataList.ItemValue>
-                  </DataList.Item>
-                </CommentableBlock>
-              ))}
-            </DataList.Root>
-          </FrontMatterDiff>
-        )}
-        <CommentableMarkdown
-          documentPath={documentPath}
-          previousMarkdown={
-            previousFrontMatter?.bodyMarkdown ?? previousMarkdown
-          }
-          showHtmlComments={showHtmlComments}
-          theme={theme}
-        >
-          {renderedMarkdown}
-        </CommentableMarkdown>
-      </Box>
+                      <DataList.ItemLabel minW={{ md: "auto" }}>
+                        {item.key}
+                      </DataList.ItemLabel>
+                      <DataList.ItemValue
+                        minW="0"
+                        overflowWrap="anywhere"
+                        whiteSpace="pre-wrap"
+                      >
+                        {item.value}
+                      </DataList.ItemValue>
+                    </DataList.Item>
+                  </CommentableBlock>
+                ))}
+              </DataList.Root>
+            </FrontMatterDiff>
+          )}
+          <CommentableMarkdown
+            documentPath={documentPath}
+            previousMarkdown={
+              previousFrontMatter?.bodyMarkdown ?? previousMarkdown
+            }
+            showHtmlComments={showHtmlComments}
+            theme={theme}
+          >
+            {renderedMarkdown}
+          </CommentableMarkdown>
+        </Box>
+      </DeletedCommentsContext.Provider>
     </CommentRenderingContext.Provider>
   );
 };

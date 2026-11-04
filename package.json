@@ -9,18 +9,18 @@
     "build:client": "npm --prefix src/preview run build",
     "install:deps": "npm ci --ignore-scripts && npm ci --prefix src/preview",
     "postinstall": "npm ci --prefix src/preview",
-    "proto:generate": "buf generate && prettier --write gen/ts",
+    "proto:generate": "buf generate && prettier --write src/gen/ts",
     "proto:lint": "buf lint",
     "test": "npm --prefix src/preview test",
-    "fmt": "prettier --write scripts/*.mts gen/ts",
-    "fmt:check": "prettier --check scripts/*.mts gen/ts",
+    "fmt": "prettier --write scripts/*.mts src/gen/ts",
+    "fmt:check": "prettier --check scripts/*.mts src/gen/ts",
     "test:actions": "node --test scripts/cloud_run_preview_comment_test.mts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.16.0"
   },
   "devDependencies": {
-    "@bufbuild/buf": "1.74.0",
+    "@bufbuild/buf": "1.75.0",
     "@bufbuild/protoc-gen-es": "2.16.0",
     "prettier": "3.9.10"
   }
