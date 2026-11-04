@@ -13,7 +13,8 @@ GO_TEST_FLAGS ?= -race -count=1 -timeout=120s
 GO_SOURCES := cmd internal src/server src/preview/assets.go gen/go test/integration
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \
- build build-server install dist notices run start test test-server test-tools test-install check vet vet-cross \
+ build build-server install dist notices run start test test-server test-server-with-assets \
+ test-tools test-install test-install-with-assets check vet vet-cross \
  fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
  check-proxy-format vet-proxy test-proxy build-proxy run-proxy
 
@@ -60,6 +61,11 @@ start: build-client
 test: test-server test-client test-actions test-proxy
 
 test-server: build-client
+	$(MAKE) test-server-with-assets
+
+# CI builds assets once before running these targets. Keep the default targets
+# building the client so local runs cannot silently use stale embedded assets.
+test-server-with-assets:
 	$(GO) test $(GO_TEST_FLAGS) ./...
 
 test-tools:
@@ -67,6 +73,9 @@ test-tools:
 	$(NPM) run test:actions
 
 test-install: build-client
+	$(MAKE) test-install-with-assets
+
+test-install-with-assets:
 	@set -eu; install_home=$$(mktemp -d); \
 	trap 'rm -rf "$$install_home"' EXIT; \
 	GOMODCACHE="$$($(GO) env GOMODCACHE)" GOCACHE="$$($(GO) env GOCACHE)" \
