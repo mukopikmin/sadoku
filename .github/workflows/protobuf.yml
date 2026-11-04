@@ -6,15 +6,15 @@ on:
       - .github/workflows/protobuf.yml
       - Makefile
       - .prettierrc.json
-      - buf.gen.yaml
-      - buf.yaml
-      - package.json
-      - package-lock.json
+      - src/proto/buf.gen.yaml
+      - src/proto/buf.yaml
+      - src/proto/package.json
+      - src/proto/package-lock.json
       - src/proto/**
-      - src/gen/ts/**
-      - src/gen/go/**
-      - go.mod
-      - go.sum
+      - src/preview/gen/**
+      - src/sadoku/internal/gen/**
+      - src/sadoku/go.mod
+      - src/sadoku/go.sum
   push:
     branches:
       - main
@@ -22,15 +22,15 @@ on:
       - .github/workflows/protobuf.yml
       - Makefile
       - .prettierrc.json
-      - buf.gen.yaml
-      - buf.yaml
-      - package.json
-      - package-lock.json
+      - src/proto/buf.gen.yaml
+      - src/proto/buf.yaml
+      - src/proto/package.json
+      - src/proto/package-lock.json
       - src/proto/**
-      - src/gen/ts/**
-      - src/gen/go/**
-      - go.mod
-      - go.sum
+      - src/preview/gen/**
+      - src/sadoku/internal/gen/**
+      - src/sadoku/go.mod
+      - src/sadoku/go.sum
 
 permissions:
   contents: read
@@ -47,20 +47,20 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: package.json
+          node-version-file: src/proto/package.json
           check-latest: true
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: src/proto/package-lock.json
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version-file: src/sadoku/go.mod
           # Generator versions live in Makefile. Keep this cache separate from
           # the backend cache so a faster generator job cannot freeze an
           # incomplete snapshot without the CGO test and release builds.
           cache-dependency-path: |
-            go.sum
+            src/sadoku/go.sum
             Makefile
 
       - name: Install Go protobuf generators

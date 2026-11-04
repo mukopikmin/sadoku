@@ -6,7 +6,7 @@ src/preview/node_modules
 src/preview/dist
 dist
 dist-test
-sadoku
+/sadoku
 mdview
 THIRD_PARTY_NOTICES.md
 *.mdview-comments.json
@@ -14,3 +14,6 @@ THIRD_PARTY_NOTICES.md
 npm-debug.log*
 .DS_Store
 gha-creds-*.json
+
+src/proto/node_modules
+src/sadoku/internal/preview/dist

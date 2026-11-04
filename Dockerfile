@@ -4,16 +4,12 @@ FROM node:bookworm-slim AS client
 
 WORKDIR /workspace
 
-COPY package.json package-lock.json ./
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-# Optional CA for builds behind a TLS proxy; never stored in an image layer.
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
-    npm_config_engine_strict=true npm run install:deps
-
+    npm --prefix src/preview ci
 COPY src/preview/ ./src/preview/
-COPY src/gen/ts/ ./src/gen/ts/
-RUN npm run build:client
+RUN npm --prefix src/preview run build
 
 FROM golang:1.26.10-bookworm AS go-toolchain
 
@@ -27,17 +23,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends make gcc libc6-
 
 WORKDIR /workspace
 
-COPY go.mod go.sum ./
+COPY src/sadoku/go.mod src/sadoku/go.sum ./src/sadoku/
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
-    go mod download
+    go -C src/sadoku mod download
 
 COPY Makefile ./
-COPY src/cmd/ ./src/cmd/
-COPY src/internal/ ./src/internal/
-COPY src/gen/go/ ./src/gen/go/
-COPY src/preview/assets.go ./src/preview/assets.go
-COPY --from=client /workspace/src/preview/dist/ ./src/preview/dist/
+COPY src/sadoku/cmd/ ./src/sadoku/cmd/
+COPY src/sadoku/internal/ ./src/sadoku/internal/
+COPY --from=client /workspace/src/preview/dist/ ./src/sadoku/internal/preview/dist/
 RUN make build-server
 
 # The Linux binary is statically linked, including SQLite. Alpine supplies the
