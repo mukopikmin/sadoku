@@ -46,7 +46,7 @@ jobs:
           filters: |
             application:
               - '**'
-              - '!proxy/**'
+              - '!src/proxy/**'
               - '!.github/workflows/proxy_test.yml'
               - '!.github/workflows/cloud_run_proxy.yml'
 

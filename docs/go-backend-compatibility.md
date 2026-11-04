@@ -6,7 +6,7 @@ the Go migration.
 
 ## Recorded response comparison
 
-`src/server/http/testdata/legacy_http.json` contains responses captured by
+`src/internal/server/http/testdata/legacy_http.json` contains responses captured by
 running the reference handler with SQLite storage. The Go test replays the same
 requests, file edits, deletions, settings, and initial data against the
 production Go handler. It requires transcripts for every method declared in

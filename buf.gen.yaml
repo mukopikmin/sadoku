@@ -2,16 +2,16 @@ version: v2
 clean: true
 plugins:
   - local: protoc-gen-es
-    out: gen/ts
+    out: src/gen/ts
     opt:
       - target=ts
   - local: protoc-gen-go
-    out: gen/go
+    out: src/gen/go
     opt:
       - paths=source_relative
-      - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/gen/go/sadoku/preview/v1;previewv1
+      - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/src/gen/go/sadoku/preview/v1;previewv1
   - local: protoc-gen-connect-go
-    out: gen/go
+    out: src/gen/go
     opt:
       - paths=source_relative
-      - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/gen/go/sadoku/preview/v1;previewv1
+      - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/src/gen/go/sadoku/preview/v1;previewv1

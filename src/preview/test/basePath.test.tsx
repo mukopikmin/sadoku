@@ -4,7 +4,7 @@ import { Link, RouterProvider } from "@tanstack/react-router";
 import { previewPath, readPreviewBasePath } from "../api/basePath";
 import { createPreviewTransport } from "../api/connect";
 import { connectHotReload, connectPreviewKeepAlive } from "../api/hotReload";
-import { PreviewService } from "../../../gen/ts/sadoku/preview/v1/preview_pb";
+import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb";
 import { createPreviewRouter } from "../router";
 import { usePreviewRoute } from "../hooks/usePreviewRoute";
 import {
