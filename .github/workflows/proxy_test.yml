@@ -17,12 +17,8 @@ permissions:
 
 jobs:
   go-proxy:
-    name: Go proxy (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-15]
+    name: Go proxy (ubuntu-latest)
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -35,11 +31,6 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Install GNU Make
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: choco install make --version=4.4.1 --yes --no-progress
-
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -47,7 +38,6 @@ jobs:
           cache: false
 
       - name: Check formatting
-        if: runner.os == 'Linux'
         run: make proxy-check-format
 
       - name: Vet

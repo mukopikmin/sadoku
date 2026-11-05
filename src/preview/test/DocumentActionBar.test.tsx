@@ -35,6 +35,7 @@ describe("DocumentActionBar", () => {
     });
     const { unmount } = render(
       <DocumentActionBar
+        markdown="# Introduction"
         memoryCount={0}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -64,6 +65,7 @@ describe("DocumentActionBar", () => {
     const onOpenTags = vi.fn();
     const { rerender } = render(
       <DocumentActionBar
+        markdown="# Introduction"
         memoryCount={4}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -100,6 +102,7 @@ describe("DocumentActionBar", () => {
     fireEvent.pointerLeave(tagsButton);
     rerender(
       <DocumentActionBar
+        markdown="# Introduction"
         memoryCount={0}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
@@ -129,6 +132,7 @@ describe("DocumentActionBar", () => {
     const onOpenRevisions = vi.fn();
     render(
       <DocumentActionBar
+        markdown="# Introduction"
         memoryCount={12}
         onOpenInstructions={onOpenInstructions}
         onOpenMemories={onOpenMemories}
@@ -158,4 +162,33 @@ describe("DocumentActionBar", () => {
     expect(onOpenMemories).toHaveBeenCalledOnce();
     expect(onOpenRevisions).toHaveBeenCalledOnce();
   });
+});
+
+it("keeps a single table of contents and its open state when the bar updates", async () => {
+  const bar = (count: number) => (
+    <DocumentActionBar
+      markdown="# Introduction"
+      memoryCount={count}
+      onOpenInstructions={() => {}}
+      onOpenMemories={() => {}}
+      onOpenRevisions={() => {}}
+      onOpenTags={() => {}}
+      tagCount={0}
+      tags={[]}
+    />
+  );
+  const { rerender } = render(bar(0));
+  const trigger = screen.getByRole("button", { name: "Table of contents" });
+  fireEvent.click(trigger);
+  const contents = await screen.findByRole("navigation", {
+    name: "Table of contents",
+  });
+  rerender(bar(3));
+  expect(screen.getAllByRole("button", { name: "Table of contents" })).toEqual([
+    trigger,
+  ]);
+  expect(screen.getByRole("navigation", { name: "Table of contents" })).toBe(
+    contents,
+  );
+  expect(screen.getByRole("link", { name: "Introduction" })).not.toBeNull();
 });
