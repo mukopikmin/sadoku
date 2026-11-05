@@ -21,8 +21,10 @@ make deps
 make start ARGS=README.md
 ```
 
-`package.json` contains npm and Node tasks only. Make invokes those scripts and
-coordinates Go and generated-code tasks:
+The root `package.json` manages Node dependencies only. Make defines dependency
+installation, formatting, action tests, and protobuf generation; npm executes
+local tools with `npm exec --no` so missing tools are not downloaded implicitly.
+The preview package retains its Vite and Vitest scripts:
 
 ```sh
 make check                       # formatting and go vet

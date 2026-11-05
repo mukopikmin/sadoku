@@ -5,10 +5,11 @@ proto-tools:
 	$(GO) install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.20.0
 
 proto-lint:
-	$(NPM) run proto:lint
+	$(NPM) exec --no -- buf lint
 
 proto-generate:
-	$(NPM) run proto:generate
+	$(NPM) exec --no -- buf generate
+	$(NPM) exec --no -- prettier --write gen/ts
 
 proto-check: proto-lint proto-generate
 	git add --intent-to-add -- gen/ts gen/go

@@ -19,9 +19,9 @@ them when making changes.
   check; never describe an incomplete or failed check as successful.
 - Use `Makefile` as the entry point for Go, release, and npm tasks. Keep
   `package.json` scripts limited to npm and Node tooling.
-- Use `make deps` to install npm dependencies from the lockfiles. When using
-  `npm install` directly, the root `postinstall` also installs the preview client's
-  dependencies under `src/preview/`.
+- Use `make deps` to install root and preview npm dependencies from the lockfiles.
+  The root `package.json` manages dependencies only; define shared commands in Make
+  and keep Vite and Vitest scripts in the preview package.
 - Keep the root `package-lock.json` and
   `src/preview/package-lock.json` consistent with dependency changes.
 - Add or update focused tests for application behavior changes. Do not rely only

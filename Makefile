@@ -3,6 +3,7 @@ SHELL := sh
 
 GO ?= go
 NPM ?= npm
+NODE ?= node
 export CGO_ENABLED := 1
 VERSION ?= 0.0.0-dev
 OUTPUT ?=
@@ -18,22 +19,23 @@ GO_SOURCES := cmd internal src/server src/preview/assets.go gen/go test/integrat
  fmt fmt-go fmt-check check-go-format
 
 deps:
-	$(NPM) run install:deps
+	$(NPM) ci --ignore-scripts
+	$(NPM) ci --prefix src/preview
 
 build-client:
-	$(NPM) run build:client
+	$(NPM) --prefix src/preview run build
 
 test-client:
-	$(NPM) test
+	$(NPM) --prefix src/preview test
 
 test-actions:
-	$(NPM) run test:actions
+	$(NODE) --test scripts/cloud_run_preview_comment_test.mts
 
 fmt-client:
-	$(NPM) run fmt
+	$(NPM) exec --no -- prettier --write scripts/*.mts gen/ts
 
 check-client-format:
-	$(NPM) run fmt:check
+	$(NPM) exec --no -- prettier --check scripts/*.mts gen/ts
 
 build: build-client
 	$(MAKE) build-server
@@ -69,7 +71,7 @@ test-server-with-assets:
 
 test-tools:
 	$(GO) test -race -count=1 ./internal/tooling
-	$(NPM) run test:actions
+	$(NODE) --test scripts/cloud_run_preview_comment_test.mts
 
 test-install: build-client
 	$(MAKE) test-install-with-assets
