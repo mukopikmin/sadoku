@@ -48,13 +48,13 @@ jobs:
 
       - name: Check formatting
         if: runner.os == 'Linux'
-        run: make check-proxy-format
+        run: make proxy-check-format
 
       - name: Vet
-        run: make vet-proxy
+        run: make proxy-vet
 
       - name: Test
-        run: make test-proxy
+        run: make proxy-test
 
       - name: Build
-        run: make build-proxy
+        run: make proxy-build

@@ -1,16 +1,16 @@
-.PHONY: check-proxy-format vet-proxy test-proxy build-proxy run-proxy
+.PHONY: proxy-check-format proxy-vet proxy-test proxy-build proxy-run
 
-check-proxy-format:
+proxy-check-format:
 	test -z "$$(gofmt -l proxy)"
 
-vet-proxy:
+proxy-vet:
 	$(GO) -C proxy vet ./...
 
-test-proxy:
+proxy-test:
 	$(GO) -C proxy test -race -count=1 -timeout=60s ./...
 
-build-proxy:
+proxy-build:
 	CGO_ENABLED=0 $(GO) -C proxy build ./...
 
-run-proxy:
+proxy-run:
 	$(GO) -C proxy run ./cmd/revision-proxy

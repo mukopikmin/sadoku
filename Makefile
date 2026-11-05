@@ -59,7 +59,7 @@ run: build-client
 start: build-client
 	$(GO) run ./cmd/sadoku start $(ARGS)
 
-test: test-server test-client test-actions test-proxy
+test: test-server test-client test-actions proxy-test
 
 test-server: build-client
 	$(MAKE) test-server-with-assets
@@ -83,7 +83,7 @@ test-install-with-assets:
 	HOME="$$install_home" $(GO) run ./cmd/sadoku-tools install --version 0.0.0-ci; \
 	test "$$("$$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
 
-check: fmt-check vet vet-proxy
+check: fmt-check vet proxy-vet
 
 vet: build-client
 	$(GO) vet ./...
@@ -98,7 +98,7 @@ fmt: fmt-go fmt-client
 fmt-go:
 	gofmt -w $(GO_SOURCES) proxy
 
-fmt-check: check-go-format check-client-format check-proxy-format
+fmt-check: check-go-format check-client-format proxy-check-format
 
 check-go-format:
 	test -z "$$(gofmt -l $(GO_SOURCES))"
