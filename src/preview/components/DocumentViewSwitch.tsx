@@ -1,115 +1,70 @@
-import {
-  Badge,
-  Box,
-  Button,
-  ButtonGroup,
-  type ButtonProps,
-  Icon,
-  Tabs,
-} from "@chakra-ui/react";
+import { Badge, Box, Icon, Tabs } from "@chakra-ui/react";
 import { BookOpen, MessagesSquare, TriangleAlert } from "lucide-react";
-import { useId } from "react";
 import type { PreviewView } from "../models/previewView";
-import { Tooltip } from "./ui/tooltip";
 
 type Props = {
-  onChangeView: (view: PreviewView) => void;
   showLabels?: boolean;
+  onChangeView: (view: PreviewView) => void;
   staleCommentCount: number;
   unresolvedCommentCount: number;
   view: PreviewView;
 };
 
-type ViewButtonProps = ButtonProps & {
-  triggerId: string;
-  tooltip: string;
-  value: PreviewView;
-};
-
-// Forward group attributes to the button instead of the tooltip root.
-const ViewButton = ({
-  triggerId,
-  tooltip,
-  value,
-  ...buttonProps
-}: ViewButtonProps) => (
-  <Tooltip content={tooltip} ids={{ trigger: triggerId }}>
-    <Tabs.Trigger asChild value={value}>
-      <Button
-        {...buttonProps}
-        _selected={{
-          bg: "bg.emphasized",
-          borderColor: "accent",
-          color: "accent",
-          zIndex: 1,
-        }}
-      />
-    </Tabs.Trigger>
-  </Tooltip>
-);
-
 export const DocumentViewSwitch = ({
+  showLabels = true,
   onChangeView,
-  showLabels = false,
   staleCommentCount,
   unresolvedCommentCount,
   view,
 }: Props) => {
-  const id = useId();
-  // Tooltips and tabs share trigger IDs to preserve keyboard navigation.
-  const triggerId = (value: string) => `${id}-${value}`;
   return (
     <Tabs.Root
-      flexShrink="0"
-      ids={{ trigger: triggerId }}
+      minW="0"
+      maxW="full"
       onValueChange={({ value }) => onChangeView(value as PreviewView)}
-      unstyled
+      size="sm"
+      variant="subtle"
       value={view}
     >
-      <Tabs.List aria-label="Preview views" asChild>
-        <ButtonGroup attached size="sm" variant="outline">
-          <ViewButton
-            aria-label="Preview"
-            px={showLabels ? undefined : "0"}
-            tooltip="Preview"
-            triggerId={triggerId("preview")}
-            value="preview"
-          >
-            <BookOpen aria-hidden="true" />
-            {showLabels && "Preview"}
-          </ViewButton>
-          <ViewButton
-            aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
-            px={!showLabels && unresolvedCommentCount === 0 &&
-                staleCommentCount === 0
-              ? "0"
-              : undefined}
-            tooltip={`Comments, ${unresolvedCommentCount} unresolved${
-              staleCommentCount > 0 ? `, ${staleCommentCount} stale` : ""
-            }`}
-            triggerId={triggerId("comments")}
-            value="comments"
-          >
-            <MessagesSquare aria-hidden="true" />
-            {showLabels && "Comments"}
-            {unresolvedCommentCount > 0 && (
-              <Badge aria-hidden="true" size="sm" variant="solid">
-                {unresolvedCommentCount}
-              </Badge>
-            )}
-            {staleCommentCount > 0 && (
-              <Box
-                as="span"
-                aria-label={`Stale comments: ${staleCommentCount}`}
-                color="warning.fg"
-                display="inline-flex"
-                role="img"
-              >
-                <Icon as={TriangleAlert} aria-hidden="true" size="xs" />
-              </Box>
-            )}
-          </ViewButton>
-        </ButtonGroup>
+      <Tabs.List aria-label="Preview views" flexWrap="wrap" maxW="full" gap="1">
+        <Tabs.Trigger
+          aria-label="Preview"
+          value="preview"
+          maxW="full"
+          h="auto"
+          minH="9"
+          flexWrap="wrap"
+        >
+          <Icon as={BookOpen} size="sm" aria-hidden="true" />
+          {showLabels && "Preview"}
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          aria-label={`Comments, ${unresolvedCommentCount} unresolved`}
+          value="comments"
+          maxW="full"
+          h="auto"
+          minH="9"
+          flexWrap="wrap"
+        >
+          <Icon as={MessagesSquare} size="sm" aria-hidden="true" />
+          {showLabels && "Comments"}
+          {unresolvedCommentCount > 0 && (
+            <Badge aria-hidden="true" size="sm" variant="solid">
+              {unresolvedCommentCount}
+            </Badge>
+          )}
+          {staleCommentCount > 0 && (
+            <Box
+              as="span"
+              aria-label={`Stale comments: ${staleCommentCount}`}
+              color="warning.fg"
+              display="inline-flex"
+              role="img"
+            >
+              <Icon as={TriangleAlert} aria-hidden="true" size="xs" />
+            </Box>
+          )}
+        </Tabs.Trigger>
       </Tabs.List>
       <Tabs.Content display="none" value={view} />
     </Tabs.Root>

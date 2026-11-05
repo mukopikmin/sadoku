@@ -1,5 +1,5 @@
 import { useQuery } from "@connectrpc/connect-query";
-import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb";
+import { PreviewService } from "../gen/sadoku/preview/v1/preview_pb";
 import { toDatabaseStatistics } from "../api/statistics";
 
 export const useStatisticsQuery = (enabled: boolean) =>

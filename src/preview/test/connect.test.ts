@@ -2,7 +2,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { describe, expect, it, vi } from "vitest";
 import { connectionSnapshot, reportConnection } from "../api/connection";
 import { createClient } from "@connectrpc/connect";
-import { PreviewService } from "../../gen/ts/sadoku/preview/v1/preview_pb";
+import { PreviewService } from "../gen/sadoku/preview/v1/preview_pb";
 import { createPreviewTransport } from "../api/connect";
 import { connectHttpStatus } from "../api/connect";
 
