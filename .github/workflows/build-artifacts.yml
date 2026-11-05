@@ -70,16 +70,21 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version-file: src/server/go.mod
+          # Native release builds must not share a snapshot with Vet or generators.
+          cache-dependency-path: |
+            src/server/go.sum
+            Makefile
+            .github/workflows/build-artifacts.yml
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: package.json
+          node-version-file: src/proto/package.json
           check-latest: true
           cache: npm
           cache-dependency-path: |
-            package-lock.json
+            src/proto/package-lock.json
             src/preview/package-lock.json
 
       - name: Install dependencies
@@ -90,7 +95,9 @@ jobs:
           VERSION: ${{ inputs.version }}
           BINARY_VERSION: ${{ inputs.binary-version || inputs.version }}
           TARGET: ${{ matrix.target }}
-        run: make dist VERSION="${VERSION}" BINARY_VERSION="${BINARY_VERSION}" TARGET="${TARGET}"
+        run:
+          make dist VERSION="${VERSION}" BINARY_VERSION="${BINARY_VERSION}"
+          TARGET="${TARGET}"
 
       - name: Smoke test packaged SQLite
         run: |

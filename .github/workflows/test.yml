@@ -4,7 +4,7 @@ on:
   workflow_call:
   pull_request:
     paths-ignore: &proxy-paths
-      - "proxy/**"
+      - "src/proxy/**"
       - ".github/workflows/proxy_test.yml"
       - ".github/workflows/cloud_run_proxy.yml"
   push:
@@ -33,16 +33,20 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version-file: src/server/go.mod
+          # Vet must not populate the cache used by race tests and release builds.
+          cache-dependency-path: |
+            src/server/go.sum
+            .github/workflows/test.yml
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: package.json
+          node-version-file: src/proto/package.json
           check-latest: true
           cache: npm
           cache-dependency-path: |
-            package-lock.json
+            src/proto/package-lock.json
             src/preview/package-lock.json
 
       - name: Install dependencies
@@ -68,11 +72,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: package.json
+          node-version-file: src/proto/package.json
           check-latest: true
           cache: npm
           cache-dependency-path: |
-            package-lock.json
+            src/proto/package-lock.json
             src/preview/package-lock.json
 
       - name: Install dependencies
@@ -129,16 +133,21 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version-file: src/server/go.mod
+          # Separate from Vet and protobuf generators; save the full test/build cache.
+          cache-dependency-path: |
+            src/server/go.sum
+            Makefile
+            .github/workflows/test.yml
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: package.json
+          node-version-file: src/proto/package.json
           check-latest: true
           cache: npm
           cache-dependency-path: |
-            package-lock.json
+            src/proto/package-lock.json
             src/preview/package-lock.json
 
       - name: Install dependencies
@@ -156,16 +165,16 @@ jobs:
         run: make check-go-format
 
       - name: Test Go server
-        run: make test-server
+        run: make test-server-with-assets
 
       - name: Compile
         run: >-
-          make build OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os ==
+          make build-server OUTPUT="${{ runner.temp }}/sadoku-ci${{ runner.os ==
           'Windows' && '.exe' || '' }}"
 
       - name: Test source installer
         if: runner.os != 'Windows'
-        run: make test-install
+        run: make test-install-with-assets
 
       - name: Test Windows installer
         if: runner.os == 'Windows'

@@ -13,3 +13,6 @@ src/preview/dist/
 npm-debug.log*
 .DS_Store
 gha-creds-*.json
+
+src/server/internal/preview/dist/
+src/proto/node_modules/

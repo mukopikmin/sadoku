@@ -1,5 +1,5 @@
-import { DocumentTitle } from "../components/DocumentTitle";
-import { Alert, Box, Container, Flex, Text } from "@chakra-ui/react";
+import { DocumentHeader } from "../components/DocumentHeader";
+import { Alert, Box, Container, Text } from "@chakra-ui/react";
 import { type RefObject, useState } from "react";
 import { useDocumentDiff } from "../hooks/useDocumentDiff";
 import { CommentListPage } from "./comments/CommentList";
@@ -60,7 +60,7 @@ export const DocumentPreviewPage = ({
   const documentPath =
     selectedDocument?.relativePath ?? document.fileUrl ?? document.title;
   return (
-    <Container as="main" maxW="980px" px="8" pt="0" pb="8">
+    <Container as="main" overflowAnchor="none" maxW="980px" px="8" pt="0" pb="8">
       {documents && selectedDocument && (
         <DocumentBreadcrumb
           document={selectedDocument}
@@ -69,37 +69,26 @@ export const DocumentPreviewPage = ({
           onSelectDocuments={onSelectDocuments}
         />
       )}
-      <Flex
-        as="section"
-        aria-label="Document header"
-        ref={documentHeaderRef}
-        align="start"
-        gap="3"
-      >
-        <Box flex="1" minW="0">
-          <DocumentTitle
-            key={documentId}
-            documentId={documentId}
-            title={document.displayTitle}
-            trailingAction={
-              // Preserve the measured title area when controls move to the header.
-              <Box
-                maxW="full"
-                visibility={documentNavigationInHeader ? "hidden" : "visible"}
-              >
-                <DocumentNavigation
-                  markdown={document.markdown}
-                  onChangeView={onChangeView}
-                  showLabels
-                  staleCommentCount={staleCommentCount}
-                  unresolvedCommentCount={unresolvedCommentCount}
-                  view={view}
-                />
-              </Box>
-            }
-          />
-        </Box>
-      </Flex>
+      <DocumentHeader
+        documentId={documentId}
+        headerRef={documentHeaderRef}
+        title={document.displayTitle}
+        trailingAction={
+          // Preserve the measured title area when controls move to the header.
+          <Box
+            minW="0"
+            maxW="full"
+            visibility={documentNavigationInHeader ? "hidden" : "visible"}
+          >
+            <DocumentNavigation
+              onChangeView={onChangeView}
+              staleCommentCount={staleCommentCount}
+              unresolvedCommentCount={unresolvedCommentCount}
+              view={view}
+            />
+          </Box>
+        }
+      />
       <DocumentRevisionsDialog
         canRestore={document.canRestore}
         deleted={document.deleted}
@@ -154,18 +143,17 @@ export const DocumentPreviewPage = ({
           documentDeleted={document.deleted}
         />
       )}
-      {view === "preview" && (
-        <DocumentActionBar
-          diff={diff}
-          memoryCount={memoryCount}
-          onOpenInstructions={onOpenInstructions}
-          onOpenMemories={onOpenMemories}
-          onOpenRevisions={() => setRevisionsOpen(true)}
-          tagCount={document.tags.length}
-          onOpenTags={onOpenTags}
-          tags={document.tags}
-        />
-      )}
+      <DocumentActionBar
+        markdown={document.markdown}
+        diff={diff}
+        memoryCount={memoryCount}
+        onOpenInstructions={onOpenInstructions}
+        onOpenMemories={onOpenMemories}
+        onOpenRevisions={() => setRevisionsOpen(true)}
+        tagCount={document.tags.length}
+        onOpenTags={onOpenTags}
+        tags={document.tags}
+      />
     </Container>
   );
 };
