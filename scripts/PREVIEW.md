@@ -56,7 +56,7 @@ moved, deleted, and resolved examples. `guides/setup/local.md` has no previous
 snapshot to compare, so its **Changes** option is unavailable.
 
 Tags are created and attached through
-`sadoku tag add` and `sadoku document tag add`:
+`sadoku tag add` and `sadoku document add --tags`:
 
 | Tag            | Documents                         |
 | -------------- | --------------------------------- |

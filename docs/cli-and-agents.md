@@ -18,7 +18,8 @@ sadoku document add docs/notes.md --create --title "Notes"
 
 Existing files are never overwritten; missing extensions default to `.md`. The
 file starts empty; `--title` sets its display title in Sadoku. You can also use
-`--title` without `--create` when registering an existing file.
+`--title` without `--create` when registering an existing file. `add` rejects
+already registered documents; use `update` to change their attributes.
 
 Manage tags independently of documents:
 
@@ -34,25 +35,28 @@ created through the CLI always use the default background color (`#718096`).
 Deleting a tag also removes it from every document without deleting the
 documents.
 
-Attach or detach existing tags from a registered document:
+Set a registered document's title and complete tag collection:
 
 ```sh
-sadoku document tag add 3 5 --source README.md
-sadoku document tag delete 3 --document 1
+sadoku document update 1 --title "Review notes" --tags 3,5
+sadoku document update 1 --tags ""
+sadoku document update 1 --title ""
 sadoku document inspect 1
 sadoku document list
 ```
 
-Use exactly one of `--document <id>` or `--source <file.md|url>` for tag
-associations. Both the document and tag IDs must already exist. Adding an
-attached tag or removing an unattached tag succeeds without changing other
-associations; removal preserves the tag itself. Each command applies all
-requested changes atomically, with at most 20 tags per document.
+Omitted attributes are unchanged. An empty title clears the display title; an
+empty tag collection removes all tag associations. `--tags` replaces the entire
+collection with existing tag IDs, up to 20 distinct tags. Repeated IDs count once.
+Title and tag changes are saved atomically. Tag definitions are managed separately
+with `tag add/list/delete`; replacing associations does not delete tags.
 
-Tag association commands return the resulting tag array as JSON. Document
-listing and inspection include `tags`, containing each tag's `id`, `name`, and
+`document add` also accepts `--tags` to set initial associations. `document update`
+returns the updated document, including its tags, as JSON. Document listing and
+inspection also include `tags`, containing each tag's `id`, `name`, and
 `backgroundColor`, or an empty array when no tags are attached. Colors are
-read-only through the CLI.
+read-only through the CLI. The former `document tag add/delete` commands have
+been replaced by `document update --tags`.
 
 Use `sadoku --help` for document, tag, comment, instruction, and memory
 commands. Instructions provide guidance for agents; memories provide
