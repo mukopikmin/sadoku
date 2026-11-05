@@ -28,6 +28,7 @@ deps:
 build-client:
 	$(NPM) --prefix src/preview run build
 	rm -rf src/server/internal/preview/dist
+	mkdir -p src/server/internal/preview
 	cp -R src/preview/dist src/server/internal/preview/dist
 
 test-client:
