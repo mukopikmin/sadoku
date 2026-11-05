@@ -1,10 +1,9 @@
 Usage:
   sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--no-sync] [--trust-forwarded-prefix]
-  sadoku document add <file.md|url> [--create] [--title <text>]
+  sadoku document add <file.md|url> [--create] [--title <text>] [--tags <id,...>]
+  sadoku document update <document-id> [--title <text>] [--tags <id,...>]
   sadoku document inspect <document-id>
   sadoku document list
-  sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
-  sadoku document tag delete <tag-id>... (--document <id> | --source <file.md|url>)
   sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
@@ -27,7 +26,8 @@ Usage:
 
 Options:
   --create          Create a new local Markdown file and register it (document add only).
-  --title           Display title (document add only).
+  --title           Display title (document add/update); empty clears it.
+  --tags            Complete comma-separated tag IDs (document add/update); empty clears all tags.
   --name            Tag name (tag add only).
   --global          Apply to all documents in this database (instruction commands only).
   --document        Existing document ID.

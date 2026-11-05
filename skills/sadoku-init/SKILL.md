@@ -49,8 +49,20 @@ preparation; the display title does not need to be written into the body yet.
 If the file already exists, do not overwrite it or silently register it as a new
 empty document. Explain the collision and establish another filename, or follow
 the user's explicit request to continue with the existing file. If creation
-succeeds but registration fails, register that same saved file without
-`--create` rather than creating another file.
+succeeds but registration reports an error, check `sadoku document list` for
+the saved path first: registration may already have completed. Reuse the
+existing ID if listed; otherwise register that same saved file without
+`--create`. `document add` rejects already registered documents.
+
+If the user revises the display title after registration, update its metadata
+using the existing document ID:
+
+```sh
+sadoku document update <document-id> --title "<revised-document-title>"
+```
+
+Use `--title ""` only when clearing the display title is requested. Updating
+the display title does not rename the file or change its Markdown body.
 
 ## 3. Prepare writing guidance through conversation
 
