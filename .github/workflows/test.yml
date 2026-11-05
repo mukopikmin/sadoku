@@ -138,7 +138,7 @@ jobs:
           cache-dependency-path: |
             src/server/go.sum
             Makefile
-            make/*.mk
+            src/*/tasks.mk
             .github/workflows/test.yml
 
       - name: Setup Node

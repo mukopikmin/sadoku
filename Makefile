@@ -108,5 +108,5 @@ fmt-check: check-go-format check-client-format proxy-check-format
 check-go-format:
 	test -z "$$(gofmt -l $(GO_SOURCES))"
 
-include make/proto.mk
-include make/proxy.mk
+include src/proto/tasks.mk
+include src/proxy/tasks.mk

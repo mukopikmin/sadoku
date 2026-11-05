@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: &proxy-paths
       - "Makefile"
-      - "make/**"
+      - "src/proto/tasks.mk"
       - "src/proxy/**"
       - ".github/workflows/proxy_test.yml"
   push:

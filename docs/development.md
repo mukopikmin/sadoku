@@ -19,7 +19,7 @@ make start ARGS=README.md
 ```
 
 `src/proto/package.json` declares Node tooling dependencies only. Make defines shared
-commands and includes `make/proto.mk` and `make/proxy.mk`; their targets use
+commands and includes `src/proto/tasks.mk` and `src/proxy/tasks.mk`; their targets use
 `proto-` and `proxy-` prefixes. Run targets from the repository root.
 
 ```sh
