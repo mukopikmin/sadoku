@@ -43,7 +43,10 @@ export const createPreviewRouter = (
       ? createMemoryHistory({ initialEntries })
       : createBrowserHistory(),
     routeTree,
-    scrollRestoration: true,
+    // Document views restore only after their query-backed content is ready.
+    // Leave list-page restoration to the router; do not race the document hook.
+    scrollRestoration: ({ location }) =>
+      !/\/documents\/[^/]+(?:\/comments)?$/.test(location.pathname),
   });
 };
 

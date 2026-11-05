@@ -2,53 +2,52 @@ import {
   Button,
   Dialog,
   Field,
-  Flex,
   Heading,
   Input,
   Portal,
-  Stack,
   Text,
 } from "@chakra-ui/react";
 import { Pencil } from "lucide-react";
-import { type ReactNode, useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export const DocumentTitle = ({ documentId, title, trailingAction }: {
+export const DocumentTitle = memo(function DocumentTitle({
+  documentId,
+  title,
+}: {
   documentId: number;
   title?: string;
-  trailingAction?: ReactNode;
-}) => {
+}) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const mutation = useDocumentTitle(documentId);
   return (
-    <Stack gap="3" mb="6">
+    <>
       {title && (
-        <Heading as="h1" size="3xl" overflowWrap="anywhere">{title}</Heading>
-      )}
-      <Flex
-        align="center"
-        aria-label="Document title actions"
-        gap="3"
-        justify="space-between"
-        wrap="wrap"
-        role="group"
-      >
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            setDraft(title ?? "");
-            mutation.reset();
-            setOpen(true);
-          }}
+        <Heading
+          as="h1"
+          size="3xl"
+          flexBasis="full"
+          minW="0"
+          overflowWrap="anywhere"
         >
-          {title && <Pencil aria-hidden="true" />}
-          {title ? "Edit title" : "Set title"}
-        </Button>
-        {trailingAction}
-      </Flex>
+          {title}
+        </Heading>
+      )}
+      <Button
+        flexShrink="0"
+        size="sm"
+        variant="ghost"
+        onClick={() => {
+          setDraft(title ?? "");
+          mutation.reset();
+          setOpen(true);
+        }}
+      >
+        {title && <Pencil aria-hidden="true" />}
+        {title ? "Edit title" : "Set title"}
+      </Button>
       <Dialog.Root
         open={open}
         onOpenChange={({ open }) => {
@@ -114,6 +113,6 @@ export const DocumentTitle = ({ documentId, title, trailingAction }: {
           </Dialog.Positioner>
         </Portal>
       </Dialog.Root>
-    </Stack>
+    </>
   );
-};
+});

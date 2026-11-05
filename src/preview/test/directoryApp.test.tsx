@@ -372,7 +372,7 @@ describe("directory preview", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     await waitFor(() => expect(scrollY).toBe(120));
-    setScrollY(scrollY);
+    setScrollY(240);
 
     history.back();
     await waitFor(() =>
@@ -380,9 +380,13 @@ describe("directory preview", () => {
     );
     await waitFor(() => expect(scrollY).toBe(340));
 
+    setScrollY(460);
     history.forward();
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
-    await waitFor(() => expect(scrollY).toBe(120));
+    await waitFor(() => expect(scrollY).toBe(240));
+    history.back();
+    await waitFor(() => expect(location.pathname).toBe("/documents/1/comments"));
+    await waitFor(() => expect(scrollY).toBe(460));
 
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     fireEvent.click(
@@ -400,7 +404,7 @@ describe("directory preview", () => {
     expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
       .not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
-    expect(screen.queryByRole("dialog", { name: "Document actions" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Document actions" })).not.toBeNull();
     expect(
       screen.getByRole("tab", {
         name: "Comments, 0 unresolved",
