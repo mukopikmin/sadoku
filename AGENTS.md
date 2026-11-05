@@ -55,6 +55,13 @@ them when making changes.
 - `src/server/internal/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
+- Add new database migrations to `src/server/internal/server/db/migrations/current.json`. For
+  constraints SQLite cannot add with ALTER TABLE, use a transactional table
+  rebuild with the original table name, IDs, foreign keys, defaults, and indexes
+  preserved. Follow `src/server/internal/server/db/migrations/README.md`; verify fresh/upgrade
+  schema equality, repeat execution, rollback, and related-data preservation.
+  Document explicit backfill policies for missing historical metadata; never
+  infer unknown original text from the current document.
 - Generate Go and TypeScript RPC bindings together using
   `make proto-generate`.
 - Keep routing and API adaptation under `http/`, session preparation under
@@ -221,3 +228,16 @@ them when making changes.
 - During review, remove repetition, keep explanations proportional to the task,
   and check links when moving or deleting documentation. Link to specialized
   references where needed without duplicating their contents.
+
+## 9. APM Skills Package Versioning
+
+- When adding, removing, or changing a distributed skill under `skills/`,
+  update the package version in root `apm.yml` in the same pull request.
+- Use a minor version bump for new skills or backward-compatible capabilities,
+  and a patch bump for corrections. Flag breaking changes explicitly and choose
+  the appropriate version before submitting the pull request.
+- Before creating or updating a pull request, compare `skills/` and `apm.yml`
+  against the base branch to verify that skill changes include a version bump.
+  One bump covers the pull request; do not bump again for each follow-up commit.
+- This version belongs to the APM skills package. Updating it does not require
+  tagging or publishing a Sadoku application release.
