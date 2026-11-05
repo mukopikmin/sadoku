@@ -101,3 +101,13 @@ apm install mukopikmin/sadoku --skill sadoku-review
 ```
 
 The skill requires `sadoku` on `PATH`.
+
+For interactive document creation, install `sadoku-init`:
+
+```sh
+apm install mukopikmin/sadoku --skill sadoku-init
+```
+
+This skill establishes a filename and title through conversation, creates an
+empty document, and uses the CLI to save writing instructions and optional
+background memories before drafting. It also requires `sadoku` on `PATH`.
