@@ -1,4 +1,6 @@
 version: 2
+# Schedules and cooldowns apply to version updates only.
+# Security updates run when vulnerabilities are detected; enable them in repository settings.
 updates:
   - package-ecosystem: "npm"
     directories:
@@ -17,6 +19,28 @@ updates:
         patterns:
           - "*"
       npm-dependencies:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "gomod"
+    directories:
+      - "/src/server"
+      - "/src/proxy"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "go"
+    groups:
+      go-security-updates:
+        applies-to: "security-updates"
+        patterns:
+          - "*"
+      go-dependencies:
         applies-to: "version-updates"
         patterns:
           - "*"
