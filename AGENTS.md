@@ -221,3 +221,16 @@ them when making changes.
 - During review, remove repetition, keep explanations proportional to the task,
   and check links when moving or deleting documentation. Link to specialized
   references where needed without duplicating their contents.
+
+## 9. APM Skills Package Versioning
+
+- When adding, removing, or changing a distributed skill under `skills/`,
+  update the package version in root `apm.yml` in the same pull request.
+- Use a minor version bump for new skills or backward-compatible capabilities,
+  and a patch bump for corrections. Flag breaking changes explicitly and choose
+  the appropriate version before submitting the pull request.
+- Before creating or updating a pull request, compare `skills/` and `apm.yml`
+  against the base branch to verify that skill changes include a version bump.
+  One bump covers the pull request; do not bump again for each follow-up commit.
+- This version belongs to the APM skills package. Updating it does not require
+  tagging or publishing a Sadoku application release.
