@@ -65,12 +65,12 @@ For nightly builds, pass `--nightly` to `install.sh` or `-Nightly` to
 
 ## Source layout
 
-`src/sadoku/` owns the Go application module, entry points, internal server and
+`src/server/` owns the Go application module, entry points, internal server and
 repository tooling, generated Go bindings, and integration tests.
 `src/preview/` owns the browser client and generated TypeScript bindings.
 `src/proxy/` remains an independent Go module. `src/proto/` owns protobuf
 schemas, Buf configuration, and Node-based generation tools.
 
 The root Makefile coordinates these applications. Client builds copy browser
-assets into `src/sadoku/internal/preview/dist/` for Go embedding; neither copy
+assets into `src/server/internal/preview/dist/` for Go embedding; neither copy
 of the generated assets is committed.

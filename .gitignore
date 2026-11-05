@@ -14,5 +14,5 @@ npm-debug.log*
 .DS_Store
 gha-creds-*.json
 
-src/sadoku/internal/preview/dist/
+src/server/internal/preview/dist/
 src/proto/node_modules/

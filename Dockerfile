@@ -23,15 +23,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends make gcc libc6-
 
 WORKDIR /workspace
 
-COPY src/sadoku/go.mod src/sadoku/go.sum ./src/sadoku/
+COPY src/server/go.mod src/server/go.sum ./src/server/
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
-    go -C src/sadoku mod download
+    go -C src/server mod download
 
 COPY Makefile ./
-COPY src/sadoku/cmd/ ./src/sadoku/cmd/
-COPY src/sadoku/internal/ ./src/sadoku/internal/
-COPY --from=client /workspace/src/preview/dist/ ./src/sadoku/internal/preview/dist/
+COPY src/server/cmd/ ./src/server/cmd/
+COPY src/server/internal/ ./src/server/internal/
+COPY --from=client /workspace/src/preview/dist/ ./src/server/internal/preview/dist/
 RUN make build-server
 
 # The Linux binary is statically linked, including SQLite. Alpine supplies the

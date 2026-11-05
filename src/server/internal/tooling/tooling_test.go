@@ -182,7 +182,7 @@ func TestCloudRunEntrypoint(t *testing.T) {
 			}
 			source, port := tc.source, tc.port
 			if source == "" {
-				source = "/app/src/sadoku/test/integration/fixtures"
+				source = "/app/src/server/test/integration/fixtures"
 			}
 			if port == "" {
 				port = "8080"

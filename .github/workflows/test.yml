@@ -33,10 +33,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: src/sadoku/go.mod
+          go-version-file: src/server/go.mod
           # Vet must not populate the cache used by race tests and release builds.
           cache-dependency-path: |
-            src/sadoku/go.sum
+            src/server/go.sum
             .github/workflows/test.yml
 
       - name: Setup Node
@@ -133,10 +133,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: src/sadoku/go.mod
+          go-version-file: src/server/go.mod
           # Separate from Vet and protobuf generators; save the full test/build cache.
           cache-dependency-path: |
-            src/sadoku/go.sum
+            src/server/go.sum
             Makefile
             .github/workflows/test.yml
 

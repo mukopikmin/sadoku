@@ -39,20 +39,20 @@ them when making changes.
 
 ## 2. Production Go Backend
 
-- The production server and CLI are implemented in Go. `src/sadoku/cmd/sadoku/main.go` is
-  the executable entry point and delegates to `src/sadoku/internal/server/app.go`.
-- Keep native code under the corresponding `src/sadoku/internal/server/` boundaries: `cli/`,
+- The production server and CLI are implemented in Go. `src/server/cmd/sadoku/main.go` is
+  the executable entry point and delegates to `src/server/internal/server/app.go`.
+- Keep native code under the corresponding `src/server/internal/server/` boundaries: `cli/`,
   `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
 - Use Go's standard library for runtime facilities. Keep domain operations as
   functions and plain data with explicit persistence ports.
-- Run `make build-client` before Go builds or tests; `src/sadoku/internal/preview/assets.go`
+- Run `make build-client` before Go builds or tests; `src/server/internal/preview/assets.go`
   embeds the generated client. Never commit client build outputs.
 - Validate Go changes with `make check-go-format`, `make vet`, and `make test-server`.
   Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
 - Keep `go.mod` and `go.sum` consistent. SQLite uses `mattn/go-sqlite3` and
   requires `CGO_ENABLED=1` and a C compiler. Build release binaries on their
   target OS/architecture; cross-compilation requires a target C toolchain.
-- `src/sadoku/internal/server/db/migrations/legacy.json` preserves the exact original migration
+- `src/server/internal/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
 - Generate Go and TypeScript RPC bindings together using
@@ -78,8 +78,8 @@ them when making changes.
 
 ## 3. Repository Tooling
 
-- Build, source installation, and notice tools use Go under `src/sadoku/internal/tooling/`,
-  with the entry point `src/sadoku/cmd/sadoku-tools/`. Stable release validation, testing,
+- Build, source installation, and notice tools use Go under `src/server/internal/tooling/`,
+  with the entry point `src/server/cmd/sadoku-tools/`. Stable release validation, testing,
   attestation, note generation, and publication belong to the Release workflow.
 - Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
   scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
@@ -146,7 +146,7 @@ them when making changes.
   behavior. Update the summary and tests when support changes.
 - `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
   generated outputs and MUST NOT be committed.
-- `src/sadoku/internal/preview/dist/` is also generated and MUST NOT be committed.
+- `src/server/internal/preview/dist/` is also generated and MUST NOT be committed.
 - Build client assets with `make build-client`; do not edit generated files
   under `src/preview/dist/`.
 - Keep Mermaid rendering functional without CDN or other network access.
@@ -154,7 +154,7 @@ them when making changes.
 ## 5. Testing Conventions
 
 - Co-locate server and tooling unit tests as `*_test.go`.
-- Put cross-module Go server workflows in `src/sadoku/test/integration/`.
+- Put cross-module Go server workflows in `src/server/test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
 - Keep component tests to the minimum needed to verify rendering, accessibility,

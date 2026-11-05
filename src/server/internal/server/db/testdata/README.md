@@ -2,7 +2,7 @@
 
 `wasm.sqlite3.gz` was written using `github.com/ncruces/go-sqlite3 v0.30.3`
 (SQLite 3.51.1), the driver used before the CGO migration. The database was
-created with `src/sadoku/internal/server/db/database.go` and the immutable migrations from
+created with `src/server/internal/server/db/database.go` and the immutable migrations from
 commit `500a35ad21384c01ad34f7a811b56f391823f514`, then compressed with gzip.
 It has all 12 applied migration records and a document with a comment, reply,
 revision, instruction, memory, and tag. All timestamps are

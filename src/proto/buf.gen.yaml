@@ -6,12 +6,12 @@ plugins:
     opt:
       - target=ts
   - local: protoc-gen-go
-    out: ../sadoku/internal/gen
+    out: ../server/internal/gen
     opt:
       - paths=source_relative
       - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1;previewv1
   - local: protoc-gen-connect-go
-    out: ../sadoku/internal/gen
+    out: ../server/internal/gen
     opt:
       - paths=source_relative
       - Msadoku/preview/v1/preview.proto=github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1;previewv1

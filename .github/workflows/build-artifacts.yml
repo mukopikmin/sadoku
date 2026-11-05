@@ -70,10 +70,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: src/sadoku/go.mod
+          go-version-file: src/server/go.mod
           # Native release builds must not share a snapshot with Vet or generators.
           cache-dependency-path: |
-            src/sadoku/go.sum
+            src/server/go.sum
             Makefile
             .github/workflows/build-artifacts.yml
 

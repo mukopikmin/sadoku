@@ -76,7 +76,7 @@ func npmNotices(lockPath, modules string) ([]notice, error) {
 	return notices, nil
 }
 func goNotices() ([]notice, error) {
-	modules, err := required(execute("go", "-C", "src/sadoku", "list", "-deps", "-f", "{{with .Module}}{{.Path}}\t{{.Version}}\t{{.Dir}}{{end}}", "./cmd/sadoku"), "List Go dependencies")
+	modules, err := required(execute("go", "-C", "src/server", "list", "-deps", "-f", "{{with .Module}}{{.Path}}\t{{.Version}}\t{{.Dir}}{{end}}", "./cmd/sadoku"), "List Go dependencies")
 	if err != nil {
 		return nil, err
 	}

@@ -110,7 +110,7 @@ func build(version, output string, t *target) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("go", "-C", "src/sadoku", "build", "-trimpath", "-tags", "netgo,osusergo,sqlite_omit_load_extension", "-ldflags", linkFlags, "-o", absoluteOutput, "./cmd/sadoku")
+	cmd := exec.Command("go", "-C", "src/server", "build", "-trimpath", "-tags", "netgo,osusergo,sqlite_omit_load_extension", "-ldflags", linkFlags, "-o", absoluteOutput, "./cmd/sadoku")
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=1", "GOOS="+osName, "GOARCH="+arch)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

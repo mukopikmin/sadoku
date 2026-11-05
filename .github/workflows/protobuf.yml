@@ -12,9 +12,9 @@ on:
       - src/proto/package-lock.json
       - src/proto/**
       - src/preview/gen/**
-      - src/sadoku/internal/gen/**
-      - src/sadoku/go.mod
-      - src/sadoku/go.sum
+      - src/server/internal/gen/**
+      - src/server/go.mod
+      - src/server/go.sum
   push:
     branches:
       - main
@@ -28,9 +28,9 @@ on:
       - src/proto/package-lock.json
       - src/proto/**
       - src/preview/gen/**
-      - src/sadoku/internal/gen/**
-      - src/sadoku/go.mod
-      - src/sadoku/go.sum
+      - src/server/internal/gen/**
+      - src/server/go.mod
+      - src/server/go.sum
 
 permissions:
   contents: read
@@ -55,12 +55,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: src/sadoku/go.mod
+          go-version-file: src/server/go.mod
           # Generator versions live in Makefile. Keep this cache separate from
           # the backend cache so a faster generator job cannot freeze an
           # incomplete snapshot without the CGO test and release builds.
           cache-dependency-path: |
-            src/sadoku/go.sum
+            src/server/go.sum
             Makefile
 
       - name: Install Go protobuf generators

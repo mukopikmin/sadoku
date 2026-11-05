@@ -21,7 +21,7 @@ launcher's exit status.
 Set a nonempty `SADOKU_SOURCE` to skip sample preparation and preserve the
 configured `SADOKU_COMMENTS_DIR`. An unset or empty source enables preparation.
 
-All sample Markdown comes from `src/sadoku/test/integration/fixtures/`, copied with its
+All sample Markdown comes from `src/server/test/integration/fixtures/`, copied with its
 directory structure into the temporary directory. The copies provide five
 documents (one deleted) and seventeen comments, including human and bot authors,
 replies, review requests, resolved comments, instructions, memories, and tags.

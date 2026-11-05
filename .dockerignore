@@ -16,4 +16,4 @@ npm-debug.log*
 gha-creds-*.json
 
 src/proto/node_modules
-src/sadoku/internal/preview/dist
+src/server/internal/preview/dist
