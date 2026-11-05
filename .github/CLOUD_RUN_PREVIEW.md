@@ -1,8 +1,8 @@
 # Cloud Run previews
 
 Application CI (`Test`) runs on pull requests and pushes to `main`, except when
-all changes are under `proxy/` or in the proxy CI/deployment workflows. The
-`Proxy Test` workflow runs only for changes under `proxy/` or to its own
+all changes are under `src/proxy/` or in the proxy CI/deployment workflows. The
+`Proxy Test` workflow runs only for changes under `src/proxy/` or to its own
 workflow. Nightly application releases follow successful `Test` runs, so
 proxy-only changes do not publish application releases. Stable tag releases
 remain explicit.
@@ -14,7 +14,7 @@ request still runs tag cleanup, even if application changes were reverted before
 closing it. The change check runs without cloud credentials and only needs read
 access to pull request files.
 
-Proxy deployment runs on pushes to `main` that change `proxy/` or
+Proxy deployment runs on pushes to `main` that change `src/proxy/` or
 `.github/workflows/cloud_run_proxy.yml`. It can also be started manually on
 `main` with `workflow_dispatch`.
 

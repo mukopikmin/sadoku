@@ -7,6 +7,9 @@ export const sadokuChakraSystem = createSystem(
   defaultConfig,
   defineConfig({
     globalCss: {
+      html: {
+        scrollbarGutter: "stable",
+      },
       body: {
         bg: "canvas",
         color: "fg",
