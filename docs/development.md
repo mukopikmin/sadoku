@@ -7,6 +7,9 @@ the backend, CLI, build, and notice tools. Release validation and notes run in
 GitHub Actions using Bash, Git, GitHub CLI, and jq. Node.js runs the preview
 client and npm tooling; its required version is specified in `package.json`.
 
+The root `Makefile` includes `make/proto.mk` and `make/proxy.mk` for protobuf
+and proxy tasks. Run all targets from the repository root.
+
 SQLite uses `mattn/go-sqlite3` with CGO enabled. Building from source requires
 a C compiler: GCC and libc development headers on Linux, Xcode Command Line
 Tools on macOS, or MinGW-w64 GCC on Windows. Make enables CGO for backend tasks.

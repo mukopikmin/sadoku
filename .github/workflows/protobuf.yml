@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/protobuf.yml
       - Makefile
+      - make/**
       - .prettierrc.json
       - buf.gen.yaml
       - buf.yaml
@@ -21,6 +22,7 @@ on:
     paths:
       - .github/workflows/protobuf.yml
       - Makefile
+      - make/**
       - .prettierrc.json
       - buf.gen.yaml
       - buf.yaml
@@ -56,12 +58,13 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-          # Generator versions live in Makefile. Keep this cache separate from
+          # Generator versions live in make/proto.mk. Keep this cache separate from
           # the backend cache so a faster generator job cannot freeze an
           # incomplete snapshot without the CGO test and release builds.
           cache-dependency-path: |
             go.sum
             Makefile
+            make/*.mk
 
       - name: Install Go protobuf generators
         run: make proto-tools

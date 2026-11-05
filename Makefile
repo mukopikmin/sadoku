@@ -15,8 +15,7 @@ GO_SOURCES := cmd internal src/server src/preview/assets.go gen/go test/integrat
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \
  build build-server install dist notices run start test test-server test-server-with-assets \
  test-tools test-install test-install-with-assets check vet vet-cross \
- fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
- check-proxy-format vet-proxy test-proxy build-proxy run-proxy
+ fmt fmt-go fmt-check check-go-format
 
 deps:
 	$(NPM) run install:deps
@@ -102,31 +101,5 @@ fmt-check: check-go-format check-client-format check-proxy-format
 check-go-format:
 	test -z "$$(gofmt -l $(GO_SOURCES))"
 
-proto-tools:
-	$(GO) install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
-	$(GO) install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.20.0
-
-proto-lint:
-	$(NPM) run proto:lint
-
-proto-generate:
-	$(NPM) run proto:generate
-
-proto-check: proto-lint proto-generate
-	git add --intent-to-add -- gen/ts gen/go
-	git diff --exit-code -- gen/ts gen/go
-
-check-proxy-format:
-	test -z "$$(gofmt -l proxy)"
-
-vet-proxy:
-	$(GO) -C proxy vet ./...
-
-test-proxy:
-	$(GO) -C proxy test -race -count=1 -timeout=60s ./...
-
-build-proxy:
-	CGO_ENABLED=0 $(GO) -C proxy build ./...
-
-run-proxy:
-	$(GO) -C proxy run ./cmd/revision-proxy
+include make/proto.mk
+include make/proxy.mk

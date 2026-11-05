@@ -33,6 +33,7 @@ RUN --mount=type=secret,id=proxy_ca \
     go mod download
 
 COPY Makefile ./
+COPY make/ ./make/
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 COPY src/server/ ./src/server/

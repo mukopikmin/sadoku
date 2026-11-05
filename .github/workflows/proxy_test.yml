@@ -3,6 +3,8 @@ name: Proxy Test
 on:
   pull_request:
     paths: &proxy-paths
+      - "Makefile"
+      - "make/**"
       - "proxy/**"
       - ".github/workflows/proxy_test.yml"
   push:
