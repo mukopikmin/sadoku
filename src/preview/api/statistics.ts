@@ -1,4 +1,4 @@
-import type { GetStatisticsResponse } from "../../gen/ts/sadoku/preview/v1/preview_pb";
+import type { GetStatisticsResponse } from "../gen/sadoku/preview/v1/preview_pb";
 
 export type DatabaseStatistics = {
   commentCount: { bot: number; human: number };

@@ -3,7 +3,7 @@ set -eu
 
 # Prepare sample data in the fresh directory owned by preview_entrypoint.sh.
 script_dir="$(CDPATH= cd "$(dirname "$0")" && pwd)"
-fixture_dir="$script_dir/../src/test/integration/fixtures"
+fixture_dir="$script_dir/../src/server/test/integration/fixtures"
 documents="$1/documents"
 
 mkdir -p "$documents"
