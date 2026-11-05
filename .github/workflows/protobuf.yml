@@ -7,15 +7,15 @@ on:
       - Makefile
       - make/**
       - .prettierrc.json
-      - buf.gen.yaml
-      - buf.yaml
-      - package.json
-      - package-lock.json
-      - proto/**
-      - gen/ts/**
-      - gen/go/**
-      - go.mod
-      - go.sum
+      - src/proto/buf.gen.yaml
+      - src/proto/buf.yaml
+      - src/proto/package.json
+      - src/proto/package-lock.json
+      - src/proto/**
+      - src/preview/gen/**
+      - src/server/internal/gen/**
+      - src/server/go.mod
+      - src/server/go.sum
   push:
     branches:
       - main
@@ -24,15 +24,15 @@ on:
       - Makefile
       - make/**
       - .prettierrc.json
-      - buf.gen.yaml
-      - buf.yaml
-      - package.json
-      - package-lock.json
-      - proto/**
-      - gen/ts/**
-      - gen/go/**
-      - go.mod
-      - go.sum
+      - src/proto/buf.gen.yaml
+      - src/proto/buf.yaml
+      - src/proto/package.json
+      - src/proto/package-lock.json
+      - src/proto/**
+      - src/preview/gen/**
+      - src/server/internal/gen/**
+      - src/server/go.mod
+      - src/server/go.sum
 
 permissions:
   contents: read
@@ -49,20 +49,20 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: package.json
+          node-version-file: src/proto/package.json
           check-latest: true
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: src/proto/package-lock.json
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version-file: src/server/go.mod
           # Generator versions live in make/proto.mk. Keep this cache separate from
           # the backend cache so a faster generator job cannot freeze an
           # incomplete snapshot without the CGO test and release builds.
           cache-dependency-path: |
-            go.sum
+            src/server/go.sum
             Makefile
             make/*.mk
 

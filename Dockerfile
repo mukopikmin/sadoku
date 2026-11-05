@@ -8,15 +8,12 @@ WORKDIR /workspace
 
 COPY Makefile ./
 COPY make/ ./make/
-COPY package.json package-lock.json ./
+COPY src/proto/package.json src/proto/package-lock.json ./src/proto/
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
-# Optional CA for builds behind a TLS proxy; never stored in an image layer.
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
-    npm_config_engine_strict=true make deps
-
+    make deps
 COPY src/preview/ ./src/preview/
-COPY gen/ts/ ./gen/ts/
 RUN make build-client
 
 FROM golang:1.26.10-bookworm AS go-toolchain
@@ -31,19 +28,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends make gcc libc6-
 
 WORKDIR /workspace
 
-COPY go.mod go.sum ./
+COPY src/server/go.mod src/server/go.sum ./src/server/
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export SSL_CERT_FILE=/run/secrets/proxy_ca; fi; \
-    go mod download
+    go -C src/server mod download
 
 COPY Makefile ./
 COPY make/ ./make/
-COPY cmd/ ./cmd/
-COPY internal/ ./internal/
-COPY src/server/ ./src/server/
-COPY gen/go/ ./gen/go/
-COPY src/preview/assets.go ./src/preview/assets.go
-COPY --from=client /workspace/src/preview/dist/ ./src/preview/dist/
+COPY src/server/cmd/ ./src/server/cmd/
+COPY src/server/internal/ ./src/server/internal/
+COPY --from=client /workspace/src/preview/dist/ ./src/server/internal/preview/dist/
 RUN make build-server
 
 # The Linux binary is statically linked, including SQLite. Alpine supplies the

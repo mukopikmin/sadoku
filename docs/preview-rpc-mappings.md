@@ -1,8 +1,8 @@
 # Preview RPC response mappings
 
-The Go handlers in `src/server/http/api/preview_rpc.go` implement the generated
+The Go handlers in `src/server/internal/server/http/api/preview_rpc.go` implement the generated
 Connect service interface and share application operations with REST adapters.
-The boundary in `src/server/http/api/rpc.go` uses Protobuf JSON conversion to
+The boundary in `src/server/internal/server/http/api/rpc.go` uses Protobuf JSON conversion to
 map requests into application inputs and application results into generated Go
 response messages. It does not call REST endpoints or round-trip HTTP responses.
 

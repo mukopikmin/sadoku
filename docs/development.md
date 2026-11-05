@@ -5,10 +5,7 @@
 Use GNU Make as the entry point for repository tasks. Go 1.26.10 or later runs
 the backend, CLI, build, and notice tools. Release validation and notes run in
 GitHub Actions using Bash, Git, GitHub CLI, and jq. Node.js runs the preview
-client and npm tooling; its required version is specified in `package.json`.
-
-The root `Makefile` includes `make/proto.mk` and `make/proxy.mk` for protobuf
-and proxy tasks. Run all targets from the repository root.
+client and npm tooling; its required version is specified in `src/proto/package.json`.
 
 SQLite uses `mattn/go-sqlite3` with CGO enabled. Building from source requires
 a C compiler: GCC and libc development headers on Linux, Xcode Command Line
@@ -21,10 +18,9 @@ make deps
 make start ARGS=README.md
 ```
 
-The root `package.json` manages Node dependencies only. Make defines dependency
-installation, formatting, action tests, and protobuf generation; npm executes
-local tools with `npm exec --no` so missing tools are not downloaded implicitly.
-The preview package retains its Vite and Vitest scripts:
+`src/proto/package.json` declares Node tooling dependencies only. Make defines shared
+commands and includes `make/proto.mk` and `make/proxy.mk`; their targets use
+`proto-` and `proxy-` prefixes. Run targets from the repository root.
 
 ```sh
 make check                       # formatting and go vet
@@ -52,13 +48,13 @@ Nightly builds use
 
 Install the pinned Go protobuf generators with `make proto-tools` before
 `make proto-check`; ensure `$(go env GOPATH)/bin` is on `PATH`. Go and TypeScript
-bindings share `proto/sadoku/preview/v1/preview.proto`.
+bindings share `src/proto/sadoku/preview/v1/preview.proto`.
 
 Server and tooling tests use Go. The inline GitHub JavaScript action test uses
 Node's built-in test runner. Generated TypeScript bindings and the Node test use
 Prettier; Go formatting uses `gofmt`.
 
-See [contributor guidelines](../AGENTS.md), [proxy setup](../proxy/README.md), and the
+See [contributor guidelines](../AGENTS.md), [proxy setup](../src/proxy/README.md), and the
 [release workflow guide](../.agents/skills/sadoku-release/SKILL.md) for details.
 
 See [stable release operations](releases.md) for tag metadata and workflow safeguards.
@@ -67,3 +63,15 @@ See [stable release operations](releases.md) for tag metadata and workflow safeg
 
 For nightly builds, pass `--nightly` to `install.sh` or `-Nightly` to
 `install.ps1`; update with `sadoku update --channel nightly`.
+
+## Source layout
+
+`src/server/` owns the Go application module, entry points, internal server and
+repository tooling, generated Go bindings, and integration tests.
+`src/preview/` owns the browser client and generated TypeScript bindings.
+`src/proxy/` remains an independent Go module. `src/proto/` owns protobuf
+schemas, Buf configuration, and Node-based generation tools.
+
+The root Makefile coordinates these applications. Client builds copy browser
+assets into `src/server/internal/preview/dist/` for Go embedding; neither copy
+of the generated assets is committed.
