@@ -62,6 +62,23 @@ them when making changes.
   schema equality, repeat execution, rollback, and related-data preservation.
   Document explicit backfill policies for missing historical metadata; never
   infer unknown original text from the current document.
+- Before tightening database constraints, inspect the previous schema and write
+  paths and enumerate data they could have persisted that the new constraints
+  reject, including NULLs, missing metadata, and inconsistent field combinations.
+  Define an upgrade policy for each case before enforcing the constraint: a
+  safe migration/backfill or an actionable diagnosis and repair procedure that
+  preserves the original database. Do not invent historical values. When a
+  repair requires information users may no longer have, provide a way to retain
+  and use that data, or defer the constraint until a compatible transition exists.
+  Database deletion or recreation is not an upgrade or repair strategy.
+- Test constraint changes against legacy databases containing those boundary
+  cases, not only fresh databases or valid sample rows. Verify successful
+  upgrades and data preservation for automatic migration policies. For cases
+  requiring operator repair, verify diagnosis, unchanged data after failure,
+  repair using available evidence, successful retry, and reopening through the
+  public database startup path. A test that only asserts migration failure or
+  rollback does not establish upgrade compatibility. Run `make test-migrations`
+  and the required Go checks for migration changes.
 - Generate Go and TypeScript RPC bindings together using
   `make proto-generate`.
 - Keep routing and API adaptation under `http/`, session preparation under

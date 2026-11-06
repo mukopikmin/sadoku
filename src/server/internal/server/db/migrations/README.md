@@ -50,6 +50,21 @@ repair, reopen with the new version to retry migration 0016.
 
 ## Reproducibility
 
+From the repository root, run `make deps` once, then `make test-migrations`.
+This runs the database suite with the race detector, including
+`TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase`.
+The test creates a temporary legacy database and covers five inconsistent
+resolution states accepted by that schema. Each case fails startup twice at
+0016, verifies unchanged schema, comments, replies, and migration history, then
+restores the fixture's known original resolution state and successfully reopens
+twice without recreating the database. The normal server CI suite runs this test
+as well. No user database is accessed.
+
+These cases reproduce known failure conditions, not a confirmed diagnosis of a
+particular incident. Preserve the original error and a sanitized database fixture
+when available to add an incident-specific regression test. The fixture repair
+is not a general repair policy for production data.
+
 Run `make deps`, `make check-go-format`, `make vet`, and `make test-server`.
 The database tests cover fresh-versus-upgraded schema equality, reopening and
 reapplying migrations, original checksums, preservation of comment/reply IDs,
