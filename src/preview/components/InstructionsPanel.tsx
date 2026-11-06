@@ -1,4 +1,4 @@
-import { Button, Flex, Text, Textarea } from "@chakra-ui/react";
+import { Button, Card, Flex, Text, Textarea } from "@chakra-ui/react";
 import { useInstructionEditor } from "../hooks/useInstructionEditor";
 import type { InstructionScope } from "../models/instruction";
 
@@ -34,19 +34,29 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
           value={editor.content}
         />
       ) : (
-        <Text
-          aria-label="Instruction text"
-          role="region"
-          tabIndex={0}
+        <Card.Root
+          variant="outline"
+          size="sm"
           maxH="36dvh"
           minH="0"
-          overflowY="auto"
-          overflowWrap="anywhere"
-          whiteSpace="pre-wrap"
-          color={editor.content ? undefined : "fg.muted"}
+          overflow="hidden"
         >
-          {editor.content || "No instructions have been added."}
-        </Text>
+          <Card.Body
+            aria-label="Instruction text"
+            role="region"
+            tabIndex={0}
+            minH="0"
+            overflowY="auto"
+            overflowWrap="anywhere"
+          >
+            <Text
+              whiteSpace="pre-wrap"
+              color={editor.content ? undefined : "fg.muted"}
+            >
+              {editor.content || "No instructions have been added."}
+            </Text>
+          </Card.Body>
+        </Card.Root>
       )}
       <Flex direction="column" gap="4" flexShrink="0">
         {editor.editing && (

@@ -1,5 +1,5 @@
 import {
-  Box,
+  Card,
   Button,
   CloseButton,
   Dialog,
@@ -46,33 +46,40 @@ export const DocumentInstructionsDialog = ({
                   Apply to all documents in this database. Document instructions
                   take precedence when they directly conflict.
                 </Text>
-                <Box
+                <Card.Root
+                  variant="outline"
+                  size="sm"
                   maxH="20dvh"
                   minH="0"
-                  overflowY="auto"
-                  overflowWrap="anywhere"
-                  role="region"
-                  aria-label="Global instruction text"
-                  tabIndex={0}
+                  overflow="hidden"
                 >
-                  {globalQuery.isPending ? (
-                    <Text>Loading global instructions...</Text>
-                  ) : globalQuery.error ? (
-                    <Text color="fg.error" role="alert">
-                      {String(globalQuery.error)}
-                    </Text>
-                  ) : globalQuery.data?.length === 0 ? (
-                    <Text color="fg.muted">
-                      No global instructions have been added.
-                    </Text>
-                  ) : (
-                    globalQuery.data?.map((instruction) => (
-                      <Text key={instruction.id} whiteSpace="pre-wrap">
-                        {instruction.content}
+                  <Card.Body
+                    minH="0"
+                    overflowY="auto"
+                    overflowWrap="anywhere"
+                    role="region"
+                    aria-label="Global instruction text"
+                    tabIndex={0}
+                  >
+                    {globalQuery.isPending ? (
+                      <Text>Loading global instructions...</Text>
+                    ) : globalQuery.error ? (
+                      <Text color="fg.error" role="alert">
+                        {String(globalQuery.error)}
                       </Text>
-                    ))
-                  )}
-                </Box>
+                    ) : globalQuery.data?.length === 0 ? (
+                      <Text color="fg.muted">
+                        No global instructions have been added.
+                      </Text>
+                    ) : (
+                      globalQuery.data?.map((instruction) => (
+                        <Text key={instruction.id} whiteSpace="pre-wrap">
+                          {instruction.content}
+                        </Text>
+                      ))
+                    )}
+                  </Card.Body>
+                </Card.Root>
                 {onOpenGlobalInstructions && (
                   <Button
                     alignSelf="flex-start"
