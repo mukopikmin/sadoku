@@ -73,7 +73,7 @@ export const DocumentMemoriesDialog = ({
                       <Flex
                         key={memory.id}
                         direction="column"
-                        gap="4"
+                        gap="2"
                         flexShrink="0"
                       >
                         <ScrollableTextCard label={`Memory ${memory.id} text`}>
