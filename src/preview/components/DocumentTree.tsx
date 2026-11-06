@@ -16,9 +16,11 @@ type DocumentTreeProps = {
   onCreateDocument?: (directory: string) => void;
 };
 
-export const DocumentTree = (
-  { documents, onSelectDocument, onCreateDocument }: DocumentTreeProps,
-) => {
+export const DocumentTree = ({
+  documents,
+  onSelectDocument,
+  onCreateDocument,
+}: DocumentTreeProps) => {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [tagSearch, setTagSearch] = useState("");
   const tags = useMemo(() => collectDocumentTags(documents), [documents]);
@@ -52,25 +54,23 @@ export const DocumentTree = (
           tags={tags}
         />
       )}
-      {filteredDocuments.length === 0
-        ? (
-          <VStack
-            borderColor="border.muted"
-            borderRadius="lg"
-            borderWidth="1px"
-            gap="2"
-            p="6"
-          >
-            <Text color="fg.muted">No documents match the selected tags.</Text>
-          </VStack>
-        )
-        : (
-          <DocumentTreeView
-            onCreateDocument={onCreateDocument}
-            onSelectDocument={onSelectDocument}
-            rootNode={rootNode}
-          />
-        )}
+      {filteredDocuments.length === 0 ? (
+        <VStack
+          borderColor="border.muted"
+          borderRadius="lg"
+          borderWidth="1px"
+          gap="2"
+          p="6"
+        >
+          <Text color="fg.muted">No documents match the selected tags.</Text>
+        </VStack>
+      ) : (
+        <DocumentTreeView
+          onCreateDocument={onCreateDocument}
+          onSelectDocument={onSelectDocument}
+          rootNode={rootNode}
+        />
+      )}
     </VStack>
   );
 };

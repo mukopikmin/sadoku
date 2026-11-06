@@ -10,12 +10,11 @@ afterEach(() => {
 
 const createViewport = (diagramWidth = 400, diagramHeight = 200) => {
   const viewport = document.createElement("div");
-  viewport.innerHTML =
-    `<svg viewBox="0 0 ${diagramWidth} ${diagramHeight}"></svg>`;
+  viewport.innerHTML = `<svg viewBox="0 0 ${diagramWidth} ${diagramHeight}"></svg>`;
   const width = vi.spyOn(viewport, "clientWidth", "get").mockReturnValue(240);
   const height = vi.spyOn(viewport, "clientHeight", "get").mockReturnValue(140);
-  vi.spyOn(viewport, "getBoundingClientRect").mockImplementation(() =>
-    new DOMRect(10, 10, viewport.clientWidth, viewport.clientHeight)
+  vi.spyOn(viewport, "getBoundingClientRect").mockImplementation(
+    () => new DOMRect(10, 10, viewport.clientWidth, viewport.clientHeight),
   );
   const controller = initializeMermaidPinchZoom(viewport);
   controllers.push(controller);

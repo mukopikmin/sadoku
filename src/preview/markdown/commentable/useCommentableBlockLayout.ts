@@ -29,23 +29,29 @@ export const measureRangeHighlightLayouts = (
   preview: HTMLElement,
   rangeHighlights: readonly RangeHighlight[],
 ): RangeHighlightLayout[] => {
-  const blocks = [...preview.querySelectorAll<HTMLElement>(
-    commentableBlockSelector,
-  )];
+  const blocks = [
+    ...preview.querySelectorAll<HTMLElement>(commentableBlockSelector),
+  ];
 
-  return measureHighlightGroups(preview, rangeHighlights.flatMap((range) => {
-    const contents = blocks.filter((block) => {
-      const startLine = Number(block.dataset.sourceLine);
-      const endLine = Number(block.dataset.sourceEndLine ?? startLine);
-      return endLine >= range.startLine && startLine <= range.endLine;
-    }).map((block) =>
-      block.querySelector<HTMLElement>(":scope > .commentable-content")
-    ).filter((content): content is HTMLElement => content !== null);
-    // Keep range outlines on current content, without spanning deleted blocks.
-    return preview.hasAttribute("data-document-diff")
-      ? contents.map((content) => ({ range, elements: [content] }))
-      : [{ range, elements: contents }];
-  }));
+  return measureHighlightGroups(
+    preview,
+    rangeHighlights.flatMap((range) => {
+      const contents = blocks
+        .filter((block) => {
+          const startLine = Number(block.dataset.sourceLine);
+          const endLine = Number(block.dataset.sourceEndLine ?? startLine);
+          return endLine >= range.startLine && startLine <= range.endLine;
+        })
+        .map((block) =>
+          block.querySelector<HTMLElement>(":scope > .commentable-content"),
+        )
+        .filter((content): content is HTMLElement => content !== null);
+      // Keep range outlines on current content, without spanning deleted blocks.
+      return preview.hasAttribute("data-document-diff")
+        ? contents.map((content) => ({ range, elements: [content] }))
+        : [{ range, elements: contents }];
+    }),
+  );
 };
 
 const arraysEqual = <Value>(
@@ -70,6 +76,9 @@ export const useCommentableBlockLayout = (
   );
   const rangeHighlightLayouts = useHighlightLayouts(previewRef, measure);
 
+  // Measure after every commit: Markdown DOM can change without changing the ref.
+  // State updates below preserve identity when the measured values are unchanged.
+  // oxlint-disable-next-line react/exhaustive-deps
   useLayoutEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;

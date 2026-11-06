@@ -38,10 +38,14 @@ export const renderMarkdownHeading = (
   </Box>
 );
 
-const createMarkdownHeading = (tagName: HeadingTagName) =>
-(
-  { children, node: _node, ...props }: MarkdownComponentProps<HeadingTagName>,
-) => renderMarkdownHeading(tagName, props, children);
+const createMarkdownHeading =
+  (tagName: HeadingTagName) =>
+  ({
+    children,
+    node: _node,
+    ...props
+  }: MarkdownComponentProps<HeadingTagName>) =>
+    renderMarkdownHeading(tagName, props, children);
 
 export const MarkdownH1 = createMarkdownHeading("h1");
 export const MarkdownH2 = createMarkdownHeading("h2");

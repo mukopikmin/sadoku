@@ -24,66 +24,77 @@ const createResponse = (
 });
 
 describe("comment model", () => {
-  it.each(
-    [
-      [{}, "active"],
-      [{ stale: true }, "stale"],
-      [{ resolved: true, resolvedAt: "2026-06-06T00:00:00.000Z" }, "resolved"],
-    ] as const,
-  )("maps API state %j to %s", (overrides, state) => {
+  it.each([
+    [{}, "active"],
+    [{ stale: true }, "stale"],
+    [{ resolved: true, resolvedAt: "2026-06-06T00:00:00.000Z" }, "resolved"],
+  ] as const)("maps API state %j to %s", (overrides, state) => {
     expect(toComment(createResponse(overrides)).state).toBe(state);
   });
 
   it("gives the resolved state precedence over stale response metadata", () => {
-    expect(toComment(createResponse({
-      resolved: true,
+    expect(
+      toComment(
+        createResponse({
+          resolved: true,
+          resolvedBy: { type: "bot" },
+          stale: true,
+        }),
+      ),
+    ).toMatchObject({
+      id: 1,
       resolvedBy: { type: "bot" },
-      stale: true,
-    })))
-      .toMatchObject({
-        id: 1,
-        resolvedBy: { type: "bot" },
-        state: "resolved",
-      });
+      state: "resolved",
+    });
   });
 
-  it.each(
-    [
-      [{}, true],
-      [{ stale: true }, true],
-      [{ resolved: true }, false],
-    ] as const,
-  )("identifies API state %j as unresolved: %s", (overrides, expected) => {
-    expect(isUnresolvedComment(toComment(createResponse(overrides))))
-      .toBe(expected);
-  });
+  it.each([
+    [{}, true],
+    [{ stale: true }, true],
+    [{ resolved: true }, false],
+  ] as const)(
+    "identifies API state %j as unresolved: %s",
+    (overrides, expected) => {
+      expect(isUnresolvedComment(toComment(createResponse(overrides)))).toBe(
+        expected,
+      );
+    },
+  );
 
   it("maps documents and replies without exposing response state flags", () => {
     const document = toCommentsDocument({
-      comments: [createResponse({
-        replies: [{
-          author: { type: "bot" },
-          body: "Agreed.",
-          createdAt: "2026-06-05T01:00:00.000Z",
-          id: 2,
-          reviewRequested: true,
-          updatedAt: "2026-06-05T01:00:00.000Z",
-        }],
-      })],
+      comments: [
+        createResponse({
+          replies: [
+            {
+              author: { type: "bot" },
+              body: "Agreed.",
+              createdAt: "2026-06-05T01:00:00.000Z",
+              id: 2,
+              reviewRequested: true,
+              updatedAt: "2026-06-05T01:00:00.000Z",
+            },
+          ],
+        }),
+      ],
       filePath: "/tmp/example.md",
     });
 
     expect(document).toMatchObject({
-      comments: [{
-        author: { type: "bot" },
-        replies: [{
+      comments: [
+        {
           author: { type: "bot" },
-          body: "Agreed.",
-          id: 2,
-          reviewRequested: true,
-        }],
-        state: "active",
-      }],
+          replies: [
+            {
+              author: { type: "bot" },
+              body: "Agreed.",
+              id: 2,
+              reviewRequested: true,
+            },
+          ],
+          state: "active",
+        },
+      ],
       filePath: "/tmp/example.md",
     });
     expect(document.comments[0]).not.toHaveProperty("resolved");
@@ -102,13 +113,14 @@ it("validates optional GitHub revision metadata", () => {
       comments: [],
       filePath: "source",
       githubHeadSha: "invalid",
-    })
+    }),
   ).toThrow("Invalid GitHub PR revision");
 });
 
 it("maps current source separately from resolution and rejects invalid metadata", () => {
-  expect(toComment(createResponse({ currentSourceText: "" })).currentSource)
-    .toEqual({ state: "available", text: "" });
+  expect(
+    toComment(createResponse({ currentSourceText: "" })).currentSource,
+  ).toEqual({ state: "available", text: "" });
   expect(
     toComment(
       createResponse({ resolved: true, stale: true, sourceDeleted: true }),
@@ -127,9 +139,9 @@ it("maps current source separately from resolution and rejects invalid metadata"
     state: "unavailable",
   });
   expect(() =>
-    toComment(createResponse({ currentSourceText: 123 as unknown as string }))
+    toComment(createResponse({ currentSourceText: 123 as unknown as string })),
   ).toThrow("Invalid comment source");
   expect(() =>
-    toComment(createResponse({ sourceDeleted: "true" as unknown as boolean }))
+    toComment(createResponse({ sourceDeleted: "true" as unknown as boolean })),
   ).toThrow("Invalid comment source");
 });

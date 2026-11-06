@@ -8,7 +8,6 @@ type MemoryResponse = {
   id: unknown;
   updatedAt: unknown;
 };
-type MemoriesResponse = { memories: unknown };
 
 const toMemory = (value: unknown): DocumentMemory => {
   if (typeof value !== "object" || value === null) {
@@ -19,10 +18,12 @@ const toMemory = (value: unknown): DocumentMemory => {
     (typeof response.id !== "number" && typeof response.id !== "bigint") ||
     (typeof response.documentId !== "number" &&
       typeof response.documentId !== "bigint") ||
-    Number(response.id) < 1 || Number(response.documentId) < 1 ||
+    Number(response.id) < 1 ||
+    Number(response.documentId) < 1 ||
     typeof response.content !== "string" ||
     typeof response.createdAt !== "string" ||
-    response.createdAt.length === 0 || typeof response.updatedAt !== "string" ||
+    response.createdAt.length === 0 ||
+    typeof response.updatedAt !== "string" ||
     response.updatedAt.length === 0
   ) {
     throw new Error("Invalid memory response.");

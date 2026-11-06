@@ -91,7 +91,8 @@ them when making changes.
 - Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
   scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
 - Keep release validation and approval gates when changing those tools.
-- Use Prettier for generated TypeScript bindings and the Node action test.
+- Use oxfmt for preview TypeScript, generated bindings, and the Node action test.
+- Use oxlint for handwritten TypeScript and React Hooks checks via `make lint-client`.
 
 ## 4. Preview Client and Generated Assets
 

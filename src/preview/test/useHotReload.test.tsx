@@ -63,7 +63,7 @@ describe("useHotReload", () => {
   it("reloads comments without marking the document for reload", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     const fetchMock = vi.fn(() =>
-      Promise.resolve(Response.json({ comments: [], filePath: "/tmp/a.md" }))
+      Promise.resolve(Response.json({ comments: [], filePath: "/tmp/a.md" })),
     );
     vi.stubGlobal("fetch", fetchMock);
 

@@ -20,9 +20,12 @@ type Props = {
   tags: DocumentTag[];
 };
 
-export const DocumentTagsDialog = (
-  { documentId, onOpenChange, open, tags }: Props,
-) => {
+export const DocumentTagsDialog = ({
+  documentId,
+  onOpenChange,
+  open,
+  tags,
+}: Props) => {
   const query = useTagsQuery(open);
   const actions = useTagActions(documentId);
   const [selectedTags, setSelectedTags] = useState<DocumentTag[]>(tags);
@@ -37,7 +40,7 @@ export const DocumentTagsDialog = (
     }
   }, [open, tags]);
 
-  const allTags = query.data ?? [];
+  const allTags = useMemo(() => query.data ?? [], [query.data]);
   const trimmed = input.trim();
   const exact = allTags.find(({ name }) => name === trimmed);
   const collection = useMemo(() => {
@@ -45,9 +48,9 @@ export const DocumentTagsDialog = (
     const available = allTags.filter(({ id }) => !selectedIds.has(id));
     const matching = trimmed
       ? [
-        ...available.filter(({ name }) => name === trimmed),
-        ...findSimilarTags(input, available, available.length),
-      ]
+          ...available.filter(({ name }) => name === trimmed),
+          ...findSimilarTags(input, available, available.length),
+        ]
       : available;
     const items: TagPickerOption[] = matching.map((tag) => ({
       value: String(tag.id),
@@ -55,7 +58,9 @@ export const DocumentTagsDialog = (
       tag,
     }));
     if (
-      trimmed && !exact && !selectedTags.some(({ name }) => name === trimmed)
+      trimmed &&
+      !exact &&
+      !selectedTags.some(({ name }) => name === trimmed)
     ) {
       items.push({ value: "create", label: `Create “${trimmed}”` });
     }
@@ -65,7 +70,7 @@ export const DocumentTagsDialog = (
       itemToValue: (item) => item.value,
       isItemDisabled: () => selectedTags.length >= 20,
     });
-  }, [input, allTags, selectedTags]);
+  }, [input, allTags, selectedTags, trimmed, exact]);
   const hasSelected = (tag: DocumentTag) =>
     selectedTags.some((item) => item.id === tag.id);
 
@@ -115,9 +120,12 @@ export const DocumentTagsDialog = (
       setMessage("A document can have at most 20 tags.");
       return;
     }
-    void persist([...selectedTags.map(({ id }) => ({ id })), {
-      name: trimmed,
-    }]);
+    void persist([
+      ...selectedTags.map(({ id }) => ({ id })),
+      {
+        name: trimmed,
+      },
+    ]);
   };
 
   return (
@@ -151,9 +159,11 @@ export const DocumentTagsDialog = (
                   }}
                   onRemove={(tag) =>
                     void persist(
-                      selectedTags.filter(({ id }) => id !== tag.id)
+                      selectedTags
+                        .filter(({ id }) => id !== tag.id)
                         .map(({ id }) => ({ id })),
-                    )}
+                    )
+                  }
                   onSelect={(item) => {
                     if (item.tag) addExisting(item.tag);
                     else if (item.value === "create") addInput();
@@ -163,7 +173,9 @@ export const DocumentTagsDialog = (
                   selectedTags={selectedTags}
                 />
                 {message && (
-                  <Text color="fg.error" role="status">{message}</Text>
+                  <Text color="fg.error" role="status">
+                    {message}
+                  </Text>
                 )}
                 {query.error && (
                   <Text color="fg.error">{String(query.error)}</Text>

@@ -1,11 +1,4 @@
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "./testUtils";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DocumentActionBar } from "../components/DocumentActionBar";
 
@@ -18,21 +11,24 @@ afterEach(() => {
 describe("DocumentActionBar", () => {
   it("reserves space for the measured bar height and follows wrapping changes", () => {
     const measurements = new Set<() => void>();
-    vi.stubGlobal("ResizeObserver", class {
-      constructor(readonly callback: ResizeObserverCallback) {}
-      notify = () => this.callback([], this as unknown as ResizeObserver);
-      observe(target: Element) {
-        if (target.getAttribute("aria-label") === "Document actions") {
-          measurements.add(this.notify);
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(readonly callback: ResizeObserverCallback) {}
+        notify = () => this.callback([], this as unknown as ResizeObserver);
+        observe(target: Element) {
+          if (target.getAttribute("aria-label") === "Document actions") {
+            measurements.add(this.notify);
+          }
         }
-      }
-      unobserve() {
-        measurements.delete(this.notify);
-      }
-      disconnect() {
-        measurements.delete(this.notify);
-      }
-    });
+        unobserve() {
+          measurements.delete(this.notify);
+        }
+        disconnect() {
+          measurements.delete(this.notify);
+        }
+      },
+    );
     const { unmount } = render(
       <DocumentActionBar
         markdown="# Introduction"
@@ -48,8 +44,8 @@ describe("DocumentActionBar", () => {
     const bar = screen.getByRole("dialog", { name: "Document actions" });
     const spacer = screen.getByTestId("action-bar-spacer");
     let height = 56;
-    vi.spyOn(bar, "getBoundingClientRect").mockImplementation(() =>
-      new DOMRect(0, 0, 420, height)
+    vi.spyOn(bar, "getBoundingClientRect").mockImplementation(
+      () => new DOMRect(0, 0, 420, height),
     );
     expect(measurements.size).toBeGreaterThan(0);
     for (const nextHeight of [56, 112, 148, 56]) {
@@ -82,8 +78,9 @@ describe("DocumentActionBar", () => {
     const tagsButton = screen.getByRole("button", { name: "Tags" });
     expect(tagsButton.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(tagsButton.textContent).toBe("2");
-    expect(screen.getByRole("button", { name: "Instructions" }).textContent)
-      .toBe("");
+    expect(
+      screen.getByRole("button", { name: "Instructions" }).textContent,
+    ).toBe("");
     expect(screen.getByRole("button", { name: "Memories" }).textContent).toBe(
       "4",
     );
@@ -148,8 +145,9 @@ describe("DocumentActionBar", () => {
     expect(screen.queryByRole("button", { name: /HTML comments/ })).toBeNull();
     expect(instructions.textContent).toBe("");
     expect(memories.textContent).toBe("12");
-    expect(instructions.querySelector('svg[aria-hidden="true"]')).not
-      .toBeNull();
+    expect(
+      instructions.querySelector('svg[aria-hidden="true"]'),
+    ).not.toBeNull();
     expect(memories.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
 
     fireEvent.pointerEnter(memories);

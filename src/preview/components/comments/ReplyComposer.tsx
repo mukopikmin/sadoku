@@ -39,22 +39,20 @@ export const ReplyComposer = ({
   };
 
   if (!isReplying) {
-    return showTrigger
-      ? (
-        <Flex align="center" justify="space-between" gap="2">
-          <CommentActionButton
-            disabled={disabled}
-            onClick={() => setIsReplying(true)}
-            type="button"
-            variant="surface"
-          >
-            <Reply aria-hidden="true" />
-            Reply
-          </CommentActionButton>
-          {trailingAction}
-        </Flex>
-      )
-      : null;
+    return showTrigger ? (
+      <Flex align="center" justify="space-between" gap="2">
+        <CommentActionButton
+          disabled={disabled}
+          onClick={() => setIsReplying(true)}
+          type="button"
+          variant="surface"
+        >
+          <Reply aria-hidden="true" />
+          Reply
+        </CommentActionButton>
+        {trailingAction}
+      </Flex>
+    ) : null;
   }
 
   return (

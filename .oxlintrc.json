@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/set-state-in-effect": "off",
+    "react/immutability": "off"
+  },
+  "ignorePatterns": [
+    "**/gen/**",
+    "**/dist/**",
+    "**/node_modules/**"
+  ]
+}

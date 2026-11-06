@@ -17,9 +17,11 @@ export const parseDocumentTag = (value: unknown): DocumentTag => {
   }
   const tag = value as Record<string, unknown>;
   if (
-    !Number.isSafeInteger(Number(tag.id)) || typeof tag.name !== "string" ||
+    !Number.isSafeInteger(Number(tag.id)) ||
+    typeof tag.name !== "string" ||
     !isTagBackgroundColor(tag.backgroundColor)
-  ) throw new Error("Invalid tag response.");
+  )
+    throw new Error("Invalid tag response.");
   return {
     id: Number(tag.id),
     name: tag.name,
@@ -28,9 +30,11 @@ export const parseDocumentTag = (value: unknown): DocumentTag => {
 };
 
 export const loadTags = async () => {
-  const values: unknown[] = (await previewClient.listTags({}).catch((error) => {
-    throw new Error(connectRawMessage(error));
-  })).tags;
+  const values: unknown[] = (
+    await previewClient.listTags({}).catch((error) => {
+      throw new Error(connectRawMessage(error));
+    })
+  ).tags;
   return values.map((value) => {
     const tag = parseDocumentTag(value);
     const summary = value as Record<string, unknown>;
@@ -38,7 +42,8 @@ export const loadTags = async () => {
       !Number.isSafeInteger(Number(summary.documentCount)) ||
       typeof summary.createdAt !== "string" ||
       typeof summary.updatedAt !== "string"
-    ) throw new Error("Invalid tag response.");
+    )
+      throw new Error("Invalid tag response.");
     return {
       ...tag,
       documentCount: Number(summary.documentCount),
@@ -58,26 +63,27 @@ export const updateTag = async (
   name: string,
   backgroundColor: string,
 ) =>
-  previewClient.updateTag({ id: BigInt(id), name, backgroundColor }).then(
-    parseDocumentTag,
-    (error) => {
+  previewClient
+    .updateTag({ id: BigInt(id), name, backgroundColor })
+    .then(parseDocumentTag, (error) => {
       throw new Error(connectRawMessage(error));
-    },
-  );
+    });
 export const replaceDocumentTags = async (
   documentId: number,
   tags: TagReference[],
 ) =>
-  previewClient.replaceDocumentTags({
-    documentId: BigInt(documentId),
-    tags: tags.map((tag) =>
-      "id" in tag
-        ? { reference: { case: "id", value: BigInt(tag.id) } }
-        : { reference: { case: "name", value: tag.name } }
-    ),
-  }).then(
-    ({ tags }) => tags.map(parseDocumentTag),
-    (error) => {
-      throw new Error(connectRawMessage(error));
-    },
-  );
+  previewClient
+    .replaceDocumentTags({
+      documentId: BigInt(documentId),
+      tags: tags.map((tag) =>
+        "id" in tag
+          ? { reference: { case: "id", value: BigInt(tag.id) } }
+          : { reference: { case: "name", value: tag.name } },
+      ),
+    })
+    .then(
+      ({ tags }) => tags.map(parseDocumentTag),
+      (error) => {
+        throw new Error(connectRawMessage(error));
+      },
+    );

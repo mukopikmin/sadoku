@@ -27,7 +27,11 @@ type Props = {
 };
 
 export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
-  const swatchColors = useToken("colors", ["gray.500", "blue.500", "green.500"]);
+  const swatchColors = useToken("colors", [
+    "gray.500",
+    "blue.500",
+    "green.500",
+  ]);
   const tags = useTagsQuery(open);
   const update = useUpdateTag();
   const remove = useDeleteTag();
@@ -101,173 +105,167 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                 <CloseButton aria-label="Close tags" size="sm" />
               </Dialog.CloseTrigger>
               <Dialog.Body pb="6">
-                {tags.isPending
-                  ? <Spinner aria-label="Loading tags" />
-                  : tags.error
-                  ? <Text color="fg.error">{tags.error.message}</Text>
-                  : tags.data.length === 0
-                  ? <Text color="fg.muted">No tags yet.</Text>
-                  : (
-                    <Table.Root>
-                      <Table.Header>
-                        <Table.Row>
-                          <Table.ColumnHeader>Tag</Table.ColumnHeader>
-                          <Table.ColumnHeader>Color</Table.ColumnHeader>
-                          <Table.ColumnHeader textAlign="end">
-                            Documents
-                          </Table.ColumnHeader>
-                          <Table.ColumnHeader />
+                {tags.isPending ? (
+                  <Spinner aria-label="Loading tags" />
+                ) : tags.error ? (
+                  <Text color="fg.error">{tags.error.message}</Text>
+                ) : tags.data.length === 0 ? (
+                  <Text color="fg.muted">No tags yet.</Text>
+                ) : (
+                  <Table.Root>
+                    <Table.Header>
+                      <Table.Row>
+                        <Table.ColumnHeader>Tag</Table.ColumnHeader>
+                        <Table.ColumnHeader>Color</Table.ColumnHeader>
+                        <Table.ColumnHeader textAlign="end">
+                          Documents
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader />
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {tags.data.map((tag) => (
+                        <Table.Row key={tag.id}>
+                          <Table.Cell>
+                            {editingId === tag.id ? (
+                              <Input
+                                aria-label={`New name for ${tag.name}`}
+                                onChange={(event) =>
+                                  setName(event.target.value)
+                                }
+                                size="sm"
+                                value={name}
+                              />
+                            ) : (
+                              <TagLabel
+                                backgroundColor={tag.backgroundColor}
+                                name={tag.name}
+                              />
+                            )}
+                          </Table.Cell>
+                          <Table.Cell>
+                            {editingId === tag.id ? (
+                              <ColorPicker.Root
+                                format="rgba"
+                                onValueChange={({ value }) =>
+                                  setBackgroundColor(
+                                    value.toString("hex").toLowerCase(),
+                                  )
+                                }
+                                size="sm"
+                                value={parseColor(backgroundColor)}
+                              >
+                                <ColorPicker.Label srOnly>
+                                  Background color
+                                </ColorPicker.Label>
+                                <ColorPicker.Control>
+                                  <ColorPicker.Input
+                                    aria-label={`Background color for ${tag.name}`}
+                                  />
+                                  <ColorPicker.Trigger>
+                                    <ColorPicker.ValueSwatch />
+                                  </ColorPicker.Trigger>
+                                </ColorPicker.Control>
+                                <ColorPicker.Positioner>
+                                  <ColorPicker.Content>
+                                    <ColorPicker.Area>
+                                      <ColorPicker.AreaBackground />
+                                      <ColorPicker.AreaThumb />
+                                    </ColorPicker.Area>
+                                    <ColorPicker.Sliders>
+                                      <ColorPicker.ChannelSlider channel="hue">
+                                        <ColorPicker.ChannelSliderTrack />
+                                        <ColorPicker.ChannelSliderThumb />
+                                      </ColorPicker.ChannelSlider>
+                                    </ColorPicker.Sliders>
+                                    <ColorPicker.SwatchGroup>
+                                      {swatchColors.map((color) => (
+                                        <ColorPicker.SwatchTrigger
+                                          aria-label={`Select ${color}`}
+                                          key={color}
+                                          value={color}
+                                        >
+                                          <ColorPicker.Swatch value={color} />
+                                        </ColorPicker.SwatchTrigger>
+                                      ))}
+                                    </ColorPicker.SwatchGroup>
+                                  </ColorPicker.Content>
+                                </ColorPicker.Positioner>
+                              </ColorPicker.Root>
+                            ) : (
+                              <Flex align="center" gap="2">
+                                <ColorSwatch
+                                  value={tag.backgroundColor}
+                                  size="sm"
+                                />
+                                <Text fontSize="sm">{tag.backgroundColor}</Text>
+                              </Flex>
+                            )}
+                          </Table.Cell>
+                          <Table.Cell textAlign="end">
+                            {tag.documentCount.toLocaleString()}
+                          </Table.Cell>
+                          <Table.Cell textAlign="end">
+                            {editingId === tag.id ? (
+                              <Flex gap="2" justify="flex-end">
+                                <Button
+                                  disabled={update.isPending}
+                                  onClick={cancelEditing}
+                                  size="sm"
+                                  variant="ghost"
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  loading={update.isPending}
+                                  onClick={save}
+                                  size="sm"
+                                >
+                                  Save
+                                </Button>
+                              </Flex>
+                            ) : (
+                              <Flex gap="2" justify="flex-end">
+                                <IconButton
+                                  disabled={pending}
+                                  aria-label={`Edit tag ${tag.name}`}
+                                  onClick={() =>
+                                    startEditing(
+                                      tag.id,
+                                      tag.name,
+                                      tag.backgroundColor,
+                                    )
+                                  }
+                                  size="sm"
+                                  variant="ghost"
+                                >
+                                  <Pencil aria-hidden="true" />
+                                </IconButton>
+                                <IconButton
+                                  aria-label={`Delete tag ${tag.name}`}
+                                  colorPalette="red"
+                                  disabled={pending}
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    cancelEditing();
+                                    setDeletingId(tag.id);
+                                  }}
+                                >
+                                  <Trash2 aria-hidden="true" />
+                                </IconButton>
+                              </Flex>
+                            )}
+                          </Table.Cell>
                         </Table.Row>
-                      </Table.Header>
-                      <Table.Body>
-                        {tags.data.map((tag) => (
-                          <Table.Row key={tag.id}>
-                            <Table.Cell>
-                              {editingId === tag.id
-                                ? (
-                                  <Input
-                                    aria-label={`New name for ${tag.name}`}
-                                    onChange={(event) =>
-                                      setName(event.target.value)}
-                                    size="sm"
-                                    value={name}
-                                  />
-                                )
-                                : (
-                                  <TagLabel
-                                    backgroundColor={tag.backgroundColor}
-                                    name={tag.name}
-                                  />
-                                )}
-                            </Table.Cell>
-                            <Table.Cell>
-                              {editingId === tag.id
-                                ? (
-                                  <ColorPicker.Root
-                                    format="rgba"
-                                    onValueChange={({ value }) =>
-                                      setBackgroundColor(
-                                        value.toString("hex").toLowerCase(),
-                                      )}
-                                    size="sm"
-                                    value={parseColor(backgroundColor)}
-                                  >
-                                    <ColorPicker.Label srOnly>
-                                      Background color
-                                    </ColorPicker.Label>
-                                    <ColorPicker.Control>
-                                      <ColorPicker.Input
-                                        aria-label={`Background color for ${tag.name}`}
-                                      />
-                                      <ColorPicker.Trigger>
-                                        <ColorPicker.ValueSwatch />
-                                      </ColorPicker.Trigger>
-                                    </ColorPicker.Control>
-                                    <ColorPicker.Positioner>
-                                      <ColorPicker.Content>
-                                        <ColorPicker.Area>
-                                          <ColorPicker.AreaBackground />
-                                          <ColorPicker.AreaThumb />
-                                        </ColorPicker.Area>
-                                        <ColorPicker.Sliders>
-                                          <ColorPicker.ChannelSlider channel="hue">
-                                            <ColorPicker.ChannelSliderTrack />
-                                            <ColorPicker.ChannelSliderThumb />
-                                          </ColorPicker.ChannelSlider>
-                                        </ColorPicker.Sliders>
-                                        <ColorPicker.SwatchGroup>
-                                          {swatchColors
-                                            .map((color) => (
-                                              <ColorPicker.SwatchTrigger
-                                                aria-label={`Select ${color}`}
-                                                key={color}
-                                                value={color}
-                                              >
-                                                <ColorPicker.Swatch
-                                                  value={color}
-                                                />
-                                              </ColorPicker.SwatchTrigger>
-                                            ))}
-                                        </ColorPicker.SwatchGroup>
-                                      </ColorPicker.Content>
-                                    </ColorPicker.Positioner>
-                                  </ColorPicker.Root>
-                                )
-                                : (
-                                  <Flex align="center" gap="2">
-                                    <ColorSwatch
-                                      value={tag.backgroundColor}
-                                      size="sm"
-                                    />
-                                    <Text fontSize="sm">
-                                      {tag.backgroundColor}
-                                    </Text>
-                                  </Flex>
-                                )}
-                            </Table.Cell>
-                            <Table.Cell textAlign="end">
-                              {tag.documentCount.toLocaleString()}
-                            </Table.Cell>
-                            <Table.Cell textAlign="end">
-                              {editingId === tag.id
-                                ? (
-                                  <Flex gap="2" justify="flex-end">
-                                    <Button
-                                      disabled={update.isPending}
-                                      onClick={cancelEditing}
-                                      size="sm"
-                                      variant="ghost"
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      loading={update.isPending}
-                                      onClick={save}
-                                      size="sm"
-                                    >
-                                      Save
-                                    </Button>
-                                  </Flex>
-                                )
-                                : (
-                                  <Flex gap="2" justify="flex-end">
-                                    <IconButton
-                                      disabled={pending}
-                                      aria-label={`Edit tag ${tag.name}`}
-                                      onClick={() =>
-                                        startEditing(
-                                          tag.id,
-                                          tag.name,
-                                          tag.backgroundColor,
-                                        )}
-                                      size="sm"
-                                      variant="ghost"
-                                    >
-                                      <Pencil aria-hidden="true" />
-                                    </IconButton>
-                                    <IconButton
-                                      aria-label={`Delete tag ${tag.name}`}
-                                      colorPalette="red"
-                                      disabled={pending}
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        cancelEditing();
-                                        setDeletingId(tag.id);
-                                      }}
-                                    >
-                                      <Trash2 aria-hidden="true" />
-                                    </IconButton>
-                                  </Flex>
-                                )}
-                            </Table.Cell>
-                          </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table.Root>
-                  )}
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                )}
                 {message && deletingId === undefined && (
-                  <Text color="fg.error" mt="3">{message}</Text>
+                  <Text color="fg.error" mt="3">
+                    {message}
+                  </Text>
                 )}
               </Dialog.Body>
             </Dialog.Content>
@@ -288,9 +286,8 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
         open={open && deletingId !== undefined}
         title="Delete tag?"
       >
-        Delete{" "}
-        {selectedTag?.name}? This removes the tag from all documents. Documents
-        will be kept.
+        Delete {selectedTag?.name}? This removes the tag from all documents.
+        Documents will be kept.
         {message && (
           <Text as="span" display="block" color="fg.error" role="alert">
             {message}

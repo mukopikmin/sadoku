@@ -58,60 +58,57 @@ export const DocumentMemoriesDialog = ({
                     review or delete them here; use the Sadoku CLI to add or
                     update memories.
                   </Text>
-                  {query.isPending
-                    ? <Text>Loading memories...</Text>
-                    : query.error
-                    ? <Text color="fg.error">{String(query.error)}</Text>
-                    : query.data?.length === 0
-                    ? <Text color="fg.muted">No memories have been saved.</Text>
-                    : (
-                      query.data?.map((memory) => (
+                  {query.isPending ? (
+                    <Text>Loading memories...</Text>
+                  ) : query.error ? (
+                    <Text color="fg.error">{String(query.error)}</Text>
+                  ) : query.data?.length === 0 ? (
+                    <Text color="fg.muted">No memories have been saved.</Text>
+                  ) : (
+                    query.data?.map((memory) => (
+                      <Flex
+                        key={memory.id}
+                        borderWidth="1px"
+                        borderColor="border.muted"
+                        borderRadius="md"
+                        direction="column"
+                        gap="3"
+                        p="3"
+                      >
+                        <Text whiteSpace="pre-wrap">{memory.content}</Text>
                         <Flex
-                          key={memory.id}
-                          borderWidth="1px"
-                          borderColor="border.muted"
-                          borderRadius="md"
-                          direction="column"
-                          gap="3"
-                          p="3"
+                          alignItems="center"
+                          gap="2"
+                          justifyContent="space-between"
                         >
-                          <Text whiteSpace="pre-wrap">{memory.content}</Text>
-                          <Flex
-                            alignItems="center"
-                            gap="2"
-                            justifyContent="space-between"
+                          <Text
+                            as="time"
+                            color="fg.muted"
+                            dateTime={memory.updatedAt}
+                            fontSize="xs"
                           >
-                            <Text
-                              as="time"
-                              color="fg.muted"
-                              dateTime={memory.updatedAt}
-                              fontSize="xs"
-                            >
-                              Updated{" "}
-                              {new Date(memory.updatedAt).toLocaleString()}
-                            </Text>
-                            <Button
-                              colorPalette="red"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setSelected(memory)}
-                            >
-                              Delete
-                            </Button>
-                          </Flex>
+                            Updated{" "}
+                            {new Date(memory.updatedAt).toLocaleString()}
+                          </Text>
+                          <Button
+                            colorPalette="red"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelected(memory)}
+                          >
+                            Delete
+                          </Button>
                         </Flex>
-                      ))
-                    )}
+                      </Flex>
+                    ))
+                  )}
                   {deletion.error && (
                     <Text color="fg.error">{String(deletion.error)}</Text>
                   )}
                 </Flex>
               </Dialog.Body>
               <Dialog.CloseTrigger asChild>
-                <CloseButton
-                  aria-label="Close document memories"
-                  size="sm"
-                />
+                <CloseButton aria-label="Close document memories" size="sm" />
               </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>

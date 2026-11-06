@@ -7,9 +7,8 @@ export const MarkdownLink = ({
   node: _node,
   ...props
 }: MarkdownComponentProps<"a">) => {
-  const isHeadingAnchor = className?.split(/\s+/).includes(
-    "heading-anchor",
-  ) ?? false;
+  const isHeadingAnchor =
+    className?.split(/\s+/).includes("heading-anchor") ?? false;
   return (
     <Link
       className={className}

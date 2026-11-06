@@ -12,21 +12,21 @@ export const useCommentSelection = () => {
   const [selection, setSelection] = useState<CommentRangeSelection>({});
   const selectedRange = selection.range;
 
-  const selectCommentRange = useCallback((
-    clickedRange: CommentRange,
-    { extend }: CommentRangeSelectionOptions,
-  ) => {
-    setActiveCommentLine(undefined);
-    setActiveRange(undefined);
-    setSelection((current) =>
-      resolveCommentRangeSelection(
-        current.range,
-        clickedRange,
-        current.anchorLine,
-        extend,
-      )
-    );
-  }, []);
+  const selectCommentRange = useCallback(
+    (clickedRange: CommentRange, { extend }: CommentRangeSelectionOptions) => {
+      setActiveCommentLine(undefined);
+      setActiveRange(undefined);
+      setSelection((current) =>
+        resolveCommentRangeSelection(
+          current.range,
+          clickedRange,
+          current.anchorLine,
+          extend,
+        ),
+      );
+    },
+    [],
+  );
 
   const openCommentForm = useCallback(() => {
     if (!selectedRange) return;

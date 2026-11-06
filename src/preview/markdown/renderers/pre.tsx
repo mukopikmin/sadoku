@@ -11,7 +11,9 @@ import type {
 
 const getCodeBlockText = (children: React.ReactNode): string => {
   if (
-    children === null || children === undefined || typeof children === "boolean"
+    children === null ||
+    children === undefined ||
+    typeof children === "boolean"
   ) {
     return "";
   }
@@ -37,10 +39,11 @@ const getCodeBlockLanguage = (
     return undefined;
   }
   if (!("props" in children)) return undefined;
-  const className =
-    (children as React.ReactElement<{ className?: string }>).props
-      .className;
-  return className?.split(/\s+/).find((name) => name.startsWith("language-"))
+  const className = (children as React.ReactElement<{ className?: string }>)
+    .props.className;
+  return className
+    ?.split(/\s+/)
+    .find((name) => name.startsWith("language-"))
     ?.slice("language-".length);
 };
 
@@ -88,18 +91,21 @@ const getCodeBlockLabel = (
   children: React.ReactNode,
   language: string | undefined,
 ): string | undefined => {
-  const label = children && !Array.isArray(children) &&
-      typeof children === "object" && "props" in children
-    ? (children as React.ReactElement<{
-      "data-code-language-label"?: string;
-    }>).props["data-code-language-label"] ?? language
-    : language;
+  const label =
+    children &&
+    !Array.isArray(children) &&
+    typeof children === "object" &&
+    "props" in children
+      ? ((
+          children as React.ReactElement<{
+            "data-code-language-label"?: string;
+          }>
+        ).props["data-code-language-label"] ?? language)
+      : language;
   return label ? formatCodeBlockLanguage(label) : undefined;
 };
 
-const getMermaidCodeText = (
-  children: React.ReactNode,
-): string | undefined => {
+const getMermaidCodeText = (children: React.ReactNode): string | undefined => {
   const childElements = Children.toArray(children);
   if (childElements.length !== 1) return undefined;
   const child = childElements[0];
@@ -138,9 +144,11 @@ export const renderMarkdownPre = (
         {label && (
           <ChakraCodeBlock.Header>
             <ChakraCodeBlock.Title data-code-language-label="">
-              {label === "suggest"
-                ? <FilePenLine aria-hidden="true" size="1em" />
-                : <Code aria-hidden="true" size="1em" />}
+              {label === "suggest" ? (
+                <FilePenLine aria-hidden="true" size="1em" />
+              ) : (
+                <Code aria-hidden="true" size="1em" />
+              )}
               {label}
             </ChakraCodeBlock.Title>
           </ChakraCodeBlock.Header>

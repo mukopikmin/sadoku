@@ -39,11 +39,12 @@ export const DocumentBreadcrumb = ({
   const [openDirectory, setOpenDirectory] = useState<string | null>(null);
   const parts = document.relativePath.split("/").filter(Boolean);
   const directories = parts.slice(0, -1);
-  const directoryDocuments = openDirectory === null
-    ? []
-    : documents.filter((item) =>
-      parentDirectory(item.relativePath) === openDirectory
-    );
+  const directoryDocuments =
+    openDirectory === null
+      ? []
+      : documents.filter(
+          (item) => parentDirectory(item.relativePath) === openDirectory,
+        );
 
   const handleCopyPath = async () => {
     try {
@@ -130,42 +131,40 @@ export const DocumentBreadcrumb = ({
                 <Dialog.Title>{openDirectory}</Dialog.Title>
               </Dialog.Header>
               <Dialog.Body>
-                {directoryDocuments.length === 0
-                  ? (
-                    <Text color="fg.muted">
-                      No Markdown documents in this directory.
-                    </Text>
-                  )
-                  : (
-                    <Flex direction="column" gap="2">
-                      {directoryDocuments.map((item) => (
-                        <Button
-                          aria-current={item.id === document.id
-                            ? "page"
-                            : undefined}
-                          colorPalette={item.id === document.id
-                            ? "blue"
-                            : undefined}
-                          justifyContent="flex-start"
-                          key={item.id}
-                          onClick={() => {
-                            setOpenDirectory(null);
-                            onSelectDocument(item.id);
-                          }}
-                          variant={item.id === document.id ? "subtle" : "ghost"}
-                        >
-                          <Text flex="1" textAlign="start">
-                            {fileName(item.relativePath)}
-                          </Text>
-                          {item.id === document.id && (
-                            <Badge colorPalette="blue" variant="solid">
-                              Current
-                            </Badge>
-                          )}
-                        </Button>
-                      ))}
-                    </Flex>
-                  )}
+                {directoryDocuments.length === 0 ? (
+                  <Text color="fg.muted">
+                    No Markdown documents in this directory.
+                  </Text>
+                ) : (
+                  <Flex direction="column" gap="2">
+                    {directoryDocuments.map((item) => (
+                      <Button
+                        aria-current={
+                          item.id === document.id ? "page" : undefined
+                        }
+                        colorPalette={
+                          item.id === document.id ? "blue" : undefined
+                        }
+                        justifyContent="flex-start"
+                        key={item.id}
+                        onClick={() => {
+                          setOpenDirectory(null);
+                          onSelectDocument(item.id);
+                        }}
+                        variant={item.id === document.id ? "subtle" : "ghost"}
+                      >
+                        <Text flex="1" textAlign="start">
+                          {fileName(item.relativePath)}
+                        </Text>
+                        {item.id === document.id && (
+                          <Badge colorPalette="blue" variant="solid">
+                            Current
+                          </Badge>
+                        )}
+                      </Button>
+                    ))}
+                  </Flex>
+                )}
               </Dialog.Body>
               <Dialog.CloseTrigger asChild>
                 <CloseButton aria-label="Close directory" size="sm" />

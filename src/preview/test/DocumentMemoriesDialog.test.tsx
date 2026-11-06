@@ -46,7 +46,7 @@ describe("DocumentMemoriesDialog", () => {
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith("/__sadoku/documents/7/memories/2", {
         method: "DELETE",
-      })
+      }),
     );
   });
 });

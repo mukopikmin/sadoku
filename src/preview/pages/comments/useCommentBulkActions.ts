@@ -16,13 +16,13 @@ export const useCommentBulkActions = (
   const [state, setState] = useState<BulkActionState>({ status: "idle" });
   const pending = useRef(false);
   const selectedIds = selection.filter((id) =>
-    comments.some((comment) => comment.id === id)
+    comments.some((comment) => comment.id === id),
   );
 
   useEffect(() => {
     setSelection((current) => {
       const remaining = current.filter((id) =>
-        comments.some((comment) => comment.id === id)
+        comments.some((comment) => comment.id === id),
       );
       return remaining.length === current.length ? current : remaining;
     });
@@ -39,7 +39,7 @@ export const useCommentBulkActions = (
     setSelection((current) =>
       current.includes(id)
         ? current.filter((selected) => selected !== id)
-        : [...current, id]
+        : [...current, id],
     );
   };
 
@@ -75,11 +75,12 @@ export const useCommentBulkActions = (
     }
     setSelection(failed);
     setState(
-      failed.length === 0 ? { status: "idle" } : {
-        status: "error",
-        message:
-          `Could not ${operation} ${failed.length} of ${selectedIds.length} selected comments. ${firstError}`,
-      },
+      failed.length === 0
+        ? { status: "idle" }
+        : {
+            status: "error",
+            message: `Could not ${operation} ${failed.length} of ${selectedIds.length} selected comments. ${firstError}`,
+          },
     );
     pending.current = false;
     return failed.length === 0;

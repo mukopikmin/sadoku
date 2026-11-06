@@ -27,13 +27,15 @@ export type SettingsUpdate = {
 
 const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
   if (
-    response.theme !== undefined && response.theme !== "dark" &&
+    response.theme !== undefined &&
+    response.theme !== "dark" &&
     response.theme !== "light"
   ) {
     throw new Error("Settings response contained an invalid theme mode.");
   }
   if (
-    response.codeWrap !== undefined && response.codeWrap !== "scroll" &&
+    response.codeWrap !== undefined &&
+    response.codeWrap !== "scroll" &&
     response.codeWrap !== "wrap"
   ) {
     throw new Error("Settings response contained an invalid code wrap mode.");
@@ -63,22 +65,27 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
     "node_modules",
   ];
   const fontScale = response.fontScale ?? 1;
-  const markdownExtensions = response.markdownExtensions ??
-    [".md", ".markdown"];
+  const markdownExtensions = response.markdownExtensions ?? [
+    ".md",
+    ".markdown",
+  ];
   if (
-    !Array.isArray(markdownExtensions) || markdownExtensions.length === 0 ||
-    markdownExtensions.some((extension) =>
-      typeof extension !== "string" || !/^\.[^.\\/]+$/.test(extension)
+    !Array.isArray(markdownExtensions) ||
+    markdownExtensions.length === 0 ||
+    markdownExtensions.some(
+      (extension) =>
+        typeof extension !== "string" || !/^\.[^.\\/]+$/.test(extension),
     ) ||
     new Set(markdownExtensions.map((extension) => extension.toLowerCase()))
-        .size !==
-      markdownExtensions.length
+      .size !== markdownExtensions.length
   ) {
     throw new Error("Settings response contained invalid Markdown extensions.");
   }
   if (
-    typeof fontScale !== "number" || !Number.isFinite(fontScale) ||
-    fontScale < 0.75 || fontScale > 1.5
+    typeof fontScale !== "number" ||
+    !Number.isFinite(fontScale) ||
+    fontScale < 0.75 ||
+    fontScale > 1.5
   ) {
     throw new Error("Settings response contained an invalid font scale.");
   }
@@ -92,11 +99,16 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
   }
   if (
     !Array.isArray(excludedDirectories) ||
-    excludedDirectories.some((directory) =>
-      typeof directory !== "string" || directory.length === 0 ||
-      directory === "." || directory === ".." || directory.includes("/") ||
-      directory.includes("\\")
-    ) || new Set(excludedDirectories).size !== excludedDirectories.length
+    excludedDirectories.some(
+      (directory) =>
+        typeof directory !== "string" ||
+        directory.length === 0 ||
+        directory === "." ||
+        directory === ".." ||
+        directory.includes("/") ||
+        directory.includes("\\"),
+    ) ||
+    new Set(excludedDirectories).size !== excludedDirectories.length
   ) {
     throw new Error(
       "Settings response contained invalid excluded directories.",

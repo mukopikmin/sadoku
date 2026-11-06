@@ -81,20 +81,24 @@ export const CommentActionMenu = ({
                 >
                   Copy comment
                 </Menu.Item>
-                {onExport && comment.author.type === "human" &&
+                {onExport &&
+                  comment.author.type === "human" &&
                   comment.state === "active" && (
-                  <Menu.Item
-                    value="github"
-                    disabled={disabled}
-                    onClick={() => {
-                      void runAction(async () => {
-                        setExportResult(await onExport(comment.id));
-                      }, { errorTitle: "Could not save to GitHub review" });
-                    }}
-                  >
-                    Save to GitHub review
-                  </Menu.Item>
-                )}
+                    <Menu.Item
+                      value="github"
+                      disabled={disabled}
+                      onClick={() => {
+                        void runAction(
+                          async () => {
+                            setExportResult(await onExport(comment.id));
+                          },
+                          { errorTitle: "Could not save to GitHub review" },
+                        );
+                      }}
+                    >
+                      Save to GitHub review
+                    </Menu.Item>
+                  )}
                 <Menu.Item value="edit" disabled={disabled} onClick={onEdit}>
                   Edit
                 </Menu.Item>

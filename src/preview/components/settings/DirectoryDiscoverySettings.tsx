@@ -52,8 +52,7 @@ export const DirectoryDiscoverySettings = (
             onChange={(event) => {
               const value = Number(event.currentTarget.value);
               if (Number.isInteger(value) && value >= 0) {
-                props
-                  .onDirectoryLimitsChange(value, props.maxFiles);
+                props.onDirectoryLimitsChange(value, props.maxFiles);
               }
             }}
             type="number"
@@ -71,8 +70,7 @@ export const DirectoryDiscoverySettings = (
             onChange={(event) => {
               const value = Number(event.currentTarget.value);
               if (Number.isInteger(value) && value >= 1) {
-                props
-                  .onDirectoryLimitsChange(props.maxDepth, value);
+                props.onDirectoryLimitsChange(props.maxDepth, value);
               }
             }}
             type="number"
@@ -95,10 +93,12 @@ export const DirectoryDiscoverySettings = (
             props.onExcludedDirectoriesChange(value);
           }}
           onValueInvalid={() =>
-            setExcludedError("Enter a directory name without path separators.")}
+            setExcludedError("Enter a directory name without path separators.")
+          }
           sanitizeValue={(value) => value.trim()}
           validate={({ inputValue }) =>
-            isValidExcludedDirectory(inputValue.trim())}
+            isValidExcludedDirectory(inputValue.trim())
+          }
           value={props.excludedDirectories}
         >
           <TagsInput.Label
@@ -144,10 +144,12 @@ export const DirectoryDiscoverySettings = (
             props.onMarkdownExtensionsChange(value);
           }}
           onValueInvalid={() =>
-            setExtensionError("Enter an extension beginning with a dot.")}
+            setExtensionError("Enter an extension beginning with a dot.")
+          }
           sanitizeValue={(value) => value.trim().toLowerCase()}
           validate={({ inputValue }) =>
-            isValidMarkdownExtension(inputValue.trim())}
+            isValidMarkdownExtension(inputValue.trim())
+          }
           value={props.markdownExtensions}
         >
           <TagsInput.Label

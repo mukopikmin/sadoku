@@ -12,7 +12,7 @@ import { CornerDownRight, Ellipsis } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
-import { CommentActionButton, CommentForm } from "./CommentForm";
+import { CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
 import { toaster } from "../ui/toaster";
 import type {
@@ -24,11 +24,7 @@ type ReplyItemProps = {
   commentId: number;
   disabled: boolean;
   onDelete: (commentId: number, replyId: number) => Promise<void>;
-  onUpdate: (
-    commentId: number,
-    replyId: number,
-    body: string,
-  ) => Promise<void>;
+  onUpdate: (commentId: number, replyId: number, body: string) => Promise<void>;
   reportError: ReportCommentActionError;
   reply: CommentReply;
   sourceText?: string;
@@ -112,7 +108,9 @@ export const ReplyItem = ({
           fontWeight="semibold"
           pr="8"
         >
-          <Badge colorPalette="purple" variant="subtle">Bot</Badge>
+          <Badge colorPalette="purple" variant="subtle">
+            Bot
+          </Badge>
           {reply.reviewRequested && (
             <Badge colorPalette="blue" variant="subtle">
               Review requested
@@ -169,30 +167,28 @@ export const ReplyItem = ({
       >
         This action cannot be undone.
       </ConfirmDialog>
-      {isEditing
-        ? (
-          <CommentForm
-            cancelAriaLabel="Cancel reply edit"
-            disabled={disabled}
-            onCancel={() => {
-              setDraft(reply.body);
-              setIsEditing(false);
-            }}
-            onChange={setDraft}
-            onSubmit={() => void handleUpdate()}
-            submitAriaLabel="Save reply"
-            submitLabel="Save"
-            textareaAriaLabel="Edit reply body"
-            value={draft}
-          />
-        )
-        : (
-          <Box pr="8">
-            <CommentMarkdown sourceText={sourceText}>
-              {reply.body}
-            </CommentMarkdown>
-          </Box>
-        )}
+      {isEditing ? (
+        <CommentForm
+          cancelAriaLabel="Cancel reply edit"
+          disabled={disabled}
+          onCancel={() => {
+            setDraft(reply.body);
+            setIsEditing(false);
+          }}
+          onChange={setDraft}
+          onSubmit={() => void handleUpdate()}
+          submitAriaLabel="Save reply"
+          submitLabel="Save"
+          textareaAriaLabel="Edit reply body"
+          value={draft}
+        />
+      ) : (
+        <Box pr="8">
+          <CommentMarkdown sourceText={sourceText}>
+            {reply.body}
+          </CommentMarkdown>
+        </Box>
+      )}
     </Stack>
   );
 };
