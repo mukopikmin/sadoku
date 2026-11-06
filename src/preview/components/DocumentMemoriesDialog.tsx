@@ -97,7 +97,7 @@ export const DocumentMemoriesDialog = ({
                           <Button
                             colorPalette="red"
                             size="sm"
-                            variant="ghost"
+                            variant="outline"
                             onClick={() => setSelected(memory)}
                           >
                             Delete
