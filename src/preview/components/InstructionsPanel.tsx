@@ -14,32 +14,73 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
     );
   }
   return (
-    <Flex direction="column" gap="4">
-      <Textarea
-        aria-label="Instruction"
-        disabled={editor.pending}
-        minH="48"
-        onChange={(event) => editor.change(event.currentTarget.value)}
-        placeholder={documentId === "global"
-          ? "Instructions for agents working with any document"
-          : "Instructions for agents working with this document"}
-        value={editor.content}
-      />
-      <Text color="fg.muted" fontSize="sm">
-        Leave empty and save to clear the instructions.
-      </Text>
-      {editor.error && (
-        <Text color="fg.error" role="alert">
-          {editor.error}
+    <Flex direction="column" gap="4" minH={editor.editing ? "56" : "0"}>
+      {editor.editing ? (
+        <Textarea
+          aria-label="Instruction"
+          autoFocus
+          disabled={editor.pending}
+          h="48"
+          minH="24"
+          maxH="36dvh"
+          flexShrink="1"
+          resize="none"
+          onChange={(event) => editor.change(event.currentTarget.value)}
+          placeholder={
+            documentId === "global"
+              ? "Instructions for agents working with any document"
+              : "Instructions for agents working with this document"
+          }
+          value={editor.content}
+        />
+      ) : (
+        <Text
+          aria-label="Instruction text"
+          role="region"
+          tabIndex={0}
+          maxH="36dvh"
+          minH="0"
+          overflowY="auto"
+          overflowWrap="anywhere"
+          whiteSpace="pre-wrap"
+          color={editor.content ? undefined : "fg.muted"}
+        >
+          {editor.content || "No instructions have been added."}
         </Text>
       )}
-      <Button
-        alignSelf="flex-end"
-        disabled={editor.pending || !editor.dirty}
-        onClick={() => void editor.save()}
-      >
-        Save instruction
-      </Button>
+      <Flex direction="column" gap="4" flexShrink="0">
+        {editor.editing && (
+          <Text color="fg.muted" fontSize="sm">
+            Leave empty and save to clear the instructions.
+          </Text>
+        )}
+        {editor.error && (
+          <Text color="fg.error" role="alert">
+            {editor.error}
+          </Text>
+        )}
+        <Flex justify="flex-end" gap="3">
+          {editor.editing ? (
+            <>
+              <Button
+                variant="outline"
+                disabled={editor.pending}
+                onClick={editor.cancel}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={editor.pending || !editor.dirty}
+                onClick={() => void editor.save()}
+              >
+                Save instruction
+              </Button>
+            </>
+          ) : (
+            <Button onClick={editor.startEditing}>Edit instructions</Button>
+          )}
+        </Flex>
+      </Flex>
     </Flex>
   );
 };

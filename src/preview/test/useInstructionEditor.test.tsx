@@ -36,21 +36,25 @@ it.each(["create", "update", "clear"])(
   async (operation) => {
     let saved = operation === "create" ? [] : [note("Saved")];
     vi.mocked(api.loadInstructions).mockImplementation(async () => saved);
-    const mutation = operation === "create"
-      ? vi.mocked(api.createInstruction)
-      : operation === "update"
-      ? vi.mocked(api.updateInstruction)
-      : vi.mocked(api.deleteInstruction);
+    const mutation =
+      operation === "create"
+        ? vi.mocked(api.createInstruction)
+        : operation === "update"
+          ? vi.mocked(api.updateInstruction)
+          : vi.mocked(api.deleteInstruction);
     mutation.mockRejectedValueOnce(new Error("Save failed"));
     const { wrapper } = setup();
     const { result } = renderHook(() => useInstructionEditor(7, true), {
       wrapper,
     });
     await waitFor(() => expect(result.current.query.isSuccess).toBe(true));
+    act(() => result.current.startEditing());
+    expect(result.current.editing).toBe(true);
     const draft = operation === "clear" ? "" : "My draft";
     act(() => result.current.change(draft));
     await act(() => result.current.save());
     expect(result.current.error).toBe("Save failed");
+    expect(result.current.editing).toBe(true);
     expect(result.current.content).toBe(draft);
     expect(result.current.dirty).toBe(true);
     if (operation === "clear") {
@@ -69,14 +73,15 @@ it.each(["create", "update", "clear"])(
     await act(() => result.current.save());
     await waitFor(() => expect(result.current.dirty).toBe(false));
     expect(result.current.error).toBe("");
+    expect(result.current.editing).toBe(false);
     expect(result.current.content).toBe(draft);
   },
 );
 
 it("keeps unsaved edits during a refetch and resets them on scope changes and reopening", async () => {
-  vi.mocked(api.loadInstructions).mockImplementation(async (
-    scope,
-  ) => [note(scope === "global" ? "Global" : "Local")]);
+  vi.mocked(api.loadInstructions).mockImplementation(async (scope) => [
+    note(scope === "global" ? "Global" : "Local"),
+  ]);
   const { client, wrapper } = setup();
   const { result, rerender } = renderHook(
     ({ scope, open }: { scope: number | "global"; open: boolean }) =>
@@ -84,15 +89,19 @@ it("keeps unsaved edits during a refetch and resets them on scope changes and re
     { wrapper, initialProps: { scope: 7, open: true } },
   );
   await waitFor(() => expect(result.current.content).toBe("Local"));
+  act(() => result.current.startEditing());
   act(() => result.current.change("Unsaved"));
   await act(() =>
-    client.invalidateQueries({ queryKey: instructionsQueryKey(7) })
+    client.invalidateQueries({ queryKey: instructionsQueryKey(7) }),
   );
   expect(result.current.content).toBe("Unsaved");
+  expect(result.current.editing).toBe(true);
   rerender({ scope: "global", open: true });
   await waitFor(() => expect(result.current.content).toBe("Global"));
+  expect(result.current.editing).toBe(false);
   act(() => result.current.change("Discard on close"));
   rerender({ scope: "global", open: false });
   rerender({ scope: "global", open: true });
   await waitFor(() => expect(result.current.content).toBe("Global"));
+  expect(result.current.editing).toBe(false);
 });

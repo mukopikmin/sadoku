@@ -184,9 +184,8 @@ describe("App", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Global instructions",
     });
-    const input = await within(dialog).findByRole("textbox", { name: "Instruction" });
-    expect((input as HTMLTextAreaElement).value)
-      .toBe("Shared review guidance\n\nAnother shared instruction");
+    expect(await within(dialog).findByText(/Shared review guidance/)).not.toBeNull();
+    expect(within(dialog).queryByRole("textbox")).toBeNull();
     fireEvent.keyDown(dialog, { key: "Escape" });
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Global instructions" }))

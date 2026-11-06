@@ -10,10 +10,12 @@ export const useInstructionEditor = (
   const actions = useInstructionActions(documentId);
   const [draft, setDraft] = useState<string>();
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
   const saving = useRef(false);
   useEffect(() => {
     setDraft(undefined);
     setError("");
+    setEditing(false);
   }, [documentId, open]);
   const instruction = query.data?.[0];
   const savedContent = instruction?.content ?? "";
@@ -33,6 +35,7 @@ export const useInstructionEditor = (
         await actions.create(content);
       }
       setDraft(undefined);
+      setEditing(false);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Failed to save instruction.",
@@ -44,6 +47,14 @@ export const useInstructionEditor = (
 
   return {
     query,
+    editing,
+    startEditing: () => setEditing(true),
+    cancel: () => {
+      if (saving.current) return;
+      setDraft(undefined);
+      setError("");
+      setEditing(false);
+    },
     content,
     error,
     dirty,
