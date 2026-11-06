@@ -3,18 +3,21 @@ import { useInstructionActions, useInstructionsQuery } from "./useInstructions";
 import type { InstructionScope } from "../models/instruction";
 
 export const useInstructionEditor = (
-  documentId: InstructionScope,
+  scope: InstructionScope,
   open: boolean,
 ) => {
-  const query = useInstructionsQuery(documentId, open);
-  const actions = useInstructionActions(documentId);
+  const query = useInstructionsQuery(scope, open);
+  const actions = useInstructionActions(scope);
   const [draft, setDraft] = useState<string>();
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
   const saving = useRef(false);
+  const documentId = scope.type === "document" ? scope.documentId : undefined;
   useEffect(() => {
     setDraft(undefined);
     setError("");
-  }, [documentId, open]);
+    setEditing(false);
+  }, [scope.type, documentId, open]);
   const instruction = query.data?.[0];
   const savedContent = instruction?.content ?? "";
   const content = draft ?? savedContent;
@@ -33,6 +36,7 @@ export const useInstructionEditor = (
         await actions.create(content);
       }
       setDraft(undefined);
+      setEditing(false);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Failed to save instruction.",
@@ -44,6 +48,14 @@ export const useInstructionEditor = (
 
   return {
     query,
+    editing,
+    startEditing: () => setEditing(true),
+    cancel: () => {
+      if (saving.current) return;
+      setDraft(undefined);
+      setError("");
+      setEditing(false);
+    },
     content,
     error,
     dirty,

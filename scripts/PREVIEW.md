@@ -27,6 +27,9 @@ documents (one deleted) and eighteen comments, including human and bot authors,
 replies, review requests, active, stale, and resolved comments, instructions,
 memories, and tags.
 Seeded comments, replies, instructions, memories, and tag names are in English.
+Global instructions and the instructions on `comprehensive.md` contain long
+review guidance for checking text scrolling and switching between viewing and
+editing while keeping save and cancel controls accessible.
 
 | Fixture                 | Preview state                                                                      |
 | ----------------------- | ---------------------------------------------------------------------------------- |

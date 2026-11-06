@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
+import { cleanup, fireEvent, render, screen } from "./testUtils";
 import { InstructionsPanel } from "../components/InstructionsPanel";
 import type { InstructionScope } from "../models/instruction";
 
@@ -8,12 +8,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it.each<InstructionScope>([7, "global"])(
-  "loads the saved text directly into a single editor for scope %s",
-  async (documentId) => {
-    const path = documentId === "global"
-      ? "/__sadoku/global-instructions"
-      : `/__sadoku/documents/${documentId}/instructions`;
+it.each<InstructionScope>([
+  { type: "document", documentId: 7 },
+  { type: "global" },
+])(
+  "shows saved text and opens an editor only on request for scope %s",
+  async (scope) => {
+    const path =
+      scope.type === "global"
+        ? "/__sadoku/global-instructions"
+        : `/__sadoku/documents/${scope.documentId}/instructions`;
     const instruction = {
       id: 2,
       content: "First instruction\n\nMiddle instruction\n\nLast instruction",
@@ -30,26 +34,38 @@ it.each<InstructionScope>([7, "global"])(
         return Response.json({ instructions: [instruction] });
       }),
     );
-    render(<InstructionsPanel documentId={documentId} open />);
-    const input = await screen.findByRole("textbox", { name: "Instruction" });
+    render(<InstructionsPanel scope={scope} open />);
+    await screen.findByText(/First instruction/);
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Save instruction" }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit instructions" }));
+    const input = screen.getByRole("textbox", { name: "Instruction" });
     expect((input as HTMLTextAreaElement).value).toBe(instruction.content);
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Add Instruction" }))
-      .toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Add Instruction" }),
+    ).toBeNull();
 
     fireEvent.change(input, { target: { value: "Updated instruction" } });
-    expect(vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method))
-      .toHaveLength(0);
+    expect(
+      vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method),
+    ).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Save instruction" }));
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Save instruction" }).hasAttribute(
-          "disabled",
-        ),
-      ).toBe(true)
+    await screen.findByText("Updated instruction");
+    expect(screen.queryByRole("textbox")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit instructions" }));
+    const reopened = screen.getByRole("textbox", { name: "Instruction" });
+    fireEvent.change(reopened, { target: { value: "Discard this draft" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.getByText("Updated instruction")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit instructions" }));
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe(
+      "Updated instruction",
     );
-    expect((input as HTMLTextAreaElement).value).toBe("Updated instruction");
     expect(fetch).toHaveBeenCalledWith(
       `${path}/2`,
       expect.objectContaining({
