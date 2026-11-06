@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  ButtonGroup,
   Checkbox,
   Flex,
   Stack,
@@ -18,9 +19,9 @@ import type {
   ResolvedComment,
   UnresolvedComment,
 } from "../../models/comment";
-import { isUnresolvedComment } from "../../models/comment";
 import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 import { useCommentBulkActions } from "./useCommentBulkActions";
+import { type CommentFilter, useCommentFilter } from "./useCommentFilter";
 
 export type CommentListProps = {
   actions: CommentActions;
@@ -117,25 +118,25 @@ export const CommentList = ({
   >(
     "unresolved",
   );
-  const unresolvedComments = comments.filter(isUnresolvedComment);
-  const resolvedComments = comments.filter(
-    (comment): comment is ResolvedComment => comment.state === "resolved",
-  );
+  const commentFilter = useCommentFilter(comments);
   const sections: Record<
     CommentDisplayCategory,
     {
       comments: UnresolvedComment[] | ResolvedComment[];
+      count: number;
       emptyText: string;
       label: string;
     }
   > = {
     unresolved: {
-      comments: unresolvedComments,
-      emptyText: "No unresolved comments.",
+      comments: commentFilter.visibleComments,
+      count: commentFilter.unresolvedCount,
+      emptyText: commentFilter.emptyText,
       label: "Unresolved",
     },
     resolved: {
-      comments: resolvedComments,
+      comments: commentFilter.resolvedComments,
+      count: commentFilter.resolvedComments.length,
       emptyText: "No resolved comments.",
       label: "Resolved",
     },
@@ -149,6 +150,12 @@ export const CommentList = ({
     if (category === selectedCategory) return;
     bulk.clearSelection();
     setSelectedCategory(category);
+  };
+  const selectFilter = (filter: CommentFilter) => {
+    if (bulk.isPending || isDeleteDialogOpen) return;
+    if (filter === commentFilter.filter) return;
+    bulk.clearSelection();
+    commentFilter.setFilter(filter);
   };
   const selectAdjacentCategory = (
     category: CommentDisplayCategory,
@@ -192,85 +199,121 @@ export const CommentList = ({
           >
             {sections[category].label}
             <Badge aria-hidden="true" size="sm" variant="solid">
-              {sections[category].comments.length}
+              {sections[category].count}
             </Badge>
           </Tabs.Trigger>
         ))}
       </Tabs.List>
       <Tabs.Content value={selectedCategory}>
-        <CommentSection
-          actions={actions}
-          bulk={bulk}
-          comments={selectedSection.comments}
-          emptyText={selectedSection.emptyText}
-        >
-          {selectedSection.comments.length > 0 && (
-            <Flex
-              align="center"
-              aria-label="Bulk comment actions"
-              gap="3"
-              mb="4"
-              role="group"
-              wrap="wrap"
-            >
-              <Checkbox.Root
-                checked={bulk.selectedIds.length ===
-                    selectedSection.comments.length
-                  ? true
-                  : bulk.selectedIds.length > 0
-                  ? "indeterminate"
-                  : false}
-                disabled={bulk.isPending}
-                onCheckedChange={bulk.toggleAll}
+        <Stack gap="4">
+          {selectedCategory === "unresolved" && (
+            <Stack gap="2">
+              <ButtonGroup
+                aria-label="Unresolved comment filters"
+                role="group"
+                size="sm"
+                variant="outline"
+                flexWrap="wrap"
               >
-                <Checkbox.HiddenInput />
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-                <Checkbox.Label>Select all</Checkbox.Label>
-              </Checkbox.Root>
-              <Text role="status" color="fg.muted" fontSize="sm">
-                {bulk.selectedIds.length} selected
+                {(Object.keys(commentFilter.filters) as CommentFilter[]).map(
+                  (filter) => (
+                    <Button
+                      key={filter}
+                      aria-pressed={commentFilter.filter === filter}
+                      disabled={bulk.isPending || isDeleteDialogOpen}
+                      onClick={() => selectFilter(filter)}
+                      variant={commentFilter.filter === filter
+                        ? "solid"
+                        : "outline"}
+                    >
+                      {commentFilter.filters[filter].label}
+                      <Badge aria-hidden="true" size="sm" variant="solid">
+                        {commentFilter.filters[filter].comments.length}
+                      </Badge>
+                    </Button>
+                  ),
+                )}
+              </ButtonGroup>
+              <Text color="fg.muted" fontSize="sm" aria-live="polite">
+                Showing {commentFilter.visibleComments.length} of{" "}
+                {commentFilter.unresolvedCount} unresolved comments
               </Text>
-              <Button
-                colorPalette={selectedCategory === "resolved" ? "gray" : "green"}
-                disabled={bulk.isPending || bulk.selectedIds.length === 0}
-                loading={bulk.state.status === "pending" &&
-                  bulk.state.operation !== "delete"}
-                loadingText={selectedCategory === "resolved"
-                  ? "Reopening…"
-                  : "Resolving…"}
-                onClick={() =>
-                  void bulk.run(
-                    selectedCategory === "resolved" ? "reopen" : "resolve",
-                  )}
-                size="sm"
-                variant="outline"
-              >
-                {selectedCategory === "resolved"
-                  ? <RotateCcw aria-hidden="true" />
-                  : <Check aria-hidden="true" />}
-                {selectedCategory === "resolved" ? "Reopen" : "Resolve"}
-              </Button>
-              <Button
-                colorPalette="red"
-                disabled={bulk.isPending || bulk.selectedIds.length === 0}
-                onClick={() =>
-                  setIsDeleteDialogOpen(true)}
-                size="sm"
-                variant="outline"
-              >
-                <Trash2 aria-hidden="true" />
-                Delete
-              </Button>
-            </Flex>
+            </Stack>
           )}
-          {bulk.state.status === "error" && (
-            <Text role="alert" color="fg.error" mb="4">
-              {bulk.state.message}
-            </Text>
-          )}
-        </CommentSection>
+          <CommentSection
+            actions={actions}
+            bulk={bulk}
+            comments={selectedSection.comments}
+            emptyText={selectedSection.emptyText}
+          >
+            {selectedSection.comments.length > 0 && (
+              <Flex
+                align="center"
+                aria-label="Bulk comment actions"
+                gap="3"
+                mb="4"
+                role="group"
+                wrap="wrap"
+              >
+                <Checkbox.Root
+                  checked={bulk.selectedIds.length ===
+                      selectedSection.comments.length
+                    ? true
+                    : bulk.selectedIds.length > 0
+                    ? "indeterminate"
+                    : false}
+                  disabled={bulk.isPending}
+                  onCheckedChange={bulk.toggleAll}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label>Select all</Checkbox.Label>
+                </Checkbox.Root>
+                <Text role="status" color="fg.muted" fontSize="sm">
+                  {bulk.selectedIds.length} selected
+                </Text>
+                <Button
+                  colorPalette={selectedCategory === "resolved" ? "gray" : "green"}
+                  disabled={bulk.isPending || bulk.selectedIds.length === 0}
+                  loading={bulk.state.status === "pending" &&
+                    bulk.state.operation !== "delete"}
+                  loadingText={selectedCategory === "resolved"
+                    ? "Reopening…"
+                    : "Resolving…"}
+                  onClick={() =>
+                    void bulk.run(
+                      selectedCategory === "resolved" ? "reopen" : "resolve",
+                    )}
+                  size="sm"
+                  variant="outline"
+                >
+                  {selectedCategory === "resolved"
+                    ? <RotateCcw aria-hidden="true" />
+                    : <Check aria-hidden="true" />}
+                  {selectedCategory === "resolved" ? "Reopen" : "Resolve"}
+                </Button>
+                <Button
+                  colorPalette="red"
+                  disabled={bulk.isPending || bulk.selectedIds.length === 0}
+                  onClick={() =>
+                    setIsDeleteDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Trash2 aria-hidden="true" />
+                  Delete
+                </Button>
+              </Flex>
+            )}
+            {bulk.state.status === "error" && (
+              <Text role="alert" color="fg.error" mb="4">
+                {bulk.state.message}
+              </Text>
+            )}
+          </CommentSection>
+        </Stack>
       </Tabs.Content>
       <ConfirmDialog
         confirmColorPalette="red"
