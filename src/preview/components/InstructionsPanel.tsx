@@ -1,6 +1,8 @@
-import { Button, Card, Flex, Text, Textarea } from "@chakra-ui/react";
+import { Button, Flex, Text, Textarea } from "@chakra-ui/react";
 import { useInstructionEditor } from "../hooks/useInstructionEditor";
 import type { InstructionScope } from "../models/instruction";
+
+import { ScrollableTextCard } from "./ui/ScrollableTextCard";
 
 type Props = { documentId: InstructionScope; open: boolean };
 export const InstructionsPanel = ({ documentId, open }: Props) => {
@@ -34,29 +36,14 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
           value={editor.content}
         />
       ) : (
-        <Card.Root
-          variant="outline"
-          size="sm"
-          maxH="36dvh"
-          minH="0"
-          overflow="hidden"
-        >
-          <Card.Body
-            aria-label="Instruction text"
-            role="region"
-            tabIndex={0}
-            minH="0"
-            overflowY="auto"
-            overflowWrap="anywhere"
+        <ScrollableTextCard label="Instruction text">
+          <Text
+            whiteSpace="pre-wrap"
+            color={editor.content ? undefined : "fg.muted"}
           >
-            <Text
-              whiteSpace="pre-wrap"
-              color={editor.content ? undefined : "fg.muted"}
-            >
-              {editor.content || "No instructions have been added."}
-            </Text>
-          </Card.Body>
-        </Card.Root>
+            {editor.content || "No instructions have been added."}
+          </Text>
+        </ScrollableTextCard>
       )}
       <Flex direction="column" gap="4" flexShrink="0">
         {editor.editing && (

@@ -1,6 +1,5 @@
 import {
   Button,
-  Card,
   CloseButton,
   Dialog,
   Flex,
@@ -11,6 +10,8 @@ import { useEffect, useState } from "react";
 import { useDeleteMemory, useMemoriesQuery } from "../hooks/useMemories";
 import type { DocumentMemory } from "../models/memory";
 import { ConfirmDialog } from "./ConfirmDialog";
+
+import { ScrollableTextCard } from "./ui/ScrollableTextCard";
 
 type Props = {
   documentId: number;
@@ -69,48 +70,34 @@ export const DocumentMemoriesDialog = ({
                     <Text color="fg.muted">No memories have been saved.</Text>
                   ) : (
                     query.data?.map((memory) => (
-                      <Card.Root
+                      <ScrollableTextCard
                         key={memory.id}
-                        variant="outline"
-                        size="sm"
-                        flexShrink="0"
-                        overflow="hidden"
+                        label={`Memory ${memory.id} text`}
+                        flexShrink={0}
+                        footer={
+                          <>
+                            <Text
+                              as="time"
+                              color="fg.muted"
+                              dateTime={memory.updatedAt}
+                              fontSize="xs"
+                            >
+                              Updated{" "}
+                              {new Date(memory.updatedAt).toLocaleString()}
+                            </Text>
+                            <Button
+                              colorPalette="red"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setSelected(memory)}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        }
                       >
-                        <Card.Body
-                          aria-label={`Memory ${memory.id} text`}
-                          role="region"
-                          tabIndex={0}
-                          maxH="36dvh"
-                          minH="0"
-                          overflowY="auto"
-                          overflowWrap="anywhere"
-                        >
-                          <Text whiteSpace="pre-wrap">{memory.content}</Text>
-                        </Card.Body>
-                        <Card.Footer
-                          alignItems="center"
-                          gap="2"
-                          justifyContent="space-between"
-                        >
-                          <Text
-                            as="time"
-                            color="fg.muted"
-                            dateTime={memory.updatedAt}
-                            fontSize="xs"
-                          >
-                            Updated{" "}
-                            {new Date(memory.updatedAt).toLocaleString()}
-                          </Text>
-                          <Button
-                            colorPalette="red"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setSelected(memory)}
-                          >
-                            Delete
-                          </Button>
-                        </Card.Footer>
-                      </Card.Root>
+                        <Text whiteSpace="pre-wrap">{memory.content}</Text>
+                      </ScrollableTextCard>
                     ))
                   )}
                   {deletion.error && (
