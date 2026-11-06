@@ -19,6 +19,7 @@ export const InstructionsPanel = ({ scope, open }: Props) => {
     <Card.Root
       variant="outline"
       size="sm"
+      gap="4"
       maxH="48dvh"
       minH={editor.editing ? "56" : "0"}
       overflow="hidden"
