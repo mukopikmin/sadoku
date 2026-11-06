@@ -1,3 +1,4 @@
+import type { InstructionScope } from "../models/instruction";
 import { QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -44,9 +45,12 @@ it.each(["create", "update", "clear"])(
           : vi.mocked(api.deleteInstruction);
     mutation.mockRejectedValueOnce(new Error("Save failed"));
     const { wrapper } = setup();
-    const { result } = renderHook(() => useInstructionEditor(7, true), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useInstructionEditor({ type: "document", documentId: 7 }, true),
+      {
+        wrapper,
+      },
+    );
     await waitFor(() => expect(result.current.query.isSuccess).toBe(true));
     act(() => result.current.startEditing());
     expect(result.current.editing).toBe(true);
@@ -80,28 +84,36 @@ it.each(["create", "update", "clear"])(
 
 it("keeps unsaved edits during a refetch and resets them on scope changes and reopening", async () => {
   vi.mocked(api.loadInstructions).mockImplementation(async (scope) => [
-    note(scope === "global" ? "Global" : "Local"),
+    note(scope.type === "global" ? "Global" : "Local"),
   ]);
   const { client, wrapper } = setup();
   const { result, rerender } = renderHook(
-    ({ scope, open }: { scope: number | "global"; open: boolean }) =>
+    ({ scope, open }: { scope: InstructionScope; open: boolean }) =>
       useInstructionEditor(scope, open),
-    { wrapper, initialProps: { scope: 7, open: true } },
+    {
+      wrapper,
+      initialProps: {
+        scope: { type: "document", documentId: 7 } as InstructionScope,
+        open: true,
+      },
+    },
   );
   await waitFor(() => expect(result.current.content).toBe("Local"));
   act(() => result.current.startEditing());
   act(() => result.current.change("Unsaved"));
   await act(() =>
-    client.invalidateQueries({ queryKey: instructionsQueryKey(7) }),
+    client.invalidateQueries({
+      queryKey: instructionsQueryKey({ type: "document", documentId: 7 }),
+    }),
   );
   expect(result.current.content).toBe("Unsaved");
   expect(result.current.editing).toBe(true);
-  rerender({ scope: "global", open: true });
+  rerender({ scope: { type: "global" }, open: true });
   await waitFor(() => expect(result.current.content).toBe("Global"));
   expect(result.current.editing).toBe(false);
   act(() => result.current.change("Discard on close"));
-  rerender({ scope: "global", open: false });
-  rerender({ scope: "global", open: true });
+  rerender({ scope: { type: "global" }, open: false });
+  rerender({ scope: { type: "global" }, open: true });
   await waitFor(() => expect(result.current.content).toBe("Global"));
   expect(result.current.editing).toBe(false);
 });

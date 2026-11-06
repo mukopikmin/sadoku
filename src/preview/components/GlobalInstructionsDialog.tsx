@@ -35,7 +35,7 @@ export const GlobalInstructionsDialog = ({
                 Changes affect every document. Document instructions take
                 precedence when they directly conflict.
               </Text>
-              <InstructionsPanel documentId="global" open={open} />
+              <InstructionsPanel scope={{ type: "global" }} open={open} />
             </Flex>
           </Dialog.Body>
           <Dialog.CloseTrigger asChild>

@@ -8,13 +8,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it.each<InstructionScope>([7, "global"])(
+it.each<InstructionScope>([
+  { type: "document", documentId: 7 },
+  { type: "global" },
+])(
   "shows saved text and opens an editor only on request for scope %s",
-  async (documentId) => {
+  async (scope) => {
     const path =
-      documentId === "global"
+      scope.type === "global"
         ? "/__sadoku/global-instructions"
-        : `/__sadoku/documents/${documentId}/instructions`;
+        : `/__sadoku/documents/${scope.documentId}/instructions`;
     const instruction = {
       id: 2,
       content: "First instruction\n\nMiddle instruction\n\nLast instruction",
@@ -31,7 +34,7 @@ it.each<InstructionScope>([7, "global"])(
         return Response.json({ instructions: [instruction] });
       }),
     );
-    render(<InstructionsPanel documentId={documentId} open />);
+    render(<InstructionsPanel scope={scope} open />);
     await screen.findByText(/First instruction/);
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(

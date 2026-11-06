@@ -1,12 +1,12 @@
-import { Button, Flex, Text, Textarea } from "@chakra-ui/react";
+import { Button, Card, Flex, Text, Textarea } from "@chakra-ui/react";
 import { useInstructionEditor } from "../hooks/useInstructionEditor";
 import type { InstructionScope } from "../models/instruction";
 
-import { ScrollableTextCard } from "./ui/ScrollableTextCard";
+import { ScrollableText } from "./ui/ScrollableText";
 
-type Props = { documentId: InstructionScope; open: boolean };
-export const InstructionsPanel = ({ documentId, open }: Props) => {
-  const editor = useInstructionEditor(documentId, open);
+type Props = { scope: InstructionScope; open: boolean };
+export const InstructionsPanel = ({ scope, open }: Props) => {
+  const editor = useInstructionEditor(scope, open);
   if (editor.query.isPending) return <Text>Loading instructions...</Text>;
   if (editor.query.error) {
     return (
@@ -16,36 +16,49 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
     );
   }
   return (
-    <Flex direction="column" gap="4" minH={editor.editing ? "56" : "0"}>
-      {editor.editing ? (
-        <Textarea
-          aria-label="Instruction"
-          autoFocus
-          disabled={editor.pending}
-          h="48"
-          minH="24"
-          maxH="36dvh"
-          flexShrink="1"
-          resize="none"
-          onChange={(event) => editor.change(event.currentTarget.value)}
-          placeholder={
-            documentId === "global"
-              ? "Instructions for agents working with any document"
-              : "Instructions for agents working with this document"
-          }
-          value={editor.content}
-        />
-      ) : (
-        <ScrollableTextCard label="Instruction text">
+    <Card.Root
+      variant="outline"
+      size="sm"
+      maxH="48dvh"
+      minH={editor.editing ? "56" : "0"}
+      overflow="hidden"
+    >
+      <ScrollableText
+        label={editor.editing ? "Instruction editor" : "Instruction text"}
+      >
+        {editor.editing ? (
+          <Textarea
+            aria-label="Instruction"
+            autoFocus
+            disabled={editor.pending}
+            h="48"
+            minH="24"
+            maxH="36dvh"
+            flexShrink="1"
+            resize="none"
+            onChange={(event) => editor.change(event.currentTarget.value)}
+            placeholder={
+              scope.type === "global"
+                ? "Instructions for agents working with any document"
+                : "Instructions for agents working with this document"
+            }
+            value={editor.content}
+          />
+        ) : (
           <Text
             whiteSpace="pre-wrap"
             color={editor.content ? undefined : "fg.muted"}
           >
             {editor.content || "No instructions have been added."}
           </Text>
-        </ScrollableTextCard>
-      )}
-      <Flex direction="column" gap="4" flexShrink="0">
+        )}
+      </ScrollableText>
+      <Card.Footer
+        flexDirection="column"
+        alignItems="stretch"
+        gap="4"
+        flexShrink="0"
+      >
         {editor.editing && (
           <Text color="fg.muted" fontSize="sm">
             Leave empty and save to clear the instructions.
@@ -77,7 +90,7 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
             <Button onClick={editor.startEditing}>Edit instructions</Button>
           )}
         </Flex>
-      </Flex>
-    </Flex>
+      </Card.Footer>
+    </Card.Root>
   );
 };

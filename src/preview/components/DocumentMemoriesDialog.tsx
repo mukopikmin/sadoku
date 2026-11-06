@@ -1,5 +1,6 @@
 import {
   Button,
+  Card,
   CloseButton,
   Dialog,
   Flex,
@@ -11,7 +12,7 @@ import { useDeleteMemory, useMemoriesQuery } from "../hooks/useMemories";
 import type { DocumentMemory } from "../models/memory";
 import { ConfirmDialog } from "./ConfirmDialog";
 
-import { ScrollableTextCard } from "./ui/ScrollableTextCard";
+import { ScrollableText } from "./ui/ScrollableText";
 
 type Props = {
   documentId: number;
@@ -70,11 +71,24 @@ export const DocumentMemoriesDialog = ({
                     <Text color="fg.muted">No memories have been saved.</Text>
                   ) : (
                     query.data?.map((memory) => (
-                      <ScrollableTextCard
+                      <Card.Root
                         key={memory.id}
-                        label={`Memory ${memory.id} text`}
-                        flexShrink={0}
-                        footer={
+                        variant="outline"
+                        size="sm"
+                        maxH="36dvh"
+                        minH="0"
+                        flexShrink="0"
+                        overflow="hidden"
+                      >
+                        <ScrollableText label={`Memory ${memory.id} text`}>
+                          <Text whiteSpace="pre-wrap">{memory.content}</Text>
+                        </ScrollableText>
+                        <Card.Footer
+                          flexShrink="0"
+                          alignItems="center"
+                          gap="2"
+                          justifyContent="space-between"
+                        >
                           <>
                             <Text
                               as="time"
@@ -94,10 +108,8 @@ export const DocumentMemoriesDialog = ({
                               Delete
                             </Button>
                           </>
-                        }
-                      >
-                        <Text whiteSpace="pre-wrap">{memory.content}</Text>
-                      </ScrollableTextCard>
+                        </Card.Footer>
+                      </Card.Root>
                     ))
                   )}
                   {deletion.error && (
