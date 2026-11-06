@@ -1,6 +1,5 @@
 import {
   Button,
-  Card,
   CloseButton,
   Dialog,
   Flex,
@@ -12,7 +11,7 @@ import { useDeleteMemory, useMemoriesQuery } from "../hooks/useMemories";
 import type { DocumentMemory } from "../models/memory";
 import { ConfirmDialog } from "./ConfirmDialog";
 
-import { ScrollableText } from "./ui/ScrollableText";
+import { ScrollableTextCard } from "./ui/ScrollableTextCard";
 
 type Props = {
   documentId: number;
@@ -71,45 +70,40 @@ export const DocumentMemoriesDialog = ({
                     <Text color="fg.muted">No memories have been saved.</Text>
                   ) : (
                     query.data?.map((memory) => (
-                      <Card.Root
+                      <Flex
                         key={memory.id}
-                        variant="outline"
-                        size="sm"
-                        maxH="36dvh"
-                        minH="0"
+                        direction="column"
+                        gap="4"
                         flexShrink="0"
-                        overflow="hidden"
                       >
-                        <ScrollableText label={`Memory ${memory.id} text`}>
+                        <ScrollableTextCard label={`Memory ${memory.id} text`}>
                           <Text whiteSpace="pre-wrap">{memory.content}</Text>
-                        </ScrollableText>
-                        <Card.Footer
+                        </ScrollableTextCard>
+                        <Flex
                           flexShrink="0"
                           alignItems="center"
                           gap="2"
                           justifyContent="space-between"
                         >
-                          <>
-                            <Text
-                              as="time"
-                              color="fg.muted"
-                              dateTime={memory.updatedAt}
-                              fontSize="xs"
-                            >
-                              Updated{" "}
-                              {new Date(memory.updatedAt).toLocaleString()}
-                            </Text>
-                            <Button
-                              colorPalette="red"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setSelected(memory)}
-                            >
-                              Delete
-                            </Button>
-                          </>
-                        </Card.Footer>
-                      </Card.Root>
+                          <Text
+                            as="time"
+                            color="fg.muted"
+                            dateTime={memory.updatedAt}
+                            fontSize="xs"
+                          >
+                            Updated{" "}
+                            {new Date(memory.updatedAt).toLocaleString()}
+                          </Text>
+                          <Button
+                            colorPalette="red"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelected(memory)}
+                          >
+                            Delete
+                          </Button>
+                        </Flex>
+                      </Flex>
                     ))
                   )}
                   {deletion.error && (

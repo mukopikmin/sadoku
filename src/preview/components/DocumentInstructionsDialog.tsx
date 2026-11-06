@@ -1,6 +1,5 @@
 import {
   Button,
-  Card,
   CloseButton,
   Dialog,
   Flex,
@@ -10,7 +9,7 @@ import {
 import { useInstructionsQuery } from "../hooks/useInstructions";
 import { InstructionsPanel } from "./InstructionsPanel";
 
-import { ScrollableText } from "./ui/ScrollableText";
+import { ScrollableTextCard } from "./ui/ScrollableTextCard";
 
 type Props = {
   documentId: number;
@@ -48,33 +47,28 @@ export const DocumentInstructionsDialog = ({
                   Apply to all documents in this database. Document instructions
                   take precedence when they directly conflict.
                 </Text>
-                <Card.Root
-                  variant="outline"
-                  size="sm"
-                  maxH="20dvh"
-                  minH="0"
-                  overflow="hidden"
+                <ScrollableTextCard
+                  label="Global instruction text"
+                  maxHeight="20dvh"
                 >
-                  <ScrollableText label="Global instruction text">
-                    {globalQuery.isPending ? (
-                      <Text>Loading global instructions...</Text>
-                    ) : globalQuery.error ? (
-                      <Text color="fg.error" role="alert">
-                        {String(globalQuery.error)}
+                  {globalQuery.isPending ? (
+                    <Text>Loading global instructions...</Text>
+                  ) : globalQuery.error ? (
+                    <Text color="fg.error" role="alert">
+                      {String(globalQuery.error)}
+                    </Text>
+                  ) : globalQuery.data?.length === 0 ? (
+                    <Text color="fg.muted">
+                      No global instructions have been added.
+                    </Text>
+                  ) : (
+                    globalQuery.data?.map((instruction) => (
+                      <Text key={instruction.id} whiteSpace="pre-wrap">
+                        {instruction.content}
                       </Text>
-                    ) : globalQuery.data?.length === 0 ? (
-                      <Text color="fg.muted">
-                        No global instructions have been added.
-                      </Text>
-                    ) : (
-                      globalQuery.data?.map((instruction) => (
-                        <Text key={instruction.id} whiteSpace="pre-wrap">
-                          {instruction.content}
-                        </Text>
-                      ))
-                    )}
-                  </ScrollableText>
-                </Card.Root>
+                    ))
+                  )}
+                </ScrollableTextCard>
                 {onOpenGlobalInstructions && (
                   <Button
                     alignSelf="flex-start"
