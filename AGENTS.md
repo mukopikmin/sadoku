@@ -47,7 +47,10 @@ them when making changes.
   functions and plain data with explicit persistence ports.
 - Run `make build-client` before Go builds or tests; `src/server/internal/preview/assets.go`
   embeds the generated client. Never commit client build outputs.
-- Validate Go changes with `make check-go-format`, `make vet`, and `make test-server`.
+- Validate Go changes with `make check-go-format`, `make lint-go`, `make vet`, and `make test-server`.
+  For proxy changes, use `make check-proxy-format`, `make lint-proxy`, and
+  `make test-proxy`. Install the golangci-lint version pinned in
+  `.golangci-lint-version`; keep local and CI lint checks on the same version.
   Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
 - Keep `go.mod` and `go.sum` consistent. SQLite uses `mattn/go-sqlite3` and
   requires `CGO_ENABLED=1` and a C compiler. Build release binaries on their

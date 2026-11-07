@@ -18,7 +18,7 @@ func legacyDatabase(t *testing.T) (*sql.DB, string) {
 		t.Fatal(err)
 	}
 	database.SetMaxOpenConns(1)
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	var migrations []migration
 	if err := json.Unmarshal(legacy, &migrations); err != nil {
 		t.Fatal(err)
@@ -49,7 +49,7 @@ func schema(t *testing.T, database *sql.DB) []string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	result := []string{}
 	for rows.Next() {
 		var value string
@@ -73,7 +73,7 @@ func TestRebuildPreservesDataAndMatchesFreshSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer fresh.Close()
+	defer func() { _ = fresh.Close() }()
 	if !reflect.DeepEqual(schema(t, database), schema(t, fresh)) {
 		t.Fatal("fresh and upgraded schemas differ")
 	}
@@ -93,7 +93,7 @@ func TestRebuildPreservesDataAndMatchesFreshSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reopened.Close()
+	defer func() { _ = reopened.Close() }()
 	for _, statement := range []string{
 		`UPDATE comment SET source_text=NULL`, `UPDATE comment SET source_hash=NULL`,
 		`UPDATE comment SET resolved=1`,

@@ -1,0 +1,25 @@
+version: "2"
+
+run:
+  timeout: 5m
+  allow-serial-runners: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    staticcheck:
+      # Start with correctness checks; gofmt remains responsible for formatting.
+      checks:
+        - SA*
+  exclusions:
+    generated: strict

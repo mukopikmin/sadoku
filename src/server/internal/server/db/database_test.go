@@ -38,7 +38,7 @@ func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer database.Close()
+			defer func() { _ = database.Close() }()
 			var count int
 			if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 16 {
 				t.Fatalf("reopened database migrations: %d, %v", count, err)
@@ -52,7 +52,7 @@ func TestReplacementConnectionsPreserveConstraints(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	// Force each operation to use a new connection instead of the one that ran
 	// migrations. Foreign keys and busy handling must survive pool replacement.
 	database.SetMaxIdleConns(0)
@@ -83,12 +83,12 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer fixture.Close()
+	defer func() { _ = fixture.Close() }()
 	reader, err := gzip.NewReader(fixture)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +102,7 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer database.Close()
+		defer func() { _ = database.Close() }()
 		var count int
 		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 16 {
 			t.Fatalf("legacy migrations: %d, %v", count, err)
@@ -159,12 +159,12 @@ func TestMigrationCompatibility(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	database.Close()
+	_ = database.Close()
 	database, err = Open(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	var title string
 	if err = database.QueryRow("SELECT title FROM comment_document").Scan(&title); err != nil || title != "Old title" {
 		t.Fatalf("lost existing document: %q %v", title, err)
@@ -206,7 +206,7 @@ func TestFailedMigrationBatchRollsBackAndCanBeRetried(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	database.SetMaxOpenConns(1)
 	// A pre-existing table makes migration 0006 fail after earlier versions ran.
 	if _, err = database.Exec("CREATE TABLE document_instruction (sentinel TEXT); INSERT INTO document_instruction VALUES ('preserved')"); err != nil {
@@ -254,16 +254,16 @@ func TestUpgradeAddsGlobalInstructionsWithoutMovingDocumentContext(t *testing.T)
 		"INSERT INTO document_memory(document_id,content,created_at,updated_at) VALUES(1,'Local memory','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 	} {
 		if _, err := database.Exec(statement); err != nil {
-			database.Close()
+			_ = database.Close()
 			t.Fatal(err)
 		}
 	}
-	database.Close()
+	_ = database.Close()
 	database, err = Open(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	for table, expected := range map[string]string{"document_instruction": "Local instruction", "document_memory": "Local memory"} {
 		var content string
 		if err := database.QueryRow("SELECT content FROM " + table + " WHERE document_id=1").Scan(&content); err != nil || content != expected {
@@ -289,12 +289,12 @@ func TestMigrationLedgerRejectsInterruptedOrUnknownHistory(t *testing.T) {
 				t.Fatal(err)
 			}
 			if _, err = database.Exec(test.statement); err != nil {
-				database.Close()
+				_ = database.Close()
 				t.Fatal(err)
 			}
-			database.Close()
+			_ = database.Close()
 			if reopened, err := Open(path); err == nil {
-				reopened.Close()
+				_ = reopened.Close()
 				t.Fatal("opened a database with invalid migration history")
 			}
 		})
@@ -305,7 +305,7 @@ func TestUpgradeLegacySnapshots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	// Recreate a pre-0012 database using the original, immutable statements.
 	for _, table := range []string{"global_instruction", "comment_reply", "comment", "document_tag_link", "document_tag", "document_memory", "document_instruction", "comment_document", "document_revision", "schema_migration"} {
 		if _, err = database.Exec("DROP TABLE " + table); err != nil {

@@ -83,14 +83,14 @@ func TestArchiveFormats(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer z.Close()
+				defer func() { _ = z.Close() }()
 				for _, f := range z.File {
 					r, err := f.Open()
 					if err != nil {
 						t.Fatal(err)
 					}
 					data, err := io.ReadAll(r)
-					r.Close()
+					_ = r.Close()
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -102,12 +102,12 @@ func TestArchiveFormats(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer f.Close()
+				defer func() { _ = f.Close() }()
 				gz, err := gzip.NewReader(f)
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer gz.Close()
+				defer func() { _ = gz.Close() }()
 				tr := tar.NewReader(gz)
 				for {
 					h, err := tr.Next()

@@ -43,8 +43,9 @@ func readPullDetails(ctx context.Context, endpoint string, metadata bool) (pullD
 		if body, exists := fields["body"]; exists && string(body) != "null" && json.Unmarshal(body, &result.Body) != nil {
 			return result, fmt.Errorf("GitHub API response did not contain a valid pull request body.")
 		}
-		json.Unmarshal(fields["node_id"], &result.NodeID)
-		json.Unmarshal(fields["state"], &result.State)
+		// These optional preview fields do not invalidate otherwise usable pull details.
+		_ = json.Unmarshal(fields["node_id"], &result.NodeID)
+		_ = json.Unmarshal(fields["state"], &result.State)
 	}
 	return result, nil
 }

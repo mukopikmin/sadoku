@@ -81,17 +81,20 @@ Requires GNU Make, Go 1.26.10 or later, Node.js matching
 [`src/proto/package.json`](src/proto/package.json), and a C compiler for SQLite (GCC and libc headers
 on Linux, Xcode Command Line Tools on macOS, or MinGW-w64 GCC on Windows).
 Make enables CGO for backend tasks.
+Lint checks also require the golangci-lint version pinned in
+[`.golangci-lint-version`](.golangci-lint-version); see
+[development details](docs/development.md) for installation.
 
 ```sh
 make deps                       # install dependencies from lockfiles
 make start ARGS=README.md        # run locally
 make build VERSION=0.0.0-dev      # build a binary with embedded client assets
-make check                      # formatting and vet
+make check                      # formatting and golangci-lint
 make test                       # server, client, action, and proxy tests
 ```
 
-Build, server test, and vet targets build the client assets first. The resulting
-binary runs without Go or Node.js installed.
+Build, server test, server lint, and vet targets build the client assets first.
+The resulting binary runs without Go or Node.js installed.
 
 See [development details](docs/development.md) for additional build targets,
 code generation, and release operations, and [AGENTS.md](AGENTS.md) for

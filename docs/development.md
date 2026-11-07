@@ -22,7 +22,9 @@ make start ARGS=README.md
 coordinates Go and generated-code tasks:
 
 ```sh
-make check                       # formatting and go vet
+make check                       # formatting and golangci-lint for both Go modules
+make lint-go                     # lint the server, CLI, and repository tooling
+make lint-proxy                  # lint the independent proxy module
 make test                        # server, client, action, and proxy tests
 make test-tools                  # repository tooling tests
 make build VERSION=1.2.3          # standalone binary with embedded client assets
@@ -32,8 +34,21 @@ make dist VERSION=1.2.3           # archive for the current platform
 make notices
 ```
 
-Build, install, server test, and vet targets build the client assets first. Run
-`make deps` before these targets when setting up a checkout. The standalone
+Install the official [golangci-lint binary](https://github.com/golangci/golangci-lint/releases)
+for the version pinned in [`.golangci-lint-version`](../.golangci-lint-version)
+and put it on `PATH` before running lint or `make check`. Set `GOLANGCI_LINT`
+to use a binary at another path. CI installs the same pinned version.
+The shared [configuration](../.golangci.yml) enables correctness checks with
+`staticcheck`, `errcheck`, `ineffassign`, `unused`, and `govet`, including tests
+and excluding generated code. Formatting stays with `gofmt`; cross-platform
+vet checks remain available through `make vet-cross`.
+
+Keep intentional error discards local and explicit, such as cleanup and
+best-effort log or HTTP output. Check errors when writing persistent data or
+creating test fixtures instead of suppressing the linter for an entire file.
+
+Build, install, server test, server lint, and vet targets build the client assets
+first. Run `make deps` before these targets when setting up a checkout. The standalone
 binary needs neither Go nor Node.js installed. Archive creation supports
 `darwin-arm64`, `linux-x64`, and `windows-x64`. Use `TARGET=linux-x64` or
 `TARGET=windows-x64` to select a distribution target explicitly. Cross-compiling

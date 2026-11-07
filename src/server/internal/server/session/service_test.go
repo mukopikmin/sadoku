@@ -54,7 +54,7 @@ func TestCreationReportsTheSavedFileWhenRegistrationFails(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer database.Close()
+			defer func() { _ = database.Close() }()
 			s, err := New(context.Background(), root, &storage.Repository{DB: database}, config.Defaults())
 			if err != nil {
 				t.Fatal(err)
@@ -128,7 +128,7 @@ func TestConcurrentRestoreReportsBusyAndClearsAfterCompletion(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		unblock()
-		<-done
+		_ = <-done
 		t.Fatal("second restore waited instead of reporting busy")
 	}
 	unblock()
@@ -178,7 +178,7 @@ func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 				}
 			case <-time.After(time.Second):
 				unblock()
-				<-first
+				_ = <-first
 				t.Fatal("slow Markdown read blocked another document")
 			}
 			if _, err := s.Invoke(context.Background(), "UpdateDocumentTitle", Input{DocumentID: 1, Title: "Updated while reading"}); err != nil {
