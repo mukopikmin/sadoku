@@ -63,6 +63,8 @@ export const DocumentActionBar = ({
             aria-label="Document actions"
             maxW="calc(100vw - 2rem)"
             flexWrap="wrap"
+            // The stable root scrollbar gutter already prevents shifts when dialogs open.
+            translate="none"
           >
             <TableOfContents markdown={markdown} />
             {diff && (
