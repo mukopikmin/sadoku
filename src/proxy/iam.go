@@ -44,7 +44,7 @@ func (t *iamTransport) RoundTrip(request *http.Request) (*http.Response, error) 
 	if err != nil || len(token) > maxIDTokenBytes || !compactJWT.MatchString(token) {
 		// RoundTripper owns the request body, including failures before forwarding.
 		if request.Body != nil {
-			request.Body.Close()
+			_ = request.Body.Close()
 		}
 		return nil, errIDToken
 	}
@@ -158,7 +158,7 @@ func (s *metadataTokenSource) fetch() (string, time.Time, error) {
 	if err != nil {
 		return "", time.Time{}, errIDToken
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK || response.Header.Get("Metadata-Flavor") != "Google" {
 		return "", time.Time{}, errIDToken
 	}

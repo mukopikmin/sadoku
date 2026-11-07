@@ -12,10 +12,9 @@ import {
   previewDocumentQueryKey,
 } from "../hooks/previewQueryKeys";
 
-vi.mock(
-  "../api/documentRevisions",
-  () => ({ restoreDocumentRevision: vi.fn() }),
-);
+vi.mock("../api/documentRevisions", () => ({
+  restoreDocumentRevision: vi.fn(),
+}));
 afterEach(() => {
   cleanup();
   vi.resetAllMocks();
@@ -33,10 +32,11 @@ it("captures the confirmed revision and refreshes document, history and comments
   client.setQueryData(previewDocumentQueryKey(8), "other document");
   const onRestored = vi.fn();
   let finish!: () => void;
-  vi.mocked(restoreDocumentRevision).mockImplementation(() =>
-    new Promise<void>((resolve) => {
-      finish = resolve;
-    })
+  vi.mocked(restoreDocumentRevision).mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
   );
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>

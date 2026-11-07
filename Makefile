@@ -4,6 +4,7 @@ SHELL := sh
 GO ?= go
 NPM ?= npm
 NODE ?= node
+GOLANGCI_LINT ?= golangci-lint
 export CGO_ENABLED := 1
 VERSION ?= 0.0.0-dev
 OUTPUT ?=
@@ -16,9 +17,9 @@ GO_TEST_TIMEOUT ?= $(if $(filter Windows_NT,$(OS)),10m,120s)
 GO_TEST_FLAGS ?= -race -count=1 -timeout=$(GO_TEST_TIMEOUT)
 GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/assets.go src/server/internal/gen src/server/test/integration
 
-.PHONY: deps build-client test-client test-actions fmt-client check-client-format \
+.PHONY: deps build-client test-client test-actions fmt-client check-client-format lint-client \
  build build-server install dist notices run start test test-server test-server-with-assets \
- test-tools test-install test-install-with-assets check vet vet-cross \
+ test-tools test-install test-install-with-assets check vet vet-cross lint lint-go \
  fmt fmt-go fmt-check check-go-format
 
 deps:
@@ -28,20 +29,22 @@ deps:
 build-client:
 	$(NPM) --prefix src/preview run build
 	rm -rf src/server/internal/preview/dist
-	mkdir -p src/server/internal/preview
 	cp -R src/preview/dist src/server/internal/preview/dist
 
 test-client:
 	$(NPM) --prefix src/preview test
 
 test-actions:
-	$(NODE) --test scripts/cloud_run_preview_comment_test.mts
+	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
 
 fmt-client:
-	cd src/proto && $(NPM) exec --no -- prettier --write ../../scripts/*.mts ../preview/gen
+	$(NPM) --prefix src/proto exec --no -- oxfmt ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
+
+lint-client:
+	$(NPM) --prefix src/proto exec --no -- oxlint --deny-warnings --report-unused-disable-directives .github/tests src/preview
 
 check-client-format:
-	cd src/proto && $(NPM) exec --no -- prettier --check ../../scripts/*.mts ../preview/gen
+	$(NPM) --prefix src/proto exec --no -- oxfmt --check ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
 
 build: build-client
 	$(MAKE) build-server
@@ -77,7 +80,7 @@ test-server-with-assets:
 
 test-tools:
 	$(GO) -C src/server test -race -count=1 ./internal/tooling
-	$(NODE) --test scripts/cloud_run_preview_comment_test.mts
+	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
 
 test-install: build-client
 	$(MAKE) test-install-with-assets
@@ -89,7 +92,12 @@ test-install-with-assets:
 	HOME="$$install_home" $(GO) -C src/server run ./cmd/sadoku-tools install --version 0.0.0-ci; \
 	test "$$("$$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
 
-check: fmt-check vet proxy-vet
+check: fmt-check lint
+
+lint: lint-client lint-go proxy-lint
+
+lint-go: build-client
+	cd src/server && $(GOLANGCI_LINT) run --config ../../.golangci.yml ./...
 
 vet: build-client
 	$(GO) -C src/server vet ./...

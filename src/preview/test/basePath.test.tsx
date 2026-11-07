@@ -42,13 +42,10 @@ describe("public base paths", () => {
     "/a?b",
     "/a/",
     "https://evil.test",
-  ])(
-    "rejects invalid browser configuration %s",
-    (value) => {
-      setBasePath(value);
-      expect(() => readPreviewBasePath()).toThrow("Invalid public base path");
-    },
-  );
+  ])("rejects invalid browser configuration %s", (value) => {
+    setBasePath(value);
+    expect(() => readPreviewBasePath()).toThrow("Invalid public base path");
+  });
 
   it.each(["v1", "staging"])(
     "uses the HTML prefix for %s API and SSE requests",
@@ -116,14 +113,13 @@ describe("public base paths", () => {
     await screen.findByText("Document 7");
     expect(
       screen.getByRole("link", { name: "Next document" }).getAttribute("href"),
-    )
-      .toBe("/revisions/pr-42/documents/8");
+    ).toBe("/revisions/pr-42/documents/8");
     fireEvent.click(screen.getByRole("link", { name: "Next document" }));
     await screen.findByText("Document 8");
     fireEvent.click(screen.getByRole("link", { name: "Back to list" }));
     await screen.findByText("Document list");
     await waitFor(() =>
-      expect(router.history.location.pathname).toBe("/revisions/pr-42/")
+      expect(router.history.location.pathname).toBe("/revisions/pr-42/"),
     );
   });
 });

@@ -33,7 +33,7 @@ func TestGitHubPreviewLogsCanonicalTargetAndImmutableSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	repo := &storage.Repository{DB: database, Path: path}
 	const target = "https://github.com/owner/repo/pull/1"
 	const contentURL = "https://api.github.com/repos/owner/repo/contents/readme.md?ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -189,7 +189,7 @@ func TestNoSyncKeepsServerRunningWithoutKeepAlive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	select {
 	case <-ctx.Done():
 		t.Fatal("server stopped")
@@ -199,7 +199,7 @@ func TestNoSyncKeepsServerRunningWithoutKeepAlive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	if response.StatusCode != 200 {
 		t.Fatalf("status: %d", response.StatusCode)
 	}

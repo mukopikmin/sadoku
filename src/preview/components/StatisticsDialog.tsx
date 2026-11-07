@@ -48,37 +48,38 @@ export const StatisticsDialog = ({
               <CloseButton aria-label="Close database statistics" size="sm" />
             </Dialog.CloseTrigger>
             <Dialog.Body pb="6">
-              {statistics.isPending
-                ? <Spinner aria-label="Loading database statistics" />
-                : statistics.error
-                ? <Text color="fg.error">{statistics.error.message}</Text>
-                : (
-                  <Flex as="dl" direction="column" gap="3">
-                    {[
-                      [
-                        "Documents",
-                        statistics.data.documentCount.toLocaleString(),
-                      ],
-                      [
-                        "Database size",
-                        formatSize(statistics.data.databaseSize),
-                      ],
-                      [
-                        "Human comments",
-                        statistics.data.commentCount.human.toLocaleString(),
-                      ],
-                      [
-                        "Bot comments",
-                        statistics.data.commentCount.bot.toLocaleString(),
-                      ],
-                    ].map(([label, value]) => (
-                      <Flex justifyContent="space-between" gap="6" key={label}>
-                        <Text as="dt" color="fg.muted">{label}</Text>
-                        <Text as="dd" fontWeight="semibold">{value}</Text>
-                      </Flex>
-                    ))}
-                  </Flex>
-                )}
+              {statistics.isPending ? (
+                <Spinner aria-label="Loading database statistics" />
+              ) : statistics.error ? (
+                <Text color="fg.error">{statistics.error.message}</Text>
+              ) : (
+                <Flex as="dl" direction="column" gap="3">
+                  {[
+                    [
+                      "Documents",
+                      statistics.data.documentCount.toLocaleString(),
+                    ],
+                    ["Database size", formatSize(statistics.data.databaseSize)],
+                    [
+                      "Human comments",
+                      statistics.data.commentCount.human.toLocaleString(),
+                    ],
+                    [
+                      "Bot comments",
+                      statistics.data.commentCount.bot.toLocaleString(),
+                    ],
+                  ].map(([label, value]) => (
+                    <Flex justifyContent="space-between" gap="6" key={label}>
+                      <Text as="dt" color="fg.muted">
+                        {label}
+                      </Text>
+                      <Text as="dd" fontWeight="semibold">
+                        {value}
+                      </Text>
+                    </Flex>
+                  ))}
+                </Flex>
+              )}
             </Dialog.Body>
           </Dialog.Content>
         </Dialog.Positioner>

@@ -26,13 +26,13 @@ func TestMain(m *testing.M) {
 			}
 			var text string
 			if json.Unmarshal(response, &text) == nil {
-				fmt.Fprint(os.Stdout, text)
+				_, _ = fmt.Fprint(os.Stdout, text)
 			} else {
-				os.Stdout.Write(response)
+				_, _ = os.Stdout.Write(response)
 			}
 			os.Exit(0)
 		}
-		fmt.Fprint(os.Stdout, os.Getenv("SADOKU_HTTP_GH_STDOUT"))
+		_, _ = fmt.Fprint(os.Stdout, os.Getenv("SADOKU_HTTP_GH_STDOUT"))
 		fmt.Fprint(os.Stderr, os.Getenv("SADOKU_HTTP_GH_STDERR"))
 		if os.Getenv("SADOKU_HTTP_GH_FAIL") == "1" {
 			os.Exit(1)
@@ -60,7 +60,7 @@ func installHTTPGitHubFixture(t *testing.T, directory string) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer source.Close()
+		defer func() { _ = source.Close() }()
 		file, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0700)
 		if err != nil {
 			t.Fatal(err)

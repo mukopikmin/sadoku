@@ -3,10 +3,11 @@ name: Proxy Test
 on:
   pull_request:
     paths: &proxy-paths
-      - "Makefile"
-      - "src/proto/tasks.mk"
       - "src/proxy/**"
       - ".github/workflows/proxy_test.yml"
+      - ".golangci.yml"
+      - ".golangci-lint-version"
+      - "Makefile"
   push:
     branches:
       - main
@@ -40,8 +41,14 @@ jobs:
       - name: Check formatting
         run: make proxy-check-format
 
-      - name: Vet
-        run: make proxy-vet
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version-file: .golangci-lint-version
+          install-only: true
+
+      - name: Lint
+        run: make proxy-lint
 
       - name: Test
         run: make proxy-test

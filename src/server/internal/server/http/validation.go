@@ -11,7 +11,12 @@ const invalidSettingsMessage = "Request body must contain valid theme, codeWrap,
 
 func validateRESTFields(operation string, fields map[string]json.RawMessage) error {
 	invalid := func(message string) error { return u.Fail("invalid_argument", message) }
-	value := func(name string) any { var result any; json.Unmarshal(fields[name], &result); return result }
+	value := func(name string) any {
+		var result any
+		// Missing or invalid values stay nil and fail the operation's type checks below.
+		_ = json.Unmarshal(fields[name], &result)
+		return result
+	}
 	switch operation {
 	case "CreateInstruction", "UpdateInstruction", "CreateGlobalInstruction", "UpdateGlobalInstruction":
 		if _, ok := value("content").(string); !ok {

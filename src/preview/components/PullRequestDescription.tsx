@@ -19,9 +19,8 @@ export const PullRequestDescription = ({ children }: Props) => {
     if (!containerRef.current) return;
     void initializeMermaid({
       root: containerRef.current,
-      theme: document.documentElement.dataset.theme === "dark"
-        ? "dark"
-        : "default",
+      theme:
+        document.documentElement.dataset.theme === "dark" ? "dark" : "default",
     });
   }, [children]);
 

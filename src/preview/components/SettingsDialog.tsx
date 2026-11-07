@@ -24,9 +24,12 @@ export type SettingsDialogProps = {
   settings: ResolvedPreviewSettings;
 };
 
-export const SettingsDialog = (
-  { open, onOpenChange, settings, ...actions }: SettingsDialogProps,
-) => {
+export const SettingsDialog = ({
+  open,
+  onOpenChange,
+  settings,
+  ...actions
+}: SettingsDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const statisticsTriggerRef = useRef<HTMLButtonElement>(null);
   const [statisticsOpen, setStatisticsOpen] = useState(false);
@@ -38,7 +41,8 @@ export const SettingsDialog = (
       finalFocusEl={() =>
         globalThis.document.querySelector<HTMLButtonElement>(
           'button[aria-label="Open settings"]',
-        )}
+        )
+      }
       initialFocusEl={() => contentRef.current}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
@@ -62,8 +66,9 @@ export const SettingsDialog = (
                   onFontScaleChange={actions.onFontScaleChange}
                   onThemeModeChange={actions.onThemeModeChange}
                   onShowHtmlCommentsChange={actions.onShowHtmlCommentsChange}
-                  onShowHighlightBoundariesChange={actions
-                    .onShowHighlightBoundariesChange}
+                  onShowHighlightBoundariesChange={
+                    actions.onShowHighlightBoundariesChange
+                  }
                   showHighlightBoundaries={settings.showHighlightBoundaries}
                   showHtmlComments={settings.showHtmlComments}
                   themeMode={settings.theme}
@@ -74,10 +79,12 @@ export const SettingsDialog = (
                   maxDepth={settings.maxDepth}
                   maxFiles={settings.maxFiles}
                   onDirectoryLimitsChange={actions.onDirectoryLimitsChange}
-                  onExcludedDirectoriesChange={actions
-                    .onExcludedDirectoriesChange}
-                  onMarkdownExtensionsChange={actions
-                    .onMarkdownExtensionsChange}
+                  onExcludedDirectoriesChange={
+                    actions.onExcludedDirectoriesChange
+                  }
+                  onMarkdownExtensionsChange={
+                    actions.onMarkdownExtensionsChange
+                  }
                 />
                 <Button
                   alignSelf="start"

@@ -34,14 +34,14 @@ describe("useCommentBulkActions", () => {
 
   it("runs sequentially and blocks duplicate actions and selection changes", async () => {
     let release!: () => void;
-    const ready = new Promise<void>((resolve) => release = resolve);
+    const ready = new Promise<void>((resolve) => (release = resolve));
     const onResolveComment = vi.fn(async () => await ready);
     const onDeleteComment = vi.fn();
     const { result } = renderHook(() =>
       useCommentBulkActions(
         [createComment(), createComment({ id: 2 })],
         createCommentActions({ onResolveComment, onDeleteComment }),
-      )
+      ),
     );
     act(() => result.current.toggleAll());
     let operation!: Promise<boolean>;
@@ -65,7 +65,8 @@ describe("useCommentBulkActions", () => {
   });
 
   it("continues after failures and retries only failed comments", async () => {
-    const onDeleteComment = vi.fn()
+    const onDeleteComment = vi
+      .fn()
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error("Connection lost."))
       .mockResolvedValue(undefined);
@@ -73,11 +74,11 @@ describe("useCommentBulkActions", () => {
       useCommentBulkActions(
         [createComment(), createComment({ id: 2 }), createComment({ id: 3 })],
         createCommentActions({ onDeleteComment }),
-      )
+      ),
     );
     act(() => result.current.toggleAll());
     await act(async () =>
-      expect(await result.current.run("delete")).toBe(false)
+      expect(await result.current.run("delete")).toBe(false),
     );
 
     expect(onDeleteComment.mock.calls).toEqual([[1], [2], [3]]);
@@ -88,7 +89,7 @@ describe("useCommentBulkActions", () => {
     });
 
     await act(async () =>
-      expect(await result.current.run("delete")).toBe(true)
+      expect(await result.current.run("delete")).toBe(true),
     );
     expect(onDeleteComment.mock.calls).toEqual([[1], [2], [3], [2]]);
     expect(result.current.selectedIds).toEqual([]);
@@ -104,10 +105,10 @@ describe("useCommentBulkActions", () => {
           createComment({ id: 2, state: "resolved" }),
         ],
         createCommentActions({ onReopenComment }),
-      )
+      ),
     );
     await act(async () =>
-      expect(await result.current.run("reopen")).toBe(false)
+      expect(await result.current.run("reopen")).toBe(false),
     );
     expect(onReopenComment).not.toHaveBeenCalled();
     act(() => result.current.toggle(2));

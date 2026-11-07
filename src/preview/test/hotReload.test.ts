@@ -19,13 +19,11 @@ class FakeEventSource extends EventTarget {
 
 describe("connectHotReload", () => {
   it("keeps the preview session alive independently of a document", () => {
-    const disconnect = connectPreviewKeepAlive(
-      {
-        EventSourceCtor: FakeEventSource as unknown as new (
-          url: string,
-        ) => EventSource,
-      },
-    );
+    const disconnect = connectPreviewKeepAlive({
+      EventSourceCtor: FakeEventSource as unknown as new (
+        url: string,
+      ) => EventSource,
+    });
     const events = FakeEventSource.instances.at(-1);
 
     expect(events?.url).toBe("/__sadoku/events");
@@ -39,8 +37,8 @@ describe("connectHotReload", () => {
       EventSourceCtor: FakeEventSource as unknown as new (
         url: string,
       ) => EventSource,
-      onConnectionLost: () => connectionLost = true,
-      onConnectionRestored: () => connectionLost = false,
+      onConnectionLost: () => (connectionLost = true),
+      onConnectionRestored: () => (connectionLost = false),
     });
     const events = FakeEventSource.instances.at(-1)!;
 
@@ -89,8 +87,8 @@ describe("connectHotReload", () => {
       EventSourceCtor: FakeEventSource as unknown as new (
         url: string,
       ) => EventSource,
-      onCommentsChanged: () => commentChanges += 1,
-      onReloadAvailable: () => reloads += 1,
+      onCommentsChanged: () => (commentChanges += 1),
+      onReloadAvailable: () => (reloads += 1),
     });
 
     FakeEventSource.instances.at(-1)?.dispatchEvent(
@@ -110,12 +108,12 @@ describe("connectHotReload", () => {
       EventSourceCtor: FakeEventSource as unknown as new (
         url: string,
       ) => EventSource,
-      onReloadAvailable: () => reloads += 1,
+      onReloadAvailable: () => (reloads += 1),
     });
 
-    FakeEventSource.instances.at(-1)?.dispatchEvent(
-      new MessageEvent("invalidate", { data: "not json" }),
-    );
+    FakeEventSource.instances
+      .at(-1)
+      ?.dispatchEvent(new MessageEvent("invalidate", { data: "not json" }));
 
     expect(reloads).toBe(0);
   });

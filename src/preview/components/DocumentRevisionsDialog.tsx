@@ -42,33 +42,43 @@ const RevisionContent = (
   >,
 ) => {
   const revisions = useDocumentRevisions(props.documentId, props.markdown);
-  const restore = useDocumentRestore(
-    props.documentId,
-    () => props.onOpenChange(false),
+  const restore = useDocumentRestore(props.documentId, () =>
+    props.onOpenChange(false),
   );
-  const savedRevisions = revisions.history.status === "ready"
-    ? revisions.history.revisions
-    : undefined;
-  const collection = useMemo(() =>
-    createListCollection({
-      items: [
-        { value: "current", label: "Current" },
-        ...(savedRevisions ?? []).flatMap((revision, index) =>
-          index === 0 && !revisions.showLatestSaved ? [] : [{
-            value: String(revision.id),
-            label: `${index === 0 ? "Saved snapshot" : `${index} earlier`} — ${
-              new Date(revision.recordedAt).toLocaleString()
-            }`,
-          }]
-        ),
-      ],
-    }), [savedRevisions, revisions.showLatestSaved]);
-  const changes = revisions.comparison.status === "ready"
-    ? revisions.comparison.changes
-    : undefined;
-  const hasChanges = changes !== undefined &&
+  const savedRevisions =
+    revisions.history.status === "ready"
+      ? revisions.history.revisions
+      : undefined;
+  const collection = useMemo(
+    () =>
+      createListCollection({
+        items: [
+          { value: "current", label: "Current" },
+          ...(savedRevisions ?? []).flatMap((revision, index) =>
+            index === 0 && !revisions.showLatestSaved
+              ? []
+              : [
+                  {
+                    value: String(revision.id),
+                    label: `${index === 0 ? "Saved snapshot" : `${index} earlier`} — ${new Date(
+                      revision.recordedAt,
+                    ).toLocaleString()}`,
+                  },
+                ],
+          ),
+        ],
+      }),
+    [savedRevisions, revisions.showLatestSaved],
+  );
+  const changes =
+    revisions.comparison.status === "ready"
+      ? revisions.comparison.changes
+      : undefined;
+  const hasChanges =
+    changes !== undefined &&
     (changes.current.size > 0 || changes.previous.size > 0);
-  const restoreId = revisions.selectedId ??
+  const restoreId =
+    revisions.selectedId ??
     (props.deleted ? savedRevisions?.[0]?.id : undefined);
   return (
     <Stack gap="4">
@@ -118,55 +128,47 @@ const RevisionContent = (
         </Select.Root>
         {changes && (
           <Flex align="center" gap="3" wrap="wrap" flex={{ md: "1" }}>
-            {hasChanges
-              ? (
-                <Flex
-                  as="span"
-                  role="group"
-                  aria-label={`Line changes from previous revision: ${changes.current.size} added, ${changes.previous.size} removed`}
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  gap="2"
-                  ms="auto"
-                >
-                  <Text
-                    as="span"
-                    color="syntax.addition.fg"
-                    aria-hidden="true"
-                  >
-                    +{changes.current.size}
-                  </Text>
-                  <Text
-                    as="span"
-                    color="syntax.deletion.fg"
-                    aria-hidden="true"
-                  >
-                    -{changes.previous.size}
-                  </Text>
-                </Flex>
-              )
-              : (
-                <Text color="fg.muted" fontSize="sm">
-                  No changes from the previous revision.
+            {hasChanges ? (
+              <Flex
+                as="span"
+                role="group"
+                aria-label={`Line changes from previous revision: ${changes.current.size} added, ${changes.previous.size} removed`}
+                fontSize="sm"
+                fontWeight="semibold"
+                gap="2"
+                ms="auto"
+              >
+                <Text as="span" color="syntax.addition.fg" aria-hidden="true">
+                  +{changes.current.size}
                 </Text>
-              )}
+                <Text as="span" color="syntax.deletion.fg" aria-hidden="true">
+                  -{changes.previous.size}
+                </Text>
+              </Flex>
+            ) : (
+              <Text color="fg.muted" fontSize="sm">
+                No changes from the previous revision.
+              </Text>
+            )}
           </Flex>
         )}
       </Flex>
-      {props.canRestore && restoreId !== undefined &&
+      {props.canRestore &&
+        restoreId !== undefined &&
         revisions.content.status === "ready" && (
-        <Button
-          alignSelf="start"
-          disabled={restore.isPending}
-          onClick={() =>
-            restore.request(
-              restoreId,
-              props.deleted ? undefined : props.markdown,
-            )}
-        >
-          Restore this revision
-        </Button>
-      )}
+          <Button
+            alignSelf="start"
+            disabled={restore.isPending}
+            onClick={() =>
+              restore.request(
+                restoreId,
+                props.deleted ? undefined : props.markdown,
+              )
+            }
+          >
+            Restore this revision
+          </Button>
+        )}
       <ConfirmDialog
         title="Restore this revision?"
         confirmLabel="Restore file"
@@ -193,7 +195,9 @@ const RevisionContent = (
       )}
       {revisions.history.status === "error" && (
         <Stack align="start">
-          <Text color="fg.error" role="alert">{revisions.history.message}</Text>
+          <Text color="fg.error" role="alert">
+            {revisions.history.message}
+          </Text>
           <Button size="sm" variant="outline" onClick={revisions.retryHistory}>
             Retry history
           </Button>
@@ -201,24 +205,24 @@ const RevisionContent = (
       )}
       {revisions.content.status === "ready" &&
         revisions.comparison.status === "loading" && (
-        <Text role="status">Loading previous revision for comparison...</Text>
-      )}
+          <Text role="status">Loading previous revision for comparison...</Text>
+        )}
       {revisions.content.status === "ready" &&
         revisions.comparison.status === "error" &&
         revisions.history.status !== "error" && (
-        <Stack align="start">
-          <Text color="fg.error" role="alert">
-            {revisions.comparison.message}
-          </Text>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={revisions.retryComparison}
-          >
-            Retry comparison
-          </Button>
-        </Stack>
-      )}
+          <Stack align="start">
+            <Text color="fg.error" role="alert">
+              {revisions.comparison.message}
+            </Text>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={revisions.retryComparison}
+            >
+              Retry comparison
+            </Button>
+          </Stack>
+        )}
       {revisions.comparison.status === "unavailable" && (
         <Text color="fg.muted" fontSize="sm">
           No previous revision is available for comparison.
@@ -252,9 +256,9 @@ const RevisionContent = (
             markdown={revisions.content.markdown}
             showHtmlComments={props.showHtmlComments}
             theme={props.theme}
-            revisionHighlight={changes
-              ? { lines: changes.current, kind: "addition" }
-              : undefined}
+            revisionHighlight={
+              changes ? { lines: changes.current, kind: "addition" } : undefined
+            }
           />
         )}
       </Box>
@@ -262,9 +266,11 @@ const RevisionContent = (
   );
 };
 
-export const DocumentRevisionsDialog = (
-  { onOpenChange, open, ...props }: Props,
-) => (
+export const DocumentRevisionsDialog = ({
+  onOpenChange,
+  open,
+  ...props
+}: Props) => (
   <Dialog.Root
     lazyMount
     unmountOnExit

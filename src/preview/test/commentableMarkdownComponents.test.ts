@@ -12,7 +12,6 @@ describe("commentable block highlights", () => {
   const context: CommentRenderingContextValue = {
     actions: createCommentActions(),
     commentsByLine: groupCommentsByAnchorLine([comment], [1, 5, 10, 12]),
-    commentHighlightsByLine: new Set(),
     markdown: "",
     rangeHighlights: deriveRangeHighlights([comment]),
     onCloseCommentForm: vi.fn(),
@@ -22,22 +21,20 @@ describe("commentable block highlights", () => {
   };
 
   it("highlights every overlapping block while keeping the thread at its anchor", () => {
-    for (
-      const sourceRange of [
-        { startLine: 1, endLine: 3 },
-        { startLine: 5, endLine: 8 },
-        { startLine: 10, endLine: 10 },
-      ]
-    ) {
+    for (const sourceRange of [
+      { startLine: 1, endLine: 3 },
+      { startLine: 5, endLine: 8 },
+      { startLine: 10, endLine: 10 },
+    ]) {
       const props = getCommentableBlockProps(context, sourceRange);
-      expect(props.hasContinuousHighlight).toBe(true);
+      expect(props.hasRangeHighlight).toBe(true);
       expect(props.comments).toEqual(
         sourceRange.startLine === 10 ? [comment] : [],
       );
     }
     expect(
       getCommentableBlockProps(context, { startLine: 12, endLine: 12 })
-        .hasContinuousHighlight,
+        .hasRangeHighlight,
     ).toBe(false);
   });
 
@@ -53,13 +50,12 @@ describe("commentable block highlights", () => {
         getCommentableBlockProps(selectedContext, {
           startLine,
           endLine: startLine,
-        })
-          .hasContinuousHighlight,
+        }).hasRangeHighlight,
       ).toBe(true);
     }
     expect(
       getCommentableBlockProps(selectedContext, { startLine: 13, endLine: 13 })
-        .hasContinuousHighlight,
+        .hasRangeHighlight,
     ).toBe(false);
   });
 });

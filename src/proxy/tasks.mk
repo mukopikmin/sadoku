@@ -1,4 +1,4 @@
-.PHONY: proxy-check-format proxy-vet proxy-test proxy-build proxy-run
+.PHONY: proxy-check-format proxy-vet proxy-lint proxy-test proxy-build proxy-run
 
 proxy-check-format:
 	test -z "$$(gofmt -l src/proxy)"
@@ -14,3 +14,6 @@ proxy-build:
 
 proxy-run:
 	$(GO) -C src/proxy run ./cmd/revision-proxy
+
+proxy-lint:
+	cd src/proxy && $(GOLANGCI_LINT) run --config ../../.golangci.yml ./...

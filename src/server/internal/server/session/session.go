@@ -92,7 +92,7 @@ func ReadMarkdown(ctx context.Context, source string) (string, error) {
 		}
 		return "", fmt.Errorf("fetch failed")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("Failed to fetch Markdown URL: %s", strings.TrimRight(resp.Status, " \t\r\n"))
 	}

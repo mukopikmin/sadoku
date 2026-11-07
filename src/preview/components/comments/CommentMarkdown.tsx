@@ -15,18 +15,18 @@ export type CommentMarkdownProps = {
   sourceText?: string;
 };
 
-export const CommentMarkdown = (
-  { children, sourceText }: CommentMarkdownProps,
-) => {
+export const CommentMarkdown = ({
+  children,
+  sourceText,
+}: CommentMarkdownProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
     void initializeMermaid({
       root: containerRef.current,
-      theme: document.documentElement.dataset.theme === "dark"
-        ? "dark"
-        : "default",
+      theme:
+        document.documentElement.dataset.theme === "dark" ? "dark" : "default",
     });
   }, [children]);
 

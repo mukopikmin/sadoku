@@ -3,7 +3,7 @@ import type { ActiveComment } from "../../models/comment";
 export type CommentRange = { endLine: number; startLine: number };
 
 export type RangeHighlight = CommentRange & {
-  kind: "comment" | "selection";
+  kind: "comment" | "selection" | "hover";
 };
 
 export type CommentRangeSelection = {
@@ -11,28 +11,28 @@ export type CommentRangeSelection = {
   range?: CommentRange;
 };
 
-export const isLineInRange = (
-  line: number,
-  range: CommentRange,
-): boolean => line >= range.startLine && line <= range.endLine;
+export const isLineInRange = (line: number, range: CommentRange): boolean =>
+  line >= range.startLine && line <= range.endLine;
 
 export const getCommentAnchorLine = (
   comment: CommentRange,
   commentableLines: readonly number[],
 ): number => {
   const linesInRange = commentableLines.filter((line) =>
-    isLineInRange(line, comment)
+    isLineInRange(line, comment),
   );
   if (linesInRange.length > 0) return linesInRange.at(-1)!;
   if (commentableLines.length === 0) return comment.endLine;
 
   return commentableLines.slice(1).reduce((closest, line) => {
-    const distance = line < comment.startLine
-      ? comment.startLine - line
-      : line - comment.endLine;
-    const closestDistance = closest < comment.startLine
-      ? comment.startLine - closest
-      : closest - comment.endLine;
+    const distance =
+      line < comment.startLine
+        ? comment.startLine - line
+        : line - comment.endLine;
+    const closestDistance =
+      closest < comment.startLine
+        ? comment.startLine - closest
+        : closest - comment.endLine;
     return distance < closestDistance ? line : closest;
   }, commentableLines[0]);
 };
@@ -44,10 +44,7 @@ export const groupCommentsByAnchorLine = (
   const grouped = new Map<number, ActiveComment[]>();
   for (const comment of comments) {
     const anchorLine = getCommentAnchorLine(comment, commentableLines);
-    grouped.set(anchorLine, [
-      ...(grouped.get(anchorLine) ?? []),
-      comment,
-    ]);
+    grouped.set(anchorLine, [...(grouped.get(anchorLine) ?? []), comment]);
   }
   return grouped;
 };
@@ -55,8 +52,9 @@ export const groupCommentsByAnchorLine = (
 export const mergeCommentRanges = (
   ranges: readonly CommentRange[],
 ): CommentRange[] => {
-  const sorted = [...ranges].sort((left, right) =>
-    left.startLine - right.startLine || left.endLine - right.endLine
+  const sorted = [...ranges].sort(
+    (left, right) =>
+      left.startLine - right.startLine || left.endLine - right.endLine,
   );
   const merged: CommentRange[] = [];
   for (const range of sorted) {
@@ -80,7 +78,8 @@ export const subtractCommentRange = (
     if (
       excluded.endLine < range.startLine ||
       excluded.startLine > range.endLine
-    ) return [{ ...range }];
+    )
+      return [{ ...range }];
 
     const remaining: CommentRange[] = [];
     if (excluded.startLine > range.startLine) {
@@ -103,33 +102,18 @@ export const deriveRangeHighlights = (
   comments: readonly CommentRange[],
   selectedRange?: CommentRange,
 ): RangeHighlight[] => {
-  const continuousCommentRanges = mergeCommentRanges(
-    comments.filter((comment) => comment.startLine < comment.endLine),
-  );
-  const continuousSelectedRange = selectedRange &&
-      selectedRange.startLine < selectedRange.endLine
-    ? selectedRange
-    : undefined;
+  const commentRanges = mergeCommentRanges(comments);
 
   return [
-    ...subtractCommentRange(
-      continuousCommentRanges,
-      continuousSelectedRange,
-    ).map((range) => ({ ...range, kind: "comment" as const })),
-    ...(continuousSelectedRange
-      ? [{ ...continuousSelectedRange, kind: "selection" as const }]
+    ...subtractCommentRange(commentRanges, selectedRange).map((range) => ({
+      ...range,
+      kind: "comment" as const,
+    })),
+    ...(selectedRange
+      ? [{ ...selectedRange, kind: "selection" as const }]
       : []),
   ];
 };
-
-export const getSingleLineCommentHighlights = (
-  comments: readonly CommentRange[],
-): Set<number> =>
-  new Set(
-    comments.filter((comment) => comment.startLine === comment.endLine).map(
-      (comment) => comment.startLine,
-    ),
-  );
 
 export const resolveCommentRangeSelection = (
   currentRange: CommentRange | undefined,
@@ -140,7 +124,8 @@ export const resolveCommentRangeSelection = (
   if (
     currentRange?.startLine === clickedRange.startLine &&
     currentRange.endLine === clickedRange.endLine
-  ) return {};
+  )
+    return {};
 
   if (!extend || anchorLine === undefined) {
     return {

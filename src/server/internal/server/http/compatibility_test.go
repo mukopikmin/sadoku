@@ -111,7 +111,7 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer database.Close()
+			defer func() { _ = database.Close() }()
 			repo := &storage.Repository{DB: database, Path: filepath.Join(directory, "comments", "sadoku.sqlite3")}
 			s, err := session.New(context.Background(), source, repo, config.Defaults())
 			if err != nil {

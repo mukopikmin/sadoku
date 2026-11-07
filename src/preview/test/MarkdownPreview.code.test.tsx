@@ -28,8 +28,9 @@ describe("MarkdownPreview code and Mermaid", () => {
       expect(block.querySelector("pre")?.textContent).toContain(source);
       if (language === "ts") {
         await waitFor(() => {
-          expect(block.querySelector("code.language-ts span[style]")).not
-            .toBeNull();
+          expect(
+            block.querySelector("code.language-ts span[style]"),
+          ).not.toBeNull();
         });
       }
       fireEvent.click(block.querySelector("pre")!);
@@ -46,7 +47,7 @@ describe("MarkdownPreview code and Mermaid", () => {
           1,
           "Review this code block.",
           3,
-        )
+        ),
       );
     },
   );
@@ -72,8 +73,8 @@ plain text
       "TypeScript",
     ]);
     expect(
-      labels.map((label) =>
-        label.querySelector('svg[aria-hidden="true"]') !== null
+      labels.map(
+        (label) => label.querySelector('svg[aria-hidden="true"]') !== null,
       ),
     ).toEqual([true, true]);
     expect(container.querySelector("code.language-plaintext")).not.toBeNull();
@@ -105,9 +106,11 @@ Paragraph with **formatting**.
 `);
 
     fireEvent.click(container.querySelector(".commentable-content p")!);
-    expect(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    })).not.toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).not.toBeNull();
     const rawMarkdownButton = screen.getByRole("button", {
       name: "View raw Markdown for line 3",
     });
@@ -123,9 +126,11 @@ Paragraph with **formatting**.
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() =>
-      expect(screen.queryByRole("dialog", {
-        name: "Raw Markdown — line 3",
-      })).toBeNull()
+      expect(
+        screen.queryByRole("dialog", {
+          name: "Raw Markdown — line 3",
+        }),
+      ).toBeNull(),
     );
   });
 
@@ -177,20 +182,18 @@ Paragraph with **formatting**.
     );
 
     fireEvent.click(container.querySelector("table")!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on lines 1-3",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on lines 1-3",
+      }),
+    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Review this table." },
     });
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(
-        1,
-        "Review this table.",
-        3,
-      )
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Review this table.", 3),
     );
   });
 
@@ -273,8 +276,9 @@ graph TD
 `);
 
     await waitFor(() => {
-      expect(container.querySelector("code.language-md span[style]")).not
-        .toBeNull();
+      expect(
+        container.querySelector("code.language-md span[style]"),
+      ).not.toBeNull();
     });
     expect(container.textContent).toContain("```mermaid");
     expect(container.textContent).toContain("A --> B");

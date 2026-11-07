@@ -30,13 +30,14 @@ const chooseRevision = async (name: string | RegExp) => {
   const trigger = await screen.findByRole("combobox", { name: "Revision" });
   await waitFor(() => {
     expect(screen.queryByText("Loading saved revisions...")).toBeNull();
-    expect(screen.queryByText("Loading previous revision for comparison..."))
-      .toBeNull();
+    expect(
+      screen.queryByText("Loading previous revision for comparison..."),
+    ).toBeNull();
   });
   fireEvent.click(trigger);
   fireEvent.click(await screen.findByRole("option", { name }));
   await waitFor(() =>
-    expect(trigger.getAttribute("aria-expanded")).toBe("false")
+    expect(trigger.getAttribute("aria-expanded")).toBe("false"),
   );
 };
 
@@ -49,11 +50,14 @@ it("confirms restoration, allows cancellation and retains errors for retry", asy
       if (request.url.endsWith("/RestoreDocumentRevision")) {
         restores.push(await request.json());
         return restores.length === 1
-          ? Response.json({
-            code: "aborted",
-            message:
-              "The file has changed. Reload the document before restoring.",
-          }, { status: 409 })
+          ? Response.json(
+              {
+                code: "aborted",
+                message:
+                  "The file has changed. Reload the document before restoring.",
+              },
+              { status: 409 },
+            )
           : Response.json({});
       }
       return Response.json(
@@ -64,8 +68,9 @@ it("confirms restoration, allows cancellation and retains errors for retry", asy
     }),
   );
   render(<DocumentRevisionsDialog {...props} canRestore />);
-  expect(screen.queryByRole("button", { name: "Restore this revision" }))
-    .toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Restore this revision" }),
+  ).toBeNull();
   await chooseRevision(/Saved snapshot/);
   fireEvent.click(
     await screen.findByRole("button", { name: "Restore this revision" }),
@@ -87,11 +92,14 @@ it("confirms restoration, allows cancellation and retains errors for retry", asy
   expect(props.onOpenChange).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Restore file" }));
   await waitFor(() => expect(props.onOpenChange).toHaveBeenCalledWith(false));
-  expect(restores).toEqual([{
-    documentId: "7",
-    revisionId: "2",
-    expectedMarkdown: props.markdown,
-  }, { documentId: "7", revisionId: "2", expectedMarkdown: props.markdown }]);
+  expect(restores).toEqual([
+    {
+      documentId: "7",
+      revisionId: "2",
+      expectedMarkdown: props.markdown,
+    },
+    { documentId: "7", revisionId: "2", expectedMarkdown: props.markdown },
+  ]);
 });
 
 it("offers the saved Current entry for a deleted local file but hides restore for remote documents", async () => {
@@ -109,11 +117,13 @@ it("offers the saved Current entry for a deleted local file but hides restore fo
   const { rerender } = render(
     <DocumentRevisionsDialog {...props} canRestore deleted />,
   );
-  expect(await screen.findByRole("button", { name: "Restore this revision" }))
-    .not.toBeNull();
+  expect(
+    await screen.findByRole("button", { name: "Restore this revision" }),
+  ).not.toBeNull();
   rerender(<DocumentRevisionsDialog {...props} canRestore={false} deleted />);
-  expect(screen.queryByRole("button", { name: "Restore this revision" }))
-    .toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Restore this revision" }),
+  ).toBeNull();
 });
 
 it("loads the latest comparison and switches historical and empty Markdown without tabs", async () => {
@@ -132,9 +142,10 @@ it("loads the latest comparison and switches historical and empty Markdown witho
       return Response.json({
         id: revisionId,
         recordedAt,
-        markdown: Number(revisionId) === 1
-          ? ""
-          : "# Previous\n\n*Old content*\n\n<script>alert(1)</script>",
+        markdown:
+          Number(revisionId) === 1
+            ? ""
+            : "# Previous\n\n*Old content*\n\n<script>alert(1)</script>",
       });
     }),
   );
@@ -146,19 +157,21 @@ it("loads the latest comparison and switches historical and empty Markdown witho
   await waitFor(() => expect(bodyRequests).toEqual([3]));
   expect(dialog.queryByRole("tab")).toBeNull();
   await chooseRevision(/1 earlier/);
-  expect(await dialog.findByRole("heading", { name: "Previous" })).not
-    .toBeNull();
+  expect(
+    await dialog.findByRole("heading", { name: "Previous" }),
+  ).not.toBeNull();
   expect(dialog.getByText("Old content").tagName).toBe("EM");
   expect(
-    dialog.getByRole("region", { name: "Revision content" }).querySelector(
-      "script",
-    ),
+    dialog
+      .getByRole("region", { name: "Revision content" })
+      .querySelector("script"),
   ).toBeNull();
   expect(dialog.queryByRole("button", { name: /Add comment/ })).toBeNull();
   await chooseRevision(/2 earlier/);
   await waitFor(() =>
-    expect(dialog.getByRole("region", { name: "Revision content" }).textContent)
-      .toBe("")
+    expect(
+      dialog.getByRole("region", { name: "Revision content" }).textContent,
+    ).toBe(""),
   );
   expect(bodyRequests).toEqual([3, 2, 1]);
   await chooseRevision("Current");
@@ -170,13 +183,19 @@ it("loads the latest comparison and switches historical and empty Markdown witho
 });
 
 it("keeps the current document visible when there is no saved history", async () => {
-  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ revisions: [] })));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => Response.json({ revisions: [] })),
+  );
   render(<DocumentRevisionsDialog {...props} />);
-  expect(await screen.findByText("No saved revisions are available.")).not
-    .toBeNull();
+  expect(
+    await screen.findByText("No saved revisions are available."),
+  ).not.toBeNull();
   expect(screen.getByRole("heading", { name: "Current" })).not.toBeNull();
   await chooseRevision("Current");
-  expect(screen.getByRole("combobox", { name: "Revision" }).textContent).toBe("Current");
+  expect(screen.getByRole("combobox", { name: "Revision" }).textContent).toBe(
+    "Current",
+  );
 });
 
 it("shows only Current for a newly initialized file and keeps its first snapshot stored", async () => {
@@ -195,9 +214,9 @@ it("shows only Current for a newly initialized file and keeps its first snapshot
   await screen.findByText("No previous revision is available for comparison.");
   fireEvent.click(screen.getByRole("combobox", { name: "Revision" }));
   await waitFor(() => {
-    const options = screen.getAllByRole("option").filter((option) =>
-      option.closest('[role="listbox"]')
-    );
+    const options = screen
+      .getAllByRole("option")
+      .filter((option) => option.closest('[role="listbox"]'));
     expect(options).toHaveLength(1);
     expect(options[0].textContent).toBe("Current");
   });
@@ -225,16 +244,15 @@ it("does not fetch while closed and refreshes the list with Current selected whe
   await screen.findByRole("heading", { name: "Saved" });
   rerender(<DocumentRevisionsDialog {...props} open={false} />);
   await waitFor(() =>
-    expect(screen.queryByRole("dialog", { name: "Document revisions" }))
-      .toBeNull()
+    expect(
+      screen.queryByRole("dialog", { name: "Document revisions" }),
+    ).toBeNull(),
   );
   newest = 4;
   rerender(<DocumentRevisionsDialog {...props} />);
   expect(
     (await screen.findByRole("combobox", { name: "Revision" })).textContent,
-  ).toBe(
-    "Current",
-  );
+  ).toBe("Current");
   await waitFor(() => expect(bodyRequests).toContain(4));
   await chooseRevision(/Saved snapshot/);
   await chooseRevision("Current");
@@ -242,11 +260,17 @@ it("does not fetch while closed and refreshes the list with Current selected whe
 });
 
 it("explains a history failure and lets the user retry while Current remains available", async () => {
-  const fetchMock = vi.fn().mockResolvedValueOnce(
-    Response.json({ code: "internal", message: "Unavailable" }, {
-      status: 500,
-    }),
-  ).mockResolvedValue(Response.json({ revisions: [] }));
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(
+      Response.json(
+        { code: "internal", message: "Unavailable" },
+        {
+          status: 500,
+        },
+      ),
+    )
+    .mockResolvedValue(Response.json({ revisions: [] }));
   vi.stubGlobal("fetch", fetchMock);
   render(<DocumentRevisionsDialog {...props} />);
   expect(await screen.findByRole("alert")).toHaveProperty(
@@ -285,7 +309,7 @@ const selectComparison = async (
   );
   await chooseRevision(/Saved snapshot/);
   await waitFor(() =>
-    expect(screen.queryByText("Loading revision...")).toBeNull()
+    expect(screen.queryByText("Loading revision...")).toBeNull(),
   );
 };
 
@@ -294,15 +318,18 @@ it("compares the selected revision with its own predecessor and highlights chang
     "# Unchanged\n\nUpdated paragraph\n\n- Kept item\n- Added item\n\nKept paragraph",
     "# Unchanged\n\nOriginal paragraph\n\n- Kept item\n- Removed item\n\nKept paragraph",
   );
-  expect(screen.getByRole("group", {
-    name: "Line changes from previous revision: 2 added, 2 removed",
-  })).not.toBeNull();
+  expect(
+    screen.getByRole("group", {
+      name: "Line changes from previous revision: 2 added, 2 removed",
+    }),
+  ).not.toBeNull();
   expect(screen.getByText("Updated paragraph").closest("ins")).not.toBeNull();
   expect(screen.getByText("Added item").closest("ins")).not.toBeNull();
   expect(screen.getByText("Kept item").closest("ins")).toBeNull();
   expect(screen.getByText("Kept paragraph").closest("ins")).toBeNull();
-  expect(screen.getByRole("heading", { name: "Unchanged" }).closest("ins"))
-    .toBeNull();
+  expect(
+    screen.getByRole("heading", { name: "Unchanged" }).closest("ins"),
+  ).toBeNull();
   expect(screen.getByText("+2")).not.toBeNull();
   expect(screen.getByText("-2")).not.toBeNull();
   expect(screen.queryByText("Original paragraph")).toBeNull();
@@ -326,13 +353,15 @@ it.each([
     const heading = screen.getByRole("heading", { name: current.slice(2) });
     expect(heading.closest("ins") !== null).toBe(added > 0);
     if (added + removed === 0) {
-      expect(screen.getByText("No changes from the previous revision.")).not
-        .toBeNull();
+      expect(
+        screen.getByText("No changes from the previous revision."),
+      ).not.toBeNull();
     } else {
-      expect(screen.getByRole("group", {
-        name:
-          `Line changes from previous revision: ${added} added, ${removed} removed`,
-      })).not.toBeNull();
+      expect(
+        screen.getByRole("group", {
+          name: `Line changes from previous revision: ${added} added, ${removed} removed`,
+        }),
+      ).not.toBeNull();
     }
   },
 );
@@ -341,8 +370,11 @@ it("preserves nested list, table and code highlighting against a saved revision"
   const saved =
     "- Parent\n  - Same child\n  - Old child\n\n| Name | Value |\n| --- | --- |\n| item | old |\n\n```txt\nold code\n```";
   await selectComparison(
-    saved.replace("Parent", "New parent").replace("Old child", "New child")
-      .replace("| old |", "| new |").replace("old code", "new code"),
+    saved
+      .replace("Parent", "New parent")
+      .replace("Old child", "New child")
+      .replace("| old |", "| new |")
+      .replace("old code", "new code"),
     saved,
   );
   expect(screen.getByText("New parent").closest("ins")).not.toBeNull();
@@ -371,7 +403,9 @@ it("joins changed paragraphs across hidden HTML comments", async () => {
     false,
   );
   expect(screen.queryByText(/Kept comment/)).toBeNull();
-  const preview = screen.getByText("First change").closest<HTMLElement>(".markdown-preview")!;
+  const preview = screen
+    .getByText("First change")
+    .closest<HTMLElement>(".markdown-preview")!;
   expect(measureRevisionHighlightLayouts(preview)).toEqual([
     { kind: "addition", top: 0, bottom: 0 },
   ]);
@@ -423,8 +457,9 @@ it("compares front matter without shifting body line numbers", async () => {
     "descriptionnew",
   );
   expect(screen.getByText("New body").closest("ins")).not.toBeNull();
-  expect(screen.getByRole("heading", { name: "Kept" }).closest("ins"))
-    .toBeNull();
+  expect(
+    screen.getByRole("heading", { name: "Kept" }).closest("ins"),
+  ).toBeNull();
   expect(screen.queryByText("Old body")).toBeNull();
 });
 
@@ -443,19 +478,22 @@ it("clears the old comparison while another saved revision loads and compares th
         });
       }
       const { revisionId } = await request.json();
-      return revisionId === "1" ? pending : Response.json({
-        id: "2",
-        recordedAt,
-        markdown: "# Old",
-        previousMarkdown: "# Older",
-      });
+      return revisionId === "1"
+        ? pending
+        : Response.json({
+            id: "2",
+            recordedAt,
+            markdown: "# Old",
+            previousMarkdown: "# Older",
+          });
     }),
   );
   render(<DocumentRevisionsDialog {...props} markdown="# Current" />);
   await chooseRevision(/Saved snapshot/);
   await screen.findByRole("heading", { name: "Old" });
-  expect(screen.getByRole("heading", { name: "Old" }).closest("ins")).not
-    .toBeNull();
+  expect(
+    screen.getByRole("heading", { name: "Old" }).closest("ins"),
+  ).not.toBeNull();
   await chooseRevision(/1 earlier/);
   await screen.findByText("Loading revision...");
   expect(screen.queryByRole("heading", { name: "Old" })).toBeNull();

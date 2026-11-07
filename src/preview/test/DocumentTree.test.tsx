@@ -17,13 +17,15 @@ describe("DocumentTree", () => {
     const onSelectDocument = vi.fn();
     render(
       <DocumentTree
-        documents={[{
-          id: 1,
-          deleted: false,
-          relativePath: "docs/guides/setup.md",
-          title: "setup.md",
-          tags: [],
-        }]}
+        documents={[
+          {
+            id: 1,
+            deleted: false,
+            relativePath: "docs/guides/setup.md",
+            title: "setup.md",
+            tags: [],
+          },
+        ]}
         onSelectDocument={onSelectDocument}
         onCreateDocument={onCreateDocument}
       />,
@@ -55,9 +57,9 @@ describe("DocumentTree", () => {
     );
 
     const tree = screen.getByRole("tree", { name: "Documents" });
-    const folder = within(tree).getByText("folder").closest(
-      '[role="treeitem"]',
-    )!;
+    const folder = within(tree)
+      .getByText("folder")
+      .closest('[role="treeitem"]')!;
     const item = within(folder).getByRole("treeitem", { name: "file.md" });
     expect(folder.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(item);
@@ -153,8 +155,9 @@ describe("DocumentTree", () => {
       const tree = screen.getByRole("tree", { name: "Documents" });
       expect(within(tree).getByText("reference.md")).toBeTruthy();
       expect(within(tree).getByText("start.md")).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Clear filters" }))
-        .toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Clear filters" }),
+      ).toBeNull();
     });
   });
 
@@ -190,16 +193,18 @@ describe("DocumentTree", () => {
         />,
       );
 
-      expect(screen.queryByRole("button", { name: "Clear filters" }))
-        .toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Clear filters" }),
+      ).toBeNull();
       const input = screen.getByRole("combobox", { name: "Search tags" });
       for (const name of ["API", "Guide"].slice(0, tagCount)) {
         fireEvent.click(input);
         fireEvent.click(await screen.findByRole("option", { name }));
         await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
       }
-      expect(screen.getByText(`Showing ${tagCount} of 3 documents`))
-        .toBeTruthy();
+      expect(
+        screen.getByText(`Showing ${tagCount} of 3 documents`),
+      ).toBeTruthy();
       expect(screen.queryByText("untagged.md")).toBeNull();
 
       fireEvent.change(input, { target: { value: "gu" } });
@@ -213,8 +218,9 @@ describe("DocumentTree", () => {
         expect(within(tree).getByText("untagged.md")).toBeTruthy();
         expect((input as HTMLInputElement).value).toBe("");
         expect(screen.queryByText(/Showing .* documents/)).toBeNull();
-        expect(screen.queryByRole("button", { name: "Clear filters" }))
-          .toBeNull();
+        expect(
+          screen.queryByRole("button", { name: "Clear filters" }),
+        ).toBeNull();
       });
     },
   );
@@ -262,10 +268,12 @@ describe("DocumentTree", () => {
       expect(within(tree).queryByText("api.md")).toBeNull();
       expect(within(tree).getByText("guide.md")).toBeTruthy();
       expect(within(tree).queryByText("untagged.md")).toBeNull();
-      expect(screen.queryByRole("button", { name: "Remove API filter" }))
-        .toBeNull();
-      expect(screen.getByRole("button", { name: "Remove Guide filter" }))
-        .toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: "Remove API filter" }),
+      ).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Remove Guide filter" }),
+      ).toBeTruthy();
     });
 
     fireEvent.click(
@@ -276,8 +284,9 @@ describe("DocumentTree", () => {
       expect(within(tree).getByText("api.md")).toBeTruthy();
       expect(within(tree).getByText("guide.md")).toBeTruthy();
       expect(within(tree).getByText("untagged.md")).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Clear filters" }))
-        .toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Clear filters" }),
+      ).toBeNull();
     });
   });
 });

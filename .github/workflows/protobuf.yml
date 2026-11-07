@@ -5,8 +5,8 @@ on:
     paths:
       - .github/workflows/protobuf.yml
       - Makefile
-      - src/proxy/tasks.mk
-      - .prettierrc.json
+      - src/proto/tasks.mk
+      - .oxfmtrc.json
       - src/proto/buf.gen.yaml
       - src/proto/buf.yaml
       - src/proto/package.json
@@ -22,8 +22,8 @@ on:
     paths:
       - .github/workflows/protobuf.yml
       - Makefile
-      - src/proxy/tasks.mk
-      - .prettierrc.json
+      - src/proto/tasks.mk
+      - .oxfmtrc.json
       - src/proto/buf.gen.yaml
       - src/proto/buf.yaml
       - src/proto/package.json
@@ -64,7 +64,7 @@ jobs:
           cache-dependency-path: |
             src/server/go.sum
             Makefile
-            src/*/tasks.mk
+            src/proto/tasks.mk
 
       - name: Install Go protobuf generators
         run: make proto-tools

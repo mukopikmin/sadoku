@@ -82,9 +82,7 @@ export const TagPicker = ({
             key={tag.id}
             style={getTagColorStyle(tag.backgroundColor)}
           >
-            <chakra.span css={tagsInputStyles.itemText}>
-              {tag.name}
-            </chakra.span>
+            <chakra.span css={tagsInputStyles.itemText}>{tag.name}</chakra.span>
             <chakra.button
               aria-label={removeLabel(tag)}
               css={tagsInputStyles.itemDeleteTrigger}
@@ -101,7 +99,8 @@ export const TagPicker = ({
           css={tagsInputStyles.input}
           onKeyDown={(event) => {
             if (
-              onInputSubmit && event.key === "Enter" &&
+              onInputSubmit &&
+              event.key === "Enter" &&
               !event.nativeEvent.isComposing &&
               !event.currentTarget.getAttribute("aria-activedescendant")
             ) {
@@ -123,14 +122,14 @@ export const TagPicker = ({
               <Combobox.ItemGroupLabel>Tags</Combobox.ItemGroupLabel>
               {collection.items.map((item) => (
                 <Combobox.Item item={item} key={item.value}>
-                  {item.tag
-                    ? (
-                      <TagLabel
-                        backgroundColor={item.tag.backgroundColor}
-                        name={item.tag.name}
-                      />
-                    )
-                    : item.label}
+                  {item.tag ? (
+                    <TagLabel
+                      backgroundColor={item.tag.backgroundColor}
+                      name={item.tag.name}
+                    />
+                  ) : (
+                    item.label
+                  )}
                   <Combobox.ItemIndicator />
                 </Combobox.Item>
               ))}

@@ -46,7 +46,10 @@ them when making changes.
   functions and plain data with explicit persistence ports.
 - Run `make build-client` before Go builds or tests; `src/server/internal/preview/assets.go`
   embeds the generated client. Never commit client build outputs.
-- Validate Go changes with `make check-go-format`, `make vet`, and `make test-server`.
+- Validate Go changes with `make check-go-format`, `make lint-go`, `make vet`, and `make test-server`.
+  For proxy changes, use `make proxy-check-format`, `make proxy-lint`, and
+  `make proxy-test`. Install the golangci-lint version pinned in
+  `.golangci-lint-version`; keep local and CI lint checks on the same version.
   Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
 - Keep `go.mod` and `go.sum` consistent. SQLite uses `mattn/go-sqlite3` and
   requires `CGO_ENABLED=1` and a C compiler. Build release binaries on their
@@ -54,6 +57,13 @@ them when making changes.
 - `src/server/internal/server/db/migrations/legacy.json` preserves the exact original migration
   statements and checksums; treat it as append-only. Never rewrite an applied
   statement or checksum during migration to Go.
+- Add new database migrations to `src/server/internal/server/db/migrations/current.json`. For
+  constraints SQLite cannot add with ALTER TABLE, use a transactional table
+  rebuild with the original table name, IDs, foreign keys, defaults, and indexes
+  preserved. Follow `src/server/internal/server/db/migrations/README.md`; verify fresh/upgrade
+  schema equality, repeat execution, rollback, and related-data preservation.
+  Document explicit backfill policies for missing historical metadata; never
+  infer unknown original text from the current document.
 - Generate Go and TypeScript RPC bindings together using
   `make proto-generate`.
 - Keep routing and API adaptation under `http/`, session preparation under
@@ -83,7 +93,8 @@ them when making changes.
 - Keep tooling tests beside the implementation as `*_test.go`. Tests may execute
   scripts under `scripts/`; the inline GitHub JavaScript action test uses Node.
 - Keep release validation and approval gates when changing those tools.
-- Use Prettier for generated TypeScript bindings and the Node action test.
+- Use oxfmt for preview TypeScript, generated bindings, and the Node action test.
+- Use oxlint for handwritten TypeScript and React Hooks checks via `make lint-client`.
 
 ## 4. Preview Client and Generated Assets
 
@@ -206,6 +217,15 @@ them when making changes.
 
 ## 8. Documentation Scope
 
+- Keep maintained usage, specification, development, and operations documents
+  directly under `docs/`. Put task-specific plans, investigations, migration
+  reports, and verification notes under `docs/work/`; these may be committed.
+- Start each work document with its purpose, related issue or pull request
+  (or explicitly state that none is recorded), and a concrete deletion condition.
+  Before completing the related work, check that condition, move any durable
+  knowledge into maintained documentation or a README beside the relevant code
+  or fixtures, and delete the work document when its condition is met. Do not
+  invent issue references or treat work documents as maintained specifications.
 - Keep user-facing essentials together in the root `README.md`: what Sadoku
   does, installation, basic review usage, meaningful limitations, settings and
   storage, and developer prerequisites plus build/test commands.
@@ -220,3 +240,16 @@ them when making changes.
 - During review, remove repetition, keep explanations proportional to the task,
   and check links when moving or deleting documentation. Link to specialized
   references where needed without duplicating their contents.
+
+## 9. APM Skills Package Versioning
+
+- When adding, removing, or changing a distributed skill under `skills/`,
+  update the package version in root `apm.yml` in the same pull request.
+- Use a minor version bump for new skills or backward-compatible capabilities,
+  and a patch bump for corrections. Flag breaking changes explicitly and choose
+  the appropriate version before submitting the pull request.
+- Before creating or updating a pull request, compare `skills/` and `apm.yml`
+  against the base branch to verify that skill changes include a version bump.
+  One bump covers the pull request; do not bump again for each follow-up commit.
+- This version belongs to the APM skills package. Updating it does not require
+  tagging or publishing a Sadoku application release.

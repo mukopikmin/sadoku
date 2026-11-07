@@ -38,9 +38,10 @@ export const useCollapsedDocumentHeader = (
     update();
     globalThis.addEventListener("scroll", scheduleUpdate, { passive: true });
     globalThis.addEventListener("resize", scheduleUpdate);
-    const observer = typeof ResizeObserver === "undefined"
-      ? undefined
-      : new ResizeObserver(scheduleUpdate);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(scheduleUpdate);
     observer?.observe(header);
     observer?.observe(documentHeader);
 
