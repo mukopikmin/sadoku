@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:bookworm-slim AS client
+FROM node:26.13.0-bookworm-slim AS client
 
 WORKDIR /workspace
 
@@ -11,7 +11,7 @@ RUN --mount=type=secret,id=proxy_ca \
 COPY src/preview/ ./src/preview/
 RUN npm --prefix src/preview run build
 
-FROM golang:1.26.10-bookworm AS go-toolchain
+FROM golang:1.27.3-bookworm AS go-toolchain
 
 FROM debian:bookworm-slim AS builder
 
