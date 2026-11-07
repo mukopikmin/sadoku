@@ -22,7 +22,7 @@ func directoryRepository(t *testing.T) *storage.Repository {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	return &storage.Repository{DB: database, Path: path}
 }
 
@@ -107,7 +107,7 @@ func TestDirectoryLimitUsesFilesystemEnumeration(t *testing.T) {
 		t.Fatal(err)
 	}
 	entries, err := directory.ReadDir(-1)
-	directory.Close()
+	_ = directory.Close()
 	if err != nil {
 		t.Fatal(err)
 	}

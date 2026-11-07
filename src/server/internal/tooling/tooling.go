@@ -136,8 +136,8 @@ func installInto(dir, version string, compile func(string, string) error) error 
 		return err
 	}
 	name := temp.Name()
-	temp.Close()
-	defer os.Remove(name)
+	_ = temp.Close()
+	defer func() { _ = os.Remove(name) }()
 	if err = compile(version, name); err != nil {
 		return err
 	}
@@ -156,13 +156,13 @@ func atomicWrite(path string, data []byte, mode os.FileMode) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(f.Name())
+	defer func() { _ = os.Remove(f.Name()) }()
 	if _, err = f.Write(data); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	if err = f.Chmod(mode); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	if err = f.Close(); err != nil {

@@ -78,7 +78,7 @@ func serve(ctx context.Context, listener net.Listener, handler http.Handler, log
 		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		// No whole-request read/write deadline: uploads and SSE may be long-lived.
 	}
-	defer server.Close()
+	defer func() { _ = server.Close() }()
 	finished := make(chan error, 1)
 	go func() { finished <- server.Serve(listener) }()
 	select {
