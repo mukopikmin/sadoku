@@ -36,23 +36,29 @@ it.each(["create", "update", "clear"])(
   async (operation) => {
     let saved = operation === "create" ? [] : [note("Saved")];
     vi.mocked(api.loadInstructions).mockImplementation(async () => saved);
-    const mutation = operation === "create"
-      ? vi.mocked(api.createInstruction)
-      : operation === "update"
-      ? vi.mocked(api.updateInstruction)
-      : vi.mocked(api.deleteInstruction);
+    const mutation =
+      operation === "create"
+        ? vi.mocked(api.createInstruction)
+        : operation === "update"
+          ? vi.mocked(api.updateInstruction)
+          : vi.mocked(api.deleteInstruction);
     mutation.mockRejectedValueOnce(new Error("Save failed"));
     const { wrapper } = setup();
     const { result } = renderHook(() => useInstructionEditor(7, true), {
       wrapper,
     });
-    await waitFor(() => expect(result.current.query.isSuccess).toBe(true));
+    await waitFor(() =>
+      expect(result.current.state.status === "ready").toBe(true),
+    );
     const draft = operation === "clear" ? "" : "My draft";
     act(() => result.current.change(draft));
     await act(() => result.current.save());
-    expect(result.current.error).toBe("Save failed");
-    expect(result.current.content).toBe(draft);
-    expect(result.current.dirty).toBe(true);
+    expect(result.current.state).toMatchObject({
+      status: "save-error",
+      message: "Save failed",
+    });
+    expect(result.current.state).toMatchObject({ content: draft });
+    expect(result.current.state).toMatchObject({ dirty: true });
     if (operation === "clear") {
       vi.mocked(api.deleteInstruction).mockImplementationOnce(async () => {
         saved = [];
@@ -67,32 +73,87 @@ it.each(["create", "update", "clear"])(
       } else vi.mocked(api.updateInstruction).mockImplementationOnce(saveDraft);
     }
     await act(() => result.current.save());
-    await waitFor(() => expect(result.current.dirty).toBe(false));
-    expect(result.current.error).toBe("");
-    expect(result.current.content).toBe(draft);
+    await waitFor(() =>
+      expect(result.current.state).toMatchObject({ dirty: false }),
+    );
+    expect(result.current.state.status).toBe("ready");
+    expect(result.current.state).toMatchObject({ content: draft });
   },
 );
 
 it("keeps unsaved edits during a refetch and resets them on scope changes and reopening", async () => {
-  vi.mocked(api.loadInstructions).mockImplementation(async (
-    scope,
-  ) => [note(scope === "global" ? "Global" : "Local")]);
+  vi.mocked(api.loadInstructions).mockImplementation(async (scope) => [
+    note(scope === "global" ? "Global" : "Local"),
+  ]);
   const { client, wrapper } = setup();
   const { result, rerender } = renderHook(
     ({ scope, open }: { scope: number | "global"; open: boolean }) =>
       useInstructionEditor(scope, open),
     { wrapper, initialProps: { scope: 7, open: true } },
   );
-  await waitFor(() => expect(result.current.content).toBe("Local"));
+  await waitFor(() =>
+    expect(result.current.state).toMatchObject({ content: "Local" }),
+  );
   act(() => result.current.change("Unsaved"));
   await act(() =>
-    client.invalidateQueries({ queryKey: instructionsQueryKey(7) })
+    client.invalidateQueries({ queryKey: instructionsQueryKey(7) }),
   );
-  expect(result.current.content).toBe("Unsaved");
+  expect(result.current.state).toMatchObject({ content: "Unsaved" });
   rerender({ scope: "global", open: true });
-  await waitFor(() => expect(result.current.content).toBe("Global"));
+  await waitFor(() =>
+    expect(result.current.state).toMatchObject({ content: "Global" }),
+  );
   act(() => result.current.change("Discard on close"));
   rerender({ scope: "global", open: false });
   rerender({ scope: "global", open: true });
-  await waitFor(() => expect(result.current.content).toBe("Global"));
+  await waitFor(() =>
+    expect(result.current.state).toMatchObject({ content: "Global" }),
+  );
+});
+
+it("ignores a late save failure after switching instruction scope", async () => {
+  vi.mocked(api.loadInstructions).mockImplementation(async (scope) => [
+    note(scope === "global" ? "Global" : "Local"),
+  ]);
+  let reject!: (error: Error) => void;
+  const pending = new Promise<never>((_resolve, no) => {
+    reject = no;
+  });
+  vi.mocked(api.updateInstruction).mockReturnValue(pending);
+  const { result, rerender } = renderHook(
+    ({ scope }: { scope: number | "global" }) =>
+      useInstructionEditor(scope, true),
+    { ...setup(), initialProps: { scope: 7 } },
+  );
+  await waitFor(() =>
+    expect(result.current.state).toMatchObject({
+      status: "ready",
+      content: "Local",
+    }),
+  );
+  act(() => result.current.change("Draft"));
+  let completion!: Promise<void>;
+  act(() => {
+    completion = result.current.save();
+    void result.current.save();
+    result.current.change("Overwrite");
+  });
+  expect(result.current.state).toMatchObject({
+    status: "saving",
+    content: "Draft",
+  });
+  await waitFor(() => expect(api.updateInstruction).toHaveBeenCalledOnce());
+  rerender({ scope: "global" });
+  await waitFor(() =>
+    expect(result.current.state).toMatchObject({ content: "Global" }),
+  );
+  await act(async () => {
+    reject(new Error("Old failure"));
+    await completion;
+  });
+  expect(result.current.state).toMatchObject({
+    status: "ready",
+    content: "Global",
+    dirty: false,
+  });
 });

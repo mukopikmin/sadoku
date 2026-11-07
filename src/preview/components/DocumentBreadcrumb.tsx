@@ -11,9 +11,9 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Copy } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import type { DocumentSummary } from "../models/document";
-import { toaster } from "./ui/toaster";
+import { useDocumentBreadcrumb } from "../hooks/useDocumentBreadcrumb";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentBreadcrumbProps = {
@@ -25,45 +25,18 @@ type DocumentBreadcrumbProps = {
 
 const fileName = (path: string) => path.split("/").at(-1) ?? path;
 
-const parentDirectory = (path: string) => {
-  const separator = path.lastIndexOf("/");
-  return separator === -1 ? "" : path.slice(0, separator);
-};
-
 export const DocumentBreadcrumb = ({
   document,
   documents,
   onSelectDocument,
   onSelectDocuments,
 }: DocumentBreadcrumbProps) => {
-  const [openDirectory, setOpenDirectory] = useState<string | null>(null);
-  const parts = document.relativePath.split("/").filter(Boolean);
-  const directories = parts.slice(0, -1);
-  const directoryDocuments = openDirectory === null
-    ? []
-    : documents.filter((item) =>
-      parentDirectory(item.relativePath) === openDirectory
-    );
-
-  const handleCopyPath = async () => {
-    try {
-      await navigator.clipboard.writeText(document.relativePath);
-      toaster.create({
-        closable: true,
-        description: "The document path was copied to the clipboard.",
-        title: "Path copied",
-        type: "success",
-      });
-    } catch {
-      toaster.create({
-        closable: true,
-        description:
-          "Check your browser's clipboard permissions and try again.",
-        title: "Could not copy path",
-        type: "error",
-      });
-    }
-  };
+  const breadcrumb = useDocumentBreadcrumb(
+    document,
+    documents,
+    onSelectDocument,
+  );
+  const { parts, directories, directoryDocuments, state } = breadcrumb;
 
   return (
     <>
@@ -90,7 +63,7 @@ export const DocumentBreadcrumb = ({
                     as="button"
                     color="fg.muted"
                     cursor="pointer"
-                    onClick={() => setOpenDirectory(path)}
+                    onClick={() => breadcrumb.openDirectory(path)}
                     type="button"
                   >
                     {directory}
@@ -105,7 +78,7 @@ export const DocumentBreadcrumb = ({
             <Tooltip content="Copy path">
               <IconButton
                 aria-label="Copy path"
-                onClick={() => void handleCopyPath()}
+                onClick={() => void breadcrumb.copy()}
                 size="xs"
                 variant="ghost"
               >
@@ -118,54 +91,53 @@ export const DocumentBreadcrumb = ({
 
       <Dialog.Root
         onOpenChange={({ open }) => {
-          if (!open) setOpenDirectory(null);
+          if (!open) breadcrumb.close();
         }}
-        open={openDirectory !== null}
+        open={state.status === "directory"}
       >
         <Portal>
           <Dialog.Backdrop />
           <Dialog.Positioner>
             <Dialog.Content>
               <Dialog.Header>
-                <Dialog.Title>{openDirectory}</Dialog.Title>
+                <Dialog.Title>
+                  {state.status === "directory" ? state.path : ""}
+                </Dialog.Title>
               </Dialog.Header>
               <Dialog.Body>
-                {directoryDocuments.length === 0
-                  ? (
-                    <Text color="fg.muted">
-                      No Markdown documents in this directory.
-                    </Text>
-                  )
-                  : (
-                    <Flex direction="column" gap="2">
-                      {directoryDocuments.map((item) => (
-                        <Button
-                          aria-current={item.id === document.id
-                            ? "page"
-                            : undefined}
-                          colorPalette={item.id === document.id
-                            ? "blue"
-                            : undefined}
-                          justifyContent="flex-start"
-                          key={item.id}
-                          onClick={() => {
-                            setOpenDirectory(null);
-                            onSelectDocument(item.id);
-                          }}
-                          variant={item.id === document.id ? "subtle" : "ghost"}
-                        >
-                          <Text flex="1" textAlign="start">
-                            {fileName(item.relativePath)}
-                          </Text>
-                          {item.id === document.id && (
-                            <Badge colorPalette="blue" variant="solid">
-                              Current
-                            </Badge>
-                          )}
-                        </Button>
-                      ))}
-                    </Flex>
-                  )}
+                {directoryDocuments.length === 0 ? (
+                  <Text color="fg.muted">
+                    No Markdown documents in this directory.
+                  </Text>
+                ) : (
+                  <Flex direction="column" gap="2">
+                    {directoryDocuments.map((item) => (
+                      <Button
+                        aria-current={
+                          item.id === document.id ? "page" : undefined
+                        }
+                        colorPalette={
+                          item.id === document.id ? "blue" : undefined
+                        }
+                        justifyContent="flex-start"
+                        key={item.id}
+                        onClick={() => {
+                          breadcrumb.select(item.id);
+                        }}
+                        variant={item.id === document.id ? "subtle" : "ghost"}
+                      >
+                        <Text flex="1" textAlign="start">
+                          {fileName(item.relativePath)}
+                        </Text>
+                        {item.id === document.id && (
+                          <Badge colorPalette="blue" variant="solid">
+                            Current
+                          </Badge>
+                        )}
+                      </Button>
+                    ))}
+                  </Flex>
+                )}
               </Dialog.Body>
               <Dialog.CloseTrigger asChild>
                 <CloseButton aria-label="Close directory" size="sm" />

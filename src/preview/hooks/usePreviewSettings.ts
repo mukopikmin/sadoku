@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { loadSettings, saveSettings } from "../api/settings";
+import { errorMessage } from "../models/uiState";
 import type {
   CodeWrapMode,
   ResolvedPreviewSettings,
@@ -26,6 +27,8 @@ export const usePreviewSettings = () => {
     maxFiles: 20,
     theme: getPreferredThemeMode(),
   }));
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
   const userChangedSettings = useRef(false);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({
@@ -34,6 +37,7 @@ export const usePreviewSettings = () => {
   });
   const saveMutation = useMutation({
     mutationFn: saveSettings,
+    scope: { id: "preview-settings" },
     onSuccess: (settings) => {
       queryClient.setQueryData(settingsQueryKey, settings);
     },
@@ -77,7 +81,8 @@ export const usePreviewSettings = () => {
 
   const changeSettings = (changes: Partial<ResolvedPreviewSettings>) => {
     userChangedSettings.current = true;
-    const next = { ...settings, ...changes };
+    const next = { ...settingsRef.current, ...changes };
+    settingsRef.current = next;
     setSettings(next);
     saveMutation.mutate(next);
   };
@@ -129,6 +134,44 @@ export const usePreviewSettings = () => {
     changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
-    settings,
+    state: settingsState(
+      settings,
+      settingsQuery.isPending,
+      settingsQuery.error,
+      saveMutation.isPending,
+      saveMutation.error,
+      userChangedSettings.current,
+    ),
   };
+};
+
+export type PreviewSettingsState = { settings: ResolvedPreviewSettings } & (
+  | { status: "loading" | "ready" | "saving" }
+  | { status: "error"; operation: "load" | "save"; message: string }
+);
+
+const settingsState = (
+  settings: ResolvedPreviewSettings,
+  loading: boolean,
+  loadError: Error | null,
+  saving: boolean,
+  saveError: Error | null,
+  changed: boolean,
+): PreviewSettingsState => {
+  if (saving) return { status: "saving", settings };
+  if (saveError)
+    return {
+      status: "error",
+      operation: "save",
+      message: errorMessage(saveError),
+      settings,
+    };
+  if (!changed && loadError)
+    return {
+      status: "error",
+      operation: "load",
+      message: errorMessage(loadError),
+      settings,
+    };
+  return { status: !changed && loading ? "loading" : "ready", settings };
 };

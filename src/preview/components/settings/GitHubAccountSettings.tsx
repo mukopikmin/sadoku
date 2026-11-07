@@ -1,14 +1,8 @@
 import { Avatar, Flex, Spinner, Text } from "@chakra-ui/react";
-import { useQuery } from "@tanstack/react-query";
-import { loadGitHubAccount } from "../../api/githubAccount";
+import { useGitHubAccount } from "../../hooks/useGitHubAccount";
 
 export const GitHubAccountSettings = ({ enabled }: { enabled: boolean }) => {
-  const query = useQuery({
-    enabled,
-    queryFn: loadGitHubAccount,
-    queryKey: ["github-account"],
-    staleTime: 0,
-  });
+  const state = useGitHubAccount(enabled);
 
   return (
     <Flex alignItems="center" justifyContent="space-between" gap="4">
@@ -18,31 +12,31 @@ export const GitHubAccountSettings = ({ enabled }: { enabled: boolean }) => {
           Account authenticated with GitHub CLI
         </Text>
       </Text>
-      {query.isPending
-        ? <Spinner aria-label="Loading GitHub account" size="sm" />
-        : query.error
-        ? <Text color="fg.error">Unavailable</Text>
-        : query.data.ok
-        ? (
-          <Flex alignItems="center" gap="3">
-            <Avatar.Root size="sm">
-              <Avatar.Fallback name={query.data.account.login} />
-              <Avatar.Image
-                alt={`${query.data.account.login}'s GitHub avatar`}
-                src={query.data.account.avatarUrl}
-              />
-            </Avatar.Root>
-            <Text as="div" textAlign="end">
-              {query.data.account.name && (
-                <Text fontWeight="medium">{query.data.account.name}</Text>
-              )}
-              <Text color="fg.muted" fontSize="sm">
-                @{query.data.account.login}
-              </Text>
+      {state.status === "loading" ? (
+        <Spinner aria-label="Loading GitHub account" size="sm" />
+      ) : state.status === "error" ? (
+        <Text color="fg.error">Unavailable</Text>
+      ) : state.status === "authenticated" ? (
+        <Flex alignItems="center" gap="3">
+          <Avatar.Root size="sm">
+            <Avatar.Fallback name={state.account.login} />
+            <Avatar.Image
+              alt={`${state.account.login}'s GitHub avatar`}
+              src={state.account.avatarUrl}
+            />
+          </Avatar.Root>
+          <Text as="div" textAlign="end">
+            {state.account.name && (
+              <Text fontWeight="medium">{state.account.name}</Text>
+            )}
+            <Text color="fg.muted" fontSize="sm">
+              @{state.account.login}
             </Text>
-          </Flex>
-        )
-        : <Text color="fg.muted">Not authenticated</Text>}
+          </Text>
+        </Flex>
+      ) : (
+        <Text color="fg.muted">Not authenticated</Text>
+      )}
     </Flex>
   );
 };

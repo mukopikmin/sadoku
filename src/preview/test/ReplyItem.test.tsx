@@ -35,19 +35,19 @@ const ReplyItemHarness = ({
   onUpdate = async () => {},
   reply = createCommentReply(),
 }: ReplyItemHarnessProps) => {
-  const { error, isPending, reportError, runAction } = useCommentActionState();
+  const { state, reportError, runAction } = useCommentActionState();
   return (
     <>
       <ReplyItem
         commentId={5}
-        disabled={isPending}
+        disabled={state.status === "pending"}
         onDelete={onDelete}
         onUpdate={onUpdate}
         reply={reply}
         reportError={reportError}
         runAction={runAction}
       />
-      {error && <span>{error}</span>}
+      {state.status === "error" && <span>{state.message}</span>}
     </>
   );
 };
@@ -65,8 +65,7 @@ describe("ReplyItem", () => {
       <ReplyItemHarness
         reply={createCommentReply({
           author: { type: "bot" },
-          body:
-            "See [documentation](https://example.com).\n\n```ts\nconst answer = 42;\n```\n\n<script>alert(1)</script>",
+          body: "See [documentation](https://example.com).\n\n```ts\nconst answer = 42;\n```\n\n<script>alert(1)</script>",
           reviewRequested: true,
         })}
       />,
@@ -77,12 +76,13 @@ describe("ReplyItem", () => {
     expect(within(card).getByText("Bot")).not.toBeNull();
     expect(within(card).getByText("Review requested")).not.toBeNull();
     expect(
-      within(card).getByRole("link", { name: "documentation" })
+      within(card)
+        .getByRole("link", { name: "documentation" })
         .getAttribute("href"),
     ).toBe("https://example.com");
     const code = container.querySelector("code.language-ts")!;
     await waitFor(() =>
-      expect(code.querySelector("span[style]")).not.toBeNull()
+      expect(code.querySelector("span[style]")).not.toBeNull(),
     );
     expect(code.textContent).toContain("const answer = 42;");
     expect(container.querySelector("script")).toBeNull();
@@ -91,10 +91,11 @@ describe("ReplyItem", () => {
 
   it("edits a reply with focus, shortcuts, and shared pending state", async () => {
     let finishUpdate!: () => void;
-    const onUpdate = vi.fn(() =>
-      new Promise<void>((resolve) => {
-        finishUpdate = resolve;
-      })
+    const onUpdate = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishUpdate = resolve;
+        }),
     );
     render(
       <ReplyItemHarness
@@ -121,17 +122,18 @@ describe("ReplyItem", () => {
       { ctrlKey: true, key: "Enter" },
     );
     await waitFor(() =>
-      expect(onUpdate).toHaveBeenCalledWith(5, 8, "Updated reply.")
+      expect(onUpdate).toHaveBeenCalledWith(5, 8, "Updated reply."),
     );
     expect(
-      screen.getByRole("button", { name: "Save reply" }).hasAttribute(
-        "disabled",
-      ),
+      screen
+        .getByRole("button", { name: "Save reply" })
+        .hasAttribute("disabled"),
     ).toBe(true);
     finishUpdate();
     await waitFor(() =>
-      expect(screen.queryByRole("textbox", { name: "Edit reply body" }))
-        .toBeNull()
+      expect(
+        screen.queryByRole("textbox", { name: "Edit reply body" }),
+      ).toBeNull(),
     );
   });
 
@@ -178,7 +180,7 @@ describe("ReplyItem", () => {
     await openReplyMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy reply" }));
     await waitFor(() =>
-      expect(writeText).toHaveBeenCalledWith("**Reply** body.")
+      expect(writeText).toHaveBeenCalledWith("**Reply** body."),
     );
     expect(await screen.findByText("Reply copied")).not.toBeNull();
 
@@ -186,8 +188,9 @@ describe("ReplyItem", () => {
     await openReplyMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy reply" }));
     expect(await screen.findByText("Comment action failed")).not.toBeNull();
-    expect(screen.getAllByText("Clipboard unavailable.").length)
-      .toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Clipboard unavailable.").length,
+    ).toBeGreaterThan(0);
   });
 
   it("keeps the editor open and reports update failures", async () => {
@@ -204,8 +207,9 @@ describe("ReplyItem", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save reply" }));
 
     expect(await screen.findByText("Comment action failed")).not.toBeNull();
-    expect(screen.getByRole("textbox", { name: "Edit reply body" }))
-      .not.toBeNull();
+    expect(
+      screen.getByRole("textbox", { name: "Edit reply body" }),
+    ).not.toBeNull();
     expect(screen.getAllByText("Update rejected.").length).toBeGreaterThan(0);
   });
 });

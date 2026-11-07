@@ -16,6 +16,8 @@ Choose the smallest helper needed by the test:
 - `domTestUtils.ts` provides Testing Library utilities, DOM cleanup, and the
   ResizeObserver fallback. Use it for hooks with their own providers and plain
   DOM harnesses.
+- `hookTestUtils.tsx` provides an isolated query client/provider and deferred
+  promises for testing asynchronous hook transitions without application UI.
 - `testUtils.tsx` renders actual UI with the application providers, syntax
   highlighting, and notifications.
 - `routerTestUtils.tsx` adds the router for application navigation tests.

@@ -10,7 +10,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Check, RotateCcw, Trash2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -21,23 +21,20 @@ import type {
 } from "../../models/comment";
 import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 import { useCommentBulkActions } from "./useCommentBulkActions";
-import { type CommentFilter, useCommentFilter } from "./useCommentFilter";
+import { type CommentFilter } from "./useCommentFilter";
 
 export type CommentListProps = {
   actions: CommentActions;
   comments: Comment[];
 };
 
-type CommentDisplayCategory = "unresolved" | "resolved";
+import { type CommentDisplayCategory, useCommentList } from "./useCommentList";
 
 const formatRange = (line: number, endLine = line): string =>
   line === endLine ? `Line ${line}` : `Lines ${line}-${endLine}`;
 
 const formatOriginalRange = (comment: Comment): string =>
-  formatRange(
-    comment.originalStartLine,
-    comment.originalEndLine,
-  );
+  formatRange(comment.originalStartLine, comment.originalEndLine);
 
 const formatLineLabel = (comment: Comment): string => {
   const current = formatRange(comment.startLine, comment.endLine);
@@ -69,112 +66,65 @@ const CommentSection = ({
 }: CommentSectionProps) => (
   <Box as="section">
     {children}
-    {comments.length === 0
-      ? <Text color="fg.muted">{emptyText}</Text>
-      : (
-        <Stack gap="3">
-          {comments.map((comment) => (
-            <Flex align="start" gap="3" key={comment.id}>
-              <Checkbox.Root
-                checked={bulk.selectedIds.includes(comment.id)}
+    {comments.length === 0 ? (
+      <Text color="fg.muted">{emptyText}</Text>
+    ) : (
+      <Stack gap="3">
+        {comments.map((comment) => (
+          <Flex align="start" gap="3" key={comment.id}>
+            <Checkbox.Root
+              checked={bulk.selectedIds.includes(comment.id)}
+              disabled={bulk.isPending}
+              mt="3"
+              onCheckedChange={() => bulk.toggle(comment.id)}
+            >
+              <Checkbox.HiddenInput
+                aria-label={`Select comment ${comment.id}: ${formatLineLabel(
+                  comment,
+                )}`}
+              />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+            </Checkbox.Root>
+            <Box flex="1" minW="0">
+              <CommentItem
+                actions={actions}
+                variant="card"
+                comment={comment}
                 disabled={bulk.isPending}
-                mt="3"
-                onCheckedChange={() =>
-                  bulk.toggle(comment.id)}
-              >
-                <Checkbox.HiddenInput
-                  aria-label={`Select comment ${comment.id}: ${
-                    formatLineLabel(comment)
-                  }`}
-                />
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-              </Checkbox.Root>
-              <Box flex="1" minW="0">
-                <CommentItem
-                  actions={actions}
-                  variant="card"
-                  comment={comment}
-                  disabled={bulk.isPending}
-                  lineLabel={formatLineLabel(comment)}
-                  showSource
-                  showState
-                />
-              </Box>
-            </Flex>
-          ))}
-        </Stack>
-      )}
+                lineLabel={formatLineLabel(comment)}
+                showSource
+                showState
+              />
+            </Box>
+          </Flex>
+        ))}
+      </Stack>
+    )}
   </Box>
 );
 
-export const CommentList = ({
-  actions,
-  comments,
-}: CommentListProps) => {
-  const [selectedCategory, setSelectedCategory] = useState<
-    CommentDisplayCategory
-  >(
-    "unresolved",
-  );
-  const commentFilter = useCommentFilter(comments);
-  const sections: Record<
-    CommentDisplayCategory,
-    {
-      comments: UnresolvedComment[] | ResolvedComment[];
-      count: number;
-      emptyText: string;
-      label: string;
-    }
-  > = {
-    unresolved: {
-      comments: commentFilter.visibleComments,
-      count: commentFilter.unresolvedCount,
-      emptyText: commentFilter.emptyText,
-      label: "Unresolved",
-    },
-    resolved: {
-      comments: commentFilter.resolvedComments,
-      count: commentFilter.resolvedComments.length,
-      emptyText: "No resolved comments.",
-      label: "Resolved",
-    },
-  };
-  const categories = Object.keys(sections) as CommentDisplayCategory[];
-  const selectedSection = sections[selectedCategory];
-  const bulk = useCommentBulkActions(selectedSection.comments, actions);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const selectCategory = (category: CommentDisplayCategory) => {
-    if (bulk.isPending || isDeleteDialogOpen) return;
-    if (category === selectedCategory) return;
-    bulk.clearSelection();
-    setSelectedCategory(category);
-  };
-  const selectFilter = (filter: CommentFilter) => {
-    if (bulk.isPending || isDeleteDialogOpen) return;
-    if (filter === commentFilter.filter) return;
-    bulk.clearSelection();
-    commentFilter.setFilter(filter);
-  };
-  const selectAdjacentCategory = (
-    category: CommentDisplayCategory,
-    direction: -1 | 1,
-    tabList: HTMLElement,
-  ) => {
-    const index = categories.indexOf(category);
-    const nextCategory = categories[
-      (index + direction + categories.length) % categories.length
-    ];
-    selectCategory(nextCategory);
-    tabList.querySelector<HTMLElement>(`[data-value="${nextCategory}"]`)
-      ?.focus();
-  };
+export const CommentList = ({ actions, comments }: CommentListProps) => {
+  const list = useCommentList(comments, actions);
+  const {
+    selectedCategory,
+    commentFilter,
+    sections,
+    categories,
+    selectedSection,
+    bulk,
+    selectCategory,
+    selectFilter,
+    selectAdjacentCategory,
+  } = list;
+  const isDeleteDialogOpen = list.deletion.status !== "closed";
 
   return (
     <Tabs.Root
       onValueChange={({ value }) =>
-        selectCategory(value as CommentDisplayCategory)}
+        selectCategory(value as CommentDisplayCategory)
+      }
       value={selectedCategory}
       variant="line"
     >
@@ -222,9 +172,9 @@ export const CommentList = ({
                       aria-pressed={commentFilter.filter === filter}
                       disabled={bulk.isPending || isDeleteDialogOpen}
                       onClick={() => selectFilter(filter)}
-                      variant={commentFilter.filter === filter
-                        ? "solid"
-                        : "outline"}
+                      variant={
+                        commentFilter.filter === filter ? "solid" : "outline"
+                      }
                     >
                       {commentFilter.filters[filter].label}
                       <Badge aria-hidden="true" size="sm" variant="solid">
@@ -256,12 +206,13 @@ export const CommentList = ({
                 wrap="wrap"
               >
                 <Checkbox.Root
-                  checked={bulk.selectedIds.length ===
-                      selectedSection.comments.length
-                    ? true
-                    : bulk.selectedIds.length > 0
-                    ? "indeterminate"
-                    : false}
+                  checked={
+                    bulk.selectedIds.length === selectedSection.comments.length
+                      ? true
+                      : bulk.selectedIds.length > 0
+                        ? "indeterminate"
+                        : false
+                  }
                   disabled={bulk.isPending}
                   onCheckedChange={bulk.toggleAll}
                 >
@@ -275,30 +226,38 @@ export const CommentList = ({
                   {bulk.selectedIds.length} selected
                 </Text>
                 <Button
-                  colorPalette={selectedCategory === "resolved" ? "gray" : "green"}
+                  colorPalette={
+                    selectedCategory === "resolved" ? "gray" : "green"
+                  }
                   disabled={bulk.isPending || bulk.selectedIds.length === 0}
-                  loading={bulk.state.status === "pending" &&
-                    bulk.state.operation !== "delete"}
-                  loadingText={selectedCategory === "resolved"
-                    ? "Reopening…"
-                    : "Resolving…"}
+                  loading={
+                    bulk.state.status === "pending" &&
+                    bulk.state.operation !== "delete"
+                  }
+                  loadingText={
+                    selectedCategory === "resolved"
+                      ? "Reopening…"
+                      : "Resolving…"
+                  }
                   onClick={() =>
                     void bulk.run(
                       selectedCategory === "resolved" ? "reopen" : "resolve",
-                    )}
+                    )
+                  }
                   size="sm"
                   variant="outline"
                 >
-                  {selectedCategory === "resolved"
-                    ? <RotateCcw aria-hidden="true" />
-                    : <Check aria-hidden="true" />}
+                  {selectedCategory === "resolved" ? (
+                    <RotateCcw aria-hidden="true" />
+                  ) : (
+                    <Check aria-hidden="true" />
+                  )}
                   {selectedCategory === "resolved" ? "Reopen" : "Resolve"}
                 </Button>
                 <Button
                   colorPalette="red"
                   disabled={bulk.isPending || bulk.selectedIds.length === 0}
-                  onClick={() =>
-                    setIsDeleteDialogOpen(true)}
+                  onClick={() => list.setDeleteOpen(true)}
                   size="sm"
                   variant="outline"
                 >
@@ -319,22 +278,22 @@ export const CommentList = ({
         confirmColorPalette="red"
         confirmLabel="Delete"
         isPending={bulk.isPending}
-        onConfirm={async () => {
-          await bulk.run("delete");
-          setIsDeleteDialogOpen(false);
-        }}
-        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={list.confirmDelete}
+        onOpenChange={list.setDeleteOpen}
         open={isDeleteDialogOpen}
         title="Delete selected comments?"
       >
-        Delete {bulk.selectedIds.length}{" "}
-        selected comments and their replies? This action cannot be undone.
+        Delete {bulk.selectedIds.length} selected comments and their replies?
+        This action cannot be undone.
       </ConfirmDialog>
     </Tabs.Root>
   );
 };
 
-export const CommentListPage = ({ documentId, documentDeleted = false }: {
+export const CommentListPage = ({
+  documentId,
+  documentDeleted = false,
+}: {
   documentId?: number;
   documentDeleted?: boolean;
 }) => {
@@ -345,12 +304,14 @@ export const CommentListPage = ({ documentId, documentDeleted = false }: {
     <CommentList
       key={documentId}
       actions={actions}
-      comments={documentDeleted
-        ? commentsQuery.data.comments.map((comment) => ({
-          ...comment,
-          currentSource: { state: "deleted" as const },
-        }))
-        : commentsQuery.data.comments}
+      comments={
+        documentDeleted
+          ? commentsQuery.data.comments.map((comment) => ({
+              ...comment,
+              currentSource: { state: "deleted" as const },
+            }))
+          : commentsQuery.data.comments
+      }
     />
   );
 };

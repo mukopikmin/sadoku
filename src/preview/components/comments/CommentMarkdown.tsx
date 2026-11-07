@@ -1,12 +1,12 @@
 import { Box } from "@chakra-ui/react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   sharedMarkdownComponents,
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
 } from "../../markdown/markdownRenderers";
-import { initializeMermaid } from "../../markdown/mermaid";
+import { useMermaidRendering } from "../../markdown/useMermaidRendering";
 import { remarkSuggestions } from "../../markdown/remarkSuggestions";
 import { remarkCommentBreaks } from "../../markdown/remarkCommentBreaks";
 
@@ -15,20 +15,13 @@ export type CommentMarkdownProps = {
   sourceText?: string;
 };
 
-export const CommentMarkdown = (
-  { children, sourceText }: CommentMarkdownProps,
-) => {
+export const CommentMarkdown = ({
+  children,
+  sourceText,
+}: CommentMarkdownProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    void initializeMermaid({
-      root: containerRef.current,
-      theme: document.documentElement.dataset.theme === "dark"
-        ? "dark"
-        : "default",
-    });
-  }, [children]);
+  useMermaidRendering(containerRef, [children]);
 
   return (
     <Box
