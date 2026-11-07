@@ -7,7 +7,6 @@ import { getCommentableBlockProps } from "../../markdown/commentable/commentable
 import {
   type CommentRange,
   deriveRangeHighlights,
-  getSingleLineCommentHighlights,
   groupCommentsByAnchorLine,
 } from "../../markdown/commentable/commentRanges";
 import {
@@ -16,6 +15,7 @@ import {
 } from "../../markdown/commentable/commentRendering";
 import { useCommentableBlockLayout } from "../../markdown/commentable/useCommentableBlockLayout";
 import { useCommentSelection } from "../../markdown/commentable/useCommentSelection";
+import { useCommentHighlightInteraction } from "../../markdown/commentable/useCommentHighlightInteraction";
 import { initializeMermaid } from "../../markdown/mermaid";
 import { HighlightOverlay } from "../../markdown/HighlightOverlay";
 import { useHeadingHashNavigation } from "../../markdown/useHeadingHashNavigation";
@@ -73,6 +73,8 @@ export const MarkdownPreview = ({
   const previewRef = useRef<HTMLDivElement>(null);
   const [rawMarkdownRange, setRawMarkdownRange] = useState<CommentRange>();
   const [drafts] = useState(() => new Map<number, string>());
+  const { interactionRange, interactionProps } =
+    useCommentHighlightInteraction();
   const {
     activeCommentLine,
     activeRange,
@@ -86,14 +88,10 @@ export const MarkdownPreview = ({
     [activeComments, selectedRange],
   );
   const { commentableLines, deletedRanges, rangeHighlightLayouts } =
-    useCommentableBlockLayout(previewRef, rangeHighlights);
+    useCommentableBlockLayout(previewRef, rangeHighlights, interactionRange);
   const commentsByLine = useMemo(
     () => groupCommentsByAnchorLine(activeComments, commentableLines),
     [commentableLines, activeComments],
-  );
-  const commentHighlightsByLine = useMemo(
-    () => getSingleLineCommentHighlights(activeComments),
-    [activeComments],
   );
   const deletedCommentsByLine = useMemo(
     () =>
@@ -125,7 +123,6 @@ export const MarkdownPreview = ({
       activeCommentLine,
       activeRange,
       commentsByLine,
-      commentHighlightsByLine,
       drafts,
       markdown,
       rangeHighlights,
@@ -140,7 +137,6 @@ export const MarkdownPreview = ({
       activeCommentLine,
       activeRange,
       closeCommentForm,
-      commentHighlightsByLine,
       commentsByLine,
       drafts,
       markdown,
@@ -163,6 +159,7 @@ export const MarkdownPreview = ({
           range={rawMarkdownRange}
         />
         <Box
+          {...interactionProps}
           className="markdown-preview"
           data-document-diff={previousMarkdown !== undefined ? "" : undefined}
           ref={previewRef}

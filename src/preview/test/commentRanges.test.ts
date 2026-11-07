@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   deriveRangeHighlights,
   getCommentAnchorLine,
-  getSingleLineCommentHighlights,
   mergeCommentRanges,
   resolveCommentRangeSelection,
   subtractCommentRange,
@@ -73,15 +72,21 @@ describe("comment ranges", () => {
     ).toEqual([
       { startLine: 1, endLine: 1, kind: "comment" },
       { startLine: 4, endLine: 5, kind: "comment" },
+      { startLine: 7, endLine: 7, kind: "comment" },
       { startLine: 2, endLine: 3, kind: "selection" },
     ]);
-    expect([
-      ...getSingleLineCommentHighlights([
-        { startLine: 1, endLine: 3 },
-        { startLine: 7, endLine: 7 },
-        { startLine: 7, endLine: 7 },
-      ]),
-    ]).toEqual([7]);
+  });
+
+  it("uses the same range model for single-line comments and selections", () => {
+    expect(deriveRangeHighlights([{ startLine: 3, endLine: 3 }])).toEqual([
+      { startLine: 3, endLine: 3, kind: "comment" },
+    ]);
+    expect(
+      deriveRangeHighlights([{ startLine: 3, endLine: 3 }], {
+        startLine: 3,
+        endLine: 3,
+      }),
+    ).toEqual([{ startLine: 3, endLine: 3, kind: "selection" }]);
   });
 
   it("selects, extends, replaces, and clears comment ranges", () => {

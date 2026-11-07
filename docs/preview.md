@@ -27,7 +27,7 @@ Set a nonempty `SADOKU_SOURCE` to skip preparation and preserve the configured
 
 The seed script copies Markdown from `src/server/test/integration/fixtures/`
 with its directory structure intact. Original fixtures are unchanged. Samples
-include five documents (one deleted), eighteen comments, human and bot authors,
+include five documents (one deleted), twenty-one comments, human and bot authors,
 replies, review requests, instructions, memories, and tags. Seeded review text
 and tag names are in English.
 
@@ -42,7 +42,15 @@ and tag names are in English.
 `comprehensive.md` has 27 saved revisions, allowing the twenty-item revision list
 to be exercised with an older predecessor outside the list. On `second.md`,
 toggle **Changes** to compare API-key access with OAuth and inspect comments over
-the diff. `guides/setup/local.md` has no **Changes** option because it has no
+the diff. Range comments cover consecutive paragraphs, the table and code, and
+review notes spanning a deletion. A partially overlapping range extends from the
+table through the Mermaid diagram. Check that shared blocks have one highlight,
+removed content splits the outline, and selecting the code block takes priority
+inside the overlap. Click a range’s first paragraph, then Shift-click its last
+block; toggle **Changes** to check that selection persists. Both overlapping
+threads remain available at their code and diagram endpoints.
+
+`guides/setup/local.md` has no **Changes** option because it has no
 previous snapshot.
 
 Tags include `Needs review`, `Markdown`, `Archived` (on the deleted document),
