@@ -214,6 +214,15 @@ them when making changes.
 
 ## 8. Documentation Scope
 
+- Keep maintained usage, specification, development, and operations documents
+  directly under `docs/`. Put task-specific plans, investigations, migration
+  reports, and verification notes under `docs/work/`; these may be committed.
+- Start each work document with its purpose, related issue or pull request
+  (or explicitly state that none is recorded), and a concrete deletion condition.
+  Before completing the related work, check that condition, move any durable
+  knowledge into maintained documentation or a README beside the relevant code
+  or fixtures, and delete the work document when its condition is met. Do not
+  invent issue references or treat work documents as maintained specifications.
 - Keep user-facing essentials together in the root `README.md`: what Sadoku
   does, installation, basic review usage, meaningful limitations, settings and
   storage, and developer prerequisites plus build/test commands.
