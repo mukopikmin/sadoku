@@ -13,13 +13,14 @@ import {
 import { TableOfContents } from "../pages/markdown/TableOfContents";
 import { useCallback } from "react";
 import { Brain, FileDiff, FileText, History, Tag } from "lucide-react";
+import type { useDocumentDiff } from "../hooks/useDocumentDiff";
 import type { DocumentTag } from "../models/document";
 import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
   markdown: string;
-  diff?: { available: boolean; enabled: boolean; onToggle: () => void };
+  diff?: ReturnType<typeof useDocumentDiff>;
   memoryCount: number;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
@@ -68,7 +69,7 @@ export const DocumentActionBar = ({
             {diff && (
               <Tooltip
                 content={
-                  diff.available
+                  diff.state.status !== "unavailable"
                     ? "Show changes since previous saved snapshot"
                     : "No previous comparison is available"
                 }
@@ -77,15 +78,15 @@ export const DocumentActionBar = ({
                   <IconButton
                     aria-label="Changes since previous snapshot"
                     aria-description={
-                      !diff.available
+                      !(diff.state.status !== "unavailable")
                         ? "No previous comparison is available"
                         : undefined
                     }
-                    aria-pressed={diff.enabled}
-                    disabled={!diff.available}
+                    aria-pressed={diff.state.status === "on"}
+                    disabled={!(diff.state.status !== "unavailable")}
                     onClick={diff.onToggle}
                     size="sm"
-                    variant={diff.enabled ? "solid" : "outline"}
+                    variant={diff.state.status === "on" ? "solid" : "outline"}
                   >
                     <FileDiff aria-hidden="true" />
                   </IconButton>

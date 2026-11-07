@@ -1,11 +1,7 @@
 import { Flex, Input, TagsInput, Text } from "@chakra-ui/react";
-import { useState } from "react";
-import {
-  isValidExcludedDirectory,
-  isValidMarkdownExtension,
-} from "./settingsValidation";
+import { useDirectoryDiscovery } from "../../hooks/useDirectoryDiscovery";
 
-type DirectoryDiscoverySettingsProps = {
+export type DirectoryDiscoverySettingsProps = {
   excludedDirectories: string[];
   markdownExtensions: string[];
   maxDepth: number;
@@ -18,8 +14,15 @@ type DirectoryDiscoverySettingsProps = {
 export const DirectoryDiscoverySettings = (
   props: DirectoryDiscoverySettingsProps,
 ) => {
-  const [excludedError, setExcludedError] = useState<string>();
-  const [extensionError, setExtensionError] = useState<string>();
+  const discovery = useDirectoryDiscovery(props);
+  const excludedError =
+    discovery.directories.status === "invalid"
+      ? discovery.directories.message
+      : undefined;
+  const extensionError =
+    discovery.extensions.status === "invalid"
+      ? discovery.extensions.message
+      : undefined;
   return (
     <Flex direction="column" gap="3">
       <Text as="div">
@@ -49,12 +52,9 @@ export const DirectoryDiscoverySettings = (
           <Input
             id="directory-max-depth"
             min="0"
-            onChange={(event) => {
-              const value = Number(event.currentTarget.value);
-              if (Number.isInteger(value) && value >= 0) {
-                props.onDirectoryLimitsChange(value, props.maxFiles);
-              }
-            }}
+            onChange={(event) =>
+              discovery.changeDepth(event.currentTarget.value)
+            }
             type="number"
             value={props.maxDepth}
             width="24"
@@ -67,12 +67,9 @@ export const DirectoryDiscoverySettings = (
           <Input
             id="directory-max-files"
             min="1"
-            onChange={(event) => {
-              const value = Number(event.currentTarget.value);
-              if (Number.isInteger(value) && value >= 1) {
-                props.onDirectoryLimitsChange(props.maxDepth, value);
-              }
-            }}
+            onChange={(event) =>
+              discovery.changeFiles(event.currentTarget.value)
+            }
             type="number"
             value={props.maxFiles}
             width="24"
@@ -87,18 +84,11 @@ export const DirectoryDiscoverySettings = (
           gap="4"
           gridTemplateColumns={{ base: "1fr", sm: "1fr minmax(0, 15rem)" }}
           invalid={excludedError !== undefined}
-          onInputValueChange={() => setExcludedError(undefined)}
-          onValueChange={({ value }) => {
-            setExcludedError(undefined);
-            props.onExcludedDirectoriesChange(value);
-          }}
-          onValueInvalid={() =>
-            setExcludedError("Enter a directory name without path separators.")
-          }
+          onInputValueChange={discovery.clearDirectoryError}
+          onValueChange={({ value }) => discovery.changeDirectories(value)}
+          onValueInvalid={discovery.invalidDirectory}
           sanitizeValue={(value) => value.trim()}
-          validate={({ inputValue }) =>
-            isValidExcludedDirectory(inputValue.trim())
-          }
+          validate={({ inputValue }) => discovery.validateDirectory(inputValue)}
           value={props.excludedDirectories}
         >
           <TagsInput.Label
@@ -134,22 +124,11 @@ export const DirectoryDiscoverySettings = (
           gap="4"
           gridTemplateColumns={{ base: "1fr", sm: "1fr minmax(0, 15rem)" }}
           invalid={extensionError !== undefined}
-          onInputValueChange={() => setExtensionError(undefined)}
-          onValueChange={({ value }) => {
-            if (value.length === 0) {
-              setExtensionError("Add at least one extension.");
-              return;
-            }
-            setExtensionError(undefined);
-            props.onMarkdownExtensionsChange(value);
-          }}
-          onValueInvalid={() =>
-            setExtensionError("Enter an extension beginning with a dot.")
-          }
+          onInputValueChange={discovery.clearExtensionError}
+          onValueChange={({ value }) => discovery.changeExtensions(value)}
+          onValueInvalid={discovery.invalidExtension}
           sanitizeValue={(value) => value.trim().toLowerCase()}
-          validate={({ inputValue }) =>
-            isValidMarkdownExtension(inputValue.trim())
-          }
+          validate={({ inputValue }) => discovery.validateExtension(inputValue)}
           value={props.markdownExtensions}
         >
           <TagsInput.Label

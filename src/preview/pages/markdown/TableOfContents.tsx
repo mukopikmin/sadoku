@@ -8,49 +8,21 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { List as ListIcon } from "lucide-react";
-import GithubSlugger from "github-slugger";
-import type { Heading, Root } from "mdast";
-import { memo, useMemo, useState } from "react";
-import { toString } from "mdast-util-to-string";
+import { memo } from "react";
+import { useTableOfContents } from "../../hooks/useTableOfContents";
 import { Tooltip } from "../../components/ui/tooltip";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
-
-export type TableOfContentsItem = {
-  id: string;
-  level: number;
-  text: string;
-};
-
-export const extractTableOfContents = (
-  markdown: string,
-): TableOfContentsItem[] => {
-  const tree = unified().use(remarkParse).parse(markdown) as Root;
-  const slugger = new GithubSlugger();
-  return tree.children
-    .filter((node): node is Heading => node.type === "heading")
-    .map((heading) => {
-      const text = toString(heading);
-      return {
-        id: slugger.slug(text),
-        level: heading.depth,
-        text,
-      };
-    });
-};
 
 export const TableOfContents = memo(function TableOfContents({
   markdown,
 }: {
   markdown: string;
 }) {
-  const items = useMemo(() => extractTableOfContents(markdown), [markdown]);
-  const [open, setOpen] = useState(false);
+  const contents = useTableOfContents(markdown);
 
   return (
     <Popover.Root
-      onOpenChange={({ open }) => setOpen(open)}
-      open={open}
+      onOpenChange={({ open }) => contents.setOpen(open)}
+      open={contents.open}
       positioning={{ placement: "bottom-end" }}
       size="lg"
     >
@@ -80,7 +52,7 @@ export const TableOfContents = memo(function TableOfContents({
             </Popover.Arrow>
             <Popover.Body>
               <Text fontWeight="semibold">Table of contents</Text>
-              {items.length === 0 ? (
+              {contents.state.status === "empty" ? (
                 <Text pt="2">No headings</Text>
               ) : (
                 <Box
@@ -90,7 +62,7 @@ export const TableOfContents = memo(function TableOfContents({
                   pt="2"
                 >
                   <List.Root listStyle="none" m="0">
-                    {items.map((item) => (
+                    {contents.state.items.map((item) => (
                       <List.Item
                         data-heading-level={item.level}
                         key={item.id}
@@ -98,7 +70,7 @@ export const TableOfContents = memo(function TableOfContents({
                       >
                         <Link
                           href={`#${item.id}`}
-                          onClick={() => setOpen(false)}
+                          onClick={() => contents.setOpen(false)}
                         >
                           {item.text}
                         </Link>

@@ -8,8 +8,8 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Pencil } from "lucide-react";
-import { memo, useRef, useState } from "react";
-import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { memo, useRef } from "react";
+import { useDocumentTitleEditor } from "../hooks/useDocumentTitleEditor";
 
 export const DocumentTitle = memo(function DocumentTitle({
   documentId,
@@ -18,10 +18,10 @@ export const DocumentTitle = memo(function DocumentTitle({
   documentId: number;
   title?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState("");
+  const editor = useDocumentTitleEditor(documentId, title);
+  const { state } = editor;
   const inputRef = useRef<HTMLInputElement>(null);
-  const mutation = useDocumentTitle(documentId);
+  const pending = state.status === "saving";
   return (
     <>
       {title && (
@@ -39,23 +39,19 @@ export const DocumentTitle = memo(function DocumentTitle({
         flexShrink="0"
         size="sm"
         variant="ghost"
-        onClick={() => {
-          setDraft(title ?? "");
-          mutation.reset();
-          setOpen(true);
-        }}
+        onClick={() => editor.open()}
       >
         {title && <Pencil aria-hidden="true" />}
         {title ? "Edit title" : "Set title"}
       </Button>
       <Dialog.Root
-        open={open}
+        open={state.status !== "closed"}
         onOpenChange={({ open }) => {
-          if (!mutation.isPending) setOpen(open);
+          if (!open) editor.close();
         }}
         initialFocusEl={() => inputRef.current}
-        closeOnEscape={!mutation.isPending}
-        closeOnInteractOutside={!mutation.isPending}
+        closeOnEscape={!pending}
+        closeOnInteractOutside={!pending}
       >
         <Portal>
           <Dialog.Backdrop />
@@ -64,8 +60,7 @@ export const DocumentTitle = memo(function DocumentTitle({
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
-                  if (mutation.isPending) return;
-                  mutation.mutate(draft, { onSuccess: () => setOpen(false) });
+                  void editor.save();
                 }}
               >
                 <Dialog.Header>
@@ -76,18 +71,20 @@ export const DocumentTitle = memo(function DocumentTitle({
                     <Field.Label>Title</Field.Label>
                     <Input
                       ref={inputRef}
-                      value={draft}
-                      disabled={mutation.isPending}
-                      onChange={(event) => setDraft(event.currentTarget.value)}
+                      value={state.status === "closed" ? "" : state.draft}
+                      disabled={pending}
+                      onChange={(event) =>
+                        editor.change(event.currentTarget.value)
+                      }
                     />
                     <Field.HelperText>
                       Leave empty to remove the title. Markdown headings are
                       saved separately.
                     </Field.HelperText>
                   </Field.Root>
-                  {mutation.error && (
+                  {state.status === "error" && (
                     <Text role="alert" color="fg.error">
-                      {mutation.error.message}
+                      {state.message}
                     </Text>
                   )}
                 </Dialog.Body>
@@ -95,16 +92,12 @@ export const DocumentTitle = memo(function DocumentTitle({
                   <Button
                     type="button"
                     variant="ghost"
-                    disabled={mutation.isPending}
-                    onClick={() => setOpen(false)}
+                    disabled={pending}
+                    onClick={editor.close}
                   >
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    loading={mutation.isPending}
-                    disabled={mutation.isPending}
-                  >
+                  <Button type="submit" loading={pending} disabled={pending}>
                     Save
                   </Button>
                 </Dialog.Footer>

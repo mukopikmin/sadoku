@@ -88,7 +88,7 @@ const RevisionContent = (
         gap="4"
       >
         <Select.Root
-          disabled={restore.isPending}
+          disabled={restore.state.status === "restoring"}
           flex="1"
           minW="0"
           collection={collection}
@@ -158,7 +158,7 @@ const RevisionContent = (
         revisions.content.status === "ready" && (
           <Button
             alignSelf="start"
-            disabled={restore.isPending}
+            disabled={restore.state.status === "restoring"}
             onClick={() =>
               restore.request(
                 restoreId,
@@ -172,8 +172,8 @@ const RevisionContent = (
       <ConfirmDialog
         title="Restore this revision?"
         confirmLabel="Restore file"
-        open={restore.open}
-        isPending={restore.isPending}
+        open={restore.state.status !== "closed"}
+        isPending={restore.state.status === "restoring"}
         onOpenChange={(open) => {
           if (!open) restore.cancel();
         }}
@@ -181,9 +181,9 @@ const RevisionContent = (
       >
         This replaces the local file with the selected revision. The current
         contents will be kept in revision history.
-        {restore.error && (
+        {restore.state.status === "error" && (
           <Text as="span" display="block" role="alert" color="fg.error">
-            {restore.error}
+            {restore.state.message}
           </Text>
         )}
       </ConfirmDialog>

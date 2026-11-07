@@ -18,16 +18,22 @@ describe("useDocumentDiff", () => {
         initialProps: { id: 1, markdown: "New", previous: "" },
       },
     );
-    expect(result.current.enabled).toBe(false);
-    expect(result.current.available).toBe(true);
-    expect(result.current.changes).toBeUndefined();
+    expect(result.current.state.status).not.toBe("on");
+    expect(result.current.state.status).toBe("off");
+    expect(result.current.state).not.toHaveProperty("changes");
     act(() => result.current.onToggle());
-    expect(result.current.changes?.current.size).toBe(1);
+    expect(result.current.state).toMatchObject({
+      status: "on",
+      changes: { current: new Set([1]) },
+    });
     rerender({ id: 1, markdown: "New\nMore", previous: "" });
-    expect(result.current.changes?.current.size).toBe(2);
+    expect(result.current.state).toMatchObject({
+      status: "on",
+      changes: { current: new Set([1, 2]) },
+    });
     rerender({ id: 2, markdown: "Other", previous: "Before" });
-    expect(result.current.enabled).toBe(false);
-    expect(result.current.changes).toBeUndefined();
+    expect(result.current.state.status).not.toBe("on");
+    expect(result.current.state).not.toHaveProperty("changes");
   });
 
   it("does not compare without a baseline and supports switching off", () => {
@@ -36,14 +42,14 @@ describe("useDocumentDiff", () => {
         useDocumentDiff(1, "New", previous),
       { initialProps: { previous: undefined as string | undefined } },
     );
-    expect(result.current.available).toBe(false);
+    expect(result.current.state.status).toBe("unavailable");
     act(() => result.current.onToggle());
-    expect(result.current.enabled).toBe(false);
+    expect(result.current.state.status).not.toBe("on");
     rerender({ previous: "Old" });
-    expect(result.current.enabled).toBe(false);
+    expect(result.current.state.status).not.toBe("on");
     act(() => result.current.onToggle());
-    expect(result.current.enabled).toBe(true);
+    expect(result.current.state.status).toBe("on");
     act(() => result.current.onToggle());
-    expect(result.current.enabled).toBe(false);
+    expect(result.current.state.status).not.toBe("on");
   });
 });

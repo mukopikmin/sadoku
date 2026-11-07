@@ -10,25 +10,21 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Check, RotateCcw, Trash2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
-import type {
-  Comment,
-  ResolvedComment,
-  UnresolvedComment,
-} from "../../models/comment";
+import type { Comment } from "../../models/comment";
 import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 import { useCommentBulkActions } from "./useCommentBulkActions";
-import { type CommentFilter, useCommentFilter } from "./useCommentFilter";
+import { type CommentFilter } from "./useCommentFilter";
 
 export type CommentListProps = {
   actions: CommentActions;
   comments: Comment[];
 };
 
-type CommentDisplayCategory = "unresolved" | "resolved";
+import { type CommentDisplayCategory, useCommentList } from "./useCommentList";
 
 const formatRange = (line: number, endLine = line): string =>
   line === endLine ? `Line ${line}` : `Lines ${line}-${endLine}`;
@@ -106,60 +102,19 @@ const CommentSection = ({
 );
 
 export const CommentList = ({ actions, comments }: CommentListProps) => {
-  const [selectedCategory, setSelectedCategory] =
-    useState<CommentDisplayCategory>("unresolved");
-  const commentFilter = useCommentFilter(comments);
-  const sections: Record<
-    CommentDisplayCategory,
-    {
-      comments: UnresolvedComment[] | ResolvedComment[];
-      count: number;
-      emptyText: string;
-      label: string;
-    }
-  > = {
-    unresolved: {
-      comments: commentFilter.visibleComments,
-      count: commentFilter.unresolvedCount,
-      emptyText: commentFilter.emptyText,
-      label: "Unresolved",
-    },
-    resolved: {
-      comments: commentFilter.resolvedComments,
-      count: commentFilter.resolvedComments.length,
-      emptyText: "No resolved comments.",
-      label: "Resolved",
-    },
-  };
-  const categories = Object.keys(sections) as CommentDisplayCategory[];
-  const selectedSection = sections[selectedCategory];
-  const bulk = useCommentBulkActions(selectedSection.comments, actions);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const selectCategory = (category: CommentDisplayCategory) => {
-    if (bulk.isPending || isDeleteDialogOpen) return;
-    if (category === selectedCategory) return;
-    bulk.clearSelection();
-    setSelectedCategory(category);
-  };
-  const selectFilter = (filter: CommentFilter) => {
-    if (bulk.isPending || isDeleteDialogOpen) return;
-    if (filter === commentFilter.filter) return;
-    bulk.clearSelection();
-    commentFilter.setFilter(filter);
-  };
-  const selectAdjacentCategory = (
-    category: CommentDisplayCategory,
-    direction: -1 | 1,
-    tabList: HTMLElement,
-  ) => {
-    const index = categories.indexOf(category);
-    const nextCategory =
-      categories[(index + direction + categories.length) % categories.length];
-    selectCategory(nextCategory);
-    tabList
-      .querySelector<HTMLElement>(`[data-value="${nextCategory}"]`)
-      ?.focus();
-  };
+  const list = useCommentList(comments, actions);
+  const {
+    selectedCategory,
+    commentFilter,
+    sections,
+    categories,
+    selectedSection,
+    bulk,
+    selectCategory,
+    selectFilter,
+    selectAdjacentCategory,
+  } = list;
+  const isDeleteDialogOpen = list.deletion.status !== "closed";
 
   return (
     <Tabs.Root
@@ -298,7 +253,7 @@ export const CommentList = ({ actions, comments }: CommentListProps) => {
                 <Button
                   colorPalette="red"
                   disabled={bulk.isPending || bulk.selectedIds.length === 0}
-                  onClick={() => setIsDeleteDialogOpen(true)}
+                  onClick={() => list.setDeleteOpen(true)}
                   size="sm"
                   variant="outline"
                 >
@@ -319,11 +274,8 @@ export const CommentList = ({ actions, comments }: CommentListProps) => {
         confirmColorPalette="red"
         confirmLabel="Delete"
         isPending={bulk.isPending}
-        onConfirm={async () => {
-          await bulk.run("delete");
-          setIsDeleteDialogOpen(false);
-        }}
-        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={list.confirmDelete}
+        onOpenChange={list.setDeleteOpen}
         open={isDeleteDialogOpen}
         title="Delete selected comments?"
       >

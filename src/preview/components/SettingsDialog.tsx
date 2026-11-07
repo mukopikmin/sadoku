@@ -1,5 +1,5 @@
 import { Button, CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import type {
   CodeWrapMode,
   ResolvedPreviewSettings,
@@ -8,6 +8,7 @@ import type {
 import { AppearanceSettings } from "./settings/AppearanceSettings";
 import { DirectoryDiscoverySettings } from "./settings/DirectoryDiscoverySettings";
 import { GitHubAccountSettings } from "./settings/GitHubAccountSettings";
+import { useNestedDialog } from "../hooks/useNestedDialog";
 import { StatisticsDialog } from "./StatisticsDialog";
 
 export type SettingsDialogProps = {
@@ -32,10 +33,7 @@ export const SettingsDialog = ({
 }: SettingsDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const statisticsTriggerRef = useRef<HTMLButtonElement>(null);
-  const [statisticsOpen, setStatisticsOpen] = useState(false);
-  useEffect(() => {
-    if (!open) setStatisticsOpen(false);
-  }, [open]);
+  const statistics = useNestedDialog(open);
   return (
     <Dialog.Root
       finalFocusEl={() =>
@@ -88,7 +86,7 @@ export const SettingsDialog = ({
                 />
                 <Button
                   alignSelf="start"
-                  onClick={() => setStatisticsOpen(true)}
+                  onClick={() => statistics.setOpen(true)}
                   ref={statisticsTriggerRef}
                   type="button"
                   variant="outline"
@@ -97,8 +95,8 @@ export const SettingsDialog = ({
                 </Button>
                 <StatisticsDialog
                   finalFocusRef={statisticsTriggerRef}
-                  onOpenChange={setStatisticsOpen}
-                  open={open && statisticsOpen}
+                  onOpenChange={statistics.setOpen}
+                  open={open && statistics.state.status === "open"}
                 />
               </Flex>
             </Dialog.Body>

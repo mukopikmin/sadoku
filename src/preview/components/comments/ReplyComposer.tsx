@@ -1,6 +1,7 @@
 import { Flex } from "@chakra-ui/react";
 import { Reply } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
+import { useCommentDraft } from "./useCommentDraft";
 import { CommentActionButton, CommentForm } from "./CommentForm";
 import type { RunCommentAction } from "./useCommentActionState";
 
@@ -21,29 +22,21 @@ export const ReplyComposer = ({
   showTrigger,
   trailingAction,
 }: ReplyComposerProps) => {
-  const [draft, setDraft] = useState("");
-  const [isReplying, setIsReplying] = useState(false);
+  const editor = useCommentDraft({
+    initiallyOpen: false,
+    commentId,
+    disabled,
+    runAction,
+    onSubmit: (draft) => onReply(commentId, draft),
+    errorTitle: "Could not add reply",
+  });
 
-  const close = () => {
-    setDraft("");
-    setIsReplying(false);
-  };
-
-  const handleSubmit = async () => {
-    const body = draft.trim();
-    if (!body || disabled) return;
-    await runAction(() => onReply(commentId, body), {
-      errorTitle: "Could not add reply",
-      onSuccess: close,
-    });
-  };
-
-  if (!isReplying) {
+  if (editor.state.status === "closed") {
     return showTrigger ? (
       <Flex align="center" justify="space-between" gap="2">
         <CommentActionButton
           disabled={disabled}
-          onClick={() => setIsReplying(true)}
+          onClick={() => editor.open()}
           type="button"
           variant="surface"
         >
@@ -57,14 +50,14 @@ export const ReplyComposer = ({
 
   return (
     <CommentForm
-      disabled={disabled}
-      onCancel={close}
-      onChange={setDraft}
-      onSubmit={() => void handleSubmit()}
+      disabled={disabled || editor.state.status === "saving"}
+      onCancel={editor.close}
+      onChange={editor.change}
+      onSubmit={() => void editor.save()}
       placeholder="Write a reply..."
       submitLabel="Add reply"
       textareaAriaLabel="Reply body"
-      value={draft}
+      value={editor.state.draft}
     />
   );
 };

@@ -40,8 +40,12 @@ export const CommentItem = ({
     onUpdateReply,
   } = actions;
   const [isEditing, setIsEditing] = useState(false);
-  const { error, isPending, reportError, runAction } = useCommentActionState();
-  const isDisabled = disabled || isPending;
+  const {
+    state: actionState,
+    reportError,
+    runAction,
+  } = useCommentActionState();
+  const isDisabled = disabled || actionState.status === "pending";
 
   const content = (
     <>
@@ -137,9 +141,9 @@ export const CommentItem = ({
               />
             }
           />
-          {error && (
+          {actionState.status === "error" && (
             <Text color="fg.error" fontSize="sm">
-              {error}
+              {actionState.message}
             </Text>
           )}
         </Stack>

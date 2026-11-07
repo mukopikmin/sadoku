@@ -108,12 +108,16 @@ them when making changes.
   component-local caches. Validate untrusted response fields at the API boundary
   when they affect rendering, routing, configuration, or discriminated model
   state.
-- Extract stateful and behavioral frontend logic into focused custom hooks when
-  practical, keeping components primarily responsible for rendering and wiring
-  user interactions. Model each meaningful hook state as a discriminated union
-  whenever possible so consumers must handle loading, success, empty, and error
-  states explicitly instead of interpreting combinations of booleans and
-  optional values.
+- Extract UI state management and behavioral logic into focused custom hooks as
+  much as practical, keeping components primarily responsible for rendering and
+  wiring user interactions. This includes input validation, asynchronous
+  operations, side effects, and state transitions.
+- Represent the UI's meaningful states in the hook's return type. Prefer
+  discriminated unions for mutually exclusive states (such as loading, ready,
+  empty, error, editing, or saving), with the data and actions available in each
+  state, instead of requiring components to infer states from combinations of
+  booleans and optional values. Keep independent state independent; trivial
+  rendering details do not require a custom hook solely for extraction.
 - Build preview UI with Chakra UI components and existing Sadoku semantic
   tokens. Reuse components under `src/preview/components/ui/` before introducing
   a new dialog, notification, or common control implementation.
@@ -168,15 +172,20 @@ them when making changes.
 - Put cross-module Go server workflows in `src/server/test/integration/`.
 - Put preview client tests in `src/preview/test/` using Vitest and Testing
   Library.
-- Keep component tests to the minimum needed to verify rendering, accessibility,
-  and user-visible integration behavior. Prefer focused hook tests for state
-  transitions, branching logic, side effects, and error handling extracted from
-  components.
+- Prioritize focused tests of custom hooks for UI state transitions, branching
+  logic, input validation, asynchronous operations, side effects, and error
+  handling. Exercise the states and actions exposed by the hook's return type.
+  Visual appearance tests are a low priority.
+- This priority does not restrict what should be tested. Add component or
+  integration tests whenever needed to verify UI behavior, user interactions,
+  accessibility, DOM integration, or other behavior that hook tests alone cannot
+  establish. Do not remove useful behavioral coverage merely to reduce UI tests.
 - Focus preview component tests on semantic DOM structure, accessible names and
-  roles, content, and user interactions. Do not assert cosmetic details such as
-  exact colors, spacing, border widths, typography, CSS tokens, generated class
-  names, or stylesheet text. Keep checks for user-selected settings and
-  functional layout calculations in the appropriate behavioral or hook tests.
+  roles, content, and user interactions. Prefer behavioral assertions over
+  cosmetic checks of exact colors, spacing, border widths, typography, CSS
+  tokens, generated class names, or stylesheet text. Keep checks for
+  user-selected settings and functional layout calculations in the appropriate
+  behavioral or hook tests.
 - Prefer behavioral tests through public functions, HTTP requests, or rendered
   UI. Avoid tests coupled to private implementation details.
 - Use temporary files and ephemeral or explicitly reserved loopback ports. Tests
