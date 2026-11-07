@@ -21,20 +21,26 @@ it("restores through Connect, preserving empty expected content and server error
       requests.push(await request.json());
       return requests.length === 1
         ? Response.json({})
-        : Response.json({ code: "aborted", message: "The file has changed." }, {
-          status: 409,
-        });
+        : Response.json(
+            { code: "aborted", message: "The file has changed." },
+            {
+              status: 409,
+            },
+          );
     }),
   );
   await restoreDocumentRevision(7, 4, "");
   await expect(restoreDocumentRevision(7, 4, undefined)).rejects.toThrow(
     "The file has changed.",
   );
-  expect(requests).toEqual([{
-    documentId: "7",
-    revisionId: "4",
-    expectedMarkdown: "",
-  }, { documentId: "7", revisionId: "4" }]);
+  expect(requests).toEqual([
+    {
+      documentId: "7",
+      revisionId: "4",
+      expectedMarkdown: "",
+    },
+    { documentId: "7", revisionId: "4" },
+  ]);
 });
 
 it("converts safe revision IDs and preserves empty saved Markdown", () => {
@@ -57,11 +63,17 @@ it("converts safe revision IDs and preserves empty saved Markdown", () => {
     previousMarkdown: "",
   });
   expect(
-    toDocumentRevisions([{ id: 3n, recordedAt, markdown: "ignored" }, {
-      id: 2n,
-      recordedAt,
-    }]),
-  ).toEqual([{ id: 3, recordedAt }, { id: 2, recordedAt }]);
+    toDocumentRevisions([
+      { id: 3n, recordedAt, markdown: "ignored" },
+      {
+        id: 2n,
+        recordedAt,
+      },
+    ]),
+  ).toEqual([
+    { id: 3, recordedAt },
+    { id: 2, recordedAt },
+  ]);
 });
 
 it.each([
@@ -80,27 +92,26 @@ it.each([
 });
 
 it("rejects oversized, duplicate, and out-of-order revision lists and invalid Markdown", () => {
-  for (
-    const ids of [
-      [2, 2],
-      [1, 2],
-      Array.from({ length: 21 }, (_, i) => 21 - i),
-    ]
-  ) {
-    expect(() => toDocumentRevisions(ids.map((id) => ({ id, recordedAt }))))
-      .toThrow("Invalid saved revisions response.");
+  for (const ids of [
+    [2, 2],
+    [1, 2],
+    Array.from({ length: 21 }, (_, i) => 21 - i),
+  ]) {
+    expect(() =>
+      toDocumentRevisions(ids.map((id) => ({ id, recordedAt }))),
+    ).toThrow("Invalid saved revisions response.");
   }
-  expect(() => toDocumentRevision({ id: 1, recordedAt, markdown: null }))
-    .toThrow("Invalid saved revision response.");
+  expect(() =>
+    toDocumentRevision({ id: 1, recordedAt, markdown: null }),
+  ).toThrow("Invalid saved revision response.");
   expect(() =>
     toDocumentRevision({
       id: 1,
       recordedAt,
       markdown: "new",
       previousMarkdown: null,
-    })
-  )
-    .toThrow("Invalid saved revision response.");
+    }),
+  ).toThrow("Invalid saved revision response.");
 });
 
 it("requests document-scoped revision metadata and bodies through Connect", async () => {
@@ -123,20 +134,29 @@ it("requests document-scoped revision metadata and bodies through Connect", asyn
     recordedAt,
     markdown: "# Saved",
   });
-  expect(requests).toEqual([{ documentId: "7" }, {
-    documentId: "7",
-    revisionId: "4",
-  }]);
+  expect(requests).toEqual([
+    { documentId: "7" },
+    {
+      documentId: "7",
+      revisionId: "4",
+    },
+  ]);
 });
 
 it("reports missing bodies and rejects a mismatched response ID", async () => {
   vi.stubGlobal(
     "fetch",
-    vi.fn().mockResolvedValueOnce(
-      Response.json({ code: "not_found", message: "Missing" }, { status: 404 }),
-    ).mockResolvedValue(
-      Response.json({ id: "9", recordedAt, markdown: "wrong" }),
-    ),
+    vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json(
+          { code: "not_found", message: "Missing" },
+          { status: 404 },
+        ),
+      )
+      .mockResolvedValue(
+        Response.json({ id: "9", recordedAt, markdown: "wrong" }),
+      ),
   );
   await expect(loadDocumentRevision(7, 4)).rejects.toThrow(
     "Failed to load saved revision: 404",

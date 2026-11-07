@@ -19,7 +19,7 @@ func TestDirectoryDiscoveryHonorsLimitsAndRetainsDeletedSnapshots(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	repo := &storage.Repository{DB: database}
 	for _, name := range []string{"a.md", "b.MARKDOWN", "ignored.txt", "nested/c.md", "nested/deep/d.md", ".git/hidden.md", "node_modules/hidden.md"} {
 		path := filepath.Join(docs, filepath.FromSlash(name))

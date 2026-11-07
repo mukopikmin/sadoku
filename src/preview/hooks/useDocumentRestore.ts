@@ -45,6 +45,8 @@ export const useDocumentRestore = (
     pending.current = false;
     setState({ status: "closed" });
     return () => {
+      // Invalidate async work; this ref is a generation counter, not a DOM node.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
     };
   }, [documentId]);

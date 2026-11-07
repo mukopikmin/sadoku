@@ -22,6 +22,8 @@ export const useTagsManager = (open: boolean) => {
     pending.current = false;
     setState({ status: "idle" });
     return () => {
+      // Invalidate async work; this ref is a generation counter, not a DOM node.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
     };
   }, [open]);

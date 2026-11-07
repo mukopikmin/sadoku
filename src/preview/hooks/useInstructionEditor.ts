@@ -7,7 +7,8 @@ type InstructionEditorState =
   | { status: "loading" }
   | { status: "load-error"; message: string }
   | ({ content: string; dirty: boolean } & (
-      { status: "ready" | "saving" } | { status: "save-error"; message: string }
+      | { status: "ready" | "saving" }
+      | { status: "save-error"; message: string }
     ));
 
 export const useInstructionEditor = (
@@ -26,6 +27,8 @@ export const useInstructionEditor = (
     setDraft(undefined);
     setAction({ status: "idle" });
     return () => {
+      // Invalidate async work; this ref is a generation counter, not a DOM node.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
     };
   }, [documentId, open]);

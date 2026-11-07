@@ -8,9 +8,11 @@ type Props = {
   open: boolean;
 };
 
-export const GlobalInstructionsDialog = (
-  { finalFocusRef, onOpenChange, open }: Props,
-) => (
+export const GlobalInstructionsDialog = ({
+  finalFocusRef,
+  onOpenChange,
+  open,
+}: Props) => (
   <Dialog.Root
     finalFocusEl={() => finalFocusRef?.current ?? null}
     onOpenChange={({ open }) => onOpenChange(open)}

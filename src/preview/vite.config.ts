@@ -5,11 +5,12 @@ import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => ({
   base: "./",
-  define: command === "build"
-    ? {
-      "process.env.NODE_ENV": JSON.stringify("production"),
-    }
-    : undefined,
+  define:
+    command === "build"
+      ? {
+          "process.env.NODE_ENV": JSON.stringify("production"),
+        }
+      : undefined,
   plugins: [react()],
   build: {
     assetsInlineLimit: 0,
@@ -26,9 +27,8 @@ export default defineConfig(({ command }) => ({
     },
   },
   test: {
-    maxWorkers: process.env.CI === "true"
-      ? Math.min(4, availableParallelism())
-      : 2,
+    maxWorkers:
+      process.env.CI === "true" ? Math.min(4, availableParallelism()) : 2,
     setupFiles: [resolve(import.meta.dirname, "test/connectFetch.ts")],
     testTimeout: 10_000,
     projects: [

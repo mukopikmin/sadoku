@@ -14,9 +14,10 @@ export const RawMarkdownDialog = ({
   range?: CommentRange;
 }) => {
   const source = range
-    ? markdown.split(/\r?\n/).slice(range.startLine - 1, range.endLine).join(
-      "\n",
-    )
+    ? markdown
+        .split(/\r?\n/)
+        .slice(range.startLine - 1, range.endLine)
+        .join("\n")
     : "";
 
   return (

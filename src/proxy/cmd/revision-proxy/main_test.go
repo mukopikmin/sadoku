@@ -69,13 +69,13 @@ func TestServerDrainsActiveResponse(t *testing.T) {
 	go func() {
 		done <- serve(ctx, listener, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "text/event-stream")
-			io.WriteString(w, "data: first\n\n")
+			_, _ = io.WriteString(w, "data: first\n\n")
 			w.(http.Flusher).Flush()
 			select {
 			case <-release:
 			case <-r.Context().Done():
 			}
-			io.WriteString(w, "data: last\n\n")
+			_, _ = io.WriteString(w, "data: last\n\n")
 		}), testLogger(), time.Second)
 	}()
 	client := &http.Client{Timeout: 3 * time.Second, Transport: &http.Transport{Proxy: nil}}
@@ -84,7 +84,7 @@ func TestServerDrainsActiveResponse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	first := make([]byte, len("data: first\n\n"))
 	if _, err := io.ReadFull(response.Body, first); err != nil || string(first) != "data: first\n\n" {
 		t.Fatalf("first SSE event = %q, %v", first, err)
@@ -133,7 +133,7 @@ func TestShutdownBoundsLongLivedResponse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	cancel()
 	select {
 	case err := <-done:

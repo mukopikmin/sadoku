@@ -19,8 +19,8 @@ export const usePreviewRoute = () => {
   const rawDocumentId = commentsMatch
     ? commentsMatch.documentId
     : previewMatch
-    ? previewMatch.documentId
-    : undefined;
+      ? previewMatch.documentId
+      : undefined;
 
   return {
     documentId: parseDocumentId(rawDocumentId),

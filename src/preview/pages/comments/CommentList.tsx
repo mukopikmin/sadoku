@@ -14,11 +14,7 @@ import { type ReactNode } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
-import type {
-  Comment,
-  ResolvedComment,
-  UnresolvedComment,
-} from "../../models/comment";
+import type { Comment } from "../../models/comment";
 import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 import { useCommentBulkActions } from "./useCommentBulkActions";
 import { type CommentFilter } from "./useCommentFilter";

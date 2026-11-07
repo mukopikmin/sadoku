@@ -32,7 +32,7 @@ func archive(t target, version, binary, output string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	var tw *tar.Writer
 	var zw *zip.Writer
 	var gz *gzip.Writer
@@ -135,7 +135,7 @@ func buildArchive(t target, version, binaryVersion string, checksums *[]string) 
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 	name := "sadoku"
 	ext := ".tar.gz"
 	if t.OS == "windows" {
@@ -152,8 +152,8 @@ func buildArchive(t target, version, binaryVersion string, checksums *[]string) 
 	if err != nil {
 		return err
 	}
-	temp.Close()
-	defer os.Remove(temp.Name())
+	_ = temp.Close()
+	defer func() { _ = os.Remove(temp.Name()) }()
 	if err = archive(t, version, binary, temp.Name()); err != nil {
 		return err
 	}

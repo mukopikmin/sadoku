@@ -53,6 +53,7 @@ export const MarkdownPreview = ({
     commentRenderingContext,
     deletedCommentsByLine,
     raw,
+    interactionProps,
   } = preview;
 
   return (
@@ -67,6 +68,7 @@ export const MarkdownPreview = ({
           range={raw.status === "open" ? raw.range : undefined}
         />
         <Box
+          {...interactionProps}
           className="markdown-preview"
           data-document-diff={previousMarkdown !== undefined ? "" : undefined}
           ref={previewRef}

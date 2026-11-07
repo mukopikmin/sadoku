@@ -9,12 +9,13 @@ afterEach(() => {
 
 it("shows the file title and saves edits without submitting Markdown", async () => {
   const fetch = vi.fn(async () =>
-    Response.json({ id: "1", title: "guide.md", displayTitle: "Changed" })
+    Response.json({ id: "1", title: "guide.md", displayTitle: "Changed" }),
   );
   vi.stubGlobal("fetch", fetch);
   render(<DocumentTitle documentId={1} title="File title" />);
-  expect(screen.getByRole("heading", { name: "File title", level: 1 }))
-    .toBeTruthy();
+  expect(
+    screen.getByRole("heading", { name: "File title", level: 1 }),
+  ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Edit title" }));
   fireEvent.change(await screen.findByRole("textbox", { name: "Title" }), {
     target: { value: "Changed" },
@@ -42,9 +43,12 @@ it("keeps the editor open with an error after a failed save", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn(async () =>
-      Response.json({ code: "internal", message: "Save failed" }, {
-        status: 500,
-      })
+      Response.json(
+        { code: "internal", message: "Save failed" },
+        {
+          status: 500,
+        },
+      ),
     ),
   );
   render(<DocumentTitle documentId={1} title="Existing" />);
@@ -63,7 +67,7 @@ it("keeps the editor open with an error after a failed save", async () => {
 
 it("clears a title by saving an empty value", async () => {
   const fetch = vi.fn(async () =>
-    Response.json({ id: "1", title: "guide.md" })
+    Response.json({ id: "1", title: "guide.md" }),
   );
   vi.stubGlobal("fetch", fetch);
   render(<DocumentTitle documentId={1} title="Existing" />);

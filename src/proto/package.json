@@ -6,11 +6,12 @@
     "node": "^26.12.1"
   },
   "scripts": {
-    "proto:generate": "buf generate && prettier --write ../preview/gen",
+    "proto:generate": "buf generate && cd ../.. && oxfmt \"src/preview/gen/**/*.ts\"",
     "proto:lint": "buf lint",
-    "fmt": "prettier --write ../../scripts/*.mts ../preview/gen",
-    "fmt:check": "prettier --check ../../scripts/*.mts ../preview/gen",
-    "test:actions": "node --test ../../scripts/cloud_run_preview_comment_test.mts"
+    "fmt": "cd ../.. && oxfmt \".github/tests/*.mts\" \"src/preview/**/*.{ts,tsx}\"",
+    "fmt:check": "cd ../.. && oxfmt --check \".github/tests/*.mts\" \"src/preview/**/*.{ts,tsx}\"",
+    "test:actions": "node --test ../../.github/tests/cloud_run_preview_comment_test.mts",
+    "lint": "cd ../.. && oxlint --deny-warnings --report-unused-disable-directives .github/tests src/preview"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.16.0"
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@bufbuild/buf": "1.75.0",
     "@bufbuild/protoc-gen-es": "2.16.0",
-    "prettier": "3.9.10"
+    "oxfmt": "0.76.0",
+    "oxlint": "1.92.0"
   }
 }

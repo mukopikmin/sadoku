@@ -2,7 +2,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { useMermaidRendering } from "../markdown/useMermaidRendering";
 
 type SourceState =
-  { status: "collapsed"; canExpand: boolean } | { status: "expanded" };
+  | { status: "collapsed"; canExpand: boolean }
+  | { status: "expanded" };
 export const useExpandableSource = (content: string) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<SourceState>({

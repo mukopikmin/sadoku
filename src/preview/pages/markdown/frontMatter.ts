@@ -43,7 +43,8 @@ const parseItems = (lines: string[], closingIndex: number) => {
   let index = 1;
   while (index < closingIndex) {
     if (
-      lines[index].trim() === "" || lines[index].trimStart().startsWith("#")
+      lines[index].trim() === "" ||
+      lines[index].trimStart().startsWith("#")
     ) {
       index++;
       continue;
@@ -60,9 +61,10 @@ const parseItems = (lines: string[], closingIndex: number) => {
         continuation.push(lines[index].replace(/^[ \t]{1,2}/, ""));
         index++;
       }
-      const value = rawValue === ">"
-        ? continuation.join(" ").replace(/\s+/g, " ").trim()
-        : continuation.join("\n").replace(/\n+$/, "");
+      const value =
+        rawValue === ">"
+          ? continuation.join(" ").replace(/\s+/g, " ").trim()
+          : continuation.join("\n").replace(/\n+$/, "");
       items.push({ endLine: index, key, startLine, value });
       continue;
     }
@@ -85,8 +87,8 @@ export const extractAgentFrontMatter = (
   if (!isAgentInstructionDocument(documentPath)) return undefined;
   const lines = markdown.split(/\r?\n/);
   if (lines[0] !== "---") return undefined;
-  const closingIndex = lines.findIndex((line, index) =>
-    index > 0 && line === "---"
+  const closingIndex = lines.findIndex(
+    (line, index) => index > 0 && line === "---",
   );
   if (closingIndex < 0) return undefined;
   const items = parseItems(lines, closingIndex);

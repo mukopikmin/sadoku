@@ -42,16 +42,16 @@ describe("AppearanceSettings", () => {
     expect(boundaries.checked).toBe(false);
     fireEvent.click(boundaries);
     await waitFor(() =>
-      expect(onShowHighlightBoundariesChange).toHaveBeenCalledWith(true)
+      expect(onShowHighlightBoundariesChange).toHaveBeenCalledWith(true),
     );
     await waitFor(() =>
-      expect(onShowHtmlCommentsChange).toHaveBeenCalledWith(false)
+      expect(onShowHtmlCommentsChange).toHaveBeenCalledWith(false),
     );
 
     expect(onThemeModeChange).toHaveBeenCalledWith("dark");
     expect(onFontScaleChange).toHaveBeenCalledWith(1.1);
     await waitFor(() =>
-      expect(onCodeWrapModeChange).toHaveBeenCalledWith("wrap")
+      expect(onCodeWrapModeChange).toHaveBeenCalledWith("wrap"),
     );
   });
 });

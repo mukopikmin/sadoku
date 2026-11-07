@@ -28,8 +28,10 @@ export const usePreviewSettings = () => {
     theme: getPreferredThemeMode(),
   }));
   const settingsRef = useRef(settings);
-  settingsRef.current = settings;
-  const userChangedSettings = useRef(false);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+  const [userChangedSettings, setUserChangedSettings] = useState(false);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({
     queryFn: loadSettings,
@@ -44,14 +46,14 @@ export const usePreviewSettings = () => {
   });
 
   useEffect(() => {
-    if (userChangedSettings.current || settingsQuery.data === undefined) return;
+    if (userChangedSettings || settingsQuery.data === undefined) return;
     setSettings((current) => ({
       ...current,
       ...settingsQuery.data,
       codeWrap: settingsQuery.data.codeWrap ?? current.codeWrap,
       theme: settingsQuery.data.theme ?? current.theme,
     }));
-  }, [settingsQuery.data]);
+  }, [settingsQuery.data, userChangedSettings]);
 
   useEffect(() => {
     globalThis.document.documentElement.style.setProperty(
@@ -80,7 +82,7 @@ export const usePreviewSettings = () => {
   }, [settings.theme]);
 
   const changeSettings = (changes: Partial<ResolvedPreviewSettings>) => {
-    userChangedSettings.current = true;
+    setUserChangedSettings(true);
     const next = { ...settingsRef.current, ...changes };
     settingsRef.current = next;
     setSettings(next);
@@ -140,7 +142,7 @@ export const usePreviewSettings = () => {
       settingsQuery.error,
       saveMutation.isPending,
       saveMutation.error,
-      userChangedSettings.current,
+      userChangedSettings,
     ),
   };
 };

@@ -31,7 +31,7 @@ describe("TagsDialog", () => {
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-01T00:00:00.000Z",
         },
-      ])
+      ]),
     );
     vi.stubGlobal("fetch", fetchMock);
     const onOpenChange = vi.fn();
@@ -56,7 +56,10 @@ describe("TagsDialog", () => {
   });
 
   it("displays an empty state", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json([])));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json([])),
+    );
 
     render(<TagsDialog onOpenChange={() => {}} open />);
 
@@ -72,7 +75,7 @@ describe("TagsDialog", () => {
     render(<TagsDialog onOpenChange={() => {}} open />);
 
     await waitFor(() =>
-      expect(screen.getByText("Could not load tags.")).not.toBeNull()
+      expect(screen.getByText("Could not load tags.")).not.toBeNull(),
     );
   });
 
@@ -86,13 +89,15 @@ describe("TagsDialog", () => {
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
     };
-    const fetchMock = vi.fn(async (
-      _input: RequestInfo | URL,
-      init?: RequestInit,
-    ) =>
-      init?.method === "PATCH"
-        ? Response.json({ id: 1, name: "Backend", backgroundColor: selectedColor })
-        : Response.json([{ ...tag, name: "Platform API" }])
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit) =>
+        init?.method === "PATCH"
+          ? Response.json({
+              id: 1,
+              name: "Backend",
+              backgroundColor: selectedColor,
+            })
+          : Response.json([{ ...tag, name: "Platform API" }]),
     );
     vi.stubGlobal("fetch", fetchMock);
     render(<TagsDialog onOpenChange={() => {}} open />);
@@ -117,10 +122,12 @@ describe("TagsDialog", () => {
     );
     await waitFor(() =>
       expect(
-        (screen.getByLabelText(
-          "Background color for Platform API",
-        ) as HTMLInputElement).value.toLowerCase(),
-      ).toBe(selectedColor)
+        (
+          screen.getByLabelText(
+            "Background color for Platform API",
+          ) as HTMLInputElement
+        ).value.toLowerCase(),
+      ).toBe(selectedColor),
     );
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -134,25 +141,25 @@ describe("TagsDialog", () => {
             backgroundColor: selectedColor,
           }),
         }),
-      )
+      ),
     );
   });
 
   it("shows a conflict returned while updating", async () => {
-    const fetchMock = vi.fn(async (
-      _input: RequestInfo | URL,
-      init?: RequestInit,
-    ) =>
-      init?.method === "PATCH"
-        ? new Response("Tag name already exists.", { status: 409 })
-        : Response.json([{
-          id: 1,
-          name: "API",
-          backgroundColor: "#123456",
-          documentCount: 1,
-          createdAt: "2026-01-01T00:00:00.000Z",
-          updatedAt: "2026-01-01T00:00:00.000Z",
-        }])
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit) =>
+        init?.method === "PATCH"
+          ? new Response("Tag name already exists.", { status: 409 })
+          : Response.json([
+              {
+                id: 1,
+                name: "API",
+                backgroundColor: "#123456",
+                documentCount: 1,
+                createdAt: "2026-01-01T00:00:00.000Z",
+                updatedAt: "2026-01-01T00:00:00.000Z",
+              },
+            ]),
     );
     vi.stubGlobal("fetch", fetchMock);
     render(<TagsDialog onOpenChange={() => {}} open />);
@@ -173,14 +180,18 @@ it("confirms deletion, supports cancel, and refreshes after success", async () =
         return new Response(null, { status: 204 });
       }
       return Response.json(
-        deleted ? [] : [{
-          id: 1,
-          name: "API",
-          backgroundColor: "#123456",
-          documentCount: 2,
-          createdAt: "now",
-          updatedAt: "now",
-        }],
+        deleted
+          ? []
+          : [
+              {
+                id: 1,
+                name: "API",
+                backgroundColor: "#123456",
+                documentCount: 2,
+                createdAt: "now",
+                updatedAt: "now",
+              },
+            ],
       );
     },
   );
@@ -219,14 +230,16 @@ it("keeps a tag and displays the error when deletion fails", async () => {
     vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) =>
       init?.method === "DELETE"
         ? new Response("Could not delete tag.", { status: 500 })
-        : Response.json([{
-          id: 1,
-          name: "API",
-          backgroundColor: "#123456",
-          documentCount: 0,
-          createdAt: "now",
-          updatedAt: "now",
-        }])
+        : Response.json([
+            {
+              id: 1,
+              name: "API",
+              backgroundColor: "#123456",
+              documentCount: 0,
+              createdAt: "now",
+              updatedAt: "now",
+            },
+          ]),
     ),
   );
   render(<TagsDialog onOpenChange={() => {}} open />);
@@ -243,6 +256,7 @@ it("keeps a tag and displays the error when deletion fails", async () => {
     "Could not delete tag.",
   );
   expect(screen.getByText("API")).not.toBeNull();
-  expect(screen.getByRole("button", { name: "Delete", exact: true })).not
-    .toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Delete", exact: true }),
+  ).not.toBeNull();
 });

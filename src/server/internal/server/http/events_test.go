@@ -38,7 +38,7 @@ func eventStream(t *testing.T, serverURL, path string) (<-chan streamEvent, func
 		t.Fatal(err)
 	}
 	if response.StatusCode != 200 {
-		response.Body.Close()
+		_ = response.Body.Close()
 		cancel()
 		t.Fatalf("event stream status: %d", response.StatusCode)
 	}
@@ -84,7 +84,7 @@ func eventStream(t *testing.T, serverURL, path string) (<-chan streamEvent, func
 	}()
 	closeStream := func() {
 		cancel()
-		response.Body.Close()
+		_ = response.Body.Close()
 		select {
 		case <-done:
 		case <-time.After(5 * time.Second):

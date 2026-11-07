@@ -21,12 +21,13 @@ const rect = (bottom: number, height: number): DOMRect => ({
   toJSON: () => ({}),
 });
 
-const Harness = ({ documentId = 1, enabled = true, view = "preview" as PreviewView }) => {
-  const { collapsed, documentHeaderRef, headerRef } = useCollapsedDocumentHeader(
-    documentId,
-    enabled,
-    view,
-  );
+const Harness = ({
+  documentId = 1,
+  enabled = true,
+  view = "preview" as PreviewView,
+}) => {
+  const { collapsed, documentHeaderRef, headerRef } =
+    useCollapsedDocumentHeader(documentId, enabled, view);
   return (
     <>
       <header ref={headerRef} />
@@ -36,11 +37,12 @@ const Harness = ({ documentId = 1, enabled = true, view = "preview" as PreviewVi
   );
 };
 
-const flushFrames = () => act(() => {
-  const pending = [...frames.values()];
-  frames.clear();
-  pending.forEach((callback) => callback(0));
-});
+const flushFrames = () =>
+  act(() => {
+    const pending = [...frames.values()];
+    frames.clear();
+    pending.forEach((callback) => callback(0));
+  });
 
 beforeEach(() => {
   headerBottom = 64;
@@ -53,13 +55,16 @@ beforeEach(() => {
     return id;
   });
   vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
-  vi.stubGlobal("ResizeObserver", class {
-    constructor(callback: () => void) {
-      resize = callback;
-    }
-    observe() {}
-    disconnect = disconnect;
-  });
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(callback: () => void) {
+        resize = callback;
+      }
+      observe() {}
+      disconnect = disconnect;
+    },
+  );
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function () {
       return this.tagName === "HEADER"

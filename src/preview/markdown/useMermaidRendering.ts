@@ -16,5 +16,7 @@ export const useMermaidRendering = (
           ? "dark"
           : "default"),
     });
+    // Callers provide the content changes that require rerendering Mermaid.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 };

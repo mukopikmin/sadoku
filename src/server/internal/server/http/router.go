@@ -101,14 +101,14 @@ func respond(w http.ResponseWriter, status int, value any) {
 	}
 	w.WriteHeader(status)
 	if status != 204 {
-		json.NewEncoder(w).Encode(value)
+		_ = json.NewEncoder(w).Encode(value)
 	}
 }
 
 func textError(w http.ResponseWriter, message string, status int) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(status)
-	io.WriteString(w, message)
+	_, _ = io.WriteString(w, message)
 }
 func respondError(w http.ResponseWriter, err error) {
 	var failure *u.Failure
@@ -158,7 +158,7 @@ func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(&css, `<link rel="stylesheet" href="%s/assets/%s">`, prefix, html.EscapeString(file))
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<!doctype html><html lang="und"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="%s/assets/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="%s/assets/icon-512.png">%s<title>Sadoku</title></head><body><div id="sadoku-client-root" data-base-path="%s" data-sync-enabled="%t"></div><script type="module" src="%s/assets/%s"></script></body></html>`, prefix, prefix, css.String(), prefix, !r.options.NoSync, prefix, html.EscapeString(e.File))
+	_, _ = fmt.Fprintf(w, `<!doctype html><html lang="und"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="%s/assets/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="%s/assets/icon-512.png">%s<title>Sadoku</title></head><body><div id="sadoku-client-root" data-base-path="%s" data-sync-enabled="%t"></div><script type="module" src="%s/assets/%s"></script></body></html>`, prefix, prefix, css.String(), prefix, !r.options.NoSync, prefix, html.EscapeString(e.File))
 }
 func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" && req.Method != "HEAD" {
@@ -183,7 +183,7 @@ func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 	if r.immutable[name] {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 	}
-	w.Write(b)
+	_, _ = w.Write(b)
 }
 func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/__sadoku/"), "/")

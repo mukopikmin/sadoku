@@ -111,10 +111,6 @@ export const usePreviewApp = () => {
     [],
   );
 
-  useEffect(() => {
-    clearReloadAvailable();
-  }, [selectedDocumentId]);
-
   const changeView = (nextView: PreviewView) => {
     if (nextView === view || selectedDocumentId === undefined) return;
     saveScrollPosition();
@@ -185,9 +181,10 @@ export const usePreviewApp = () => {
     selectedDocumentId,
   ]);
 
+  const refetchDocuments = documentsQuery.refetch;
   useEffect(() => {
-    if (directoryStatus?.state === "ready") void documentsQuery.refetch();
-  }, [directoryStatus?.state]);
+    if (directoryStatus?.state === "ready") void refetchDocuments();
+  }, [directoryStatus?.state, refetchDocuments]);
 
   const dialogProps = {
     globalInstructions: globalInstructionsDisclosure,

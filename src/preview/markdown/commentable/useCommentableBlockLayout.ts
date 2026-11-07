@@ -1,5 +1,6 @@
 import { type RefObject, useCallback, useLayoutEffect, useState } from "react";
 import type { CommentRange, RangeHighlight } from "./commentRanges";
+import { getCommentAnchorLine } from "./commentRanges";
 import {
   measureHighlightGroups,
   useHighlightLayouts,
@@ -29,23 +30,54 @@ export const measureRangeHighlightLayouts = (
   preview: HTMLElement,
   rangeHighlights: readonly RangeHighlight[],
 ): RangeHighlightLayout[] => {
-  const blocks = [...preview.querySelectorAll<HTMLElement>(
-    commentableBlockSelector,
-  )];
+  const blocks = [
+    ...preview.querySelectorAll<HTMLElement>(
+      `${commentableBlockSelector}, :scope > .document-diff-deletion`,
+    ),
+  ];
+  const isDiff = preview.hasAttribute("data-document-diff");
+  // Claim content in priority order so a block receives exactly one highlight,
+  // even when different source ranges overlap the same rendered paragraph.
+  const priority = { selection: 0, comment: 1, hover: 2 };
+  const claimed = new Set<HTMLElement>();
 
-  return measureHighlightGroups(preview, rangeHighlights.flatMap((range) => {
-    const contents = blocks.filter((block) => {
-      const startLine = Number(block.dataset.sourceLine);
-      const endLine = Number(block.dataset.sourceEndLine ?? startLine);
-      return endLine >= range.startLine && startLine <= range.endLine;
-    }).map((block) =>
-      block.querySelector<HTMLElement>(":scope > .commentable-content")
-    ).filter((content): content is HTMLElement => content !== null);
-    // Keep range outlines on current content, without spanning deleted blocks.
-    return preview.hasAttribute("data-document-diff")
-      ? contents.map((content) => ({ range, elements: [content] }))
-      : [{ range, elements: contents }];
-  }));
+  return measureHighlightGroups(
+    preview,
+    [...rangeHighlights]
+      .sort((a, b) => priority[a.kind] - priority[b.kind])
+      .flatMap((range) => {
+        const groups: HTMLElement[][] = [];
+        let contents: HTMLElement[] = [];
+        const overlaps = (block: HTMLElement) => {
+          const startLine = Number(block.dataset.sourceLine);
+          const endLine = Number(block.dataset.sourceEndLine ?? startLine);
+          return endLine >= range.startLine && startLine <= range.endLine;
+        };
+        // Comments on blank or non-rendered source lines still highlight their anchor.
+        const anchorLine =
+          range.kind === "comment" && !blocks.some(overlaps)
+            ? getCommentAnchorLine(range, getCommentableLines(preview))
+            : undefined;
+        for (const block of blocks) {
+          const content =
+            overlaps(block) || Number(block.dataset.sourceLine) === anchorLine
+              ? block.querySelector<HTMLElement>(
+                  ":scope > .commentable-content",
+                )
+              : null;
+          if (content && !claimed.has(content)) {
+            contents.push(content);
+          } else if (contents.length > 0 && (isDiff || content)) {
+            // A deletion or unselected block separates visible parts of the range.
+            groups.push(contents);
+            contents = [];
+          }
+        }
+        if (contents.length > 0) groups.push(contents);
+        for (const content of groups.flat()) claimed.add(content);
+        return groups.map((elements) => ({ range, elements }));
+      }),
+  );
 };
 
 const arraysEqual = <Value>(
@@ -59,17 +91,26 @@ const arraysEqual = <Value>(
 export const useCommentableBlockLayout = (
   previewRef: RefObject<HTMLElement | null>,
   rangeHighlights: readonly RangeHighlight[],
+  interactionRange?: CommentRange,
 ) => {
   const [commentableLines, setCommentableLines] = useState<number[]>([]);
   const [deletedRanges, setDeletedRanges] = useState<CommentRange[]>([]);
   const measure = useCallback(
     (preview: HTMLElement) => {
-      return measureRangeHighlightLayouts(preview, rangeHighlights);
+      return measureRangeHighlightLayouts(preview, [
+        ...rangeHighlights,
+        ...(interactionRange
+          ? [{ ...interactionRange, kind: "hover" as const }]
+          : []),
+      ]);
     },
-    [rangeHighlights],
+    [rangeHighlights, interactionRange],
   );
   const rangeHighlightLayouts = useHighlightLayouts(previewRef, measure);
 
+  // Measure after every commit: Markdown DOM can change without changing the ref.
+  // State updates below preserve identity when the measured values are unchanged.
+  // oxlint-disable-next-line react/exhaustive-deps
   useLayoutEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;

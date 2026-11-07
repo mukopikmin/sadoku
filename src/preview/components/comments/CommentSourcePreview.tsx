@@ -3,9 +3,13 @@ import { useId } from "react";
 import type { Comment } from "../../models/comment";
 import { CommentSourceMarkdown } from "./CommentSourceMarkdown";
 
-const SourceVersion = (
-  { label, children }: { label: string; children: string },
-) => {
+const SourceVersion = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: string;
+}) => {
   const labelId = useId();
   return (
     <Box as="section" aria-labelledby={labelId}>
@@ -27,8 +31,8 @@ export const CommentSourcePreview = ({ comment }: { comment: Comment }) => {
   const original = comment.sourceText;
   const current = comment.currentSource ?? { state: "unavailable" };
   const unchanged = current.state === "available" && current.text === original;
-  const changed = current.state === "available" && original !== undefined &&
-    !unchanged;
+  const changed =
+    current.state === "available" && original !== undefined && !unchanged;
   if (original === undefined && current.state !== "available") return null;
 
   return (
@@ -51,17 +55,19 @@ export const CommentSourcePreview = ({ comment }: { comment: Comment }) => {
           {original}
         </SourceVersion>
       )}
-      {unchanged
-        ? <Text color="fg.muted" fontSize="xs">Unchanged since comment</Text>
-        : current.state === "available"
-        ? <SourceVersion label="Current">{current.text}</SourceVersion>
-        : (
-          <Text color="fg.muted" fontSize="sm">
-            {current.state === "deleted"
-              ? "The target lines have been deleted."
-              : "The current target lines could not be located."}
-          </Text>
-        )}
+      {unchanged ? (
+        <Text color="fg.muted" fontSize="xs">
+          Unchanged since comment
+        </Text>
+      ) : current.state === "available" ? (
+        <SourceVersion label="Current">{current.text}</SourceVersion>
+      ) : (
+        <Text color="fg.muted" fontSize="sm">
+          {current.state === "deleted"
+            ? "The target lines have been deleted."
+            : "The current target lines could not be located."}
+        </Text>
+      )}
     </Stack>
   );
 };

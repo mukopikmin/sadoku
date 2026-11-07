@@ -33,10 +33,12 @@ export const useDocumentTagEditor = (
     pending.current = false;
     setState({ status: "editing", tags, input: "" });
     return () => {
+      // Invalidate async work; this ref is a generation counter, not a DOM node.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
     };
   }, [documentId, open, tags]);
-  const allTags = query.data ?? [];
+  const allTags = useMemo(() => query.data ?? [], [query.data]);
   const trimmed = state.input.trim();
   const exact = allTags.find(({ name }) => name === trimmed);
   const options = useMemo(() => {

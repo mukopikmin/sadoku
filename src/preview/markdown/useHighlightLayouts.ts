@@ -1,7 +1,7 @@
 import { type RefObject, useCallback, useLayoutEffect, useState } from "react";
 
 export type HighlightLayout = {
-  kind: "comment" | "selection" | "addition" | "deletion";
+  kind: "comment" | "selection" | "hover" | "addition" | "deletion";
   top: number;
   bottom: number;
   startLine?: number;

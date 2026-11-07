@@ -40,8 +40,12 @@ export const useTextEditor = ({
         : { status: "closed" },
     );
     return () => {
+      // Invalidate async work; this ref is a generation counter, not a DOM node.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
     };
+    // Only a scope change resets the editor; refreshed props preserve its draft.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [scope]);
   return {
     state,

@@ -28,9 +28,7 @@ describe("DocumentTagsDialog", () => {
             },
           ]);
         }
-        if (
-          url === "/__sadoku/documents/7/tags" && init?.method === "PUT"
-        ) {
+        if (url === "/__sadoku/documents/7/tags" && init?.method === "PUT") {
           const { tags } = JSON.parse(String(init.body));
           return Response.json(
             tags.map((tag: { id?: number; name?: string }) => ({
@@ -94,8 +92,9 @@ describe("DocumentTagsDialog", () => {
     expect(screen.queryByRole("option", { name: "API" })).toBeNull();
     expect(screen.queryByRole("option", { name: "Create “API”" })).toBeNull();
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(await screen.findByText("This tag has already been added.")).not
-      .toBeNull();
+    expect(
+      await screen.findByText("This tag has already been added."),
+    ).not.toBeNull();
   });
 
   it("offers existing matches and creation in the same dropdown, preserving case", async () => {
@@ -137,8 +136,9 @@ describe("DocumentTagsDialog", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Remove API tag" }));
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Remove API tag" }))
-        .toBeNull()
+      expect(
+        screen.queryByRole("button", { name: "Remove API tag" }),
+      ).toBeNull(),
     );
     expect(fetch).toHaveBeenCalledWith(
       "/__sadoku/documents/7/tags",
@@ -156,7 +156,7 @@ describe("DocumentTagsDialog", () => {
     await screen.findByRole("option", { name: "API" });
     fireEvent.keyDown(input, { key: "ArrowDown" });
     await waitFor(() =>
-      expect(input.getAttribute("aria-activedescendant")).toBeTruthy()
+      expect(input.getAttribute("aria-activedescendant")).toBeTruthy(),
     );
     fireEvent.keyDown(input, { key: "Enter" });
     await screen.findByRole("button", { name: "Remove api tag" });
@@ -187,11 +187,13 @@ describe("DocumentTagsDialog", () => {
   });
 
   it("disables dropdown choices and prevents Enter from exceeding the tag limit", async () => {
-    renderDialog(Array.from({ length: 20 }, (_, index) => ({
-      id: index + 10,
-      name: `Tag ${index}`,
-      backgroundColor: "#ffffff",
-    })));
+    renderDialog(
+      Array.from({ length: 20 }, (_, index) => ({
+        id: index + 10,
+        name: `Tag ${index}`,
+        backgroundColor: "#ffffff",
+      })),
+    );
     const input = await readyInput();
     fireEvent.click(screen.getByRole("button", { name: "Show tag options" }));
     expect(
@@ -201,12 +203,14 @@ describe("DocumentTagsDialog", () => {
     ).toBe("true");
     fireEvent.change(input, { target: { value: "new" } });
     expect(
-      (await screen.findByRole("option", { name: "Create “new”" }))
-        .getAttribute("aria-disabled"),
+      (
+        await screen.findByRole("option", { name: "Create “new”" })
+      ).getAttribute("aria-disabled"),
     ).toBe("true");
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(await screen.findByText("A document can have at most 20 tags.")).not
-      .toBeNull();
+    expect(
+      await screen.findByText("A document can have at most 20 tags."),
+    ).not.toBeNull();
     expect(
       vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method === "PUT"),
     ).toHaveLength(0);
@@ -248,8 +252,9 @@ describe("DocumentTagsDialog", () => {
     await readyInput();
     fireEvent.click(screen.getByRole("button", { name: "Remove API tag" }));
     await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "Remove API tag" }))
-        .toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Remove API tag" }),
+      ).toBeNull();
       expect(screen.queryByRole("status")).toBeNull();
     });
     expect(fetch).toHaveBeenCalledWith(

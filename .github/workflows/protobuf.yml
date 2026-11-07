@@ -5,7 +5,7 @@ on:
     paths:
       - .github/workflows/protobuf.yml
       - Makefile
-      - .prettierrc.json
+      - .oxfmtrc.json
       - src/proto/buf.gen.yaml
       - src/proto/buf.yaml
       - src/proto/package.json
@@ -21,7 +21,7 @@ on:
     paths:
       - .github/workflows/protobuf.yml
       - Makefile
-      - .prettierrc.json
+      - .oxfmtrc.json
       - src/proto/buf.gen.yaml
       - src/proto/buf.yaml
       - src/proto/package.json

@@ -8,12 +8,7 @@ export const renderMarkdownHorizontalRule = (
   elementProps: Omit<MarkdownElementProps, "children">,
 ) => (
   <Box py="4">
-    <Separator
-      as="hr"
-      borderColor="border.muted"
-      m="0"
-      {...elementProps}
-    />
+    <Separator as="hr" borderColor="border.muted" m="0" {...elementProps} />
   </Box>
 );
 
