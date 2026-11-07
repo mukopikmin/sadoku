@@ -3,6 +3,7 @@ SHELL := sh
 
 GO ?= go
 NPM ?= npm
+GOLANGCI_LINT ?= golangci-lint
 export CGO_ENABLED := 1
 VERSION ?= 0.0.0-dev
 OUTPUT ?=
@@ -17,7 +18,7 @@ GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/ass
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format \
  build build-server install dist notices run start test test-server test-server-with-assets \
- test-tools test-install test-install-with-assets check vet vet-cross \
+ test-tools test-install test-install-with-assets check vet vet-cross lint lint-go lint-proxy \
  fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
  check-proxy-format vet-proxy test-proxy build-proxy run-proxy
 
@@ -88,7 +89,15 @@ test-install-with-assets:
 	HOME="$$install_home" $(GO) -C src/server run ./cmd/sadoku-tools install --version 0.0.0-ci; \
 	test "$$("$$install_home/.local/bin/sadoku" --version)" = "sadoku 0.0.0-ci"
 
-check: fmt-check vet vet-proxy
+check: fmt-check lint
+
+lint: lint-go lint-proxy
+
+lint-go: build-client
+	cd src/server && $(GOLANGCI_LINT) run --config ../../.golangci.yml ./...
+
+lint-proxy:
+	cd src/proxy && $(GOLANGCI_LINT) run --config ../../.golangci.yml ./...
 
 vet: build-client
 	$(GO) -C src/server vet ./...

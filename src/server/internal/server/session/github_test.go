@@ -31,7 +31,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	repo := &storage.Repository{DB: database, Path: path}
 	// Previous versions stored PR comments at the Contents API's canonical URL,
 	// separately from the PR document registration and its archival revisions.

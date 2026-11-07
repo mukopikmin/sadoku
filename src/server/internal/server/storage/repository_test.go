@@ -19,7 +19,7 @@ func testRepository(t *testing.T) *Repository {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	return &Repository{DB: database, Path: path}
 }
 

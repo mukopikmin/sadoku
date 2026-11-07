@@ -372,7 +372,7 @@ func TestIAMFailureDoesNotForward(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := &trackedBody{Reader: strings.NewReader("payload")}
-	defer body.Close() // The HTTP server owns the incoming body.
+	defer func() { _ = body.Close() }() // The HTTP server owns the incoming body.
 	r := httptest.NewRequest("POST", publicOrigin+"/revisions/v1/", body)
 	w := httptest.NewRecorder()
 	proxy.ServeHTTP(w, r)

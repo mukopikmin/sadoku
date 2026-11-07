@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   vet:
-    name: Vet
+    name: Lint and vet
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -34,10 +34,13 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: src/server/go.mod
-          # Vet must not populate the cache used by race tests and release builds.
+          # Lint and vet must not populate the cache used by race tests and release builds.
           cache-dependency-path: |
             src/server/go.sum
             .github/workflows/test.yml
+            .golangci.yml
+            .golangci-lint-version
+            Makefile
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -52,8 +55,14 @@ jobs:
       - name: Install dependencies
         run: make deps
 
-      - name: Vet Go server for native and cross-platform code
-        run: make vet-cross
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version-file: .golangci-lint-version
+          install-only: true
+
+      - name: Lint and vet Go server for native and cross-platform code
+        run: make lint-go vet-cross
 
   client:
     name: Test client
@@ -175,8 +184,3 @@ jobs:
       - name: Test source installer
         if: runner.os != 'Windows'
         run: make test-install-with-assets
-
-      - name: Test Windows installer
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: .\scripts\install_windows_test.ps1

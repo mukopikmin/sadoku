@@ -8,9 +8,9 @@
   "scripts": {
     "proto:generate": "buf generate && prettier --write ../preview/gen",
     "proto:lint": "buf lint",
-    "fmt": "prettier --write ../../scripts/*.mts ../preview/gen",
-    "fmt:check": "prettier --check ../../scripts/*.mts ../preview/gen",
-    "test:actions": "node --test ../../scripts/cloud_run_preview_comment_test.mts"
+    "fmt": "prettier --write '../../.github/tests/*.mts' ../preview/gen",
+    "fmt:check": "prettier --check '../../.github/tests/*.mts' ../preview/gen",
+    "test:actions": "node --test ../../.github/tests/cloud_run_preview_comment_test.mts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.16.0"

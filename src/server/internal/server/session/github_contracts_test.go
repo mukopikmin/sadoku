@@ -43,8 +43,13 @@ func TestGitHubFixtureProcess(t *testing.T) {
 	if err != nil {
 		os.Exit(2)
 	}
-	json.NewEncoder(log).Encode(call)
-	log.Close()
+	if err := json.NewEncoder(log).Encode(call); err != nil {
+		_ = log.Close()
+		os.Exit(2)
+	}
+	if err := log.Close(); err != nil {
+		os.Exit(2)
+	}
 	b, err := os.ReadFile(filepath.Join(directory, "responses.json"))
 	var responses map[string]json.RawMessage
 	if err != nil || json.Unmarshal(b, &responses) != nil {
@@ -74,11 +79,15 @@ func TestGitHubFixtureProcess(t *testing.T) {
 			os.Exit(1)
 		}
 		if control.Raw != nil {
-			fmt.Fprint(os.Stdout, *control.Raw)
+			if _, err := fmt.Fprint(os.Stdout, *control.Raw); err != nil {
+				os.Exit(2)
+			}
 			os.Exit(0)
 		}
 	}
-	os.Stdout.Write(response)
+	if _, err := os.Stdout.Write(response); err != nil {
+		os.Exit(2)
+	}
 	os.Exit(0)
 }
 
@@ -205,7 +214,7 @@ func newGitHubFixture(t *testing.T) *githubFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	repo := &storage.Repository{DB: database, Path: path}
 	f := &githubFixture{directory: root, endpoint: "repos/owner/repo/pulls/1"}
 	sha := strings.Repeat("a", 40)
@@ -609,7 +618,7 @@ func TestGitHubExportAllowsLocalEditsAndRefusesChangedComments(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		unblock()
-		<-done
+		_ = <-done
 		t.Fatal("export blocked a local edit")
 	}
 	unblock()

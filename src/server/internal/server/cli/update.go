@@ -36,7 +36,7 @@ func download(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Could not download %s: %s", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("Could not download %s: HTTP %d.", url, resp.StatusCode)
 	}
@@ -68,7 +68,7 @@ func archiveBinary(archive []byte, root, binary string, isZip bool) ([]byte, err
 				if err != nil {
 					return nil, err
 				}
-				defer f.Close()
+				defer func() { _ = f.Close() }()
 				return io.ReadAll(io.LimitReader(f, 256<<20))
 			}
 		}
@@ -77,7 +77,7 @@ func archiveBinary(archive []byte, root, binary string, isZip bool) ([]byte, err
 		if err != nil {
 			return nil, err
 		}
-		defer reader.Close()
+		defer func() { _ = reader.Close() }()
 		tr := tar.NewReader(reader)
 		for {
 			header, err := tr.Next()
@@ -174,13 +174,13 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 		version = "nightly-" + date.UTC().Format("20060102") + "-" + ref.Object.SHA[:8]
 		tag = "nightly"
 	}
-	fmt.Fprintf(out, "Current version: %s\nUpdate channel: %s\nAvailable version: %s\n", Version, channel, version)
+	_, _ = fmt.Fprintf(out, "Current version: %s\nUpdate channel: %s\nAvailable version: %s\n", Version, channel, version)
 	if !updateIsNewer(channel, Version, version) {
-		fmt.Fprintln(out, "No newer version available: "+version)
+		_, _ = fmt.Fprintln(out, "No newer version available: "+version)
 		return nil
 	}
 	if !confirmUpdate(os.Stdin, out, version, terminalInput(os.Stdin.Fd())) {
-		fmt.Fprintln(out, "Update cancelled.")
+		_, _ = fmt.Fprintln(out, "Update cancelled.")
 		return nil
 	}
 	root := "sadoku-v" + version + "-" + target
@@ -224,14 +224,14 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 	temporaryPath := temporary.Name()
 	if runtime.GOOS == "windows" {
 		temporaryPath += ".exe"
-		temporary.Close()
-		os.Remove(temporary.Name())
+		_ = temporary.Close()
+		_ = os.Remove(temporary.Name())
 		temporary, err = os.OpenFile(temporaryPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0700)
 		if err != nil {
 			return err
 		}
 	}
-	defer os.Remove(temporaryPath)
+	defer func() { _ = os.Remove(temporaryPath) }()
 	if err = temporary.Chmod(0755); err == nil {
 		_, err = temporary.Write(contents)
 	}
@@ -255,12 +255,13 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 	}
 	if runtime.GOOS == "windows" {
 		backup := executable + ".old"
-		os.Remove(backup)
+		_ = os.Remove(backup)
 		if err = os.Rename(executable, backup); err != nil {
 			return err
 		}
 		if err = config.AtomicWrite(executable, contents, 0755); err != nil {
-			os.Rename(backup, executable)
+			// Attempt recovery while preserving the original installation error.
+			_ = os.Rename(backup, executable)
 			return err
 		}
 	} else {
@@ -268,7 +269,7 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 			return err
 		}
 	}
-	fmt.Fprintln(out, "Updated to: "+version)
+	_, _ = fmt.Fprintln(out, "Updated to: "+version)
 	return nil
 }
 
@@ -304,7 +305,7 @@ func confirmUpdate(input io.Reader, out io.Writer, version string, terminal bool
 	if !terminal {
 		return false
 	}
-	fmt.Fprintf(out, "Update Sadoku to %s? [y/N] ", version)
+	_, _ = fmt.Fprintf(out, "Update Sadoku to %s? [y/N] ", version)
 	answer, _ := bufio.NewReader(input).ReadString('\n')
 	a := strings.ToLower(strings.TrimSpace(answer))
 	return a == "y" || a == "yes"
