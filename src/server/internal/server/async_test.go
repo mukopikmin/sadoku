@@ -74,7 +74,7 @@ func assertShell(t *testing.T, url string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != 200 {
 		t.Fatalf("shell status: %d", response.StatusCode)
 	}
@@ -167,7 +167,7 @@ func TestDirectoryPreparationServesProgressReadyErrorsAndCancellation(t *testing
 			if err != nil {
 				t.Fatal(err)
 			}
-			t.Cleanup(func() { database.Close() })
+			t.Cleanup(func() { _ = database.Close() })
 			repo := &gatedDirectoryRepository{Repository: &storage.Repository{DB: database, Path: path}, registrationStarted: make(chan struct{}), register: make(chan struct{}), listed: make(chan struct{}), publish: make(chan struct{})}
 			if outcome == "error" {
 				repo.fail = errors.New("registration failed")

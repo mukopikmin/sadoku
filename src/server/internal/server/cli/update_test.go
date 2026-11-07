@@ -26,8 +26,12 @@ func TestUpdateArchiveValidation(t *testing.T) {
 	if _, err := tr.Write(contents); err != nil {
 		t.Fatal(err)
 	}
-	tr.Close()
-	gz.Close()
+	if err := tr.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := gz.Close(); err != nil {
+		t.Fatal(err)
+	}
 	checksum := fmt.Sprintf("%x", sha256.Sum256(buffer.Bytes()))
 	if err := verifyArchive(buffer.Bytes(), []byte(checksum+"\n")); err != nil {
 		t.Fatal(err)
@@ -48,8 +52,12 @@ func TestUpdateArchiveValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file.Write(contents)
-	zw.Close()
+	if _, err := file.Write(contents); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
 	b, err = archiveBinary(buffer.Bytes(), "release", "sadoku.exe", true)
 	if err != nil || string(b) != "binary" {
 		t.Fatal(string(b), err)
@@ -77,7 +85,7 @@ func TestUpdateCommandOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer input.Close()
+	defer func() { _ = input.Close() }()
 	os.Stdin = input
 	sha := strings.Repeat("a", 40)
 	for _, tc := range []struct {

@@ -31,7 +31,7 @@ func snapshotSession(t *testing.T, count int) (*Session, *storage.Repository) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	repo := &storage.Repository{DB: database, Path: path}
 	s := &Session{Repository: repo, Sources: map[int64]string{}}
 	for i := 1; i <= count; i++ {

@@ -146,9 +146,9 @@ type UsageError struct{ message string }
 func (e *UsageError) Error() string               { return e.message }
 func usageError(format string, args ...any) error { return &UsageError{fmt.Sprintf(format, args...)} }
 func WriteError(out io.Writer, err error) {
-	fmt.Fprintln(out, err)
+	_, _ = fmt.Fprintln(out, err)
 	if _, ok := err.(*UsageError); ok {
-		io.WriteString(out, Usage+"\n")
+		_, _ = io.WriteString(out, Usage+"\n")
 	}
 }
 

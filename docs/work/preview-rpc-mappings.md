@@ -1,5 +1,11 @@
 # Preview RPC response mappings
 
+Purpose: Record RPC adapter implementation and validation details.
+Related issue/PR: None recorded in this document.
+Deletion condition: Review the boundary rules against current code and tests,
+preserve any otherwise undocumented maintenance requirements beside the adapters
+or in the development guide, then delete this implementation note.
+
 The Go handlers in `src/server/internal/server/http/api/preview_rpc.go` implement the generated
 Connect service interface and share application operations with REST adapters.
 The boundary in `src/server/internal/server/http/api/rpc.go` uses Protobuf JSON conversion to
