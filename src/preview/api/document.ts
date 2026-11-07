@@ -48,11 +48,13 @@ export const loadDocuments = async (): Promise<DocumentSummary[]> => {
 export const loadPreviewDocument = async (
   documentId: number,
 ): Promise<PreviewDocument> => {
-  const document = await previewClient.getDocument({
-    documentId: BigInt(documentId),
-  }).catch((error) => {
-    throw new Error(`Failed to load Markdown: ${connectHttpStatus(error)}`);
-  });
+  const document = await previewClient
+    .getDocument({
+      documentId: BigInt(documentId),
+    })
+    .catch((error) => {
+      throw new Error(`Failed to load Markdown: ${connectHttpStatus(error)}`);
+    });
   return {
     ...document,
     previousMarkdown: parsePreviousMarkdown(document.previousMarkdown),
@@ -72,10 +74,11 @@ export const updateDocumentTitle = async (
   documentId: number,
   title: string,
 ): Promise<void> => {
-  await previewClient.updateDocumentTitle({
-    documentId: BigInt(documentId),
-    title,
-  })
+  await previewClient
+    .updateDocumentTitle({
+      documentId: BigInt(documentId),
+      title,
+    })
     .catch((error) => {
       throw new Error(connectRawMessage(error) || "Failed to save title.");
     });

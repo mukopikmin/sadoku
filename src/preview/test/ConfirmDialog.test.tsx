@@ -43,12 +43,13 @@ describe("ConfirmDialog", () => {
     const dialog = await screen.findByRole("alertdialog", {
       name: "Continue action?",
     });
-    expect(within(dialog).getByText("Check the details before continuing."))
-      .not.toBeNull();
+    expect(
+      within(dialog).getByText("Check the details before continuing."),
+    ).not.toBeNull();
     await waitFor(() =>
       expect(document.activeElement).toBe(
         within(dialog).getByRole("button", { name: "Cancel" }),
-      )
+      ),
     );
   });
 
@@ -74,14 +75,14 @@ describe("ConfirmDialog", () => {
     const dialog = await screen.findByRole("alertdialog");
 
     expect(
-      within(dialog).getByRole("button", { name: "Cancel" }).hasAttribute(
-        "disabled",
-      ),
+      within(dialog)
+        .getByRole("button", { name: "Cancel" })
+        .hasAttribute("disabled"),
     ).toBe(true);
     expect(
-      within(dialog).getByRole("button", { name: "Continue" }).hasAttribute(
-        "disabled",
-      ),
+      within(dialog)
+        .getByRole("button", { name: "Continue" })
+        .hasAttribute("disabled"),
     ).toBe(true);
     fireEvent.keyDown(dialog, { key: "Escape" });
     expect(screen.getByRole("alertdialog")).not.toBeNull();

@@ -11,9 +11,10 @@ afterEach(() => {
 it.each<InstructionScope>([7, "global"])(
   "loads the saved text directly into a single editor for scope %s",
   async (documentId) => {
-    const path = documentId === "global"
-      ? "/__sadoku/global-instructions"
-      : `/__sadoku/documents/${documentId}/instructions`;
+    const path =
+      documentId === "global"
+        ? "/__sadoku/global-instructions"
+        : `/__sadoku/documents/${documentId}/instructions`;
     const instruction = {
       id: 2,
       content: "First instruction\n\nMiddle instruction\n\nLast instruction",
@@ -35,19 +36,21 @@ it.each<InstructionScope>([7, "global"])(
     expect((input as HTMLTextAreaElement).value).toBe(instruction.content);
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Add Instruction" }))
-      .toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Add Instruction" }),
+    ).toBeNull();
 
     fireEvent.change(input, { target: { value: "Updated instruction" } });
-    expect(vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method))
-      .toHaveLength(0);
+    expect(
+      vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method),
+    ).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Save instruction" }));
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Save instruction" }).hasAttribute(
-          "disabled",
-        ),
-      ).toBe(true)
+        screen
+          .getByRole("button", { name: "Save instruction" })
+          .hasAttribute("disabled"),
+      ).toBe(true),
     );
     expect((input as HTMLTextAreaElement).value).toBe("Updated instruction");
     expect(fetch).toHaveBeenCalledWith(

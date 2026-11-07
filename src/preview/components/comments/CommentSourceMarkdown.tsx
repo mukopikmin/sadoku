@@ -14,9 +14,9 @@ export type CommentSourceMarkdownProps = {
   children: string;
 };
 
-export const CommentSourceMarkdown = (
-  { children }: CommentSourceMarkdownProps,
-) => {
+export const CommentSourceMarkdown = ({
+  children,
+}: CommentSourceMarkdownProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const contentId = useId();
@@ -27,9 +27,8 @@ export const CommentSourceMarkdown = (
     if (!contentRef.current) return;
     void initializeMermaid({
       root: contentRef.current,
-      theme: document.documentElement.dataset.theme === "dark"
-        ? "dark"
-        : "default",
+      theme:
+        document.documentElement.dataset.theme === "dark" ? "dark" : "default",
     });
   }, [children]);
 
@@ -42,9 +41,10 @@ export const CommentSourceMarkdown = (
     };
     updateOverflow();
 
-    const observer = typeof ResizeObserver === "undefined"
-      ? undefined
-      : new ResizeObserver(updateOverflow);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(updateOverflow);
     observer?.observe(content);
     window.addEventListener("resize", updateOverflow);
     return () => {

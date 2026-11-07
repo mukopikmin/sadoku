@@ -8,11 +8,13 @@ describe("directory status API", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
-        Promise.resolve(Response.json({
-          state: "loading",
-          detected: 3,
-          registered: 1,
-        }))
+        Promise.resolve(
+          Response.json({
+            state: "loading",
+            detected: 3,
+            registered: 1,
+          }),
+        ),
       ),
     );
     await expect(loadDirectoryStatus()).resolves.toEqual({
@@ -26,11 +28,13 @@ describe("directory status API", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
-        Promise.resolve(Response.json({
-          state: "unknown",
-          detected: 0,
-          registered: 0,
-        }))
+        Promise.resolve(
+          Response.json({
+            state: "unknown",
+            detected: 0,
+            registered: 0,
+          }),
+        ),
       ),
     );
     await expect(loadDirectoryStatus()).rejects.toThrow(

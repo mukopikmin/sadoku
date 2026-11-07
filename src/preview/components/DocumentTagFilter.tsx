@@ -61,9 +61,8 @@ export const DocumentTagFilter = ({
         maxWidth="320px"
         onInputValueChange={onSearchChange}
         onRemove={(tag) =>
-          onSelectedTagIdsChange(
-            selectedTagIds.filter((id) => id !== tag.id),
-          )}
+          onSelectedTagIdsChange(selectedTagIds.filter((id) => id !== tag.id))
+        }
         onSelect={({ tag }) => {
           if (!tag) return;
           onSelectedTagIdsChange(

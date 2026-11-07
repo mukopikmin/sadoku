@@ -97,23 +97,30 @@ describe("commentable block layout", () => {
       </div>
     `;
     preview.getBoundingClientRect = () => mockRect(100, 400);
-    const contents = preview.querySelectorAll<HTMLElement>(".commentable-content");
+    const contents = preview.querySelectorAll<HTMLElement>(
+      ".commentable-content",
+    );
     contents[0].getBoundingClientRect = () => mockRect(110, 140);
     contents[1].getBoundingClientRect = () => mockRect(300, 340);
     expect(getCommentableLines(preview)).toEqual([1, 3]);
-    expect(measureRangeHighlightLayouts(preview, [{ startLine: 1, endLine: 3, kind: "comment" }]))
-      .toEqual([
-        { startLine: 1, endLine: 3, kind: "comment", top: 10, bottom: 40 },
-        { startLine: 1, endLine: 3, kind: "comment", top: 200, bottom: 240 },
-      ]);
+    expect(
+      measureRangeHighlightLayouts(preview, [
+        { startLine: 1, endLine: 3, kind: "comment" },
+      ]),
+    ).toEqual([
+      { startLine: 1, endLine: 3, kind: "comment", top: 10, bottom: 40 },
+      { startLine: 1, endLine: 3, kind: "comment", top: 200, bottom: 240 },
+    ]);
   });
 
   it("measures range highlights again when the preview is resized", async () => {
-    const ranges: RangeHighlight[] = [{
-      startLine: 1,
-      endLine: 4,
-      kind: "selection",
-    }];
+    const ranges: RangeHighlight[] = [
+      {
+        startLine: 1,
+        endLine: 4,
+        kind: "selection",
+      },
+    ];
     const { unmount } = render(<LayoutHarness ranges={ranges} />);
     const preview = screen.getByTestId("preview");
     const first = screen.getByTestId("first");
@@ -133,13 +140,15 @@ describe("commentable block layout", () => {
     });
 
     await waitFor(() =>
-      expect(JSON.parse(preview.dataset.layouts ?? "[]")).toEqual([{
-        startLine: 1,
-        endLine: 4,
-        kind: "selection",
-        top: 20,
-        bottom: 150,
-      }])
+      expect(JSON.parse(preview.dataset.layouts ?? "[]")).toEqual([
+        {
+          startLine: 1,
+          endLine: 4,
+          kind: "selection",
+          top: 20,
+          bottom: 150,
+        },
+      ]),
     );
 
     unmount();

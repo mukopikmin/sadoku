@@ -31,9 +31,11 @@ const toInstruction = (value: unknown): DocumentInstruction => {
   const response = value as InstructionResponse;
   if (
     (typeof response.id !== "number" && typeof response.id !== "bigint") ||
-    Number(response.id) < 1 || typeof response.content !== "string" ||
+    Number(response.id) < 1 ||
+    typeof response.content !== "string" ||
     typeof response.createdAt !== "string" ||
-    response.createdAt.length === 0 || typeof response.updatedAt !== "string" ||
+    response.createdAt.length === 0 ||
+    typeof response.updatedAt !== "string" ||
     response.updatedAt.length === 0
   ) {
     throw new Error("Invalid instruction response.");
@@ -70,9 +72,9 @@ export const createInstruction = async (
       documentId === "global"
         ? previewClient.createGlobalInstruction({ content })
         : previewClient.createInstruction({
-          documentId: BigInt(documentId),
-          content,
-        }),
+            documentId: BigInt(documentId),
+            content,
+          }),
       "create instruction",
     ),
   );
@@ -87,14 +89,14 @@ export const updateInstruction = async (
     await instructionRequest(
       documentId === "global"
         ? previewClient.updateGlobalInstruction({
-          instructionId: BigInt(instructionId),
-          content,
-        })
+            instructionId: BigInt(instructionId),
+            content,
+          })
         : previewClient.updateInstruction({
-          documentId: BigInt(documentId),
-          instructionId: BigInt(instructionId),
-          content,
-        }),
+            documentId: BigInt(documentId),
+            instructionId: BigInt(instructionId),
+            content,
+          }),
       "update instruction",
     ),
   );
@@ -107,12 +109,12 @@ export const deleteInstruction = async (
   await instructionRequest<unknown>(
     documentId === "global"
       ? previewClient.deleteGlobalInstruction({
-        instructionId: BigInt(instructionId),
-      })
+          instructionId: BigInt(instructionId),
+        })
       : previewClient.deleteInstruction({
-        documentId: BigInt(documentId),
-        instructionId: BigInt(instructionId),
-      }),
+          documentId: BigInt(documentId),
+          instructionId: BigInt(instructionId),
+        }),
     "delete instruction",
   );
 };

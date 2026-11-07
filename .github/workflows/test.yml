@@ -94,6 +94,9 @@ jobs:
       - name: Check formatting
         run: make check-client-format
 
+      - name: Lint client
+        run: make lint-client
+
       - name: Test client
         run: make test-client
 

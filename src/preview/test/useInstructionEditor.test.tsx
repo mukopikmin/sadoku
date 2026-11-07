@@ -36,11 +36,12 @@ it.each(["create", "update", "clear"])(
   async (operation) => {
     let saved = operation === "create" ? [] : [note("Saved")];
     vi.mocked(api.loadInstructions).mockImplementation(async () => saved);
-    const mutation = operation === "create"
-      ? vi.mocked(api.createInstruction)
-      : operation === "update"
-      ? vi.mocked(api.updateInstruction)
-      : vi.mocked(api.deleteInstruction);
+    const mutation =
+      operation === "create"
+        ? vi.mocked(api.createInstruction)
+        : operation === "update"
+          ? vi.mocked(api.updateInstruction)
+          : vi.mocked(api.deleteInstruction);
     mutation.mockRejectedValueOnce(new Error("Save failed"));
     const { wrapper } = setup();
     const { result } = renderHook(() => useInstructionEditor(7, true), {
@@ -74,9 +75,9 @@ it.each(["create", "update", "clear"])(
 );
 
 it("keeps unsaved edits during a refetch and resets them on scope changes and reopening", async () => {
-  vi.mocked(api.loadInstructions).mockImplementation(async (
-    scope,
-  ) => [note(scope === "global" ? "Global" : "Local")]);
+  vi.mocked(api.loadInstructions).mockImplementation(async (scope) => [
+    note(scope === "global" ? "Global" : "Local"),
+  ]);
   const { client, wrapper } = setup();
   const { result, rerender } = renderHook(
     ({ scope, open }: { scope: number | "global"; open: boolean }) =>
@@ -86,7 +87,7 @@ it("keeps unsaved edits during a refetch and resets them on scope changes and re
   await waitFor(() => expect(result.current.content).toBe("Local"));
   act(() => result.current.change("Unsaved"));
   await act(() =>
-    client.invalidateQueries({ queryKey: instructionsQueryKey(7) })
+    client.invalidateQueries({ queryKey: instructionsQueryKey(7) }),
   );
   expect(result.current.content).toBe("Unsaved");
   rerender({ scope: "global", open: true });

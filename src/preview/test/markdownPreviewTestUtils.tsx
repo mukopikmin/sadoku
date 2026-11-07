@@ -52,9 +52,7 @@ export const renderMarkdown = (
       </>
     );
   };
-  const result = render(
-    <PreviewWithActions />,
-  );
+  const result = render(<PreviewWithActions />);
   return { ...result, container: result.container };
 };
 

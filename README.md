@@ -89,7 +89,7 @@ Lint checks also require the golangci-lint version pinned in
 make deps                       # install dependencies from lockfiles
 make start ARGS=README.md        # run locally
 make build VERSION=0.0.0-dev      # build a binary with embedded client assets
-make check                      # formatting and golangci-lint
+make check                      # formatting, oxlint, and golangci-lint
 make test                       # server, client, action, and proxy tests
 ```
 

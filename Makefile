@@ -16,7 +16,7 @@ GO_TEST_TIMEOUT ?= $(if $(filter Windows_NT,$(OS)),10m,120s)
 GO_TEST_FLAGS ?= -race -count=1 -timeout=$(GO_TEST_TIMEOUT)
 GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/assets.go src/server/internal/gen src/server/test/integration
 
-.PHONY: deps build-client test-client test-actions fmt-client check-client-format \
+.PHONY: deps build-client test-client test-actions fmt-client check-client-format lint-client \
  build build-server install dist notices run start test test-server test-server-with-assets \
  test-tools test-install test-install-with-assets check vet vet-cross lint lint-go lint-proxy \
  fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
@@ -39,6 +39,9 @@ test-actions:
 
 fmt-client:
 	$(NPM) --prefix src/proto run fmt
+
+lint-client:
+	$(NPM) --prefix src/proto run lint
 
 check-client-format:
 	$(NPM) --prefix src/proto run fmt:check
@@ -91,7 +94,7 @@ test-install-with-assets:
 
 check: fmt-check lint
 
-lint: lint-go lint-proxy
+lint: lint-client lint-go lint-proxy
 
 lint-go: build-client
 	cd src/server && $(GOLANGCI_LINT) run --config ../../.golangci.yml ./...

@@ -22,7 +22,7 @@ make start ARGS=README.md
 coordinates Go and generated-code tasks:
 
 ```sh
-make check                       # formatting and golangci-lint for both Go modules
+make check                       # formatting, oxlint, and golangci-lint for both Go modules
 make lint-go                     # lint the server, CLI, and repository tooling
 make lint-proxy                  # lint the independent proxy module
 make test                        # server, client, action, and proxy tests
@@ -65,8 +65,11 @@ Install the pinned Go protobuf generators with `make proto-tools` before
 bindings share `src/proto/sadoku/preview/v1/preview.proto`.
 
 Server and tooling tests use Go. The inline GitHub JavaScript action test uses
-Node's built-in test runner. Generated TypeScript bindings and the Node test use
-Prettier; Go formatting uses `gofmt`.
+Node's built-in test runner. Preview TypeScript, generated bindings, and the Node
+test use oxfmt via
+`make fmt-client` and `make check-client-format`. Handwritten TypeScript uses
+oxlint via `make lint-client`, including React Hooks checks; generated bindings
+are excluded from linting. Go formatting uses `gofmt`.
 
 See [contributor guidelines](../AGENTS.md), [proxy setup](../src/proxy/README.md), and the
 [release workflow guide](../.agents/skills/sadoku-release/SKILL.md) for details.

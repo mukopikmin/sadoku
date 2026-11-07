@@ -64,7 +64,8 @@ const toCurrentSource = (response: CommentResponse): CommentSource => {
       typeof response.currentSourceText !== "string") ||
     (response.sourceDeleted !== undefined &&
       typeof response.sourceDeleted !== "boolean")
-  ) throw new Error("Invalid comment source response.");
+  )
+    throw new Error("Invalid comment source response.");
   if (response.sourceDeleted === true) return { state: "deleted" };
   if (response.stale || response.currentSourceText === undefined) {
     return { state: "unavailable" };
@@ -182,10 +183,9 @@ export const exportCommentToGitHub = async (
   }
   if (
     typeof value?.url !== "string" ||
-    !/^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+(?:\/files|#discussion_r\d+)$/
-      .test(
-        value.url,
-      ) ||
+    !/^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+(?:\/files|#discussion_r\d+)$/.test(
+      value.url,
+    ) ||
     (value.state !== "pending" && value.state !== "submitted")
   ) {
     throw new Error(
@@ -199,10 +199,10 @@ export const loadComments = async (
   documentId: number,
 ): Promise<CommentsDocument> => {
   return toCommentsDocument(
-    await commentRequest(
+    (await commentRequest(
       previewClient.listComments({ documentId: BigInt(documentId) }),
       "load comments",
-    ) as unknown as CommentsDocumentResponse,
+    )) as unknown as CommentsDocumentResponse,
   );
 };
 
@@ -213,7 +213,7 @@ export const createComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await commentRequest(
+    (await commentRequest(
       previewClient.createComment({
         documentId: BigInt(documentId),
         startLine,
@@ -221,7 +221,7 @@ export const createComment = async (
         body,
       }),
       "create comment",
-    ) as unknown as CommentResponse,
+    )) as unknown as CommentResponse,
   );
 };
 
@@ -231,14 +231,14 @@ export const createReply = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await commentRequest(
+    (await commentRequest(
       previewClient.createReply({
         documentId: BigInt(documentId),
         commentId: BigInt(commentId),
         body,
       }),
       "create reply",
-    ) as unknown as CommentResponse,
+    )) as unknown as CommentResponse,
   );
 };
 
@@ -249,7 +249,7 @@ export const updateReply = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await commentRequest(
+    (await commentRequest(
       previewClient.updateReply({
         documentId: BigInt(documentId),
         commentId: BigInt(commentId),
@@ -257,7 +257,7 @@ export const updateReply = async (
         body,
       }),
       "update reply",
-    ) as unknown as CommentResponse,
+    )) as unknown as CommentResponse,
   );
 };
 
@@ -282,14 +282,14 @@ export const updateComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await commentRequest(
+    (await commentRequest(
       previewClient.updateComment({
         documentId: BigInt(documentId),
         commentId: BigInt(id),
         body,
       }),
       "update comment",
-    ) as unknown as CommentResponse,
+    )) as unknown as CommentResponse,
   );
 };
 
@@ -298,14 +298,14 @@ export const resolveComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await commentRequest(
+    (await commentRequest(
       previewClient.setCommentResolution({
         documentId: BigInt(documentId),
         commentId: BigInt(id),
         resolved: true,
       }),
       "resolve comment",
-    ) as unknown as CommentResponse,
+    )) as unknown as CommentResponse,
   );
 };
 
@@ -314,14 +314,14 @@ export const reopenComment = async (
   documentId: number,
 ): Promise<Comment> => {
   return toComment(
-    await commentRequest(
+    (await commentRequest(
       previewClient.setCommentResolution({
         documentId: BigInt(documentId),
         commentId: BigInt(id),
         resolved: false,
       }),
       "reopen comment",
-    ) as unknown as CommentResponse,
+    )) as unknown as CommentResponse,
   );
 };
 

@@ -38,9 +38,7 @@ describe("MarkdownPreview basic rendering", () => {
     expect(labels).toHaveLength(2);
     const cards = labels.map((label) => label.closest("[data-html-comment]")!);
     const body = cards[0].querySelector("p");
-    expect(body?.textContent).toBe(
-      "**not bold** <img src=x onerror=alert(1)>",
-    );
+    expect(body?.textContent).toBe("**not bold** <img src=x onerror=alert(1)>");
     expect(cards[0].querySelector("strong, img")).toBeNull();
     expect(cards[1].textContent?.trim()).toBe("HTML COMMENT");
     expect(container.querySelectorAll("html-comment")).toHaveLength(0);
@@ -51,9 +49,9 @@ describe("MarkdownPreview basic rendering", () => {
       "Before\n\n<!-- first line\n# still plain text\nlast line -->\n\nAfter",
     );
 
-    const card = screen.getByText("HTML COMMENT").closest(
-      "[data-html-comment]",
-    )!;
+    const card = screen
+      .getByText("HTML COMMENT")
+      .closest("[data-html-comment]")!;
     expect(card.querySelector("p")?.textContent).toBe(
       "first line\n# still plain text\nlast line",
     );
@@ -100,11 +98,7 @@ describe("MarkdownPreview basic rendering", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(
-        3,
-        "Review this comment",
-        4,
-      )
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Review this comment", 4),
     );
   });
 
@@ -131,8 +125,7 @@ Review carefully.
     expect(dataList).not.toBeNull();
     expect(
       [...dataList!.querySelectorAll("dt")].map((term) => term.textContent),
-    )
-      .toEqual(["name", "description", "unknown-key"]);
+    ).toEqual(["name", "description", "unknown-key"]);
     expect(dataList!.querySelectorAll("dd")).toHaveLength(3);
     expect(dataList?.textContent).toContain("nameReviewer");
     expect(dataList?.textContent).toContain(
@@ -141,13 +134,15 @@ Review carefully.
     expect(dataList?.textContent).toContain("unknown-keyvisible");
     expect(dataList?.querySelector("strong, img")).toBeNull();
     expect(container.textContent).not.toContain("---");
-    expect(screen.getByRole("heading", { name: "Instructions" })).not
-      .toBeNull();
     expect(
-      container.querySelector("h1")?.closest(".commentable-block")
+      screen.getByRole("heading", { name: "Instructions" }),
+    ).not.toBeNull();
+    expect(
+      container
+        .querySelector("h1")
+        ?.closest(".commentable-block")
         ?.getAttribute("data-source-line"),
-    )
-      .toBe("8");
+    ).toBe("8");
 
     fireEvent.click(screen.getByText("Reviewer"));
     fireEvent.click(
@@ -161,7 +156,7 @@ Review carefully.
     );
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(2, "Metadata comment", 2)
+      expect(onCreateComment).toHaveBeenCalledWith(2, "Metadata comment", 2),
     );
   });
 
@@ -190,14 +185,15 @@ console.log("<ok>");
 \`\`\`
 `);
 
-    expect(container.querySelector("h1#title .heading-anchor")?.textContent)
-      .toBe("Title");
+    expect(
+      container.querySelector("h1#title .heading-anchor")?.textContent,
+    ).toBe("Title");
     expect(container.querySelector("strong")?.textContent).toBe("world");
     const unorderedList = screen.getByRole("list");
     expect(unorderedList?.querySelectorAll(":scope > li")).toHaveLength(2);
     const code = container.querySelector("code.language-js")!;
     await waitFor(() =>
-      expect(code.querySelector("span[style]")).not.toBeNull()
+      expect(code.querySelector("span[style]")).not.toBeNull(),
     );
     expect(code.textContent).toContain('console.log("<ok>")');
   });
@@ -253,18 +249,19 @@ Footnote-looking text stays plain.[^note]
 
     const table = screen.getByRole("table");
     expect(
-      within(table).getAllByRole("columnheader").map((cell) =>
-        cell.textContent
-      ),
-    )
-      .toEqual(["Name", "Count"]);
+      within(table)
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Name", "Count"]);
     expect(within(table).getAllByRole("row")).toHaveLength(3);
-    expect(within(table).getAllByRole("cell").map((cell) => cell.textContent))
-      .toEqual(["alpha", "1", "beta", "20"]);
+    expect(
+      within(table)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual(["alpha", "1", "beta", "20"]);
     expect(
       within(table).getByRole("cell", { name: "beta" }).querySelector("strong"),
-    )
-      .not.toBeNull();
+    ).not.toBeNull();
   });
 
   it("renders horizontal rules as separators between paragraphs", () => {
@@ -279,9 +276,7 @@ After
 
     expect(horizontalRule).not.toBeNull();
     expect(horizontalRule?.getAttribute("role")).toBe("separator");
-    expect(horizontalRule?.getAttribute("aria-orientation")).toBe(
-      "horizontal",
-    );
+    expect(horizontalRule?.getAttribute("aria-orientation")).toBe("horizontal");
     expect(
       screen.getByText("Before").compareDocumentPosition(horizontalRule) &
         Node.DOCUMENT_POSITION_FOLLOWING,
@@ -334,9 +329,11 @@ After
     );
     expect(nestedItemGutter).not.toBeNull();
 
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    );
     const nestedCommentThread = container.querySelector(
       '[data-source-line="3"] .comment-thread',
     );

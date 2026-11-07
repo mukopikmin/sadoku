@@ -6,10 +6,7 @@ type CommentActionOptions = {
   onSuccess?: () => void;
 };
 
-export type ReportCommentActionError = (
-  error: unknown,
-  title?: string,
-) => void;
+export type ReportCommentActionError = (error: unknown, title?: string) => void;
 
 export type RunCommentAction = (
   action: () => Promise<void>,
@@ -23,9 +20,8 @@ export const useCommentActionState = () => {
 
   const reportError = useCallback<ReportCommentActionError>(
     (error, title = "Comment action failed") => {
-      const description = error instanceof Error
-        ? error.message
-        : String(error);
+      const description =
+        error instanceof Error ? error.message : String(error);
       setError(description);
       toaster.create({
         closable: true,
