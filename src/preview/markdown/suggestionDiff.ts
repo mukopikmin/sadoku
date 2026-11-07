@@ -14,9 +14,10 @@ const diffLines = (before: string[], after: string[]): string[] => {
   const lengths = new Uint32Array((before.length + 1) * width);
   for (let i = before.length - 1; i >= 0; i -= 1) {
     for (let j = after.length - 1; j >= 0; j -= 1) {
-      lengths[i * width + j] = before[i] === after[j]
-        ? lengths[(i + 1) * width + j + 1] + 1
-        : Math.max(lengths[(i + 1) * width + j], lengths[i * width + j + 1]);
+      lengths[i * width + j] =
+        before[i] === after[j]
+          ? lengths[(i + 1) * width + j + 1] + 1
+          : Math.max(lengths[(i + 1) * width + j], lengths[i * width + j + 1]);
     }
   }
 
@@ -48,14 +49,18 @@ export const suggestionDiff = (source: string, replacement: string): string => {
   const after = linesOf(replacement);
   let start = 0;
   while (
-    start < before.length && start < after.length &&
+    start < before.length &&
+    start < after.length &&
     before[start] === after[start]
-  ) start += 1;
+  )
+    start += 1;
   let end = 0;
   while (
-    end < before.length - start && end < after.length - start &&
+    end < before.length - start &&
+    end < after.length - start &&
     before[before.length - end - 1] === after[after.length - end - 1]
-  ) end += 1;
+  )
+    end += 1;
   return [
     ...before.slice(0, start).map((line) => ` ${line}`),
     ...diffLines(

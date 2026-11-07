@@ -33,7 +33,7 @@ it("shows global guidance separately from editable document instructions", async
               : "Document guidance",
           ),
         ],
-      })
+      }),
     ),
   );
   const manage = vi.fn();

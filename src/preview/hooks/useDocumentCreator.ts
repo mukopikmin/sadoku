@@ -18,10 +18,12 @@ export const useDocumentCreator = (onCreated: (id: number) => void) => {
       queryClient.setQueryData<DocumentSummary[]>(
         documentsQueryKey,
         (previous) =>
-          [...(previous ?? []).filter(({ id }) => id !== document.id), document]
-            .sort((left, right) =>
-              left.relativePath.localeCompare(right.relativePath)
-            ),
+          [
+            ...(previous ?? []).filter(({ id }) => id !== document.id),
+            document,
+          ].sort((left, right) =>
+            left.relativePath.localeCompare(right.relativePath),
+          ),
       );
       void queryClient.invalidateQueries({ queryKey: documentsQueryKey });
     },
@@ -43,18 +45,22 @@ export const useDocumentCreator = (onCreated: (id: number) => void) => {
     change: (field: "filename" | "title", value: string) => {
       if (submitting.current) return;
       setState((previous) =>
-        previous.status === "closed" ? previous : {
-          ...previous,
-          input: { ...previous.input, [field]: value },
-          error: "",
-        }
+        previous.status === "closed"
+          ? previous
+          : {
+              ...previous,
+              input: { ...previous.input, [field]: value },
+              error: "",
+            },
       );
     },
     save: async () => {
       if (
-        state.status === "closed" || submitting.current ||
+        state.status === "closed" ||
+        submitting.current ||
         !state.input.filename.trim()
-      ) return;
+      )
+        return;
       submitting.current = true;
       try {
         const document = await mutation.mutateAsync(state.input);
@@ -63,9 +69,8 @@ export const useDocumentCreator = (onCreated: (id: number) => void) => {
       } catch (error) {
         setState({
           ...state,
-          error: error instanceof Error
-            ? error.message
-            : "Failed to create file.",
+          error:
+            error instanceof Error ? error.message : "Failed to create file.",
         });
       } finally {
         submitting.current = false;

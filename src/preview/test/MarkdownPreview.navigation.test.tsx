@@ -30,33 +30,33 @@ describe("MarkdownPreview heading navigation", () => {
     );
     fireEvent.pointerLeave(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("navigation", { name: "Table of contents" }))
-      .toBeNull();
+    expect(
+      screen.queryByRole("navigation", { name: "Table of contents" }),
+    ).toBeNull();
 
     fireEvent.click(trigger);
     await waitFor(() =>
-      expect(trigger.getAttribute("aria-expanded")).toBe("true")
+      expect(trigger.getAttribute("aria-expanded")).toBe("true"),
     );
     const navigation = screen.getByRole("navigation", {
       name: "Table of contents",
     });
     expect(
-      within(navigation).getByRole("link", { name: "Only heading" })
+      within(navigation)
+        .getByRole("link", { name: "Only heading" })
         .getAttribute("href"),
     ).toBe("#only-heading");
 
     fireEvent.click(trigger);
     await waitFor(() =>
-      expect(trigger.getAttribute("aria-expanded")).toBe("false")
+      expect(trigger.getAttribute("aria-expanded")).toBe("false"),
     );
   });
 
   it("shows an empty table of contents for Markdown without headings", async () => {
     renderMarkdown("A paragraph without headings.");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Table of contents" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Table of contents" }));
     expect(await screen.findByText("No headings")).not.toBeNull();
   });
 
@@ -69,15 +69,14 @@ describe("MarkdownPreview heading navigation", () => {
 
 ###### **Rich** \`Heading\`
 `);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Table of contents" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Table of contents" }));
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Table of contents" })
+        screen
+          .getByRole("button", { name: "Table of contents" })
           .getAttribute("aria-expanded"),
-      ).toBe("true")
+      ).toBe("true"),
     );
     const expectedLinks = [
       ["Title!", "#title"],
@@ -96,8 +95,9 @@ describe("MarkdownPreview heading navigation", () => {
       const id = decodeURIComponent(href.slice(1));
       expect(document.getElementById(id)).not.toBeNull();
     });
-    expect(links.map((link) => link.parentElement?.dataset.headingLevel))
-      .toEqual(["1", "2", "3", "6"]);
+    expect(
+      links.map((link) => link.parentElement?.dataset.headingLevel),
+    ).toEqual(["1", "2", "3", "6"]);
   });
 
   it("closes the table of contents after a link updates the hash and scrolls", async () => {
@@ -124,10 +124,11 @@ describe("MarkdownPreview heading navigation", () => {
       screen.getByRole("heading", { name: "Target" }),
     );
     await waitFor(() =>
-      expect(trigger.getAttribute("aria-expanded")).toBe("false")
+      expect(trigger.getAttribute("aria-expanded")).toBe("false"),
     );
-    expect(screen.queryByPlaceholderText("Write a GitHub PR comment..."))
-      .toBeNull();
+    expect(
+      screen.queryByPlaceholderText("Write a GitHub PR comment..."),
+    ).toBeNull();
     header.remove();
   });
 
@@ -141,15 +142,17 @@ describe("MarkdownPreview heading navigation", () => {
 #### Before ~~removed~~ after
 `);
 
-    expect(container.querySelector("h1#title a.heading-anchor")?.textContent)
-      .toBe("Title!");
     expect(
-      container.querySelector("h1#title a.heading-anchor")?.getAttribute(
-        "target",
-      ),
+      container.querySelector("h1#title a.heading-anchor")?.textContent,
+    ).toBe("Title!");
+    expect(
+      container
+        .querySelector("h1#title a.heading-anchor")
+        ?.getAttribute("target"),
     ).toBeNull();
-    expect(container.querySelector("h2#title-1 a.heading-anchor")?.textContent)
-      .toBe("Title!");
+    expect(
+      container.querySelector("h2#title-1 a.heading-anchor")?.textContent,
+    ).toBe("Title!");
     expect(
       container.querySelector("h3#rich-heading a.heading-anchor")?.textContent,
     ).toBe("Rich Heading");
@@ -174,8 +177,7 @@ Paragraph
     fireEvent.click(screen.getByText("Paragraph"));
     expect(
       screen.queryByRole("button", { name: "Update URL with heading link" }),
-    )
-      .toBeNull();
+    ).toBeNull();
 
     fireEvent.click(screen.getByRole("heading", { level: 2, name: "Title" }));
     const headingLinkButton = screen.getByRole("button", {
@@ -188,11 +190,12 @@ Paragraph
     await waitFor(() =>
       expect(globalThis.location.href).toBe(
         `${globalThis.location.origin}/docs/readme?mode=review#title-1`,
-      )
+      ),
     );
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
-    expect(screen.queryByPlaceholderText("Write a GitHub PR comment..."))
-      .toBeNull();
+    expect(
+      screen.queryByPlaceholderText("Write a GitHub PR comment..."),
+    ).toBeNull();
   });
 
   it("scrolls to encoded headings on initial load and later hash changes", () => {
@@ -225,8 +228,9 @@ Paragraph
     expect(scrollIntoView).not.toHaveBeenCalled();
 
     globalThis.history.replaceState(null, "", "/#%E0%A4%A");
-    expect(() => fireEvent(globalThis, new HashChangeEvent("hashchange")))
-      .not.toThrow();
+    expect(() =>
+      fireEvent(globalThis, new HashChangeEvent("hashchange")),
+    ).not.toThrow();
     expect(scrollIntoView).not.toHaveBeenCalled();
     header.remove();
   });
@@ -272,9 +276,9 @@ Paragraph
     expect(heading?.textContent).toBe(
       "Terraform Cloud の Sentinel Policy Override を承認行為とする(BOADR-315 で検討した案)",
     );
-    expect(
-      heading?.querySelector("a")?.getAttribute("href"),
-    ).toBe("https://app.notion.com/p/368ee7728c57806c8a5ad4043597c6b5");
+    expect(heading?.querySelector("a")?.getAttribute("href")).toBe(
+      "https://app.notion.com/p/368ee7728c57806c8a5ad4043597c6b5",
+    );
     expect(heading?.querySelector("a a")).toBeNull();
     expect(heading?.querySelector("a.heading-anchor")).toBeNull();
   });

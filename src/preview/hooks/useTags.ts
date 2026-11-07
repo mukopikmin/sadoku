@@ -32,13 +32,15 @@ export const useDeleteTag = () => {
 export const useUpdateTag = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (
-      { id, name, backgroundColor }: {
-        id: number;
-        name: string;
-        backgroundColor: string;
-      },
-    ) => updateTag(id, name, backgroundColor),
+    mutationFn: ({
+      id,
+      name,
+      backgroundColor,
+    }: {
+      id: number;
+      name: string;
+      backgroundColor: string;
+    }) => updateTag(id, name, backgroundColor),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: tagsQueryKey }),

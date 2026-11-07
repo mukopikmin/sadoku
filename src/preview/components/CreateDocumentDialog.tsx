@@ -10,19 +10,20 @@ import {
 import { useRef } from "react";
 import type { useDocumentCreator } from "../hooks/useDocumentCreator";
 
-export const CreateDocumentDialog = ({ creator }: {
+export const CreateDocumentDialog = ({
+  creator,
+}: {
   creator: ReturnType<typeof useDocumentCreator>;
 }) => {
   const filenameRef = useRef<HTMLInputElement>(null);
   if (creator.state.status === "closed") return null;
   const { input, error } = creator.state;
   const filename = input.filename.trim();
-  const resolvedFilename = filename && !filename.includes(".")
-    ? `${filename}.md`
-    : filename;
-  const relativePath = [input.directory, resolvedFilename].filter(Boolean).join(
-    "/",
-  );
+  const resolvedFilename =
+    filename && !filename.includes(".") ? `${filename}.md` : filename;
+  const relativePath = [input.directory, resolvedFilename]
+    .filter(Boolean)
+    .join("/");
   return (
     <Dialog.Root
       open
@@ -51,14 +52,16 @@ export const CreateDocumentDialog = ({ creator }: {
                   <Text>Directory: {input.directory || "Project root"}</Text>
                   <Field.Root required>
                     <Field.Label>
-                      Filename<Field.RequiredIndicator />
+                      Filename
+                      <Field.RequiredIndicator />
                     </Field.Label>
                     <Input
                       ref={filenameRef}
                       value={input.filename}
                       disabled={creator.pending}
                       onChange={(event) =>
-                        creator.change("filename", event.currentTarget.value)}
+                        creator.change("filename", event.currentTarget.value)
+                      }
                     />
                     <Field.HelperText>
                       Uses .md when the extension is omitted.
@@ -70,7 +73,8 @@ export const CreateDocumentDialog = ({ creator }: {
                       value={input.title}
                       disabled={creator.pending}
                       onChange={(event) =>
-                        creator.change("title", event.currentTarget.value)}
+                        creator.change("title", event.currentTarget.value)
+                      }
                     />
                     <Field.HelperText>
                       Saves a title as a file attribute, separate from Markdown
@@ -80,7 +84,11 @@ export const CreateDocumentDialog = ({ creator }: {
                   <Text color="fg.muted" fontSize="sm" overflowWrap="anywhere">
                     File: {relativePath || "—"}
                   </Text>
-                  {error && <Text color="fg.error" role="alert">{error}</Text>}
+                  {error && (
+                    <Text color="fg.error" role="alert">
+                      {error}
+                    </Text>
+                  )}
                 </Stack>
               </Dialog.Body>
               <Dialog.Footer>

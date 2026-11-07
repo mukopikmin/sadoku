@@ -73,7 +73,8 @@ export const MarkdownPreview = ({
   const previewRef = useRef<HTMLDivElement>(null);
   const [rawMarkdownRange, setRawMarkdownRange] = useState<CommentRange>();
   const [drafts] = useState(() => new Map<number, string>());
-  const { interactionRange, interactionProps } = useCommentHighlightInteraction();
+  const { interactionRange, interactionProps } =
+    useCommentHighlightInteraction();
   const {
     activeCommentLine,
     activeRange,

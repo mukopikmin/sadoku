@@ -7,16 +7,22 @@ class TestEventSource extends EventTarget {
   close() {}
 }
 
-const installFetch = (
-  { empty = false, enabled = true, conflict = false } = {},
-) => {
-  const documents = empty ? [] : [{
-    id: 1,
-    deleted: false,
-    relativePath: "docs/guides/setup.md",
-    title: "setup.md",
-    tags: [],
-  }];
+const installFetch = ({
+  empty = false,
+  enabled = true,
+  conflict = false,
+} = {}) => {
+  const documents = empty
+    ? []
+    : [
+        {
+          id: 1,
+          deleted: false,
+          relativePath: "docs/guides/setup.md",
+          title: "setup.md",
+          tags: [],
+        },
+      ];
   let fail = conflict;
   const requests: Array<Record<string, string>> = [];
   vi.stubGlobal(
@@ -36,10 +42,13 @@ const installFetch = (
         requests.push(body);
         if (fail) {
           fail = false;
-          return Response.json({
-            code: "already_exists",
-            message: "A file or folder with this name already exists.",
-          }, { status: 409 });
+          return Response.json(
+            {
+              code: "already_exists",
+              message: "A file or folder with this name already exists.",
+            },
+            { status: 409 },
+          );
         }
         const filename = body.filename.includes(".")
           ? body.filename
@@ -154,21 +163,25 @@ describe("file creation from the document list", () => {
       screen.getByRole("button", { name: "Create", exact: true }),
     );
     await waitFor(() => expect(location.pathname).toBe("/documents/2"));
-    expect(await screen.findByRole("heading", { name: "New guide" }))
-      .toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { name: "New guide" }),
+    ).toBeTruthy();
     expect(
       screen.getByRole("heading", { name: "File attribute title", level: 1 }),
     ).toBeTruthy();
-    expect(requests).toEqual([{
-      directory: "docs/guides",
-      filename: "new",
-      title: "New guide",
-    }]);
+    expect(requests).toEqual([
+      {
+        directory: "docs/guides",
+        filename: "new",
+        title: "New guide",
+      },
+    ]);
     fireEvent.click(
       screen.getByRole("link", { name: "Documents", exact: true }),
     );
-    expect(await screen.findByRole("treeitem", { name: "new.md" }))
-      .toBeTruthy();
+    expect(
+      await screen.findByRole("treeitem", { name: "new.md" }),
+    ).toBeTruthy();
   });
 
   it("can create at the root of an empty directory without a title", async () => {
@@ -208,8 +221,9 @@ describe("file creation from the document list", () => {
       "value",
       "existing.md",
     );
-    expect(screen.getByRole("textbox", { name: "Document title (optional)" }))
-      .toHaveProperty("value", "New guide");
+    expect(
+      screen.getByRole("textbox", { name: "Document title (optional)" }),
+    ).toHaveProperty("value", "New guide");
     fireEvent.change(screen.getByRole("textbox", { name: /Filename/ }), {
       target: { value: "new.md" },
     });
@@ -242,8 +256,9 @@ describe("file creation from the document list", () => {
   it("hides creation actions when the session does not support writing files", async () => {
     installFetch({ enabled: false });
     render(<App />);
-    expect(await screen.findByRole("treeitem", { name: "setup.md" }))
-      .toBeTruthy();
+    expect(
+      await screen.findByRole("treeitem", { name: "setup.md" }),
+    ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "New file" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Create file in/ })).toBeNull();
   });

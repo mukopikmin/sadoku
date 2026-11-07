@@ -21,24 +21,17 @@ type Props = {
   pullRequest?: PullRequestMetadata;
   onCreateDocument?: (directory: string) => void;
 };
-export const DocumentListPage = (
-  {
-    directoryStatus,
-    documents,
-    onSelectDocument,
-    pullRequest,
-    onCreateDocument,
-  }: Props,
-) => (
+export const DocumentListPage = ({
+  directoryStatus,
+  documents,
+  onSelectDocument,
+  pullRequest,
+  onCreateDocument,
+}: Props) => (
   <Container as="main" maxW="980px" px="8" pb="16">
     {pullRequest && (
       <>
-        <Heading
-          as="h1"
-          fontSize="3xl"
-          fontWeight="semibold"
-          lineHeight="1.25"
-        >
+        <Heading as="h1" fontSize="3xl" fontWeight="semibold" lineHeight="1.25">
           {pullRequest.title}{" "}
           <Link
             color="fg.muted"
@@ -71,39 +64,35 @@ export const DocumentListPage = (
         </Button>
       )}
     </HStack>
-    {directoryStatus?.state === "loading"
-      ? (
-        <Alert.Root status="info">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>Detecting documents</Alert.Title>
-            <Alert.Description>
-              Detected {directoryStatus.detected} · Registered{" "}
-              {directoryStatus.registered}
-            </Alert.Description>
-          </Alert.Content>
-        </Alert.Root>
-      )
-      : directoryStatus?.state === "error"
-      ? (
-        <Alert.Root status="error">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>Could not load documents</Alert.Title>
-            <Alert.Description>
-              {directoryStatus.error?.message}
-            </Alert.Description>
-          </Alert.Content>
-        </Alert.Root>
-      )
-      : documents.length === 0
-      ? <Text color="fg.muted">No Markdown documents found.</Text>
-      : (
-        <DocumentTree
-          documents={documents}
-          onSelectDocument={onSelectDocument}
-          onCreateDocument={onCreateDocument}
-        />
-      )}
+    {directoryStatus?.state === "loading" ? (
+      <Alert.Root status="info">
+        <Alert.Indicator />
+        <Alert.Content>
+          <Alert.Title>Detecting documents</Alert.Title>
+          <Alert.Description>
+            Detected {directoryStatus.detected} · Registered{" "}
+            {directoryStatus.registered}
+          </Alert.Description>
+        </Alert.Content>
+      </Alert.Root>
+    ) : directoryStatus?.state === "error" ? (
+      <Alert.Root status="error">
+        <Alert.Indicator />
+        <Alert.Content>
+          <Alert.Title>Could not load documents</Alert.Title>
+          <Alert.Description>
+            {directoryStatus.error?.message}
+          </Alert.Description>
+        </Alert.Content>
+      </Alert.Root>
+    ) : documents.length === 0 ? (
+      <Text color="fg.muted">No Markdown documents found.</Text>
+    ) : (
+      <DocumentTree
+        documents={documents}
+        onSelectDocument={onSelectDocument}
+        onCreateDocument={onCreateDocument}
+      />
+    )}
   </Container>
 );

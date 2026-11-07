@@ -20,9 +20,11 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
         disabled={editor.pending}
         minH="48"
         onChange={(event) => editor.change(event.currentTarget.value)}
-        placeholder={documentId === "global"
-          ? "Instructions for agents working with any document"
-          : "Instructions for agents working with this document"}
+        placeholder={
+          documentId === "global"
+            ? "Instructions for agents working with any document"
+            : "Instructions for agents working with this document"
+        }
         value={editor.content}
       />
       <Text color="fg.muted" fontSize="sm">

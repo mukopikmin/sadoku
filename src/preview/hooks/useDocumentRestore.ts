@@ -25,12 +25,14 @@ export const useDocumentRestore = (
         input.expectedMarkdown,
       ),
     onSuccess: async () => {
-      await Promise.all([
-        previewDocumentQueryKey(documentId),
-        documentsQueryKey,
-        documentRevisionsQueryKey(documentId),
-        commentsQueryKey(documentId),
-      ].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+      await Promise.all(
+        [
+          previewDocumentQueryKey(documentId),
+          documentsQueryKey,
+          documentRevisionsQueryKey(documentId),
+          commentsQueryKey(documentId),
+        ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+      );
       setConfirmation(undefined);
       onRestored();
     },

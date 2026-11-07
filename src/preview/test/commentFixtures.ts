@@ -15,9 +15,7 @@ export const createCommentActions = (
   ...overrides,
 });
 
-export const createComment = (
-  overrides: Partial<Comment> = {},
-): Comment => ({
+export const createComment = (overrides: Partial<Comment> = {}): Comment => ({
   author: { type: "human" },
   body: "Clarify this.",
   createdAt: "2026-06-05T00:00:00.000Z",

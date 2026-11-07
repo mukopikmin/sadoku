@@ -69,7 +69,7 @@ describe("tag hooks", () => {
       const fetchMock = vi.fn(async () =>
         response === undefined
           ? new Response(null, { status: 204 })
-          : Response.json(response)
+          : Response.json(response),
       );
       vi.stubGlobal("fetch", fetchMock);
       const { wrapper, invalidated } = setup();

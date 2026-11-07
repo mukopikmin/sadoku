@@ -25,8 +25,7 @@ describe("suggestionDiff", () => {
       [
         ...source.map((line) => `-${line}`),
         ...replacement.map((line) => `+${line}`),
-      ]
-        .join("\n"),
+      ].join("\n"),
     );
   });
 });

@@ -44,8 +44,9 @@ describe("document tree model", () => {
       "beta.md",
       "zeta.md",
     ]);
-    expect(root.children?.[0].children?.[0].children?.map(({ name }) => name))
-      .toEqual(["alpha.md"]);
+    expect(
+      root.children?.[0].children?.[0].children?.map(({ name }) => name),
+    ).toEqual(["alpha.md"]);
     expect(getDirectoryValues(root)).toEqual([
       "directory:alpha",
       "directory:alpha/nested",
@@ -72,10 +73,12 @@ describe("document tree model", () => {
     const api = { backgroundColor: "#123456", id: 1, name: "API" };
     const guide = { backgroundColor: "#abcdef", id: 2, name: "Guide" };
 
-    expect(collectDocumentTags([
-      document(1, "one.md", { tags: [guide, api] }),
-      document(2, "two.md", { tags: [api] }),
-    ])).toEqual([api, guide]);
+    expect(
+      collectDocumentTags([
+        document(1, "one.md", { tags: [guide, api] }),
+        document(2, "two.md", { tags: [api] }),
+      ]),
+    ).toEqual([api, guide]);
   });
 
   it("filters tags using trimmed, case-insensitive substring matching", () => {
@@ -107,9 +110,14 @@ describe("document tree model", () => {
   });
 
   it("reconciles selected tag ids when available tags change", () => {
-    expect(reconcileSelectedTagIds([3, 1, 2], [
-      { backgroundColor: "#123456", id: 1, name: "API" },
-      { backgroundColor: "#abcdef", id: 2, name: "Guide" },
-    ])).toEqual([1, 2]);
+    expect(
+      reconcileSelectedTagIds(
+        [3, 1, 2],
+        [
+          { backgroundColor: "#123456", id: 1, name: "API" },
+          { backgroundColor: "#abcdef", id: 2, name: "Guide" },
+        ],
+      ),
+    ).toEqual([1, 2]);
   });
 });

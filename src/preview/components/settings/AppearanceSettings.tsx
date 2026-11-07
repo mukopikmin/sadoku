@@ -29,20 +29,18 @@ type AppearanceSettingsProps = {
   themeMode: ThemeMode;
 };
 
-export const AppearanceSettings = (
-  {
-    codeWrapMode,
-    fontScale,
-    onCodeWrapModeChange,
-    onFontScaleChange,
-    onThemeModeChange,
-    onShowHtmlCommentsChange,
-    onShowHighlightBoundariesChange,
-    showHighlightBoundaries,
-    showHtmlComments,
-    themeMode,
-  }: AppearanceSettingsProps,
-) => {
+export const AppearanceSettings = ({
+  codeWrapMode,
+  fontScale,
+  onCodeWrapModeChange,
+  onFontScaleChange,
+  onThemeModeChange,
+  onShowHtmlCommentsChange,
+  onShowHighlightBoundariesChange,
+  showHighlightBoundaries,
+  showHtmlComments,
+  themeMode,
+}: AppearanceSettingsProps) => {
   const { decrease, increase } = getAdjacentFontScales(fontScale);
   return (
     <>
@@ -133,7 +131,8 @@ export const AppearanceSettings = (
         <Switch.Root
           checked={codeWrapMode === "wrap"}
           onCheckedChange={({ checked }) =>
-            onCodeWrapModeChange(checked ? "wrap" : "scroll")}
+            onCodeWrapModeChange(checked ? "wrap" : "scroll")
+          }
         >
           <Switch.HiddenInput />
           <Switch.Control>
@@ -165,7 +164,8 @@ export const AppearanceSettings = (
         <Switch.Root
           checked={showHighlightBoundaries}
           onCheckedChange={({ checked }) =>
-            onShowHighlightBoundariesChange(checked)}
+            onShowHighlightBoundariesChange(checked)
+          }
         >
           <Switch.HiddenInput />
           <Switch.Control>

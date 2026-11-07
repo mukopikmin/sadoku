@@ -89,7 +89,8 @@ export const sadokuChakraSystem = createSystem(
               bg: {
                 value: {
                   base: "color-mix(in srgb, {colors.accent} 14%, {colors.canvas})",
-                  _dark: "color-mix(in srgb, {colors.accent} 14%, {colors.canvas})",
+                  _dark:
+                    "color-mix(in srgb, {colors.accent} 14%, {colors.canvas})",
                 },
               },
             },

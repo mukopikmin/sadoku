@@ -80,27 +80,33 @@ export const CommentableBlock = ({
   };
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const pendingRange: CommentRange = activeRange ?? selectedRange ?? {
-    ...sourceRange,
-  };
+  const pendingRange: CommentRange = activeRange ??
+    selectedRange ?? {
+      ...sourceRange,
+    };
   const [error, setError] = useState<string>();
   const ancestorSourceLines = useContext(SourceLineContext);
   const listDepth = useContext(MarkdownListDepthContext);
-  const commentIndentEm = listDepth === 0
-    ? 0
-    : markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm;
-  const commentGutterLeft = listDepth === 0
-    ? "calc(-1 * var(--chakra-spacing-8))"
-    : `calc(-1 * var(--chakra-spacing-8) - ${commentIndentEm}em)`;
+  const commentIndentEm =
+    listDepth === 0
+      ? 0
+      : markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm;
+  const commentGutterLeft =
+    listDepth === 0
+      ? "calc(-1 * var(--chakra-spacing-8))"
+      : `calc(-1 * var(--chakra-spacing-8) - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
 
-  const selectedSource = useMemo(() =>
-    markdown.split(/\r?\n/).slice(
-      pendingRange.startLine - 1,
-      pendingRange.endLine,
-    ).join("\n"), [markdown, pendingRange.endLine, pendingRange.startLine]);
+  const selectedSource = useMemo(
+    () =>
+      markdown
+        .split(/\r?\n/)
+        .slice(pendingRange.startLine - 1, pendingRange.endLine)
+        .join("\n"),
+    [markdown, pendingRange.endLine, pendingRange.startLine],
+  );
 
   const handleCreate = async () => {
     const body = draft.trim();
@@ -141,9 +147,7 @@ export const CommentableBlock = ({
     event.stopPropagation();
   };
 
-  const handleSetHeadingLink = (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleSetHeadingLink = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
     if (!headingId) return;
@@ -155,25 +159,22 @@ export const CommentableBlock = ({
     <Box
       className={[
         "commentable-block",
-        isSelected
-          ? "commentable-block-selected"
-          : undefined,
+        isSelected ? "commentable-block-selected" : undefined,
         isSelected ? "commentable-block-range-selected" : undefined,
-        hasRangeHighlight
-          ? "commentable-block-highlighted"
-          : undefined,
+        hasRangeHighlight ? "commentable-block-highlighted" : undefined,
         className,
-      ].filter(Boolean).join(" ")}
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-source-end-line={sourceRange.endLine}
       data-source-line={sourceRange.startLine}
-      style={{
-        "--comment-indent-offset": `${commentIndentEm}em`,
-      } as React.CSSProperties}
+      style={
+        {
+          "--comment-indent-offset": `${commentIndentEm}em`,
+        } as React.CSSProperties
+      }
     >
-      <Box
-        className="commentable-content"
-        onClick={handleContentClick}
-      >
+      <Box className="commentable-content" onClick={handleContentClick}>
         {isRangeActionLine && !isAdding && (
           <Flex
             className="comment-line-gutter"
@@ -226,14 +227,14 @@ export const CommentableBlock = ({
               </Tooltip>
             )}
             <Tooltip
-              content={`View raw Markdown for ${
-                formatRangeLabel(pendingRange)
-              }`}
+              content={`View raw Markdown for ${formatRangeLabel(
+                pendingRange,
+              )}`}
             >
               <IconButton
-                aria-label={`View raw Markdown for ${
-                  formatRangeLabel(pendingRange)
-                }`}
+                aria-label={`View raw Markdown for ${formatRangeLabel(
+                  pendingRange,
+                )}`}
                 bg="canvas"
                 borderColor="border"
                 boxSize="6"
@@ -263,9 +264,11 @@ export const CommentableBlock = ({
               actions={actions}
               comment={comment}
               key={comment.id}
-              lineLabel={comment.startLine === comment.endLine
-                ? `Line ${comment.startLine}`
-                : `Lines ${comment.startLine}-${comment.endLine}`}
+              lineLabel={
+                comment.startLine === comment.endLine
+                  ? `Line ${comment.startLine}`
+                  : `Lines ${comment.startLine}-${comment.endLine}`
+              }
             />
           ))}
           {isAdding && (
@@ -286,10 +289,11 @@ export const CommentableBlock = ({
                     aria-label="Suggest edit"
                     disabled={isSaving}
                     onClick={() => {
-                      setDraft((current) =>
-                        `${current}${current ? "\n\n" : ""}${
-                          suggestionBody(selectedSource)
-                        }`
+                      setDraft(
+                        (current) =>
+                          `${current}${current ? "\n\n" : ""}${suggestionBody(
+                            selectedSource,
+                          )}`,
                       );
                       textareaRef.current?.focus();
                     }}
@@ -310,7 +314,8 @@ export const CommentableBlock = ({
                 onKeyDown={(event) =>
                   submitCommentOnShortcut(event, () => {
                     void handleCreate();
-                  })}
+                  })
+                }
                 placeholder="Write a GitHub PR comment..."
                 ref={textareaRef}
                 value={draft}
@@ -337,7 +342,11 @@ export const CommentableBlock = ({
               </Flex>
             </Box>
           )}
-          {error && <Text color="fg.error" fontSize="sm">{error}</Text>}
+          {error && (
+            <Text color="fg.error" fontSize="sm">
+              {error}
+            </Text>
+          )}
         </Stack>
       )}
     </Box>

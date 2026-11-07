@@ -9,7 +9,7 @@ export const measureRevisionHighlightLayouts = (preview: HTMLElement) => {
     range: { kind: "addition" | "deletion" };
     elements: HTMLElement[];
   }[] = [];
-  let previous: typeof groups[number] | undefined;
+  let previous: (typeof groups)[number] | undefined;
   // Unchanged blocks break groups, including unchanged nested list items.
   for (const element of preview.querySelectorAll<HTMLElement>(
     "[data-revision-block], [data-revision-kind]",

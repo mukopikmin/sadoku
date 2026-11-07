@@ -6,13 +6,18 @@ type GestureEvent = Event & {
 
 const getSvgDimensions = (svg: SVGSVGElement | null) => {
   if (!svg) return undefined;
-  const viewBox = svg.getAttribute("viewBox")?.trim().split(/[\s,]+/).map(
-    Number,
-  );
+  const viewBox = svg
+    .getAttribute("viewBox")
+    ?.trim()
+    .split(/[\s,]+/)
+    .map(Number);
   if (
-    viewBox?.length === 4 && viewBox.every(Number.isFinite) &&
-    viewBox[2] > 0 && viewBox[3] > 0
-  ) return { width: viewBox[2], height: viewBox[3] };
+    viewBox?.length === 4 &&
+    viewBox.every(Number.isFinite) &&
+    viewBox[2] > 0 &&
+    viewBox[3] > 0
+  )
+    return { width: viewBox[2], height: viewBox[3] };
   const bounds = svg.getBoundingClientRect();
   return bounds.width > 0 && bounds.height > 0
     ? { width: bounds.width, height: bounds.height }
@@ -31,14 +36,16 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
   const view = viewport.ownerDocument.defaultView ?? globalThis.window;
   let scale = 1;
   let gestureStartScale: number | undefined;
-  let layout: {
-    width: number;
-    height: number;
-    viewportWidth: number;
-    viewportHeight: number;
-    offsetX: number;
-    offsetY: number;
-  } | undefined;
+  let layout:
+    | {
+        width: number;
+        height: number;
+        viewportWidth: number;
+        viewportHeight: number;
+        offsetX: number;
+        offsetY: number;
+      }
+    | undefined;
 
   const updateLayout = () => {
     const viewportWidth = viewport.clientWidth;
@@ -90,10 +97,12 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
       updateLayout();
       return;
     }
-    const centerX = (viewport.scrollLeft + layout.viewportWidth / 2 -
-      layout.offsetX) / layout.width;
-    const centerY = (viewport.scrollTop + layout.viewportHeight / 2 -
-      layout.offsetY) / layout.height;
+    const centerX =
+      (viewport.scrollLeft + layout.viewportWidth / 2 - layout.offsetX) /
+      layout.width;
+    const centerY =
+      (viewport.scrollTop + layout.viewportHeight / 2 - layout.offsetY) /
+      layout.height;
     if (!updateLayout()) return;
     setScroll(
       centerX * layout.width + layout.offsetX - layout.viewportWidth / 2,
@@ -132,12 +141,13 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
     if (!event.ctrlKey || (!layout && !updateLayout())) return;
     event.preventDefault();
     if (gestureStartScale !== undefined) return;
-    const delta = event.deltaY *
+    const delta =
+      event.deltaY *
       (event.deltaMode === 1
         ? 16
         : event.deltaMode === 2
-        ? viewport.clientHeight
-        : 1);
+          ? viewport.clientHeight
+          : 1);
     zoomTo(
       scale * Math.exp(Math.max(-20, Math.min(20, -delta * 0.01))),
       event.clientX,
@@ -178,9 +188,10 @@ export const initializeMermaidPinchZoom = (viewport: HTMLElement) => {
   });
   viewport.addEventListener("gestureend", onGestureEnd, { passive: false });
   view.addEventListener("resize", resize);
-  const observer = typeof ResizeObserver === "undefined"
-    ? undefined
-    : new ResizeObserver(resize);
+  const observer =
+    typeof ResizeObserver === "undefined"
+      ? undefined
+      : new ResizeObserver(resize);
   observer?.observe(viewport);
 
   return {

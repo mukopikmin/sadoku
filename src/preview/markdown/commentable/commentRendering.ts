@@ -58,13 +58,13 @@ export const useCommentRenderingContext = (): CommentRenderingContextValue => {
   return value;
 };
 
-export const getSourceLine = (
-  props: { node?: SourceNode },
-): number | undefined => props.node?.position?.start?.line;
+export const getSourceLine = (props: {
+  node?: SourceNode;
+}): number | undefined => props.node?.position?.start?.line;
 
-export const getSourceRange = (
-  props: { node?: SourceNode },
-): CommentRange | undefined => {
+export const getSourceRange = (props: {
+  node?: SourceNode;
+}): CommentRange | undefined => {
   const startLine = props.node?.position?.start?.line;
   if (startLine === undefined) return undefined;
   return {
@@ -82,6 +82,8 @@ export const hasTextSelectionWithin = (element: Element): boolean => {
   const selection = element.ownerDocument.getSelection();
   if (!selection || selection.isCollapsed) return false;
 
-  return element.contains(selection.anchorNode) ||
-    element.contains(selection.focusNode);
+  return (
+    element.contains(selection.anchorNode) ||
+    element.contains(selection.focusNode)
+  );
 };

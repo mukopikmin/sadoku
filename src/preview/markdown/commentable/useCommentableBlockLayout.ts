@@ -108,6 +108,9 @@ export const useCommentableBlockLayout = (
   );
   const rangeHighlightLayouts = useHighlightLayouts(previewRef, measure);
 
+  // Measure after every commit: Markdown DOM can change without changing the ref.
+  // State updates below preserve identity when the measured values are unchanged.
+  // oxlint-disable-next-line react/exhaustive-deps
   useLayoutEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;

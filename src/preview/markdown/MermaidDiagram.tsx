@@ -46,9 +46,11 @@ const useMermaidZoom = (sourceRef: RefObject<HTMLPreElement | null>) => {
   };
 };
 
-const MermaidZoomContent = (
-  { sourceRef }: { sourceRef: RefObject<HTMLPreElement | null> },
-) => {
+const MermaidZoomContent = ({
+  sourceRef,
+}: {
+  sourceRef: RefObject<HTMLPreElement | null>;
+}) => {
   const { viewportRef, fit, zoomIn, zoomOut } = useMermaidZoom(sourceRef);
   return (
     <>
@@ -123,7 +125,9 @@ export const MermaidDiagram = ({ source }: { source: string }) => {
     >
       <Box className="mermaid-container" py="2">
         <Box position="relative">
-          <pre className="mermaid" key={theme} ref={sourceRef}>{source}</pre>
+          <pre className="mermaid" key={theme} ref={sourceRef}>
+            {source}
+          </pre>
           <Tooltip content="Zoom Mermaid diagram">
             <Dialog.Trigger asChild>
               <Button

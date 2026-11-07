@@ -205,24 +205,29 @@ describe("rendered document diff", () => {
 
   it("highlights a continuous selection across additions as one range", () => {
     const markdown = "# Title\n\nFirst addition\n\nSecond addition\n\nEnd";
-    const { container, rerender } = render(
-      preview(markdown, "# Title\n\nEnd"),
-    );
+    const { container, rerender } = render(preview(markdown, "# Title\n\nEnd"));
     fireEvent.mouseOver(screen.getByText("First addition"));
-    expect(container.querySelector(".markdown-range-highlight-hover")
-      ?.getAttribute("data-start-line")).toBe("3");
+    expect(
+      container
+        .querySelector(".markdown-range-highlight-hover")
+        ?.getAttribute("data-start-line"),
+    ).toBe("3");
     fireEvent.click(screen.getByRole("heading", { name: "Title" }));
     fireEvent.click(screen.getByText("End"), { shiftKey: true });
 
-    const highlights = () => container.querySelectorAll<HTMLElement>(
-      ".markdown-range-highlight-selection",
-    );
+    const highlights = () =>
+      container.querySelectorAll<HTMLElement>(
+        ".markdown-range-highlight-selection",
+      );
     expect(highlights()).toHaveLength(1);
-    expect(container.querySelector(".markdown-range-highlight-hover")).toBeNull();
+    expect(
+      container.querySelector(".markdown-range-highlight-hover"),
+    ).toBeNull();
     expect(highlights()[0].dataset.startLine).toBe("1");
     expect(highlights()[0].dataset.endLine).toBe("7");
-    expect(screen.getByRole("button", { name: "Add comment on lines 1-7" }))
-      .not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Add comment on lines 1-7" }),
+    ).not.toBeNull();
 
     rerender(preview(markdown, "# Title\n\nRemoved text\n\nEnd"));
     expect(highlights()).toHaveLength(2);

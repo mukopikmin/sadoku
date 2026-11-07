@@ -3,7 +3,6 @@ import { Children, createElement, isValidElement, useContext } from "react";
 import type React from "react";
 import type { Components } from "react-markdown";
 import {
-  MarkdownListDepthContext,
   renderMarkdownBlockquote,
   renderMarkdownHeading,
   renderMarkdownHorizontalRule,
@@ -31,8 +30,10 @@ const isListElement = (
   child: React.ReactNode,
 ): child is React.ReactElement<ListElementProps> =>
   isValidElement<ListElementProps>(child) &&
-  (child.type === "ol" || child.type === "ul" ||
-    child.props.node?.tagName === "ol" || child.props.node?.tagName === "ul");
+  (child.type === "ol" ||
+    child.type === "ul" ||
+    child.props.node?.tagName === "ol" ||
+    child.props.node?.tagName === "ul");
 
 const splitListItemChildren = (
   children: React.ReactNode,
@@ -59,18 +60,20 @@ export const getCommentableBlockProps = (
   } = context;
   const { endLine, startLine } = sourceRange;
   const comments = [...commentsByLine.entries()].flatMap(([line, comments]) =>
-    line >= startLine && line <= endLine ? comments : []
+    line >= startLine && line <= endLine ? comments : [],
   );
   return {
     ...props,
     comments,
-    hasRangeHighlight: rangeHighlights.some((range) =>
-      range.endLine >= startLine && range.startLine <= endLine
+    hasRangeHighlight: rangeHighlights.some(
+      (range) => range.endLine >= startLine && range.startLine <= endLine,
     ),
-    isAdding: props.activeCommentLine !== undefined &&
+    isAdding:
+      props.activeCommentLine !== undefined &&
       props.activeCommentLine >= startLine &&
       props.activeCommentLine <= endLine,
-    isRangeActionLine: props.selectedRange !== undefined &&
+    isRangeActionLine:
+      props.selectedRange !== undefined &&
       props.selectedRange.endLine >= startLine &&
       props.selectedRange.endLine <= endLine,
     isSelected: props.selectedRange
@@ -89,11 +92,7 @@ const createCommentableComponent = (
   ) => React.ReactNode,
   isHeading = false,
 ) => {
-  return ({
-    children,
-    node,
-    ...elementProps
-  }: CommentableComponentProps) => {
+  return ({ children, node, ...elementProps }: CommentableComponentProps) => {
     const context = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
     const sourceRange = getSourceRange({ node });
@@ -107,9 +106,11 @@ const createCommentableComponent = (
     return (
       <CommentableBlock
         {...getCommentableBlockProps(context, sourceRange)}
-        headingId={isHeading && typeof elementProps.id === "string"
-          ? elementProps.id
-          : undefined}
+        headingId={
+          isHeading && typeof elementProps.id === "string"
+            ? elementProps.id
+            : undefined
+        }
       >
         {element}
       </CommentableBlock>
@@ -118,11 +119,7 @@ const createCommentableComponent = (
 };
 
 const createCommentableListItem = () => {
-  return ({
-    children,
-    node,
-    ...elementProps
-  }: CommentableComponentProps) => {
+  return ({ children, node, ...elementProps }: CommentableComponentProps) => {
     const context = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
     const line = getSourceLine({ node });
@@ -149,11 +146,7 @@ const createCommentableListItem = () => {
 };
 
 const createCommentablePre = () => {
-  return ({
-    children,
-    node,
-    ...elementProps
-  }: CommentableComponentProps) => {
+  return ({ children, node, ...elementProps }: CommentableComponentProps) => {
     const context = useCommentRenderingContext();
     const ancestorSourceLines = useContext(SourceLineContext);
     const sourceRange = getSourceRange({ node });
