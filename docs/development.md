@@ -72,11 +72,17 @@ See [contributor guidelines](../AGENTS.md), [proxy setup](../src/proxy/README.md
 [release workflow guide](../.agents/skills/sadoku-release/SKILL.md) for details.
 
 See [stable release operations](releases.md) for tag metadata and workflow safeguards.
+See [preview sample data](preview.md) for local demos and
+[Cloud Run previews](cloud-run-preview.md) for hosted preview setup and operation.
+
+Task-specific plans, investigations, and verification notes belong in
+[`docs/work/`](work/README.md). They may be committed, but have explicit deletion
+conditions and are reviewed for cleanup when the related work finishes.
 
 ## Nightly builds
 
-For nightly builds, pass `--nightly` to `install.sh` or `-Nightly` to
-`install.ps1`; update with `sadoku update --channel nightly`.
+For nightly builds, pass `--nightly` to `scripts/install.sh` or `-Nightly` to
+`scripts/install.ps1`; update with `sadoku update --channel nightly`.
 
 ## Source layout
 

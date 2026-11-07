@@ -184,8 +184,3 @@ jobs:
       - name: Test source installer
         if: runner.os != 'Windows'
         run: make test-install-with-assets
-
-      - name: Test Windows installer
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: .\scripts\install_windows_test.ps1

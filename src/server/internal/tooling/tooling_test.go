@@ -37,8 +37,7 @@ func readTestFile(t *testing.T, path string) string {
 	return string(data)
 }
 func TestNpmNotices(t *testing.T) {
-	t.Chdir("../../../..")
-	notices, err := npmNotices("scripts/testdata/notices/package-lock.json", "scripts/testdata/notices/node_modules")
+	notices, err := npmNotices("testdata/notices/package-lock.json", "testdata/notices/node_modules")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,7 +201,7 @@ func TestReleaseInstaller(t *testing.T) {
 		t.Skip("POSIX installer")
 	}
 	t.Chdir("../../../..")
-	installer, err := filepath.Abs("install.sh")
+	installer, err := filepath.Abs("scripts/install.sh")
 	if err != nil {
 		t.Fatal(err)
 	}
