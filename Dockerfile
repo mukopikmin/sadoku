@@ -17,7 +17,7 @@ RUN --mount=type=secret,id=proxy_ca \
 COPY src/preview/ ./src/preview/
 RUN make build-client
 
-FROM golang:1.26.10-bookworm AS go-toolchain
+FROM golang:1.27.2-bookworm AS go-toolchain
 
 FROM debian:bookworm-slim AS builder
 
