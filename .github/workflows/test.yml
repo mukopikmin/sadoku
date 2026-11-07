@@ -150,6 +150,7 @@ jobs:
           cache-dependency-path: |
             src/server/go.sum
             Makefile
+            src/*/tasks.mk
             .github/workflows/test.yml
 
       - name: Setup Node

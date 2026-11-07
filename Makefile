@@ -3,6 +3,7 @@ SHELL := sh
 
 GO ?= go
 NPM ?= npm
+NODE ?= node
 GOLANGCI_LINT ?= golangci-lint
 export CGO_ENABLED := 1
 VERSION ?= 0.0.0-dev
@@ -18,9 +19,8 @@ GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/ass
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format lint-client \
  build build-server install dist notices run start test test-server test-server-with-assets \
- test-tools test-install test-install-with-assets check vet vet-cross lint lint-go lint-proxy \
- fmt fmt-go fmt-check check-go-format proto-tools proto-lint proto-generate proto-check \
- check-proxy-format vet-proxy test-proxy build-proxy run-proxy
+ test-tools test-install test-install-with-assets check vet vet-cross lint lint-go \
+ fmt fmt-go fmt-check check-go-format
 
 deps:
 	$(NPM) --prefix src/proto ci --ignore-scripts
@@ -29,22 +29,23 @@ deps:
 build-client:
 	$(NPM) --prefix src/preview run build
 	rm -rf src/server/internal/preview/dist
+	mkdir -p src/server/internal/preview
 	cp -R src/preview/dist src/server/internal/preview/dist
 
 test-client:
 	$(NPM) --prefix src/preview test
 
 test-actions:
-	$(NPM) --prefix src/proto run test:actions
+	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
 
 fmt-client:
-	$(NPM) --prefix src/proto run fmt
+	$(NPM) --prefix src/proto exec --no -- oxfmt ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
 
 lint-client:
-	$(NPM) --prefix src/proto run lint
+	$(NPM) --prefix src/proto exec --no -- oxlint --deny-warnings --report-unused-disable-directives .github/tests src/preview
 
 check-client-format:
-	$(NPM) --prefix src/proto run fmt:check
+	$(NPM) --prefix src/proto exec --no -- oxfmt --check ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
 
 build: build-client
 	$(MAKE) build-server
@@ -68,7 +69,7 @@ run: build-client
 start: build-client
 	$(GO) -C src/server run ./cmd/sadoku start $(ARGS)
 
-test: test-server test-client test-actions test-proxy
+test: test-server test-client test-actions proxy-test
 
 test-server: build-client
 	$(MAKE) test-server-with-assets
@@ -80,7 +81,7 @@ test-server-with-assets:
 
 test-tools:
 	$(GO) -C src/server test -race -count=1 ./internal/tooling
-	$(NPM) --prefix src/proto run test:actions
+	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
 
 test-install: build-client
 	$(MAKE) test-install-with-assets
@@ -94,13 +95,10 @@ test-install-with-assets:
 
 check: fmt-check lint
 
-lint: lint-client lint-go lint-proxy
+lint: lint-client lint-go proxy-lint
 
 lint-go: build-client
 	cd src/server && $(GOLANGCI_LINT) run --config ../../.golangci.yml ./...
-
-lint-proxy:
-	cd src/proxy && $(GOLANGCI_LINT) run --config ../../.golangci.yml ./...
 
 vet: build-client
 	$(GO) -C src/server vet ./...
@@ -115,36 +113,10 @@ fmt: fmt-go fmt-client
 fmt-go:
 	gofmt -w $(GO_SOURCES) src/proxy
 
-fmt-check: check-go-format check-client-format check-proxy-format
+fmt-check: check-go-format check-client-format proxy-check-format
 
 check-go-format:
 	test -z "$$(gofmt -l $(GO_SOURCES))"
 
-proto-tools:
-	$(GO) install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
-	$(GO) install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.20.0
-
-proto-lint:
-	$(NPM) --prefix src/proto run proto:lint
-
-proto-generate:
-	$(NPM) --prefix src/proto run proto:generate
-
-proto-check: proto-lint proto-generate
-	git add --intent-to-add -- src/preview/gen src/server/internal/gen
-	git diff --exit-code -- src/preview/gen src/server/internal/gen
-
-check-proxy-format:
-	test -z "$$(gofmt -l src/proxy)"
-
-vet-proxy:
-	$(GO) -C src/proxy vet ./...
-
-test-proxy:
-	$(GO) -C src/proxy test -race -count=1 -timeout=60s ./...
-
-build-proxy:
-	CGO_ENABLED=0 $(GO) -C src/proxy build ./...
-
-run-proxy:
-	$(GO) -C src/proxy run ./cmd/revision-proxy
+include src/proto/tasks.mk
+include src/proxy/tasks.mk

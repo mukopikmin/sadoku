@@ -18,13 +18,14 @@ make deps
 make start ARGS=README.md
 ```
 
-`src/proto/package.json` contains npm and Node tasks only. Make invokes those scripts and
-coordinates Go and generated-code tasks:
+`src/proto/package.json` declares Node tooling dependencies only. Make defines shared
+commands and includes `src/proto/tasks.mk` and `src/proxy/tasks.mk`; their targets use
+`proto-` and `proxy-` prefixes. Run targets from the repository root.
 
 ```sh
 make check                       # formatting, oxlint, and golangci-lint for both Go modules
 make lint-go                     # lint the server, CLI, and repository tooling
-make lint-proxy                  # lint the independent proxy module
+make proxy-lint                  # lint the independent proxy module
 make test                        # server, client, action, and proxy tests
 make test-tools                  # repository tooling tests
 make build VERSION=1.2.3          # standalone binary with embedded client assets

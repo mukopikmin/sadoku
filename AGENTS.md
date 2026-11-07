@@ -19,9 +19,8 @@ them when making changes.
   check; never describe an incomplete or failed check as successful.
 - Use `Makefile` as the entry point for Go, release, and npm tasks. Keep
   `package.json` scripts limited to npm and Node tooling.
-- Use `make deps` to install npm dependencies from the lockfiles. When using
-  `npm install` directly, install the protocol tooling in `src/proto/` and the preview client in
-  `src/preview/`.
+- Use `make deps` to install protocol tooling and preview dependencies from lockfiles.
+  `src/proto/package.json` declares dependencies only; define shared commands in Make.
 - Keep `src/proto/package-lock.json` and
   `src/preview/package-lock.json` consistent with dependency changes.
 - Add or update focused tests for application behavior changes. Do not rely only
@@ -48,8 +47,8 @@ them when making changes.
 - Run `make build-client` before Go builds or tests; `src/server/internal/preview/assets.go`
   embeds the generated client. Never commit client build outputs.
 - Validate Go changes with `make check-go-format`, `make lint-go`, `make vet`, and `make test-server`.
-  For proxy changes, use `make check-proxy-format`, `make lint-proxy`, and
-  `make test-proxy`. Install the golangci-lint version pinned in
+  For proxy changes, use `make proxy-check-format`, `make proxy-lint`, and
+  `make proxy-test`. Install the golangci-lint version pinned in
   `.golangci-lint-version`; keep local and CI lint checks on the same version.
   Co-locate Go tests as `*_test.go` and preserve existing protocol contracts.
 - Keep `go.mod` and `go.sum` consistent. SQLite uses `mattn/go-sqlite3` and
