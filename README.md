@@ -9,13 +9,13 @@ source document. Comments are saved locally.
 **Linux x64 / macOS arm64:**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/mukopikmin/sadoku/main/scripts/install.sh | sh
 ```
 
 **Windows x64 (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/mukopikmin/sadoku/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/mukopikmin/sadoku/main/scripts/install.ps1 | iex
 ```
 
 On Linux and macOS, make sure `$HOME/.local/bin` is on `PATH`.
