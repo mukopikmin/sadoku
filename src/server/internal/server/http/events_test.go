@@ -147,7 +147,7 @@ func TestSSEWatchesAtomicSavesAndRecreatedFiles(t *testing.T) {
 				return err
 			}
 			after := bytes.Repeat([]byte("x"), len(before))
-			if err = os.WriteFile(file, after, 0600); err != nil {
+			if err = os.WriteFile(file, after, 0600); err != nil { // #nosec G703 -- The path comes from the test harness and is confined to its temporary fixtures.
 				return err
 			}
 			return os.Chtimes(file, info.ModTime(), info.ModTime())

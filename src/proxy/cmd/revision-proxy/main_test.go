@@ -61,7 +61,7 @@ func TestServerDrainsActiveResponse(t *testing.T) {
 	defer cancel()
 	release := make(chan struct{})
 	defer close(release)
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestServerDrainsActiveResponse(t *testing.T) {
 	}()
 	client := &http.Client{Timeout: 3 * time.Second, Transport: &http.Transport{Proxy: nil}}
 	defer client.CloseIdleConnections()
-	response, err := client.Get("http://" + listener.Addr().String())
+	response, err := testGet(t, client, "http://"+listener.Addr().String())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func TestServerDrainsActiveResponse(t *testing.T) {
 func TestShutdownBoundsLongLivedResponse(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestShutdownBoundsLongLivedResponse(t *testing.T) {
 	}()
 	client := &http.Client{Timeout: 3 * time.Second, Transport: &http.Transport{Proxy: nil}}
 	defer client.CloseIdleConnections()
-	response, err := client.Get("http://" + listener.Addr().String())
+	response, err := testGet(t, client, "http://"+listener.Addr().String())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,4 +160,14 @@ func TestRunRejectsConfigurationBeforeListening(t *testing.T) {
 
 func testLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
+// testGet binds HTTP requests to the lifetime of the calling test.
+func testGet(t *testing.T, client *http.Client, url string) (*http.Response, error) {
+	t.Helper()
+	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(request)
 }

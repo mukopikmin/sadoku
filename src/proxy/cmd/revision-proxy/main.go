@@ -60,7 +60,7 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger) e
 	if err != nil {
 		return err
 	}
-	listener, err := net.Listen("tcp", address)
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", address)
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
@@ -89,7 +89,7 @@ func serve(ctx context.Context, listener net.Listener, handler http.Handler, log
 		return err
 	case <-ctx.Done():
 		logger.Info("Proxy shutting down")
-		deadline, cancel := context.WithTimeout(context.Background(), grace)
+		deadline, cancel := context.WithTimeout(context.WithoutCancel(ctx), grace)
 		defer cancel()
 		if err := server.Shutdown(deadline); err != nil {
 			return fmt.Errorf("shutdown: %w", err)

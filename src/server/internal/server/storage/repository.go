@@ -412,7 +412,7 @@ func noteTable(kind string) string {
 	return "document_instruction"
 }
 func (r *Repository) Notes(kind string, id int64) ([]u.Note, error) {
-	rows, err := r.DB.Query("SELECT id,document_id,content,created_at,updated_at FROM "+noteTable(kind)+" WHERE document_id=? ORDER BY id", id)
+	rows, err := r.DB.Query("SELECT id,document_id,content,created_at,updated_at FROM "+noteTable(kind)+" WHERE document_id=? ORDER BY id", id) // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 	if err != nil {
 		return nil, err
 	}
@@ -440,12 +440,12 @@ func (r *Repository) SaveNote(kind string, n u.Note) (u.Note, error) {
 	var res sql.Result
 	if n.ID == 0 {
 		n.CreatedAt = now
-		res, err = r.DB.Exec("INSERT INTO "+noteTable(kind)+"(document_id,content,created_at,updated_at) VALUES(?,?,?,?)", n.DocumentID, n.Content, now, now)
+		res, err = r.DB.Exec("INSERT INTO "+noteTable(kind)+"(document_id,content,created_at,updated_at) VALUES(?,?,?,?)", n.DocumentID, n.Content, now, now) // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 		if err == nil {
 			n.ID, err = res.LastInsertId()
 		}
 	} else {
-		res, err = r.DB.Exec("UPDATE "+noteTable(kind)+" SET content=?,updated_at=? WHERE document_id=? AND id=?", n.Content, now, n.DocumentID, n.ID)
+		res, err = r.DB.Exec("UPDATE "+noteTable(kind)+" SET content=?,updated_at=? WHERE document_id=? AND id=?", n.Content, now, n.DocumentID, n.ID) // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 		if err == nil {
 			count, _ := res.RowsAffected()
 			if count == 0 {

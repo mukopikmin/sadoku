@@ -2,9 +2,11 @@ package db
 
 import (
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,6 +16,25 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestOpenContextHonorsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	path := filepath.Join(t.TempDir(), "comments.sqlite3")
+	database, err := OpenContext(ctx, path)
+	if database != nil {
+		_ = database.Close()
+		t.Fatal("canceled initialization returned a database")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("initialization error = %v, want cancellation", err)
+	}
+	database, err = OpenContext(t.Context(), path)
+	if err != nil {
+		t.Fatalf("initialization after cancellation: %v", err)
+	}
+	defer func() { _ = database.Close() }()
+}
 
 func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
 	names := []string{"comments # % 日本語.sqlite3"}

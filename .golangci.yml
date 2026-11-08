@@ -12,17 +12,26 @@ linters:
   default: none
   enable:
     - bodyclose
+    - contextcheck
     - errcheck
     - errorlint
+    - gosec
     - govet
     - ineffassign
     - nilerr
+    - noctx
     - nolintlint
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
     - unused
   settings:
+    gosec:
+      excludes:
+        # Sadoku intentionally opens user-selected files and runs local tools.
+        # Keep the G702/G703 taint checks for command injection/path traversal.
+        - G204
+        - G304
     nolintlint:
       require-explanation: true
       require-specific: true
@@ -33,3 +42,9 @@ linters:
         - SA*
   exclusions:
     generated: strict
+    rules:
+      # Legacy SQL APIs need a separate end-to-end context migration.
+      # Keep noctx active for HTTP, listeners, and subprocesses, including tests.
+      - linters:
+          - noctx
+        text: '\(\*database/sql\.'

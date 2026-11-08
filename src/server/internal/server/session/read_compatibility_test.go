@@ -77,7 +77,7 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 	}
 	t.Run("URL credentials", func(t *testing.T) {
 		remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, _ = fmt.Fprint(w, r.Header.Get("Authorization"))
+			_, _ = fmt.Fprint(w, r.Header.Get("Authorization")) // #nosec G705 -- This test intentionally echoes a request header to verify URL credential handling.
 		}))
 		defer remote.Close()
 		source := strings.Replace(remote.URL, "http://", "http://user:pass@", 1)
@@ -90,6 +90,10 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 		t.Run(fmt.Sprintf("decoding/%d", i), func(t *testing.T) {
 			data := make([]byte, len(test.Bytes))
 			for i, b := range test.Bytes {
+				if b < 0 || b > 255 {
+					t.Fatalf("fixture byte out of range: %d", b)
+					return
+				}
 				data[i] = byte(b)
 			}
 			path := filepath.Join(t.TempDir(), "readme.md")

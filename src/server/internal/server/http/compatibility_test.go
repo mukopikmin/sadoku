@@ -204,9 +204,9 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 						}
 					}
 					body := bytes.ReplaceAll(step.Body, []byte("$COMMENT_CREATED_AT"), []byte(createdAt))
-					request := httptest.NewRequest(step.Method, step.Path, bytes.NewReader(body))
+					request := httptest.NewRequestWithContext(t.Context(), step.Method, step.Path, bytes.NewReader(body))
 					if step.RawBody != nil {
-						request = httptest.NewRequest(step.Method, step.Path, strings.NewReader(*step.RawBody))
+						request = httptest.NewRequestWithContext(t.Context(), step.Method, step.Path, strings.NewReader(*step.RawBody))
 					}
 					if step.Body != nil {
 						request.Header.Set("Content-Type", "application/json")

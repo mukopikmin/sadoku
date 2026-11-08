@@ -39,7 +39,7 @@ func TestGitHubFixtureProcess(t *testing.T) {
 			os.Exit(2)
 		}
 	}
-	log, err := os.OpenFile(filepath.Join(directory, "calls.jsonl"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	log, err := os.OpenFile(filepath.Join(directory, "calls.jsonl"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600) // #nosec G703 -- The path comes from the test harness and is confined to its temporary fixtures.
 	if err != nil {
 		os.Exit(2)
 	}
@@ -50,7 +50,7 @@ func TestGitHubFixtureProcess(t *testing.T) {
 	if err := log.Close(); err != nil {
 		os.Exit(2)
 	}
-	b, err := os.ReadFile(filepath.Join(directory, "responses.json"))
+	b, err := os.ReadFile(filepath.Join(directory, "responses.json")) // #nosec G703 -- The path comes from the test harness and is confined to its temporary fixtures.
 	var responses map[string]json.RawMessage
 	if err != nil || json.Unmarshal(b, &responses) != nil {
 		os.Exit(2)
@@ -204,7 +204,7 @@ func newGitHubFixture(t *testing.T) *githubFixture {
 	}
 	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'" }
 	launcher := "#!/bin/sh\nGORACE=atexit_sleep_ms=0 SADOKU_GH_FIXTURE_PROCESS=1 exec " + quote(executable) + " -test.run=^TestGitHubFixtureProcess$ -- \"$@\"\n"
-	if err := os.WriteFile(filepath.Join(root, "gh"), []byte(launcher), 0700); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "gh"), []byte(launcher), 0700); err != nil { // #nosec G306 -- This owner-only executable is a test CLI fixture.
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))

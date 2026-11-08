@@ -226,7 +226,7 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 		temporaryPath += ".exe"
 		_ = temporary.Close()
 		_ = os.Remove(temporary.Name())
-		temporary, err = os.OpenFile(temporaryPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0700)
+		temporary, err = os.OpenFile(temporaryPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0700) // #nosec G302 -- The artifact must remain executable or readable for installation/distribution; it contains no secrets.
 		if err != nil {
 			return err
 		}

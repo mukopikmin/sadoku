@@ -242,7 +242,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		return err
 	}
 	path := filepath.Join(directory, "sadoku.sqlite3")
-	database, err := db.Open(path)
+	database, err := db.OpenContext(ctx, path)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			if len(words) != 2 {
 				return fmt.Errorf("document list accepts no arguments")
 			}
-			docs, err := repo.Documents()
+			docs, err := repo.DocumentsContext(ctx)
 			if err != nil {
 				return err
 			}
@@ -316,7 +316,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			if err != nil {
 				return err
 			}
-			docs, err := repo.Documents()
+			docs, err := repo.DocumentsContext(ctx)
 			if err != nil {
 				return err
 			}
@@ -398,7 +398,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	if hasSource == hasDocument {
 		return fmt.Errorf("specify exactly one of --document or --source")
 	}
-	docs, err := repo.Documents()
+	docs, err := repo.DocumentsContext(ctx)
 	if err != nil {
 		return err
 	}

@@ -180,7 +180,7 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 	_, server, _ := setup(t)
 	request := func(method, path, body string) *http.Response {
 		t.Helper()
-		req, _ := http.NewRequest(method, server.URL+path, strings.NewReader(body))
+		req, _ := http.NewRequestWithContext(t.Context(), method, server.URL+path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Connect-Protocol-Version", "1")
 		res, err := server.Client().Do(req)
@@ -211,7 +211,7 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 	if traversalResponse.StatusCode != 404 {
 		t.Fatalf("traversal %d", traversalResponse.StatusCode)
 	}
-	req, _ := http.NewRequest("GET", server.URL+"/", nil)
+	req, _ := http.NewRequestWithContext(t.Context(), "GET", server.URL+"/", nil)
 	req.Header.Set("X-Forwarded-Prefix", "/x\"bad")
 	res, err := server.Client().Do(req)
 	if err != nil {
@@ -236,13 +236,13 @@ func TestNoSyncDisablesEvents(t *testing.T) {
 	}
 	for _, path := range []string{"/__sadoku/events", "/__sadoku/documents/1/events"} {
 		response := httptest.NewRecorder()
-		handler.ServeHTTP(response, httptest.NewRequest("GET", path, nil))
+		handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), "GET", path, nil))
 		if response.Code != 404 {
 			t.Fatalf("%s: %d", path, response.Code)
 		}
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest("GET", "/", nil))
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), "GET", "/", nil))
 	if !strings.Contains(response.Body.String(), `data-sync-enabled="false"`) {
 		t.Fatal("missing no-sync bootstrap")
 	}
