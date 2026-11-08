@@ -53,7 +53,7 @@ func Open(path string) (*sql.DB, error) {
 	database.SetMaxOpenConns(1)
 	err = Migrate(database)
 	if err != nil {
-		database.Close()
+		_ = database.Close()
 		return nil, err
 	}
 	return database, nil
@@ -101,7 +101,7 @@ func Migrate(database *sql.DB) error {
 	if err == nil {
 		err = rows.Err()
 	}
-	rows.Close()
+	_ = rows.Close()
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func applyMigrations(database *sql.DB, migrations []migration) (result error) {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	if rebuild {
 		var enabled int
 		if err := conn.QueryRowContext(ctx, "PRAGMA foreign_keys").Scan(&enabled); err != nil {
@@ -153,7 +153,7 @@ func applyMigrations(database *sql.DB, migrations []migration) (result error) {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	for _, m := range migrations {
 		for _, statement := range m.Statements {
 			if _, err := tx.Exec(statement); err != nil {
@@ -171,7 +171,7 @@ func applyMigrations(database *sql.DB, migrations []migration) (result error) {
 		}
 		invalid := rows.Next()
 		err = rows.Err()
-		rows.Close()
+		_ = rows.Close()
 		if err != nil {
 			return err
 		}

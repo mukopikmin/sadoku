@@ -4,10 +4,7 @@ import type { RenderOptions } from "@testing-library/react";
 import { createPreviewRouter } from "../router";
 import { render } from "./testUtils";
 
-export const renderWithRouter = (
-  ui: ReactElement,
-  options?: RenderOptions,
-) => {
+export const renderWithRouter = (ui: ReactElement, options?: RenderOptions) => {
   const router = createPreviewRouter(() => ui);
   return render(<RouterProvider router={router} />, options);
 };

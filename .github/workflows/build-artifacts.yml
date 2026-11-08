@@ -75,6 +75,7 @@ jobs:
           cache-dependency-path: |
             src/server/go.sum
             Makefile
+            src/*/tasks.mk
             .github/workflows/build-artifacts.yml
 
       - name: Setup Node

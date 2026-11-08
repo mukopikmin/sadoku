@@ -1,6 +1,6 @@
 import { Box, HStack, IconButton, Separator } from "@chakra-ui/react";
 import { ChevronRight } from "lucide-react";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useId } from "react";
 import ReactMarkdown from "react-markdown";
 import { Tooltip } from "../ui/tooltip";
 import {
@@ -8,50 +8,22 @@ import {
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
 } from "../../markdown/markdownRenderers";
-import { initializeMermaid } from "../../markdown/mermaid";
+import { useExpandableSource } from "../../hooks/useExpandableSource";
 
 export type CommentSourceMarkdownProps = {
   children: string;
 };
 
-export const CommentSourceMarkdown = (
-  { children }: CommentSourceMarkdownProps,
-) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isOverflowing, setIsOverflowing] = useState(false);
+export const CommentSourceMarkdown = ({
+  children,
+}: CommentSourceMarkdownProps) => {
+  const source = useExpandableSource(children);
+  const { contentRef, state } = source;
+  const isExpanded = state.status === "expanded";
+  const isOverflowing =
+    isExpanded || (state.status === "collapsed" && state.canExpand);
   const contentId = useId();
-  const contentRef = useRef<HTMLDivElement>(null);
   const toggleLabel = isExpanded ? "Collapse source" : "Show full source";
-
-  useEffect(() => {
-    if (!contentRef.current) return;
-    void initializeMermaid({
-      root: contentRef.current,
-      theme: document.documentElement.dataset.theme === "dark"
-        ? "dark"
-        : "default",
-    });
-  }, [children]);
-
-  useLayoutEffect(() => {
-    const content = contentRef.current;
-    if (!content || isExpanded) return;
-
-    const updateOverflow = () => {
-      setIsOverflowing(content.scrollHeight > content.clientHeight);
-    };
-    updateOverflow();
-
-    const observer = typeof ResizeObserver === "undefined"
-      ? undefined
-      : new ResizeObserver(updateOverflow);
-    observer?.observe(content);
-    window.addEventListener("resize", updateOverflow);
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", updateOverflow);
-    };
-  }, [children, isExpanded]);
 
   return (
     <>
@@ -79,7 +51,7 @@ export const CommentSourceMarkdown = (
               aria-expanded={isExpanded}
               aria-label={toggleLabel}
               color="fg.muted"
-              onClick={() => setIsExpanded((expanded) => !expanded)}
+              onClick={source.toggle}
               size="xs"
               variant="ghost"
             >

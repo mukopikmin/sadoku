@@ -86,7 +86,9 @@ describe("CommentMarkdown", () => {
   it("preserves code newlines and existing hard breaks", () => {
     const { container } = render(
       <CommentMarkdown>
-        {"First  \nSecond\\\nThird\n\n```text\nCode first\nCode second\n```\n\n`Inline first\nInline second`"}
+        {
+          "First  \nSecond\\\nThird\n\n```text\nCode first\nCode second\n```\n\n`Inline first\nInline second`"
+        }
       </CommentMarkdown>,
     );
 
@@ -103,13 +105,13 @@ describe("CommentMarkdown", () => {
       <>
         <div data-testid="suggested-diff">
           <CommentMarkdown sourceText={"Original\nUnchanged"}>
-            {"Please revise this.\n\n```suggest\n<script>edited</script>\nUnchanged\n```\n\nThanks."}
+            {
+              "Please revise this.\n\n```suggest\n<script>edited</script>\nUnchanged\n```\n\nThanks."
+            }
           </CommentMarkdown>
         </div>
         <div data-testid="suggestion-alias">
-          <CommentMarkdown>
-            {"```suggestion\nReplacement\n```"}
-          </CommentMarkdown>
+          <CommentMarkdown>{"```suggestion\nReplacement\n```"}</CommentMarkdown>
         </div>
         <div data-testid="ordinary-diff">
           <CommentMarkdown>
@@ -126,15 +128,18 @@ describe("CommentMarkdown", () => {
       "suggest",
     );
     expect(alias.querySelector("code.language-diff")).not.toBeNull();
-    expect(suggestion.querySelector("[data-code-language-label]")?.textContent)
-      .toBe("suggest");
-    expect(ordinary.querySelector("[data-code-language-label]")?.textContent)
-      .toBe("Diff");
+    expect(
+      suggestion.querySelector("[data-code-language-label]")?.textContent,
+    ).toBe("suggest");
+    expect(
+      ordinary.querySelector("[data-code-language-label]")?.textContent,
+    ).toBe("Diff");
     expect(suggestion.querySelector("code.language-diff")).not.toBeNull();
     expect(ordinary.querySelector("code.language-diff")).not.toBeNull();
     await waitFor(() => {
-      expect(suggestion.querySelector("code.language-diff span[style]")).not
-        .toBeNull();
+      expect(
+        suggestion.querySelector("code.language-diff span[style]"),
+      ).not.toBeNull();
     });
     expect(suggestion.querySelector("script")).toBeNull();
     expect(screen.getByText("Please revise this.")).not.toBeNull();
@@ -149,8 +154,9 @@ describe("CommentMarkdown", () => {
       "Replacement",
     );
     await waitFor(() => {
-      expect(container.querySelector("code.language-diff span[style]")).not
-        .toBeNull();
+      expect(
+        container.querySelector("code.language-diff span[style]"),
+      ).not.toBeNull();
     });
   });
 
@@ -190,11 +196,18 @@ Paragraph with [a link](https://example.com) and \`code\`.
 
     const documentMarkdown = screen.getByTestId("document-markdown");
     const commentMarkdown = screen.getByTestId("comment-markdown");
-    for (
-      const selector of ["h2", "p", "blockquote", "ul", "hr", "pre", "code"]
-    ) {
-      const documentElement = [...documentMarkdown.querySelectorAll(selector)]
-        .find((element) => !element.closest("[data-scope=collapsible]"))!;
+    for (const selector of [
+      "h2",
+      "p",
+      "blockquote",
+      "ul",
+      "hr",
+      "pre",
+      "code",
+    ]) {
+      const documentElement = [
+        ...documentMarkdown.querySelectorAll(selector),
+      ].find((element) => !element.closest("[data-scope=collapsible]"))!;
       const commentElement = commentMarkdown.querySelector(selector)!;
       expect(documentElement.tagName).toBe(commentElement.tagName);
       expect(documentElement.textContent).toBe(commentElement.textContent);
@@ -202,7 +215,7 @@ Paragraph with [a link](https://example.com) and \`code\`.
 
     const diff = commentMarkdown.querySelector("code.language-diff")!;
     await waitFor(() =>
-      expect(diff.querySelector("span[style]")).not.toBeNull()
+      expect(diff.querySelector("span[style]")).not.toBeNull(),
     );
     expect(diff.textContent).toContain('-const state = "loading";');
     expect(diff.textContent).toContain('+const state = "ready";');
@@ -221,15 +234,15 @@ graph TD
 
     expect(
       container.querySelector(".mermaid-container pre.mermaid")?.textContent,
-    )
-      .toBe("graph TD\n  A --> B");
-    expect(screen.getByRole("button", { name: "Zoom Mermaid diagram" }))
-      .not.toBeNull();
+    ).toBe("graph TD\n  A --> B");
+    expect(
+      screen.getByRole("button", { name: "Zoom Mermaid diagram" }),
+    ).not.toBeNull();
     await waitFor(() =>
       expect(initializeMermaid).toHaveBeenCalledWith({
         root: container.querySelector(".comment-markdown-body"),
         theme: "dark",
-      })
+      }),
     );
   });
 });

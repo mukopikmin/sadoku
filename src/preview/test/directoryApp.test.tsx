@@ -34,27 +34,27 @@ const installFetch = (
 ) =>
   vi.stubGlobal(
     "fetch",
-    vi.fn(
-      (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = input instanceof Request
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url =
+        input instanceof Request
           ? new URL(input.url).pathname
           : new URL(String(input), globalThis.location.origin).pathname;
-        if (url === "/__sadoku/directory-status") {
-          if (!directoryStatuses) {
-            return Promise.resolve(new Response("Not found", { status: 404 }));
-          }
-          const status = directoryStatuses.length > 1
+      if (url === "/__sadoku/directory-status") {
+        if (!directoryStatuses) {
+          return Promise.resolve(new Response("Not found", { status: 404 }));
+        }
+        const status =
+          directoryStatuses.length > 1
             ? directoryStatuses.shift()
             : directoryStatuses[0];
-          return Promise.resolve(Response.json(status));
-        }
-        if (url === "/__sadoku/documents") {
-          return Promise.resolve(
-            Response.json(documents),
-          );
-        }
-        if (url === "/sadoku.preview.v1.PreviewService/GetSession") {
-          return Promise.resolve(Response.json({
+        return Promise.resolve(Response.json(status));
+      }
+      if (url === "/__sadoku/documents") {
+        return Promise.resolve(Response.json(documents));
+      }
+      if (url === "/sadoku.preview.v1.PreviewService/GetSession") {
+        return Promise.resolve(
+          Response.json({
             pullRequest: {
               description:
                 "First paragraph\n\n**Important** details with [a link](https://example.com).",
@@ -62,65 +62,64 @@ const installFetch = (
               title: "Improve documentation",
               url: "https://github.com/octo/repo/pull/23",
             },
-          }));
-        }
-        if (url === "/sadoku.preview.v1.PreviewService/ListDocumentRevisions") {
-          return Promise.resolve(Response.json({
+          }),
+        );
+      }
+      if (url === "/sadoku.preview.v1.PreviewService/ListDocumentRevisions") {
+        return Promise.resolve(
+          Response.json({
             revisions: [
               { id: "2", recordedAt: "2026-10-22T01:00:00.000Z" },
               { id: "1", recordedAt: "2026-10-22T00:00:00.000Z" },
             ],
-          }));
+          }),
+        );
+      }
+      if (url === "/sadoku.preview.v1.PreviewService/GetDocumentRevision") {
+        return new Request(input, init).json().then(({ revisionId }) =>
+          Response.json({
+            id: revisionId,
+            recordedAt: "2026-10-22T00:00:00.000Z",
+            markdown: "# Earlier document\n\n**Old content**",
+          }),
+        );
+      }
+      const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
+      if (documentMatch) {
+        const id = Number(documentMatch[1]);
+        if (pendingDocument) {
+          return pendingDocument;
         }
-        if (url === "/sadoku.preview.v1.PreviewService/GetDocumentRevision") {
-          return new Request(input, init).json().then(({ revisionId }) =>
-            Response.json({
-              id: revisionId,
-              recordedAt: "2026-10-22T00:00:00.000Z",
-              markdown: "# Earlier document\n\n**Old content**",
-            })
-          );
+        if (id === failDocumentId) {
+          return Promise.resolve(new Response("Failed", { status: 500 }));
         }
-        const documentMatch = url.match(/^\/__sadoku\/documents\/(\d+)$/);
-        if (documentMatch) {
-          const id = Number(documentMatch[1]);
-          if (pendingDocument) {
-            return pendingDocument;
-          }
-          if (id === failDocumentId) {
-            return Promise.resolve(
-              new Response("Failed", { status: 500 }),
-            );
-          }
-          return Promise.resolve(Response.json({
+        return Promise.resolve(
+          Response.json({
             deleted: id === 2,
             fileUrl: `file:///tmp/${id}.md`,
             markdown: `# Document ${id}\n`,
-            previousMarkdown: id === 1
-              ? "# Earlier document\n\n**Old content**"
-              : undefined,
+            previousMarkdown:
+              id === 1 ? "# Earlier document\n\n**Old content**" : undefined,
             title: `Document ${id}`,
-          }));
-        }
-        const commentsMatch = url.match(
-          /^\/__sadoku\/documents\/(\d+)\/comments$/,
+          }),
         );
-        if (commentsMatch) {
-          return Promise.resolve(
-            Response.json({
-              comments: [],
-              filePath: `/tmp/${commentsMatch[1]}.md`,
-            }),
-          );
-        }
-        if (url === "/__sadoku/settings") {
-          return Promise.resolve(
-            Response.json({}),
-          );
-        }
-        return Promise.resolve(new Response("Not found", { status: 404 }));
-      },
-    ),
+      }
+      const commentsMatch = url.match(
+        /^\/__sadoku\/documents\/(\d+)\/comments$/,
+      );
+      if (commentsMatch) {
+        return Promise.resolve(
+          Response.json({
+            comments: [],
+            filePath: `/tmp/${commentsMatch[1]}.md`,
+          }),
+        );
+      }
+      if (url === "/__sadoku/settings") {
+        return Promise.resolve(Response.json({}));
+      }
+      return Promise.resolve(new Response("Not found", { status: 404 }));
+    }),
   );
 
 beforeEach(() => {
@@ -135,43 +134,38 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
-  it(
-    "opens revisions from the document view and switches the rendered content",
-    async () => {
-      vi.stubGlobal("EventSource", DirectoryEventSource);
-      installFetch();
-      render(<App />);
-      fireEvent.click(
-        await screen.findByRole("treeitem", { name: "alpha.md" }),
-      );
-      await screen.findByRole("heading", { name: "Document 1" });
-      fireEvent.click(await screen.findByRole("button", { name: "Revisions" }));
-      const dialog = within(
-        await screen.findByRole("dialog", { name: "Document revisions" }),
-      );
-      expect(dialog.getByRole("heading", { name: "Document 1" })).not
-        .toBeNull();
-      fireEvent.click(dialog.getByRole("combobox", { name: "Revision" }));
-      fireEvent.click(await dialog.findByRole("option", { name: /1 earlier/ }));
-      expect(await dialog.findByRole("heading", { name: "Earlier document" }))
-        .not
-        .toBeNull();
-      expect(dialog.getByText("Old content").tagName).toBe("STRONG");
-      fireEvent.click(
-        dialog.getByRole("button", { name: "Close document revisions" }),
-      );
-      await waitFor(() =>
-        expect(screen.queryByRole("dialog", { name: "Document revisions" }))
-          .toBeNull()
-      );
+  it("opens revisions from the document view and switches the rendered content", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    render(<App />);
+    fireEvent.click(await screen.findByRole("treeitem", { name: "alpha.md" }));
+    await screen.findByRole("heading", { name: "Document 1" });
+    fireEvent.click(await screen.findByRole("button", { name: "Revisions" }));
+    const dialog = within(
+      await screen.findByRole("dialog", { name: "Document revisions" }),
+    );
+    expect(dialog.getByRole("heading", { name: "Document 1" })).not.toBeNull();
+    fireEvent.click(dialog.getByRole("combobox", { name: "Revision" }));
+    fireEvent.click(await dialog.findByRole("option", { name: /1 earlier/ }));
+    expect(
+      await dialog.findByRole("heading", { name: "Earlier document" }),
+    ).not.toBeNull();
+    expect(dialog.getByText("Old content").tagName).toBe("STRONG");
+    fireEvent.click(
+      dialog.getByRole("button", { name: "Close document revisions" }),
+    );
+    await waitFor(() =>
       expect(
-        screen.getByRole("tab", { name: "Preview" }).getAttribute(
-          "aria-selected",
-        ),
-      ).toBe("true");
-      expect(location.pathname).toBe("/documents/1");
-    },
-  );
+        screen.queryByRole("dialog", { name: "Document revisions" }),
+      ).toBeNull(),
+    );
+    expect(
+      screen
+        .getByRole("tab", { name: "Preview" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(location.pathname).toBe("/documents/1");
+  });
   it("shows pull request metadata above the document tree", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();
@@ -184,12 +178,14 @@ describe("directory preview", () => {
       }),
     ).not.toBeNull();
     const pullRequestLink = screen.getByRole("link", { name: "#23" });
-    expect(pullRequestLink.getAttribute("href"))
-      .toBe("https://github.com/octo/repo/pull/23");
+    expect(pullRequestLink.getAttribute("href")).toBe(
+      "https://github.com/octo/repo/pull/23",
+    );
     expect(screen.getByText("First paragraph").tagName).toBe("P");
     expect(screen.getByText("Important").tagName).toBe("STRONG");
-    expect(screen.getByRole("link", { name: "a link" }).getAttribute("href"))
-      .toBe("https://example.com");
+    expect(
+      screen.getByRole("link", { name: "a link" }).getAttribute("href"),
+    ).toBe("https://example.com");
     expect(screen.getByRole("treeitem", { name: "alpha.md" })).not.toBeNull();
   });
   it("shows preparation progress and switches to the list when ready", async () => {
@@ -200,28 +196,32 @@ describe("directory preview", () => {
     ]);
     render(<App />);
 
-    expect(await screen.findByText("Detecting documents")).not
-      .toBeNull();
+    expect(await screen.findByText("Detecting documents")).not.toBeNull();
     expect(screen.getByText("Detected 3 · Registered 1")).not.toBeNull();
     expect(
-      await screen.findByRole("treeitem", { name: "alpha.md" }, {
-        timeout: 1500,
-      }),
+      await screen.findByRole(
+        "treeitem",
+        { name: "alpha.md" },
+        {
+          timeout: 1500,
+        },
+      ),
     ).not.toBeNull();
   });
 
   it("shows directory preparation failures", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
-    installFetch(undefined, undefined, [{
-      state: "error",
-      detected: 2,
-      registered: 0,
-      error: { name: "Error", message: "scan failed" },
-    }]);
+    installFetch(undefined, undefined, [
+      {
+        state: "error",
+        detected: 2,
+        registered: 0,
+        error: { name: "Error", message: "scan failed" },
+      },
+    ]);
     render(<App />);
 
-    expect(await screen.findByText("Could not load documents"))
-      .not.toBeNull();
+    expect(await screen.findByText("Could not load documents")).not.toBeNull();
     expect(screen.getByText("scan failed")).not.toBeNull();
   });
   it("lists documents, routes to one, and returns through breadcrumbs", async () => {
@@ -229,23 +229,28 @@ describe("directory preview", () => {
     installFetch();
     render(<App />);
 
-    expect(await screen.findByRole("treeitem", { name: "alpha.md" })).not
-      .toBeNull();
-    expect(screen.getByRole("treeitem", { name: "beta.mdDeleted" })).not
-      .toBeNull();
+    expect(
+      await screen.findByRole("treeitem", { name: "alpha.md" }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("treeitem", { name: "beta.mdDeleted" }),
+    ).not.toBeNull();
     expect(screen.getByRole("treeitem", { name: /guides/ })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "guides folder" })).not
-      .toBeNull();
+    expect(
+      screen.getByRole("button", { name: "guides folder" }),
+    ).not.toBeNull();
     expect(screen.getByRole("img", { name: "Sadoku" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Open settings" })).not
-      .toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Open settings" }),
+    ).not.toBeNull();
     expect(screen.queryByRole("tab", { name: "Preview" })).toBeNull();
     expect(
       screen.queryByRole("tab", { name: "Comments, 0 unresolved" }),
     ).toBeNull();
     fireEvent.click(screen.getByRole("treeitem", { name: "alpha.md" }));
-    expect(await screen.findByRole("heading", { name: "Document 1" })).not
-      .toBeNull();
+    expect(
+      await screen.findByRole("heading", { name: "Document 1" }),
+    ).not.toBeNull();
     expect(location.pathname).toBe("/documents/1");
     const breadcrumbs = screen.getByRole("navigation", {
       name: "Document path",
@@ -266,8 +271,9 @@ describe("directory preview", () => {
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
-    expect(await screen.findByRole("treeitem", { name: "beta.mdDeleted" })).not
-      .toBeNull();
+    expect(
+      await screen.findByRole("treeitem", { name: "beta.mdDeleted" }),
+    ).not.toBeNull();
     expect(location.pathname).toBe("/");
   });
 
@@ -285,12 +291,13 @@ describe("directory preview", () => {
 
     fireEvent.click(expandGuides);
     await waitFor(() =>
-      expect(screen.queryByRole("treeitem", { name: "alpha.md" })).toBeNull()
+      expect(screen.queryByRole("treeitem", { name: "alpha.md" })).toBeNull(),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "guides folder" }));
-    expect(await screen.findByRole("treeitem", { name: "alpha.md" })).not
-      .toBeNull();
+    expect(
+      await screen.findByRole("treeitem", { name: "alpha.md" }),
+    ).not.toBeNull();
   });
 
   it("marks deleted documents and explains that their snapshot is shown", async () => {
@@ -310,26 +317,25 @@ describe("directory preview", () => {
     installFetch();
     render(<App />);
 
-    fireEvent.click(
-      await screen.findByRole("treeitem", { name: "alpha.md" }),
-    );
+    fireEvent.click(await screen.findByRole("treeitem", { name: "alpha.md" }));
     await screen.findByRole("heading", { name: "Document 1" });
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
     await waitFor(() =>
-      expect(location.pathname).toBe("/documents/1/comments")
+      expect(location.pathname).toBe("/documents/1/comments"),
     );
-    expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
-      .not.toBeNull();
+    expect(
+      await screen.findByRole("tabpanel", { name: "Unresolved" }),
+    ).not.toBeNull();
 
     history.replaceState(null, "", "/documents/1");
     dispatchEvent(new PopStateEvent("popstate"));
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     expect(
-      screen.getByRole("tab", { name: "Preview" }).getAttribute(
-        "aria-selected",
-      ),
+      screen
+        .getByRole("tab", { name: "Preview" })
+        .getAttribute("aria-selected"),
     ).toBe("true");
   });
 
@@ -344,7 +350,8 @@ describe("directory preview", () => {
     });
     const scrollTo = vi.fn(
       (optionsOrX: ScrollToOptions | number, y?: number) => {
-        scrollY = typeof optionsOrX === "number" ? y ?? 0 : optionsOrX.top ?? 0;
+        scrollY =
+          typeof optionsOrX === "number" ? (y ?? 0) : (optionsOrX.top ?? 0);
       },
     );
     vi.stubGlobal("scrollTo", scrollTo);
@@ -354,9 +361,7 @@ describe("directory preview", () => {
     };
     render(<App />);
 
-    fireEvent.click(
-      await screen.findByRole("treeitem", { name: "alpha.md" }),
-    );
+    fireEvent.click(await screen.findByRole("treeitem", { name: "alpha.md" }));
     await screen.findByRole("heading", { name: "Document 1" });
     await waitFor(() => expect(scrollTo).toHaveBeenCalled());
     expect(scrollY).toBe(0);
@@ -376,7 +381,7 @@ describe("directory preview", () => {
 
     history.back();
     await waitFor(() =>
-      expect(location.pathname).toBe("/documents/1/comments")
+      expect(location.pathname).toBe("/documents/1/comments"),
     );
     await waitFor(() => expect(scrollY).toBe(340));
 
@@ -385,7 +390,9 @@ describe("directory preview", () => {
     await waitFor(() => expect(location.pathname).toBe("/documents/1"));
     await waitFor(() => expect(scrollY).toBe(240));
     history.back();
-    await waitFor(() => expect(location.pathname).toBe("/documents/1/comments"));
+    await waitFor(() =>
+      expect(location.pathname).toBe("/documents/1/comments"),
+    );
     await waitFor(() => expect(scrollY).toBe(460));
 
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
@@ -401,18 +408,24 @@ describe("directory preview", () => {
     installFetch();
     history.replaceState(null, "", "/documents/2/comments");
     const { unmount } = render(<App />);
-    expect(await screen.findByRole("tabpanel", { name: "Unresolved" }))
-      .not.toBeNull();
-    expect(location.pathname).toBe("/documents/2/comments");
-    expect(screen.getByRole("dialog", { name: "Document actions" })).not.toBeNull();
     expect(
-      screen.getByRole("tab", {
-        name: "Comments, 0 unresolved",
-      }).getAttribute("aria-selected"),
+      await screen.findByRole("tabpanel", { name: "Unresolved" }),
+    ).not.toBeNull();
+    expect(location.pathname).toBe("/documents/2/comments");
+    expect(
+      screen.getByRole("dialog", { name: "Document actions" }),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("tab", {
+          name: "Comments, 0 unresolved",
+        })
+        .getAttribute("aria-selected"),
     ).toBe("true");
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
-    expect(await screen.findByRole("heading", { name: "Document 2" }))
-      .not.toBeNull();
+    expect(
+      await screen.findByRole("heading", { name: "Document 2" }),
+    ).not.toBeNull();
     expect(location.pathname).toBe("/documents/2");
 
     unmount();
@@ -431,12 +444,13 @@ describe("directory preview", () => {
           String(input) === "/__sadoku/documents"
             ? Response.json([])
             : Response.json({}),
-        )
+        ),
       ),
     );
     render(<App />);
-    expect(await screen.findByText("No Markdown documents found.")).not
-      .toBeNull();
+    expect(
+      await screen.findByText("No Markdown documents found."),
+    ).not.toBeNull();
   });
 
   it("keeps the shared header mounted while a document loads", async () => {
@@ -456,13 +470,16 @@ describe("directory preview", () => {
     expect(container.querySelector("header")).not.toBeNull();
     expect(screen.queryByRole("tab", { name: "Preview" })).toBeNull();
 
-    resolveDocument(Response.json({
-      fileUrl: "file:///tmp/1.md",
-      markdown: "# Document 1\n",
-      title: "Document 1",
-    }));
-    expect(await screen.findByRole("heading", { name: "Document 1" })).not
-      .toBeNull();
+    resolveDocument(
+      Response.json({
+        fileUrl: "file:///tmp/1.md",
+        markdown: "# Document 1\n",
+        title: "Document 1",
+      }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Document 1" }),
+    ).not.toBeNull();
     expect(container.querySelector("header")).not.toBeNull();
     expect(screen.getByRole("tab", { name: "Preview" })).toHaveProperty(
       "disabled",
@@ -499,15 +516,15 @@ describe("directory preview", () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch(1);
     render(<App />);
-    fireEvent.click(
-      await screen.findByRole("treeitem", { name: "alpha.md" }),
-    );
-    expect(await screen.findByText("Failed to load Markdown: 500")).not
-      .toBeNull();
+    fireEvent.click(await screen.findByRole("treeitem", { name: "alpha.md" }));
+    expect(
+      await screen.findByText("Failed to load Markdown: 500"),
+    ).not.toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await waitFor(() =>
-      expect(screen.getByRole("treeitem", { name: "beta.mdDeleted" })).not
-        .toBeNull()
+      expect(
+        screen.getByRole("treeitem", { name: "beta.mdDeleted" }),
+      ).not.toBeNull(),
     );
   });
 });

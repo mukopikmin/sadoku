@@ -57,10 +57,18 @@ export const DocumentPreviewPage = ({
     document.markdown,
     document.previousMarkdown,
   );
+  const changes = diff.state.status === "on" ? diff.state.changes : undefined;
   const documentPath =
     selectedDocument?.relativePath ?? document.fileUrl ?? document.title;
   return (
-    <Container as="main" overflowAnchor="none" maxW="980px" px="8" pt="0" pb="8">
+    <Container
+      as="main"
+      overflowAnchor="none"
+      maxW="980px"
+      px="8"
+      pt="0"
+      pb="8"
+    >
       {documents && selectedDocument && (
         <DocumentBreadcrumb
           document={selectedDocument}
@@ -113,16 +121,16 @@ export const DocumentPreviewPage = ({
           </Alert.Content>
         </Alert.Root>
       )}
-      {view === "preview" && diff.changes && (
+      {view === "preview" && changes && (
         <Text
           role="status"
-          aria-label={`Changes since previous snapshot: ${diff.changes.current.size} added lines, ${diff.changes.previous.size} removed lines`}
+          aria-label={`Changes since previous snapshot: ${changes.current.size} added lines, ${changes.previous.size} removed lines`}
           fontSize="sm"
           color="fg.muted"
           mb="4"
         >
-          Changes since previous snapshot: +{diff.changes.current.size} / −
-          {diff.changes.previous.size} lines
+          Changes since previous snapshot: +{changes.current.size} / −
+          {changes.previous.size} lines
         </Text>
       )}
       {view === "preview" ? (
@@ -132,7 +140,7 @@ export const DocumentPreviewPage = ({
           key={`${documentId}-${settings.theme}-${settings.fontScale}`}
           markdown={document.markdown}
           previousMarkdown={
-            diff.enabled ? document.previousMarkdown : undefined
+            diff.state.status === "on" ? document.previousMarkdown : undefined
           }
           showHtmlComments={showHtmlComments}
           theme={settings.theme === "dark" ? "dark" : "default"}

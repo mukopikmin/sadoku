@@ -10,7 +10,7 @@ func (r *Repository) GlobalInstructions() ([]u.Note, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	notes := []u.Note{}
 	for rows.Next() {
 		var n u.Note

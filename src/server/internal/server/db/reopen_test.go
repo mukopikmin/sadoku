@@ -30,7 +30,7 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 			for range 2 {
 				opened, err := Open(path)
 				if opened != nil {
-					opened.Close()
+					_ = opened.Close()
 					t.Fatal("startup accepted inconsistent legacy data")
 				}
 				if err == nil || !strings.Contains(err.Error(), "migration 0016") {
@@ -42,7 +42,7 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 					t.Fatal(err)
 				}
 				func() {
-					defer raw.Close()
+					defer func() { _ = raw.Close() }()
 					if !reflect.DeepEqual(beforeSchema, schema(t, raw)) || !reflect.DeepEqual(beforeData, migrationData(t, raw)) {
 						t.Fatal("failed startup changed schema, data, or migration history")
 					}
@@ -56,11 +56,11 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 			}
 			_, err = raw.Exec("UPDATE comment SET resolved=0,resolved_at=NULL,resolved_by_type=NULL")
 			if err != nil {
-				raw.Close()
+				_ = raw.Close()
 				t.Fatal(err)
 			}
 			repairedData := migrationData(t, raw)
-			raw.Close()
+			_ = raw.Close()
 			var upgradedData map[string][][]any
 			for range 2 {
 				opened, err := Open(path)
@@ -68,7 +68,7 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 					t.Fatal(err)
 				}
 				func() {
-					defer opened.Close()
+					defer func() { _ = opened.Close() }()
 					data := migrationData(t, opened)
 					if upgradedData == nil {
 						upgradedData = data
@@ -98,7 +98,7 @@ func migrationData(t *testing.T, database *sql.DB) map[string][][]any {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer rows.Close()
+			defer func() { _ = rows.Close() }()
 			columns, err := rows.Columns()
 			if err != nil {
 				t.Fatal(err)

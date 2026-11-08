@@ -16,9 +16,12 @@ type Props = {
   open: boolean;
 };
 
-export const DocumentInstructionsDialog = (
-  { documentId, onOpenChange, onOpenGlobalInstructions, open }: Props,
-) => {
+export const DocumentInstructionsDialog = ({
+  documentId,
+  onOpenChange,
+  onOpenGlobalInstructions,
+  open,
+}: Props) => {
   const globalQuery = useInstructionsQuery("global", open);
   return (
     <Dialog.Root
@@ -41,25 +44,23 @@ export const DocumentInstructionsDialog = (
                   Apply to all documents in this database. Document instructions
                   take precedence when they directly conflict.
                 </Text>
-                {globalQuery.isPending
-                  ? <Text>Loading global instructions...</Text>
-                  : globalQuery.error
-                  ? (
-                    <Text color="fg.error" role="alert">
-                      {String(globalQuery.error)}
-                    </Text>
-                  )
-                  : globalQuery.data?.length === 0
-                  ? (
-                    <Text color="fg.muted">
-                      No global instructions have been added.
-                    </Text>
-                  )
-                  : globalQuery.data?.map((instruction) => (
+                {globalQuery.isPending ? (
+                  <Text>Loading global instructions...</Text>
+                ) : globalQuery.error ? (
+                  <Text color="fg.error" role="alert">
+                    {String(globalQuery.error)}
+                  </Text>
+                ) : globalQuery.data?.length === 0 ? (
+                  <Text color="fg.muted">
+                    No global instructions have been added.
+                  </Text>
+                ) : (
+                  globalQuery.data?.map((instruction) => (
                     <Text key={instruction.id} whiteSpace="pre-wrap">
                       {instruction.content}
                     </Text>
-                  ))}
+                  ))
+                )}
                 {onOpenGlobalInstructions && (
                   <Button
                     alignSelf="flex-start"

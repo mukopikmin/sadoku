@@ -40,7 +40,7 @@ func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.Docume
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	documents := []u.Document{}
 	now := db.Now()
 	for _, path := range paths {
@@ -67,7 +67,7 @@ func (r *Repository) DocumentsContext(ctx context.Context) ([]u.Document, error)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	docs := []u.Document{}
 	for rows.Next() {
 		var d u.Document
@@ -92,7 +92,7 @@ func (r *Repository) Revisions(id int64) ([]u.Revision, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	list := []u.Revision{}
 	for rows.Next() {
 		var rev u.Revision
@@ -123,7 +123,7 @@ func (r *Repository) RecordRevision(id int64, markdown string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	var previous string
 	err = tx.QueryRow("SELECT markdown FROM document_revision WHERE document_id=? ORDER BY id DESC LIMIT 1", id).Scan(&previous)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -144,7 +144,7 @@ func (r *Repository) InitializeSnapshotContext(ctx context.Context, id int64, ma
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	var revID *int64
 	if err = tx.QueryRowContext(ctx, "SELECT source_revision_id FROM comment_document WHERE id=?", id).Scan(&revID); err != nil {
 		return err
@@ -185,7 +185,7 @@ func (r *Repository) ReadComments(id int64) (u.Comments, error) {
 		var resolver *string
 		err = rows.Scan(&internal, &c.ID, &c.Body, &c.Author.Type, &c.StartLine, &c.EndLine, &c.OriginalStartLine, &c.OriginalEndLine, &c.CreatedAt, &c.UpdatedAt, &c.Resolved, &c.Stale, &c.ResolvedAt, &resolver, &c.SourceHash, &c.SourceText, &c.SourceDeleted)
 		if err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return doc, err
 		}
 		if resolver != nil {
@@ -196,7 +196,7 @@ func (r *Repository) ReadComments(id int64) (u.Comments, error) {
 		doc.Comments = append(doc.Comments, c)
 	}
 	err = rows.Err()
-	rows.Close()
+	_ = rows.Close()
 	if err != nil {
 		return doc, err
 	}
@@ -208,13 +208,13 @@ func (r *Repository) ReadComments(id int64) (u.Comments, error) {
 		for replies.Next() {
 			var reply u.Reply
 			if err = replies.Scan(&reply.ID, &reply.Body, &reply.Author.Type, &reply.CreatedAt, &reply.UpdatedAt, &reply.ReviewRequested); err != nil {
-				replies.Close()
+				_ = replies.Close()
 				return doc, err
 			}
 			doc.Comments[i].Replies = append(doc.Comments[i].Replies, reply)
 		}
 		err = replies.Err()
-		replies.Close()
+		_ = replies.Close()
 		if err != nil {
 			return doc, err
 		}
@@ -226,7 +226,7 @@ func (r *Repository) SaveComments(id int64, doc u.Comments) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	var source string
 	var old *string
 	var currentID *int64
@@ -284,7 +284,7 @@ func (r *Repository) Tags(documentID int64) ([]u.Tag, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	list := []u.Tag{}
 	for rows.Next() {
 		var t u.Tag
@@ -343,7 +343,7 @@ func (r *Repository) ReplaceTags(id int64, ids []int64) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	if _, err = tx.Exec("DELETE FROM document_tag_link WHERE document_id=?", id); err != nil {
 		return err
 	}
@@ -360,7 +360,7 @@ func (r *Repository) ReplaceTagReferences(id int64, references []u.TagReference)
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	ids := map[int64]bool{}
 	for _, reference := range references {
 		tagID := reference.ID
@@ -416,7 +416,7 @@ func (r *Repository) Notes(kind string, id int64) ([]u.Note, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	list := []u.Note{}
 	for rows.Next() {
 		var n u.Note

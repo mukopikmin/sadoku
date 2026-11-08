@@ -6,12 +6,13 @@ export const remarkCommentBreaks = () => (tree: Root) => {
       if ("children" in node) transform(node);
       if (node.type !== "text") return [node];
 
-      return node.value.split(/\r\n|\r|\n/).flatMap(
-        (value, index): RootContent[] =>
+      return node.value
+        .split(/\r\n|\r|\n/)
+        .flatMap((value, index): RootContent[] =>
           index === 0
             ? [{ type: "text", value }]
             : [{ type: "break" }, { type: "text", value }],
-      );
+        );
     });
   };
   transform(tree);

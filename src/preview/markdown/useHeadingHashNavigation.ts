@@ -22,8 +22,8 @@ export const scrollToHeadingHash = (
     return false;
   }
 
-  const headerHeight = document.querySelector("header")
-    ?.getBoundingClientRect().height ?? 0;
+  const headerHeight =
+    document.querySelector("header")?.getBoundingClientRect().height ?? 0;
   heading.style.scrollMarginTop = `${headerHeight}px`;
   heading.scrollIntoView();
   return true;

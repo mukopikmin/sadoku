@@ -1,51 +1,48 @@
 import { useCallback, useState } from "react";
 import {
   type CommentRange,
-  type CommentRangeSelection,
   resolveCommentRangeSelection,
 } from "./commentRanges";
 import type { CommentRangeSelectionOptions } from "./commentRendering";
 
+type SelectionState =
+  | { status: "none" }
+  | {
+      status: "selected" | "composing";
+      range: CommentRange;
+      anchorLine: number;
+    };
 export const useCommentSelection = () => {
-  const [activeCommentLine, setActiveCommentLine] = useState<number>();
-  const [activeRange, setActiveRange] = useState<CommentRange>();
-  const [selection, setSelection] = useState<CommentRangeSelection>({});
-  const selectedRange = selection.range;
-
-  const selectCommentRange = useCallback((
-    clickedRange: CommentRange,
-    { extend }: CommentRangeSelectionOptions,
-  ) => {
-    setActiveCommentLine(undefined);
-    setActiveRange(undefined);
-    setSelection((current) =>
-      resolveCommentRangeSelection(
-        current.range,
-        clickedRange,
-        current.anchorLine,
-        extend,
-      )
-    );
-  }, []);
-
-  const openCommentForm = useCallback(() => {
-    if (!selectedRange) return;
-    setActiveCommentLine(selectedRange.endLine);
-    setActiveRange(selectedRange);
-  }, [selectedRange]);
-
-  const closeCommentForm = useCallback(() => {
-    setActiveCommentLine(undefined);
-    setActiveRange(undefined);
-    setSelection({});
-  }, []);
-
-  return {
-    activeCommentLine,
-    activeRange,
-    closeCommentForm,
-    openCommentForm,
-    selectCommentRange,
-    selectedRange,
-  };
+  const [state, setState] = useState<SelectionState>({ status: "none" });
+  const selectCommentRange = useCallback(
+    (clickedRange: CommentRange, { extend }: CommentRangeSelectionOptions) => {
+      setState((current) => {
+        const selected = resolveCommentRangeSelection(
+          current.status === "none" ? undefined : current.range,
+          clickedRange,
+          current.status === "none" ? undefined : current.anchorLine,
+          extend,
+        );
+        return selected.range
+          ? {
+              status: "selected",
+              range: selected.range,
+              anchorLine: selected.anchorLine!,
+            }
+          : { status: "none" };
+      });
+    },
+    [],
+  );
+  const openCommentForm = useCallback(
+    () =>
+      setState((current) =>
+        current.status === "none"
+          ? current
+          : { ...current, status: "composing" },
+      ),
+    [],
+  );
+  const closeCommentForm = useCallback(() => setState({ status: "none" }), []);
+  return { state, selectCommentRange, openCommentForm, closeCommentForm };
 };

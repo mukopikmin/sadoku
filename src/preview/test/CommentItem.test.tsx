@@ -34,9 +34,11 @@ describe("CommentItem", () => {
           actions={createCommentActions()}
           comment={createComment({
             body: `\`\`\`${language}\nRevised **Markdown**\n\`\`\``,
-            replies: [createCommentReply({
-              body: "```suggest\nAlternative\n```",
-            })],
+            replies: [
+              createCommentReply({
+                body: "```suggest\nAlternative\n```",
+              }),
+            ],
           })}
           lineLabel="Line 3"
         />,
@@ -46,12 +48,12 @@ describe("CommentItem", () => {
       const code = container.querySelector("pre code.language-diff");
       expect(code?.textContent).toBe("-Body\n+Revised **Markdown**");
       await waitFor(() =>
-        expect(code?.querySelector("span[style]")).not.toBeNull()
+        expect(code?.querySelector("span[style]")).not.toBeNull(),
       );
       expect(
-        screen.getByRole("article", { name: "Reply" }).querySelector(
-          "pre code.language-diff",
-        )?.textContent,
+        screen
+          .getByRole("article", { name: "Reply" })
+          .querySelector("pre code.language-diff")?.textContent,
       ).toBe("-Body\n+Alternative");
       expect(screen.queryByRole("button", { name: /apply/i })).toBeNull();
     },
@@ -63,8 +65,7 @@ describe("CommentItem", () => {
         actions={createCommentActions()}
         comment={createComment({
           author: { type: "bot" },
-          body:
-            "**Comment**\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n<script>alert(1)</script>",
+          body: "**Comment**\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n<script>alert(1)</script>",
           sourceText: [
             "# Source heading",
             "",
@@ -92,7 +93,8 @@ describe("CommentItem", () => {
       }),
     ).not.toBeNull();
     expect(
-      within(sourceMarkdown).getByRole("link", { name: "Safe link" })
+      within(sourceMarkdown)
+        .getByRole("link", { name: "Safe link" })
         .getAttribute("href"),
     ).toBe("https://example.com");
     expect(sourceMarkdown.querySelector("script")).toBeNull();
@@ -110,14 +112,16 @@ describe("CommentItem", () => {
   });
 
   it("expands overflowing source previews independently", async () => {
-    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get")
-      .mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(
+      function () {
         return this.classList.contains("comment-source-markdown") ? 320 : 0;
-      });
-    vi.spyOn(HTMLElement.prototype, "clientHeight", "get")
-      .mockImplementation(function () {
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+      function () {
         return this.classList.contains("comment-source-markdown") ? 160 : 0;
-      });
+      },
+    );
 
     render(
       <CommentItem
@@ -137,11 +141,13 @@ describe("CommentItem", () => {
     expect(expandButtons).toHaveLength(2);
     fireEvent.click(expandButtons[0]);
     expect(
-      screen.getByRole("button", { name: "Collapse source" })
+      screen
+        .getByRole("button", { name: "Collapse source" })
         .getAttribute("aria-expanded"),
     ).toBe("true");
-    expect(screen.getAllByRole("button", { name: "Show full source" }))
-      .toHaveLength(1);
+    expect(
+      screen.getAllByRole("button", { name: "Show full source" }),
+    ).toHaveLength(1);
     const current = within(screen.getByRole("region", { name: "Current" }));
     fireEvent.click(current.getByRole("button", { name: "Show full source" }));
     const original = within(
@@ -149,14 +155,14 @@ describe("CommentItem", () => {
     );
     fireEvent.click(original.getByRole("button", { name: "Collapse source" }));
     expect(
-      original.getByRole("button", { name: "Show full source" }).getAttribute(
-        "aria-expanded",
-      ),
+      original
+        .getByRole("button", { name: "Show full source" })
+        .getAttribute("aria-expanded"),
     ).toBe("false");
     expect(
-      current.getByRole("button", { name: "Collapse source" }).getAttribute(
-        "aria-expanded",
-      ),
+      current
+        .getByRole("button", { name: "Collapse source" })
+        .getAttribute("aria-expanded"),
     ).toBe("true");
   });
 
@@ -203,16 +209,15 @@ describe("CommentItem", () => {
     expect(screen.getAllByText("Original")).toHaveLength(1);
     expect(screen.getByText("Unchanged since comment")).not.toBeNull();
     expect(screen.queryByText("Changed")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Show full source" }))
-      .toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Show full source" }),
+    ).toBeNull();
   });
 
-  it.each(
-    [
-      ["deleted", "The target lines have been deleted."],
-      ["unavailable", "The current target lines could not be located."],
-    ] as const,
-  )(
+  it.each([
+    ["deleted", "The target lines have been deleted."],
+    ["unavailable", "The current target lines could not be located."],
+  ] as const)(
     "keeps the original when the current target is %s, including resolved comments",
     (state, message) => {
       render(
@@ -226,8 +231,9 @@ describe("CommentItem", () => {
           showSource
         />,
       );
-      expect(screen.getByRole("region", { name: "At comment time" })).not
-        .toBeNull();
+      expect(
+        screen.getByRole("region", { name: "At comment time" }),
+      ).not.toBeNull();
       expect(screen.getByText(message)).not.toBeNull();
       expect(screen.queryByRole("region", { name: "Current" })).toBeNull();
     },
@@ -265,7 +271,7 @@ describe("CommentItem", () => {
       key: "Enter",
     });
     await waitFor(() =>
-      expect(onUpdateComment).toHaveBeenCalledWith(1, "Updated body.")
+      expect(onUpdateComment).toHaveBeenCalledWith(1, "Updated body."),
     );
     await waitFor(() => expect(screen.queryByRole("textbox")).toBeNull());
   });
@@ -303,10 +309,11 @@ describe("CommentItem", () => {
 
   it("composes replies and disables the whole thread while saving", async () => {
     let finishReply!: () => void;
-    const onReplyComment = vi.fn(() =>
-      new Promise<void>((resolve) => {
-        finishReply = resolve;
-      })
+    const onReplyComment = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishReply = resolve;
+        }),
     );
     render(
       <CommentItem
@@ -322,33 +329,33 @@ describe("CommentItem", () => {
     fireEvent.change(textbox, { target: { value: "  New reply.  " } });
     fireEvent.keyDown(textbox, { key: "Enter", metaKey: true });
     await waitFor(() =>
-      expect(onReplyComment).toHaveBeenCalledWith(1, "New reply.")
+      expect(onReplyComment).toHaveBeenCalledWith(1, "New reply."),
     );
 
     expect(
-      screen.getByRole("button", { name: "More actions" }).hasAttribute(
-        "disabled",
-      ),
+      screen
+        .getByRole("button", { name: "More actions" })
+        .hasAttribute("disabled"),
     ).toBe(true);
     expect(
-      screen.getByRole("button", {
-        name: "More actions for reply",
-      }).hasAttribute("disabled"),
+      screen
+        .getByRole("button", {
+          name: "More actions for reply",
+        })
+        .hasAttribute("disabled"),
     ).toBe(true);
     expect(
-      screen.getByRole("button", { name: "Add reply" }).hasAttribute(
-        "disabled",
-      ),
+      screen
+        .getByRole("button", { name: "Add reply" })
+        .hasAttribute("disabled"),
     ).toBe(true);
 
     finishReply();
     await waitFor(() =>
-      expect(screen.queryByRole("textbox", { name: "Reply body" })).toBeNull()
+      expect(screen.queryByRole("textbox", { name: "Reply body" })).toBeNull(),
     );
     expect(
-      screen.getByRole("button", { name: "Reply" }).hasAttribute(
-        "disabled",
-      ),
+      screen.getByRole("button", { name: "Reply" }).hasAttribute("disabled"),
     ).toBe(false);
   });
 
@@ -366,7 +373,7 @@ describe("CommentItem", () => {
     await openCommentMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy comment" }));
     await waitFor(() =>
-      expect(writeText).toHaveBeenCalledWith("**Comment** body.")
+      expect(writeText).toHaveBeenCalledWith("**Comment** body."),
     );
     expect(await screen.findByText("Comment copied")).not.toBeNull();
 
@@ -374,8 +381,9 @@ describe("CommentItem", () => {
     await openCommentMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy comment" }));
     expect(await screen.findByText("Could not copy comment")).not.toBeNull();
-    expect(screen.getAllByText("Clipboard unavailable.").length)
-      .toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Clipboard unavailable.").length,
+    ).toBeGreaterThan(0);
   });
 
   it.each(["active", "stale"] as const)(
@@ -415,10 +423,11 @@ describe("CommentItem", () => {
 
   it("disables thread actions while resolution is pending", async () => {
     let finishResolve!: () => void;
-    const onResolveComment = vi.fn(() =>
-      new Promise<void>((resolve) => {
-        finishResolve = resolve;
-      })
+    const onResolveComment = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishResolve = resolve;
+        }),
     );
     const actions = createCommentActions({ onResolveComment });
     const comment = createComment({ replies: [createCommentReply()] });
@@ -438,21 +447,20 @@ describe("CommentItem", () => {
     );
     fireEvent.click(resolveButton);
     expect(onResolveComment).toHaveBeenCalledExactlyOnceWith(1);
-    for (
-      const name of [
-        "Resolve",
-        "Reply",
-        "More actions",
-        "More actions for reply",
-      ]
-    ) {
-      expect(screen.getByRole("button", { name }).hasAttribute("disabled"))
-        .toBe(true);
+    for (const name of [
+      "Resolve",
+      "Reply",
+      "More actions",
+      "More actions for reply",
+    ]) {
+      expect(
+        screen.getByRole("button", { name }).hasAttribute("disabled"),
+      ).toBe(true);
     }
 
     finishResolve();
     await waitFor(() =>
-      expect(resolveButton.hasAttribute("disabled")).toBe(false)
+      expect(resolveButton.hasAttribute("disabled")).toBe(false),
     );
   });
 
@@ -476,8 +484,9 @@ describe("CommentItem", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
     expect(await screen.findByText("Could not resolve comment")).not.toBeNull();
-    expect(screen.getAllByText("Server unavailable.").length)
-      .toBeGreaterThan(0);
+    expect(screen.getAllByText("Server unavailable.").length).toBeGreaterThan(
+      0,
+    );
     expect(screen.queryByText("Comment resolved")).toBeNull();
 
     await openCommentMenu();
@@ -530,20 +539,19 @@ it("saves only eligible parent comments to a pending GitHub review and links it"
     await screen.findByRole("menuitem", { name: "Save to GitHub review" }),
   );
   await waitFor(() =>
-    expect(onExportComment).toHaveBeenCalledExactlyOnceWith(1)
+    expect(onExportComment).toHaveBeenCalledExactlyOnceWith(1),
   );
   expect(
-    (await screen.findByRole("link", { name: "View pending GitHub review" }))
-      .getAttribute("href"),
+    (
+      await screen.findByRole("link", { name: "View pending GitHub review" })
+    ).getAttribute("href"),
   ).toBe(url);
   cleanup();
-  for (
-    const comment of [
-      createComment({ author: { type: "bot" } }),
-      createComment({ state: "stale" }),
-      createComment({ state: "resolved" }),
-    ]
-  ) {
+  for (const comment of [
+    createComment({ author: { type: "bot" } }),
+    createComment({ state: "stale" }),
+    createComment({ state: "resolved" }),
+  ]) {
     render(
       <CommentItem actions={actions} comment={comment} lineLabel="Line 3" />,
     );
@@ -573,10 +581,13 @@ it("identifies an already submitted export without presenting it as pending", as
     screen.getByRole("menuitem", { name: "Save to GitHub review" }),
   );
   expect(
-    (await screen.findByRole("link", {
-      name: "Already submitted — view on GitHub",
-    })).getAttribute("href"),
+    (
+      await screen.findByRole("link", {
+        name: "Already submitted — view on GitHub",
+      })
+    ).getAttribute("href"),
   ).toBe(url);
-  expect(screen.queryByRole("link", { name: "View pending GitHub review" }))
-    .toBeNull();
+  expect(
+    screen.queryByRole("link", { name: "View pending GitHub review" }),
+  ).toBeNull();
 });

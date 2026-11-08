@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCommentDraft } from "./useCommentDraft";
 import { CommentForm } from "./CommentForm";
 import type { RunCommentAction } from "./useCommentActionState";
 
@@ -19,25 +19,24 @@ export const CommentEditor = ({
   onUpdate,
   runAction,
 }: CommentEditorProps) => {
-  const [draft, setDraft] = useState(body);
-
-  const handleSubmit = async () => {
-    const updatedBody = draft.trim();
-    if (!updatedBody || disabled) return;
-    await runAction(() => onUpdate(commentId, updatedBody), {
-      errorTitle: "Could not update comment",
-      onSuccess: onClose,
-    });
-  };
+  const editor = useCommentDraft({
+    body,
+    commentId,
+    disabled,
+    runAction,
+    onSubmit: (draft) => onUpdate(commentId, draft),
+    errorTitle: "Could not update comment",
+    onSaved: onClose,
+  });
 
   return (
     <CommentForm
-      disabled={disabled}
+      disabled={disabled || editor.state.status === "saving"}
       onCancel={onClose}
-      onChange={setDraft}
-      onSubmit={() => void handleSubmit()}
+      onChange={editor.change}
+      onSubmit={() => void editor.save()}
       submitLabel="Save"
-      value={draft}
+      value={editor.state.status === "closed" ? "" : editor.state.draft}
     />
   );
 };
