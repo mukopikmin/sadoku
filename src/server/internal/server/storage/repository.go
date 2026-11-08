@@ -178,6 +178,7 @@ func (r *Repository) ReadComments(id int64) (u.Comments, error) {
 	if err != nil {
 		return doc, err
 	}
+	defer func() { _ = rows.Close() }()
 	ids := []int64{}
 	for rows.Next() {
 		var c u.Comment
@@ -185,7 +186,6 @@ func (r *Repository) ReadComments(id int64) (u.Comments, error) {
 		var resolver *string
 		err = rows.Scan(&internal, &c.ID, &c.Body, &c.Author.Type, &c.StartLine, &c.EndLine, &c.OriginalStartLine, &c.OriginalEndLine, &c.CreatedAt, &c.UpdatedAt, &c.Resolved, &c.Stale, &c.ResolvedAt, &resolver, &c.SourceHash, &c.SourceText, &c.SourceDeleted)
 		if err != nil {
-			_ = rows.Close()
 			return doc, err
 		}
 		if resolver != nil {
@@ -201,21 +201,21 @@ func (r *Repository) ReadComments(id int64) (u.Comments, error) {
 		return doc, err
 	}
 	for i, internal := range ids {
-		replies, err := r.DB.Query("SELECT local_id,body,author_type,created_at,updated_at,review_requested FROM comment_reply WHERE comment_id=? ORDER BY local_id", internal)
-		if err != nil {
-			return doc, err
-		}
-		for replies.Next() {
-			var reply u.Reply
-			if err = replies.Scan(&reply.ID, &reply.Body, &reply.Author.Type, &reply.CreatedAt, &reply.UpdatedAt, &reply.ReviewRequested); err != nil {
-				_ = replies.Close()
-				return doc, err
+		if err := func() error {
+			replies, err := r.DB.Query("SELECT local_id,body,author_type,created_at,updated_at,review_requested FROM comment_reply WHERE comment_id=? ORDER BY local_id", internal)
+			if err != nil {
+				return err
 			}
-			doc.Comments[i].Replies = append(doc.Comments[i].Replies, reply)
-		}
-		err = replies.Err()
-		_ = replies.Close()
-		if err != nil {
+			defer func() { _ = replies.Close() }()
+			for replies.Next() {
+				var reply u.Reply
+				if err := replies.Scan(&reply.ID, &reply.Body, &reply.Author.Type, &reply.CreatedAt, &reply.UpdatedAt, &reply.ReviewRequested); err != nil {
+					return err
+				}
+				doc.Comments[i].Replies = append(doc.Comments[i].Replies, reply)
+			}
+			return replies.Err()
+		}(); err != nil {
 			return doc, err
 		}
 	}

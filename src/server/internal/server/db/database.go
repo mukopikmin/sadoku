@@ -85,6 +85,7 @@ func Migrate(database *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	defer func() { _ = rows.Close() }()
 	applied := map[string]bool{}
 	for rows.Next() {
 		var version, checksum, state string
@@ -169,6 +170,7 @@ func applyMigrations(database *sql.DB, migrations []migration) (result error) {
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		invalid := rows.Next()
 		err = rows.Err()
 		_ = rows.Close()

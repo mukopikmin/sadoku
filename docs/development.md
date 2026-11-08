@@ -40,9 +40,10 @@ for the version pinned in [`.golangci-lint-version`](../.golangci-lint-version)
 and put it on `PATH` before running lint or `make check`. Set `GOLANGCI_LINT`
 to use a binary at another path. CI installs the same pinned version.
 The shared [configuration](../.golangci.yml) enables correctness checks with
-`staticcheck`, `errcheck`, `ineffassign`, `unused`, and `govet`, including tests
-and excluding generated code. Formatting stays with `gofmt`; cross-platform
-vet checks remain available through `make vet-cross`.
+`staticcheck`, `errcheck`, `errorlint`, `ineffassign`, `unused`, and `govet`,
+plus `rowserrcheck` and `sqlclosecheck` for SQL resource and iteration errors.
+Tests are included and generated code is excluded. Formatting stays with `gofmt`;
+cross-platform vet checks remain available through `make vet-cross`.
 
 Keep intentional error discards local and explicit, such as cleanup and
 best-effort log or HTTP output. Check errors when writing persistent data or

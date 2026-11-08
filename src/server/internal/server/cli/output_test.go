@@ -13,6 +13,15 @@ import (
 	"testing"
 )
 
+func TestWriteErrorWrappedUsageError(t *testing.T) {
+	err := fmt.Errorf("command failed: %w", usageError("invalid argument"))
+	var stderr bytes.Buffer
+	WriteError(&stderr, err)
+	if want := err.Error() + "\n" + Usage + "\n"; stderr.String() != want {
+		t.Fatalf("stderr = %q, want %q", stderr.String(), want)
+	}
+}
+
 // Captured from 368b47e (the last TypeScript server). Only timestamps and the
 // temporary root are normalized; whitespace, field order and stderr are exact.
 // Historical instruction commands assert generic invalid-command errors.

@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,7 @@ func TestMarkdownFetchTransportFailureAndCancellation(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := ReadMarkdown(ctx, remote.URL); err != context.Canceled {
+	if _, err := ReadMarkdown(ctx, remote.URL); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled read: %v", err)
 	}
 }

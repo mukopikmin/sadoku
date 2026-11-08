@@ -12,8 +12,11 @@ linters:
   default: none
   enable:
     - errcheck
+    - errorlint
     - govet
     - ineffassign
+    - rowserrcheck
+    - sqlclosecheck
     - staticcheck
     - unused
   settings:
