@@ -7,11 +7,12 @@ import { ScrollableTextCard } from "./ui/ScrollableTextCard";
 type Props = { scope: InstructionScope; open: boolean };
 export const InstructionsPanel = ({ scope, open }: Props) => {
   const editor = useInstructionEditor(scope, open);
-  if (editor.query.isPending) return <Text>Loading instructions...</Text>;
-  if (editor.query.error) {
+  const { state } = editor;
+  if (state.status === "loading") return <Text>Loading instructions...</Text>;
+  if (state.status === "load-error") {
     return (
       <Text color="fg.error" role="alert">
-        {String(editor.query.error)}
+        {state.message}
       </Text>
     );
   }
@@ -29,7 +30,7 @@ export const InstructionsPanel = ({ scope, open }: Props) => {
           <Textarea
             aria-label="Instruction"
             autoFocus
-            disabled={editor.pending}
+            disabled={state.status === "saving"}
             h="48"
             minH="24"
             maxH="36dvh"
@@ -41,14 +42,14 @@ export const InstructionsPanel = ({ scope, open }: Props) => {
                 ? "Instructions for agents working with any document"
                 : "Instructions for agents working with this document"
             }
-            value={editor.content}
+            value={state.content}
           />
         ) : (
           <Text
             whiteSpace="pre-wrap"
-            color={editor.content ? undefined : "fg.muted"}
+            color={state.content ? undefined : "fg.muted"}
           >
-            {editor.content || "No instructions have been added."}
+            {state.content || "No instructions have been added."}
           </Text>
         )}
       </ScrollableTextCard>
@@ -58,9 +59,9 @@ export const InstructionsPanel = ({ scope, open }: Props) => {
             Leave empty and save to clear the instructions.
           </Text>
         )}
-        {editor.error && (
+        {state.status === "save-error" && (
           <Text color="fg.error" role="alert">
-            {editor.error}
+            {state.message}
           </Text>
         )}
         <Flex justify="flex-end" gap="3">
@@ -68,13 +69,13 @@ export const InstructionsPanel = ({ scope, open }: Props) => {
             <>
               <Button
                 variant="outline"
-                disabled={editor.pending}
+                disabled={state.status === "saving"}
                 onClick={editor.cancel}
               >
                 Cancel
               </Button>
               <Button
-                disabled={editor.pending || !editor.dirty}
+                disabled={state.status === "saving" || !state.dirty}
                 onClick={() => void editor.save()}
               >
                 Save instruction

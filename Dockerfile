@@ -2,16 +2,22 @@
 
 FROM node:bookworm-slim AS client
 
+RUN apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /workspace
 
+COPY Makefile ./
+COPY src/proto/tasks.mk ./src/proto/
+COPY src/proxy/tasks.mk ./src/proxy/
+COPY src/proto/package.json src/proto/package-lock.json ./src/proto/
 COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
-    npm --prefix src/preview ci
+    make deps
 COPY src/preview/ ./src/preview/
-RUN npm --prefix src/preview run build
+RUN make build-client
 
-FROM golang:1.26.10-bookworm AS go-toolchain
+FROM golang:1.27.2-bookworm AS go-toolchain
 
 FROM debian:bookworm-slim AS builder
 
@@ -29,6 +35,8 @@ RUN --mount=type=secret,id=proxy_ca \
     go -C src/server mod download
 
 COPY Makefile ./
+COPY src/proto/tasks.mk ./src/proto/
+COPY src/proxy/tasks.mk ./src/proxy/
 COPY src/server/cmd/ ./src/server/cmd/
 COPY src/server/internal/ ./src/server/internal/
 COPY --from=client /workspace/src/preview/dist/ ./src/server/internal/preview/dist/

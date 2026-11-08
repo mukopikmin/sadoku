@@ -1,0 +1,10 @@
+{
+  "printWidth": 80,
+  "proseWrap": "always",
+  "sortImports": false,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**"
+  ]
+}

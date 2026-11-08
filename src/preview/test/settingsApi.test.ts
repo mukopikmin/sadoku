@@ -12,9 +12,9 @@ describe("settings API", () => {
   it.each([undefined, true, false])(
     "converts highlight boundary visibility %s with a disabled default",
     async (showHighlightBoundaries) => {
-      vi.mocked(previewClient.getSettings).mockResolvedValue(
-        { showHighlightBoundaries } as never,
-      );
+      vi.mocked(previewClient.getSettings).mockResolvedValue({
+        showHighlightBoundaries,
+      } as never);
       expect((await loadSettings()).showHighlightBoundaries).toBe(
         showHighlightBoundaries ?? false,
       );
@@ -24,9 +24,9 @@ describe("settings API", () => {
   it.each([null, "false", 0])(
     "rejects invalid highlight boundary visibility %s",
     async (showHighlightBoundaries) => {
-      vi.mocked(previewClient.getSettings).mockResolvedValue(
-        { showHighlightBoundaries } as never,
-      );
+      vi.mocked(previewClient.getSettings).mockResolvedValue({
+        showHighlightBoundaries,
+      } as never);
       await expect(loadSettings()).rejects.toThrow(
         "invalid highlight boundary visibility",
       );
@@ -36,9 +36,9 @@ describe("settings API", () => {
   it.each([undefined, true, false])(
     "converts HTML comment visibility %s",
     async (showHtmlComments) => {
-      vi.mocked(previewClient.getSettings).mockResolvedValue(
-        { showHtmlComments } as never,
-      );
+      vi.mocked(previewClient.getSettings).mockResolvedValue({
+        showHtmlComments,
+      } as never);
       expect((await loadSettings()).showHtmlComments).toBe(
         showHtmlComments ?? true,
       );
@@ -48,9 +48,9 @@ describe("settings API", () => {
   it.each([null, "false", 0])(
     "rejects invalid HTML comment visibility %s",
     async (showHtmlComments) => {
-      vi.mocked(previewClient.getSettings).mockResolvedValue(
-        { showHtmlComments } as never,
-      );
+      vi.mocked(previewClient.getSettings).mockResolvedValue({
+        showHtmlComments,
+      } as never);
       await expect(loadSettings()).rejects.toThrow(
         "invalid HTML comment visibility",
       );

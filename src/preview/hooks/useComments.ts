@@ -28,7 +28,12 @@ export const useCommentActions = (documentId?: number): CommentActions => {
   const preview = usePreviewDocumentQuery(documentId, documentId !== undefined);
   const comments = useCommentsQuery(documentId, documentId !== undefined);
   const exportMutation = useMutation({
-    mutationFn: ({ targetDocumentId, headSha, comment, displayedMarkdown }: {
+    mutationFn: ({
+      targetDocumentId,
+      headSha,
+      comment,
+      displayedMarkdown,
+    }: {
       targetDocumentId: number;
       headSha: string;
       comment: Comment;
@@ -60,7 +65,7 @@ export const useCommentActions = (documentId?: number): CommentActions => {
     updateComments(
       (comments) =>
         comments.map((comment) =>
-          comment.id === updated.id ? updated : comment
+          comment.id === updated.id ? updated : comment,
         ),
       targetDocumentId,
     );
@@ -83,31 +88,39 @@ export const useCommentActions = (documentId?: number): CommentActions => {
     },
   });
   const updateCommentMutation = useMutation({
-    mutationFn: (
-      { body, id, targetDocumentId }: {
-        body: string;
-        id: number;
-        targetDocumentId?: number;
-      },
-    ) => updateComment(id, body, targetDocumentId),
+    mutationFn: ({
+      body,
+      id,
+      targetDocumentId,
+    }: {
+      body: string;
+      id: number;
+      targetDocumentId?: number;
+    }) => updateComment(id, body, targetDocumentId),
     onSuccess: (updated, { targetDocumentId }) =>
       replaceComment(updated, targetDocumentId),
   });
   const replyCommentMutation = useMutation({
-    mutationFn: (
-      { body, id, targetDocumentId }: {
-        body: string;
-        id: number;
-        targetDocumentId?: number;
-      },
-    ) => createReply(id, body, targetDocumentId),
+    mutationFn: ({
+      body,
+      id,
+      targetDocumentId,
+    }: {
+      body: string;
+      id: number;
+      targetDocumentId?: number;
+    }) => createReply(id, body, targetDocumentId),
     onSuccess: (updated, { targetDocumentId }) =>
       replaceComment(updated, targetDocumentId),
   });
   const deleteCommentMutation = useMutation({
-    mutationFn: (
-      { id, targetDocumentId }: { id: number; targetDocumentId?: number },
-    ) => deleteComment(id, targetDocumentId),
+    mutationFn: ({
+      id,
+      targetDocumentId,
+    }: {
+      id: number;
+      targetDocumentId?: number;
+    }) => deleteComment(id, targetDocumentId),
     onSuccess: (_data, { id, targetDocumentId }) => {
       updateComments(
         (comments) => comments.filter((comment) => comment.id !== id),
@@ -146,48 +159,59 @@ export const useCommentActions = (documentId?: number): CommentActions => {
           comments.map((comment) =>
             comment.id === commentId
               ? {
-                ...comment,
-                replies: (comment.replies ?? []).filter((reply) =>
-                  reply.id !== replyId
-                ),
-              }
-              : comment
+                  ...comment,
+                  replies: (comment.replies ?? []).filter(
+                    (reply) => reply.id !== replyId,
+                  ),
+                }
+              : comment,
           ),
         targetDocumentId,
       );
     },
   });
   const resolveCommentMutation = useMutation({
-    mutationFn: (
-      { id, targetDocumentId }: { id: number; targetDocumentId?: number },
-    ) => resolveComment(id, targetDocumentId),
+    mutationFn: ({
+      id,
+      targetDocumentId,
+    }: {
+      id: number;
+      targetDocumentId?: number;
+    }) => resolveComment(id, targetDocumentId),
     onSuccess: (updated, { targetDocumentId }) =>
       replaceComment(updated, targetDocumentId),
   });
   const reopenCommentMutation = useMutation({
-    mutationFn: (
-      { id, targetDocumentId }: { id: number; targetDocumentId?: number },
-    ) => reopenComment(id, targetDocumentId),
+    mutationFn: ({
+      id,
+      targetDocumentId,
+    }: {
+      id: number;
+      targetDocumentId?: number;
+    }) => reopenComment(id, targetDocumentId),
     onSuccess: (updated, { targetDocumentId }) =>
       replaceComment(updated, targetDocumentId),
   });
 
   return {
-    onExportComment: preview.data?.githubHeadSha &&
-        preview.data.githubHeadSha === comments.data?.githubHeadSha
-      ? async (id) => {
-        const comment = comments.data?.comments.find((item) => item.id === id);
-        if (!comment || documentId === undefined) {
-          throw new Error("Comment not found.");
-        }
-        return await exportMutation.mutateAsync({
-          targetDocumentId: documentId,
-          headSha: preview.data!.githubHeadSha!,
-          displayedMarkdown: preview.data!.markdown,
-          comment,
-        });
-      }
-      : undefined,
+    onExportComment:
+      preview.data?.githubHeadSha &&
+      preview.data.githubHeadSha === comments.data?.githubHeadSha
+        ? async (id) => {
+            const comment = comments.data?.comments.find(
+              (item) => item.id === id,
+            );
+            if (!comment || documentId === undefined) {
+              throw new Error("Comment not found.");
+            }
+            return await exportMutation.mutateAsync({
+              targetDocumentId: documentId,
+              headSha: preview.data!.githubHeadSha!,
+              displayedMarkdown: preview.data!.markdown,
+              comment,
+            });
+          }
+        : undefined,
     onCreateComment: async (startLine, body, endLine) => {
       await createCommentMutation.mutateAsync({
         body,

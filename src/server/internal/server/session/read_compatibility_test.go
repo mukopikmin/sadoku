@@ -61,7 +61,7 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 					http.Redirect(w, r, "/"+strconv.Itoa(n-1), http.StatusFound)
 					return
 				}
-				fmt.Fprint(w, "# Title")
+				_, _ = fmt.Fprint(w, "# Title")
 			}))
 			defer remote.Close()
 			text, err := ReadMarkdown(context.Background(), remote.URL+"/"+strconv.Itoa(test.Redirects))
@@ -76,7 +76,7 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 	}
 	t.Run("URL credentials", func(t *testing.T) {
 		remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprint(w, r.Header.Get("Authorization"))
+			_, _ = fmt.Fprint(w, r.Header.Get("Authorization"))
 		}))
 		defer remote.Close()
 		source := strings.Replace(remote.URL, "http://", "http://user:pass@", 1)
@@ -99,7 +99,7 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 			if err != nil || text != test.Local {
 				t.Errorf("local: %q %v; want %q", text, err, test.Local)
 			}
-			remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write(data) }))
+			remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(data) }))
 			defer remote.Close()
 			text, err = ReadMarkdown(context.Background(), remote.URL+"/readme.md")
 			if err != nil || text != test.Remote {
@@ -111,7 +111,7 @@ func TestLegacyMarkdownReadTranscripts(t *testing.T) {
 		t.Run(fmt.Sprintf("status/%d", test.Status), func(t *testing.T) {
 			remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(test.Status)
-				fmt.Fprint(w, "# Title\nBody\n")
+				_, _ = fmt.Fprint(w, "# Title\nBody\n")
 			}))
 			defer remote.Close()
 			text, err := ReadMarkdown(context.Background(), remote.URL+"/readme.md")

@@ -6,9 +6,7 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import { useDeleteMemory, useMemoriesQuery } from "../hooks/useMemories";
-import type { DocumentMemory } from "../models/memory";
+import { useDocumentMemories } from "../hooks/useDocumentMemories";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 import { ScrollableTextCard } from "./ui/ScrollableTextCard";
@@ -24,21 +22,8 @@ export const DocumentMemoriesDialog = ({
   onOpenChange,
   open,
 }: Props) => {
-  const query = useMemoriesQuery(documentId, open);
-  const deletion = useDeleteMemory(documentId);
-  const [selected, setSelected] = useState<DocumentMemory>();
-  useEffect(() => {
-    if (!open) setSelected(undefined);
-  }, [open]);
-  const remove = async () => {
-    if (!selected) return;
-    try {
-      await deletion.mutateAsync(selected.id);
-      setSelected(undefined);
-    } catch {
-      // The mutation error is rendered below and the dialog remains open.
-    }
-  };
+  const memories = useDocumentMemories(documentId, open);
+  const { list, state } = memories;
   return (
     <>
       <Dialog.Root
@@ -62,14 +47,14 @@ export const DocumentMemoriesDialog = ({
                     review or delete them here; use the Sadoku CLI to add or
                     update memories.
                   </Text>
-                  {query.isPending ? (
+                  {list.status === "loading" ? (
                     <Text>Loading memories...</Text>
-                  ) : query.error ? (
-                    <Text color="fg.error">{String(query.error)}</Text>
-                  ) : query.data?.length === 0 ? (
+                  ) : list.status === "error" ? (
+                    <Text color="fg.error">{list.message}</Text>
+                  ) : list.status === "empty" ? (
                     <Text color="fg.muted">No memories have been saved.</Text>
                   ) : (
-                    query.data?.map((memory) => (
+                    list.items.map((memory) => (
                       <Flex
                         key={memory.id}
                         direction="column"
@@ -98,7 +83,7 @@ export const DocumentMemoriesDialog = ({
                             colorPalette="red"
                             size="sm"
                             variant="outline"
-                            onClick={() => setSelected(memory)}
+                            onClick={() => memories.requestDelete(memory)}
                           >
                             Delete
                           </Button>
@@ -106,8 +91,8 @@ export const DocumentMemoriesDialog = ({
                       </Flex>
                     ))
                   )}
-                  {deletion.error && (
-                    <Text color="fg.error">{String(deletion.error)}</Text>
+                  {state.status === "error" && (
+                    <Text color="fg.error">{state.message}</Text>
                   )}
                 </Flex>
               </Dialog.Body>
@@ -121,12 +106,12 @@ export const DocumentMemoriesDialog = ({
       <ConfirmDialog
         confirmColorPalette="red"
         confirmLabel="Delete memory"
-        isPending={deletion.isPending}
-        onConfirm={remove}
+        isPending={state.status === "deleting"}
+        onConfirm={memories.remove}
         onOpenChange={(open) => {
-          if (!open) setSelected(undefined);
+          if (!open) memories.cancel();
         }}
-        open={selected !== undefined}
+        open={state.status !== "idle"}
         title="Delete memory?"
       >
         Agents will no longer receive this background information.

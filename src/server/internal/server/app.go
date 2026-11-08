@@ -46,7 +46,7 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	repo := &storage.Repository{DB: database, Path: path}
 	s, err := session.New(ctx, options.Source, repo, settings)
 	if err != nil {
@@ -63,15 +63,13 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 	if s.GitHub != nil {
 		source = s.GitHub.URL
 	}
-	log := func(message string) { fmt.Fprintf(out, "[%s] %s\n", db.Now(), message) }
+	log := func(message string) { _, _ = fmt.Fprintf(out, "[%s] %s\n", db.Now(), message) }
 
 	if !s.CanCreate {
 		for _, doc := range s.Documents {
-			path := doc.FilePath
+			path := source
 			if s.GitHub != nil {
 				path = s.Sources[doc.ID]
-			} else {
-				path = source
 			}
 			suffix := ""
 			if doc.Deleted {
@@ -126,7 +124,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 	if err != nil {
 		return err
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 	pathname := "/"
 	if !s.CanCreate && s.GitHub == nil && len(s.Documents) > 0 {
 		pathname = fmt.Sprintf("/documents/%d", s.Documents[0].ID)
@@ -165,7 +163,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 		case <-ctx.Done():
 			shutdownCtx, stop := context.WithTimeout(context.Background(), 5*time.Second)
 			defer stop()
-			server.Shutdown(shutdownCtx)
+			_ = server.Shutdown(shutdownCtx)
 		case <-done:
 		}
 	}()

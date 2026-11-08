@@ -13,9 +13,9 @@ export const HighlightOverlay = ({
         data-start-line={layout.startLine}
         data-end-line={layout.endLine}
         bg={`highlight.${layout.kind}.bg`}
-        height={`${Math.max(0, layout.bottom - layout.top - 2)}px`}
+        height={`${Math.max(0, layout.bottom - layout.top)}px`}
         key={`${layout.kind}-${index}`}
-        top={`${layout.top + 1}px`}
+        top={`${layout.top}px`}
       />
     ))}
   </Box>

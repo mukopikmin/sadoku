@@ -22,11 +22,11 @@ func TestUpgradeMergesInstructionsPerScope(t *testing.T) {
 		"INSERT INTO document_memory(document_id,content,created_at,updated_at) VALUES(1,'Memory one','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z'),(1,'Memory two','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 	} {
 		if _, err := database.Exec(statement); err != nil {
-			database.Close()
+			_ = database.Close()
 			t.Fatal(err)
 		}
 	}
-	database.Close()
+	_ = database.Close()
 	for range 2 {
 		database, err = Open(path)
 		if err != nil {

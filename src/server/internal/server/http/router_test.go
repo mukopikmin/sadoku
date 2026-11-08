@@ -41,7 +41,7 @@ func setup(t *testing.T) (*session.Session, *httptest.Server, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	repo := &storage.Repository{DB: database, Path: path}
 	s, err := session.New(context.Background(), docs, repo, config.Defaults())
 	if err != nil {
@@ -187,7 +187,7 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() { res.Body.Close() })
+		t.Cleanup(func() { _ = res.Body.Close() })
 		return res
 	}
 	res := request("GET", "/documents/1", "")
@@ -214,7 +214,7 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if res.StatusCode != 400 {
 		t.Fatal("unsafe prefix accepted")
 	}

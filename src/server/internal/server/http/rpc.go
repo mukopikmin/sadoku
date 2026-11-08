@@ -55,7 +55,7 @@ func validateRPC(w http.ResponseWriter, req *http.Request) bool {
 	var err error
 	if req.Body != nil {
 		data, err = io.ReadAll(io.LimitReader(req.Body, (32<<20)+1))
-		req.Body.Close()
+		_ = req.Body.Close()
 	}
 	if err != nil || len(data) > 32<<20 || protojson.Unmarshal(data, dynamicpb.NewMessage(input)) != nil {
 		return fail(400, "invalid_argument", "Invalid request message.")
@@ -99,5 +99,5 @@ func (w *creationResponse) finish() {
 		status = 412
 	}
 	w.ResponseWriter.WriteHeader(status)
-	w.ResponseWriter.Write(w.body.Bytes())
+	_, _ = w.ResponseWriter.Write(w.body.Bytes())
 }

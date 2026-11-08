@@ -82,6 +82,13 @@ add_comment "$review" 'const state: PreviewState = "ready";' \
   'Code comment: consider how failures should be represented.'
 add_comment "$review" '## Mermaid Diagrams' \
   'Diagram comment: check Mermaid rendering and zoom controls.'
+# Remove a commented passage so the main sample also exercises the Stale filter.
+printf '\n%s\n' 'Temporary review note: confirm the previous workflow before release.' >> "$review"
+add_comment "$review" 'Temporary review note: confirm the previous workflow before release.' \
+  'Stale comment: this passage was removed. Use the Stale filter to find this thread and compare its saved quote.'
+cp "$fixture_dir/comprehensive.md" "$review.updated"
+mv "$review.updated" "$review"
+sadoku comment list --source "$review" >/dev/null
 sadoku instruction set --source "$review" \
   --content 'Document review instructions
 
@@ -211,6 +218,18 @@ add_comment "$changes" 'Reviewers authenticate with OAuth for each review sessio
   'Changed paragraph: turn on Changes and check that the comment outline remains distinct from the added-content background.'
 add_comment "$changes" '| Authentication | OAuth |' \
   'Changed table: compare the old and new settings while reviewing this comment.' --as-bot
+sadoku comment add --source "$changes" \
+  --start-line "$(awk '/^Reviewers authenticate with OAuth/ { print NR; exit }' "$changes")" \
+  --end-line "$(awk '/^const tokenLifetime/ { print NR + 1; exit }' "$changes")" \
+  --body 'Continuous range: these paragraphs, table, and code should share one outline in Changes. Click the first paragraph, then Shift-click the code block to try selecting the same range.' >/dev/null
+sadoku comment add --source "$changes" \
+  --start-line "$(awk '/^Review notes remain attached/ { print NR; exit }' "$changes")" \
+  --end-line "$(awk '/^Reviewers sign in again/ { print NR; exit }' "$changes")" \
+  --body 'Range across a deletion: Changes should split the outline at the removed paragraph and join the adjacent current blocks. Click the first review note, then Shift-click the final sign-in paragraph to try this selection.' --as-bot >/dev/null
+sadoku comment add --source "$changes" \
+  --start-line "$(awk '/^\| Setting \| Value \|/ { print NR; exit }' "$changes")" \
+  --end-line "$(awk '/^  OAuth --> Review/ { print NR + 1; exit }' "$changes")" \
+  --body 'Overlapping range: this table, code, and Mermaid diagram partially overlap the earlier paragraph-to-code comment. The shared table and code should have one highlight, extending through the diagram. Select the code block to check selection priority inside the overlap.' --as-bot >/dev/null
 
 archived="$documents/guides/overview.md"
 add_comment "$archived" 'This document is a first-level nested fixture for directory preview mode.' \

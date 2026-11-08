@@ -32,7 +32,7 @@ func restRequest(t *testing.T, serverURL, method, path, body, contentType string
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)

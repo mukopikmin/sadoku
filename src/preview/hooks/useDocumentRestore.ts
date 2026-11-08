@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { restoreDocumentRevision } from "../api/documentRevisions";
+import { errorMessage } from "../models/uiState";
 import {
   commentsQueryKey,
   documentRevisionsQueryKey,
@@ -8,46 +9,85 @@ import {
   previewDocumentQueryKey,
 } from "./previewQueryKeys";
 
+type RestoreInput = {
+  revisionId: number;
+  expectedMarkdown: string | undefined;
+};
+type RestoreState =
+  | { status: "closed" }
+  | { status: "confirming" | "restoring"; input: RestoreInput }
+  | { status: "error"; input: RestoreInput; message: string };
+
 export const useDocumentRestore = (
   documentId: number,
   onRestored: () => void,
 ) => {
-  const [confirmation, setConfirmation] = useState<{
-    revisionId: number;
-    expectedMarkdown: string | undefined;
-  }>();
-  const queryClient = useQueryClient();
+  const [state, setState] = useState<RestoreState>({ status: "closed" });
+  const pending = useRef(false);
+  const generation = useRef(0);
+  const client = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (input: NonNullable<typeof confirmation>) =>
+    mutationFn: ({
+      targetDocumentId,
+      input,
+    }: {
+      targetDocumentId: number;
+      input: RestoreInput;
+    }) =>
       restoreDocumentRevision(
-        documentId,
+        targetDocumentId,
         input.revisionId,
         input.expectedMarkdown,
       ),
-    onSuccess: async () => {
-      await Promise.all([
-        previewDocumentQueryKey(documentId),
-        documentsQueryKey,
-        documentRevisionsQueryKey(documentId),
-        commentsQueryKey(documentId),
-      ].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
-      setConfirmation(undefined);
-      onRestored();
-    },
   });
+  useEffect(() => {
+    generation.current++;
+    pending.current = false;
+    setState({ status: "closed" });
+    return () => {
+      // Invalidate async work; this ref is a generation counter, not a DOM node.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
+      generation.current++;
+    };
+  }, [documentId]);
   return {
-    open: confirmation !== undefined,
-    isPending: mutation.isPending,
-    error: mutation.error?.message,
+    state,
     request: (revisionId: number, expectedMarkdown: string | undefined) => {
-      mutation.reset();
-      setConfirmation({ revisionId, expectedMarkdown });
+      if (!pending.current)
+        setState({
+          status: "confirming",
+          input: { revisionId, expectedMarkdown },
+        });
     },
     cancel: () => {
-      if (!mutation.isPending) setConfirmation(undefined);
+      if (!pending.current) setState({ status: "closed" });
     },
-    confirm: () => {
-      if (confirmation && !mutation.isPending) mutation.mutate(confirmation);
+    confirm: async () => {
+      if (state.status === "closed" || pending.current) return;
+      const { input } = state;
+      const started = generation.current;
+      pending.current = true;
+      setState({ status: "restoring", input });
+      try {
+        await mutation.mutateAsync({ targetDocumentId: documentId, input });
+        await Promise.all(
+          [
+            previewDocumentQueryKey(documentId),
+            documentsQueryKey,
+            documentRevisionsQueryKey(documentId),
+            commentsQueryKey(documentId),
+          ].map((queryKey) => client.invalidateQueries({ queryKey })),
+        );
+        if (started === generation.current) {
+          setState({ status: "closed" });
+          onRestored();
+        }
+      } catch (error) {
+        if (started === generation.current)
+          setState({ status: "error", input, message: errorMessage(error) });
+      } finally {
+        if (started === generation.current) pending.current = false;
+      }
     },
   };
 };

@@ -1,15 +1,14 @@
 import { Box, Flex, IconButton, Link, Menu, Portal } from "@chakra-ui/react";
 import { Ellipsis } from "lucide-react";
-import { useState } from "react";
+import { useCommentMenu } from "./useCommentMenu";
 import type { Comment, GitHubCommentExport } from "../../models/comment";
 import { ConfirmDialog } from "../ConfirmDialog";
-import { toaster } from "../ui/toaster";
 import type {
   ReportCommentActionError,
   RunCommentAction,
 } from "./useCommentActionState";
 
-type CommentActionMenuProps = {
+export type CommentActionMenuProps = {
   comment: Comment;
   disabled: boolean;
   lineLabel: string;
@@ -30,28 +29,20 @@ export const CommentActionMenu = ({
   reportError,
   runAction,
 }: CommentActionMenuProps) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [exportResult, setExportResult] = useState<GitHubCommentExport>();
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(comment.body);
-      toaster.create({
-        closable: true,
-        description: "The comment body was copied to the clipboard.",
-        title: "Comment copied",
-        type: "success",
-      });
-    } catch (error) {
-      reportError(error, "Could not copy comment");
-    }
-  };
-
-  const handleDelete = () =>
-    runAction(() => onDelete(comment.id), {
-      errorTitle: "Could not delete comment",
-      onSuccess: () => setIsDeleteDialogOpen(false),
-    });
+  const menu = useCommentMenu({
+    comment,
+    disabled,
+    lineLabel,
+    onDelete,
+    onExport,
+    onEdit,
+    reportError,
+    runAction,
+  });
+  const exportResult =
+    menu.exportState.status === "exported"
+      ? menu.exportState.result
+      : undefined;
 
   return (
     <>
@@ -77,31 +68,28 @@ export const CommentActionMenu = ({
                 <Menu.Item
                   value="copy"
                   disabled={disabled}
-                  onClick={() => void handleCopy()}
+                  onClick={() => void menu.copy()}
                 >
                   Copy comment
                 </Menu.Item>
-                {onExport && comment.author.type === "human" &&
+                {onExport &&
+                  comment.author.type === "human" &&
                   comment.state === "active" && (
-                  <Menu.Item
-                    value="github"
-                    disabled={disabled}
-                    onClick={() => {
-                      void runAction(async () => {
-                        setExportResult(await onExport(comment.id));
-                      }, { errorTitle: "Could not save to GitHub review" });
-                    }}
-                  >
-                    Save to GitHub review
-                  </Menu.Item>
-                )}
+                    <Menu.Item
+                      value="github"
+                      disabled={disabled}
+                      onClick={() => void menu.exportToGitHub()}
+                    >
+                      Save to GitHub review
+                    </Menu.Item>
+                  )}
                 <Menu.Item value="edit" disabled={disabled} onClick={onEdit}>
                   Edit
                 </Menu.Item>
                 <Menu.Item
                   value="delete"
                   disabled={disabled}
-                  onClick={() => setIsDeleteDialogOpen(true)}
+                  onClick={() => menu.setDeleteOpen(true)}
                 >
                   Delete
                 </Menu.Item>
@@ -126,9 +114,9 @@ export const CommentActionMenu = ({
         confirmColorPalette="red"
         confirmLabel="Delete"
         isPending={disabled}
-        onConfirm={() => void handleDelete()}
-        onOpenChange={setIsDeleteDialogOpen}
-        open={isDeleteDialogOpen}
+        onConfirm={() => void menu.remove()}
+        onOpenChange={menu.setDeleteOpen}
+        open={menu.state.status === "confirming-delete"}
         title="Delete comment?"
       >
         This action cannot be undone.

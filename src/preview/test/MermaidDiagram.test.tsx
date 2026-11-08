@@ -65,8 +65,7 @@ describe("MermaidDiagram", () => {
     );
     expect(
       await screen.findByRole("dialog", { name: "Zoomed Mermaid diagram" }),
-    )
-      .not.toBeNull();
+    ).not.toBeNull();
   });
 
   it("zooms and fits only the dialog without selecting the underlying block", async () => {
@@ -149,8 +148,11 @@ describe("MermaidDiagram", () => {
     await waitFor(() => expect(document.activeElement).toBe(trigger));
     fireEvent.click(trigger);
     const reopened = await screen.findByRole("dialog");
-    expect(reopened.querySelector<HTMLElement>(".mermaid-zoom-scroller")!
-      .style.getPropertyValue("--mermaid-pinch-width")).toBe("200px");
+    expect(
+      reopened
+        .querySelector<HTMLElement>(".mermaid-zoom-scroller")!
+        .style.getPropertyValue("--mermaid-pinch-width"),
+    ).toBe("200px");
   });
 
   it("uses the standard Escape behavior", async () => {
@@ -160,7 +162,7 @@ describe("MermaidDiagram", () => {
     );
     const dialog = await screen.findByRole("dialog");
     await waitFor(() =>
-      expect(dialog.contains(document.activeElement)).toBe(true)
+      expect(dialog.contains(document.activeElement)).toBe(true),
     );
     fireEvent.keyDown(document.activeElement!, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());

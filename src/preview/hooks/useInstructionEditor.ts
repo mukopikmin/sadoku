@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useInstructionActions, useInstructionsQuery } from "./useInstructions";
 import type { InstructionScope } from "../models/instruction";
+import { type ActionState, errorMessage } from "../models/uiState";
+
+type InstructionEditorState =
+  | { status: "loading" }
+  | { status: "load-error"; message: string }
+  | ({ content: string; dirty: boolean } & (
+      | { status: "ready" | "saving" }
+      | { status: "save-error"; message: string }
+    ));
 
 export const useInstructionEditor = (
   scope: InstructionScope,
@@ -9,61 +18,76 @@ export const useInstructionEditor = (
   const query = useInstructionsQuery(scope, open);
   const actions = useInstructionActions(scope);
   const [draft, setDraft] = useState<string>();
-  const [error, setError] = useState("");
-  const [editing, setEditing] = useState(false);
+  const [action, setAction] = useState<ActionState>({ status: "idle" });
   const saving = useRef(false);
+  const generation = useRef(0);
+  const [editing, setEditing] = useState(false);
   const documentId = scope.type === "document" ? scope.documentId : undefined;
   useEffect(() => {
+    generation.current++;
+    saving.current = false;
     setDraft(undefined);
-    setError("");
     setEditing(false);
+    setAction({ status: "idle" });
+    return () => {
+      // Invalidate async work; this ref is a generation counter, not a DOM node.
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
+      generation.current++;
+    };
   }, [scope.type, documentId, open]);
   const instruction = query.data?.[0];
   const savedContent = instruction?.content ?? "";
   const content = draft ?? savedContent;
   const dirty = content !== savedContent;
-
+  const state: InstructionEditorState = query.isPending
+    ? { status: "loading" }
+    : query.error
+      ? { status: "load-error", message: String(query.error) }
+      : action.status === "pending"
+        ? { status: "saving", content, dirty }
+        : action.status === "error"
+          ? { status: "save-error", content, dirty, message: action.message }
+          : { status: "ready", content, dirty };
   const save = async () => {
-    if (!query.isSuccess || !dirty || saving.current) return;
+    if (!open || !query.isSuccess || !dirty || saving.current) return;
     saving.current = true;
-    setError("");
+    const started = generation.current;
+    setAction({ status: "pending" });
     try {
       if (!content.trim()) {
         if (instruction) await actions.delete(instruction.id);
-      } else if (instruction) {
+      } else if (instruction)
         await actions.update({ id: instruction.id, content });
-      } else {
-        await actions.create(content);
+      else await actions.create(content);
+      if (started === generation.current) {
+        setDraft(undefined);
+        setEditing(false);
+        setAction({ status: "idle" });
       }
-      setDraft(undefined);
-      setEditing(false);
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to save instruction.",
-      );
+      if (started === generation.current)
+        setAction({ status: "error", message: errorMessage(error) });
     } finally {
-      saving.current = false;
+      if (started === generation.current) saving.current = false;
     }
   };
-
   return {
-    query,
+    state,
     editing,
-    startEditing: () => setEditing(true),
+    startEditing: () => {
+      if (open && query.isSuccess && !saving.current) setEditing(true);
+    },
     cancel: () => {
       if (saving.current) return;
       setDraft(undefined);
-      setError("");
+      setAction({ status: "idle" });
       setEditing(false);
     },
-    content,
-    error,
-    dirty,
-    pending: actions.pending,
-    change: (content: string) => {
-      setDraft(content);
-      setError("");
-    },
     save,
+    change: (content: string) => {
+      if (saving.current || !open || !query.isSuccess) return;
+      setDraft(content);
+      setAction({ status: "idle" });
+    },
   };
 };
