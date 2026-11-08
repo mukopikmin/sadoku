@@ -1,12 +1,12 @@
 import { Box, DataList } from "@chakra-ui/react";
-import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import { type ReactNode, useMemo, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   sharedMarkdownComponents,
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
 } from "../../markdown/markdownRenderers";
-import { initializeMermaid } from "../../markdown/mermaid";
+import { useMermaidRendering } from "../../markdown/useMermaidRendering";
 import { extractAgentFrontMatter } from "./frontMatter";
 import { rehypeRevisionHighlights } from "../../markdown/rehypeRevisionHighlights";
 import { RevisionHighlight } from "../../markdown/RevisionHighlight";
@@ -34,17 +34,17 @@ export const ReadOnlyMarkdownPreview = ({
   const root = useRef<HTMLDivElement>(null);
   const highlightLayouts = useRevisionHighlightLayout(root);
   const frontMatter = extractAgentFrontMatter(markdown, documentPath);
-  useEffect(() => {
-    if (root.current) {
-      void initializeMermaid({ root: root.current, theme });
-    }
-  }, [
-    markdown,
-    showHtmlComments,
+  useMermaidRendering(
+    root,
+    [
+      markdown,
+      showHtmlComments,
+      theme,
+      revisionHighlight?.kind,
+      revisionHighlight?.lines,
+    ],
     theme,
-    revisionHighlight?.kind,
-    revisionHighlight?.lines,
-  ]);
+  );
 
   const highlightKind = revisionHighlight?.kind;
   const components = useMemo(

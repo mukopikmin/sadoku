@@ -5,11 +5,12 @@ import type { InstructionScope } from "../models/instruction";
 type Props = { documentId: InstructionScope; open: boolean };
 export const InstructionsPanel = ({ documentId, open }: Props) => {
   const editor = useInstructionEditor(documentId, open);
-  if (editor.query.isPending) return <Text>Loading instructions...</Text>;
-  if (editor.query.error) {
+  const { state } = editor;
+  if (state.status === "loading") return <Text>Loading instructions...</Text>;
+  if (state.status === "load-error") {
     return (
       <Text color="fg.error" role="alert">
-        {String(editor.query.error)}
+        {state.message}
       </Text>
     );
   }
@@ -17,7 +18,7 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
     <Flex direction="column" gap="4">
       <Textarea
         aria-label="Instruction"
-        disabled={editor.pending}
+        disabled={state.status === "saving"}
         minH="48"
         onChange={(event) => editor.change(event.currentTarget.value)}
         placeholder={
@@ -25,19 +26,19 @@ export const InstructionsPanel = ({ documentId, open }: Props) => {
             ? "Instructions for agents working with any document"
             : "Instructions for agents working with this document"
         }
-        value={editor.content}
+        value={state.content}
       />
       <Text color="fg.muted" fontSize="sm">
         Leave empty and save to clear the instructions.
       </Text>
-      {editor.error && (
+      {state.status === "save-error" && (
         <Text color="fg.error" role="alert">
-          {editor.error}
+          {state.message}
         </Text>
       )}
       <Button
         alignSelf="flex-end"
-        disabled={editor.pending || !editor.dirty}
+        disabled={state.status === "saving" || !state.dirty}
         onClick={() => void editor.save()}
       >
         Save instruction

@@ -8,7 +8,7 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 import { CodeXml, FilePenLine, Link, Plus } from "lucide-react";
-import { useContext, useMemo, useRef, useState } from "react";
+import { useContext, useMemo } from "react";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -19,13 +19,12 @@ import {
   markdownListIndentEm,
   markdownTopLevelListIndentEm,
 } from "../markdownRenderers";
+import { useCommentComposer } from "./useCommentComposer";
 import type { CommentRange } from "./commentRanges";
 import {
   type CommentControlProps,
   formatRangeLabel,
-  hasTextSelectionWithin,
   SourceLineContext,
-  useCommentRenderingContext,
 } from "./commentRendering";
 
 type CommentableBlockProps = CommentControlProps & {
@@ -38,15 +37,6 @@ type CommentableBlockProps = CommentControlProps & {
   isRangeActionLine: boolean;
   isSelected: boolean;
   sourceRange: CommentRange;
-};
-
-const suggestionBody = (replacement: string): string => {
-  const longestBacktickRun = Math.max(
-    0,
-    ...[...replacement.matchAll(/`+/g)].map((match) => match[0].length),
-  );
-  const fence = "`".repeat(Math.max(3, longestBacktickRun + 1));
-  return `${fence}suggest\n${replacement}\n${fence}`;
 };
 
 export const CommentableBlock = ({
@@ -67,24 +57,19 @@ export const CommentableBlock = ({
   onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
-  const { markdown, drafts } = useCommentRenderingContext();
-  const [draft, setDraftState] = useState(
-    () => drafts?.get(sourceRange.startLine) ?? "",
-  );
-  // Diff mode can reparent a block. Keep an unfinished comment across that remount.
-  const setDraft = (value: React.SetStateAction<string>) => {
-    const next = typeof value === "function" ? value(draft) : value;
-    if (next) drafts?.set(sourceRange.startLine, next);
-    else drafts?.delete(sourceRange.startLine);
-    setDraftState(next);
-  };
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const pendingRange: CommentRange = activeRange ??
-    selectedRange ?? {
-      ...sourceRange,
-    };
-  const [error, setError] = useState<string>();
+  const composer = useCommentComposer({
+    actions,
+    sourceRange,
+    activeRange,
+    selectedRange,
+    headingId,
+    onCloseCommentForm,
+    onSelectCommentRange,
+  });
+  const { state, pendingRange, textareaRef } = composer;
+  const isSaving = state.status === "saving";
+  const error = state.status === "error" ? state.message : undefined;
+  const draft = state.draft;
   const ancestorSourceLines = useContext(SourceLineContext);
   const listDepth = useContext(MarkdownListDepthContext);
   const commentIndentEm =
@@ -98,62 +83,6 @@ export const CommentableBlock = ({
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
-
-  const selectedSource = useMemo(
-    () =>
-      markdown
-        .split(/\r?\n/)
-        .slice(pendingRange.startLine - 1, pendingRange.endLine)
-        .join("\n"),
-    [markdown, pendingRange.endLine, pendingRange.startLine],
-  );
-
-  const handleCreate = async () => {
-    const body = draft.trim();
-    if (!body || isSaving) return;
-    setIsSaving(true);
-    setError(undefined);
-    try {
-      await actions.onCreateComment(
-        pendingRange.startLine,
-        body,
-        pendingRange.endLine,
-      );
-      setDraft("");
-      onCloseCommentForm();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : String(error));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleContentClick = (event: React.MouseEvent<HTMLElement>) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    if (target.closest("button, input, label, select, textarea")) return;
-    // On Windows, Shift+click can extend the browser's native text selection
-    // before the click event reaches us. It must still extend the comment range.
-    if (!event.shiftKey && hasTextSelectionWithin(event.currentTarget)) {
-      event.stopPropagation();
-      return;
-    }
-
-    const link = target.closest("a");
-    if (link && !link.classList.contains("heading-anchor")) return;
-    if (link) event.preventDefault();
-
-    onSelectCommentRange(sourceRange, { extend: event.shiftKey });
-    event.stopPropagation();
-  };
-
-  const handleSetHeadingLink = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!headingId) return;
-
-    globalThis.location.hash = headingId;
-  };
 
   return (
     <Box
@@ -174,7 +103,7 @@ export const CommentableBlock = ({
         } as React.CSSProperties
       }
     >
-      <Box className="commentable-content" onClick={handleContentClick}>
+      <Box className="commentable-content" onClick={composer.contentClick}>
         {isRangeActionLine && !isAdding && (
           <Flex
             className="comment-line-gutter"
@@ -217,7 +146,7 @@ export const CommentableBlock = ({
                   color="fg.muted"
                   fontSize="xs"
                   minW="6"
-                  onClick={handleSetHeadingLink}
+                  onClick={composer.setHeadingLink}
                   p="0"
                   type="button"
                   variant="outline"
@@ -288,15 +217,7 @@ export const CommentableBlock = ({
                   <IconButton
                     aria-label="Suggest edit"
                     disabled={isSaving}
-                    onClick={() => {
-                      setDraft(
-                        (current) =>
-                          `${current}${current ? "\n\n" : ""}${suggestionBody(
-                            selectedSource,
-                          )}`,
-                      );
-                      textareaRef.current?.focus();
-                    }}
+                    onClick={composer.insertSuggestion}
                     size="xs"
                     type="button"
                     variant="ghost"
@@ -310,10 +231,10 @@ export const CommentableBlock = ({
                 autoFocus
                 fontSize="comment"
                 minH="90px"
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) => composer.change(event.target.value)}
                 onKeyDown={(event) =>
                   submitCommentOnShortcut(event, () => {
-                    void handleCreate();
+                    void composer.create();
                   })
                 }
                 placeholder="Write a GitHub PR comment..."
@@ -325,7 +246,7 @@ export const CommentableBlock = ({
                   size="xs"
                   variant="outline"
                   disabled={isSaving || draft.trim() === ""}
-                  onClick={handleCreate}
+                  onClick={composer.create}
                   type="button"
                 >
                   Add comment

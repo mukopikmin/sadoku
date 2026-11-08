@@ -1,224 +1,26 @@
-import { Button, Container, Text, useDisclosure } from "@chakra-ui/react";
-import { useEffect, useRef } from "react";
-import { Link as RouterLink, useNavigate } from "@tanstack/react-router";
+import { Button, Container, Text } from "@chakra-ui/react";
+import { Link as RouterLink } from "@tanstack/react-router";
 import { PreviewShell } from "./components/layout/PreviewHeader";
-import type { PreviewView } from "./models/previewView";
-import { markdownStyles } from "./markdown/markdownStyles";
-import { useHotReload } from "./hooks/useHotReload";
-import { useConnection } from "./hooks/useConnection";
-import { reportConnection } from "./api/connection";
-import { isSyncEnabled, connectPreviewKeepAlive } from "./api/hotReload";
-import { useCommentsQuery } from "./hooks/useComments";
-import {
-  useDirectoryStatusQuery,
-  useDocumentsQuery,
-  usePreviewDocumentQuery,
-} from "./hooks/useDocuments";
-import { useMemoriesQuery } from "./hooks/useMemories";
-import { usePreviewSettings } from "./hooks/usePreviewSettings";
-import { useScrollPosition } from "./hooks/useScrollPosition";
-import { useCollapsedDocumentHeader } from "./hooks/useCollapsedDocumentHeader";
+import { PreviewLayout } from "./components/layout/PreviewLayout";
+import { CreateDocumentDialog } from "./components/CreateDocumentDialog";
 import { DocumentListPage } from "./pages/DocumentListPage";
 import { DocumentLoadingPage } from "./pages/DocumentLoadingPage";
 import { DocumentPreviewPage } from "./pages/DocumentPreviewPage";
-import { PreviewLayout } from "./components/layout/PreviewLayout";
-import { usePreviewRoute } from "./hooks/usePreviewRoute";
-import { isUnresolvedComment } from "./models/comment";
-import { useSessionQuery } from "./hooks/useSession";
-import { useDocumentCreator } from "./hooks/useDocumentCreator";
-import { CreateDocumentDialog } from "./components/CreateDocumentDialog";
+import { markdownStyles } from "./markdown/markdownStyles";
+import { usePreviewApp } from "./hooks/usePreviewApp";
 
 export const App = () => {
-  const tagsTriggerRef = useRef<HTMLButtonElement>(null);
-  const globalInstructionsTriggerRef = useRef<HTMLButtonElement>(null);
-  const {
-    documentId: selectedDocumentId,
-    isDocumentList,
-    pathname,
-    rawDocumentId,
-    view,
-  } = usePreviewRoute();
-  const navigate = useNavigate();
-  const documentCreator = useDocumentCreator((id) => {
-    void navigate({
-      to: "/documents/$documentId",
-      params: { documentId: String(id) },
-    });
-  });
-  const documentsQuery = useDocumentsQuery();
-  const sessionQuery = useSessionQuery();
-  const directoryStatusQuery = useDirectoryStatusQuery();
-  const directoryStatus = directoryStatusQuery.data;
-  const documents = documentsQuery.data;
-  const directoryMode = documents !== null && documents !== undefined;
-  const shouldLoadDocument =
-    documentsQuery.isSuccess &&
-    (!directoryMode || selectedDocumentId !== undefined);
-  const documentQuery = usePreviewDocumentQuery(
-    selectedDocumentId,
-    shouldLoadDocument,
-  );
-  const commentsQuery = useCommentsQuery(
-    selectedDocumentId,
-    shouldLoadDocument,
-  );
-  const memoriesQuery = useMemoriesQuery(
-    selectedDocumentId,
-    shouldLoadDocument,
-  );
-  const saveScrollPosition = useScrollPosition(
-    selectedDocumentId,
-    view,
-    Boolean(documentQuery.data && commentsQuery.data),
-  );
-  const { collapsed, documentHeaderRef, headerRef } =
-    useCollapsedDocumentHeader(
-      selectedDocumentId,
-      Boolean(documentQuery.data && commentsQuery.data),
-      view,
-    );
-  const settingsDisclosure = useDisclosure();
-  const instructionsDisclosure = useDisclosure();
-  const globalInstructionsDisclosure = useDisclosure();
-  const memoriesDisclosure = useDisclosure();
-  const tagsDisclosure = useDisclosure();
-  const documentTagsDisclosure = useDisclosure();
-  const connectionLost = useConnection();
-  const {
-    changeCodeWrapMode,
-    changeDirectoryLimits,
-    changeExcludedDirectories,
-    changeFontScale,
-    changeMarkdownExtensions,
-    changeShowHighlightBoundaries,
-    changeShowHtmlComments,
-    changeThemeMode,
-    settings,
-  } = usePreviewSettings();
-  const { clearReloadAvailable, reloadAvailable } =
-    useHotReload(selectedDocumentId);
-  const settingsActions = {
-    onCodeWrapModeChange: changeCodeWrapMode,
-    onDirectoryLimitsChange: changeDirectoryLimits,
-    onExcludedDirectoriesChange: changeExcludedDirectories,
-    onFontScaleChange: changeFontScale,
-    onMarkdownExtensionsChange: changeMarkdownExtensions,
-    onShowHighlightBoundariesChange: changeShowHighlightBoundaries,
-    onShowHtmlCommentsChange: changeShowHtmlComments,
-    onThemeModeChange: changeThemeMode,
-  };
-
-  useEffect(
-    () =>
-      connectPreviewKeepAlive({
-        onConnectionLost: () => reportConnection(true),
-        onConnectionRestored: () => reportConnection(false),
-      }),
-    [],
-  );
-
-  const changeView = (nextView: PreviewView) => {
-    if (nextView === view || selectedDocumentId === undefined) return;
-    saveScrollPosition();
-    void navigate({
-      to:
-        nextView === "comments"
-          ? "/documents/$documentId/comments"
-          : "/documents/$documentId",
-      params: { documentId: String(selectedDocumentId) },
-    });
-  };
-
-  const selectDocument = (id: number) => {
-    saveScrollPosition();
-    void navigate({
-      to: "/documents/$documentId",
-      params: { documentId: String(id) },
-    });
-  };
-
-  const selectDocuments = () => {
-    saveScrollPosition();
-    void navigate({ to: "/" });
-  };
-
-  const reloadPreview = async () => {
-    if (!isSyncEnabled()) {
-      await Promise.all([
-        documentsQuery.refetch(),
-        directoryStatusQuery.refetch(),
-        sessionQuery.refetch(),
-      ]);
-      if (selectedDocumentId === undefined) return;
-    }
-    const [documentResult, commentsResult] = await Promise.all([
-      documentQuery.refetch(),
-      commentsQuery.refetch(),
-    ]);
-    if (documentResult.isSuccess && commentsResult.isSuccess) {
-      clearReloadAvailable();
-    }
-  };
-
-  useEffect(() => {
-    if (pathname === "/") {
-      globalThis.document.title = "Documents — Sadoku";
-    } else if (documentQuery.data) {
-      globalThis.document.title =
-        view === "comments"
-          ? `Comments — ${documentQuery.data.title} — Sadoku`
-          : `${documentQuery.data.title} — Sadoku`;
-    }
-  }, [documentQuery.data, pathname, view]);
-
-  const refetchDocuments = documentsQuery.refetch;
-  useEffect(() => {
-    if (directoryStatus?.state === "ready") void refetchDocuments();
-  }, [directoryStatus?.state, refetchDocuments]);
-
-  const dialogProps = {
-    globalInstructions: globalInstructionsDisclosure,
-    globalInstructionsTriggerRef,
-    documentInstructions: instructionsDisclosure,
-    documentMemories: memoriesDisclosure,
-    documentTagsDialog: documentTagsDisclosure,
-    settings,
-    settingsActions,
-    settingsDialog: settingsDisclosure,
-    tagsDialog: tagsDisclosure,
-    tagsTriggerRef,
-  };
-  const headerActions = {
-    connectionLost,
-    onOpenGlobalInstructions: globalInstructionsDisclosure.onOpen,
-    globalInstructionsTriggerRef,
-    onOpenSettings: settingsDisclosure.onOpen,
-    onOpenTags: tagsDisclosure.onOpen,
-    onReloadPreview: reloadPreview,
-    tagsTriggerRef,
-  };
-
-  if (documentsQuery.isPending) {
+  const state = usePreviewApp();
+  if (state.status === "loading" || state.status === "error")
     return (
       <>
         <style>{markdownStyles}</style>
-        <PreviewShell>Loading preview...</PreviewShell>
+        <PreviewShell>
+          {state.status === "loading" ? "Loading preview..." : state.message}
+        </PreviewShell>
       </>
     );
-  }
-  if (documentsQuery.error) {
-    return (
-      <>
-        <style>{markdownStyles}</style>
-        <PreviewShell>{String(documentsQuery.error)}</PreviewShell>
-      </>
-    );
-  }
-  const selectedDocumentExists =
-    selectedDocumentId !== undefined &&
-    documents?.some((document) => document.id === selectedDocumentId);
-  if (!isDocumentList && (!rawDocumentId || !selectedDocumentExists)) {
-    globalThis.document.title = "Not Found — Sadoku";
+  if (state.status === "not-found")
     return (
       <>
         <style>{markdownStyles}</style>
@@ -232,126 +34,19 @@ export const App = () => {
         </Container>
       </>
     );
-  }
-  if (selectedDocumentId === undefined) {
-    return (
-      <PreviewLayout
-        dialogs={dialogProps}
-        header={{
-          ...headerActions,
-          reloadAvailable: !isSyncEnabled(),
-          reloading:
-            documentsQuery.isFetching ||
-            directoryStatusQuery.isFetching ||
-            sessionQuery.isFetching,
-          title: "Documents",
-        }}
-      >
-        <DocumentListPage
-          directoryStatus={directoryStatus}
-          documents={documents!}
-          onSelectDocument={selectDocument}
-          pullRequest={sessionQuery.data?.pullRequest}
-          onCreateDocument={
-            sessionQuery.data?.canCreateDocuments &&
-            directoryStatus?.state !== "loading" &&
-            directoryStatus?.state !== "error"
-              ? documentCreator.open
-              : undefined
-          }
-        />
-        <CreateDocumentDialog creator={documentCreator} />
-      </PreviewLayout>
-    );
-  }
-
-  if (!documentQuery.data || !commentsQuery.data) {
-    const error = documentQuery.error ?? commentsQuery.error;
-    const selectedDocument = documents?.find(
-      (item) => item.id === selectedDocumentId,
-    );
-    return (
-      <PreviewLayout
-        dialogs={dialogProps}
-        header={{
-          ...headerActions,
-          reloadAvailable: !isSyncEnabled(),
-          reloading:
-            documentsQuery.isFetching ||
-            directoryStatusQuery.isFetching ||
-            sessionQuery.isFetching,
-          title: selectedDocument?.relativePath ?? "Preview",
-        }}
-      >
-        <DocumentLoadingPage
-          documents={documents}
-          error={error}
-          onSelectDocument={selectDocument}
-          onSelectDocuments={selectDocuments}
-          selectedDocument={selectedDocument}
-        />
-      </PreviewLayout>
-    );
-  }
-
-  const { comments } = commentsQuery.data;
-  const document = documentQuery.data;
-  const selectedDocument = documents?.find(
-    (item) => item.id === selectedDocumentId,
-  );
-  const staleCommentCount = comments.filter(
-    (comment) => comment.state === "stale",
-  ).length;
-  const unresolvedCommentCount = comments.filter(isUnresolvedComment).length;
-
   return (
-    <PreviewLayout
-      dialogs={{
-        ...dialogProps,
-        documentId: selectedDocumentId,
-        documentTags: document.tags,
-      }}
-      header={{
-        ...headerActions,
-        collapsedDocument: collapsed
-          ? {
-              title: document.displayTitle,
-            }
-          : undefined,
-        fileUrl: document.fileUrl,
-        documentNavigation: collapsed
-          ? {
-              onChangeView: changeView,
-              staleCommentCount,
-              unresolvedCommentCount,
-              view,
-            }
-          : undefined,
-        headerRef,
-        reloadAvailable: reloadAvailable || !isSyncEnabled(),
-        reloading: documentQuery.isFetching || commentsQuery.isFetching,
-        title: document.title,
-      }}
-    >
-      <DocumentPreviewPage
-        document={document}
-        documentId={selectedDocumentId}
-        documentHeaderRef={documentHeaderRef}
-        documentNavigationInHeader={collapsed}
-        documents={documents}
-        memoryCount={memoriesQuery.data?.length ?? 0}
-        onChangeView={changeView}
-        onOpenInstructions={instructionsDisclosure.onOpen}
-        onOpenMemories={memoriesDisclosure.onOpen}
-        onOpenTags={documentTagsDisclosure.onOpen}
-        onSelectDocument={selectDocument}
-        onSelectDocuments={selectDocuments}
-        selectedDocument={selectedDocument}
-        settings={settings}
-        staleCommentCount={staleCommentCount}
-        unresolvedCommentCount={unresolvedCommentCount}
-        view={view}
-      />
+    <PreviewLayout dialogs={state.dialogs} header={state.header}>
+      {state.status === "list" ? (
+        <>
+          <DocumentListPage {...state.page} />
+          <CreateDocumentDialog creator={state.creator} />
+        </>
+      ) : state.status === "document-loading" ||
+        state.status === "document-error" ? (
+        <DocumentLoadingPage {...state.page} />
+      ) : (
+        <DocumentPreviewPage {...state.page} />
+      )}
     </PreviewLayout>
   );
 };

@@ -9,18 +9,17 @@ import {
   Stack,
 } from "@chakra-ui/react";
 import { CornerDownRight, Ellipsis } from "lucide-react";
-import { useState } from "react";
+import { useReplyItem } from "./useReplyItem";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { CommentReply } from "../../models/comment";
 import { CommentForm } from "./CommentForm";
 import { CommentMarkdown } from "./CommentMarkdown";
-import { toaster } from "../ui/toaster";
 import type {
   ReportCommentActionError,
   RunCommentAction,
 } from "./useCommentActionState";
 
-type ReplyItemProps = {
+export type ReplyItemProps = {
   commentId: number;
   disabled: boolean;
   onDelete: (commentId: number, replyId: number) => Promise<void>;
@@ -41,37 +40,20 @@ export const ReplyItem = ({
   sourceText,
   runAction,
 }: ReplyItemProps) => {
-  const [draft, setDraft] = useState(reply.body);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const handleUpdate = async () => {
-    const body = draft.trim();
-    if (!body || disabled) return;
-    await runAction(() => onUpdate(commentId, reply.id, body), {
-      onSuccess: () => setIsEditing(false),
-    });
-  };
-
-  const handleConfirmDelete = async () => {
-    await runAction(() => onDelete(commentId, reply.id), {
-      onSuccess: () => setIsDeleteDialogOpen(false),
-    });
-  };
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(reply.body);
-      toaster.create({
-        closable: true,
-        description: "The reply body was copied to the clipboard.",
-        title: "Reply copied",
-        type: "success",
-      });
-    } catch (error) {
-      reportError(error);
-    }
-  };
+  const item = useReplyItem({
+    commentId,
+    disabled,
+    onDelete,
+    onUpdate,
+    reportError,
+    reply,
+    runAction,
+  });
+  const { state } = item;
+  const isEditing =
+    state.status === "editing" ||
+    state.status === "saving" ||
+    state.status === "error";
 
   return (
     <Stack
@@ -137,16 +119,16 @@ export const ReplyItem = ({
                   <Menu.Item
                     value="copy"
                     disabled={disabled}
-                    onClick={() => void handleCopy()}
+                    onClick={() => void item.copy()}
                   >
                     Copy reply
                   </Menu.Item>
-                  <Menu.Item value="edit" onClick={() => setIsEditing(true)}>
+                  <Menu.Item value="edit" onClick={() => item.edit()}>
                     Edit
                   </Menu.Item>
                   <Menu.Item
                     value="delete"
-                    onClick={() => setIsDeleteDialogOpen(true)}
+                    onClick={() => item.setDeleteOpen(true)}
                   >
                     Delete
                   </Menu.Item>
@@ -160,9 +142,9 @@ export const ReplyItem = ({
         confirmColorPalette="red"
         confirmLabel="Delete"
         isPending={disabled}
-        onConfirm={handleConfirmDelete}
-        onOpenChange={setIsDeleteDialogOpen}
-        open={isDeleteDialogOpen}
+        onConfirm={item.confirmDelete}
+        onOpenChange={item.setDeleteOpen}
+        open={state.status === "confirming-delete"}
         title="Delete reply?"
       >
         This action cannot be undone.
@@ -171,16 +153,13 @@ export const ReplyItem = ({
         <CommentForm
           cancelAriaLabel="Cancel reply edit"
           disabled={disabled}
-          onCancel={() => {
-            setDraft(reply.body);
-            setIsEditing(false);
-          }}
-          onChange={setDraft}
-          onSubmit={() => void handleUpdate()}
+          onCancel={item.cancelEdit}
+          onChange={item.change}
+          onSubmit={() => void item.save()}
           submitAriaLabel="Save reply"
           submitLabel="Save"
           textareaAriaLabel="Edit reply body"
-          value={draft}
+          value={"draft" in state ? state.draft : ""}
         />
       ) : (
         <Box pr="8">

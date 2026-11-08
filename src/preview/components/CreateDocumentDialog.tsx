@@ -17,21 +17,16 @@ export const CreateDocumentDialog = ({
 }) => {
   const filenameRef = useRef<HTMLInputElement>(null);
   if (creator.state.status === "closed") return null;
-  const { input, error } = creator.state;
-  const filename = input.filename.trim();
-  const resolvedFilename =
-    filename && !filename.includes(".") ? `${filename}.md` : filename;
-  const relativePath = [input.directory, resolvedFilename]
-    .filter(Boolean)
-    .join("/");
+  const { input, relativePath } = creator.state;
+  const pending = creator.state.status === "saving";
   return (
     <Dialog.Root
       open
       onOpenChange={({ open }) => {
         if (!open) creator.close();
       }}
-      closeOnEscape={!creator.pending}
-      closeOnInteractOutside={!creator.pending}
+      closeOnEscape={!pending}
+      closeOnInteractOutside={!pending}
       initialFocusEl={() => filenameRef.current}
     >
       <Portal>
@@ -58,7 +53,7 @@ export const CreateDocumentDialog = ({
                     <Input
                       ref={filenameRef}
                       value={input.filename}
-                      disabled={creator.pending}
+                      disabled={pending}
                       onChange={(event) =>
                         creator.change("filename", event.currentTarget.value)
                       }
@@ -71,7 +66,7 @@ export const CreateDocumentDialog = ({
                     <Field.Label>Document title (optional)</Field.Label>
                     <Input
                       value={input.title}
-                      disabled={creator.pending}
+                      disabled={pending}
                       onChange={(event) =>
                         creator.change("title", event.currentTarget.value)
                       }
@@ -84,9 +79,9 @@ export const CreateDocumentDialog = ({
                   <Text color="fg.muted" fontSize="sm" overflowWrap="anywhere">
                     File: {relativePath || "—"}
                   </Text>
-                  {error && (
+                  {creator.state.status === "error" && (
                     <Text color="fg.error" role="alert">
-                      {error}
+                      {creator.state.message}
                     </Text>
                   )}
                 </Stack>
@@ -95,15 +90,15 @@ export const CreateDocumentDialog = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  disabled={creator.pending}
+                  disabled={pending}
                   onClick={creator.close}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={creator.pending || !filename}
-                  loading={creator.pending}
+                  disabled={pending || !input.filename.trim()}
+                  loading={pending}
                 >
                   Create
                 </Button>

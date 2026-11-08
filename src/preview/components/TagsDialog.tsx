@@ -15,8 +15,8 @@ import {
   useToken,
 } from "@chakra-ui/react";
 import { Pencil, Trash2 } from "lucide-react";
-import { type RefObject, useEffect, useState } from "react";
-import { useDeleteTag, useTagsQuery, useUpdateTag } from "../hooks/useTags";
+import { type RefObject } from "react";
+import { useTagsManager } from "../hooks/useTagsManager";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { TagLabel } from "./ui/TagLabel";
 
@@ -32,59 +32,12 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
     "blue.500",
     "green.500",
   ]);
-  const tags = useTagsQuery(open);
-  const update = useUpdateTag();
-  const remove = useDeleteTag();
-  const [deletingId, setDeletingId] = useState<number>();
-  const pending = update.isPending || remove.isPending;
-  const selectedTag = tags.data?.find((tag) => tag.id === deletingId);
-  useEffect(() => {
-    if (!open) setDeletingId(undefined);
-  }, [open]);
-  const [editingId, setEditingId] = useState<number>();
-  const [name, setName] = useState("");
-  const [backgroundColor, setBackgroundColor] = useState(swatchColors[0]);
-  const [message, setMessage] = useState("");
-
-  const startEditing = (
-    id: number,
-    currentName: string,
-    currentBackgroundColor: string,
-  ) => {
-    setDeletingId(undefined);
-    setEditingId(id);
-    setName(currentName);
-    setBackgroundColor(currentBackgroundColor);
-    setMessage("");
-  };
-  const cancelEditing = () => {
-    setEditingId(undefined);
-    setMessage("");
-  };
-  const save = async () => {
-    if (editingId === undefined) return;
-    try {
-      await update.mutateAsync({ id: editingId, name, backgroundColor });
-      cancelEditing();
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Could not update tag.",
-      );
-    }
-  };
-
-  const deleteSelected = async () => {
-    if (deletingId === undefined) return;
-    setMessage("");
-    try {
-      await remove.mutateAsync(deletingId);
-      setDeletingId(undefined);
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Could not delete tag.",
-      );
-    }
-  };
+  const manager = useTagsManager(open);
+  const { state, list, selectedTag } = manager;
+  const input = "input" in state ? state.input : undefined;
+  const editingId = input?.id;
+  const deletingId = "id" in state ? state.id : undefined;
+  const pending = state.status === "saving" || state.status === "deleting";
 
   return (
     <>
@@ -105,11 +58,11 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                 <CloseButton aria-label="Close tags" size="sm" />
               </Dialog.CloseTrigger>
               <Dialog.Body pb="6">
-                {tags.isPending ? (
+                {list.status === "loading" ? (
                   <Spinner aria-label="Loading tags" />
-                ) : tags.error ? (
-                  <Text color="fg.error">{tags.error.message}</Text>
-                ) : tags.data.length === 0 ? (
+                ) : list.status === "error" ? (
+                  <Text color="fg.error">{list.message}</Text>
+                ) : list.status === "empty" ? (
                   <Text color="fg.muted">No tags yet.</Text>
                 ) : (
                   <Table.Root>
@@ -124,17 +77,17 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                       </Table.Row>
                     </Table.Header>
                     <Table.Body>
-                      {tags.data.map((tag) => (
+                      {list.items.map((tag) => (
                         <Table.Row key={tag.id}>
                           <Table.Cell>
                             {editingId === tag.id ? (
                               <Input
                                 aria-label={`New name for ${tag.name}`}
                                 onChange={(event) =>
-                                  setName(event.target.value)
+                                  manager.change({ name: event.target.value })
                                 }
                                 size="sm"
-                                value={name}
+                                value={input?.name ?? ""}
                               />
                             ) : (
                               <TagLabel
@@ -148,12 +101,16 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                               <ColorPicker.Root
                                 format="rgba"
                                 onValueChange={({ value }) =>
-                                  setBackgroundColor(
-                                    value.toString("hex").toLowerCase(),
-                                  )
+                                  manager.change({
+                                    backgroundColor: value
+                                      .toString("hex")
+                                      .toLowerCase(),
+                                  })
                                 }
                                 size="sm"
-                                value={parseColor(backgroundColor)}
+                                value={parseColor(
+                                  input?.backgroundColor ?? swatchColors[0],
+                                )}
                               >
                                 <ColorPicker.Label srOnly>
                                   Background color
@@ -209,16 +166,16 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                             {editingId === tag.id ? (
                               <Flex gap="2" justify="flex-end">
                                 <Button
-                                  disabled={update.isPending}
-                                  onClick={cancelEditing}
+                                  disabled={state.status === "saving"}
+                                  onClick={manager.cancel}
                                   size="sm"
                                   variant="ghost"
                                 >
                                   Cancel
                                 </Button>
                                 <Button
-                                  loading={update.isPending}
-                                  onClick={save}
+                                  loading={state.status === "saving"}
+                                  onClick={manager.save}
                                   size="sm"
                                 >
                                   Save
@@ -230,11 +187,11 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                                   disabled={pending}
                                   aria-label={`Edit tag ${tag.name}`}
                                   onClick={() =>
-                                    startEditing(
-                                      tag.id,
-                                      tag.name,
-                                      tag.backgroundColor,
-                                    )
+                                    manager.edit({
+                                      id: tag.id,
+                                      name: tag.name,
+                                      backgroundColor: tag.backgroundColor,
+                                    })
                                   }
                                   size="sm"
                                   variant="ghost"
@@ -248,8 +205,7 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => {
-                                    cancelEditing();
-                                    setDeletingId(tag.id);
+                                    manager.requestDelete(tag.id);
                                   }}
                                 >
                                   <Trash2 aria-hidden="true" />
@@ -262,9 +218,9 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
                     </Table.Body>
                   </Table.Root>
                 )}
-                {message && deletingId === undefined && (
+                {state.status === "edit-error" && (
                   <Text color="fg.error" mt="3">
-                    {message}
+                    {state.message}
                   </Text>
                 )}
               </Dialog.Body>
@@ -275,22 +231,19 @@ export const TagsDialog = ({ finalFocusRef, onOpenChange, open }: Props) => {
       <ConfirmDialog
         confirmColorPalette="red"
         confirmLabel="Delete"
-        isPending={remove.isPending}
-        onConfirm={deleteSelected}
+        isPending={state.status === "deleting"}
+        onConfirm={manager.deleteSelected}
         onOpenChange={(open) => {
-          if (!open) {
-            setDeletingId(undefined);
-            setMessage("");
-          }
+          if (!open) manager.cancel();
         }}
         open={open && deletingId !== undefined}
         title="Delete tag?"
       >
         Delete {selectedTag?.name}? This removes the tag from all documents.
         Documents will be kept.
-        {message && (
+        {state.status === "delete-error" && (
           <Text as="span" display="block" color="fg.error" role="alert">
-            {message}
+            {state.message}
           </Text>
         )}
       </ConfirmDialog>

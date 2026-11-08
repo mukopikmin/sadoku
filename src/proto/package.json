@@ -5,14 +5,6 @@
   "engines": {
     "node": "^26.13.0"
   },
-  "scripts": {
-    "proto:generate": "buf generate && cd ../.. && oxfmt \"src/preview/gen/**/*.ts\"",
-    "proto:lint": "buf lint",
-    "fmt": "cd ../.. && oxfmt \".github/tests/*.mts\" \"src/preview/**/*.{ts,tsx}\"",
-    "fmt:check": "cd ../.. && oxfmt --check \".github/tests/*.mts\" \"src/preview/**/*.{ts,tsx}\"",
-    "test:actions": "node --test ../../.github/tests/cloud_run_preview_comment_test.mts",
-    "lint": "cd ../.. && oxlint --deny-warnings --report-unused-disable-directives .github/tests src/preview"
-  },
   "dependencies": {
     "@bufbuild/protobuf": "2.16.0"
   },

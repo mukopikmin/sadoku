@@ -6,7 +6,8 @@ import { documentsQueryKey } from "./previewQueryKeys";
 
 type CreatorState =
   | { status: "closed" }
-  | { status: "editing"; input: CreateDocumentInput; error: string };
+  | { status: "editing" | "saving"; input: CreateDocumentInput }
+  | { status: "error"; input: CreateDocumentInput; message: string };
 
 export const useDocumentCreator = (onCreated: (id: number) => void) => {
   const [state, setState] = useState<CreatorState>({ status: "closed" });
@@ -29,14 +30,26 @@ export const useDocumentCreator = (onCreated: (id: number) => void) => {
     },
   });
   return {
-    state,
-    pending: mutation.isPending,
+    state:
+      state.status === "closed"
+        ? state
+        : {
+            ...state,
+            relativePath: [
+              state.input.directory,
+              state.input.filename.trim() &&
+              !state.input.filename.trim().includes(".")
+                ? `${state.input.filename.trim()}.md`
+                : state.input.filename.trim(),
+            ]
+              .filter(Boolean)
+              .join("/"),
+          },
     open: (directory: string) => {
       if (submitting.current) return;
       setState({
         status: "editing",
         input: { directory, filename: "", title: "" },
-        error: "",
       });
     },
     close: () => {
@@ -48,9 +61,8 @@ export const useDocumentCreator = (onCreated: (id: number) => void) => {
         previous.status === "closed"
           ? previous
           : {
-              ...previous,
+              status: "editing",
               input: { ...previous.input, [field]: value },
-              error: "",
             },
       );
     },
@@ -62,14 +74,16 @@ export const useDocumentCreator = (onCreated: (id: number) => void) => {
       )
         return;
       submitting.current = true;
+      setState({ status: "saving", input: state.input });
       try {
         const document = await mutation.mutateAsync(state.input);
         setState({ status: "closed" });
         onCreated(document.id);
       } catch (error) {
         setState({
-          ...state,
-          error:
+          status: "error",
+          input: state.input,
+          message:
             error instanceof Error ? error.message : "Failed to create file.",
         });
       } finally {

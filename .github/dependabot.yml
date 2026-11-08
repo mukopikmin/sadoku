@@ -46,6 +46,24 @@ updates:
           - "*"
     open-pull-requests-limit: 5
 
+  - package-ecosystem: "docker"
+    directories:
+      - "/"
+      - "/src/proxy"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "docker"
+    groups:
+      docker-dependencies:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

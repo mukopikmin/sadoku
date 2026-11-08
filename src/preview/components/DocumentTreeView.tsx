@@ -6,11 +6,9 @@ import {
   TreeView,
 } from "@chakra-ui/react";
 import { ChevronRight, File, Folder, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
-import {
-  type DocumentTreeNode,
-  getDirectoryValues,
-} from "../models/documentTree";
+import { useMemo } from "react";
+import { type DocumentTreeNode } from "../models/documentTree";
+import { useDocumentTreeExpansion } from "../hooks/useDocumentTreeExpansion";
 import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
@@ -34,24 +32,15 @@ export const DocumentTreeView = ({
       }),
     [rootNode],
   );
-  const [expandedValue, setExpandedValue] = useState<string[]>(() =>
-    getDirectoryValues(rootNode),
-  );
+  const expansion = useDocumentTreeExpansion(rootNode, onSelectDocument);
 
   return (
     <TreeView.Root
       collection={collection}
       expandOnClick={false}
-      expandedValue={expandedValue}
-      onExpandedChange={({ expandedValue }) => setExpandedValue(expandedValue)}
-      onSelectionChange={({ selectedNodes }) => {
-        const selectedDocument = selectedNodes.find(
-          (node) => node.documentId !== undefined,
-        );
-        if (selectedDocument?.documentId !== undefined) {
-          onSelectDocument(selectedDocument.documentId);
-        }
-      }}
+      expandedValue={expansion.expandedValue}
+      onExpandedChange={({ expandedValue }) => expansion.expand(expandedValue)}
+      onSelectionChange={({ selectedNodes }) => expansion.select(selectedNodes)}
       borderColor="border.muted"
       borderRadius="lg"
       borderWidth="1px"

@@ -1,6 +1,6 @@
 import { Check, RotateCcw } from "lucide-react";
 import type { Comment } from "../../models/comment";
-import { toaster } from "../ui/toaster";
+import { useCommentResolution } from "./useCommentResolution";
 import { CommentActionButton } from "./CommentForm";
 import type { RunCommentAction } from "./useCommentActionState";
 
@@ -19,46 +19,28 @@ export const CommentResolutionButton = ({
   onResolve,
   runAction,
 }: CommentResolutionButtonProps) => {
-  const handleReopen = () =>
-    runAction(() => onReopen(comment.id), {
-      errorTitle: "Could not reopen comment",
-    });
-
-  const handleResolve = () =>
-    runAction(() => onResolve(comment.id), {
-      errorTitle: "Could not resolve comment",
-      onSuccess: () => {
-        toaster.create({
-          action: {
-            label: "Undo",
-            onClick: () => {
-              void handleReopen();
-            },
-          },
-          closable: true,
-          description: "The comment was resolved.",
-          title: "Comment resolved",
-          type: "success",
-        });
-      },
-    });
+  const resolution = useCommentResolution({
+    comment,
+    disabled,
+    onReopen,
+    onResolve,
+    runAction,
+  });
 
   return (
     <CommentActionButton
-      colorPalette={comment.state === "resolved" ? "gray" : "green"}
+      colorPalette={resolution.action === "reopen" ? "gray" : "green"}
       disabled={disabled}
-      onClick={() => {
-        void (comment.state === "resolved" ? handleReopen() : handleResolve());
-      }}
+      onClick={() => void resolution.run()}
       type="button"
       variant="outline"
     >
-      {comment.state === "resolved" ? (
+      {resolution.action === "reopen" ? (
         <RotateCcw aria-hidden="true" />
       ) : (
         <Check aria-hidden="true" />
       )}
-      {comment.state === "resolved" ? "Reopen" : "Resolve"}
+      {resolution.action === "reopen" ? "Reopen" : "Resolve"}
     </CommentActionButton>
   );
 };

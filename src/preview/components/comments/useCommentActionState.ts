@@ -1,59 +1,39 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback } from "react";
+import { useAsyncAction } from "../../hooks/useAsyncAction";
+import { errorMessage } from "../../models/uiState";
 import { toaster } from "../ui/toaster";
 
-type CommentActionOptions = {
-  errorTitle?: string;
-  onSuccess?: () => void;
-};
-
+type CommentActionOptions = { errorTitle?: string; onSuccess?: () => void };
 export type ReportCommentActionError = (error: unknown, title?: string) => void;
-
 export type RunCommentAction = (
   action: () => Promise<void>,
   options?: CommentActionOptions,
 ) => Promise<boolean>;
 
 export const useCommentActionState = () => {
-  const [error, setError] = useState<string>();
-  const [isPending, setIsPending] = useState(false);
-  const isPendingRef = useRef(false);
-
+  const { state, run, reportError: setError } = useAsyncAction();
   const reportError = useCallback<ReportCommentActionError>(
     (error, title = "Comment action failed") => {
-      const description =
-        error instanceof Error ? error.message : String(error);
-      setError(description);
+      setError(error);
       toaster.create({
         closable: true,
-        description,
+        description: errorMessage(error),
         title,
         type: "error",
       });
     },
-    [],
+    [setError],
   );
-
   const runAction = useCallback<RunCommentAction>(
-    async (action, options = {}) => {
-      if (isPendingRef.current) return false;
-
-      isPendingRef.current = true;
-      setIsPending(true);
-      setError(undefined);
-      try {
-        await action();
-        options.onSuccess?.();
-        return true;
-      } catch (error) {
-        reportError(error, options.errorTitle);
-        return false;
-      } finally {
-        isPendingRef.current = false;
-        setIsPending(false);
-      }
-    },
-    [reportError],
+    (action, options = {}) =>
+      run(
+        async () => {
+          await action();
+          options.onSuccess?.();
+        },
+        (error) => reportError(error, options.errorTitle),
+      ),
+    [run, reportError],
   );
-
-  return { error, isPending, reportError, runAction };
+  return { state, reportError, runAction };
 };

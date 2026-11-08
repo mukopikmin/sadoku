@@ -35,19 +35,19 @@ const ReplyItemHarness = ({
   onUpdate = async () => {},
   reply = createCommentReply(),
 }: ReplyItemHarnessProps) => {
-  const { error, isPending, reportError, runAction } = useCommentActionState();
+  const { state, reportError, runAction } = useCommentActionState();
   return (
     <>
       <ReplyItem
         commentId={5}
-        disabled={isPending}
+        disabled={state.status === "pending"}
         onDelete={onDelete}
         onUpdate={onUpdate}
         reply={reply}
         reportError={reportError}
         runAction={runAction}
       />
-      {error && <span>{error}</span>}
+      {state.status === "error" && <span>{state.message}</span>}
     </>
   );
 };

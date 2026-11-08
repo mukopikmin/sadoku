@@ -9,42 +9,10 @@ import {
   VisuallyHidden,
 } from "@chakra-ui/react";
 import { Minus, Plus } from "lucide-react";
-import {
-  type RefObject,
-  useContext,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { type RefObject, useContext } from "react";
+import { useMermaidDiagram, useMermaidZoom } from "./useMermaidZoom";
 import { Tooltip } from "../components/ui/tooltip";
-import { initializeMermaidPinchZoom } from "./mermaidPinchZoom";
 import { MarkdownThemeContext } from "./MarkdownThemeContext";
-
-const useMermaidZoom = (sourceRef: RefObject<HTMLPreElement | null>) => {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const zoomRef = useRef<ReturnType<typeof initializeMermaidPinchZoom>>(null);
-
-  useLayoutEffect(() => {
-    const viewport = viewportRef.current;
-    const svg = sourceRef.current?.querySelector("svg");
-    if (!viewport || !svg) return;
-    viewport.replaceChildren(svg.cloneNode(true));
-    const zoom = initializeMermaidPinchZoom(viewport);
-    zoomRef.current = zoom;
-    return () => {
-      zoom.destroy();
-      zoomRef.current = null;
-      viewport.replaceChildren();
-    };
-  }, [sourceRef]);
-
-  return {
-    viewportRef,
-    fit: () => zoomRef.current?.fit(),
-    zoomIn: () => zoomRef.current?.zoomIn(),
-    zoomOut: () => zoomRef.current?.zoomOut(),
-  };
-};
 
 const MermaidZoomContent = ({
   sourceRef,
@@ -110,16 +78,15 @@ const MermaidZoomContent = ({
 
 export const MermaidDiagram = ({ source }: { source: string }) => {
   const theme = useContext(MarkdownThemeContext);
-  const sourceRef = useRef<HTMLPreElement>(null);
-  const [open, setOpen] = useState(false);
+  const { sourceRef, state, setOpen } = useMermaidDiagram();
 
   return (
     <Dialog.Root
       lazyMount
       onOpenChange={({ open }) => {
-        setOpen(open && Boolean(sourceRef.current?.querySelector("svg")));
+        setOpen(open);
       }}
-      open={open}
+      open={state.status === "open"}
       size="cover"
       unmountOnExit
     >
