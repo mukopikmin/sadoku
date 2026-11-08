@@ -185,7 +185,7 @@ func TestNoSyncKeepsServerRunningWithoutKeepAlive(t *testing.T) {
 		t.Fatal("server did not start")
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
-	response, err := client.Get(url)
+	response, err := testGet(t, client, url)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +195,7 @@ func TestNoSyncKeepsServerRunningWithoutKeepAlive(t *testing.T) {
 		t.Fatal("server stopped")
 	case <-time.After(3200 * time.Millisecond):
 	}
-	response, err = client.Get(url)
+	response, err = testGet(t, client, url)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,4 +203,14 @@ func TestNoSyncKeepsServerRunningWithoutKeepAlive(t *testing.T) {
 	if response.StatusCode != 200 {
 		t.Fatalf("status: %d", response.StatusCode)
 	}
+}
+
+// testGet binds HTTP requests to the lifetime of the calling test.
+func testGet(t *testing.T, client *http.Client, url string) (*http.Response, error) {
+	t.Helper()
+	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(request)
 }

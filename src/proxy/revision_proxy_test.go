@@ -51,9 +51,9 @@ func newProxy(t *testing.T, transport http.RoundTripper) http.Handler {
 	return handler
 }
 
-func serve(handler http.Handler, method, path string, body io.Reader) *httptest.ResponseRecorder {
+func serve(t *testing.T, handler http.Handler, method, path string, body io.Reader) *httptest.ResponseRecorder {
 	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, httptest.NewRequest(method, publicOrigin+path, body))
+	handler.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), method, publicOrigin+path, body))
 	return w
 }
 
@@ -73,7 +73,7 @@ func TestDynamicTagsPathsAndQuery(t *testing.T) {
 				}
 				return response(200, "ok"), nil
 			}))
-			w := serve(proxy, "GET", "/revisions/"+tag+"/documents/a%20b%2Fc?x=1&x=2&q=a+b&next=%2F", nil)
+			w := serve(t, proxy, "GET", "/revisions/"+tag+"/documents/a%20b%2Fc?x=1&x=2&q=a+b&next=%2F", nil)
 			if w.Code != 200 || w.Body.String() != "ok" {
 				t.Fatalf("response = %d %q", w.Code, w.Body.String())
 			}
@@ -95,7 +95,7 @@ func TestDeterministicCloudRunURL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := serve(handler, "GET", "/revisions/v1/", nil).Code; got != 204 {
+	if got := serve(t, handler, "GET", "/revisions/v1/", nil).Code; got != 204 {
 		t.Fatal(got)
 	}
 }
@@ -107,18 +107,18 @@ func TestInvalidRevisionRoutes(t *testing.T) {
 		"v1%2Fstaging", "v1%5Cstaging", "v1%252Fstaging", "%0A", "user@evil.test", strings.Repeat("a", 64),
 	} {
 		t.Run(tag, func(t *testing.T) {
-			if got := serve(proxy, "GET", "/revisions/"+tag+"/", nil).Code; got != 400 {
+			if got := serve(t, proxy, "GET", "/revisions/"+tag+"/", nil).Code; got != 400 {
 				t.Fatalf("status = %d", got)
 			}
 		})
 	}
 	for _, path := range []string{"/", "/documents", "/revisions", "//evil.test/"} {
-		if got := serve(proxy, "GET", path, nil).Code; got != 404 {
+		if got := serve(t, proxy, "GET", path, nil).Code; got != 404 {
 			t.Errorf("%q: status = %d", path, got)
 		}
 	}
 	for _, path := range []string{"../documents", "%2e%2e/documents", "a/./b", "a%2F..%2Fb", `a%5Cb`} {
-		if got := serve(proxy, "GET", "/revisions/v1/"+path, nil).Code; got != 400 {
+		if got := serve(t, proxy, "GET", "/revisions/v1/"+path, nil).Code; got != 400 {
 			t.Errorf("%q: status = %d", path, got)
 		}
 	}
@@ -129,7 +129,7 @@ func TestDNSLabelLimit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := serve(proxy, "GET", "/revisions/v1/", nil).Code; got != 400 {
+	if got := serve(t, proxy, "GET", "/revisions/v1/", nil).Code; got != 400 {
 		t.Fatal(got)
 	}
 }
@@ -158,7 +158,7 @@ func TestRejectsInvalidConfiguration(t *testing.T) {
 func TestRejectsUnconfiguredHost(t *testing.T) {
 	proxy := newProxy(t, nil)
 	for _, host := range []string{"evil.test", "preview.example.com:1234", "preview.example.com.evil.test"} {
-		r := httptest.NewRequest("GET", publicOrigin+"/revisions/v1/", nil)
+		r := httptest.NewRequestWithContext(t.Context(), "GET", publicOrigin+"/revisions/v1/", nil)
 		r.Host = host
 		w := httptest.NewRecorder()
 		proxy.ServeHTTP(w, r)
@@ -167,7 +167,7 @@ func TestRejectsUnconfiguredHost(t *testing.T) {
 		}
 	}
 	// Absolute-form request targets must also match the configured authority.
-	r := httptest.NewRequest("GET", "https://evil.test/revisions/v1/", nil)
+	r := httptest.NewRequestWithContext(t.Context(), "GET", "https://evil.test/revisions/v1/", nil)
 	r.Host = "preview.example.com"
 	w := httptest.NewRecorder()
 	proxy.ServeHTTP(w, r)
@@ -179,7 +179,7 @@ func TestRejectsUnconfiguredHost(t *testing.T) {
 func TestCanonicalTagRoot(t *testing.T) {
 	proxy := newProxy(t, nil)
 	for _, query := range []string{"?x=1&next=%2F", "?", ""} {
-		w := serve(proxy, "POST", "/revisions/v1"+query, strings.NewReader("payload"))
+		w := serve(t, proxy, "POST", "/revisions/v1"+query, strings.NewReader("payload"))
 		if w.Code != 308 || w.Header().Get("Location") != publicOrigin+"/revisions/v1/"+query {
 			t.Fatalf("response = %d %q", w.Code, w.Header().Get("Location"))
 		}
@@ -198,7 +198,7 @@ func TestTLSIsTerminatedBeforeContainer(t *testing.T) {
 	}))
 	for _, trailing := range []string{"", "/"} {
 		w := httptest.NewRecorder()
-		proxy.ServeHTTP(w, httptest.NewRequest("GET", "http://preview.example.com/revisions/v1"+trailing, nil))
+		proxy.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), "GET", "http://preview.example.com/revisions/v1"+trailing, nil))
 		if trailing == "" && w.Header().Get("Location") != publicOrigin+"/revisions/v1/" {
 			t.Fatal("redirect did not retain HTTPS")
 		}
@@ -229,7 +229,7 @@ func TestMethodsAndBinaryBodies(t *testing.T) {
 				}
 				return response(204, ""), nil
 			}))
-			r := httptest.NewRequest(method, publicOrigin+"/revisions/v1/resource", bytes.NewReader(payload))
+			r := httptest.NewRequestWithContext(t.Context(), method, publicOrigin+"/revisions/v1/resource", bytes.NewReader(payload))
 			r.Header.Set("Content-Type", "application/octet-stream")
 			w := httptest.NewRecorder()
 			proxy.ServeHTTP(w, r)
@@ -262,7 +262,7 @@ func TestForwardingHeaders(t *testing.T) {
 		}
 		return response(204, ""), nil
 	}))
-	r := httptest.NewRequest("GET", publicOrigin+"/revisions/staging/", nil)
+	r := httptest.NewRequestWithContext(t.Context(), "GET", publicOrigin+"/revisions/staging/", nil)
 	for name, value := range map[string]string{
 		"Host": "evil.test", "Connection": "X-Private, X-Forwarded-Prefix", "X-Private": "secret",
 		"Keep-Alive": "timeout=5", "Transfer-Encoding": "chunked", "Content-Length": "0",
@@ -288,7 +288,7 @@ func TestURLShapedPathAndQueryCannotChangeBackend(t *testing.T) {
 		}
 		return response(204, ""), nil
 	}))
-	if got := serve(proxy, "GET", "/revisions/v1//evil.test/path?url=https://evil.test", nil).Code; got != 204 {
+	if got := serve(t, proxy, "GET", "/revisions/v1//evil.test/path?url=https://evil.test", nil).Code; got != 204 {
 		t.Fatal(got)
 	}
 }
@@ -318,7 +318,7 @@ func TestRequestStreamAndCancellation(t *testing.T) {
 		}
 		return response(204, ""), nil
 	}))
-	r := httptest.NewRequest("POST", publicOrigin+"/revisions/v1/", reader).WithContext(ctx)
+	r := httptest.NewRequestWithContext(t.Context(), "POST", publicOrigin+"/revisions/v1/", reader).WithContext(ctx)
 	w := httptest.NewRecorder()
 	proxy.ServeHTTP(w, r)
 	if w.Code != 204 {
@@ -386,7 +386,7 @@ func TestUpstreamStatusesAndRedirects(t *testing.T) {
 			r.Header.Set("Retry-After", "5")
 			return r, nil
 		}))
-		w := serve(proxy, "GET", "/revisions/nonexistent/", nil)
+		w := serve(t, proxy, "GET", "/revisions/nonexistent/", nil)
 		if w.Code != status || w.Body.String() != "upstream" || calls != 1 {
 			t.Errorf("status %d: got %d %q, calls %d", status, w.Code, w.Body.String(), calls)
 		}
@@ -401,7 +401,7 @@ func TestTransportErrorIsGeneric(t *testing.T) {
 	proxy := newProxy(t, roundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("private backend details")
 	}))
-	w := serve(proxy, "GET", "/revisions/v1/", nil)
+	w := serve(t, proxy, "GET", "/revisions/v1/", nil)
 	if w.Code != 502 || w.Body.String() != "Upstream request failed.\n" || w.Header().Get("Cache-Control") != "no-store" {
 		t.Fatalf("response = %d %q", w.Code, w.Body.String())
 	}

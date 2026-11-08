@@ -19,7 +19,7 @@ import (
 
 func writeTestFile(t *testing.T, path, text string, mode os.FileMode) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil { // #nosec G301 -- This directory contains distributable binaries or test fixtures, not private application data.
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(path, []byte(text), mode); err != nil {
@@ -122,7 +122,7 @@ func TestArchiveFormats(t *testing.T) {
 						t.Fatal(err)
 					}
 					files[h.Name] = string(data)
-					modes[h.Name] = os.FileMode(h.Mode)
+					modes[h.Name] = h.FileInfo().Mode()
 				}
 			}
 			name := "sadoku"
@@ -171,7 +171,7 @@ func TestCloudRunEntrypoint(t *testing.T) {
 		t.Run(tc.source+tc.port+tc.trust, func(t *testing.T) {
 			dir := t.TempDir()
 			writeTestFile(t, filepath.Join(dir, "sadoku"), "#!/bin/sh\nprintf '%s\\n' \"$@\"\n", 0755)
-			cmd := exec.Command("sh", "scripts/cloud_run_entrypoint.sh")
+			cmd := exec.CommandContext(t.Context(), "sh", "scripts/cloud_run_entrypoint.sh")
 			cmd.Env = []string{"PATH=" + dir + ":/usr/bin:/bin", "SADOKU_SOURCE=" + tc.source, "PORT=" + tc.port, "SADOKU_TRUST_FORWARDED_PREFIX=" + tc.trust}
 			out, err := cmd.CombinedOutput()
 			if (err == nil) != tc.valid {
@@ -263,7 +263,7 @@ cp "$FAKE_RELEASE_DIR/${url##*/}" "$output"
 				checksum = strings.Repeat("0", 64)
 			}
 			writeTestFile(t, path+".sha256", checksum+"\n", 0644)
-			cmd := exec.Command("sh", append([]string{installer}, tc.args...)...)
+			cmd := exec.CommandContext(t.Context(), "sh", append([]string{installer}, tc.args...)...)
 			cmd.Env = append(os.Environ(), "HOME="+home, "PATH="+bin+":"+os.Getenv("PATH"), "FAKE_RELEASE_DIR="+dir, "FAKE_UNAME_S="+tc.os, "FAKE_UNAME_M="+tc.arch)
 			out, err := cmd.CombinedOutput()
 			if (err != nil) != tc.fail {

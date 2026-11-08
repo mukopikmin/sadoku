@@ -70,7 +70,7 @@ func awaitSignal(t *testing.T, signal <-chan struct{}) {
 func assertShell(t *testing.T, url string) {
 	t.Helper()
 	client := &http.Client{Timeout: 3 * time.Second}
-	response, err := client.Get(url)
+	response, err := testGet(t, client, url)
 	if err != nil {
 		t.Fatal(err)
 	}

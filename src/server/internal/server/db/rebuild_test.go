@@ -122,7 +122,7 @@ func TestRebuildFailureRollsBackAndCanRetry(t *testing.T) {
 	for _, invalid := range []string{`resolved=1`, `resolved_by_type='bot'`} {
 		t.Run(invalid, func(t *testing.T) {
 			database, _ := legacyDatabase(t)
-			if _, err := database.Exec("UPDATE comment SET " + invalid); err != nil {
+			if _, err := database.Exec("UPDATE comment SET " + invalid); err != nil { // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 				t.Fatal(err)
 			}
 			err := Migrate(database)
@@ -174,7 +174,7 @@ func TestRebuildFillsOnlyMissingSourceValues(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			database, _ := legacyDatabase(t)
-			if _, err := database.Exec("UPDATE comment SET " + test.assignment); err != nil {
+			if _, err := database.Exec("UPDATE comment SET " + test.assignment); err != nil { // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 				t.Fatal(err)
 			}
 			for range 2 {

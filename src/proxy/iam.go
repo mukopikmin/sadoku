@@ -116,7 +116,7 @@ func (s *metadataTokenSource) Token(ctx context.Context) (string, error) {
 		s.refresh = flight
 		// One bounded refresh is shared across callers. A browser disconnect
 		// cancels its wait without canceling credentials for other requests.
-		go s.load(flight)
+		go s.load(ctx, flight)
 	}
 	s.mu.Unlock()
 	select {
@@ -130,8 +130,8 @@ func (s *metadataTokenSource) Token(ctx context.Context) (string, error) {
 	}
 }
 
-func (s *metadataTokenSource) load(flight *tokenRefresh) {
-	token, expires, err := s.fetch()
+func (s *metadataTokenSource) load(ctx context.Context, flight *tokenRefresh) {
+	token, expires, err := s.fetch(ctx)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if err == nil {
@@ -147,10 +147,10 @@ func (s *metadataTokenSource) load(flight *tokenRefresh) {
 	close(flight.done)
 }
 
-func (s *metadataTokenSource) fetch() (string, time.Time, error) {
+func (s *metadataTokenSource) fetch(parent context.Context) (string, time.Time, error) {
 	u, _ := url.Parse(identityEndpoint)
 	u.RawQuery = url.Values{"audience": {s.audience}, "format": {"full"}}.Encode()
-	ctx, cancel := context.WithTimeout(context.Background(), metadataTimeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(parent), metadataTimeout)
 	defer cancel()
 	request, _ := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	request.Header.Set("Metadata-Flavor", "Google")

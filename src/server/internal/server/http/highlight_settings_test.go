@@ -29,7 +29,7 @@ func TestHighlightBoundarySettingsRoundTrip(t *testing.T) {
 					t.Fatalf("stored highlight boundaries: %+v %v", stored, err)
 				}
 				if transport == "REST" {
-					body := restRequest(t, server.URL, "GET", "/__sadoku/settings", "", "", 200)
+					body := restRequest(ctx, t, server.URL, "GET", "/__sadoku/settings", "", "", 200)
 					var settings config.Settings
 					if err := json.Unmarshal(body, &settings); err != nil || settings.ShowHighlightBoundaries != want {
 						t.Fatalf("REST settings: %s %v", body, err)
@@ -45,7 +45,7 @@ func TestHighlightBoundarySettingsRoundTrip(t *testing.T) {
 			for _, enabled := range []bool{true, false, true} {
 				if transport == "REST" {
 					body := fmt.Sprintf(`{"theme":"light","codeWrap":"scroll","fontScale":1,"maxDepth":2,"maxFiles":20,"excludedDirectories":[],"markdownExtensions":[".md"],"showHighlightBoundaries":%t}`, enabled)
-					restRequest(t, server.URL, "PUT", "/__sadoku/settings", body, "application/json", 200)
+					restRequest(ctx, t, server.URL, "PUT", "/__sadoku/settings", body, "application/json", 200)
 				} else {
 					_, err := client.UpdateSettings(ctx, connect.NewRequest(&pb.UpdateSettingsRequest{
 						Theme: "light", CodeWrap: "scroll", FontScale: 1, MaxDepth: 2, MaxFiles: 20,
@@ -59,7 +59,7 @@ func TestHighlightBoundarySettingsRoundTrip(t *testing.T) {
 			}
 			// Older clients omit this setting and must preserve the saved value.
 			if transport == "REST" {
-				restRequest(t, server.URL, "PUT", "/__sadoku/settings", `{"theme":"dark","codeWrap":"wrap","fontScale":1,"maxDepth":2,"maxFiles":20}`, "application/json", 200)
+				restRequest(ctx, t, server.URL, "PUT", "/__sadoku/settings", `{"theme":"dark","codeWrap":"wrap","fontScale":1,"maxDepth":2,"maxFiles":20}`, "application/json", 200)
 			} else {
 				_, err := client.UpdateSettings(ctx, connect.NewRequest(&pb.UpdateSettingsRequest{
 					Theme: "dark", CodeWrap: "wrap", FontScale: 1, MaxDepth: 2, MaxFiles: 20, MarkdownExtensions: []string{".md"},

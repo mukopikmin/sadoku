@@ -54,7 +54,7 @@ func TestPublicResponseLocations(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			w := serve(proxy, "GET", "/revisions/v1/documents/1?old=yes", nil)
+			w := serve(t, proxy, "GET", "/revisions/v1/documents/1?old=yes", nil)
 			if w.Code != 302 || w.Header().Get("Location") != test.want || calls != 1 || w.Body.String() != "redirect body" {
 				t.Fatalf("response = %d %q, calls %d", w.Code, w.Header().Get("Location"), calls)
 			}
@@ -73,7 +73,7 @@ func TestResourceLocationAndRedirectStatusPreserved(t *testing.T) {
 			r.Header.Set("Content-Location", backendURL+"/documents/2?format=raw")
 			return r, nil
 		}))
-		w := serve(proxy, "POST", "/revisions/v1/documents", strings.NewReader("payload"))
+		w := serve(t, proxy, "POST", "/revisions/v1/documents", strings.NewReader("payload"))
 		if w.Code != status || w.Body.String() != "unchanged response" ||
 			w.Header().Get("Location") != publicOrigin+"/revisions/v1/documents/2" ||
 			w.Header().Get("Content-Location") != publicOrigin+"/revisions/v1/documents/2?format=raw" {
@@ -100,7 +100,7 @@ func TestMalformedResponseLocationsFailClosed(t *testing.T) {
 			r.Header.Set("Location", location)
 			return r, nil
 		}))
-		w := serve(proxy, "GET", "/revisions/v1/", nil)
+		w := serve(t, proxy, "GET", "/revisions/v1/", nil)
 		if w.Code != 502 || w.Body.String() != "Upstream request failed.\n" || w.Header().Get("Location") != "" || !closed.closed {
 			t.Errorf("malformed URL was not safely rejected: %q", location)
 		}
@@ -112,7 +112,7 @@ func TestMalformedResponseLocationsFailClosed(t *testing.T) {
 			r.Header.Add(name, backendURL+"/documents")
 			return r, nil
 		}))
-		if got := serve(proxy, "GET", "/revisions/v1/", nil).Code; got != 502 {
+		if got := serve(t, proxy, "GET", "/revisions/v1/", nil).Code; got != 502 {
 			t.Errorf("duplicate %s was accepted", name)
 		}
 	}
@@ -189,7 +189,7 @@ func TestResponseCachePolicy(t *testing.T) {
 				r.Header.Set("ETag", `"asset-version"`)
 				return r, nil
 			}))
-			w := serve(proxy, c.method, c.path, nil)
+			w := serve(t, proxy, c.method, c.path, nil)
 			if w.Code != c.status || w.Header().Get("Cache-Control") != test.want {
 				t.Fatalf("response = %d, cache = %q, want %q", w.Code, w.Header().Get("Cache-Control"), test.want)
 			}
@@ -226,7 +226,7 @@ func TestResponsePoliciesStayIsolatedAcrossConcurrentTags(t *testing.T) {
 	for range 20 {
 		for _, tag := range []string{"v1", "staging"} {
 			wg.Go(func() {
-				w := serve(proxy, "GET", "/revisions/"+tag+"/", nil)
+				w := serve(t, proxy, "GET", "/revisions/"+tag+"/", nil)
 				if w.Code != 302 || w.Body.String() != "/revisions/"+tag ||
 					w.Header().Get("Location") != publicOrigin+"/revisions/"+tag+"/documents" ||
 					w.Header().Get("Cache-Control") != "no-store" {
@@ -242,7 +242,7 @@ func TestLocalProxyResponsesPreventSharedCaching(t *testing.T) {
 	proxy := newProxy(t, nil)
 	for _, path := range []string{"/", "/revisions/INVALID/", "/revisions/v1"} {
 		w := httptest.NewRecorder()
-		proxy.ServeHTTP(w, httptest.NewRequest("GET", publicOrigin+path, nil))
+		proxy.ServeHTTP(w, httptest.NewRequestWithContext(t.Context(), "GET", publicOrigin+path, nil))
 		if w.Header().Get("Cache-Control") != "no-store" || w.Header().Get("CDN-Cache-Control") != "no-store" {
 			t.Error("local error or canonical redirect permits caching")
 		}

@@ -108,7 +108,7 @@ func markdownFile(t *testing.T, name, body string) string {
 }
 
 func TestServerFallsBackFromOccupiedPortAndStopsCleanly(t *testing.T) {
-	reserved, err := net.Listen("tcp", "127.0.0.1:0")
+	reserved, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ func TestServerFallsBackFromOccupiedPortAndStopsCleanly(t *testing.T) {
 		t.Fatal("reused an occupied port")
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
-	response, err := client.Get(previewURL)
+	response, err := testGet(t, client, previewURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 	var reserved []net.Listener
 	var port int
 	for attempt := 0; attempt < 20; attempt++ {
-		first, err := net.Listen("tcp", "127.0.0.1:0")
+		first, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -150,7 +150,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 		port = first.Addr().(*net.TCPAddr).Port
 		if port+count <= 65535 {
 			for i := 1; i < count; i++ {
-				next, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port+i))
+				next, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", fmt.Sprintf("127.0.0.1:%d", port+i))
 				if err != nil {
 					break
 				}
@@ -189,7 +189,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 
 func TestLastEventStreamDisconnectShutsDownServer(t *testing.T) {
 	previewURL, stopped := startServer(t, markdownFile(t, "preview.md", "# Preview\n"), 0, false)
-	response, err := http.Get(previewURL + "/__sadoku/events")
+	response, err := testGet(t, http.DefaultClient, previewURL+"/__sadoku/events")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -289,7 +289,7 @@ func TestRESTCommentsRemainScopedAndValidateBodies(t *testing.T) {
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 	request := func(method, path, body string) *http.Response {
 		t.Helper()
-		req, _ := http.NewRequest(method, previewURL+path, strings.NewReader(body))
+		req, _ := http.NewRequestWithContext(t.Context(), method, previewURL+path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		res, err := httpClient.Do(req)
 		if err != nil {
@@ -330,4 +330,14 @@ func TestRESTCommentsRemainScopedAndValidateBodies(t *testing.T) {
 	if err != nil || len(body) != 0 {
 		t.Fatal("delete returned a response body", err)
 	}
+}
+
+// testGet binds HTTP requests to the lifetime of the calling test.
+func testGet(t *testing.T, client *http.Client, url string) (*http.Response, error) {
+	t.Helper()
+	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(request)
 }

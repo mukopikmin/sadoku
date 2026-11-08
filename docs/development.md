@@ -45,6 +45,16 @@ plus `rowserrcheck` and `sqlclosecheck` for SQL resource and iteration errors.
 `bodyclose` checks HTTP response cleanup, and `nilerr` catches branches that
 discard a non-nil error by returning nil. `nolintlint` requires suppressions to
 name specific linters, explain the reason, and remain necessary.
+`contextcheck` verifies context propagation. `noctx` covers HTTP, listeners, and
+subprocesses, including tests; legacy SQL APIs remain excluded pending an
+end-to-end context migration. Database initialization and existing context-aware
+repository operations inherit the caller's context. Shutdown and shared token
+refresh retain context values while detaching cancellation.
+`gosec` checks security-sensitive operations, with G204 and G304 disabled because
+Sadoku deliberately executes local tools and opens user-selected files. Command
+injection and path traversal taint analysis (G702/G703) remain enabled. Local
+`#nosec` comments identify reviewed cases such as executable artifact permissions,
+fixed SQL table allowlists, and test fixture paths.
 Tests are included and generated code is excluded. Formatting stays with `gofmt`;
 cross-platform vet checks remain available through `make vet-cross`.
 
