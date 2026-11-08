@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -147,7 +148,8 @@ func (e *UsageError) Error() string               { return e.message }
 func usageError(format string, args ...any) error { return &UsageError{fmt.Sprintf(format, args...)} }
 func WriteError(out io.Writer, err error) {
 	_, _ = fmt.Fprintln(out, err)
-	if _, ok := err.(*UsageError); ok {
+	var usage *UsageError
+	if errors.As(err, &usage) {
 		_, _ = io.WriteString(out, Usage+"\n")
 	}
 }

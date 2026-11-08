@@ -176,7 +176,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 		timer.Stop()
 	}
 	mu.Unlock()
-	if err == http.ErrServerClosed {
+	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
 	return err
