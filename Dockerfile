@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:bookworm-slim AS client
+FROM node:26.13.0-bookworm-slim AS client
 
 RUN apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +17,7 @@ RUN --mount=type=secret,id=proxy_ca \
 COPY src/preview/ ./src/preview/
 RUN make build-client
 
-FROM golang:1.27.2-bookworm AS go-toolchain
+FROM golang:1.27.3-bookworm AS go-toolchain
 
 FROM debian:bookworm-slim AS builder
 

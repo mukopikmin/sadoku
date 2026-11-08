@@ -2,7 +2,7 @@
 
 [Back to README](../README.md)
 
-Use GNU Make as the entry point for repository tasks. Go 1.26.10 or later runs
+Use GNU Make as the entry point for repository tasks. Go 1.27.3 or later runs
 the backend, CLI, build, and notice tools. Release validation and notes run in
 GitHub Actions using Bash, Git, GitHub CLI, and jq. Node.js runs the preview
 client and npm tooling; its required version is specified in `src/proto/package.json`.
