@@ -213,7 +213,7 @@ func GitHubAccount(ctx context.Context) (any, error) {
 	}
 	var account map[string]any
 	if err = json.Unmarshal([]byte(decodeText(b, true)), &account); err != nil {
-		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}, nil
+		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}, nil //nolint:nilerr // Account lookup failures are represented by ok=false in the response.
 	}
 	login, ok := account["login"].(string)
 	if !ok || login == "" {

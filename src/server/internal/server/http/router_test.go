@@ -187,26 +187,29 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() { _ = res.Body.Close() })
 		return res
 	}
-	res := request("GET", "/documents/1", "")
-	b, _ := io.ReadAll(res.Body)
-	if res.StatusCode != 200 || !bytes.Contains(b, []byte("sadoku-client-root")) {
+	spaResponse := request("GET", "/documents/1", "")
+	defer func() { _ = spaResponse.Body.Close() }()
+	b, _ := io.ReadAll(spaResponse.Body)
+	if spaResponse.StatusCode != 200 || !bytes.Contains(b, []byte("sadoku-client-root")) {
 		t.Fatal("SPA unavailable")
 	}
-	res = request("GET", "/assets/.vite/manifest.json", "")
+	manifestResponse := request("GET", "/assets/.vite/manifest.json", "")
+	defer func() { _ = manifestResponse.Body.Close() }()
 	var manifest map[string]struct{ File string }
-	if err := json.NewDecoder(res.Body).Decode(&manifest); err != nil {
+	if err := json.NewDecoder(manifestResponse.Body).Decode(&manifest); err != nil {
 		t.Fatal(err)
 	}
-	res = request("GET", "/assets/"+manifest["main.tsx"].File, "")
-	if res.StatusCode != 200 || !strings.Contains(res.Header.Get("Cache-Control"), "immutable") {
+	assetResponse := request("GET", "/assets/"+manifest["main.tsx"].File, "")
+	defer func() { _ = assetResponse.Body.Close() }()
+	if assetResponse.StatusCode != 200 || !strings.Contains(assetResponse.Header.Get("Cache-Control"), "immutable") {
 		t.Fatal("fingerprinted asset unavailable")
 	}
-	res = request("GET", "/assets/%2e%2e%2fgo.mod", "")
-	if res.StatusCode != 404 {
-		t.Fatalf("traversal %d", res.StatusCode)
+	traversalResponse := request("GET", "/assets/%2e%2e%2fgo.mod", "")
+	defer func() { _ = traversalResponse.Body.Close() }()
+	if traversalResponse.StatusCode != 404 {
+		t.Fatalf("traversal %d", traversalResponse.StatusCode)
 	}
 	req, _ := http.NewRequest("GET", server.URL+"/", nil)
 	req.Header.Set("X-Forwarded-Prefix", "/x\"bad")
@@ -218,9 +221,10 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 	if res.StatusCode != 400 {
 		t.Fatal("unsafe prefix accepted")
 	}
-	res = request("POST", "/sadoku.preview.v1.PreviewService/CreateComment", `{"documentId":"1","startLine":0,"endLine":0,"body":"bad"}`)
-	if res.StatusCode != 400 {
-		t.Fatalf("invalid range %d", res.StatusCode)
+	invalidCommentResponse := request("POST", "/sadoku.preview.v1.PreviewService/CreateComment", `{"documentId":"1","startLine":0,"endLine":0,"body":"bad"}`)
+	defer func() { _ = invalidCommentResponse.Body.Close() }()
+	if invalidCommentResponse.StatusCode != 400 {
+		t.Fatalf("invalid range %d", invalidCommentResponse.StatusCode)
 	}
 }
 

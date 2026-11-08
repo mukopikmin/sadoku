@@ -295,34 +295,38 @@ func TestRESTCommentsRemainScopedAndValidateBodies(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() { _ = res.Body.Close() })
 		return res
 	}
-	response := request("GET", "/__sadoku/documents", "")
+	documentsResponse := request("GET", "/__sadoku/documents", "")
+	defer func() { _ = documentsResponse.Body.Close() }()
 	var documents []struct{ ID int64 }
-	if err := json.NewDecoder(response.Body).Decode(&documents); err != nil || len(documents) != 2 {
+	if err := json.NewDecoder(documentsResponse.Body).Decode(&documents); err != nil || len(documents) != 2 {
 		t.Fatalf("document list: %v %v", documents, err)
 	}
 	one, two := documents[0].ID, documents[1].ID
 	path := fmt.Sprintf("/__sadoku/documents/%d/comments", one)
-	response = request("POST", path, `{"startLine":2,"endLine":2,"body":"review"}`)
-	if response.StatusCode != 200 {
-		t.Fatalf("comment creation: %d", response.StatusCode)
+	createResponse := request("POST", path, `{"startLine":2,"endLine":2,"body":"review"}`)
+	defer func() { _ = createResponse.Body.Close() }()
+	if createResponse.StatusCode != 200 {
+		t.Fatalf("comment creation: %d", createResponse.StatusCode)
 	}
-	response = request("GET", fmt.Sprintf("/__sadoku/documents/%d/comments", two), "")
+	commentsResponse := request("GET", fmt.Sprintf("/__sadoku/documents/%d/comments", two), "")
+	defer func() { _ = commentsResponse.Body.Close() }()
 	var comments struct{ Comments []json.RawMessage }
-	if err := json.NewDecoder(response.Body).Decode(&comments); err != nil || len(comments.Comments) != 0 {
+	if err := json.NewDecoder(commentsResponse.Body).Decode(&comments); err != nil || len(comments.Comments) != 0 {
 		t.Fatal("comments crossed document boundary", err)
 	}
-	response = request("POST", path, `{"startLine":1,"endLine":1,"body":"x"} {}`)
-	if response.StatusCode != 400 {
+	invalidBodyResponse := request("POST", path, `{"startLine":1,"endLine":1,"body":"x"} {}`)
+	defer func() { _ = invalidBodyResponse.Body.Close() }()
+	if invalidBodyResponse.StatusCode != 400 {
 		t.Fatal("accepted trailing JSON")
 	}
-	response = request("DELETE", fmt.Sprintf("%s/1", path), "")
-	if response.StatusCode != 204 {
-		t.Fatalf("delete status: %d", response.StatusCode)
+	deleteResponse := request("DELETE", fmt.Sprintf("%s/1", path), "")
+	defer func() { _ = deleteResponse.Body.Close() }()
+	if deleteResponse.StatusCode != 204 {
+		t.Fatalf("delete status: %d", deleteResponse.StatusCode)
 	}
-	body, err := io.ReadAll(response.Body)
+	body, err := io.ReadAll(deleteResponse.Body)
 	if err != nil || len(body) != 0 {
 		t.Fatal("delete returned a response body", err)
 	}

@@ -53,7 +53,7 @@ func Read() (Settings, map[string]any, error) {
 	}
 	// Earlier versions also ignore syntactically invalid TOML.
 	if err = toml.Unmarshal(b, &extra); err != nil {
-		return s, map[string]any{}, nil
+		return s, map[string]any{}, nil //nolint:nilerr // Preserve the historical fallback to defaults for malformed TOML.
 	}
 	s, err = settingsFromConfig(extra)
 	return s, extra, err

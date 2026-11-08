@@ -392,7 +392,11 @@ func TestIAMTransportClosesBodyOnCredentialFailure(t *testing.T) {
 	}
 	body := &trackedBody{Reader: strings.NewReader("payload")}
 	r := httptest.NewRequest("POST", backendURL, body)
-	if _, err := transport.RoundTrip(r); !errors.Is(err, errIDToken) || !body.closed {
+	response, err := transport.RoundTrip(r)
+	if response != nil {
+		defer func() { _ = response.Body.Close() }()
+	}
+	if !errors.Is(err, errIDToken) || !body.closed {
 		t.Fatal("failed RoundTrip did not close its owned request body")
 	}
 }
