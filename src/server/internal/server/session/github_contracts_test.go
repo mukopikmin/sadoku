@@ -244,7 +244,7 @@ func newGitHubFixture(t *testing.T) *githubFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = f.s.saveComments(int64(f.in.DocumentID), comments); err != nil {
+	if err = f.s.saveComments(t.Context(), int64(f.in.DocumentID), comments); err != nil {
 		t.Fatal(err)
 	}
 	return f
@@ -438,12 +438,12 @@ func TestGitHubExportDiffEligibilityAndMutationFailures(t *testing.T) {
 				f.responses[f.endpoint+"/files?per_page=100&page=2"] = map[string]any{"__stderr": "unnecessary request"}
 			case "split hunks", "multiline hunk":
 				f.in.StartLine = 1
-				comments, err := f.s.Repository.ReadComments(f.s.CommentDocumentID(int64(f.in.DocumentID)))
+				comments, err := f.s.Repository.ReadComments(t.Context(), f.s.CommentDocumentID(int64(f.in.DocumentID)))
 				if err != nil {
 					t.Fatal(err)
 				}
 				comments.Comments[0].StartLine = 1
-				if err := f.s.Repository.SaveComments(f.s.CommentDocumentID(int64(f.in.DocumentID)), comments); err != nil {
+				if err := f.s.Repository.SaveComments(t.Context(), f.s.CommentDocumentID(int64(f.in.DocumentID)), comments); err != nil {
 					t.Fatal(err)
 				}
 				if scenario == "split hunks" {
@@ -486,7 +486,7 @@ func TestGitHubExportRebasesBeforeRecheckingTheComment(t *testing.T) {
 	if _, err := f.s.Invoke(context.Background(), "ExportCommentToGitHub", f.in); err != nil {
 		t.Fatal("rebased comment was rejected:", err)
 	}
-	comments, err := f.s.Repository.ReadComments(f.s.CommentDocumentID(int64(f.in.DocumentID)))
+	comments, err := f.s.Repository.ReadComments(t.Context(), f.s.CommentDocumentID(int64(f.in.DocumentID)))
 	if err != nil || comments.Comments[0].StartLine != 3 || *comments.SourceSnapshot != f.in.DisplayedMarkdown {
 		t.Fatalf("rebase was not saved: %+v %v", comments, err)
 	}

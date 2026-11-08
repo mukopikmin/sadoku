@@ -36,7 +36,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	// Previous versions stored PR comments at the Contents API's canonical URL,
 	// separately from the PR document registration and its archival revisions.
 	canonical := "https://api.github.com/repos/owner/repo/contents/readme.md"
-	old, err := repo.Ensure(canonical)
+	old, err := repo.Ensure(t.Context(), canonical)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = repo.SaveComments(old.ID, comments); err != nil {
+	if err = repo.SaveComments(t.Context(), old.ID, comments); err != nil {
 		t.Fatal(err)
 	}
 	responses := map[string]any{

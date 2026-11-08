@@ -23,7 +23,7 @@ func legacyDatabase(t *testing.T) (*sql.DB, string) {
 	if err := json.Unmarshal(legacy, &migrations); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := database.Exec(`CREATE TABLE schema_migration(version TEXT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,state TEXT NOT NULL,started_at TEXT NOT NULL,finished_at TEXT,error_message TEXT)`); err != nil {
+	if _, err := database.ExecContext(t.Context(), `CREATE TABLE schema_migration(version TEXT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,state TEXT NOT NULL,started_at TEXT NOT NULL,finished_at TEXT,error_message TEXT)`); err != nil {
 		t.Fatal(err)
 	}
 	for _, m := range migrations {
@@ -36,7 +36,7 @@ func legacyDatabase(t *testing.T) (*sql.DB, string) {
 		`INSERT INTO comment(id,document_id,local_id,start_line,end_line,original_start_line,original_end_line,body,created_at,updated_at,source_text,source_hash) VALUES(7,1,1,1,1,1,1,'review','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z','original','hash')`,
 		`INSERT INTO comment_reply(id,comment_id,local_id,body,created_at,updated_at) VALUES(9,7,1,'reply','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')`,
 	} {
-		if _, err := database.Exec(statement); err != nil {
+		if _, err := database.ExecContext(t.Context(), statement); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -45,7 +45,7 @@ func legacyDatabase(t *testing.T) (*sql.DB, string) {
 
 func schema(t *testing.T, database *sql.DB) []string {
 	t.Helper()
-	rows, err := database.Query(`SELECT type||':'||name||':'||sql FROM sqlite_schema WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY type,name`)
+	rows, err := database.QueryContext(t.Context(), `SELECT type||':'||name||':'||sql FROM sqlite_schema WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY type,name`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestRebuildPreservesDataAndMatchesFreshSchema(t *testing.T) {
 			t.Fatal(err)
 		}
 		var body string
-		if err := database.QueryRow(`SELECT r.body FROM comment_reply r JOIN comment c ON c.id=r.comment_id WHERE c.id=7 AND r.id=9`).Scan(&body); err != nil || body != "reply" {
+		if err := database.QueryRowContext(t.Context(), `SELECT r.body FROM comment_reply r JOIN comment c ON c.id=r.comment_id WHERE c.id=7 AND r.id=9`).Scan(&body); err != nil || body != "reply" {
 			t.Fatalf("lost reply: %q %v", body, err)
 		}
 	}
@@ -102,18 +102,18 @@ func TestRebuildPreservesDataAndMatchesFreshSchema(t *testing.T) {
 		`UPDATE schema_migration SET version=NULL`,
 		`INSERT INTO comment_reply(comment_id,local_id,body,created_at,updated_at) VALUES(999,1,'orphan','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')`,
 	} {
-		if _, err := reopened.Exec(statement); err == nil {
+		if _, err := reopened.ExecContext(t.Context(), statement); err == nil {
 			t.Fatalf("accepted invalid data: %s", statement)
 		}
 	}
-	if _, err := reopened.Exec(`UPDATE comment SET resolved=1,resolved_at='2026-01-01T00:00:00.000Z',resolved_by_type='bot'`); err != nil {
+	if _, err := reopened.ExecContext(t.Context(), `UPDATE comment SET resolved=1,resolved_at='2026-01-01T00:00:00.000Z',resolved_by_type='bot'`); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := reopened.Exec(`DELETE FROM comment WHERE id=7`); err != nil {
+	if _, err := reopened.ExecContext(t.Context(), `DELETE FROM comment WHERE id=7`); err != nil {
 		t.Fatal(err)
 	}
 	var count int
-	if err := reopened.QueryRow(`SELECT count(*) FROM comment_reply`).Scan(&count); err != nil || count != 0 {
+	if err := reopened.QueryRowContext(t.Context(), `SELECT count(*) FROM comment_reply`).Scan(&count); err != nil || count != 0 {
 		t.Fatalf("cascade: %d %v", count, err)
 	}
 }
@@ -122,7 +122,7 @@ func TestRebuildFailureRollsBackAndCanRetry(t *testing.T) {
 	for _, invalid := range []string{`resolved=1`, `resolved_by_type='bot'`} {
 		t.Run(invalid, func(t *testing.T) {
 			database, _ := legacyDatabase(t)
-			if _, err := database.Exec("UPDATE comment SET " + invalid); err != nil { // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
+			if _, err := database.ExecContext(t.Context(), "UPDATE comment SET "+invalid); err != nil { // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 				t.Fatal(err)
 			}
 			err := Migrate(database)
@@ -130,19 +130,19 @@ func TestRebuildFailureRollsBackAndCanRetry(t *testing.T) {
 				t.Fatalf("expected actionable migration error: %v", err)
 			}
 			var enabled, count int
-			if err := database.QueryRow("PRAGMA foreign_keys").Scan(&enabled); err != nil || enabled != 1 {
+			if err := database.QueryRowContext(t.Context(), "PRAGMA foreign_keys").Scan(&enabled); err != nil || enabled != 1 {
 				t.Fatalf("foreign keys: %d %v", enabled, err)
 			}
-			if err := database.QueryRow("SELECT count(*) FROM comment_reply WHERE id=9 AND comment_id=7").Scan(&count); err != nil || count != 1 {
+			if err := database.QueryRowContext(t.Context(), "SELECT count(*) FROM comment_reply WHERE id=9 AND comment_id=7").Scan(&count); err != nil || count != 1 {
 				t.Fatalf("lost data: %d %v", count, err)
 			}
-			if err := database.QueryRow("SELECT count(*) FROM sqlite_schema WHERE name='comment_new'").Scan(&count); err != nil || count != 0 {
+			if err := database.QueryRowContext(t.Context(), "SELECT count(*) FROM sqlite_schema WHERE name='comment_new'").Scan(&count); err != nil || count != 0 {
 				t.Fatalf("temporary table survived: %d %v", count, err)
 			}
-			if err := database.QueryRow("SELECT count(*) FROM schema_migration WHERE version IN ('0015','0016')").Scan(&count); err != nil || count != 0 {
+			if err := database.QueryRowContext(t.Context(), "SELECT count(*) FROM schema_migration WHERE version IN ('0015','0016')").Scan(&count); err != nil || count != 0 {
 				t.Fatalf("failed migration recorded: %d %v", count, err)
 			}
-			if _, err := database.Exec(`UPDATE comment SET source_text='original',source_hash='hash',resolved=0,resolved_at=NULL,resolved_by_type=NULL`); err != nil {
+			if _, err := database.ExecContext(t.Context(), `UPDATE comment SET source_text='original',source_hash='hash',resolved=0,resolved_at=NULL,resolved_by_type=NULL`); err != nil {
 				t.Fatal(err)
 			}
 			if err := Migrate(database); err != nil {
@@ -159,7 +159,7 @@ func TestRebuildRejectsForeignKeyViolations(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	var parent int
-	if err := database.QueryRow("SELECT comment_id FROM comment_reply WHERE id=9").Scan(&parent); err != nil || parent != 7 {
+	if err := database.QueryRowContext(t.Context(), "SELECT comment_id FROM comment_reply WHERE id=9").Scan(&parent); err != nil || parent != 7 {
 		t.Fatalf("failed rebuild changed data: %d %v", parent, err)
 	}
 }
@@ -174,7 +174,7 @@ func TestRebuildFillsOnlyMissingSourceValues(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			database, _ := legacyDatabase(t)
-			if _, err := database.Exec("UPDATE comment SET " + test.assignment); err != nil { // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
+			if _, err := database.ExecContext(t.Context(), "UPDATE comment SET "+test.assignment); err != nil { // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 				t.Fatal(err)
 			}
 			for range 2 {
@@ -182,7 +182,7 @@ func TestRebuildFillsOnlyMissingSourceValues(t *testing.T) {
 					t.Fatal(err)
 				}
 				var text, hash string
-				if err := database.QueryRow("SELECT source_text,source_hash FROM comment WHERE id=7").Scan(&text, &hash); err != nil {
+				if err := database.QueryRowContext(t.Context(), "SELECT source_text,source_hash FROM comment WHERE id=7").Scan(&text, &hash); err != nil {
 					t.Fatal(err)
 				}
 				if text != test.text || hash != test.hash {

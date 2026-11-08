@@ -45,10 +45,12 @@ plus `rowserrcheck` and `sqlclosecheck` for SQL resource and iteration errors.
 `bodyclose` checks HTTP response cleanup, and `nilerr` catches branches that
 discard a non-nil error by returning nil. `nolintlint` requires suppressions to
 name specific linters, explain the reason, and remain necessary.
-`contextcheck` verifies context propagation. `noctx` covers HTTP, listeners, and
-subprocesses, including tests; legacy SQL APIs remain excluded pending an
-end-to-end context migration. Database initialization and existing context-aware
-repository operations inherit the caller's context. Shutdown and shared token
+`contextcheck` verifies context propagation. `noctx` covers HTTP, listeners,
+subprocesses, and SQL, including tests. Repository operations require the caller's
+context and pass it to SQL queries and transactions. HTTP and CLI operations
+propagate their context through the session and persistence boundaries. Committed
+comment changes publish their notification with a bounded, detached context so a
+late disconnect cannot skip publication. Shutdown and shared token
 refresh retain context values while detaching cancellation.
 `gosec` checks security-sensitive operations, with G204 and G304 disabled because
 Sadoku deliberately executes local tools and opens user-selected files. Command

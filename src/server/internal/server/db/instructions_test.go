@@ -21,7 +21,7 @@ func TestUpgradeMergesInstructionsPerScope(t *testing.T) {
 		"INSERT INTO global_instruction(id,content,created_at,updated_at) VALUES(7,'Shared second','2026-01-02T00:00:00.000Z','2026-01-04T00:00:00.000Z'),(4,'Shared first','2026-01-01T00:00:00.000Z','2026-01-03T00:00:00.000Z')",
 		"INSERT INTO document_memory(document_id,content,created_at,updated_at) VALUES(1,'Memory one','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z'),(1,'Memory two','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 	} {
-		if _, err := database.Exec(statement); err != nil {
+		if _, err := database.ExecContext(t.Context(), statement); err != nil {
 			_ = database.Close()
 			t.Fatal(err)
 		}
@@ -41,24 +41,24 @@ func TestUpgradeMergesInstructionsPerScope(t *testing.T) {
 		} {
 			var id int64
 			var content, created, updated string
-			err = database.QueryRow(test.query).Scan(&id, &content, &created, &updated)
+			err = database.QueryRowContext(t.Context(), test.query).Scan(&id, &content, &created, &updated)
 			if err != nil || id != test.id || content != test.content || created != "2026-01-01T00:00:00.000Z" || updated != "2026-01-04T00:00:00.000Z" {
 				t.Fatalf("merged instruction: %d %q %q %q: %v", id, content, created, updated, err)
 			}
 		}
 		var other string
-		if err = database.QueryRow("SELECT content FROM document_instruction WHERE document_id=2").Scan(&other); err != nil || other != "Other document" {
+		if err = database.QueryRowContext(t.Context(), "SELECT content FROM document_instruction WHERE document_id=2").Scan(&other); err != nil || other != "Other document" {
 			t.Fatalf("other scope: %q %v", other, err)
 		}
 		var memories int
-		if err = database.QueryRow("SELECT COUNT(*) FROM document_memory WHERE document_id=1").Scan(&memories); err != nil || memories != 2 {
+		if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM document_memory WHERE document_id=1").Scan(&memories); err != nil || memories != 2 {
 			t.Fatalf("memories: %d %v", memories, err)
 		}
 		for _, statement := range []string{
 			"INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(1,'duplicate','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 			"INSERT INTO global_instruction(content,created_at,updated_at) VALUES('duplicate','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 		} {
-			if _, err := database.Exec(statement); err == nil {
+			if _, err := database.ExecContext(t.Context(), statement); err == nil {
 				t.Fatal("accepted multiple instructions")
 			}
 		}

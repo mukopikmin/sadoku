@@ -119,12 +119,12 @@ type gatedDirectoryRepository struct {
 	statisticsStarted, statisticsRelease           chan struct{}
 }
 
-func (r *gatedDirectoryRepository) Statistics() (any, error) {
+func (r *gatedDirectoryRepository) Statistics(ctx context.Context) (any, error) {
 	if r.statisticsStarted != nil {
 		close(r.statisticsStarted)
 		<-r.statisticsRelease
 	}
-	return r.Repository.Statistics()
+	return r.Repository.Statistics(ctx)
 }
 func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []string) ([]u.Document, error) {
 	close(r.registrationStarted)
@@ -138,14 +138,14 @@ func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []strin
 	}
 	return r.Repository.EnsureMany(ctx, paths)
 }
-func (r *gatedDirectoryRepository) DocumentsContext(ctx context.Context) ([]u.Document, error) {
+func (r *gatedDirectoryRepository) Documents(ctx context.Context) ([]u.Document, error) {
 	close(r.listed)
 	select {
 	case <-r.publish:
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-	return r.Repository.DocumentsContext(ctx)
+	return r.Repository.Documents(ctx)
 }
 func TestDirectoryPreparationServesProgressReadyErrorsAndCancellation(t *testing.T) {
 	for _, outcome := range []string{"ready", "error", "cancelled"} {

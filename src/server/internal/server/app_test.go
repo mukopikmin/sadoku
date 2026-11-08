@@ -37,7 +37,7 @@ func TestGitHubPreviewLogsCanonicalTargetAndImmutableSource(t *testing.T) {
 	repo := &storage.Repository{DB: database, Path: path}
 	const target = "https://github.com/owner/repo/pull/1"
 	const contentURL = "https://api.github.com/repos/owner/repo/contents/readme.md?ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	doc, err := repo.Ensure(target + "/files/readme.md")
+	doc, err := repo.Ensure(t.Context(), target+"/files/readme.md")
 	if err != nil {
 		t.Fatal(err)
 	}

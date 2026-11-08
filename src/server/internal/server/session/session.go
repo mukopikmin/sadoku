@@ -129,7 +129,7 @@ func New(ctx context.Context, input string, repo u.Repository, settings config.S
 	}
 	if remote || !info.IsDir() {
 		s.Root = filepath.Dir(identity)
-		d, err := repo.Ensure(identity)
+		d, err := repo.Ensure(ctx, identity)
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +233,7 @@ func (s *Session) CommentDocumentID(id int64) int64 {
 
 // GitHub document registration and comment storage have separate identities.
 // Read a missing comment identity without creating a persistent document row.
-func (s *Session) commentStorage(id int64, create bool) (int64, string, error) {
+func (s *Session) commentStorage(ctx context.Context, id int64, create bool) (int64, string, error) {
 	identity, _, _ := Source(s.Sources[id])
 	if s.GitHub == nil {
 		return id, identity, nil
@@ -241,12 +241,12 @@ func (s *Session) commentStorage(id int64, create bool) (int64, string, error) {
 	if mapped := s.CommentIDs[id]; mapped != 0 {
 		return mapped, identity, nil
 	}
-	document, found, err := s.Repository.FindDocument(identity)
+	document, found, err := s.Repository.FindDocument(ctx, identity)
 	if err != nil {
 		return 0, identity, err
 	}
 	if !found && create {
-		document, err = s.Repository.Ensure(identity)
+		document, err = s.Repository.Ensure(ctx, identity)
 		found = err == nil
 	}
 	if found {
@@ -259,21 +259,21 @@ func (s *Session) commentStorage(id int64, create bool) (int64, string, error) {
 	return 0, identity, err
 }
 
-func (s *Session) readComments(id int64) (u.Comments, error) {
-	storageID, identity, err := s.commentStorage(id, false)
+func (s *Session) readComments(ctx context.Context, id int64) (u.Comments, error) {
+	storageID, identity, err := s.commentStorage(ctx, id, false)
 	if err != nil {
 		return u.Comments{}, err
 	}
 	if storageID == 0 {
 		return u.Comments{FilePath: identity, Comments: []u.Comment{}}, nil
 	}
-	return s.Repository.ReadComments(storageID)
+	return s.Repository.ReadComments(ctx, storageID)
 }
 
-func (s *Session) saveComments(id int64, comments u.Comments) error {
-	storageID, _, err := s.commentStorage(id, true)
+func (s *Session) saveComments(ctx context.Context, id int64, comments u.Comments) error {
+	storageID, _, err := s.commentStorage(ctx, id, true)
 	if err != nil {
 		return err
 	}
-	return s.Repository.SaveComments(storageID, comments)
+	return s.Repository.SaveComments(ctx, storageID, comments)
 }

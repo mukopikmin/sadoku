@@ -479,7 +479,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 			r.session.Mu.Lock()
-			tags, tagErr := r.session.Repository.Tags(0)
+			tags, tagErr := r.session.Repository.Tags(req.Context(), 0)
 			r.session.Mu.Unlock()
 			if tagErr != nil {
 				respondError(w, tagErr)

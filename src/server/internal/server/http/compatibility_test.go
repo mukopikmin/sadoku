@@ -122,7 +122,7 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 				if profile.GitHubResponses != nil {
 					break
 				}
-				if _, err := repo.SaveNote("memory", u.Note{DocumentID: int64(id + 1), Content: content}); err != nil {
+				if _, err := repo.SaveNote(t.Context(), "memory", u.Note{DocumentID: int64(id + 1), Content: content}); err != nil {
 					t.Fatal(err)
 				}
 			}

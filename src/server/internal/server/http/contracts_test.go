@@ -103,11 +103,11 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 
 func TestRESTTagConflictsAndPartialUpdates(t *testing.T) {
 	s, server, _ := setup(t)
-	one, err := s.Repository.SaveTag(u.Tag{Name: "One", BackgroundColor: "#123456"})
+	one, err := s.Repository.SaveTag(t.Context(), u.Tag{Name: "One", BackgroundColor: "#123456"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.Repository.SaveTag(u.Tag{Name: "Two", BackgroundColor: "#abcdef"}); err != nil {
+	if _, err = s.Repository.SaveTag(t.Context(), u.Tag{Name: "Two", BackgroundColor: "#abcdef"}); err != nil {
 		t.Fatal(err)
 	}
 	path := fmt.Sprintf("/__sadoku/tags/%d", one.ID)

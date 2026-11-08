@@ -42,9 +42,3 @@ linters:
         - SA*
   exclusions:
     generated: strict
-    rules:
-      # Legacy SQL APIs need a separate end-to-end context migration.
-      # Keep noctx active for HTTP, listeners, and subprocesses, including tests.
-      - linters:
-          - noctx
-        text: '\(\*database/sql\.'

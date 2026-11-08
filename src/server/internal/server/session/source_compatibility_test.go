@@ -16,7 +16,7 @@ type sourceRepository struct {
 	ensured string
 }
 
-func (r *sourceRepository) Ensure(path string) (u.Document, error) {
+func (r *sourceRepository) Ensure(ctx context.Context, path string) (u.Document, error) {
 	r.ensured = path
 	return u.Document{ID: 1, FilePath: path}, nil
 }

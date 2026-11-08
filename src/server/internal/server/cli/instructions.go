@@ -1,5 +1,7 @@
 package cli
 
+import "context"
+
 import (
 	"io"
 	"strings"
@@ -8,13 +10,13 @@ import (
 )
 
 // executeInstructionValue exposes a single text value without a resource ID.
-func executeInstructionValue(repo u.Repository, documentID int64, o Options, out io.Writer) error {
+func executeInstructionValue(ctx context.Context, repo u.Repository, documentID int64, o Options, out io.Writer) error {
 	var notes []u.Note
 	var err error
 	if documentID == 0 {
-		notes, err = repo.GlobalInstructions()
+		notes, err = repo.GlobalInstructions(ctx)
 	} else {
-		notes, err = repo.Notes("instruction", documentID)
+		notes, err = repo.Notes(ctx, "instruction", documentID)
 	}
 	if err != nil {
 		return commandError("instruction", err)
@@ -30,15 +32,15 @@ func executeInstructionValue(repo u.Repository, documentID int64, o Options, out
 			content = ""
 			if len(notes) > 0 {
 				if documentID == 0 {
-					err = repo.DeleteGlobalInstruction(notes[0].ID)
+					err = repo.DeleteGlobalInstruction(ctx, notes[0].ID)
 				} else {
-					err = repo.DeleteNote("instruction", documentID, notes[0].ID)
+					err = repo.DeleteNote(ctx, "instruction", documentID, notes[0].ID)
 				}
 			}
 		} else if documentID == 0 {
-			_, err = repo.SaveGlobalInstruction(u.Note{Content: content})
+			_, err = repo.SaveGlobalInstruction(ctx, u.Note{Content: content})
 		} else {
-			_, err = repo.SaveNote("instruction", u.Note{DocumentID: documentID, Content: content})
+			_, err = repo.SaveNote(ctx, "instruction", u.Note{DocumentID: documentID, Content: content})
 		}
 		if err != nil {
 			return commandError("instruction", err)

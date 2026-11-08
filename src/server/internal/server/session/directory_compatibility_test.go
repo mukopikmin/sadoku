@@ -75,7 +75,7 @@ func TestLegacyDirectoryOrderAndRegistration(t *testing.T) {
 		}
 	}
 	check(fixture.Initial)
-	stored, err := repo.Documents()
+	stored, err := repo.Documents(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}

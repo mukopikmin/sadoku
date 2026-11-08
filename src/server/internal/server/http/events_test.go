@@ -196,15 +196,15 @@ func TestCommentNotificationWriterProcess(t *testing.T) {
 func TestSSECommentsFromAnotherCLIProcessAreScoped(t *testing.T) {
 	s, server, file := setup(t)
 	events, _ := eventStream(t, server.URL, "/__sadoku/documents/1/events")
-	other, err := s.Repository.Ensure(filepath.Join(filepath.Dir(file), "other.md"))
+	other, err := s.Repository.Ensure(t.Context(), filepath.Join(filepath.Dir(file), "other.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	comments, err := s.Repository.ReadComments(other.ID)
+	comments, err := s.Repository.ReadComments(t.Context(), other.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = s.Repository.SaveComments(other.ID, comments); err != nil {
+	if err = s.Repository.SaveComments(t.Context(), other.ID, comments); err != nil {
 		t.Fatal(err)
 	}
 	expectNoEvent(t, events)
@@ -220,7 +220,7 @@ func TestSSECommentsFromAnotherCLIProcessAreScoped(t *testing.T) {
 		t.Fatalf("CLI: %v\n%s", err, output)
 	}
 	expectEvent(t, events, "comments")
-	saved, err := s.Repository.ReadComments(1)
+	saved, err := s.Repository.ReadComments(t.Context(), 1)
 	if err != nil || len(saved.Comments) != 1 || saved.Comments[0].Body != "from another process" {
 		t.Fatalf("committed comments: %+v %v", saved, err)
 	}

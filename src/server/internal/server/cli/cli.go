@@ -255,12 +255,12 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			if len(words) != 2 {
 				return fmt.Errorf("document list accepts no arguments")
 			}
-			docs, err := repo.DocumentsContext(ctx)
+			docs, err := repo.Documents(ctx)
 			if err != nil {
 				return err
 			}
 			for i := range docs {
-				docs[i].Tags, err = repo.Tags(docs[i].ID)
+				docs[i].Tags, err = repo.Tags(ctx, docs[i].ID)
 				if err != nil {
 					return err
 				}
@@ -289,7 +289,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 				}
 				doc = result.(u.Document)
 			} else {
-				doc, err = repo.Ensure(identity)
+				doc, err = repo.Ensure(ctx, identity)
 				if err != nil {
 					return err
 				}
@@ -302,7 +302,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 					if title != "" {
 						doc.DisplayTitle = &title
 					}
-					if err = repo.SetTitle(doc.ID, doc.DisplayTitle); err != nil {
+					if err = repo.SetTitle(ctx, doc.ID, doc.DisplayTitle); err != nil {
 						return err
 					}
 				}
@@ -316,13 +316,13 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			if err != nil {
 				return err
 			}
-			docs, err := repo.DocumentsContext(ctx)
+			docs, err := repo.Documents(ctx)
 			if err != nil {
 				return err
 			}
 			for _, doc := range docs {
 				if doc.ID == id {
-					doc.Tags, err = repo.Tags(id)
+					doc.Tags, err = repo.Tags(ctx, id)
 					if err != nil {
 						return err
 					}
@@ -391,14 +391,14 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		return fmt.Errorf("invalid command: %s", command)
 	}
 	if command == "instruction" && o.Flags["global"] {
-		return executeInstructionValue(repo, 0, o, out)
+		return executeInstructionValue(ctx, repo, 0, o, out)
 	}
 	source, hasSource := o.Values["source"]
 	document, hasDocument := o.Values["document"]
 	if hasSource == hasDocument {
 		return fmt.Errorf("specify exactly one of --document or --source")
 	}
-	docs, err := repo.DocumentsContext(ctx)
+	docs, err := repo.Documents(ctx)
 	if err != nil {
 		return err
 	}
@@ -421,7 +421,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			}
 		}
 		if selected == nil && o.Flags["ensure-document"] && command == "comment" && operation == "add" {
-			doc, e := repo.Ensure(identity)
+			doc, e := repo.Ensure(ctx, identity)
 			if e != nil {
 				return e
 			}
@@ -450,7 +450,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		if len(words) < 4 || (words[2] != "add" && words[2] != "delete") {
 			return fmt.Errorf("document tag add/delete requires tag IDs")
 		}
-		tags, err := repo.Tags(selected.ID)
+		tags, err := repo.Tags(ctx, selected.ID)
 		if err != nil {
 			return err
 		}
@@ -458,7 +458,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		for _, tag := range tags {
 			ids[tag.ID] = true
 		}
-		allTags, e := repo.Tags(0)
+		allTags, e := repo.Tags(ctx, 0)
 		if e != nil {
 			return e
 		}
@@ -485,7 +485,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		}
 		op = "ReplaceDocumentTags"
 	} else if command == "instruction" {
-		return executeInstructionValue(repo, selected.ID, o, out)
+		return executeInstructionValue(ctx, repo, selected.ID, o, out)
 	} else if command == "memory" {
 		switch operation {
 		case "list":
@@ -514,7 +514,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		if u.TrimSpace(content) == "" {
 			return commandError(command, fmt.Errorf("Content must not be empty."))
 		}
-		n, err := repo.SaveNote(command, u.Note{ID: int64(in.MemoryID), DocumentID: selected.ID, Content: content})
+		n, err := repo.SaveNote(ctx, command, u.Note{ID: int64(in.MemoryID), DocumentID: selected.ID, Content: content})
 		if err != nil {
 			return commandError(command, err)
 		}
