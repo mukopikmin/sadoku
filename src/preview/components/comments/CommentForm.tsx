@@ -2,9 +2,9 @@ import { Button, Flex, Stack, Textarea } from "@chakra-ui/react";
 import type { ComponentProps } from "react";
 import { submitCommentOnShortcut } from "./commentShortcuts";
 
-export const CommentActionButton = (
-  props: ComponentProps<typeof Button>,
-) => <Button size="sm" variant="outline" {...props} />;
+export const CommentActionButton = (props: ComponentProps<typeof Button>) => (
+  <Button size="sm" variant="outline" {...props} />
+);
 
 type CommentFormProps = {
   cancelAriaLabel?: string;
@@ -41,7 +41,8 @@ export const CommentForm = ({
       onKeyDown={(event) =>
         submitCommentOnShortcut(event, () => {
           onSubmit();
-        })}
+        })
+      }
       placeholder={placeholder}
       value={value}
     />

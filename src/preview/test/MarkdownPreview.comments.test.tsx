@@ -26,23 +26,28 @@ describe("MarkdownPreview comments", () => {
     const diagram = await screen.findByRole("img", { name: "Example diagram" });
 
     fireEvent.click(header);
-    expect(screen.getByRole("button", { name: "Add comment on lines 1-3" }))
-      .not.toBeNull();
-    fireEvent.click(diagram.querySelector("rect")!, { shiftKey: true });
-    expect(screen.getByRole("button", { name: "Add comment on lines 1-7" }))
-      .not.toBeNull();
     expect(
-      container.querySelector(".markdown-range-highlight-selection")
+      screen.getByRole("button", { name: "Add comment on lines 1-3" }),
+    ).not.toBeNull();
+    fireEvent.click(diagram.querySelector("rect")!, { shiftKey: true });
+    expect(
+      screen.getByRole("button", { name: "Add comment on lines 1-7" }),
+    ).not.toBeNull();
+    expect(
+      container
+        .querySelector(".markdown-range-highlight-selection")
         ?.getAttribute("data-end-line"),
     ).toBe("7");
     expect(screen.getByRole("img", { name: "Example diagram" })).toBe(diagram);
 
     fireEvent.click(diagram.querySelector("rect")!);
-    expect(screen.getByRole("button", { name: "Add comment on lines 5-7" }))
-      .not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Add comment on lines 5-7" }),
+    ).not.toBeNull();
     fireEvent.click(diagram.querySelector("rect")!);
-    expect(screen.queryByRole("button", { name: "Add comment on lines 5-7" }))
-      .toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Add comment on lines 5-7" }),
+    ).toBeNull();
   });
 
   it("submits a new comment with command or control enter", async () => {
@@ -58,9 +63,11 @@ describe("MarkdownPreview comments", () => {
     expect(getBodyLine()).not.toBeNull();
 
     fireEvent.click(getTitleLine()!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 1",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on line 1",
+      }),
+    );
     expect(document.activeElement).toBe(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
     );
@@ -74,18 +81,20 @@ describe("MarkdownPreview comments", () => {
     );
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1)
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Mac shortcut.", 1),
     );
     await waitFor(() =>
       expect(
         screen.queryByPlaceholderText("Write a GitHub PR comment..."),
-      ).toBeNull()
+      ).toBeNull(),
     );
 
     fireEvent.click(getBodyLine()!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    );
     expect(document.activeElement).toBe(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
     );
@@ -99,7 +108,7 @@ describe("MarkdownPreview comments", () => {
     );
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(3, "Control shortcut.", 3)
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Control shortcut.", 3),
     );
   });
 
@@ -109,9 +118,7 @@ describe("MarkdownPreview comments", () => {
 
     const blockquote = container.querySelector("blockquote");
 
-    expect(blockquote?.querySelector("p")?.textContent).toBe(
-      "Quoted text",
-    );
+    expect(blockquote?.querySelector("p")?.textContent).toBe("Quoted text");
     expect(container.querySelectorAll('[data-source-line="1"]')).toHaveLength(
       1,
     );
@@ -134,20 +141,26 @@ describe("MarkdownPreview comments", () => {
 
   it("resolves inline comments from the preview", async () => {
     const onResolveComment = vi.fn(async () => {});
-    renderMarkdown("# Title\n\nBody\n", [{
-      body: "Clarify this.",
-      author: { type: "human" },
-      createdAt: "2026-06-05T00:00:00.000Z",
-      id: 1,
-      endLine: 3,
-      originalEndLine: 3,
-      originalStartLine: 3,
-      startLine: 3,
-      sourceHash: "example",
-      sourceText: "Body",
-      state: "active",
-      updatedAt: "2026-06-05T00:00:00.000Z",
-    }], { onResolveComment });
+    renderMarkdown(
+      "# Title\n\nBody\n",
+      [
+        {
+          body: "Clarify this.",
+          author: { type: "human" },
+          createdAt: "2026-06-05T00:00:00.000Z",
+          id: 1,
+          endLine: 3,
+          originalEndLine: 3,
+          originalStartLine: 3,
+          startLine: 3,
+          sourceHash: "example",
+          sourceText: "Body",
+          state: "active",
+          updatedAt: "2026-06-05T00:00:00.000Z",
+        },
+      ],
+      { onResolveComment },
+    );
 
     screen.getByRole("button", { name: "Resolve" }).click();
 
@@ -155,20 +168,22 @@ describe("MarkdownPreview comments", () => {
   });
 
   it("renders a range comment once at its end line", async () => {
-    const { container } = renderMarkdown("# Title\n\nBody\n", [{
-      body: "Clarify this range.",
-      author: { type: "human" },
-      createdAt: "2026-06-05T00:00:00.000Z",
-      endLine: 3,
-      id: 1,
-      startLine: 1,
-      originalEndLine: 3,
-      originalStartLine: 1,
-      sourceHash: "example",
-      sourceText: "# Title\n\nBody",
-      state: "active",
-      updatedAt: "2026-06-05T00:00:00.000Z",
-    }]);
+    const { container } = renderMarkdown("# Title\n\nBody\n", [
+      {
+        body: "Clarify this range.",
+        author: { type: "human" },
+        createdAt: "2026-06-05T00:00:00.000Z",
+        endLine: 3,
+        id: 1,
+        startLine: 1,
+        originalEndLine: 3,
+        originalStartLine: 1,
+        sourceHash: "example",
+        sourceText: "# Title\n\nBody",
+        state: "active",
+        updatedAt: "2026-06-05T00:00:00.000Z",
+      },
+    ]);
 
     expect(screen.queryByText("Lines 1-3")).toBeNull();
     screen.getByRole("button", { name: "More actions" }).click();
@@ -180,32 +195,35 @@ describe("MarkdownPreview comments", () => {
     expect(
       container.querySelector('[data-source-line="3"] .comment-thread'),
     ).not.toBeNull();
-    expect(container.querySelector(".markdown-range-highlight-comment"))
-      .not.toBeNull();
     expect(
-      container.querySelector('[data-source-line="3"]')?.classList.contains(
-        "commentable-block-continuous-highlight",
-      ),
+      container.querySelector(".markdown-range-highlight-comment"),
+    ).not.toBeNull();
+    expect(
+      container
+        .querySelector('[data-source-line="3"]')
+        ?.classList.contains("commentable-block-highlighted"),
     ).toBe(true);
   });
 
   it("renders a range comment at the last commentable line in its range", () => {
     const { container } = renderMarkdown(
       "# Title\n\nFirst line\ncontinued line\n\nAfter\n",
-      [{
-        body: "Clarify the changed range.",
-        author: { type: "human" },
-        createdAt: "2026-06-05T00:00:00.000Z",
-        endLine: 4,
-        id: 1,
-        startLine: 1,
-        originalEndLine: 4,
-        originalStartLine: 1,
-        sourceHash: "example",
-        sourceText: "# Title\n\nFirst line\ncontinued line",
-        state: "active",
-        updatedAt: "2026-06-05T00:00:00.000Z",
-      }],
+      [
+        {
+          body: "Clarify the changed range.",
+          author: { type: "human" },
+          createdAt: "2026-06-05T00:00:00.000Z",
+          endLine: 4,
+          id: 1,
+          startLine: 1,
+          originalEndLine: 4,
+          originalStartLine: 1,
+          sourceHash: "example",
+          sourceText: "# Title\n\nFirst line\ncontinued line",
+          state: "active",
+          updatedAt: "2026-06-05T00:00:00.000Z",
+        },
+      ],
     );
 
     expect(screen.getAllByText("Clarify the changed range.")).toHaveLength(1);
@@ -243,19 +261,17 @@ describe("MarkdownPreview comments", () => {
     expect(highlight).not.toBeNull();
     expect(highlight?.dataset.startLine).toBe("1");
     expect(highlight?.dataset.endLine).toBe("3");
-    expect(container.querySelectorAll(".markdown-range-highlight-selection"))
-      .toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Add comment on lines 1-3" })).not
-      .toBeNull();
     expect(
-      titleBlock?.classList.contains(
-        "commentable-block-range-selected",
-      ),
+      container.querySelectorAll(".markdown-range-highlight-selection"),
+    ).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Add comment on lines 1-3" }),
+    ).not.toBeNull();
+    expect(
+      titleBlock?.classList.contains("commentable-block-range-selected"),
     ).toBe(false);
     expect(
-      bodyBlock?.classList.contains(
-        "commentable-block-range-selected",
-      ),
+      bodyBlock?.classList.contains("commentable-block-range-selected"),
     ).toBe(false);
   });
 
@@ -290,24 +306,19 @@ describe("MarkdownPreview comments", () => {
       "# Title\n\nFirst\n\nSecond\n",
       comments,
     );
-    expect(container.querySelectorAll(
-      ".markdown-range-highlight-comment",
-    )).toHaveLength(1);
     expect(
-      container.querySelector<HTMLElement>(
-        ".markdown-range-highlight-comment",
-      )?.dataset.endLine,
+      container.querySelectorAll(".markdown-range-highlight-comment"),
+    ).toHaveLength(1);
+    expect(
+      container.querySelector<HTMLElement>(".markdown-range-highlight-comment")
+        ?.dataset.endLine,
     ).toBe("5");
 
     fireEvent.click(
-      container.querySelector(
-        '[data-source-line="1"] .commentable-content',
-      )!,
+      container.querySelector('[data-source-line="1"] .commentable-content')!,
     );
     fireEvent.click(
-      container.querySelector(
-        '[data-source-line="3"] .commentable-content',
-      )!,
+      container.querySelector('[data-source-line="3"] .commentable-content')!,
       { shiftKey: true },
     );
 
@@ -316,9 +327,9 @@ describe("MarkdownPreview comments", () => {
     );
     expect(savedHighlight?.dataset.startLine).toBe("4");
     expect(savedHighlight?.dataset.endLine).toBe("5");
-    expect(container.querySelectorAll(
-      ".markdown-range-highlight-selection",
-    )).toHaveLength(1);
+    expect(
+      container.querySelectorAll(".markdown-range-highlight-selection"),
+    ).toHaveLength(1);
   });
 
   it("shows and clears a single-line comment selection", () => {
@@ -331,30 +342,36 @@ describe("MarkdownPreview comments", () => {
     expect(block?.dataset.sourceLine).toBe("3");
     expect(block?.dataset.sourceEndLine).toBe("3");
     expect(getLine()).not.toBeNull();
-    expect(screen.queryByRole("button", {
-      name: "Add comment on line 3",
-    })).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).toBeNull();
 
     fireEvent.click(getLine()!);
 
-    expect(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    })).not.toBeNull();
     expect(
-      container.querySelector('[data-source-line="3"]')?.classList.contains(
-        "commentable-block-range-selected",
-      ),
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).not.toBeNull();
+    expect(
+      container
+        .querySelector('[data-source-line="3"]')
+        ?.classList.contains("commentable-block-range-selected"),
     ).toBe(true);
 
     fireEvent.click(getLine()!);
 
-    expect(screen.queryByRole("button", {
-      name: "Add comment on line 3",
-    })).toBeNull();
     expect(
-      container.querySelector('[data-source-line="3"]')?.classList.contains(
-        "commentable-block-range-selected",
-      ),
+      screen.queryByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).toBeNull();
+    expect(
+      container
+        .querySelector('[data-source-line="3"]')
+        ?.classList.contains("commentable-block-range-selected"),
     ).toBe(false);
   });
 
@@ -387,24 +404,30 @@ describe("MarkdownPreview comments", () => {
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
-    expect(screen.queryByRole("button", {
-      name: "Add comment on line 3",
-    })).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).toBeNull();
 
     selection?.removeAllRanges();
     fireEvent.click(body!);
-    expect(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    })).not.toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).not.toBeNull();
 
     selection?.addRange(range);
 
     fireEvent.click(body!);
 
     expect(selection?.toString()).toBe("Body");
-    expect(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    })).not.toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).not.toBeNull();
   });
 
   it("creates comments for a selected line range", async () => {
@@ -420,9 +443,11 @@ describe("MarkdownPreview comments", () => {
       shiftKey: true,
     });
 
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on lines 1-3",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on lines 1-3",
+      }),
+    );
     expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Review this line range." },
@@ -434,7 +459,7 @@ describe("MarkdownPreview comments", () => {
         1,
         "Review this line range.",
         3,
-      )
+      ),
     );
   });
 
@@ -448,13 +473,16 @@ describe("MarkdownPreview comments", () => {
     fireEvent.click(container.querySelector('[data-source-line="3"] p')!, {
       shiftKey: true,
     });
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on lines 1-3",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on lines 1-3",
+      }),
+    );
     const suggestButton = screen.getByRole("button", { name: "Suggest edit" });
     expect(suggestButton.textContent).toBe("");
-    expect(suggestButton.querySelector('svg[aria-hidden="true"]')).not
-      .toBeNull();
+    expect(
+      suggestButton.querySelector('svg[aria-hidden="true"]'),
+    ).not.toBeNull();
     fireEvent.click(suggestButton);
 
     const textbox = screen.getByRole("textbox", {
@@ -472,11 +500,7 @@ describe("MarkdownPreview comments", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(
-        1,
-        body,
-        3,
-      )
+      expect(onCreateComment).toHaveBeenCalledWith(1, body, 3),
     );
   });
 
@@ -486,9 +510,11 @@ describe("MarkdownPreview comments", () => {
       onCreateComment,
     });
     fireEvent.click(container.querySelector('[data-source-line="1"] pre')!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on lines 1-3",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on lines 1-3",
+      }),
+    );
     const textbox = screen.getByRole("textbox", { name: "Comment body" });
     fireEvent.change(textbox, {
       target: { value: "Please revise this example." },
@@ -500,12 +526,11 @@ describe("MarkdownPreview comments", () => {
       `Please revise this example.\n\n${suggestion}`,
     );
     fireEvent.click(screen.getByRole("button", { name: "Suggest edit" }));
-    const body =
-      `Please revise this example.\n\n${suggestion}\n\n${suggestion}`;
+    const body = `Please revise this example.\n\n${suggestion}\n\n${suggestion}`;
     expect((textbox as HTMLTextAreaElement).value).toBe(body);
     fireEvent.keyDown(textbox, { key: "Enter", ctrlKey: true });
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(1, body, 3)
+      expect(onCreateComment).toHaveBeenCalledWith(1, body, 3),
     );
   });
 
@@ -525,9 +550,11 @@ describe("MarkdownPreview comments", () => {
 
     fireEvent.click(body, { shiftKey: true });
 
-    expect(screen.getByRole("button", {
-      name: "Add comment on lines 1-3",
-    })).not.toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Add comment on lines 1-3",
+      }),
+    ).not.toBeNull();
   });
 
   it("selects only the clicked line without the shift key", () => {
@@ -536,12 +563,16 @@ describe("MarkdownPreview comments", () => {
     fireEvent.click(container.querySelector('[data-source-line="1"] h1')!);
     fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
 
-    expect(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    })).not.toBeNull();
-    expect(screen.queryByRole("button", {
-      name: "Add comment on lines 1-3",
-    })).toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: "Add comment on lines 1-3",
+      }),
+    ).toBeNull();
   });
 
   it("creates comments on the clicked nested list item line", async () => {
@@ -560,20 +591,18 @@ describe("MarkdownPreview comments", () => {
     expect(orderedChild).not.toBeNull();
 
     fireEvent.click(orderedChild!);
-    fireEvent.click(screen.getByRole("button", {
-      name: "Add comment on line 3",
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add comment on line 3",
+      }),
+    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Review nested item." },
     });
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
 
     await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(
-        3,
-        "Review nested item.",
-        3,
-      )
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Review nested item.", 3),
     );
   });
 });

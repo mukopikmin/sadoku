@@ -6,9 +6,7 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import { useDeleteMemory, useMemoriesQuery } from "../hooks/useMemories";
-import type { DocumentMemory } from "../models/memory";
+import { useDocumentMemories } from "../hooks/useDocumentMemories";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 type Props = {
@@ -22,21 +20,8 @@ export const DocumentMemoriesDialog = ({
   onOpenChange,
   open,
 }: Props) => {
-  const query = useMemoriesQuery(documentId, open);
-  const deletion = useDeleteMemory(documentId);
-  const [selected, setSelected] = useState<DocumentMemory>();
-  useEffect(() => {
-    if (!open) setSelected(undefined);
-  }, [open]);
-  const remove = async () => {
-    if (!selected) return;
-    try {
-      await deletion.mutateAsync(selected.id);
-      setSelected(undefined);
-    } catch {
-      // The mutation error is rendered below and the dialog remains open.
-    }
-  };
+  const memories = useDocumentMemories(documentId, open);
+  const { list, state } = memories;
   return (
     <>
       <Dialog.Root
@@ -58,60 +43,57 @@ export const DocumentMemoriesDialog = ({
                     review or delete them here; use the Sadoku CLI to add or
                     update memories.
                   </Text>
-                  {query.isPending
-                    ? <Text>Loading memories...</Text>
-                    : query.error
-                    ? <Text color="fg.error">{String(query.error)}</Text>
-                    : query.data?.length === 0
-                    ? <Text color="fg.muted">No memories have been saved.</Text>
-                    : (
-                      query.data?.map((memory) => (
+                  {list.status === "loading" ? (
+                    <Text>Loading memories...</Text>
+                  ) : list.status === "error" ? (
+                    <Text color="fg.error">{list.message}</Text>
+                  ) : list.status === "empty" ? (
+                    <Text color="fg.muted">No memories have been saved.</Text>
+                  ) : (
+                    list.items.map((memory) => (
+                      <Flex
+                        key={memory.id}
+                        borderWidth="1px"
+                        borderColor="border.muted"
+                        borderRadius="md"
+                        direction="column"
+                        gap="3"
+                        p="3"
+                      >
+                        <Text whiteSpace="pre-wrap">{memory.content}</Text>
                         <Flex
-                          key={memory.id}
-                          borderWidth="1px"
-                          borderColor="border.muted"
-                          borderRadius="md"
-                          direction="column"
-                          gap="3"
-                          p="3"
+                          alignItems="center"
+                          gap="2"
+                          justifyContent="space-between"
                         >
-                          <Text whiteSpace="pre-wrap">{memory.content}</Text>
-                          <Flex
-                            alignItems="center"
-                            gap="2"
-                            justifyContent="space-between"
+                          <Text
+                            as="time"
+                            color="fg.muted"
+                            dateTime={memory.updatedAt}
+                            fontSize="xs"
                           >
-                            <Text
-                              as="time"
-                              color="fg.muted"
-                              dateTime={memory.updatedAt}
-                              fontSize="xs"
-                            >
-                              Updated{" "}
-                              {new Date(memory.updatedAt).toLocaleString()}
-                            </Text>
-                            <Button
-                              colorPalette="red"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setSelected(memory)}
-                            >
-                              Delete
-                            </Button>
-                          </Flex>
+                            Updated{" "}
+                            {new Date(memory.updatedAt).toLocaleString()}
+                          </Text>
+                          <Button
+                            colorPalette="red"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => memories.requestDelete(memory)}
+                          >
+                            Delete
+                          </Button>
                         </Flex>
-                      ))
-                    )}
-                  {deletion.error && (
-                    <Text color="fg.error">{String(deletion.error)}</Text>
+                      </Flex>
+                    ))
+                  )}
+                  {state.status === "error" && (
+                    <Text color="fg.error">{state.message}</Text>
                   )}
                 </Flex>
               </Dialog.Body>
               <Dialog.CloseTrigger asChild>
-                <CloseButton
-                  aria-label="Close document memories"
-                  size="sm"
-                />
+                <CloseButton aria-label="Close document memories" size="sm" />
               </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>
@@ -120,12 +102,12 @@ export const DocumentMemoriesDialog = ({
       <ConfirmDialog
         confirmColorPalette="red"
         confirmLabel="Delete memory"
-        isPending={deletion.isPending}
-        onConfirm={remove}
+        isPending={state.status === "deleting"}
+        onConfirm={memories.remove}
         onOpenChange={(open) => {
-          if (!open) setSelected(undefined);
+          if (!open) memories.cancel();
         }}
-        open={selected !== undefined}
+        open={state.status !== "idle"}
         title="Delete memory?"
       >
         Agents will no longer receive this background information.

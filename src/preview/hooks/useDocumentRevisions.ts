@@ -45,12 +45,12 @@ export const useDocumentRevisions = (documentId: number, markdown: string) => {
     staleTime: Infinity,
   });
   const currentMatchesSaved = latest.data?.markdown === markdown;
-  const selectedId = currentMatchesSaved && requestedId === latestId
-    ? undefined
-    : requestedId;
+  const selectedId =
+    currentMatchesSaved && requestedId === latestId ? undefined : requestedId;
   useEffect(() => {
     if (
-      currentMatchesSaved && requestedId !== undefined &&
+      currentMatchesSaved &&
+      requestedId !== undefined &&
       requestedId === latestId
     ) {
       selectRevision(undefined);
@@ -68,44 +68,46 @@ export const useDocumentRevisions = (documentId: number, markdown: string) => {
       ? { status: "empty" }
       : { status: "ready", revisions: list.data }
     : list.error
-    ? { status: "error", message: list.error.message }
-    : { status: "loading" };
-  const content: RevisionState = selectedId === undefined
-    ? { status: "ready", markdown }
-    : selected.data
-    ? { status: "ready", markdown: selected.data.markdown }
-    : selected.error
-    ? { status: "error", message: selected.error.message }
-    : { status: "loading" };
-  const previousMarkdown = selectedId === undefined
-    ? currentMatchesSaved
-      ? latest.data?.previousMarkdown
-      : latest.data?.markdown
-    : selected.data?.previousMarkdown;
+      ? { status: "error", message: list.error.message }
+      : { status: "loading" };
+  const content: RevisionState =
+    selectedId === undefined
+      ? { status: "ready", markdown }
+      : selected.data
+        ? { status: "ready", markdown: selected.data.markdown }
+        : selected.error
+          ? { status: "error", message: selected.error.message }
+          : { status: "loading" };
+  const previousMarkdown =
+    selectedId === undefined
+      ? currentMatchesSaved
+        ? latest.data?.previousMarkdown
+        : latest.data?.markdown
+      : selected.data?.previousMarkdown;
   const revision = selectedId === undefined ? latest : selected;
   const revisionId = selectedId ?? latestId;
+  const contentMarkdown =
+    content.status === "ready" ? content.markdown : undefined;
   const changes = useMemo(
     () =>
-      content.status === "ready" && previousMarkdown !== undefined
-        ? changedRevisionLines(previousMarkdown, content.markdown)
+      contentMarkdown !== undefined && previousMarkdown !== undefined
+        ? changedRevisionLines(previousMarkdown, contentMarkdown)
         : undefined,
-    [
-      content.status,
-      content.status === "ready" ? content.markdown : undefined,
-      previousMarkdown,
-    ],
+    [contentMarkdown, previousMarkdown],
   );
   const comparison: ComparisonState = changes
     ? { status: "ready", changes }
     : revision.error
-    ? { status: "error", message: revision.error.message }
-    : revisionId !== undefined
-    ? revision.data ? { status: "unavailable" } : { status: "loading" }
-    : history.status === "error"
-    ? history
-    : history.status === "loading"
-    ? { status: "loading" }
-    : { status: "unavailable" };
+      ? { status: "error", message: revision.error.message }
+      : revisionId !== undefined
+        ? revision.data
+          ? { status: "unavailable" }
+          : { status: "loading" }
+        : history.status === "error"
+          ? history
+          : history.status === "loading"
+            ? { status: "loading" }
+            : { status: "unavailable" };
   return {
     history,
     content,

@@ -249,7 +249,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	if err != nil {
 		return err
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	repo := &storage.Repository{DB: database, Path: path}
 	printJSON := func(value any) error { return printJSON(out, value) }
 	if command == "document" && len(words) >= 2 {

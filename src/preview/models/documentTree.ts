@@ -36,8 +36,8 @@ export const createDocumentTree = (
         return;
       }
 
-      let directory = parent.children!.find((node) =>
-        node.value === `directory:${path}`
+      let directory = parent.children!.find(
+        (node) => node.value === `directory:${path}`,
       );
       if (!directory) {
         directory = {
@@ -69,7 +69,7 @@ export const createDocumentTree = (
 
 export const getDirectoryValues = (node: DocumentTreeNode): string[] =>
   (node.children ?? []).flatMap((child) =>
-    child.children ? [child.value, ...getDirectoryValues(child)] : []
+    child.children ? [child.value, ...getDirectoryValues(child)] : [],
   );
 
 export const collectDocumentTags = (
@@ -79,7 +79,7 @@ export const collectDocumentTags = (
     documents.flatMap((document) => document.tags).map((tag) => [tag.id, tag]),
   );
   return [...tagsById.values()].sort((left, right) =>
-    left.name.localeCompare(right.name)
+    left.name.localeCompare(right.name),
   );
 };
 
@@ -107,5 +107,5 @@ export const filterDocumentsByTags = (
   selectedTagIds.length === 0
     ? documents
     : documents.filter((document) =>
-      document.tags.some((tag) => selectedTagIds.includes(tag.id))
-    );
+        document.tags.some((tag) => selectedTagIds.includes(tag.id)),
+      );

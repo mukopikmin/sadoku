@@ -10,18 +10,15 @@ import {
   Separator,
   Text,
 } from "@chakra-ui/react";
-import {
-  RefreshCw,
-  ScrollText,
-  Settings,
-  Tag,
-  WifiOff,
-} from "lucide-react";
+import { RefreshCw, ScrollText, Settings, Tag, WifiOff } from "lucide-react";
 import type { ComponentProps, ReactNode, RefObject } from "react";
 import { Tooltip } from "../ui/tooltip";
 import { DocumentNavigation } from "../DocumentNavigation";
 
-export const PreviewShell = ({ children, headerRef }: {
+export const PreviewShell = ({
+  children,
+  headerRef,
+}: {
   children: ReactNode;
   headerRef?: RefObject<HTMLDivElement | null>;
 }) => (
@@ -97,20 +94,19 @@ export const PreviewHeader = ({
         w="8"
       />
       <Flex direction="column" gap="1" minW="0" flex="1">
-        {fileUrl
-          ? (
-            <Text as="div" minW="0" truncate title={title}>
-              Previewing{" "}
-              <Link href={fileUrl} color="fg" fontWeight="semibold">
-                {title}
-              </Link>.
-            </Text>
-          )
-          : (
-            <Text minW="0" truncate fontWeight="semibold" title={title}>
+        {fileUrl ? (
+          <Text as="div" minW="0" truncate title={title}>
+            Previewing{" "}
+            <Link href={fileUrl} color="fg" fontWeight="semibold">
               {title}
-            </Text>
-          )}
+            </Link>
+            .
+          </Text>
+        ) : (
+          <Text minW="0" truncate fontWeight="semibold" title={title}>
+            {title}
+          </Text>
+        )}
         {collapsedDocument?.title && (
           <Text
             minW="0"

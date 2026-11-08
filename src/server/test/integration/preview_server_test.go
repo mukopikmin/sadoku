@@ -112,7 +112,7 @@ func TestServerFallsBackFromOccupiedPortAndStopsCleanly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer reserved.Close()
+	defer func() { _ = reserved.Close() }()
 	port := reserved.Addr().(*net.TCPAddr).Port
 	if port == 65535 {
 		t.Skip("cannot increment final TCP port")
@@ -130,7 +130,7 @@ func TestServerFallsBackFromOccupiedPortAndStopsCleanly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	body, err := io.ReadAll(response.Body)
 	if err != nil || response.StatusCode != 200 || !strings.Contains(string(body), "sadoku-client-root") || response.Header.Get("Cache-Control") != "no-store" {
 		t.Fatalf("preview response: %d %v", response.StatusCode, err)
@@ -161,7 +161,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 			}
 		}
 		for _, listener := range reserved {
-			listener.Close()
+			_ = listener.Close()
 		}
 		reserved = nil
 	}
@@ -170,7 +170,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 	}
 	t.Cleanup(func() {
 		for _, listener := range reserved {
-			listener.Close()
+			_ = listener.Close()
 		}
 	})
 	previewURL, _ := startServer(t, markdownFile(t, "preview.md", "# Preview\n"), port, true)
@@ -194,10 +194,10 @@ func TestLastEventStreamDisconnectShutsDownServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	if response.StatusCode != 200 {
-		response.Body.Close()
+		_ = response.Body.Close()
 		t.Fatalf("events status %d", response.StatusCode)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	select {
 	case <-stopped:
 	case <-time.After(8 * time.Second):
@@ -209,7 +209,7 @@ func TestRemoteSourceKeepsFetchTokenOutOfPersistentIdentity(t *testing.T) {
 	requests := make(chan string, 4)
 	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests <- r.URL.RawQuery
-		fmt.Fprint(w, "# Remote\nBody\n")
+		_, _ = fmt.Fprint(w, "# Remote\nBody\n")
 	}))
 	defer remote.Close()
 	previewURL, _ := startServer(t, remote.URL+"/guide.md?token=private#heading", 0, true)
@@ -295,7 +295,7 @@ func TestRESTCommentsRemainScopedAndValidateBodies(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() { res.Body.Close() })
+		t.Cleanup(func() { _ = res.Body.Close() })
 		return res
 	}
 	response := request("GET", "/__sadoku/documents", "")

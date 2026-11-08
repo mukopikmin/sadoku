@@ -12,9 +12,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const createComment = (
-  overrides: Partial<Comment> = {},
-): Comment => ({
+const createComment = (overrides: Partial<Comment> = {}): Comment => ({
   body: "Original comment.",
   author: { type: "human" },
   createdAt: "2026-06-05T00:00:00.000Z",
@@ -31,10 +29,12 @@ const createComment = (
 describe("comment hooks", () => {
   it("shares one comments request across query consumers", async () => {
     const fetchMock = vi.fn(() =>
-      Promise.resolve(Response.json({
-        comments: [],
-        filePath: "/tmp/example.md",
-      }))
+      Promise.resolve(
+        Response.json({
+          comments: [],
+          filePath: "/tmp/example.md",
+        }),
+      ),
     );
     vi.stubGlobal("fetch", fetchMock);
     const queryClient = createPreviewQueryClient();
@@ -75,9 +75,13 @@ describe("comment hooks", () => {
           url === "/__sadoku/documents/42/comments/1" &&
           init?.method === "PUT"
         ) {
-          return Promise.resolve(Response.json(createComment({
-            body: "Updated comment.",
-          })));
+          return Promise.resolve(
+            Response.json(
+              createComment({
+                body: "Updated comment.",
+              }),
+            ),
+          );
         }
         if (
           url === "/__sadoku/documents/42/comments/1" &&
@@ -92,23 +96,22 @@ describe("comment hooks", () => {
 
     await act(() => result.current.onCreateComment(3, "New comment.", 3));
     expect(
-      queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(42),
-      )?.comments.map((comment) => comment.id),
+      queryClient
+        .getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
+        ?.comments.map((comment) => comment.id),
     ).toEqual([1, 2]);
 
     await act(() => result.current.onUpdateComment(1, "Updated comment."));
     expect(
-      queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(42),
-      )?.comments[0].body,
+      queryClient.getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
+        ?.comments[0].body,
     ).toBe("Updated comment.");
 
     await act(() => result.current.onDeleteComment(1));
     expect(
-      queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(42),
-      )?.comments.map((comment) => comment.id),
+      queryClient
+        .getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
+        ?.comments.map((comment) => comment.id),
     ).toEqual([2]);
   });
 
@@ -132,9 +135,8 @@ describe("comment hooks", () => {
       act(() => result.current.onUpdateComment(1, "Rejected update.")),
     ).rejects.toThrow("Failed to update comment: 500");
     expect(
-      queryClient.getQueryData<{ comments: Comment[] }>(
-        commentsQueryKey(42),
-      )?.comments,
+      queryClient.getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
+        ?.comments,
     ).toEqual([comment]);
   });
 
@@ -149,7 +151,7 @@ describe("comment hooks", () => {
       filePath: "/tmp/b.md",
     });
     let release!: () => void;
-    const responseReady = new Promise<void>((resolve) => release = resolve);
+    const responseReady = new Promise<void>((resolve) => (release = resolve));
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
@@ -172,13 +174,11 @@ describe("comment hooks", () => {
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(commentsQueryKey(1))
         ?.comments[0].body,
-    )
-      .toBe("Updated A");
+    ).toBe("Updated A");
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(commentsQueryKey(2))
         ?.comments[0].body,
-    )
-      .toBe("Document B");
+    ).toBe("Document B");
   });
 });
 
@@ -199,7 +199,7 @@ it("enables GitHub export only when preview and comments share a revision and ne
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
   const fetchMock = vi.fn(async () =>
-    Response.json({ error: { code: "export_out_of_sync" } }, { status: 409 })
+    Response.json({ error: { code: "export_out_of_sync" } }, { status: 409 }),
   );
   vi.stubGlobal("fetch", fetchMock);
   const hook = renderHook(() => useCommentActions(42), { wrapper });
@@ -209,10 +209,10 @@ it("enables GitHub export only when preview and comments share a revision and ne
       githubHeadSha: sha,
       comments: [createComment()],
       filePath: "source",
-    })
+    }),
   );
   await waitFor(() =>
-    expect(hook.result.current.onExportComment).toBeTypeOf("function")
+    expect(hook.result.current.onExportComment).toBeTypeOf("function"),
   );
   await act(async () => {
     await expect(hook.result.current.onExportComment!(1)).rejects.toThrow(

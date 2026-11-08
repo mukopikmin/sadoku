@@ -14,10 +14,13 @@ export const useDocumentDiff = (
       enabled ? changedRevisionLines(previousMarkdown!, markdown) : undefined,
     [enabled, previousMarkdown, markdown],
   );
+  const state = !available
+    ? { status: "unavailable" as const }
+    : changes
+      ? { status: "on" as const, changes }
+      : { status: "off" as const };
   return {
-    available,
-    enabled,
-    changes,
+    state,
     onToggle: () => {
       if (available) setEnabledDocumentId(enabled ? undefined : documentId);
     },

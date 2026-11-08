@@ -295,8 +295,8 @@ func TestURLShapedPathAndQueryCannotChangeBackend(t *testing.T) {
 
 func TestRequestStreamAndCancellation(t *testing.T) {
 	reader, writer := io.Pipe()
-	defer reader.Close()
-	defer writer.Close()
+	defer func() { _ = reader.Close() }()
+	defer func() { _ = writer.Close() }()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	proxy := newProxy(t, roundTripFunc(func(r *http.Request) (*http.Response, error) {
@@ -306,7 +306,7 @@ func TestRequestStreamAndCancellation(t *testing.T) {
 			return nil, errors.New("missing body")
 		}
 		go func() {
-			defer writer.Close()
+			defer func() { _ = writer.Close() }()
 			_, _ = writer.Write([]byte("streamed body"))
 		}()
 		if got, err := io.ReadAll(r.Body); err != nil || string(got) != "streamed body" {
@@ -337,13 +337,13 @@ func TestLargeResponseAndSSEStreamOverHTTP(t *testing.T) {
 			server := httptest.NewServer(proxy)
 			defer server.Close()
 			release := make(chan struct{})
-			defer func() { close(release); reader.Close(); writer.Close() }()
+			defer func() { close(release); _ = reader.Close(); _ = writer.Close() }()
 			first := bytes.Repeat([]byte("x"), 1024*1024)
 			if contentType == "text/event-stream" {
 				first = []byte("data: first\n\n")
 			}
 			go func() {
-				defer writer.Close()
+				defer func() { _ = writer.Close() }()
 				if _, err := writer.Write(first); err != nil {
 					return
 				}
@@ -360,7 +360,7 @@ func TestLargeResponseAndSSEStreamOverHTTP(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer res.Body.Close()
+			defer func() { _ = res.Body.Close() }()
 			got := make([]byte, len(first))
 			if _, err := io.ReadFull(res.Body, got); err != nil || !bytes.Equal(got, first) {
 				t.Fatalf("first chunk was not streamed: %v", err)

@@ -11,8 +11,9 @@ description:
 
 Help the user establish what to write, persist the writing guidance in Sadoku,
 and then write the document. Communicate in the user's language. Use the
-`sadoku` CLI for registration, instructions, and memories; never read or modify
-Sadoku storage directly or replace these settings with sidecar Markdown files.
+`sadoku` CLI for registration, tags, instructions, and memories; never read or
+modify Sadoku storage directly or replace these settings with sidecar Markdown
+files.
 
 ## 1. Establish the filename and title
 
@@ -63,6 +64,36 @@ sadoku document update <document-id> --title "<revised-document-title>"
 
 Use `--title ""` only when clearing the display title is requested. Updating
 the display title does not rename the file or change its Markdown body.
+
+### Tag the created document
+
+After registration, attach the `Sadoku Init` tag to every document created by
+this skill, including documents left empty after preparation. List tags first:
+
+```sh
+sadoku tag list
+```
+
+Reuse the ID of the tag whose name is exactly `Sadoku Init`. If none exists,
+create it and use the ID returned in the JSON response:
+
+```sh
+sadoku tag add --name "Sadoku Init"
+```
+
+Attach the tag and verify it in the document's `tags` array:
+
+```sh
+sadoku document inspect <document-id>
+sadoku document update <document-id> --tags <existing-tag-ids-and-sadoku-init-tag-id>
+sadoku document inspect <document-id>
+```
+
+Use the registered document ID and returned tag IDs. Inspect its current tags
+and include all existing IDs in the replacement collection to preserve them.
+On resumption, verify the tag and add it if missing rather than creating a
+duplicate. If another process creates the same tag before `tag add` succeeds,
+list tags again and reuse its ID.
 
 ## 3. Prepare writing guidance through conversation
 
@@ -143,9 +174,9 @@ checks. Update instructions or useful memories if drafting establishes a change
 in direction.
 
 Report the file path, title, document ID, whether the body is still empty or has
-been drafted, and the instruction and memory outcomes. On resumption, inspect
-the existing body and retrieve settings rather than creating another document
-or restarting the questions.
+been drafted, and the tag, instruction, and memory outcomes. On resumption,
+inspect the existing body and retrieve settings rather than creating another
+document or restarting the questions.
 
 ## Failure handling
 
@@ -153,6 +184,9 @@ or restarting the questions.
   `PATH`. Do not substitute direct storage edits or sidecar files.
 - If creation or registration fails, report what exists and what remains
   incomplete. Do not proceed as though the document were registered.
+- If tag creation or attachment fails, preserve the registered document and its
+  existing tags, report the incomplete tagging, and retry after resolving the
+  error. Do not claim the tag was attached until verification succeeds.
 - If instruction or memory retrieval fails, report the error and resolve it
   before replacing settings or drafting against unknown guidance.
 - If saving instructions fails, preserve the empty document and the prepared

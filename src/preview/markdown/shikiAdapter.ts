@@ -22,9 +22,7 @@ const themes = {
 } as const;
 
 let highlighterPromise:
-  | ReturnType<
-    typeof import("shiki")["createHighlighter"]
-  >
+  | ReturnType<(typeof import("shiki"))["createHighlighter"]>
   | undefined;
 
 const adapter = createShikiAdapter({

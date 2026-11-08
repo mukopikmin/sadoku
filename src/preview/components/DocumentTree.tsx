@@ -1,12 +1,6 @@
 import { Text, VStack } from "@chakra-ui/react";
-import { useMemo, useState } from "react";
 import type { DocumentSummary } from "../models/document";
-import {
-  collectDocumentTags,
-  createDocumentTree,
-  filterDocumentsByTags,
-  reconcileSelectedTagIds,
-} from "../models/documentTree";
+import { useDocumentTree } from "../hooks/useDocumentTree";
 import { DocumentTagFilter } from "./DocumentTagFilter";
 import { DocumentTreeView } from "./DocumentTreeView";
 
@@ -16,24 +10,14 @@ type DocumentTreeProps = {
   onCreateDocument?: (directory: string) => void;
 };
 
-export const DocumentTree = (
-  { documents, onSelectDocument, onCreateDocument }: DocumentTreeProps,
-) => {
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
-  const [tagSearch, setTagSearch] = useState("");
-  const tags = useMemo(() => collectDocumentTags(documents), [documents]);
-  const activeTagIds = useMemo(
-    () => reconcileSelectedTagIds(selectedTagIds, tags),
-    [selectedTagIds, tags],
-  );
-  const filteredDocuments = useMemo(
-    () => filterDocumentsByTags(documents, activeTagIds),
-    [activeTagIds, documents],
-  );
-  const rootNode = useMemo(
-    () => createDocumentTree(filteredDocuments),
-    [filteredDocuments],
-  );
+export const DocumentTree = ({
+  documents,
+  onSelectDocument,
+  onCreateDocument,
+}: DocumentTreeProps) => {
+  const tree = useDocumentTree(documents);
+  const { tags, activeTagIds, filteredDocuments, rootNode, tagSearch } =
+    tree.state;
 
   return (
     <VStack align="stretch" gap="3">
@@ -41,36 +25,31 @@ export const DocumentTree = (
         <DocumentTagFilter
           documentCount={documents.length}
           filteredDocumentCount={filteredDocuments.length}
-          onClearFilters={() => {
-            setSelectedTagIds([]);
-            setTagSearch("");
-          }}
-          onSearchChange={setTagSearch}
-          onSelectedTagIdsChange={setSelectedTagIds}
+          onClearFilters={tree.clear}
+          onSearchChange={tree.setTagSearch}
+          onSelectedTagIdsChange={tree.setSelectedTagIds}
           searchValue={tagSearch}
           selectedTagIds={activeTagIds}
           tags={tags}
         />
       )}
-      {filteredDocuments.length === 0
-        ? (
-          <VStack
-            borderColor="border.muted"
-            borderRadius="lg"
-            borderWidth="1px"
-            gap="2"
-            p="6"
-          >
-            <Text color="fg.muted">No documents match the selected tags.</Text>
-          </VStack>
-        )
-        : (
-          <DocumentTreeView
-            onCreateDocument={onCreateDocument}
-            onSelectDocument={onSelectDocument}
-            rootNode={rootNode}
-          />
-        )}
+      {tree.state.status === "empty" ? (
+        <VStack
+          borderColor="border.muted"
+          borderRadius="lg"
+          borderWidth="1px"
+          gap="2"
+          p="6"
+        >
+          <Text color="fg.muted">No documents match the selected tags.</Text>
+        </VStack>
+      ) : (
+        <DocumentTreeView
+          onCreateDocument={onCreateDocument}
+          onSelectDocument={onSelectDocument}
+          rootNode={rootNode}
+        />
+      )}
     </VStack>
   );
 };

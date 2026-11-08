@@ -29,24 +29,28 @@ const preserveUnsupportedSyntax = () => (tree: MarkdownAstNode) => {
         if (htmlComment) {
           return {
             type: "htmlComment",
-            children: [{
-              type: "text",
-              value: trimHtmlComment(htmlComment[1]),
-            }],
+            children: [
+              {
+                type: "text",
+                value: trimHtmlComment(htmlComment[1]),
+              },
+            ],
             data: { hName: "html-comment" },
             position: node.position,
           };
         }
         return parent.type === "root" || parent.type === "blockquote"
           ? {
-            type: "paragraph",
-            children: [{
-              type: "text",
-              value,
+              type: "paragraph",
+              children: [
+                {
+                  type: "text",
+                  value,
+                  position: node.position,
+                },
+              ],
               position: node.position,
-            }],
-            position: node.position,
-          }
+            }
           : { ...node, type: "text" };
       }
       if (node.type === "footnoteReference") {
@@ -59,13 +63,15 @@ const preserveUnsupportedSyntax = () => (tree: MarkdownAstNode) => {
       if (node.type === "footnoteDefinition") {
         return {
           type: "paragraph",
-          children: [{
-            type: "text",
-            value: `[^${node.label ?? node.identifier ?? ""}]: ${
-              plainTextFromNode(node)
-            }`,
-            position: node.position,
-          }],
+          children: [
+            {
+              type: "text",
+              value: `[^${node.label ?? node.identifier ?? ""}]: ${plainTextFromNode(
+                node,
+              )}`,
+              position: node.position,
+            },
+          ],
           position: node.position,
         };
       }

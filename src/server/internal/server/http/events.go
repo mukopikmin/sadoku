@@ -59,7 +59,7 @@ func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
 			respondError(w, err)
 			return
 		}
-		defer watcher.Close()
+		defer func() { _ = watcher.Close() }()
 		parents := map[string]bool{}
 		for i := range targets {
 			path, err := filepath.Abs(targets[i].path)
@@ -108,7 +108,7 @@ func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
 		select {
 		case <-req.Context().Done():
 			return
-		case <-watchErrors:
+		case _ = <-watchErrors:
 			// EventSource reconnects with fresh watchers after an OS watch failure.
 			return
 		case event, ok := <-events:

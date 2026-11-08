@@ -1,5 +1,11 @@
 # Go backend compatibility checks
 
+Purpose: Record compatibility verification for the TypeScript-to-Go migration.
+Related issue/PR: None recorded in this document.
+Deletion condition: Preserve the reference commit, fixture provenance, comparison
+rules, and accepted differences beside the compatibility tests, then delete this
+migration report once that reference is available there.
+
 The reference implementation is commit
 `368b47eb1ae18a84d428ce4367d25cb815584968`, the final TypeScript backend before
 the Go migration.

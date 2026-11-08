@@ -1,33 +1,19 @@
 import { Box, DataList } from "@chakra-ui/react";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode } from "react";
 import type { CommentActions } from "../../api/commentActions";
+import type { UnresolvedComment } from "../../models/comment";
 import { CommentableBlock } from "../../markdown/commentable/CommentableBlock";
 import { CommentableMarkdown } from "../../markdown/commentable/CommentableMarkdown";
 import { getCommentableBlockProps } from "../../markdown/commentable/commentableMarkdownComponents";
-import {
-  type CommentRange,
-  deriveRangeHighlights,
-  getSingleLineCommentHighlights,
-  groupCommentsByAnchorLine,
-} from "../../markdown/commentable/commentRanges";
-import {
-  CommentRenderingContext,
-  type CommentRenderingContextValue,
-} from "../../markdown/commentable/commentRendering";
-import { useCommentableBlockLayout } from "../../markdown/commentable/useCommentableBlockLayout";
-import { useCommentSelection } from "../../markdown/commentable/useCommentSelection";
-import { initializeMermaid } from "../../markdown/mermaid";
+import { CommentRenderingContext } from "../../markdown/commentable/commentRendering";
 import { HighlightOverlay } from "../../markdown/HighlightOverlay";
-import { useHeadingHashNavigation } from "../../markdown/useHeadingHashNavigation";
-import type { UnresolvedComment } from "../../models/comment";
-import { extractAgentFrontMatter } from "./frontMatter";
 import { RawMarkdownDialog } from "./RawMarkdownDialog";
 import { DocumentDiffBlock } from "../../markdown/DocumentDiffBlock";
 import {
   DeletedCommentsContext,
   DeletedMarkdownBlock,
 } from "../../markdown/commentable/DeletedMarkdownBlock";
-import { groupDeletedComments } from "../../markdown/commentable/deletedComments";
+import { useMarkdownPreview } from "./useMarkdownPreview";
 
 export type MarkdownPreviewProps = {
   actions: CommentActions;
@@ -48,108 +34,27 @@ export const MarkdownPreview = ({
   showHtmlComments,
   theme,
 }: MarkdownPreviewProps) => {
-  const activeComments = useMemo(
-    () => comments.filter((comment) => comment.state === "active"),
-    [comments],
-  );
-  const frontMatter = useMemo(
-    () => extractAgentFrontMatter(markdown, documentPath),
-    [documentPath, markdown],
-  );
-  const previousFrontMatter = useMemo(
-    () =>
-      previousMarkdown === undefined
-        ? undefined
-        : extractAgentFrontMatter(previousMarkdown, documentPath),
-    [documentPath, previousMarkdown],
-  );
-  const frontMatterChanged =
-    previousMarkdown !== undefined &&
-    JSON.stringify(frontMatter?.items.map(({ key, value }) => [key, value])) !==
-      JSON.stringify(
-        previousFrontMatter?.items.map(({ key, value }) => [key, value]),
-      );
-  const renderedMarkdown = frontMatter?.bodyMarkdown ?? markdown;
-  const previewRef = useRef<HTMLDivElement>(null);
-  const [rawMarkdownRange, setRawMarkdownRange] = useState<CommentRange>();
-  const [drafts] = useState(() => new Map<number, string>());
-  const {
-    activeCommentLine,
-    activeRange,
-    closeCommentForm,
-    openCommentForm,
-    selectCommentRange,
-    selectedRange,
-  } = useCommentSelection();
-  const rangeHighlights = useMemo(
-    () => deriveRangeHighlights(activeComments, selectedRange),
-    [activeComments, selectedRange],
-  );
-  const { commentableLines, deletedRanges, rangeHighlightLayouts } =
-    useCommentableBlockLayout(previewRef, rangeHighlights);
-  const commentsByLine = useMemo(
-    () => groupCommentsByAnchorLine(activeComments, commentableLines),
-    [commentableLines, activeComments],
-  );
-  const commentHighlightsByLine = useMemo(
-    () => getSingleLineCommentHighlights(activeComments),
-    [activeComments],
-  );
-  const deletedCommentsByLine = useMemo(
-    () =>
-      groupDeletedComments(
-        comments.filter((comment) => comment.state === "stale"),
-        previousMarkdown ?? "",
-        deletedRanges,
-      ),
-    [comments, previousMarkdown, deletedRanges],
-  );
-
-  useHeadingHashNavigation(previewRef, markdown);
-
-  useEffect(() => {
-    void initializeMermaid({ theme });
-  }, [
-    activeCommentLine,
+  const preview = useMarkdownPreview({
+    actions,
     comments,
+    documentPath,
     markdown,
     previousMarkdown,
-    selectedRange,
     showHtmlComments,
     theme,
-  ]);
-
-  const commentRenderingContext = useMemo<CommentRenderingContextValue>(
-    () => ({
-      actions,
-      activeCommentLine,
-      activeRange,
-      commentsByLine,
-      commentHighlightsByLine,
-      drafts,
-      markdown,
-      rangeHighlights,
-      onCloseCommentForm: closeCommentForm,
-      onOpenCommentForm: openCommentForm,
-      onOpenRawMarkdown: setRawMarkdownRange,
-      onSelectCommentRange: selectCommentRange,
-      selectedRange,
-    }),
-    [
-      actions,
-      activeCommentLine,
-      activeRange,
-      closeCommentForm,
-      commentHighlightsByLine,
-      commentsByLine,
-      drafts,
-      markdown,
-      openCommentForm,
-      rangeHighlights,
-      selectCommentRange,
-      selectedRange,
-    ],
-  );
+  });
+  const {
+    frontMatter,
+    previousFrontMatter,
+    frontMatterChanged,
+    renderedMarkdown,
+    previewRef,
+    rangeHighlightLayouts,
+    commentRenderingContext,
+    deletedCommentsByLine,
+    raw,
+    interactionProps,
+  } = preview;
 
   return (
     <CommentRenderingContext.Provider value={commentRenderingContext}>
@@ -157,12 +62,13 @@ export const MarkdownPreview = ({
         <RawMarkdownDialog
           markdown={markdown}
           onOpenChange={(open) => {
-            if (!open) setRawMarkdownRange(undefined);
+            if (!open) preview.closeRaw();
           }}
-          open={rawMarkdownRange !== undefined}
-          range={rawMarkdownRange}
+          open={raw.status === "open"}
+          range={raw.status === "open" ? raw.range : undefined}
         />
         <Box
+          {...interactionProps}
           className="markdown-preview"
           data-document-diff={previousMarkdown !== undefined ? "" : undefined}
           ref={previewRef}

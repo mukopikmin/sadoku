@@ -40,7 +40,9 @@ export const useInstructionActions = (documentId: InstructionScope) => {
   return {
     create: createMutation.mutateAsync,
     delete: deleteMutation.mutateAsync,
-    pending: createMutation.isPending || updateMutation.isPending ||
+    pending:
+      createMutation.isPending ||
+      updateMutation.isPending ||
       deleteMutation.isPending,
     update: updateMutation.mutateAsync,
   };

@@ -24,7 +24,7 @@ func (r *Repository) saveDocumentAttributes(id int64, path string, title **strin
 	if err != nil {
 		return doc, err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	if id == 0 {
 		var existing int64
 		err = tx.QueryRow("SELECT id FROM comment_document WHERE file_path=?", path).Scan(&existing)
