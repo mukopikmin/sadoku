@@ -32,7 +32,7 @@ func eventStream(t *testing.T, serverURL, path string) (<-chan streamEvent, func
 		cancel()
 		t.Fatal(err)
 	}
-	response, err := http.DefaultClient.Do(req)
+	response, err := http.DefaultClient.Do(req) //nolint:bodyclose // closeStream owns the streaming body and is returned and registered with t.Cleanup.
 	if err != nil {
 		cancel()
 		t.Fatal(err)

@@ -42,6 +42,9 @@ to use a binary at another path. CI installs the same pinned version.
 The shared [configuration](../.golangci.yml) enables correctness checks with
 `staticcheck`, `errcheck`, `errorlint`, `ineffassign`, `unused`, and `govet`,
 plus `rowserrcheck` and `sqlclosecheck` for SQL resource and iteration errors.
+`bodyclose` checks HTTP response cleanup, and `nilerr` catches branches that
+discard a non-nil error by returning nil. `nolintlint` requires suppressions to
+name specific linters, explain the reason, and remain necessary.
 Tests are included and generated code is excluded. Formatting stays with `gofmt`;
 cross-platform vet checks remain available through `make vet-cross`.
 

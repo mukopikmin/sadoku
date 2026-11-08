@@ -11,15 +11,22 @@ issues:
 linters:
   default: none
   enable:
+    - bodyclose
     - errcheck
     - errorlint
     - govet
     - ineffassign
+    - nilerr
+    - nolintlint
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
     - unused
   settings:
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
     staticcheck:
       # Start with correctness checks; gofmt remains responsible for formatting.
       checks:

@@ -4,6 +4,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -124,6 +125,10 @@ func TestSavePreservesMalformedConfiguration(t *testing.T) {
 	contents := []byte("theme_mode = [broken")
 	if err := AtomicWrite(Path(), contents, 0600); err != nil {
 		t.Fatal(err)
+	}
+	read, extra, err := Read()
+	if err != nil || !reflect.DeepEqual(read, Defaults()) || len(extra) != 0 {
+		t.Fatalf("malformed configuration should use defaults: %+v %+v %v", read, extra, err)
 	}
 	settings := Defaults()
 	settings.Theme = "dark"
