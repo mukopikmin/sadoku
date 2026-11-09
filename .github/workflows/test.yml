@@ -110,7 +110,7 @@ jobs:
         os:
           ${{ fromJSON(github.event_name == 'pull_request' &&
           '["ubuntu-latest"]' ||
-          '["ubuntu-latest","windows-latest","macos-15"]') }}
+          '["ubuntu-latest","windows-latest","macos-latest"]') }}
     env:
       CGO_ENABLED: "1"
     defaults:
