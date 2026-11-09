@@ -119,7 +119,6 @@ export const TagPicker = ({
         <Combobox.Positioner>
           <Combobox.Content maxH="64" overflowY="auto">
             <Combobox.ItemGroup>
-              <Combobox.ItemGroupLabel>Tags</Combobox.ItemGroupLabel>
               {collection.items.map((item) => (
                 <Combobox.Item item={item} key={item.value}>
                   {item.tag ? (
