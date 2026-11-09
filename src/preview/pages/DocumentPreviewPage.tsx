@@ -81,6 +81,8 @@ export const DocumentPreviewPage = ({
         documentId={documentId}
         headerRef={documentHeaderRef}
         title={document.displayTitle}
+        onOpenTags={onOpenTags}
+        tags={document.tags}
         trailingAction={
           // Preserve the measured title area when controls move to the header.
           <Box
@@ -158,9 +160,6 @@ export const DocumentPreviewPage = ({
         onOpenInstructions={onOpenInstructions}
         onOpenMemories={onOpenMemories}
         onOpenRevisions={() => setRevisionsOpen(true)}
-        tagCount={document.tags.length}
-        onOpenTags={onOpenTags}
-        tags={document.tags}
       />
     </Container>
   );
