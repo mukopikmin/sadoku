@@ -185,9 +185,12 @@ describe("MarkdownPreview comments", () => {
       },
     ]);
 
-    expect(screen.queryByText("Lines 1-3")).toBeNull();
+    expect(screen.getByText("Lines 1-3")).not.toBeNull();
+    expect(screen.getByText("#1")).not.toBeNull();
     screen.getByRole("button", { name: "More actions" }).click();
-    expect(await screen.findByText("Lines 1-3")).not.toBeNull();
+    expect((await screen.findByRole("menu")).textContent).not.toContain(
+      "Lines 1-3",
+    );
     expect(screen.getAllByText("Clarify this range.")).toHaveLength(1);
     expect(
       container.querySelector('[data-source-line="1"] .comment-thread'),
