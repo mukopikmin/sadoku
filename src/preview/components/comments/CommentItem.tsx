@@ -59,6 +59,9 @@ export const CommentItem = ({
       >
         <Stack gap="4" position="relative">
           <Stack gap="2">
+            <Text color="fg.muted" fontSize="xs" fontWeight="normal" pr="8">
+              <span>#{comment.id}</span> · <span>{lineLabel}</span>
+            </Text>
             {(comment.author.type === "bot" ||
               (showState && comment.state !== "active")) && (
               <Flex align="center" gap="1.5" pr="8">
