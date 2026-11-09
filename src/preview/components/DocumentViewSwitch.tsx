@@ -23,7 +23,8 @@ export const DocumentViewSwitch = ({
       maxW="full"
       onValueChange={({ value }) => onChangeView(value as PreviewView)}
       size="sm"
-      variant="subtle"
+      variant="line"
+      colorPalette="blue"
       value={view}
     >
       <Tabs.List aria-label="Preview views" flexWrap="wrap" maxW="full" gap="1">
