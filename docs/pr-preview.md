@@ -1,10 +1,10 @@
-# Cloud Run previews
+# PR previews
 
 [Back to development](development.md)
 
 ## Deployment behavior
 
-The [Preview workflow](../.github/workflows/cloud_run_preview.yml) deploys
+The [Preview workflow](../.github/workflows/pr_preview.yml) deploys
 same-repository pull requests with a `pr-<number>` revision tag and application
 changes pushed to `main` with a stable `main` tag. Main builds use the pushed
 commit, including merge results. Closing a PR removes its tag while preserving
@@ -18,7 +18,7 @@ runs for changes to `src/proxy/` or its deployment workflow on `main`, and can
 also be started manually on `main`.
 
 Deployments use `--no-traffic`, preserving existing service traffic. URLs appear
-in the workflow summary and `cloud-run-preview` deployment environment. PR
+in the workflow summary and `pr-preview` deployment environment. PR
 builds create or update one bot comment containing the URL, commit, and run link.
 Main deployments do not post PR comments.
 
@@ -41,7 +41,7 @@ binary build separately, with dependency downloads before source copies.
 
 Docker runs `scripts/preview_entrypoint.sh` to prepare
 [sample data](preview.md), then executes `scripts/cloud_run_entrypoint.sh`.
-Cloud Run previews disable SSE with `--no-sync` to avoid idle open requests.
+PR previews disable SSE with `--no-sync` to avoid idle open requests.
 Use **Reload preview** to fetch external changes; comment saving still works.
 The server stays running without `--keep-alive`.
 
@@ -53,7 +53,7 @@ entrypoint directly skips preparation and uses its own source/storage defaults.
 
 ## GitHub configuration
 
-Configure these repository or `cloud-run-preview` environment **secrets**:
+Configure these repository or `pr-preview` environment **secrets**:
 
 - `GCP_PROJECT_ID`
 - `GCP_REGION`
@@ -71,7 +71,7 @@ Configure these repository Actions **variables**:
 
 The proxy must be in the backend's project. Both preview and proxy deployment
 workflows read these variables. Alternatively, define them in both
-`cloud-run-preview` and `cloud-run-proxy` environments; environment values
+`pr-preview` and `cloud-run-proxy` environments; environment values
 override repository values. The proxy's `PUBLIC_ORIGIN` supplies the custom
 domain, so no additional domain variable is needed.
 
@@ -104,7 +104,7 @@ assertion.repository_id == 'REPOSITORY_ID' &&
 
 A provider that previously allowed only PR events must be updated before main
 deployments. GitHub Environment deployment branch rules must allow both PR refs
-and `main`. Configure required reviewers on `cloud-run-preview` to gate access
+and `main`. Configure required reviewers on `pr-preview` to gate access
 to deployment credentials.
 
 Apply the same repository restriction to the service account's
