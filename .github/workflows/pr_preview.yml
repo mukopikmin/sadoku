@@ -97,7 +97,7 @@ jobs:
       id-token: write
       pull-requests: write
     environment:
-      name: pr-preview
+      name: cloud-run-preview
       url: ${{ steps.preview.outputs.url }}
 
     steps:
@@ -280,7 +280,7 @@ jobs:
       contents: read
       id-token: write
     environment:
-      name: pr-preview
+      name: cloud-run-preview
 
     steps:
       - name: Authenticate to Google Cloud

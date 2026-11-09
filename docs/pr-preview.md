@@ -18,7 +18,7 @@ runs for changes to `src/proxy/` or its deployment workflow on `main`, and can
 also be started manually on `main`.
 
 Deployments use `--no-traffic`, preserving existing service traffic. URLs appear
-in the workflow summary and `pr-preview` deployment environment. PR
+in the workflow summary and `cloud-run-preview` deployment environment. PR
 builds create or update one bot comment containing the URL, commit, and run link.
 Main deployments do not post PR comments.
 
@@ -53,7 +53,11 @@ entrypoint directly skips preparation and uses its own source/storage defaults.
 
 ## GitHub configuration
 
-Configure these repository or `pr-preview` environment **secrets**:
+The deployment environment retains the internal name `cloud-run-preview` so
+existing secrets and OIDC configuration continue to apply. The workflow and
+documentation use PR preview as the feature name.
+
+Configure these repository or `cloud-run-preview` environment **secrets**:
 
 - `GCP_PROJECT_ID`
 - `GCP_REGION`
@@ -71,7 +75,7 @@ Configure these repository Actions **variables**:
 
 The proxy must be in the backend's project. Both preview and proxy deployment
 workflows read these variables. Alternatively, define them in both
-`pr-preview` and `cloud-run-proxy` environments; environment values
+`cloud-run-preview` and `cloud-run-proxy` environments; environment values
 override repository values. The proxy's `PUBLIC_ORIGIN` supplies the custom
 domain, so no additional domain variable is needed.
 
@@ -104,7 +108,7 @@ assertion.repository_id == 'REPOSITORY_ID' &&
 
 A provider that previously allowed only PR events must be updated before main
 deployments. GitHub Environment deployment branch rules must allow both PR refs
-and `main`. Configure required reviewers on `pr-preview` to gate access
+and `main`. Configure required reviewers on `cloud-run-preview` to gate access
 to deployment credentials.
 
 Apply the same repository restriction to the service account's
