@@ -4,18 +4,14 @@ import {
   Box,
   Button,
   Flex,
-  HoverCard,
   IconButton,
   Portal,
-  Text,
   useElementRect,
 } from "@chakra-ui/react";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
 import { useCallback } from "react";
-import { Brain, FileDiff, FileText, History, Tag } from "lucide-react";
+import { Brain, FileDiff, FileText, History } from "lucide-react";
 import type { useDocumentDiff } from "../hooks/useDocumentDiff";
-import type { DocumentTag } from "../models/document";
-import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
@@ -25,9 +21,6 @@ type DocumentActionBarProps = {
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
   onOpenRevisions: () => void;
-  tagCount: number;
-  onOpenTags: () => void;
-  tags: DocumentTag[];
 };
 
 export const DocumentActionBar = ({
@@ -37,9 +30,6 @@ export const DocumentActionBar = ({
   onOpenInstructions,
   onOpenMemories,
   onOpenRevisions,
-  onOpenTags,
-  tagCount,
-  tags,
 }: DocumentActionBarProps) => {
   const { ref, rect } = useElementRect();
   const contentRef = useCallback(
@@ -96,57 +86,6 @@ export const DocumentActionBar = ({
               </Tooltip>
             )}
             <Flex alignItems="center" gap="3" wrap="wrap">
-              <HoverCard.Root
-                closeDelay={100}
-                openDelay={200}
-                positioning={{ placement: "top-start" }}
-                size="sm"
-              >
-                <Tooltip content="Tags">
-                  <HoverCard.Trigger asChild>
-                    <Button
-                      aria-label="Tags"
-                      onClick={onOpenTags}
-                      px={tagCount === 0 ? "0" : undefined}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Tag aria-hidden="true" />
-                      {tagCount > 0 && (
-                        <Badge aria-hidden="true" size="sm" variant="solid">
-                          {tagCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </HoverCard.Trigger>
-                </Tooltip>
-                <Portal>
-                  <HoverCard.Positioner>
-                    <HoverCard.Content>
-                      <HoverCard.Arrow>
-                        <HoverCard.ArrowTip />
-                      </HoverCard.Arrow>
-                      <Text fontWeight="semibold">Document tags</Text>
-                      {tags.length === 0 ? (
-                        <Text color="fg.muted" pt="2">
-                          No tags added.
-                        </Text>
-                      ) : (
-                        <Flex gap="2" pt="2" wrap="wrap">
-                          {tags.map((tag) => (
-                            <TagLabel
-                              backgroundColor={tag.backgroundColor}
-                              key={tag.id}
-                              name={tag.name}
-                            />
-                          ))}
-                        </Flex>
-                      )}
-                    </HoverCard.Content>
-                  </HoverCard.Positioner>
-                </Portal>
-              </HoverCard.Root>
               <Tooltip content="Instructions">
                 <IconButton
                   aria-label="Instructions"

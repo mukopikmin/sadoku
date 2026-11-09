@@ -5,7 +5,7 @@ import { DocumentHeader } from "../components/DocumentHeader";
 import { DocumentNavigation } from "../components/DocumentNavigation";
 import { DocumentTitle } from "../components/DocumentTitle";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
-import { cleanup, render, screen, within } from "./testUtils";
+import { cleanup, fireEvent, render, screen, within } from "./testUtils";
 
 // Observe the real memoized components' render functions, rather than DOM reuse.
 const titleComponent = DocumentTitle as typeof DocumentTitle & {
@@ -32,6 +32,8 @@ it("updates view controls without rendering the title or table of contents again
       <DocumentHeader
         documentId={1}
         title={title}
+        onOpenTags={() => {}}
+        tags={[]}
         trailingAction={
           <DocumentNavigation
             onChangeView={() => {}}
@@ -43,14 +45,10 @@ it("updates view controls without rendering the title or table of contents again
       />
       <DocumentActionBar
         markdown={markdown}
-        instructionCount={0}
         memoryCount={0}
         onOpenInstructions={() => {}}
         onOpenMemories={() => {}}
         onOpenRevisions={() => {}}
-        onOpenTags={() => {}}
-        tagCount={0}
-        tags={[]}
       />
     </>
   );
@@ -86,4 +84,39 @@ it("updates view controls without rendering the title or table of contents again
       screen.getByRole("group", { name: "Document title actions" }),
     ).getByRole("button", { name: "Edit title" }),
   ).toBeTruthy();
+});
+
+it("shows tags below the title and keeps the editor available without tags", () => {
+  const onOpenTags = vi.fn();
+  const header = (tags: ComponentProps<typeof DocumentHeader>["tags"]) => (
+    <DocumentHeader
+      documentId={1}
+      title="Guide"
+      tags={tags}
+      onOpenTags={onOpenTags}
+    />
+  );
+  const { rerender } = render(
+    header([
+      { id: 1, name: "reviewed", backgroundColor: "#3182ce" },
+      { id: 2, name: "documentation", backgroundColor: "#38a169" },
+    ]),
+  );
+  const region = screen.getByRole("region", { name: "Document header" });
+  const tags = within(region).getByRole("group", { name: "Document tags" });
+  expect(within(tags).getByText("reviewed")).toBeTruthy();
+  expect(within(tags).getByText("documentation")).toBeTruthy();
+  expect(
+    within(region)
+      .getByRole("heading", { name: "Guide" })
+      .compareDocumentPosition(tags) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  fireEvent.click(within(tags).getByRole("button", { name: "Tags" }));
+  expect(onOpenTags).toHaveBeenCalledOnce();
+
+  rerender(header([]));
+  expect(screen.queryByText("reviewed")).toBeNull();
+  expect(screen.queryByText("documentation")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Tags" }));
+  expect(onOpenTags).toHaveBeenCalledTimes(2);
 });
