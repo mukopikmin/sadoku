@@ -1,4 +1,4 @@
-import { Box, Flex, IconButton, Link, Menu, Portal } from "@chakra-ui/react";
+import { Flex, IconButton, Link, Menu, Portal } from "@chakra-ui/react";
 import { Ellipsis } from "lucide-react";
 import { useCommentMenu } from "./useCommentMenu";
 import type { Comment, GitHubCommentExport } from "../../models/comment";
@@ -61,10 +61,6 @@ export const CommentActionMenu = ({
           <Portal>
             <Menu.Positioner>
               <Menu.Content>
-                <Box color="fg.muted" fontSize="xs" px="2" py="1">
-                  {lineLabel}
-                </Box>
-                <Menu.Separator />
                 <Menu.Item
                   value="copy"
                   disabled={disabled}

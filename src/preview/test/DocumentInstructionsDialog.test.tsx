@@ -18,9 +18,6 @@ describe("DocumentInstructionsDialog", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
-        if (String(url) === "/__sadoku/global-instructions") {
-          return Response.json({ instructions: [] });
-        }
         if (init?.method === "POST" || init?.method === "PUT") {
           instructions = [
             {
@@ -43,6 +40,33 @@ describe("DocumentInstructionsDialog", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+  });
+
+  it("keeps global management available without loading or showing its body", async () => {
+    const onOpenGlobalInstructions = vi.fn();
+    render(
+      <DocumentInstructionsDialog
+        documentId={7}
+        open
+        onOpenChange={() => {}}
+        onOpenGlobalInstructions={onOpenGlobalInstructions}
+      />,
+    );
+    await screen.findByRole("button", { name: "Edit instructions" });
+    expect(
+      screen.queryByRole("region", { name: "Global instruction text" }),
+    ).toBeNull();
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(([url]) =>
+          String(url).includes("global-instructions"),
+        ),
+    ).toBe(false);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Manage global instructions" }),
+    );
+    expect(onOpenGlobalInstructions).toHaveBeenCalledOnce();
   });
 
   it("edits a single text value and clears it by saving an empty value", async () => {

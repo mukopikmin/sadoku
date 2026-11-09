@@ -14,7 +14,7 @@ const note = (content: string) => ({
   updatedAt: "updated",
 });
 
-it("shows global guidance separately from editable document instructions", async () => {
+it("shows only document guidance with a link to global management", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL) =>
@@ -38,8 +38,8 @@ it("shows global guidance separately from editable document instructions", async
       onOpenGlobalInstructions={manage}
     />,
   );
-  expect(await screen.findByText("Shared guidance")).not.toBeNull();
   expect(await screen.findByText("Document guidance")).not.toBeNull();
+  expect(screen.queryByText("Shared guidance")).toBeNull();
   expect(screen.queryByRole("textbox")).toBeNull();
   fireEvent.click(
     screen.getByRole("button", {

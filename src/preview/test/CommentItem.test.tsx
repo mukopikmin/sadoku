@@ -26,6 +26,24 @@ const openCommentMenu = async () => {
 };
 
 describe("CommentItem", () => {
+  it("shows the comment ID and line range above the body instead of in the menu", async () => {
+    render(
+      <CommentItem
+        actions={createCommentActions()}
+        comment={createComment({ id: 42, body: "Review this text." })}
+        lineLabel="Lines 3–5"
+      />,
+    );
+    const range = screen.getByText("Lines 3–5");
+    expect(screen.getByText("#42")).not.toBeNull();
+    expect(
+      range.compareDocumentPosition(screen.getByText("Review this text.")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const menu = await openCommentMenu();
+    expect(within(menu).queryByText("Lines 3–5")).toBeNull();
+  });
+
   it.each(["suggest", "suggestion"])(
     "renders %s blocks as diffs against the comment source",
     async (language) => {

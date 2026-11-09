@@ -2,7 +2,9 @@ import {
   Button,
   Dialog,
   Field,
+  Flex,
   Heading,
+  IconButton,
   Input,
   Portal,
   Text,
@@ -10,6 +12,7 @@ import {
 import { Pencil } from "lucide-react";
 import { memo, useRef } from "react";
 import { useDocumentTitleEditor } from "../hooks/useDocumentTitleEditor";
+import { Tooltip } from "./ui/tooltip";
 
 export const DocumentTitle = memo(function DocumentTitle({
   documentId,
@@ -24,26 +27,34 @@ export const DocumentTitle = memo(function DocumentTitle({
   const pending = state.status === "saving";
   return (
     <>
-      {title && (
-        <Heading
-          as="h1"
-          size="3xl"
-          flexBasis="full"
-          minW="0"
-          overflowWrap="anywhere"
+      {title ? (
+        <Flex flexBasis="full" minW="0" align="center" gap="2">
+          <Heading as="h1" size="3xl" minW="0" overflowWrap="anywhere">
+            {title}
+          </Heading>
+          <Tooltip content="Edit title">
+            <IconButton
+              aria-label="Edit title"
+              flexShrink="0"
+              size="sm"
+              variant="ghost"
+              onClick={() => editor.open()}
+            >
+              <Pencil aria-hidden="true" />
+            </IconButton>
+          </Tooltip>
+        </Flex>
+      ) : (
+        <Button
+          alignSelf="flex-start"
+          flexShrink="0"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.open()}
         >
-          {title}
-        </Heading>
+          Set title
+        </Button>
       )}
-      <Button
-        flexShrink="0"
-        size="sm"
-        variant="ghost"
-        onClick={() => editor.open()}
-      >
-        {title && <Pencil aria-hidden="true" />}
-        {title ? "Edit title" : "Set title"}
-      </Button>
       <Dialog.Root
         open={state.status !== "closed"}
         onOpenChange={({ open }) => {

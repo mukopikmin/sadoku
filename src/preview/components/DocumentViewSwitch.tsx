@@ -23,10 +23,18 @@ export const DocumentViewSwitch = ({
       maxW="full"
       onValueChange={({ value }) => onChangeView(value as PreviewView)}
       size="sm"
-      variant="subtle"
+      variant="plain"
       value={view}
     >
-      <Tabs.List aria-label="Preview views" flexWrap="wrap" maxW="full" gap="1">
+      <Tabs.List
+        aria-label="Preview views"
+        flexWrap="wrap"
+        maxW="full"
+        gap="1"
+        bg="bg.muted"
+        rounded="l3"
+        p="1"
+      >
         <Tabs.Trigger
           aria-label="Preview"
           value="preview"
@@ -65,6 +73,7 @@ export const DocumentViewSwitch = ({
             </Box>
           )}
         </Tabs.Trigger>
+        <Tabs.Indicator />
       </Tabs.List>
       <Tabs.Content display="none" value={view} />
     </Tabs.Root>
