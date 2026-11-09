@@ -111,12 +111,12 @@ it("shows tags below the title and keeps the editor available without tags", () 
       .getByRole("heading", { name: "Guide" })
       .compareDocumentPosition(tags) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
-  fireEvent.click(within(tags).getByRole("button", { name: "Tags" }));
+  fireEvent.click(within(tags).getByRole("button", { name: "Edit tags" }));
   expect(onOpenTags).toHaveBeenCalledOnce();
 
   rerender(header([]));
   expect(screen.queryByText("reviewed")).toBeNull();
   expect(screen.queryByText("documentation")).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Tags" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add tags" }));
   expect(onOpenTags).toHaveBeenCalledTimes(2);
 });

@@ -1,6 +1,6 @@
-import { Flex, IconButton, Stack } from "@chakra-ui/react";
+import { Button, Flex, IconButton, Stack } from "@chakra-ui/react";
 import { type ReactNode, type RefObject } from "react";
-import { Tag } from "lucide-react";
+import { Pencil, Tag } from "lucide-react";
 import type { DocumentTag } from "../models/document";
 import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
@@ -54,16 +54,23 @@ export const DocumentHeader = ({
             name={tag.name}
           />
         ))}
-        <Tooltip content="Edit tags">
-          <IconButton
-            aria-label="Tags"
-            onClick={onOpenTags}
-            size="sm"
-            variant="ghost"
-          >
+        {tags.length > 0 ? (
+          <Tooltip content="Edit tags">
+            <IconButton
+              aria-label="Edit tags"
+              onClick={onOpenTags}
+              size="sm"
+              variant="ghost"
+            >
+              <Pencil aria-hidden="true" />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Button onClick={onOpenTags} size="sm" variant="ghost">
             <Tag aria-hidden="true" />
-          </IconButton>
-        </Tooltip>
+            Add tags
+          </Button>
+        )}
       </Flex>
     </Stack>
   );
