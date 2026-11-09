@@ -34,8 +34,9 @@ jobs:
             target: linux-x64
           - os: windows-latest
             target: windows-x64
-          - os: macos-15
-            target: darwin-arm64
+          # Temporarily disabled until macOS runner capacity is available again.
+          # - os: macos-15
+          #   target: darwin-arm64
     defaults:
       run:
         shell: bash
@@ -148,7 +149,8 @@ jobs:
           mkdir dist
           find platform-artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name '*.sha256' \) -exec cp '{}' dist/ \;
           cat platform-artifacts/*/checksums.txt | LC_ALL=C sort > dist/checksums.txt
-          test "$(wc -l < dist/checksums.txt)" -eq 3
+          # Restore to 3 when the macOS build is re-enabled.
+          test "$(wc -l < dist/checksums.txt)" -eq 2
           (cd dist && sha256sum --check checksums.txt)
 
       - name: Upload release artifacts

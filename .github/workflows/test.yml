@@ -106,11 +106,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Pull requests use Linux; main pushes and release callers cover all platforms.
+        # Pull requests use Linux; main pushes and release callers also cover Windows.
+        # Temporarily omit macos-15 until macOS runner capacity is available again.
         os:
           ${{ fromJSON(github.event_name == 'pull_request' &&
           '["ubuntu-latest"]' ||
-          '["ubuntu-latest","windows-latest","macos-15"]') }}
+          '["ubuntu-latest","windows-latest"]') }}
     env:
       CGO_ENABLED: "1"
     defaults:
