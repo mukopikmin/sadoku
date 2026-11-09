@@ -9,13 +9,14 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 // Captured from 368b47e (the last TypeScript server). Only timestamps and the
 // temporary root are normalized; whitespace, field order and stderr are exact.
-// Historical instruction commands assert generic invalid-command errors.
+// Intentional command changes are adapted below without rewriting the captures.
 func TestLegacyCLITranscripts(t *testing.T) {
 	data, err := os.ReadFile("testdata/legacy_cli.json")
 	if err != nil {
@@ -61,6 +62,37 @@ func TestLegacyCLITranscripts(t *testing.T) {
 			tc.Stderr = "Invalid instruction command.\n$HELP"
 			tc.Code = 1
 		}
+		if len(tc.Args) >= 2 && tc.Args[0] == "document" && tc.Args[1] == "tag" {
+			if tc.Code == 0 {
+				// Replay successful historical associations as complete-state updates
+				// so later transcript cases retain their captured database state.
+				var tags []map[string]any
+				if err := json.Unmarshal([]byte(tc.Stdout), &tags); err != nil {
+					t.Fatal(err)
+				}
+				ids := []string{}
+				for _, tag := range tags {
+					ids = append(ids, strconv.Itoa(int(tag["id"].(float64))))
+				}
+				tc.Args = []string{"document", "update", "1", "--tags", strings.Join(ids, ",")}
+				var expected bytes.Buffer
+				if err := printJSON(&expected, object{{"filePath", "$ROOT/doc.md"}, {"id", 1}, {"displayTitle", "日本語 <&>"}, {"tags", tags}}); err != nil {
+					t.Fatal(err)
+				}
+				tc.Stdout = expected.String()
+			} else {
+				tc.Stderr = "Invalid document command.\n$HELP"
+			}
+		}
+		if len(tc.Args) >= 3 && tc.Args[0] == "document" && tc.Args[1] == "add" && tc.Code == 1 {
+			if id := map[string]int{"$ROOT/doc.md": 1, "$ROOT/created.md": 2}[tc.Args[2]]; id != 0 {
+				tc.Stderr = fmt.Sprintf("Document is already registered: %d. Use `sadoku document update %d` to change its attributes.\n", id, id)
+			}
+		}
+		if len(tc.Args) > 0 && tc.Args[0] == "--title" {
+			tc.Stderr = "--title requires a value. Pass an empty string to clear it.\n$HELP"
+		}
+		tc.Stderr = strings.ReplaceAll(tc.Stderr, "--create and --title are only accepted by document add.", "--title and --tags are only accepted by document add/update.")
 		t.Run(fmt.Sprintf("%03d_%s", i, strings.Join(tc.Args, " ")), func(t *testing.T) {
 			for name, body := range tc.Files {
 				if err := os.WriteFile(filepath.Join(root, name), []byte(body), 0600); err != nil {

@@ -33,14 +33,39 @@ sadoku document add <markdown-path-or-url>
 Both forms return JSON with the document `id` and canonical `filePath`; use
 these for subsequent commands. If the file already exists, `--create` fails
 without overwriting or registering it: read it and edit only within the user's
-request. If creation succeeds but registration fails, register the saved file
-without `--create`.
+request. `add` rejects already registered documents; use `document list` to find
+the existing ID and reuse it. If creation succeeds but registration reports an
+error, check `document list` first: registration may already have completed.
+Register the saved file without `--create` only if it is not listed.
 
 After registration, follow **Start every document task**, write the requested
 content with normal editing tools, and inspect the diff and relevant
 documentation checks. Complete **Maintain memories** even for creation-only
 requests. Report the created path, document ID, and memory outcome. If review
 work was also requested, continue with **Review feedback**.
+
+## Updating document attributes
+
+Use the registered document ID to change its display title or tag collection:
+
+```sh
+sadoku document inspect <document-id>
+sadoku tag list
+sadoku document update <document-id> --title "<document-title>" --tags <tag-id,tag-id>
+```
+
+Omitted attributes remain unchanged. `--tags` replaces the entire collection
+with existing tag IDs (at most 20 distinct tags); inspect current associations
+before constructing the requested final collection. Use `--title ""` to clear
+the display title or `--tags ""` to remove all associations. Title and tag
+changes are saved together atomically, and the command returns the updated
+document with its tags. `add` accepts the same options for initial state only.
+
+Use `tag add --name "<tag-name>"` to create a missing tag and use its returned ID.
+`tag delete <tag-id>` deletes the tag itself from all documents. To change only
+a document's associations, use `document update --tags`; the former
+`document tag add/delete` commands are no longer supported. Attribute updates
+change Sadoku metadata; edit Markdown content with normal editing tools.
 
 ## Start every document task
 

@@ -9,21 +9,24 @@ documents="$1/documents"
 mkdir -p "$documents"
 cp -R "$fixture_dir/." "$documents/"
 
-for document in "$documents/"*.md "$documents/"*/*.md "$documents/"*/*/*.md; do
-  [ -f "$document" ] || continue
-  seed_title="$(awk '/^# / { sub(/^# /, ""); print; exit }' "$document")"
-  sadoku document add "$document" --title "$seed_title" >/dev/null
-done
-
 # Tag IDs start at 1 in the fresh preview database.
 sadoku tag add --name 'Needs review' >/dev/null
 sadoku tag add --name 'Markdown' >/dev/null
 sadoku tag add --name 'Archived' >/dev/null
 sadoku tag add --name 'Unassigned' >/dev/null
-sadoku document tag add 1 2 --source "$documents/comprehensive.md" >/dev/null
-sadoku document tag add 1 --source "$documents/second.md" >/dev/null
-sadoku document tag add 2 --source "$documents/japanese.md" >/dev/null
-sadoku document tag add 3 --source "$documents/guides/overview.md" >/dev/null
+
+for document in "$documents/"*.md "$documents/"*/*.md "$documents/"*/*/*.md; do
+  [ -f "$document" ] || continue
+  seed_title="$(awk '/^# / { sub(/^# /, ""); print; exit }' "$document")"
+  seed_tags=""
+  case "${document#"$documents/"}" in
+    comprehensive.md) seed_tags="1,2" ;;
+    second.md) seed_tags="1" ;;
+    japanese.md) seed_tags="2" ;;
+    guides/overview.md) seed_tags="3" ;;
+  esac
+  sadoku document add "$document" --title "$seed_title" --tags "$seed_tags" >/dev/null
+done
 
 # Locate the selected text so formatting changes do not silently move comments.
 add_comment() {

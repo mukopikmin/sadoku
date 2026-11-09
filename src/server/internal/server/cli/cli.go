@@ -18,11 +18,10 @@ var Version = "0.0.0-dev"
 
 const Usage = `Usage:
   sadoku start <file.md|directory|url> [--port <port>] [--host <host>] [--max-depth <depth>] [--max-files <count>] [--no-open] [--keep-alive] [--no-sync] [--trust-forwarded-prefix]
-  sadoku document add <file.md|url> [--create] [--title <text>]
+  sadoku document add <file.md|url> [--create] [--title <text>] [--tags <id,...>]
+  sadoku document update <document-id> [--title <text>] [--tags <id,...>]
   sadoku document inspect <document-id>
   sadoku document list
-  sadoku document tag add <tag-id>... (--document <id> | --source <file.md|url>)
-  sadoku document tag delete <tag-id>... (--document <id> | --source <file.md|url>)
   sadoku tag add --name <name>
   sadoku tag delete <tag-id>
   sadoku tag list
@@ -45,7 +44,8 @@ const Usage = `Usage:
 
 Options:
   --create          Create a new local Markdown file and register it (document add only).
-  --title           Display title (document add only).
+  --title           Display title (document add/update); empty clears it.
+  --tags            Complete comma-separated tag IDs (document add/update); empty clears all tags.
   --name            Tag name (tag add only).
   --global          Apply to all documents in this database (instruction commands only).
   --document        Existing document ID.
@@ -79,7 +79,7 @@ type Options struct {
 }
 
 var booleanOptions = map[string]bool{"global": true, "help": true, "version": true, "no-open": true, "keep-alive": true, "no-sync": true, "create": true, "as-bot": true, "ensure-document": true, "request-review": true, "trust-forwarded-prefix": true}
-var valueOptions = map[string]bool{"port": true, "host": true, "max-depth": true, "max-files": true, "source": true, "document": true, "title": true, "name": true, "body": true, "content": true, "comment": true, "start-line": true, "end-line": true, "channel": true}
+var valueOptions = map[string]bool{"port": true, "host": true, "max-depth": true, "max-files": true, "source": true, "document": true, "title": true, "tags": true, "name": true, "body": true, "content": true, "comment": true, "start-line": true, "end-line": true, "channel": true}
 
 func Parse(args []string) (Options, error) {
 	o := Options{Values: map[string]string{}, Flags: map[string]bool{}}
@@ -144,10 +144,13 @@ func Parse(args []string) (Options, error) {
 		if !valueOptions[name] {
 			return o, usageError("Unknown option: %s", a)
 		}
-		if !hasValue && i+1 < len(expanded) && (expanded[i+1] != "" || name == "content") && !strings.HasPrefix(expanded[i+1], "-") {
+		if !hasValue && i+1 < len(expanded) && (expanded[i+1] != "" || name == "content" || name == "title" || name == "tags") && !strings.HasPrefix(expanded[i+1], "-") {
 			i++
 			value = expanded[i]
 			hasValue = true
+		}
+		if (name == "title" || name == "tags") && !hasValue {
+			return o, usageError("--%s requires a value. Pass an empty string to clear it.", name)
 		}
 		if name == "content" {
 			missingContent = !hasValue
@@ -249,7 +252,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	defer func() { _ = database.Close() }()
 	repo := &storage.Repository{DB: database, Path: path}
 	printJSON := func(value any) error { return printJSON(out, value) }
-	if command == "document" && len(words) >= 2 && words[1] != "tag" {
+	if command == "document" && len(words) >= 2 {
 		switch words[1] {
 		case "list":
 			if len(words) != 2 {
@@ -274,40 +277,21 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 			if len(words) != 3 {
 				return fmt.Errorf("document add requires one source")
 			}
-			identity, source, remote := session.Source(words[2])
-			var doc u.Document
-			if o.Flags["create"] {
-				if remote || u.TrimSpace(words[2]) == "" || strings.HasSuffix(words[2], "/") || strings.HasSuffix(words[2], "\\") || filepath.Base(words[2]) == "." || filepath.Base(words[2]) == ".." {
-					return fmt.Errorf("--create requires a local Markdown filename.")
-				}
-				s := &session.Session{Root: filepath.Dir(source), CanCreate: true, Repository: repo, Sources: map[int64]string{}}
-				// Windows path normalization can remove a trailing dot before the
-				// filename validator sees it. Validate the spelling the user supplied.
-				result, e := s.Invoke(ctx, "CreateDocument", session.Input{Filename: filepath.Base(words[2]), Title: o.Values["title"]})
-				if e != nil {
-					return documentError(e)
-				}
-				doc = result.(u.Document)
-			} else {
-				doc, err = repo.Ensure(identity)
-				if err != nil {
-					return err
-				}
-				if title, ok := o.Values["title"]; ok {
-					if strings.ContainsAny(title, "\r\n\x00") {
-						return fmt.Errorf("title must be a single line")
-					}
-					title = u.TrimSpace(title)
-					doc.DisplayTitle = nil
-					if title != "" {
-						doc.DisplayTitle = &title
-					}
-					if err = repo.SetTitle(doc.ID, doc.DisplayTitle); err != nil {
-						return err
-					}
-				}
+			return addDocument(ctx, repo, words[2], o, out)
+		case "update":
+			id, err := number(words[2], "document ID", 1)
+			if err != nil {
+				return err
 			}
-			return printJSON(documentOutput(doc, false))
+			title, tags, err := documentAttributes(o)
+			if err != nil {
+				return err
+			}
+			doc, err := repo.UpdateDocumentAttributes(id, title, tags)
+			if err != nil {
+				return err
+			}
+			return printJSON(documentOutput(doc, true))
 		case "inspect":
 			if len(words) != 3 {
 				return fmt.Errorf("document inspect requires one ID")
@@ -387,7 +371,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		}
 		return printJSON(tagOutput(result.(u.Tag), false))
 	}
-	if command != "comment" && command != "instruction" && command != "memory" && !(command == "document" && operation == "tag") {
+	if command != "comment" && command != "instruction" && command != "memory" {
 		return fmt.Errorf("invalid command: %s", command)
 	}
 	if command == "instruction" && o.Flags["global"] {
@@ -446,45 +430,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	s := &session.Session{Root: filepath.Dir(selected.FilePath), Documents: []u.Document{*selected}, Sources: map[int64]string{selected.ID: fetch}, Repository: repo}
 	in := session.Input{DocumentID: session.ID(selected.ID), Body: o.Values["body"], Content: o.Values["content"], AsBot: o.Flags["as-bot"], RequestReview: o.Flags["request-review"]}
 	op := ""
-	if command == "document" {
-		if len(words) < 4 || (words[2] != "add" && words[2] != "delete") {
-			return fmt.Errorf("document tag add/delete requires tag IDs")
-		}
-		tags, err := repo.Tags(selected.ID)
-		if err != nil {
-			return err
-		}
-		ids := map[int64]bool{}
-		for _, tag := range tags {
-			ids[tag.ID] = true
-		}
-		allTags, e := repo.Tags(0)
-		if e != nil {
-			return e
-		}
-		knownTags := map[int64]bool{}
-		for _, tag := range allTags {
-			knownTags[tag.ID] = true
-		}
-		for _, word := range words[3:] {
-			id, e := number(word, "tag ID", 1)
-			if e != nil {
-				return e
-			}
-			if !knownTags[id] {
-				return fmt.Errorf("Tag %d not found.", id)
-			}
-			if words[2] == "add" {
-				ids[id] = true
-			} else {
-				delete(ids, id)
-			}
-		}
-		for id := range ids {
-			in.Tags = append(in.Tags, session.TagReference{ID: session.ID(id)})
-		}
-		op = "ReplaceDocumentTags"
-	} else if command == "instruction" {
+	if command == "instruction" {
 		return executeInstructionValue(repo, selected.ID, o, out)
 	} else if command == "memory" {
 		switch operation {
