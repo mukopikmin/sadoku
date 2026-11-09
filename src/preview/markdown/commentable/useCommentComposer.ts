@@ -105,11 +105,12 @@ export const useCommentComposer = ({
         target.closest("button, input, label, select, textarea")
       )
         return;
+      const link = target.closest("a");
       if (!event.shiftKey && hasTextSelectionWithin(event.currentTarget)) {
+        if (link?.classList.contains("heading-anchor")) event.preventDefault();
         event.stopPropagation();
         return;
       }
-      const link = target.closest("a");
       if (link && !link.classList.contains("heading-anchor")) return;
       if (link) event.preventDefault();
       onSelectCommentRange(sourceRange, { extend: event.shiftKey });
