@@ -55,6 +55,7 @@ export const DocumentTreeView = ({
             nodeState.isBranch ? (
               <TreeView.BranchControl
                 borderRadius="md"
+                minH="9"
                 py="1.5"
                 _hover={{ bg: "bg.muted" }}
               >
@@ -75,7 +76,7 @@ export const DocumentTreeView = ({
                       )}`}
                       color="fg.muted"
                       marginStart="auto"
-                      size="xs"
+                      size="2xs"
                       variant="ghost"
                       onPointerDown={(event) => event.stopPropagation()}
                       onKeyDown={(event) => event.stopPropagation()}
@@ -92,6 +93,7 @@ export const DocumentTreeView = ({
             ) : (
               <TreeView.Item
                 borderRadius="md"
+                minH="9"
                 cursor="pointer"
                 py="1.5"
                 _hover={{ bg: "bg.muted" }}

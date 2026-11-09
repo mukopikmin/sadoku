@@ -23,7 +23,7 @@ export const renderMarkdownHeading = (
 ) => (
   <Box
     as={tagName}
-    borderBottomWidth={tagName === "h1" || tagName === "h2" ? "1px" : "0"}
+    borderBottomWidth={tagName === "h1" ? "1px" : "0"}
     borderColor="border.muted"
     color={tagName === "h6" ? "fg.muted" : undefined}
     fontSize={headingSizes[tagName]}
@@ -31,7 +31,7 @@ export const renderMarkdownHeading = (
     lineHeight="1.25"
     m="0"
     pt="3"
-    pb="1.5"
+    pb="2"
     {...elementProps}
   >
     {children}

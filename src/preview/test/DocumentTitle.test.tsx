@@ -16,7 +16,9 @@ it("shows the file title and saves edits without submitting Markdown", async () 
   expect(
     screen.getByRole("heading", { name: "File title", level: 1 }),
   ).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Edit title" }));
+  const editButton = screen.getByRole("button", { name: "Edit title" });
+  expect(editButton.textContent).toBe("");
+  fireEvent.click(editButton);
   fireEvent.change(await screen.findByRole("textbox", { name: "Title" }), {
     target: { value: "Changed" },
   });

@@ -1,4 +1,4 @@
-import { Button, Flex, IconButton, Stack } from "@chakra-ui/react";
+import { Button, Flex, Icon, IconButton, Stack } from "@chakra-ui/react";
 import { type ReactNode, type RefObject } from "react";
 import { Pencil, Tag } from "lucide-react";
 import type { DocumentTag } from "../models/document";
@@ -47,6 +47,15 @@ export const DocumentHeader = ({
         gap="2"
         wrap="wrap"
       >
+        {tags.length > 0 && (
+          <Icon
+            as={Tag}
+            aria-hidden="true"
+            size="sm"
+            color="fg.muted"
+            flexShrink="0"
+          />
+        )}
         {tags.map((tag) => (
           <TagLabel
             key={tag.id}
