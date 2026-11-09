@@ -29,7 +29,8 @@ The seed script copies Markdown from `src/server/test/integration/fixtures/`
 with its directory structure intact. Original fixtures are unchanged. Samples
 include five documents (one deleted), twenty-one comments, human and bot authors,
 replies, review requests, instructions, memories, and tags. Seeded review text
-and tag names are in English.
+and tag names are in English. Long document and global instructions exercise
+bounded text scrolling and instruction editing in the guidance dialogs.
 
 | Document | Examples to try |
 | --- | --- |

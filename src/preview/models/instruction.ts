@@ -1,4 +1,6 @@
-export type InstructionScope = number | "global";
+export type InstructionScope =
+  | { type: "global" }
+  | { type: "document"; documentId: number };
 
 export type DocumentInstruction = {
   content: string;

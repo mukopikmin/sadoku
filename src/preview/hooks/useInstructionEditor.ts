@@ -12,26 +12,29 @@ type InstructionEditorState =
     ));
 
 export const useInstructionEditor = (
-  documentId: InstructionScope,
+  scope: InstructionScope,
   open: boolean,
 ) => {
-  const query = useInstructionsQuery(documentId, open);
-  const actions = useInstructionActions(documentId);
+  const query = useInstructionsQuery(scope, open);
+  const actions = useInstructionActions(scope);
   const [draft, setDraft] = useState<string>();
   const [action, setAction] = useState<ActionState>({ status: "idle" });
   const saving = useRef(false);
   const generation = useRef(0);
+  const [editing, setEditing] = useState(false);
+  const documentId = scope.type === "document" ? scope.documentId : undefined;
   useEffect(() => {
     generation.current++;
     saving.current = false;
     setDraft(undefined);
+    setEditing(false);
     setAction({ status: "idle" });
     return () => {
       // Invalidate async work; this ref is a generation counter, not a DOM node.
       // oxlint-disable-next-line react-hooks/exhaustive-deps
       generation.current++;
     };
-  }, [documentId, open]);
+  }, [scope.type, documentId, open]);
   const instruction = query.data?.[0];
   const savedContent = instruction?.content ?? "";
   const content = draft ?? savedContent;
@@ -58,6 +61,7 @@ export const useInstructionEditor = (
       else await actions.create(content);
       if (started === generation.current) {
         setDraft(undefined);
+        setEditing(false);
         setAction({ status: "idle" });
       }
     } catch (error) {
@@ -69,6 +73,16 @@ export const useInstructionEditor = (
   };
   return {
     state,
+    editing,
+    startEditing: () => {
+      if (open && query.isSuccess && !saving.current) setEditing(true);
+    },
+    cancel: () => {
+      if (saving.current) return;
+      setDraft(undefined);
+      setAction({ status: "idle" });
+      setEditing(false);
+    },
     save,
     change: (content: string) => {
       if (saving.current || !open || !query.isSuccess) return;

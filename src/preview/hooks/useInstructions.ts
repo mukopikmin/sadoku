@@ -9,32 +9,32 @@ import type { InstructionScope } from "../models/instruction";
 import { instructionsQueryKey } from "./previewQueryKeys";
 
 export const useInstructionsQuery = (
-  documentId?: InstructionScope,
+  scope?: InstructionScope,
   enabled = true,
 ) =>
   useQuery({
-    enabled: enabled && documentId !== undefined,
-    queryFn: () => loadInstructions(documentId!),
-    queryKey: instructionsQueryKey(documentId),
+    enabled: enabled && scope !== undefined,
+    queryFn: () => loadInstructions(scope!),
+    queryKey: instructionsQueryKey(scope),
   });
 
-export const useInstructionActions = (documentId: InstructionScope) => {
+export const useInstructionActions = (scope: InstructionScope) => {
   const queryClient = useQueryClient();
   const refresh = () =>
     queryClient.invalidateQueries({
-      queryKey: instructionsQueryKey(documentId),
+      queryKey: instructionsQueryKey(scope),
     });
   const createMutation = useMutation({
-    mutationFn: (content: string) => createInstruction(documentId, content),
+    mutationFn: (content: string) => createInstruction(scope, content),
     onSuccess: refresh,
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, content }: { id: number; content: string }) =>
-      updateInstruction(documentId, id, content),
+      updateInstruction(scope, id, content),
     onSuccess: refresh,
   });
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteInstruction(documentId, id),
+    mutationFn: (id: number) => deleteInstruction(scope, id),
     onSuccess: refresh,
   });
   return {
