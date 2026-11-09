@@ -1,13 +1,4 @@
-import {
-  Alert,
-  Button,
-  Container,
-  Heading,
-  HStack,
-  Link,
-  Text,
-} from "@chakra-ui/react";
-import { Plus } from "lucide-react";
+import { Alert, Container, Heading, HStack, Link } from "@chakra-ui/react";
 import type { DirectoryStatus } from "../api/directoryStatus";
 import { DocumentTree } from "../components/DocumentTree";
 import type { DocumentSummary } from "../models/document";
@@ -53,16 +44,6 @@ export const DocumentListPage = ({
     )}
     <HStack mb="4" justify="space-between">
       <Heading size="md">Documents</Heading>
-      {onCreateDocument && (
-        <Button
-          size="sm"
-          variant="ghost"
-          color="fg.muted"
-          onClick={() => onCreateDocument("")}
-        >
-          <Plus aria-hidden="true" /> New file
-        </Button>
-      )}
     </HStack>
     {directoryStatus?.state === "loading" ? (
       <Alert.Root status="info">
@@ -85,8 +66,6 @@ export const DocumentListPage = ({
           </Alert.Description>
         </Alert.Content>
       </Alert.Root>
-    ) : documents.length === 0 ? (
-      <Text color="fg.muted">No Markdown documents found.</Text>
     ) : (
       <DocumentTree
         documents={documents}

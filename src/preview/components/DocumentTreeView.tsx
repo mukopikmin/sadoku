@@ -41,10 +41,6 @@ export const DocumentTreeView = ({
       expandedValue={expansion.expandedValue}
       onExpandedChange={({ expandedValue }) => expansion.expand(expandedValue)}
       onSelectionChange={({ selectedNodes }) => expansion.select(selectedNodes)}
-      borderColor="border.muted"
-      borderRadius="lg"
-      borderWidth="1px"
-      p="2"
     >
       <TreeView.Tree aria-label="Documents">
         <TreeView.Node<DocumentTreeNode>
