@@ -22,17 +22,20 @@ an entity: &copy;.
 
 ## Consecutive Heading Levels
 
-Compare the vertical spacing between the consecutive h1–h5 headings below.
+Compare the vertical spacing between the consecutive h1–h6 headings below.
+Inline code should have the same font size as the surrounding heading text.
 
-# Heading Level 1
+# Heading Level 1 with `inline code`
 
-## Heading Level 2
+## Heading Level 2 with `inline code`
 
-### Heading Level 3
+### Heading Level 3 with `inline code`
 
-#### Heading Level 4
+#### Heading Level 4 with `inline code`
 
-##### Heading Level 5
+##### Heading Level 5 with `inline code`
+
+###### Heading Level 6 with `inline code`
 
 Paragraph after the consecutive headings to compare spacing before body text.
 
