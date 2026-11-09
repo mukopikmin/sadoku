@@ -23,7 +23,7 @@ export const DocumentViewSwitch = ({
       maxW="full"
       onValueChange={({ value }) => onChangeView(value as PreviewView)}
       size="sm"
-      variant="line"
+      variant="subtle"
       colorPalette="blue"
       value={view}
     >
