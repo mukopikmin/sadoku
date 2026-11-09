@@ -46,6 +46,7 @@ export const DocumentTitle = memo(function DocumentTitle({
         </Flex>
       ) : (
         <Button
+          alignSelf="flex-start"
           flexShrink="0"
           size="sm"
           variant="ghost"
