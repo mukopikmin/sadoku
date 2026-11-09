@@ -258,7 +258,9 @@ describe("App", () => {
     const documentDialog = await screen.findByRole("dialog", {
       name: "Document instructions",
     });
-    await within(documentDialog).findByText("Shared review guidance");
+    expect(
+      within(documentDialog).queryByText("Shared review guidance"),
+    ).toBeNull();
     fireEvent.click(
       within(documentDialog).getByRole("button", {
         name: "Manage global instructions",
@@ -272,7 +274,9 @@ describe("App", () => {
         screen.queryByRole("dialog", { name: "Document instructions" }),
       ).toBeNull(),
     );
-    expect(within(manager).getByText("Shared review guidance")).not.toBeNull();
+    expect(
+      await within(manager).findByText("Shared review guidance"),
+    ).not.toBeNull();
     expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull();
     fireEvent.click(
       within(manager).getByRole("button", {
