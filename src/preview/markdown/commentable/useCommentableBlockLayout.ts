@@ -17,6 +17,7 @@ export const commentableBlockSelector = [
   ":scope > .document-diff-addition > .commentable-block",
   ":scope > .document-diff-addition > .comment-markdown-list .commentable-block",
   ":scope > .document-diff-addition > dl .commentable-block",
+  ":scope > .document-diff-modification > .commentable-block",
   ":scope > dl .commentable-block",
 ].join(", ");
 
@@ -123,7 +124,7 @@ export const useCommentableBlockLayout = (
     );
     const ranges = [
       ...preview.querySelectorAll<HTMLElement>(
-        ":scope > .document-diff-deletion[data-previous-source-line]",
+        ":scope > [data-previous-source-line]",
       ),
     ].map((block) => ({
       startLine: Number(block.dataset.previousSourceLine),

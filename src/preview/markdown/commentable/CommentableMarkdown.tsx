@@ -1,7 +1,11 @@
 import { useMemo, type ReactNode } from "react";
 import { DocumentDiffBlock } from "../DocumentDiffBlock";
 import { remarkDocumentDiff } from "../remarkDocumentDiff";
-import { DeletedMarkdownBlock } from "./DeletedMarkdownBlock";
+import { Box, Stack } from "@chakra-ui/react";
+import {
+  DeletedCommentThreads,
+  DeletedMarkdownBlock,
+} from "./DeletedMarkdownBlock";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -34,6 +38,50 @@ export const CommentableMarkdown = ({
     }
     return {
       ...markdownComponents,
+      "revision-inline-deletion": ({ children }: { children?: ReactNode }) => (
+        <Box
+          as="del"
+          bg="highlight.deletion.bg"
+          textDecoration="line-through"
+          data-revision-kind="deletion"
+          role="group"
+          aria-label="Removed content"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {children}
+        </Box>
+      ),
+      "revision-inline-addition": ({ children }: { children?: ReactNode }) => (
+        <Box
+          as="ins"
+          bg="highlight.addition.bg"
+          data-revision-kind="addition"
+          role="group"
+          aria-label="Added content"
+          textDecoration="none"
+        >
+          {children}
+        </Box>
+      ),
+      "revision-modification": ({
+        children,
+        previousStartLine,
+        previousEndLine,
+      }: {
+        children?: ReactNode;
+        previousStartLine: number;
+        previousEndLine: number;
+      }) => (
+        <Stack
+          className="document-diff-modification"
+          gap="3"
+          data-previous-source-line={previousStartLine}
+          data-previous-source-end-line={previousEndLine}
+        >
+          {children}
+          <DeletedCommentThreads previousStartLine={previousStartLine} />
+        </Stack>
+      ),
       "revision-addition": ({ children }: { children?: ReactNode }) => (
         <DocumentDiffBlock kind="addition">{children}</DocumentDiffBlock>
       ),

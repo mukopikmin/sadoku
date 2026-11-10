@@ -86,8 +86,8 @@ describe("rendered document diff", () => {
     );
     const removed = screen.getByRole("group", { name: "Removed content" });
     const added = screen.getByRole("group", { name: "Added content" });
-    expect(removed.textContent).toContain("Old text");
-    expect(added.textContent).toContain("New text");
+    expect(removed.textContent).toBe("Old");
+    expect(added.textContent).toBe("New");
     expect(
       removed.compareDocumentPosition(added) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -100,6 +100,50 @@ describe("rendered document diff", () => {
     rerender(preview("# Title\n\nNew text\n\nEnd"));
     expect(screen.queryByText("Old text")).toBeNull();
     expect(screen.queryByRole("group", { name: "Added content" })).toBeNull();
+  });
+
+  it("shows a small prose edit inline without repeating the rest of the section", () => {
+    const { container } = render(
+      preview(
+        "# 設定\n\n処理は45秒で終了します。\nこの設定は全環境に適用されます。\n\n次の段落。",
+        "# 設定\n\n処理は30秒で終了します。\nこの設定は全環境に適用されます。\n\n次の段落。",
+      ),
+    );
+    expect(
+      screen.getByRole("group", { name: "Removed content" }).textContent,
+    ).toBe("30");
+    expect(
+      screen.getByRole("group", { name: "Added content" }).textContent,
+    ).toBe("45");
+    const paragraph = container.querySelector('[data-source-line="3"] p')!;
+    expect(paragraph.textContent).toBe(
+      "処理は3045秒で終了します。\nこの設定は全環境に適用されます。",
+    );
+    expect(container.querySelectorAll("p")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("group", { name: "Added content" }));
+    expect(
+      screen.getByRole("button", { name: "Add comment on lines 3-4" }),
+    ).not.toBeNull();
+  });
+
+  it("compares adjacent changed paragraphs with their corresponding versions", () => {
+    const { container } = render(
+      preview(
+        "First value: 45\n\nSecond value: 25",
+        "First value: 30\n\nSecond value: 10",
+      ),
+    );
+    expect(
+      screen
+        .getAllByRole("group", { name: "Removed content" })
+        .map((node) => node.textContent),
+    ).toEqual(["30", "10"]);
+    expect(
+      screen
+        .getAllByRole("group", { name: "Added content" })
+        .map((node) => node.textContent),
+    ).toEqual(["45", "25"]);
+    expect(container.querySelectorAll("p")).toHaveLength(2);
   });
 
   it.each([
@@ -135,6 +179,56 @@ describe("rendered document diff", () => {
         role,
       ).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("limits list changes to the affected items and keeps their source lines", () => {
+    const { container } = render(
+      preview(
+        "- First\n- New\n- Third\n- Fourth",
+        "- First\n- Old\n- Third\n- Fourth",
+      ),
+    );
+    const removed = screen.getByRole("group", { name: "Removed content" });
+    const added = screen.getByRole("group", { name: "Added content" });
+    expect(within(removed).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(added).getAllByRole("listitem")).toHaveLength(1);
+    expect(removed.textContent?.trim()).toBe("Old");
+    expect(added.textContent?.trim()).toBe("New");
+    expect(screen.getAllByText("First")).toHaveLength(1);
+    expect(screen.getAllByText("Third")).toHaveLength(1);
+    expect(screen.getByText("Third").closest("ul")).toBe(
+      screen.getByText("Fourth").closest("ul"),
+    );
+    expect(removed.getAttribute("data-previous-source-line")).toBe("2");
+    expect(removed.getAttribute("data-previous-source-end-line")).toBe("2");
+    expect(container.querySelector('[data-source-line="2"]')?.textContent).toBe(
+      "New",
+    );
+  });
+
+  it("keeps renumbered ordered items unchanged after an insertion", () => {
+    render(
+      preview(
+        "1. First\n2. Added\n3. Second\n4. Third",
+        "1. First\n2. Second\n3. Third",
+      ),
+    );
+    expect(screen.queryByRole("group", { name: "Removed content" })).toBeNull();
+    const added = screen.getByRole("group", { name: "Added content" });
+    expect(added.textContent?.trim()).toBe("Added");
+    expect(within(added).getByRole("list").getAttribute("start")).toBe("2");
+    expect(screen.getAllByText("Second")).toHaveLength(1);
+    expect(
+      screen.getByText("Second").closest("ol")?.getAttribute("start"),
+    ).toBe("3");
+  });
+
+  it("preserves unchanged list structure when changes are enabled", () => {
+    render(preview("- First\n- Second\n- Third", "- First\n- Second\n- Third"));
+    expect(screen.getAllByRole("list")).toHaveLength(1);
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.queryByRole("group", { name: "Added content" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Removed content" })).toBeNull();
   });
 
   it("preserves reference links when their target changes", () => {
@@ -229,8 +323,12 @@ describe("rendered document diff", () => {
       screen.getByRole("button", { name: "Add comment on lines 1-7" }),
     ).not.toBeNull();
 
-    rerender(preview(markdown, "# Title\n\nRemoved text\n\nEnd"));
+    rerender(preview(markdown, "# Title\n\nZZZ\n\nEnd"));
     expect(highlights()).toHaveLength(2);
+    rerender(
+      preview(markdown, "# Title\n\nRemoved text\n\nSecond addition\n\nEnd"),
+    );
+    expect(highlights()).toHaveLength(1);
     rerender(preview(markdown));
     expect(highlights()).toHaveLength(1);
   });
@@ -296,15 +394,22 @@ describe("rendered document diff", () => {
     );
     expect(screen.getByText("Existing comment")).not.toBeNull();
     const removed = screen.getByRole("group", { name: "Removed content" });
-    expect(within(removed).getByText("Comment on old text")).not.toBeNull();
-    expect(within(removed).getByText("Previous reply")).not.toBeNull();
-    expect(within(removed).queryByText("Existing comment")).toBeNull();
+    const modified = removed.closest(
+      ".document-diff-modification",
+    )! as HTMLElement;
+    expect(within(modified).getByText("Comment on old text")).not.toBeNull();
+    expect(within(modified).getByText("Previous reply")).not.toBeNull();
     expect(
-      within(screen.getByRole("group", { name: "Added content" })).getByText(
-        "Existing comment",
-      ),
+      within(
+        container.querySelector('[data-source-line="3"]')! as HTMLElement,
+      ).getByText("Existing comment"),
     ).not.toBeNull();
-    fireEvent.click(within(removed).getByText("Old text"));
+    expect(
+      within(
+        container.querySelector('[data-source-line="3"]')! as HTMLElement,
+      ).queryByText("Comment on old text"),
+    ).toBeNull();
+    fireEvent.click(removed);
     expect(screen.queryByRole("button", { name: /Add comment on/ })).toBeNull();
     fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
     fireEvent.click(
