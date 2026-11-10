@@ -30,6 +30,7 @@ export const renderMarkdownHeading = (
     css={{
       "& code": {
         fontSize: "inherit",
+        lineHeight: "inherit",
         paddingInline: "0.4em",
         paddingBlock: "0.15em",
       },
