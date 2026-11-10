@@ -54,6 +54,12 @@ threads remain available at their code and diagram endpoints.
 `guides/setup/local.md` has no **Changes** option because it has no
 previous snapshot.
 
+For a minimal character-level comparison, open `second.md`, enable **Changes**,
+and find **Inline Diff Check**. Only `30` (removed) and `45` (added) should be
+highlighted in “The request timeout is 30 seconds.” The surrounding words and
+the following paragraph should appear once without a diff background. Restart
+the sample launcher with `SADOKU_SOURCE` unset to regenerate existing samples.
+
 Tags include `Needs review`, `Markdown`, `Archived` (on the deleted document),
 and `Unassigned` (with no documents). The nested document remains untagged.
 These cover filtering, document tag editing, and tag management. Tag colors use
