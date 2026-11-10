@@ -10,6 +10,7 @@ export const MarkdownCode = ({
   return (
     <Code
       className={className}
+      display="inline"
       borderRadius="sm"
       px="1.5"
       py="0.5"

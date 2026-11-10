@@ -163,32 +163,39 @@ describe("MarkdownPreview heading navigation", () => {
     expect(decoratedAnchor?.querySelector("del")?.textContent).toBe("removed");
   });
 
-  it("preserves selected heading text without following its permalink or selecting a comment line", () => {
-    globalThis.history.replaceState(null, "", "/docs/readme");
-    const { container } = renderMarkdown("# **Heading** text");
-    const anchor =
-      container.querySelector<HTMLAnchorElement>("a.heading-anchor")!;
-    expect(anchor.draggable).toBe(false);
+  it.each([
+    ["# **Heading** text", "strong"],
+    ["# `Heading` text", "code"],
+    ["# `Heading text`", "code"],
+  ])(
+    "preserves selected heading text in %s without following its permalink or selecting a comment line",
+    (markdown, selector) => {
+      globalThis.history.replaceState(null, "", "/docs/readme");
+      const { container } = renderMarkdown(markdown);
+      const anchor =
+        container.querySelector<HTMLAnchorElement>("a.heading-anchor")!;
+      expect(anchor.draggable).toBe(false);
 
-    const range = document.createRange();
-    range.selectNodeContents(anchor);
-    const selection = globalThis.getSelection()!;
-    selection.removeAllRanges();
-    selection.addRange(range);
+      const range = document.createRange();
+      range.selectNodeContents(anchor);
+      const selection = globalThis.getSelection()!;
+      selection.removeAllRanges();
+      selection.addRange(range);
 
-    expect(fireEvent.click(anchor.querySelector("strong")!)).toBe(false);
-    expect(selection.toString()).toBe("Heading text");
-    expect(globalThis.location.hash).toBe("");
-    expect(
-      screen.queryByRole("button", { name: "Add comment on line 1" }),
-    ).toBeNull();
+      expect(fireEvent.click(anchor.querySelector(selector)!)).toBe(false);
+      expect(selection.toString()).toBe("Heading text");
+      expect(globalThis.location.hash).toBe("");
+      expect(
+        screen.queryByRole("button", { name: "Add comment on line 1" }),
+      ).toBeNull();
 
-    selection.removeAllRanges();
-    fireEvent.click(anchor);
-    expect(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    ).not.toBeNull();
-  });
+      selection.removeAllRanges();
+      fireEvent.click(anchor);
+      expect(
+        screen.getByRole("button", { name: "Add comment on line 1" }),
+      ).not.toBeNull();
+    },
+  );
 
   it("updates the URL for the selected unique heading without offering links for regular blocks", async () => {
     globalThis.history.replaceState(null, "", "/docs/readme?mode=review");
