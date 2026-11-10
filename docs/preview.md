@@ -54,6 +54,14 @@ threads remain available at their code and diagram endpoints.
 `guides/setup/local.md` has no **Changes** option because it has no
 previous snapshot.
 
+For a small prose edit, open `second.md`, enable **Changes**, and find
+**Paragraph Diff Check**. The timeout changes from `30` to `45` seconds. The old
+and new versions of that entire two-line paragraph are highlighted; the following
+unchanged paragraph appears once without a diff background. Comparisons use
+source lines, while rendered changes use complete paragraphs and list items to
+preserve Markdown structure. Restart the sample launcher with `SADOKU_SOURCE`
+unset to regenerate existing samples.
+
 Tags include `Needs review`, `Markdown`, `Archived` (on the deleted document),
 and `Unassigned` (with no documents). The nested document remains untagged.
 These cover filtering, document tag editing, and tag management. Tag colors use

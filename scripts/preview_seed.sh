@@ -163,6 +163,10 @@ add_comment "$changes" 'const documentName = "second.md";' \
 sadoku comment resolve 4 --source "$changes" --as-bot >/dev/null
 # Edit only the copied fixture, then advance snapshots through the normal CLI.
 awk '
+  $0 == "The request timeout is 30 seconds." {
+    print "The request timeout is 45 seconds."
+    next
+  }
   $0 == "# Second Document" {
     print
     print ""
