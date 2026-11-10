@@ -27,7 +27,14 @@ export const renderMarkdownHeading = (
     borderColor="border.muted"
     color={tagName === "h6" ? "fg.muted" : undefined}
     fontSize={headingSizes[tagName]}
-    css={{ "& code": { fontSize: "inherit" } }}
+    css={{
+      "& code": {
+        fontSize: "inherit",
+        lineHeight: "inherit",
+        paddingInline: "0.4em",
+        paddingBlock: "0.15em",
+      },
+    }}
     fontWeight="semibold"
     lineHeight="1.25"
     m="0"
