@@ -65,7 +65,7 @@ export const DocumentPreviewPage = ({
       as="main"
       overflowAnchor="none"
       maxW="980px"
-      px="8"
+      px={{ base: "8", md: "12" }}
       pt="0"
       pb="8"
     >

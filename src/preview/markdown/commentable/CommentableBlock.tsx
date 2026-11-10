@@ -107,7 +107,9 @@ export const CommentableBlock = ({
         {isRangeActionLine && !isAdding && (
           <Flex
             className="comment-line-gutter"
-            direction="column"
+            align="start"
+            direction={{ base: "row", md: "column" }}
+            wrap="wrap"
             gap="1"
             left={commentGutterLeft}
             mb={{ base: "1.5", md: "0" }}
