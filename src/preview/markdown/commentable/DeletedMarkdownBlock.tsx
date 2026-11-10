@@ -13,29 +13,6 @@ export const DeletedCommentsContext = createContext<
   ReadonlyMap<number, StaleComment[]>
 >(new Map());
 
-export const DeletedCommentThreads = ({
-  previousStartLine,
-}: {
-  previousStartLine: number;
-}) => {
-  const { actions } = useCommentRenderingContext();
-  const comments =
-    useContext(DeletedCommentsContext).get(previousStartLine) ?? [];
-  return comments.length > 0 ? (
-    <Stack className="comment-thread" gap="3">
-      {comments.map((comment) => (
-        <CommentItem
-          actions={actions}
-          comment={comment}
-          key={comment.id}
-          lineLabel={`Previously ${formatRangeLabel(comment)}`}
-          showState
-        />
-      ))}
-    </Stack>
-  ) : null;
-};
-
 export const DeletedMarkdownBlock = ({
   markdown,
   previousStartLine,
@@ -51,6 +28,9 @@ export const DeletedMarkdownBlock = ({
   showHtmlComments: boolean;
   theme: "dark" | "default";
 }) => {
+  const { actions } = useCommentRenderingContext();
+  const comments =
+    useContext(DeletedCommentsContext).get(previousStartLine) ?? [];
   return (
     <DocumentDiffBlock
       kind="deletion"
@@ -63,7 +43,19 @@ export const DeletedMarkdownBlock = ({
           showHtmlComments={showHtmlComments}
           theme={theme}
         />
-        <DeletedCommentThreads previousStartLine={previousStartLine} />
+        {comments.length > 0 && (
+          <Stack className="comment-thread" gap="3">
+            {comments.map((comment) => (
+              <CommentItem
+                actions={actions}
+                comment={comment}
+                key={comment.id}
+                lineLabel={`Previously ${formatRangeLabel(comment)}`}
+                showState
+              />
+            ))}
+          </Stack>
+        )}
       </Stack>
     </DocumentDiffBlock>
   );

@@ -48,8 +48,9 @@ Resolved feedback remains available in the comment history.
 
 Review decisions are saved with the document.
 
-## Inline Diff Check
+## Paragraph Diff Check
 
 The request timeout is 30 seconds.
+This setting applies to every review session.
 
 This paragraph stays unchanged when the preview samples are prepared.

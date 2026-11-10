@@ -86,8 +86,8 @@ describe("rendered document diff", () => {
     );
     const removed = screen.getByRole("group", { name: "Removed content" });
     const added = screen.getByRole("group", { name: "Added content" });
-    expect(removed.textContent).toBe("Old");
-    expect(added.textContent).toBe("New");
+    expect(removed.textContent).toContain("Old text");
+    expect(added.textContent).toContain("New text");
     expect(
       removed.compareDocumentPosition(added) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -102,48 +102,31 @@ describe("rendered document diff", () => {
     expect(screen.queryByRole("group", { name: "Added content" })).toBeNull();
   });
 
-  it("shows a small prose edit inline without repeating the rest of the section", () => {
+  it("renders a small prose edit as complete paragraphs and keeps adjacent context unchanged", () => {
+    const unchangedLine = "この設定は全環境に適用されます。";
+    const previousParagraph = `処理は30秒で終了します。\n${unchangedLine}`;
+    const currentParagraph = `処理は45秒で終了します。\n${unchangedLine}`;
     const { container } = render(
       preview(
-        "# 設定\n\n処理は45秒で終了します。\nこの設定は全環境に適用されます。\n\n次の段落。",
-        "# 設定\n\n処理は30秒で終了します。\nこの設定は全環境に適用されます。\n\n次の段落。",
+        `# 設定\n\n${currentParagraph}\n\n次の段落。`,
+        `# 設定\n\n${previousParagraph}\n\n次の段落。`,
       ),
     );
-    expect(
-      screen.getByRole("group", { name: "Removed content" }).textContent,
-    ).toBe("30");
-    expect(
-      screen.getByRole("group", { name: "Added content" }).textContent,
-    ).toBe("45");
-    const paragraph = container.querySelector('[data-source-line="3"] p')!;
-    expect(paragraph.textContent).toBe(
-      "処理は3045秒で終了します。\nこの設定は全環境に適用されます。",
+    const removed = screen.getByRole("group", { name: "Removed content" });
+    const added = screen.getByRole("group", { name: "Added content" });
+    expect(within(removed).getByText(/処理は30秒/).textContent).toBe(
+      previousParagraph,
     );
-    expect(container.querySelectorAll("p")).toHaveLength(2);
-    fireEvent.click(screen.getByRole("group", { name: "Added content" }));
-    expect(
-      screen.getByRole("button", { name: "Add comment on lines 3-4" }),
-    ).not.toBeNull();
-  });
-
-  it("compares adjacent changed paragraphs with their corresponding versions", () => {
-    const { container } = render(
-      preview(
-        "First value: 45\n\nSecond value: 25",
-        "First value: 30\n\nSecond value: 10",
-      ),
+    expect(within(added).getByText(/処理は45秒/).textContent).toBe(
+      currentParagraph,
     );
+    expect(screen.getAllByText("次の段落。")).toHaveLength(1);
+    expect(container.querySelector("ins, del")).toBeNull();
     expect(
-      screen
-        .getAllByRole("group", { name: "Removed content" })
-        .map((node) => node.textContent),
-    ).toEqual(["30", "10"]);
-    expect(
-      screen
-        .getAllByRole("group", { name: "Added content" })
-        .map((node) => node.textContent),
-    ).toEqual(["45", "25"]);
-    expect(container.querySelectorAll("p")).toHaveLength(2);
+      container
+        .querySelector('[data-source-line="3"]')
+        ?.getAttribute("data-source-end-line"),
+    ).toBe("4");
   });
 
   it.each([
@@ -270,32 +253,46 @@ describe("rendered document diff", () => {
     ).toEqual(["graph TD; A-->B;", "graph TD; A-->C;"]);
   });
 
-  it("preserves an unfinished comment when changes are toggled", () => {
-    const { container, rerender } = render(preview("New text"));
-    fireEvent.click(container.querySelector('[data-source-line="1"] p')!);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    );
-    fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
-      target: { value: "Unfinished review" },
-    });
-    rerender(preview("New text", "Old text"));
-    expect(
-      (
-        screen.getByRole("textbox", {
-          name: "Comment body",
-        }) as HTMLTextAreaElement
-      ).value,
-    ).toBe("Unfinished review");
-    rerender(preview("New text"));
-    expect(
-      (
-        screen.getByRole("textbox", {
-          name: "Comment body",
-        }) as HTMLTextAreaElement
-      ).value,
-    ).toBe("Unfinished review");
-  });
+  it.each([
+    ["", false],
+    ["# Title\n\nContext\n\n", false],
+    ["# Title\n\nContext\n\n", true],
+  ] as const)(
+    "preserves an unfinished comment with context %j and initial changes %j",
+    (prefix, enabled) => {
+      const markdown = `${prefix}New text\n\nFollowing context`;
+      const previousMarkdown = `${prefix}Old text\n\nFollowing context`;
+      const line = prefix.split("\n").length;
+      const { container, rerender } = render(
+        preview(markdown, enabled ? previousMarkdown : undefined),
+      );
+      fireEvent.click(
+        container.querySelector(`[data-source-line="${line}"] p`)!,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: `Add comment on line ${line}` }),
+      );
+      fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
+        target: { value: "Unfinished review" },
+      });
+      rerender(preview(markdown, enabled ? undefined : previousMarkdown));
+      expect(
+        (
+          screen.getByRole("textbox", {
+            name: "Comment body",
+          }) as HTMLTextAreaElement
+        ).value,
+      ).toBe("Unfinished review");
+      rerender(preview(markdown, enabled ? previousMarkdown : undefined));
+      expect(
+        (
+          screen.getByRole("textbox", {
+            name: "Comment body",
+          }) as HTMLTextAreaElement
+        ).value,
+      ).toBe("Unfinished review");
+    },
+  );
 
   it("highlights a continuous selection across additions as one range", () => {
     const markdown = "# Title\n\nFirst addition\n\nSecond addition\n\nEnd";
@@ -323,12 +320,8 @@ describe("rendered document diff", () => {
       screen.getByRole("button", { name: "Add comment on lines 1-7" }),
     ).not.toBeNull();
 
-    rerender(preview(markdown, "# Title\n\nZZZ\n\nEnd"));
+    rerender(preview(markdown, "# Title\n\nRemoved text\n\nEnd"));
     expect(highlights()).toHaveLength(2);
-    rerender(
-      preview(markdown, "# Title\n\nRemoved text\n\nSecond addition\n\nEnd"),
-    );
-    expect(highlights()).toHaveLength(1);
     rerender(preview(markdown));
     expect(highlights()).toHaveLength(1);
   });
@@ -394,22 +387,15 @@ describe("rendered document diff", () => {
     );
     expect(screen.getByText("Existing comment")).not.toBeNull();
     const removed = screen.getByRole("group", { name: "Removed content" });
-    const modified = removed.closest(
-      ".document-diff-modification",
-    )! as HTMLElement;
-    expect(within(modified).getByText("Comment on old text")).not.toBeNull();
-    expect(within(modified).getByText("Previous reply")).not.toBeNull();
+    expect(within(removed).getByText("Comment on old text")).not.toBeNull();
+    expect(within(removed).getByText("Previous reply")).not.toBeNull();
+    expect(within(removed).queryByText("Existing comment")).toBeNull();
     expect(
-      within(
-        container.querySelector('[data-source-line="3"]')! as HTMLElement,
-      ).getByText("Existing comment"),
+      within(screen.getByRole("group", { name: "Added content" })).getByText(
+        "Existing comment",
+      ),
     ).not.toBeNull();
-    expect(
-      within(
-        container.querySelector('[data-source-line="3"]')! as HTMLElement,
-      ).queryByText("Comment on old text"),
-    ).toBeNull();
-    fireEvent.click(removed);
+    fireEvent.click(within(removed).getByText("Old text"));
     expect(screen.queryByRole("button", { name: /Add comment on/ })).toBeNull();
     fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
     fireEvent.click(

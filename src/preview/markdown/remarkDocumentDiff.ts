@@ -3,7 +3,6 @@ import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import { unified } from "unified";
 import { suggestionDiff } from "./suggestionDiff";
-import { paragraphDiff } from "./paragraphDiff";
 
 const parser = unified().use(remarkParse).use(remarkGfm);
 
@@ -111,59 +110,8 @@ export const remarkDocumentDiff =
         changes.push({ kind, node, source: kind === "-" ? previous : current });
       }
     }
-    // Pair adjacent paragraph replacements in source order. Otherwise the last
-    // deleted paragraph could be compared with the first added paragraph.
-    const pairedChanges: ((typeof changes)[number] & { pair?: boolean })[] = [];
-    for (let index = 0; index < changes.length;) {
-      if (changes[index].kind !== "-") {
-        pairedChanges.push(changes[index++]);
-        continue;
-      }
-      let middle = index;
-      while (changes[middle]?.kind === "-") middle++;
-      let end = middle;
-      while (changes[end]?.kind === "+") end++;
-      const removed = changes.slice(index, middle);
-      const added = changes.slice(middle, end);
-      if (
-        removed.length === added.length &&
-        [...removed, ...added].every(({ node }) => node.type === "paragraph")
-      ) {
-        removed.forEach((change, offset) => {
-          pairedChanges.push({ ...change, pair: true }, added[offset]);
-        });
-      } else {
-        pairedChanges.push(...changes.slice(index, end));
-      }
-      index = end;
-    }
     const children: RootContent[] = [];
-    for (let index = 0; index < pairedChanges.length; index += 1) {
-      const { kind, node, source, pair } = pairedChanges[index];
-      const next = pairedChanges[index + 1];
-      const paragraph =
-        pair &&
-        kind === "-" &&
-        node.type === "paragraph" &&
-        next?.kind === "+" &&
-        next.node.type === "paragraph"
-          ? paragraphDiff(node, next.node)
-          : undefined;
-      if (paragraph) {
-        children.push({
-          type: "blockquote",
-          children: [paragraph],
-          data: {
-            hName: "revision-modification",
-            hProperties: {
-              previousStartLine: node.position?.start.line,
-              previousEndLine: node.position?.end.line,
-            },
-          },
-        });
-        index += 1;
-        continue;
-      }
+    for (const { kind, node, source } of changes) {
       if (kind === "-") {
         children.push({
           type: "blockquote",

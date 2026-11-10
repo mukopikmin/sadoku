@@ -83,11 +83,9 @@ describe("document changes option", () => {
       screen.getByRole("button", { name: "Changes since previous snapshot" }),
     );
     expect(
-      within(
-        screen
-          .getByRole("group", { name: "Removed content" })
-          .closest(".document-diff-modification")! as HTMLElement,
-      ).getByText("Deleted text review"),
+      within(screen.getByRole("group", { name: "Removed content" })).getByText(
+        "Deleted text review",
+      ),
     ).not.toBeNull();
     expect(screen.queryByText("Resolved review")).toBeNull();
   });
@@ -103,10 +101,10 @@ describe("document changes option", () => {
     expect(toggle.getAttribute("aria-pressed")).toBe("true");
     expect(
       screen.getByRole("group", { name: "Removed content" }).textContent,
-    ).toBe("Old");
+    ).toContain("Old text");
     expect(
       screen.getByRole("group", { name: "Added content" }).textContent,
-    ).toBe("New");
+    ).toContain("New text");
     expect(
       screen.getByRole("status", {
         name: "Changes since previous snapshot: 1 added lines, 1 removed lines",
