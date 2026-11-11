@@ -1,0 +1,86 @@
+package storage
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"github.com/mukopikmin/sadoku/internal/server/db"
+	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+)
+
+func (r *Repository) RegisterDocument(ctx context.Context, path string, title **string, tags *[]int64) (u.Document, error) {
+	return r.saveDocumentAttributes(ctx, 0, path, title, tags)
+}
+
+// Omitted attributes are preserved, and all specified attributes commit together.
+func (r *Repository) UpdateDocumentAttributes(ctx context.Context, id int64, title **string, tags *[]int64) (u.Document, error) {
+	return r.saveDocumentAttributes(ctx, id, "", title, tags)
+}
+
+func (r *Repository) saveDocumentAttributes(ctx context.Context, id int64, path string, title **string, tags *[]int64) (u.Document, error) {
+	var doc u.Document
+	tx, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return doc, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	if id == 0 {
+		var existing int64
+		err = tx.QueryRowContext(ctx, "SELECT id FROM comment_document WHERE file_path=?", path).Scan(&existing)
+		if err == nil {
+			return doc, fmt.Errorf("Document is already registered: %d. Use `sadoku document update %d` to change its attributes.", existing, existing)
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return doc, err
+		}
+		now := db.Now()
+		result, err := tx.ExecContext(ctx, "INSERT INTO comment_document(file_path,created_at,updated_at) VALUES(?,?,?)", path, now, now)
+		if err != nil {
+			return doc, err
+		}
+		id, err = result.LastInsertId()
+		if err != nil {
+			return doc, err
+		}
+	}
+	err = tx.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE id=?", id).Scan(&doc.ID, &doc.FilePath, &doc.DisplayTitle)
+	if errors.Is(err, sql.ErrNoRows) {
+		return doc, fmt.Errorf("Document not found: %d", id)
+	}
+	if err != nil {
+		return doc, err
+	}
+	if title != nil {
+		doc.DisplayTitle = *title
+		if _, err = tx.ExecContext(ctx, "UPDATE comment_document SET title=?,updated_at=? WHERE id=?", *title, db.Now(), id); err != nil {
+			return doc, err
+		}
+	}
+	if tags != nil {
+		for _, tagID := range *tags {
+			var found int64
+			err = tx.QueryRowContext(ctx, "SELECT id FROM document_tag WHERE id=?", tagID).Scan(&found)
+			if errors.Is(err, sql.ErrNoRows) {
+				return doc, fmt.Errorf("Tag %d not found.", tagID)
+			}
+			if err != nil {
+				return doc, err
+			}
+		}
+		if _, err = tx.ExecContext(ctx, "DELETE FROM document_tag_link WHERE document_id=?", id); err != nil {
+			return doc, err
+		}
+		for _, tagID := range *tags {
+			if _, err = tx.ExecContext(ctx, "INSERT INTO document_tag_link(document_id,tag_id) VALUES(?,?) ON CONFLICT DO NOTHING", id, tagID); err != nil {
+				return doc, err
+			}
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return doc, err
+	}
+	doc.Tags, err = r.Tags(ctx, id)
+	return doc, err
+}

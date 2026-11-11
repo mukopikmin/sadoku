@@ -36,6 +36,9 @@ describe("DocumentMemoriesDialog", () => {
     expect(
       await screen.findByText("The audience is maintainers."),
     ).not.toBeNull();
+    expect(screen.getByRole("region", { name: "Memory 2 text" }).tabIndex).toBe(
+      0,
+    );
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.queryByRole("button", { name: /edit/i })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));

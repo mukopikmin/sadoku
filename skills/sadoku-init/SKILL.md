@@ -50,8 +50,20 @@ preparation; the display title does not need to be written into the body yet.
 If the file already exists, do not overwrite it or silently register it as a new
 empty document. Explain the collision and establish another filename, or follow
 the user's explicit request to continue with the existing file. If creation
-succeeds but registration fails, register that same saved file without
-`--create` rather than creating another file.
+succeeds but registration reports an error, check `sadoku document list` for
+the saved path first: registration may already have completed. Reuse the
+existing ID if listed; otherwise register that same saved file without
+`--create`. `document add` rejects already registered documents.
+
+If the user revises the display title after registration, update its metadata
+using the existing document ID:
+
+```sh
+sadoku document update <document-id> --title "<revised-document-title>"
+```
+
+Use `--title ""` only when clearing the display title is requested. Updating
+the display title does not rename the file or change its Markdown body.
 
 ### Tag the created document
 
@@ -72,14 +84,16 @@ sadoku tag add --name "Sadoku Init"
 Attach the tag and verify it in the document's `tags` array:
 
 ```sh
-sadoku document tag add <tag-id> --source <markdown-path>
+sadoku document inspect <document-id>
+sadoku document update <document-id> --tags <existing-tag-ids-and-sadoku-init-tag-id>
 sadoku document inspect <document-id>
 ```
 
-Use the registered document's canonical path and returned IDs. Preserve other
-tags; adding an already attached tag is safe. On resumption, verify the tag and
-add it if missing rather than creating a duplicate. If another process creates
-the same tag before `tag add` succeeds, list tags again and reuse its ID.
+Use the registered document ID and returned tag IDs. Inspect its current tags
+and include all existing IDs in the replacement collection to preserve them.
+On resumption, verify the tag and add it if missing rather than creating a
+duplicate. If another process creates the same tag before `tag add` succeeds,
+list tags again and reuse its ID.
 
 ## 3. Prepare writing guidance through conversation
 

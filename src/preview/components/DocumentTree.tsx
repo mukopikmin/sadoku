@@ -1,4 +1,5 @@
-import { Text, VStack } from "@chakra-ui/react";
+import { Button, Text, VStack } from "@chakra-ui/react";
+import { Plus } from "lucide-react";
 import type { DocumentSummary } from "../models/document";
 import { useDocumentTree } from "../hooks/useDocumentTree";
 import { DocumentTagFilter } from "./DocumentTagFilter";
@@ -33,23 +34,41 @@ export const DocumentTree = ({
           tags={tags}
         />
       )}
-      {tree.state.status === "empty" ? (
-        <VStack
-          borderColor="border.muted"
-          borderRadius="lg"
-          borderWidth="1px"
-          gap="2"
-          p="6"
-        >
-          <Text color="fg.muted">No documents match the selected tags.</Text>
-        </VStack>
-      ) : (
-        <DocumentTreeView
-          onCreateDocument={onCreateDocument}
-          onSelectDocument={onSelectDocument}
-          rootNode={rootNode}
-        />
-      )}
+      <VStack
+        align="stretch"
+        borderColor="border.muted"
+        borderRadius="lg"
+        borderWidth="1px"
+        gap="2"
+        p="2"
+      >
+        {onCreateDocument && (
+          <Button
+            alignSelf="flex-start"
+            size="sm"
+            variant="ghost"
+            color="fg.muted"
+            onClick={() => onCreateDocument("")}
+          >
+            <Plus aria-hidden="true" /> New file
+          </Button>
+        )}
+        {tree.state.status === "empty" ? (
+          <VStack gap="2" p="6">
+            <Text color="fg.muted">
+              {documents.length === 0
+                ? "No Markdown documents found."
+                : "No documents match the selected tags."}
+            </Text>
+          </VStack>
+        ) : (
+          <DocumentTreeView
+            onCreateDocument={onCreateDocument}
+            onSelectDocument={onSelectDocument}
+            rootNode={rootNode}
+          />
+        )}
+      </VStack>
     </VStack>
   );
 };

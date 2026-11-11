@@ -9,21 +9,24 @@ documents="$1/documents"
 mkdir -p "$documents"
 cp -R "$fixture_dir/." "$documents/"
 
-for document in "$documents/"*.md "$documents/"*/*.md "$documents/"*/*/*.md; do
-  [ -f "$document" ] || continue
-  seed_title="$(awk '/^# / { sub(/^# /, ""); print; exit }' "$document")"
-  sadoku document add "$document" --title "$seed_title" >/dev/null
-done
-
 # Tag IDs start at 1 in the fresh preview database.
 sadoku tag add --name 'Needs review' >/dev/null
 sadoku tag add --name 'Markdown' >/dev/null
 sadoku tag add --name 'Archived' >/dev/null
 sadoku tag add --name 'Unassigned' >/dev/null
-sadoku document tag add 1 2 --source "$documents/comprehensive.md" >/dev/null
-sadoku document tag add 1 --source "$documents/second.md" >/dev/null
-sadoku document tag add 2 --source "$documents/japanese.md" >/dev/null
-sadoku document tag add 3 --source "$documents/guides/overview.md" >/dev/null
+
+for document in "$documents/"*.md "$documents/"*/*.md "$documents/"*/*/*.md; do
+  [ -f "$document" ] || continue
+  seed_title="$(awk '/^# / { sub(/^# /, ""); print; exit }' "$document")"
+  seed_tags=""
+  case "${document#"$documents/"}" in
+    comprehensive.md) seed_tags="1,2" ;;
+    second.md) seed_tags="1" ;;
+    japanese.md) seed_tags="2" ;;
+    guides/overview.md) seed_tags="3" ;;
+  esac
+  sadoku document add "$document" --title "$seed_title" --tags "$seed_tags" >/dev/null
+done
 
 # Locate the selected text so formatting changes do not silently move comments.
 add_comment() {
@@ -90,9 +93,59 @@ cp "$fixture_dir/comprehensive.md" "$review.updated"
 mv "$review.updated" "$review"
 sadoku comment list --source "$review" >/dev/null
 sadoku instruction set --source "$review" \
-  --content 'Check that the document explains the workflow clearly enough for users to follow.
+  --content 'Document review instructions
 
-Include a reason and a concrete example with each suggestion.' >/dev/null
+Review this comprehensive document as a practical guide for a reader using Sadoku for the first time. Follow the workflow from selecting a document through adding comments, responding to feedback, and confirming a final revision.
+
+1. Purpose and audience
+Check that the introduction identifies the intended reader and explains the outcome. Include a reason and a concrete example with each suggestion. Keep the original meaning when proposing clearer wording.
+
+2. Paragraphs and headings
+Read every section in order. Look for missing context, unexplained terminology, and headings that promise more than the section delivers. Suggest a useful transition when neighboring sections feel disconnected.
+
+3. Lists and task items
+Check ordered steps for a sensible sequence. Confirm that nested lists remain readable and that task items describe actions a reviewer can complete. Explain any prerequisite before the step that depends on it.
+
+4. Tables and code samples
+Compare table labels with the surrounding explanation. Check that code examples use consistent names and show enough context to understand their purpose. Mention the expected result and how a reader can recognize a failure.
+
+5. Diagrams and navigation
+Check each Mermaid diagram against the written workflow. Follow internal links and confirm that their labels describe the destination. Review narrow-screen wrapping without removing details that readers need.
+
+6. Comments and revisions
+Attach each comment to the smallest useful passage. Explain the concern, the effect on the reader, and a possible improvement. Compare revisions before resolving a thread, and retain an unresolved thread when a decision is still needed.
+
+7. Final review
+Read the revised text once more as a continuous document. Check that examples, terminology, and conclusions agree. Summarize remaining questions clearly so the next reviewer can continue without reconstructing the discussion.
+
+End of document instructions: use this final paragraph to check that the complete text is reachable while the edit, save, and cancel controls remain accessible.' >/dev/null
+sadoku instruction set --global \
+  --content 'Global review instructions
+
+These shared instructions apply to every document in this preview database. Use them as a common review baseline. Document instructions take precedence when they directly conflict with this guidance.
+
+1. Understand the request
+Identify the purpose of the document and the audience before suggesting changes. Read the surrounding context so that a local improvement does not introduce an inconsistency elsewhere.
+
+2. Write actionable feedback
+Describe the specific problem and explain its impact. Offer a concrete example or replacement when helpful. Keep each comment focused on one decision so the author can respond clearly.
+
+3. Preserve intent
+Respect the terminology and conventions established by the document. Ask for clarification when the intended behavior cannot be determined from the available context. Distinguish a required correction from an optional improvement.
+
+4. Review examples carefully
+Check that commands, code snippets, tables, and diagrams tell the same story. State prerequisites and expected outcomes. Avoid assuming that readers already know the setup steps.
+
+5. Consider readability
+Use clear language and meaningful headings. Check long paragraphs, nested lists, and narrow-screen line wrapping. Make link labels understandable without relying on the surrounding sentence.
+
+6. Collaborate through comments
+Read existing threads before adding duplicate feedback. Reply with the reason for a decision and request another review when needed. Resolve a thread after the underlying concern has been addressed.
+
+7. Check the final result
+Compare the latest revision with earlier feedback. Confirm that changes remain consistent across sections and document any unresolved questions. Keep the handoff concise enough for another reviewer to act on it.
+
+End of global instructions: scroll here in the global manager and in the document dialog to confirm that shared guidance stays separate from document-specific instructions.' >/dev/null
 sadoku memory add --source "$review" \
   --content 'This document is for preview checks. Try editing, replying to, and resolving comments.' >/dev/null
 sadoku memory add --source "$review" \
@@ -110,6 +163,10 @@ add_comment "$changes" 'const documentName = "second.md";' \
 sadoku comment resolve 4 --source "$changes" --as-bot >/dev/null
 # Edit only the copied fixture, then advance snapshots through the normal CLI.
 awk '
+  $0 == "The request timeout is 30 seconds." {
+    print "The request timeout is 45 seconds."
+    next
+  }
   $0 == "# Second Document" {
     print
     print ""

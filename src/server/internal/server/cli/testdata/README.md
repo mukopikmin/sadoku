@@ -29,3 +29,9 @@ The historical instruction transcripts remain unchanged in `legacy_cli.json`;
 the test harness checks generic invalid-command errors for these cases. Supported
 instruction behavior is covered in `instructions_test.go`. The help fixture lists
 the current command set.
+
+Historical `document tag` successes are replayed as `document update --tags`
+with the captured resulting tag sets; their expected output is wrapped as a
+document. Removed commands assert invalid-command errors. Repeated registration
+now asserts an already-registered error, including the former empty-title case.
+The original captures remain unchanged.

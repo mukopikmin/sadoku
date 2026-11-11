@@ -102,6 +102,33 @@ describe("rendered document diff", () => {
     expect(screen.queryByRole("group", { name: "Added content" })).toBeNull();
   });
 
+  it("renders a small prose edit as complete paragraphs and keeps adjacent context unchanged", () => {
+    const unchangedLine = "この設定は全環境に適用されます。";
+    const previousParagraph = `処理は30秒で終了します。\n${unchangedLine}`;
+    const currentParagraph = `処理は45秒で終了します。\n${unchangedLine}`;
+    const { container } = render(
+      preview(
+        `# 設定\n\n${currentParagraph}\n\n次の段落。`,
+        `# 設定\n\n${previousParagraph}\n\n次の段落。`,
+      ),
+    );
+    const removed = screen.getByRole("group", { name: "Removed content" });
+    const added = screen.getByRole("group", { name: "Added content" });
+    expect(within(removed).getByText(/処理は30秒/).textContent).toBe(
+      previousParagraph,
+    );
+    expect(within(added).getByText(/処理は45秒/).textContent).toBe(
+      currentParagraph,
+    );
+    expect(screen.getAllByText("次の段落。")).toHaveLength(1);
+    expect(container.querySelector("ins, del")).toBeNull();
+    expect(
+      container
+        .querySelector('[data-source-line="3"]')
+        ?.getAttribute("data-source-end-line"),
+    ).toBe("4");
+  });
+
   it.each([
     ["", "Removed paragraph", 0, 1],
     ["Added paragraph", "", 1, 0],
@@ -135,6 +162,56 @@ describe("rendered document diff", () => {
         role,
       ).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("limits list changes to the affected items and keeps their source lines", () => {
+    const { container } = render(
+      preview(
+        "- First\n- New\n- Third\n- Fourth",
+        "- First\n- Old\n- Third\n- Fourth",
+      ),
+    );
+    const removed = screen.getByRole("group", { name: "Removed content" });
+    const added = screen.getByRole("group", { name: "Added content" });
+    expect(within(removed).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(added).getAllByRole("listitem")).toHaveLength(1);
+    expect(removed.textContent?.trim()).toBe("Old");
+    expect(added.textContent?.trim()).toBe("New");
+    expect(screen.getAllByText("First")).toHaveLength(1);
+    expect(screen.getAllByText("Third")).toHaveLength(1);
+    expect(screen.getByText("Third").closest("ul")).toBe(
+      screen.getByText("Fourth").closest("ul"),
+    );
+    expect(removed.getAttribute("data-previous-source-line")).toBe("2");
+    expect(removed.getAttribute("data-previous-source-end-line")).toBe("2");
+    expect(container.querySelector('[data-source-line="2"]')?.textContent).toBe(
+      "New",
+    );
+  });
+
+  it("keeps renumbered ordered items unchanged after an insertion", () => {
+    render(
+      preview(
+        "1. First\n2. Added\n3. Second\n4. Third",
+        "1. First\n2. Second\n3. Third",
+      ),
+    );
+    expect(screen.queryByRole("group", { name: "Removed content" })).toBeNull();
+    const added = screen.getByRole("group", { name: "Added content" });
+    expect(added.textContent?.trim()).toBe("Added");
+    expect(within(added).getByRole("list").getAttribute("start")).toBe("2");
+    expect(screen.getAllByText("Second")).toHaveLength(1);
+    expect(
+      screen.getByText("Second").closest("ol")?.getAttribute("start"),
+    ).toBe("3");
+  });
+
+  it("preserves unchanged list structure when changes are enabled", () => {
+    render(preview("- First\n- Second\n- Third", "- First\n- Second\n- Third"));
+    expect(screen.getAllByRole("list")).toHaveLength(1);
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.queryByRole("group", { name: "Added content" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Removed content" })).toBeNull();
   });
 
   it("preserves reference links when their target changes", () => {
@@ -176,32 +253,46 @@ describe("rendered document diff", () => {
     ).toEqual(["graph TD; A-->B;", "graph TD; A-->C;"]);
   });
 
-  it("preserves an unfinished comment when changes are toggled", () => {
-    const { container, rerender } = render(preview("New text"));
-    fireEvent.click(container.querySelector('[data-source-line="1"] p')!);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 1" }),
-    );
-    fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
-      target: { value: "Unfinished review" },
-    });
-    rerender(preview("New text", "Old text"));
-    expect(
-      (
-        screen.getByRole("textbox", {
-          name: "Comment body",
-        }) as HTMLTextAreaElement
-      ).value,
-    ).toBe("Unfinished review");
-    rerender(preview("New text"));
-    expect(
-      (
-        screen.getByRole("textbox", {
-          name: "Comment body",
-        }) as HTMLTextAreaElement
-      ).value,
-    ).toBe("Unfinished review");
-  });
+  it.each([
+    ["", false],
+    ["# Title\n\nContext\n\n", false],
+    ["# Title\n\nContext\n\n", true],
+  ] as const)(
+    "preserves an unfinished comment with context %j and initial changes %j",
+    (prefix, enabled) => {
+      const markdown = `${prefix}New text\n\nFollowing context`;
+      const previousMarkdown = `${prefix}Old text\n\nFollowing context`;
+      const line = prefix.split("\n").length;
+      const { container, rerender } = render(
+        preview(markdown, enabled ? previousMarkdown : undefined),
+      );
+      fireEvent.click(
+        container.querySelector(`[data-source-line="${line}"] p`)!,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: `Add comment on line ${line}` }),
+      );
+      fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
+        target: { value: "Unfinished review" },
+      });
+      rerender(preview(markdown, enabled ? undefined : previousMarkdown));
+      expect(
+        (
+          screen.getByRole("textbox", {
+            name: "Comment body",
+          }) as HTMLTextAreaElement
+        ).value,
+      ).toBe("Unfinished review");
+      rerender(preview(markdown, enabled ? previousMarkdown : undefined));
+      expect(
+        (
+          screen.getByRole("textbox", {
+            name: "Comment body",
+          }) as HTMLTextAreaElement
+        ).value,
+      ).toBe("Unfinished review");
+    },
+  );
 
   it("highlights a continuous selection across additions as one range", () => {
     const markdown = "# Title\n\nFirst addition\n\nSecond addition\n\nEnd";

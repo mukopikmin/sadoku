@@ -29,7 +29,8 @@ The seed script copies Markdown from `src/server/test/integration/fixtures/`
 with its directory structure intact. Original fixtures are unchanged. Samples
 include five documents (one deleted), twenty-one comments, human and bot authors,
 replies, review requests, instructions, memories, and tags. Seeded review text
-and tag names are in English.
+and tag names are in English. Long document and global instructions exercise
+bounded text scrolling and instruction editing in the guidance dialogs.
 
 | Document | Examples to try |
 | --- | --- |
@@ -52,6 +53,14 @@ threads remain available at their code and diagram endpoints.
 
 `guides/setup/local.md` has no **Changes** option because it has no
 previous snapshot.
+
+For a small prose edit, open `second.md`, enable **Changes**, and find
+**Paragraph Diff Check**. The timeout changes from `30` to `45` seconds. The old
+and new versions of that entire two-line paragraph are highlighted; the following
+unchanged paragraph appears once without a diff background. Comparisons use
+source lines, while rendered changes use complete paragraphs and list items to
+preserve Markdown structure. Restart the sample launcher with `SADOKU_SOURCE`
+unset to regenerate existing samples.
 
 Tags include `Needs review`, `Markdown`, `Archived` (on the deleted document),
 and `Unassigned` (with no documents). The nested document remains untagged.

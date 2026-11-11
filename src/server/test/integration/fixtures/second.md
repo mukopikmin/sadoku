@@ -47,3 +47,10 @@ Legacy API keys may be reused across review sessions.
 Resolved feedback remains available in the comment history.
 
 Review decisions are saved with the document.
+
+## Paragraph Diff Check
+
+The request timeout is 30 seconds.
+This setting applies to every review session.
+
+This paragraph stays unchanged when the preview samples are prepared.

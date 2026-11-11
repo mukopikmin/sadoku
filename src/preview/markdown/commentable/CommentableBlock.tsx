@@ -78,8 +78,8 @@ export const CommentableBlock = ({
       : markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm;
   const commentGutterLeft =
     listDepth === 0
-      ? "calc(-1 * var(--chakra-spacing-8))"
-      : `calc(-1 * var(--chakra-spacing-8) - ${commentIndentEm}em)`;
+      ? "calc(-1 * var(--chakra-spacing-10))"
+      : `calc(-1 * var(--chakra-spacing-10) - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
@@ -107,7 +107,9 @@ export const CommentableBlock = ({
         {isRangeActionLine && !isAdding && (
           <Flex
             className="comment-line-gutter"
-            direction="column"
+            align="start"
+            direction={{ base: "row", md: "column" }}
+            wrap="wrap"
             gap="1"
             left={commentGutterLeft}
             mb={{ base: "1.5", md: "0" }}
@@ -121,13 +123,10 @@ export const CommentableBlock = ({
                 aria-label={`Add comment on ${formatRangeLabel(pendingRange)}`}
                 bg="canvas"
                 borderColor="accent"
-                boxSize="6"
                 className="comment-line-button"
                 color="accent"
-                fontSize="md"
-                minW="6"
                 onClick={onOpenCommentForm}
-                p="0"
+                size="xs"
                 type="button"
                 variant="outline"
                 _focusVisible={{ borderColor: "accent", color: "accent" }}
@@ -142,12 +141,9 @@ export const CommentableBlock = ({
                   aria-label="Update URL with heading link"
                   bg="canvas"
                   borderColor="border"
-                  boxSize="6"
                   color="fg.muted"
-                  fontSize="xs"
-                  minW="6"
                   onClick={composer.setHeadingLink}
-                  p="0"
+                  size="xs"
                   type="button"
                   variant="outline"
                 >
@@ -166,12 +162,9 @@ export const CommentableBlock = ({
                 )}`}
                 bg="canvas"
                 borderColor="border"
-                boxSize="6"
                 color="fg.muted"
-                fontSize="xs"
-                minW="6"
                 onClick={() => onOpenRawMarkdown(pendingRange)}
-                p="0"
+                size="xs"
                 type="button"
                 variant="outline"
               >

@@ -34,4 +34,14 @@ describe("changedRevisionLines", () => {
     expect([...changes.previous]).toEqual([1001]);
     expect([...changes.current]).toEqual([1001]);
   });
+
+  it("counts only changed lines when edits are far apart in a large document", () => {
+    const before = Array.from({ length: 2_000 }, (_, index) => `Line ${index}`);
+    const after = [...before];
+    after[100] = "First change";
+    after[1900] = "Last change";
+    const changes = changedRevisionLines(before.join("\n"), after.join("\n"));
+    expect([...changes.previous]).toEqual([101, 1901]);
+    expect([...changes.current]).toEqual([101, 1901]);
+  });
 });

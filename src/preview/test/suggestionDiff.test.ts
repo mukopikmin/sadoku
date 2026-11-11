@@ -28,4 +28,35 @@ describe("suggestionDiff", () => {
       ].join("\n"),
     );
   });
+
+  it.each(["replace", "insert", "delete"])(
+    "preserves unchanged lines between distant edits in large selections (%s)",
+    (operation) => {
+      const before = Array.from({ length: 2_000 }, (_, i) => `line ${i}`);
+      const after = [...before];
+      const deleteCount = operation === "insert" ? 0 : 1;
+      const replacement = operation === "delete" ? [] : ["changed"];
+      after.splice(1_900, deleteCount, ...replacement);
+      after.splice(100, deleteCount, ...replacement);
+      const diff = suggestionDiff(before.join("\n"), after.join("\n")).split(
+        "\n",
+      );
+      expect(diff.filter((line) => line.startsWith("-"))).toHaveLength(
+        operation === "insert" ? 0 : 2,
+      );
+      expect(diff.filter((line) => line.startsWith("+"))).toHaveLength(
+        operation === "delete" ? 0 : 2,
+      );
+      expect(
+        diff
+          .filter((line) => !line.startsWith("+"))
+          .map((line) => line.slice(1)),
+      ).toEqual(before);
+      expect(
+        diff
+          .filter((line) => !line.startsWith("-"))
+          .map((line) => line.slice(1)),
+      ).toEqual(after);
+    },
+  );
 });

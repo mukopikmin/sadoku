@@ -77,7 +77,7 @@ macOS/Linux, or `%APPDATA%\sadoku\config.toml` on Windows.
 
 ## Development
 
-Requires GNU Make, Go 1.26.10 or later, Node.js matching
+Requires GNU Make, Go 1.27.3 or later, Node.js matching
 [`src/proto/package.json`](src/proto/package.json), and a C compiler for SQLite (GCC and libc headers
 on Linux, Xcode Command Line Tools on macOS, or MinGW-w64 GCC on Windows).
 Make enables CGO for backend tasks.

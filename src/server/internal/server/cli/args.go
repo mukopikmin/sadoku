@@ -29,11 +29,14 @@ func validate(o Options) error {
 	if o.Flags["global"] && word(0) != "instruction" {
 		return usageError("--global is only accepted by instruction commands.")
 	}
-	if (o.Flags["create"] || has("title")) && !(word(0) == "document" && word(1) == "add") {
-		return usageError("--create and --title are only accepted by document add.")
+	if o.Flags["create"] && !(word(0) == "document" && word(1) == "add") {
+		return usageError("--create is only accepted by document add.")
 	}
-	if strings.ContainsAny(o.Values["title"], "\r\n\x00") {
-		return usageError("--title must be a single line without null characters.")
+	if (has("title") || has("tags")) && !(word(0) == "document" && (word(1) == "add" || word(1) == "update")) {
+		return usageError("--title and --tags are only accepted by document add/update.")
+	}
+	if _, _, err := documentAttributes(o); err != nil {
+		return err
 	}
 	if has("max-depth") {
 		n, err := cliInteger(o.Values["max-depth"])
@@ -128,31 +131,7 @@ func validate(o Options) error {
 		return usageError("Invalid tag command.")
 	case "document":
 		if word(1) == "tag" {
-			if content || has("channel") || has("body") || has("comment") || has("start-line") || has("end-line") || o.Flags["as-bot"] || o.Flags["ensure-document"] || o.Flags["request-review"] {
-				return usageError("document tag commands do not accept comment, content, or update options.")
-			}
-			if (word(2) != "add" && word(2) != "delete") || len(o.Words) < 4 {
-				return usageError("document tag add/delete requires at least one tag ID.")
-			}
-			if err := target(); err != nil {
-				return err
-			}
-			safe := true
-			if has("document") {
-				n, _ := positive(o.Values["document"], "Document ID")
-				safe = n <= 9007199254740991
-			}
-			for _, v := range o.Words[3:] {
-				n, err := positive(v, "Tag ID")
-				if err != nil {
-					return err
-				}
-				safe = safe && n <= 9007199254740991
-			}
-			if !safe {
-				return usageError("Document and tag IDs must be positive safe integers.")
-			}
-			return nil
+			return usageError("Invalid document command.")
 		}
 		if commentOptions || content || has("channel") {
 			return usageError("document commands do not accept comment or update options.")
@@ -161,6 +140,15 @@ func validate(o Options) error {
 			return nil
 		}
 		if word(1) == "add" && len(o.Words) == 3 {
+			return nil
+		}
+		if word(1) == "update" && len(o.Words) == 3 {
+			if _, err := number(word(2), "Document ID", 1); err != nil {
+				return usageError("Document ID must be a positive safe integer.")
+			}
+			if !has("title") && !has("tags") {
+				return usageError("document update requires --title or --tags.")
+			}
 			return nil
 		}
 		if word(1) == "inspect" && len(o.Words) == 3 {

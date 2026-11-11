@@ -9,6 +9,8 @@ import {
 import { useDocumentMemories } from "../hooks/useDocumentMemories";
 import { ConfirmDialog } from "./ConfirmDialog";
 
+import { ScrollableTextCard } from "./ui/ScrollableTextCard";
+
 type Props = {
   documentId: number;
   onOpenChange: (open: boolean) => void;
@@ -27,12 +29,14 @@ export const DocumentMemoriesDialog = ({
       <Dialog.Root
         onOpenChange={({ open }) => onOpenChange(open)}
         open={open}
+        placement="center"
+        scrollBehavior="inside"
         size="lg"
       >
         <Portal>
           <Dialog.Backdrop />
           <Dialog.Positioner>
-            <Dialog.Content>
+            <Dialog.Content maxH="calc(100dvh - 2rem)">
               <Dialog.Header>
                 <Dialog.Title>Document memories</Dialog.Title>
               </Dialog.Header>
@@ -53,15 +57,15 @@ export const DocumentMemoriesDialog = ({
                     list.items.map((memory) => (
                       <Flex
                         key={memory.id}
-                        borderWidth="1px"
-                        borderColor="border.muted"
-                        borderRadius="md"
                         direction="column"
-                        gap="3"
-                        p="3"
+                        gap="2"
+                        flexShrink="0"
                       >
-                        <Text whiteSpace="pre-wrap">{memory.content}</Text>
+                        <ScrollableTextCard label={`Memory ${memory.id} text`}>
+                          <Text whiteSpace="pre-wrap">{memory.content}</Text>
+                        </ScrollableTextCard>
                         <Flex
+                          flexShrink="0"
                           alignItems="center"
                           gap="2"
                           justifyContent="space-between"
@@ -78,7 +82,7 @@ export const DocumentMemoriesDialog = ({
                           <Button
                             colorPalette="red"
                             size="sm"
-                            variant="ghost"
+                            variant="outline"
                             onClick={() => memories.requestDelete(memory)}
                           >
                             Delete
