@@ -78,7 +78,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	// slow statistics query or GitHub command must not serialize progress RPCs.
 	switch operation {
 	case "GetStatistics":
-		return s.Repository.Statistics()
+		return s.Repository.Statistics(ctx)
 
 	case "GetSettings":
 		settings, _, err := config.Read()
@@ -110,7 +110,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	case "ListDocuments":
 		docs := append([]u.Document{}, s.Documents...)
 		for i := range docs {
-			tags, err := r.Tags(docs[i].ID)
+			tags, err := r.Tags(ctx, docs[i].ID)
 			if err != nil {
 				return nil, err
 			}
@@ -118,7 +118,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		return map[string]any{"documents": docs}, nil
 	case "ListTags":
-		tags, err := r.Tags(0)
+		tags, err := r.Tags(ctx, 0)
 		return map[string]any{"tags": tags}, err
 	case "UpdateTag", "CreateTag":
 		if operation == "UpdateTag" {
@@ -137,7 +137,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if !regexp.MustCompile(`^#[0-9a-fA-F]{6}$`).MatchString(color) {
 			return nil, u.Fail("invalid_argument", "Tag background color must be a hexadecimal RGB color.")
 		}
-		tag, err := r.SaveTag(u.Tag{ID: int64(in.ID), Name: name, BackgroundColor: strings.ToLower(color)})
+		tag, err := r.SaveTag(ctx, u.Tag{ID: int64(in.ID), Name: name, BackgroundColor: strings.ToLower(color)})
 		if err != nil && strings.Contains(err.Error(), "UNIQUE") {
 			return nil, u.Fail("already_exists", "Tag name already exists.")
 		}
@@ -146,13 +146,13 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if err := u.PositiveID(int64(in.ID)); err != nil {
 			return nil, u.Fail("invalid_argument", "Tag id must be a positive integer.")
 		}
-		err := r.DeleteTag(int64(in.ID))
+		err := r.DeleteTag(ctx, int64(in.ID))
 		if err != nil && err.Error() == "Tag not found." {
 			err = u.Fail("not_found", fmt.Sprintf("Tag %d not found.", in.ID))
 		}
 		return struct{}{}, err
 	case "ListGlobalInstructions":
-		notes, err := r.GlobalInstructions()
+		notes, err := r.GlobalInstructions(ctx)
 		return map[string]any{"instructions": notes}, err
 	case "CreateGlobalInstruction", "UpdateGlobalInstruction", "DeleteGlobalInstruction":
 		noteID := int64(in.InstructionID)
@@ -162,7 +162,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			}
 		}
 		if operation == "DeleteGlobalInstruction" {
-			return struct{}{}, noteFailure("instruction", r.DeleteGlobalInstruction(noteID))
+			return struct{}{}, noteFailure("instruction", r.DeleteGlobalInstruction(ctx, noteID))
 		}
 		if u.TrimSpace(in.Content) == "" {
 			return nil, noteFailure("instruction", u.Fail("invalid_argument", "Content must not be empty."))
@@ -170,10 +170,10 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if operation == "CreateGlobalInstruction" {
 			noteID = 0
 		}
-		note, err := r.SaveGlobalInstruction(u.Note{ID: noteID, Content: in.Content})
+		note, err := r.SaveGlobalInstruction(ctx, u.Note{ID: noteID, Content: in.Content})
 		return note, noteFailure("instruction", err)
 	case "CreateDocument":
-		return s.createDocument(in)
+		return s.createDocument(ctx, in)
 	}
 	doc, err := s.Find(id)
 	if err != nil {
@@ -192,7 +192,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if title != "" {
 			value = &title
 		}
-		if err = r.SetTitle(id, value); err != nil {
+		if err = r.SetTitle(ctx, id, value); err != nil {
 			return nil, err
 		}
 		doc.DisplayTitle = value
@@ -201,7 +201,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 				s.Documents[i] = doc
 			}
 		}
-		doc.Tags, err = r.Tags(id)
+		doc.Tags, err = r.Tags(ctx, id)
 		return doc, err
 	case "GetDocument":
 		source := s.Sources[id]
@@ -215,7 +215,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		if os.IsNotExist(err) {
 			doc.Deleted = true
-			snapshot, _, e := r.Snapshot(id)
+			snapshot, _, e := r.Snapshot(ctx, id)
 			if e != nil {
 				return nil, e
 			}
@@ -231,17 +231,17 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if !doc.Deleted {
 			// A request may reach the document before the background queue does.
 			// Preserve the first successfully displayed content, as the old loader did.
-			if err = r.InitializeSnapshotContext(ctx, id, markdown); err != nil {
+			if err = r.InitializeSnapshot(ctx, id, markdown); err != nil {
 				return nil, err
 			}
 		}
 		var current, previous *string
-		storageID, _, err := s.commentStorage(id, false)
+		storageID, _, err := s.commentStorage(ctx, id, false)
 		if err != nil {
 			return nil, err
 		}
 		if storageID != 0 {
-			current, previous, err = r.Snapshot(storageID)
+			current, previous, err = r.Snapshot(ctx, storageID)
 		}
 		if err != nil {
 			return nil, err
@@ -249,7 +249,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if current != nil && *current != markdown {
 			previous = current
 		}
-		tags, err := r.Tags(id)
+		tags, err := r.Tags(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -279,14 +279,14 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		return result, nil
 	case "ListDocumentRevisions":
-		list, err := r.Revisions(id)
+		list, err := r.Revisions(ctx, id)
 		summaries := []map[string]any{}
 		for _, rev := range list {
 			summaries = append(summaries, map[string]any{"id": rev.ID, "recordedAt": rev.RecordedAt})
 		}
 		return map[string]any{"revisions": summaries}, err
 	case "GetDocumentRevision":
-		return r.Revision(id, int64(in.RevisionID))
+		return r.Revision(ctx, id, int64(in.RevisionID))
 	case "RestoreDocumentRevision":
 		return struct{}{}, s.restore(ctx, doc, in)
 	case "ReplaceDocumentTags":
@@ -311,7 +311,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 				references = append(references, u.TagReference{ID: int64(ref.ID)})
 			}
 		}
-		tags, err := r.ReplaceTagReferences(id, references)
+		tags, err := r.ReplaceTagReferences(ctx, id, references)
 		return map[string]any{"tags": tags}, err
 
 	case "ListInstructions", "ListMemories", "CreateInstruction", "UpdateInstruction", "DeleteInstruction", "CreateMemory", "UpdateMemory", "DeleteMemory":
@@ -320,11 +320,11 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			kind, key, noteID = "memory", "memories", int64(in.MemoryID)
 		}
 		if strings.HasPrefix(operation, "List") {
-			notes, err := r.Notes(kind, id)
+			notes, err := r.Notes(ctx, kind, id)
 			return map[string]any{key: notes}, err
 		}
 		if strings.HasPrefix(operation, "Delete") {
-			return struct{}{}, noteFailure(kind, r.DeleteNote(kind, id, noteID))
+			return struct{}{}, noteFailure(kind, r.DeleteNote(ctx, kind, id, noteID))
 		}
 		if strings.HasPrefix(operation, "Update") {
 			if err := u.PositiveID(noteID); err != nil {
@@ -334,14 +334,14 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if u.TrimSpace(in.Content) == "" {
 			return nil, noteFailure(kind, u.Fail("invalid_argument", "Content must not be empty."))
 		}
-		note, err := r.SaveNote(kind, u.Note{ID: noteID, DocumentID: id, Content: in.Content})
+		note, err := r.SaveNote(ctx, kind, u.Note{ID: noteID, DocumentID: id, Content: in.Content})
 		return note, noteFailure(kind, err)
 	case "ListComments", "CreateComment", "UpdateComment", "DeleteComment", "SetCommentResolution", "CreateReply", "UpdateReply", "DeleteReply":
 		githubHead := ""
 		if s.GitHub != nil {
 			githubHead = s.GitHub.HeadSHA
 		}
-		comments, err := s.readComments(id)
+		comments, err := s.readComments(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +354,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			if err == nil || os.IsNotExist(err) {
 				// A comment may have changed while the file/network read was pending.
 				var commentErr error
-				comments, commentErr = s.readComments(id)
+				comments, commentErr = s.readComments(ctx, id)
 				if commentErr != nil {
 					return nil, commentErr
 				}
@@ -371,7 +371,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
 			comments = u.ResolveComments(comments, markdown)
 			if changed && len(comments.Comments) > 0 {
-				if err = s.saveComments(id, comments); err != nil {
+				if err = s.saveComments(ctx, id, comments); err != nil {
 					return nil, err
 				}
 			}
@@ -396,7 +396,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			comment.CurrentSourceText = u.RangeText(*comments.SourceSnapshot, comment.StartLine, comment.EndLine)
 			result = comment
 		}
-		return result, s.saveComments(id, updated)
+		return result, s.saveComments(ctx, id, updated)
 	case "ExportCommentToGitHub":
 		if s.GitHub == nil {
 			return nil, u.Fail("not_found", `{"error":{"code":"export_unavailable"}}`)
@@ -449,7 +449,7 @@ var invalidFilename = regexp.MustCompile(`[\\/\x00-\x1f<>:"|?*]`)
 var reservedFilename = regexp.MustCompile(`(?i)^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)`)
 var invalidDirectoryComponent = regexp.MustCompile(`[\\:\x00-\x1f]`)
 
-func (s *Session) createDocument(in Input) (any, error) {
+func (s *Session) createDocument(ctx context.Context, in Input) (any, error) {
 	if !s.CanCreate || (s.directoryStatus != nil && s.directoryStatus.State != "ready") {
 		return nil, u.Fail("failed_precondition", "File creation is unavailable in this preview.")
 	}
@@ -486,7 +486,7 @@ func (s *Session) createDocument(in Input) (any, error) {
 		return nil, err
 	}
 
-	doc, err := s.Repository.Ensure(path)
+	doc, err := s.Repository.Ensure(ctx, path)
 	if err != nil {
 		return nil, createdDocumentRegistrationFailure()
 	}
@@ -494,10 +494,10 @@ func (s *Session) createDocument(in Input) (any, error) {
 	if title != "" {
 		doc.DisplayTitle = &title
 	}
-	if err = s.Repository.SetTitle(doc.ID, doc.DisplayTitle); err != nil {
+	if err = s.Repository.SetTitle(ctx, doc.ID, doc.DisplayTitle); err != nil {
 		return nil, createdDocumentRegistrationFailure()
 	}
-	if err = s.Repository.InitializeSnapshot(doc.ID, ""); err != nil {
+	if err = s.Repository.InitializeSnapshot(ctx, doc.ID, ""); err != nil {
 		return nil, createdDocumentRegistrationFailure()
 	}
 	rel, _ := filepath.Rel(s.Root, path)
@@ -527,7 +527,7 @@ func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
 	if remote || s.GitHub != nil {
 		return u.Fail("failed_precondition", "Only local files can be restored.")
 	}
-	revision, err := s.Repository.Revision(doc.ID, int64(in.RevisionID))
+	revision, err := s.Repository.Revision(ctx, doc.ID, int64(in.RevisionID))
 	if err != nil {
 		return err
 	}
@@ -544,7 +544,7 @@ func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
 		return u.Fail("aborted", "The file has changed. Reload the document before restoring.")
 	}
 	if exists {
-		if err = s.Repository.RecordRevision(doc.ID, decodeText(contents, false)); err != nil {
+		if err = s.Repository.RecordRevision(ctx, doc.ID, decodeText(contents, false)); err != nil {
 			return err
 		}
 	}
@@ -568,15 +568,15 @@ func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
 			s.Documents[i].Deleted = false
 		}
 	}
-	comments, err := s.Repository.ReadComments(doc.ID)
+	comments, err := s.Repository.ReadComments(ctx, doc.ID)
 	if err != nil {
 		return err
 	}
 	comments = u.ResolveComments(comments, revision.Markdown)
-	if err = s.Repository.SaveComments(doc.ID, comments); err != nil {
+	if err = s.Repository.SaveComments(ctx, doc.ID, comments); err != nil {
 		return err
 	}
-	return s.Repository.RecordRevision(doc.ID, revision.Markdown)
+	return s.Repository.RecordRevision(ctx, doc.ID, revision.Markdown)
 }
 
 func DecodeInput(b []byte) (Input, error) {

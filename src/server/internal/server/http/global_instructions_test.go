@@ -66,7 +66,7 @@ func TestGlobalInstructionsConnect(t *testing.T) {
 func TestGlobalInstructionsREST(t *testing.T) {
 	_, server, _ := setup(t)
 	path := "/__sadoku/global-instructions"
-	b := restRequest(t, server.URL, "POST", path, `{"content":"Shared","documentId":999}`, "application/json", 201)
+	b := restRequest(t.Context(), t, server.URL, "POST", path, `{"content":"Shared","documentId":999}`, "application/json", 201)
 	var created map[string]any
 	if err := json.Unmarshal(b, &created); err != nil {
 		t.Fatal(err)
@@ -75,18 +75,18 @@ func TestGlobalInstructionsREST(t *testing.T) {
 		t.Fatal(created)
 	}
 	idPath := fmt.Sprintf("%s/%.0f", path, created["id"])
-	restRequest(t, server.URL, "PUT", idPath, `{"content":"Updated","instructionId":999}`, "application/json", 200)
-	b = restRequest(t, server.URL, "GET", path, "", "", 200)
+	restRequest(t.Context(), t, server.URL, "PUT", idPath, `{"content":"Updated","instructionId":999}`, "application/json", 200)
+	b = restRequest(t.Context(), t, server.URL, "GET", path, "", "", 200)
 	var list struct{ Instructions []struct{ Content string } }
 	if err := json.Unmarshal(b, &list); err != nil || len(list.Instructions) != 1 || list.Instructions[0].Content != "Updated" {
 		t.Fatalf("list: %s %v", b, err)
 	}
 	for _, body := range []string{`{}`, `{"content":null}`, `{"content":7}`, `{"content":" "}`} {
-		restRequest(t, server.URL, "POST", path, body, "application/json", 400)
+		restRequest(t.Context(), t, server.URL, "POST", path, body, "application/json", 400)
 	}
-	restRequest(t, server.URL, "DELETE", idPath, "", "", 204)
-	restRequest(t, server.URL, "DELETE", idPath, "", "", 404)
-	restRequest(t, server.URL, "PUT", path+"/0", `{"content":"bad"}`, "application/json", 404)
+	restRequest(t.Context(), t, server.URL, "DELETE", idPath, "", "", 204)
+	restRequest(t.Context(), t, server.URL, "DELETE", idPath, "", "", 404)
+	restRequest(t.Context(), t, server.URL, "PUT", path+"/0", `{"content":"bad"}`, "application/json", 404)
 }
 
 func TestInstructionAPISavesSingleValuePerScope(t *testing.T) {
@@ -99,7 +99,12 @@ func TestInstructionAPISavesSingleValuePerScope(t *testing.T) {
 			}
 			client := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL, options...)
 			ctx := context.Background()
-			docID := uint64(s.Documents[0].ID)
+			documentID := s.Documents[0].ID
+			if documentID <= 0 {
+				t.Fatal("expected positive document ID")
+				return
+			}
+			docID := uint64(documentID)
 			var globalID, localID uint64
 			for _, content := range []string{"First", "Replacement"} {
 				global, err := client.CreateGlobalInstruction(ctx, connect.NewRequest(&pb.CreateGlobalInstructionRequest{Content: "Global " + content}))

@@ -44,7 +44,7 @@ func archive(t target, version, binary, output string) error {
 	}
 	for _, entry := range []struct {
 		name, path string
-		mode       int64
+		mode       os.FileMode
 	}{{binaryName, binary, 0755}, {"LICENSE", "LICENSE", 0644}, {"THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.md", 0644}} {
 		data, err := os.ReadFile(entry.path)
 		if err != nil {
@@ -57,7 +57,7 @@ func archive(t target, version, binary, output string) error {
 			h.SetMode(os.FileMode(entry.mode))
 			w, err = zw.CreateHeader(h)
 		} else {
-			err = tw.WriteHeader(&tar.Header{Name: name, Mode: entry.mode, Size: int64(len(data)), Typeflag: tar.TypeReg})
+			err = tw.WriteHeader(&tar.Header{Name: name, Mode: int64(entry.mode), Size: int64(len(data)), Typeflag: tar.TypeReg})
 			w = tw
 		}
 		if err != nil {
@@ -116,7 +116,7 @@ func dist(version, binaryVersion string, selected []string) error {
 			}
 		}
 	}
-	if err := os.MkdirAll("dist", 0755); err != nil {
+	if err := os.MkdirAll("dist", 0755); err != nil { // #nosec G301 -- This directory contains distributable binaries or test fixtures, not private application data.
 		return err
 	}
 	if err := generateNotices("THIRD_PARTY_NOTICES.md"); err != nil {
@@ -162,7 +162,7 @@ func buildArchive(t target, version, binaryVersion string, checksums *[]string) 
 		return err
 	}
 	checksum := fmt.Sprintf("%x", sha256.Sum256(data))
-	if err = os.Chmod(temp.Name(), 0644); err != nil {
+	if err = os.Chmod(temp.Name(), 0644); err != nil { // #nosec G302 -- The artifact must remain executable or readable for installation/distribution; it contains no secrets.
 		return err
 	}
 	if err = os.Rename(temp.Name(), output); err != nil {

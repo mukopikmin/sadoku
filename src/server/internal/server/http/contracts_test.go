@@ -19,9 +19,9 @@ import (
 	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
-func restRequest(t *testing.T, serverURL, method, path, body, contentType string, status int) []byte {
+func restRequest(ctx context.Context, t *testing.T, serverURL, method, path, body, contentType string, status int) []byte {
 	t.Helper()
-	req, err := http.NewRequest(method, serverURL+path, strings.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, serverURL+path, strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func TestRESTDocumentIDsRejectNonCanonicalAndUnsafeNumbers(t *testing.T) {
 	_, server, _ := setup(t)
 	for _, id := range []string{"-1", "1.0", "abc", "18446744073709551616"} {
 		t.Run(id, func(t *testing.T) {
-			restRequest(t, server.URL, "GET", "/__sadoku/documents/"+id, "", "", 404)
+			restRequest(t.Context(), t, server.URL, "GET", "/__sadoku/documents/"+id, "", "", 404)
 		})
 	}
 }
@@ -63,7 +63,7 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 	settings := config.Defaults()
 	settings.Theme, settings.CodeWrap, settings.ShowHTMLComments = "dark", "wrap", false
 	b, _ := json.Marshal(settings)
-	restRequest(t, server.URL, "PUT", "/__sadoku/settings", string(b), "application/json", 200)
+	restRequest(t.Context(), t, server.URL, "PUT", "/__sadoku/settings", string(b), "application/json", 200)
 	var valid map[string]any
 	if err := json.Unmarshal(b, &valid); err != nil {
 		t.Fatal(err)
@@ -81,7 +81,7 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 			}
 			invalid[key] = value
 			body, _ := json.Marshal(invalid)
-			restRequest(t, server.URL, "PUT", "/__sadoku/settings", string(body), "application/json", 400)
+			restRequest(t.Context(), t, server.URL, "PUT", "/__sadoku/settings", string(body), "application/json", 400)
 			stored, _, err := config.Read()
 			if err != nil || stored.Theme != "dark" || stored.MaxDepth != settings.MaxDepth || stored.ShowHTMLComments {
 				t.Fatalf("invalid request changed settings: %+v %v", stored, err)
@@ -89,12 +89,12 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 		})
 	}
 	for _, body := range []string{"null", "[]", "{", string(b) + " {}"} {
-		restRequest(t, server.URL, "PUT", "/__sadoku/settings", body, "application/json", 400)
+		restRequest(t.Context(), t, server.URL, "PUT", "/__sadoku/settings", body, "application/json", 400)
 	}
-	restRequest(t, server.URL, "PUT", "/__sadoku/settings", string(b), "text/plain", 400)
+	restRequest(t.Context(), t, server.URL, "PUT", "/__sadoku/settings", string(b), "text/plain", 400)
 	delete(valid, "showHtmlComments")
 	b, _ = json.Marshal(valid)
-	restRequest(t, server.URL, "PUT", "/__sadoku/settings", string(b), "application/json", 200)
+	restRequest(t.Context(), t, server.URL, "PUT", "/__sadoku/settings", string(b), "application/json", 200)
 	stored, _, err := config.Read()
 	if err != nil || stored.ShowHTMLComments {
 		t.Fatalf("older client reset HTML comment visibility: %+v %v", stored, err)
@@ -103,25 +103,25 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 
 func TestRESTTagConflictsAndPartialUpdates(t *testing.T) {
 	s, server, _ := setup(t)
-	one, err := s.Repository.SaveTag(u.Tag{Name: "One", BackgroundColor: "#123456"})
+	one, err := s.Repository.SaveTag(t.Context(), u.Tag{Name: "One", BackgroundColor: "#123456"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.Repository.SaveTag(u.Tag{Name: "Two", BackgroundColor: "#abcdef"}); err != nil {
+	if _, err = s.Repository.SaveTag(t.Context(), u.Tag{Name: "Two", BackgroundColor: "#abcdef"}); err != nil {
 		t.Fatal(err)
 	}
 	path := fmt.Sprintf("/__sadoku/tags/%d", one.ID)
 	for _, body := range []string{`{}`, `null`, `{"name":null}`, `{"backgroundColor":"red"}`, `{"name":5}`} {
-		restRequest(t, server.URL, "PATCH", path, body, "application/json", 400)
+		restRequest(t.Context(), t, server.URL, "PATCH", path, body, "application/json", 400)
 	}
-	restRequest(t, server.URL, "PATCH", path, `{"name":"Two"}`, "application/json", 409)
-	b := restRequest(t, server.URL, "PATCH", path, `{"backgroundColor":"#AABBCC"}`, "application/json", 200)
+	restRequest(t.Context(), t, server.URL, "PATCH", path, `{"name":"Two"}`, "application/json", 409)
+	b := restRequest(t.Context(), t, server.URL, "PATCH", path, `{"backgroundColor":"#AABBCC"}`, "application/json", 200)
 	var tag u.Tag
 	if err = json.Unmarshal(b, &tag); err != nil || tag.Name != "One" || tag.BackgroundColor != "#aabbcc" {
 		t.Fatalf("partial update: %s %v", b, err)
 	}
-	restRequest(t, server.URL, "DELETE", path, "", "", 204)
-	restRequest(t, server.URL, "DELETE", path, "", "", 404)
+	restRequest(t.Context(), t, server.URL, "DELETE", path, "", "", 204)
+	restRequest(t.Context(), t, server.URL, "DELETE", path, "", "", 404)
 }
 
 func TestRESTGitHubExportReturnsStructuredFailures(t *testing.T) {
@@ -132,7 +132,7 @@ func TestRESTGitHubExportReturnsStructuredFailures(t *testing.T) {
 	body := `{"startLine":1,"endLine":1,"body":"Review","createdAt":"created","headSha":"` + sha + `","displayedMarkdown":"# Title\n\nBody\n"}`
 	check := func(path, body, contentType string, status int, code string) {
 		t.Helper()
-		b := restRequest(t, server.URL, "POST", path, body, contentType, status)
+		b := restRequest(t.Context(), t, server.URL, "POST", path, body, contentType, status)
 		var failure struct{ Error struct{ Code string } }
 		if err := json.Unmarshal(b, &failure); err != nil || failure.Error.Code != code {
 			t.Fatalf("expected %s JSON error, got %s (%v)", code, b, err)
@@ -166,7 +166,12 @@ func TestConnectGitHubExportPreservesErrorCodes(t *testing.T) {
 				options = append(options, connect.WithProtoJSON())
 			}
 			client := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL, options...)
-			id := uint64(s.Documents[0].ID)
+			documentID := s.Documents[0].ID
+			if documentID <= 0 {
+				t.Fatal("expected positive document ID")
+				return
+			}
+			id := uint64(documentID)
 			check := func(in *pb.ExportCommentToGitHubRequest, code connect.Code, failure string) {
 				t.Helper()
 				_, err := client.ExportCommentToGitHub(context.Background(), connect.NewRequest(in))
@@ -205,7 +210,7 @@ func TestSettingsWriteFailureIsInternalAndPreservesTheFile(t *testing.T) {
 	settings := config.Defaults()
 	settings.Theme, settings.CodeWrap = "dark", "wrap"
 	body, _ := json.Marshal(settings)
-	response := restRequest(t, server.URL, "PUT", "/__sadoku/settings", string(body), "application/json", 500)
+	response := restRequest(t.Context(), t, server.URL, "PUT", "/__sadoku/settings", string(body), "application/json", 500)
 	if string(response) != "Internal Server Error" {
 		t.Fatalf("write failure: %s", response)
 	}

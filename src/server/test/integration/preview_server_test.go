@@ -108,7 +108,7 @@ func markdownFile(t *testing.T, name, body string) string {
 }
 
 func TestServerFallsBackFromOccupiedPortAndStopsCleanly(t *testing.T) {
-	reserved, err := net.Listen("tcp", "127.0.0.1:0")
+	reserved, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ func TestServerFallsBackFromOccupiedPortAndStopsCleanly(t *testing.T) {
 		t.Fatal("reused an occupied port")
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
-	response, err := client.Get(previewURL)
+	response, err := testGet(t, client, previewURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 	var reserved []net.Listener
 	var port int
 	for attempt := 0; attempt < 20; attempt++ {
-		first, err := net.Listen("tcp", "127.0.0.1:0")
+		first, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -150,7 +150,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 		port = first.Addr().(*net.TCPAddr).Port
 		if port+count <= 65535 {
 			for i := 1; i < count; i++ {
-				next, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port+i))
+				next, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", fmt.Sprintf("127.0.0.1:%d", port+i))
 				if err != nil {
 					break
 				}
@@ -189,7 +189,7 @@ func TestServerFallsBackPastOneHundredOccupiedPorts(t *testing.T) {
 
 func TestLastEventStreamDisconnectShutsDownServer(t *testing.T) {
 	previewURL, stopped := startServer(t, markdownFile(t, "preview.md", "# Preview\n"), 0, false)
-	response, err := http.Get(previewURL + "/__sadoku/events")
+	response, err := testGet(t, http.DefaultClient, previewURL+"/__sadoku/events")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -289,41 +289,55 @@ func TestRESTCommentsRemainScopedAndValidateBodies(t *testing.T) {
 	httpClient := &http.Client{Timeout: 5 * time.Second}
 	request := func(method, path, body string) *http.Response {
 		t.Helper()
-		req, _ := http.NewRequest(method, previewURL+path, strings.NewReader(body))
+		req, _ := http.NewRequestWithContext(t.Context(), method, previewURL+path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		res, err := httpClient.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() { _ = res.Body.Close() })
 		return res
 	}
-	response := request("GET", "/__sadoku/documents", "")
+	documentsResponse := request("GET", "/__sadoku/documents", "")
+	defer func() { _ = documentsResponse.Body.Close() }()
 	var documents []struct{ ID int64 }
-	if err := json.NewDecoder(response.Body).Decode(&documents); err != nil || len(documents) != 2 {
+	if err := json.NewDecoder(documentsResponse.Body).Decode(&documents); err != nil || len(documents) != 2 {
 		t.Fatalf("document list: %v %v", documents, err)
 	}
 	one, two := documents[0].ID, documents[1].ID
 	path := fmt.Sprintf("/__sadoku/documents/%d/comments", one)
-	response = request("POST", path, `{"startLine":2,"endLine":2,"body":"review"}`)
-	if response.StatusCode != 200 {
-		t.Fatalf("comment creation: %d", response.StatusCode)
+	createResponse := request("POST", path, `{"startLine":2,"endLine":2,"body":"review"}`)
+	defer func() { _ = createResponse.Body.Close() }()
+	if createResponse.StatusCode != 200 {
+		t.Fatalf("comment creation: %d", createResponse.StatusCode)
 	}
-	response = request("GET", fmt.Sprintf("/__sadoku/documents/%d/comments", two), "")
+	commentsResponse := request("GET", fmt.Sprintf("/__sadoku/documents/%d/comments", two), "")
+	defer func() { _ = commentsResponse.Body.Close() }()
 	var comments struct{ Comments []json.RawMessage }
-	if err := json.NewDecoder(response.Body).Decode(&comments); err != nil || len(comments.Comments) != 0 {
+	if err := json.NewDecoder(commentsResponse.Body).Decode(&comments); err != nil || len(comments.Comments) != 0 {
 		t.Fatal("comments crossed document boundary", err)
 	}
-	response = request("POST", path, `{"startLine":1,"endLine":1,"body":"x"} {}`)
-	if response.StatusCode != 400 {
+	invalidBodyResponse := request("POST", path, `{"startLine":1,"endLine":1,"body":"x"} {}`)
+	defer func() { _ = invalidBodyResponse.Body.Close() }()
+	if invalidBodyResponse.StatusCode != 400 {
 		t.Fatal("accepted trailing JSON")
 	}
-	response = request("DELETE", fmt.Sprintf("%s/1", path), "")
-	if response.StatusCode != 204 {
-		t.Fatalf("delete status: %d", response.StatusCode)
+	deleteResponse := request("DELETE", fmt.Sprintf("%s/1", path), "")
+	defer func() { _ = deleteResponse.Body.Close() }()
+	if deleteResponse.StatusCode != 204 {
+		t.Fatalf("delete status: %d", deleteResponse.StatusCode)
 	}
-	body, err := io.ReadAll(response.Body)
+	body, err := io.ReadAll(deleteResponse.Body)
 	if err != nil || len(body) != 0 {
 		t.Fatal("delete returned a response body", err)
 	}
+}
+
+// testGet binds HTTP requests to the lifetime of the calling test.
+func testGet(t *testing.T, client *http.Client, url string) (*http.Response, error) {
+	t.Helper()
+	request, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(request)
 }

@@ -32,6 +32,10 @@ type migration struct {
 func Now() string { return time.Now().UTC().Format("2006-01-02T15:04:05.000Z") }
 
 func Open(path string) (*sql.DB, error) {
+	return OpenContext(context.Background(), path)
+}
+
+func OpenContext(ctx context.Context, path string) (*sql.DB, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return nil, err
 	}
@@ -51,7 +55,7 @@ func Open(path string) (*sql.DB, error) {
 		return nil, err
 	}
 	database.SetMaxOpenConns(1)
-	err = Migrate(database)
+	err = migrateContext(ctx, database)
 	if err != nil {
 		_ = database.Close()
 		return nil, err
@@ -60,7 +64,11 @@ func Open(path string) (*sql.DB, error) {
 }
 
 func Migrate(database *sql.DB) error {
-	_, err := database.Exec(`CREATE TABLE IF NOT EXISTS schema_migration (
+	return migrateContext(context.Background(), database)
+}
+
+func migrateContext(ctx context.Context, database *sql.DB) error {
+	_, err := database.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_migration (
 		version TEXT PRIMARY KEY, name TEXT NOT NULL, checksum TEXT NOT NULL,
 		state TEXT NOT NULL CHECK(state IN ('running','applied','failed')),
 		started_at TEXT NOT NULL CHECK(started_at GLOB '????-??-??T??:??:??.???Z'),
@@ -81,10 +89,11 @@ func Migrate(database *sql.DB) error {
 	for _, m := range migrations {
 		known[m.Version] = m
 	}
-	rows, err := database.Query("SELECT version, checksum, state FROM schema_migration")
+	rows, err := database.QueryContext(ctx, "SELECT version, checksum, state FROM schema_migration")
 	if err != nil {
 		return err
 	}
+	defer func() { _ = rows.Close() }()
 	applied := map[string]bool{}
 	for rows.Next() {
 		var version, checksum, state string
@@ -116,21 +125,20 @@ func Migrate(database *sql.DB) error {
 	}
 	// Commit pending migrations together to avoid a disk sync per version.
 	// A failed upgrade rolls back both schema changes and migration records.
-	return applyMigrations(database, pending)
+	return applyMigrations(ctx, database, pending)
 }
 
 func applyMigration(database *sql.DB, m migration) error {
-	return applyMigrations(database, []migration{m})
+	return applyMigrations(context.Background(), database, []migration{m})
 }
 
 // Rebuilds must disable foreign keys before BEGIN on the same pinned connection.
 // Otherwise dropping a parent table can cascade into its children.
-func applyMigrations(database *sql.DB, migrations []migration) (result error) {
+func applyMigrations(ctx context.Context, database *sql.DB, migrations []migration) (result error) {
 	rebuild := false
 	for _, m := range migrations {
 		rebuild = rebuild || m.Rebuild
 	}
-	ctx := context.Background()
 	conn, err := database.Conn(ctx)
 	if err != nil {
 		return err
@@ -145,7 +153,7 @@ func applyMigrations(database *sql.DB, migrations []migration) (result error) {
 			return err
 		}
 		defer func() {
-			_, err := conn.ExecContext(ctx, fmt.Sprintf("PRAGMA foreign_keys=%d", enabled))
+			_, err := conn.ExecContext(context.WithoutCancel(ctx), fmt.Sprintf("PRAGMA foreign_keys=%d", enabled))
 			result = errors.Join(result, err)
 		}()
 	}
@@ -156,19 +164,20 @@ func applyMigrations(database *sql.DB, migrations []migration) (result error) {
 	defer func() { _ = tx.Rollback() }()
 	for _, m := range migrations {
 		for _, statement := range m.Statements {
-			if _, err := tx.Exec(statement); err != nil {
+			if _, err := tx.ExecContext(ctx, statement); err != nil {
 				return fmt.Errorf("migration %s: %w", m.Version, err)
 			}
 		}
-		if _, err := tx.Exec("INSERT INTO schema_migration VALUES (?, ?, ?, 'applied', ?, ?, NULL)", m.Version, m.Name, m.Checksum, Now(), Now()); err != nil {
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migration VALUES (?, ?, ?, 'applied', ?, ?, NULL)", m.Version, m.Name, m.Checksum, Now(), Now()); err != nil {
 			return fmt.Errorf("migration %s: %w", m.Version, err)
 		}
 	}
 	if rebuild {
-		rows, err := tx.Query("PRAGMA foreign_key_check")
+		rows, err := tx.QueryContext(ctx, "PRAGMA foreign_key_check")
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		invalid := rows.Next()
 		err = rows.Err()
 		_ = rows.Close()

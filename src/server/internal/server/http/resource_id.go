@@ -19,7 +19,7 @@ func parseRESTResourceID(value string) (int64, error) {
 	value = u.TrimSpace(value)
 	if restRadix.MatchString(value) {
 		n, err := strconv.ParseUint(value, 0, 64)
-		if err == nil && n < 1<<63 {
+		if err == nil && n <= math.MaxInt64 {
 			return int64(n), nil
 		}
 		return 0, fmt.Errorf("invalid resource ID")

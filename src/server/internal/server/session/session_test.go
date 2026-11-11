@@ -56,7 +56,7 @@ func TestDirectoryDiscoveryHonorsLimitsAndRetainsDeletedSnapshots(t *testing.T) 
 	deleted := false
 	for _, d := range s.Documents {
 		if d.RelativePath == "a.md" {
-			snapshot, _, err := repo.Snapshot(d.ID)
+			snapshot, _, err := repo.Snapshot(t.Context(), d.ID)
 			if err != nil || snapshot == nil || *snapshot != "# a.md" || !d.Deleted {
 				t.Fatalf("deleted snapshot %+v %v", d, err)
 			}

@@ -180,35 +180,38 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 	_, server, _ := setup(t)
 	request := func(method, path, body string) *http.Response {
 		t.Helper()
-		req, _ := http.NewRequest(method, server.URL+path, strings.NewReader(body))
+		req, _ := http.NewRequestWithContext(t.Context(), method, server.URL+path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Connect-Protocol-Version", "1")
 		res, err := server.Client().Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() { _ = res.Body.Close() })
 		return res
 	}
-	res := request("GET", "/documents/1", "")
-	b, _ := io.ReadAll(res.Body)
-	if res.StatusCode != 200 || !bytes.Contains(b, []byte("sadoku-client-root")) {
+	spaResponse := request("GET", "/documents/1", "")
+	defer func() { _ = spaResponse.Body.Close() }()
+	b, _ := io.ReadAll(spaResponse.Body)
+	if spaResponse.StatusCode != 200 || !bytes.Contains(b, []byte("sadoku-client-root")) {
 		t.Fatal("SPA unavailable")
 	}
-	res = request("GET", "/assets/.vite/manifest.json", "")
+	manifestResponse := request("GET", "/assets/.vite/manifest.json", "")
+	defer func() { _ = manifestResponse.Body.Close() }()
 	var manifest map[string]struct{ File string }
-	if err := json.NewDecoder(res.Body).Decode(&manifest); err != nil {
+	if err := json.NewDecoder(manifestResponse.Body).Decode(&manifest); err != nil {
 		t.Fatal(err)
 	}
-	res = request("GET", "/assets/"+manifest["main.tsx"].File, "")
-	if res.StatusCode != 200 || !strings.Contains(res.Header.Get("Cache-Control"), "immutable") {
+	assetResponse := request("GET", "/assets/"+manifest["main.tsx"].File, "")
+	defer func() { _ = assetResponse.Body.Close() }()
+	if assetResponse.StatusCode != 200 || !strings.Contains(assetResponse.Header.Get("Cache-Control"), "immutable") {
 		t.Fatal("fingerprinted asset unavailable")
 	}
-	res = request("GET", "/assets/%2e%2e%2fgo.mod", "")
-	if res.StatusCode != 404 {
-		t.Fatalf("traversal %d", res.StatusCode)
+	traversalResponse := request("GET", "/assets/%2e%2e%2fgo.mod", "")
+	defer func() { _ = traversalResponse.Body.Close() }()
+	if traversalResponse.StatusCode != 404 {
+		t.Fatalf("traversal %d", traversalResponse.StatusCode)
 	}
-	req, _ := http.NewRequest("GET", server.URL+"/", nil)
+	req, _ := http.NewRequestWithContext(t.Context(), "GET", server.URL+"/", nil)
 	req.Header.Set("X-Forwarded-Prefix", "/x\"bad")
 	res, err := server.Client().Do(req)
 	if err != nil {
@@ -218,9 +221,10 @@ func TestHTTPAssetsAndValidation(t *testing.T) {
 	if res.StatusCode != 400 {
 		t.Fatal("unsafe prefix accepted")
 	}
-	res = request("POST", "/sadoku.preview.v1.PreviewService/CreateComment", `{"documentId":"1","startLine":0,"endLine":0,"body":"bad"}`)
-	if res.StatusCode != 400 {
-		t.Fatalf("invalid range %d", res.StatusCode)
+	invalidCommentResponse := request("POST", "/sadoku.preview.v1.PreviewService/CreateComment", `{"documentId":"1","startLine":0,"endLine":0,"body":"bad"}`)
+	defer func() { _ = invalidCommentResponse.Body.Close() }()
+	if invalidCommentResponse.StatusCode != 400 {
+		t.Fatalf("invalid range %d", invalidCommentResponse.StatusCode)
 	}
 }
 
@@ -232,13 +236,13 @@ func TestNoSyncDisablesEvents(t *testing.T) {
 	}
 	for _, path := range []string{"/__sadoku/events", "/__sadoku/documents/1/events"} {
 		response := httptest.NewRecorder()
-		handler.ServeHTTP(response, httptest.NewRequest("GET", path, nil))
+		handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), "GET", path, nil))
 		if response.Code != 404 {
 			t.Fatalf("%s: %d", path, response.Code)
 		}
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest("GET", "/", nil))
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), "GET", "/", nil))
 	if !strings.Contains(response.Body.String(), `data-sync-enabled="false"`) {
 		t.Fatal("missing no-sync bootstrap")
 	}

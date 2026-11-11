@@ -19,7 +19,7 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			database, path := legacyDatabase(t)
-			if _, err := database.Exec("UPDATE comment SET " + test.assignment); err != nil {
+			if _, err := database.ExecContext(t.Context(), "UPDATE comment SET "+test.assignment); err != nil { // #nosec G202 -- Assignments come from fixed test cases, never external input.
 				t.Fatal(err)
 			}
 			beforeSchema := schema(t, database)
@@ -54,7 +54,7 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = raw.Exec("UPDATE comment SET resolved=0,resolved_at=NULL,resolved_by_type=NULL")
+			_, err = raw.ExecContext(t.Context(), "UPDATE comment SET resolved=0,resolved_at=NULL,resolved_by_type=NULL")
 			if err != nil {
 				_ = raw.Close()
 				t.Fatal(err)
@@ -94,7 +94,7 @@ func migrationData(t *testing.T, database *sql.DB) map[string][][]any {
 	result := make(map[string][][]any)
 	for _, table := range []string{"comment_document", "comment", "comment_reply", "schema_migration"} {
 		func() {
-			rows, err := database.Query("SELECT * FROM " + table + " ORDER BY 1")
+			rows, err := database.QueryContext(t.Context(), "SELECT * FROM "+table+" ORDER BY 1") // #nosec G202 -- Table names come from the fixed internal allowlist above.
 			if err != nil {
 				t.Fatal(err)
 			}

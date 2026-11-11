@@ -75,7 +75,7 @@ func (s *Session) prepareDirectory(ctx context.Context, settings config.Settings
 		documents[i].Title = filepath.Base(documents[i].FilePath)
 		documents[i].Tags = []u.Tag{}
 	}
-	stored, err := s.Repository.DocumentsContext(ctx)
+	stored, err := s.Repository.Documents(ctx)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (s *Session) InitializeSnapshots(ctx context.Context) SnapshotProgress {
 		}
 		markdown, err := read(ctx, sources[d.ID])
 		if err == nil {
-			err = s.Repository.InitializeSnapshotContext(ctx, d.ID, markdown)
+			err = s.Repository.InitializeSnapshot(ctx, d.ID, markdown)
 		}
 		if err != nil {
 			progress.Failed++

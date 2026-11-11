@@ -39,7 +39,7 @@ func TestGitHubFixtureProcess(t *testing.T) {
 			os.Exit(2)
 		}
 	}
-	log, err := os.OpenFile(filepath.Join(directory, "calls.jsonl"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	log, err := os.OpenFile(filepath.Join(directory, "calls.jsonl"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600) // #nosec G703 -- The path comes from the test harness and is confined to its temporary fixtures.
 	if err != nil {
 		os.Exit(2)
 	}
@@ -50,7 +50,7 @@ func TestGitHubFixtureProcess(t *testing.T) {
 	if err := log.Close(); err != nil {
 		os.Exit(2)
 	}
-	b, err := os.ReadFile(filepath.Join(directory, "responses.json"))
+	b, err := os.ReadFile(filepath.Join(directory, "responses.json")) // #nosec G703 -- The path comes from the test harness and is confined to its temporary fixtures.
 	var responses map[string]json.RawMessage
 	if err != nil || json.Unmarshal(b, &responses) != nil {
 		os.Exit(2)
@@ -204,7 +204,7 @@ func newGitHubFixture(t *testing.T) *githubFixture {
 	}
 	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'" }
 	launcher := "#!/bin/sh\nGORACE=atexit_sleep_ms=0 SADOKU_GH_FIXTURE_PROCESS=1 exec " + quote(executable) + " -test.run=^TestGitHubFixtureProcess$ -- \"$@\"\n"
-	if err := os.WriteFile(filepath.Join(root, "gh"), []byte(launcher), 0700); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "gh"), []byte(launcher), 0700); err != nil { // #nosec G306 -- This owner-only executable is a test CLI fixture.
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
@@ -244,7 +244,7 @@ func newGitHubFixture(t *testing.T) *githubFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = f.s.saveComments(int64(f.in.DocumentID), comments); err != nil {
+	if err = f.s.saveComments(t.Context(), int64(f.in.DocumentID), comments); err != nil {
 		t.Fatal(err)
 	}
 	return f
@@ -438,12 +438,12 @@ func TestGitHubExportDiffEligibilityAndMutationFailures(t *testing.T) {
 				f.responses[f.endpoint+"/files?per_page=100&page=2"] = map[string]any{"__stderr": "unnecessary request"}
 			case "split hunks", "multiline hunk":
 				f.in.StartLine = 1
-				comments, err := f.s.Repository.ReadComments(f.s.CommentDocumentID(int64(f.in.DocumentID)))
+				comments, err := f.s.Repository.ReadComments(t.Context(), f.s.CommentDocumentID(int64(f.in.DocumentID)))
 				if err != nil {
 					t.Fatal(err)
 				}
 				comments.Comments[0].StartLine = 1
-				if err := f.s.Repository.SaveComments(f.s.CommentDocumentID(int64(f.in.DocumentID)), comments); err != nil {
+				if err := f.s.Repository.SaveComments(t.Context(), f.s.CommentDocumentID(int64(f.in.DocumentID)), comments); err != nil {
 					t.Fatal(err)
 				}
 				if scenario == "split hunks" {
@@ -486,7 +486,7 @@ func TestGitHubExportRebasesBeforeRecheckingTheComment(t *testing.T) {
 	if _, err := f.s.Invoke(context.Background(), "ExportCommentToGitHub", f.in); err != nil {
 		t.Fatal("rebased comment was rejected:", err)
 	}
-	comments, err := f.s.Repository.ReadComments(f.s.CommentDocumentID(int64(f.in.DocumentID)))
+	comments, err := f.s.Repository.ReadComments(t.Context(), f.s.CommentDocumentID(int64(f.in.DocumentID)))
 	if err != nil || comments.Comments[0].StartLine != 3 || *comments.SourceSnapshot != f.in.DisplayedMarkdown {
 		t.Fatalf("rebase was not saved: %+v %v", comments, err)
 	}

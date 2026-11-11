@@ -69,7 +69,7 @@ func readCLI(ctx context.Context, s *session.Session, id int64) (string, error) 
 func executeComments(ctx context.Context, s *session.Session, o Options, out io.Writer) error {
 	repo := s.Repository
 	id := s.Documents[0].ID
-	comments, err := repo.ReadComments(id)
+	comments, err := repo.ReadComments(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 		}
 		comments = u.ResolveComments(comments, markdown)
 		if changed && len(comments.Comments) > 0 {
-			if err = repo.SaveComments(id, comments); err != nil {
+			if err = repo.SaveComments(ctx, id, comments); err != nil {
 				return err
 			}
 		}
@@ -142,7 +142,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 				}
 			}
 		}
-		if err = repo.SaveComments(id, comments); err != nil {
+		if err = repo.SaveComments(ctx, id, comments); err != nil {
 			return err
 		}
 		list := []object{}
@@ -198,7 +198,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 	if err != nil {
 		return commentError(err, in)
 	}
-	if err = repo.SaveComments(id, updated); err != nil {
+	if err = repo.SaveComments(ctx, id, updated); err != nil {
 		return err
 	}
 	if op == "DeleteComment" {
