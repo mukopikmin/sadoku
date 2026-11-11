@@ -44,6 +44,7 @@ const ContentsNode = ({
       </TreeView.Branch>
     ) : (
       <TreeView.Item>
+        <Box aria-hidden="true" flexShrink="0" width="var(--tree-icon-size)" />
         <TreeView.ItemText>{node.text}</TreeView.ItemText>
       </TreeView.Item>
     )}
