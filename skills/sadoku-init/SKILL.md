@@ -4,16 +4,19 @@ description:
   Start a document interactively with Sadoku. Use when the user wants to work
   out what to write through conversation, choose a filename and title, create an
   empty Markdown document, and configure instructions and optional memories
-  through the sadoku CLI before drafting. Supports any document type.
+  through the sadoku CLI before drafting. Supports any document type. For AI
+  review comments, use sadoku-review; for acting on human feedback, use
+  sadoku-address-comments.
 ---
 
 # Sadoku Init
 
 Help the user establish what to write, persist the writing guidance in Sadoku,
-and then write the document. Communicate in the user's language. Use the
-`sadoku` CLI for registration, tags, instructions, and memories; never read or
-modify Sadoku storage directly or replace these settings with sidecar Markdown
-files.
+and then write the document. Independent AI review belongs to `sadoku-review`;
+acting on human comments belongs to `sadoku-address-comments`. Communicate in
+the user's language. Use the `sadoku` CLI for registration, tags, instructions,
+and memories; never read or modify Sadoku storage directly or replace these
+settings with sidecar Markdown files.
 
 ## 1. Establish the filename and title
 
@@ -110,7 +113,19 @@ Retrieve global instructions once per task, and retrieve document settings for
 each target, including on resumption. Apply both instruction scopes; document
 instructions override conflicting global instructions. Current user requests
 and applicable project instructions take precedence over Sadoku instructions.
-Treat memories as potentially stale background, not binding instructions.
+Treat memories as potentially stale background, not binding instructions;
+verified facts and applicable instructions take precedence over memories.
+Verify relevant memories against current evidence, especially when they
+conflict with the document or the proposed writing direction. An empty
+instruction text or memory list is valid; a failed retrieval is not equivalent
+to an empty result. Do not skip retrieval even for a new or empty document.
+
+Use both instruction scopes and relevant, verified memories to establish the
+writing direction before asking further questions. Carry forward confirmed
+purpose, audience, scope, terminology, constraints, and decision rationale;
+do not restart questions already answered by that context. If current evidence
+conflicts with a saved premise, explain the conflict and clarify only what is
+needed rather than silently applying stale context.
 
 Help clarify only what materially affects the writing, such as purpose,
 audience, scope, key points, structure, language, tone, length, constraints,

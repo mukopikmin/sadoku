@@ -1,195 +1,124 @@
 ---
 name: sadoku-review
 description:
-  Create and register Markdown files with the sadoku CLI, or address Sadoku
-  review feedback and maintain reusable document memories. Use when asked to
-  create a Markdown document with Sadoku or review, address, incorporate, or fix
-  feedback attached to a Markdown file with Sadoku.
+  Review an existing Markdown document and post AI-authored findings as Sadoku
+  comments using global and document instructions and relevant document memories.
+  Use when asked for an AI review or to identify problems and leave
+  comments without editing the document. For acting on human feedback, use
+  sadoku-address-comments; for new documents, use sadoku-init.
 ---
 
 # Sadoku Review
 
-Use the `sadoku` CLI for instructions, memories, and review comments; never read
-or modify its storage files directly. Communicate in the user's language.
+Read the document, identify concrete issues, and post review comments through
+Sadoku. Communicate in the user's language. Use the `sadoku` CLI for document
+registration, instructions, memories, and comments; never read or modify its
+storage files directly. Leave the document body unchanged during review.
 
-## Creating and registering documents
+## 1. Load the document and guidance
 
-Create and register a requested new Markdown file together:
-
-```sh
-sadoku document add <markdown-path> --create --title "<document-title>"
-```
-
-The parent directory must exist. The file starts empty; `--title` sets its
-display title. An extensionless filename defaults to `.md`; otherwise use a
-configured Markdown extension. `--create` supports local files only.
-
-To register an existing file or URL, omit `--create`:
+Read applicable project instructions and establish the existing target from the
+user's request. Use `sadoku document list` to find an already registered target
+and its canonical `filePath` and `id`. If needed, register an existing file or URL:
 
 ```sh
 sadoku document add <markdown-path-or-url>
 ```
 
-Both forms return JSON with the document `id` and canonical `filePath`; use
-these for subsequent commands. If the file already exists, `--create` fails
-without overwriting or registering it: read it and edit only within the user's
-request. `add` rejects already registered documents; use `document list` to find
-the existing ID and reuse it. If creation succeeds but registration reports an
-error, check `document list` first: registration may already have completed.
-Register the saved file without `--create` only if it is not listed.
-
-After registration, follow **Start every document task**, write the requested
-content with normal editing tools, and inspect the diff and relevant
-documentation checks. Complete **Maintain memories** even for creation-only
-requests. Report the created path, document ID, and memory outcome. If review
-work was also requested, continue with **Review feedback**.
-
-## Updating document attributes
-
-Use the registered document ID to change its display title or tag collection:
-
-```sh
-sadoku document inspect <document-id>
-sadoku tag list
-sadoku document update <document-id> --title "<document-title>" --tags <tag-id,tag-id>
-```
-
-Omitted attributes remain unchanged. `--tags` replaces the entire collection
-with existing tag IDs (at most 20 distinct tags); inspect current associations
-before constructing the requested final collection. Use `--title ""` to clear
-the display title or `--tags ""` to remove all associations. Title and tag
-changes are saved together atomically, and the command returns the updated
-document with its tags. `add` accepts the same options for initial state only.
-
-Use `tag add --name "<tag-name>"` to create a missing tag and use its returned ID.
-`tag delete <tag-id>` deletes the tag itself from all documents. To change only
-a document's associations, use `document update --tags`; the former
-`document tag add/delete` commands are no longer supported. Attribute updates
-change Sadoku metadata; edit Markdown content with normal editing tools.
-
-## Start every document task
-
-Before drafting or editing, read applicable project instructions and retrieve
-Sadoku instructions and memories for each target:
+Do not use `--create`; new-document preparation belongs to `sadoku-init`.
+Retrieve global instructions once per task and document instructions, memories,
+and comments for every target, including on resumption:
 
 ```sh
 sadoku instruction get --global
-sadoku instruction get --source <markdown-path>
-sadoku memory list --source <markdown-path>
+sadoku instruction get --source <markdown-path-or-url>
+sadoku memory list --source <markdown-path-or-url>
+sadoku comment list --source <markdown-path-or-url>
 ```
 
-Retrieve global instructions once per task and document instructions and
-memories for every target, including newly registered documents and resumed
-reviews. Do not skip memory retrieval because the user did not mention memory,
-comments are absent, or the task seems small. Report retrieval failures; do not
-proceed without both instruction scopes.
+Apply both instruction scopes; document instructions override conflicting global
+instructions. Current user requests and applicable project instructions take
+precedence over Sadoku instructions. Treat memories as potentially stale
+background, not binding instructions; verified facts and applicable instructions
+take precedence over memories. Verify relevant memories against current evidence,
+especially when they conflict with the document or a proposed finding. Do not
+skip retrieval because the user did not mention instructions or memories, or
+because the review seems small. An empty instruction text or memory list is
+valid; a failed retrieval is not equivalent to an empty result.
 
-Apply both instruction scopes. Document instructions override conflicting global
-instructions; current user requests and applicable project instructions take
-precedence over both. Memories are potentially stale background, not
-instructions; verified facts and all applicable instructions take precedence
-over memories. Use relevant memories when interpreting feedback and making
-edits; verify any memory that conflicts with current evidence.
+Read the complete current document and relevant supplied sources. Use the same
+source content and line numbering that Sadoku reviews. For a remote target,
+retrieve its current Markdown using available source tools; if the exact content
+cannot be obtained, report the blocker rather than guessing line numbers.
 
-## Review feedback
+## 2. Identify findings
 
-1. Retrieve comments, then read the target document and applicable project
-   instructions:
+Before identifying findings, derive the review criteria from the user's request
+and both instruction scopes. Carry forward the established purpose, audience,
+scope, terminology, constraints, and explicit review priorities. Use relevant,
+verified memories to understand background and the reasons for earlier decisions.
+Do not require a fixed document template or apply generic preferences that
+conflict with the established direction.
 
-   ```sh
-   sadoku comment list --source <markdown-path>
-   ```
+For example, if instructions limit a migration guide to existing installations
+and a verified memory explains that fresh installations have a separate guide,
+do not flag missing fresh-install steps as an omission. If current evidence
+undermines that premise, explain the conflict and ask a focused question rather
+than silently treating the memory as authoritative.
 
-   The JSON includes the canonical path and position-adjusted comments. Ignore
-   entries with `resolved: true`. Interpret `body` using `line`, `sourceText`,
-   and nearby content. For `stale: true`, search for `sourceText` and inspect
-   nearby headings before deciding the target is unavailable.
+Review against these criteria. Look for factual errors,
+contradictions, missing essential explanations, unclear requirements, and other
+issues that materially affect the intended reader. Verify claims against
+available evidence; do not invent facts or manufacture findings to meet a quota.
+Before posting each finding, check that it accounts for applicable instructions
+and relevant memories. Avoid reopening a deliberate, still-valid decision as a
+new issue without evidence. When a finding depends on saved guidance or context,
+include enough of that rationale to make the comment understandable on its own.
 
-2. Classify unresolved comments:
-   - **Actionable**: specific enough to implement.
-   - **Already satisfied**: the document already meets the request.
-   - **Needs clarification**: a concrete question can unblock the work.
-   - **Ambiguous**: neither the intent nor a useful question can be established.
-   - **Invalid**: conflicts with verified facts or requirements.
-3. Ask a concise question for comments needing clarification using the reply
-   command below. Do not invent missing facts or act speculatively on vague
-   feedback. Leave ambiguous or invalid comments open and explain blockers in
-   the final report; do not post mere acknowledgements.
-4. Apply actionable comments as one coherent edit, combining overlapping
-   requests. Preserve the document's language, tone, structure, terminology,
-   links, and formatting unless the feedback requests otherwise. Inspect the
-   diff, for example with `git diff -- <markdown-path>`, and run relevant
-   documentation checks.
-5. Reply to each addressed or already satisfied comment:
+For each finding, identify the smallest useful current line range, describe the
+specific issue and its impact, and suggest a concrete improvement or ask a
+focused question. Keep independent findings separate and combine overlapping
+ones. Preserve the document's language in comments unless requested otherwise.
 
-   ```sh
-   sadoku comment reply add --source <markdown-path> \
-     --comment <comment-id> --body "<change, reason, or question>" --as-bot --request-review
-   ```
+Read existing threads before posting. Avoid duplicating an unresolved finding
+or repeating a resolved finding unless current evidence shows it still applies;
+explain that evidence when raising it again. Human requests to change the
+text belong to `sadoku-address-comments` and do not authorize edits in this
+review-only task.
 
-   Describe what changed and, when useful, where. If one edit addresses multiple
-   comments, explain how it satisfies each. For already satisfied comments, make
-   no edit and state only why the document meets the request. Use the same flags
-   for clarification questions: `--as-bot` identifies the agent, and
-   `--request-review` requests the user's confirmation or decision.
+## 3. Post AI comments
 
-6. Complete **Maintain memories**, then list comments again. Report the changed
-   document, replies posted, comment IDs awaiting user confirmation, remaining
-   blockers, and memory outcome.
-
-Leave every comment unresolved for user confirmation. Do not run
-`sadoku comment resolve`, `sadoku comment delete`, or
-`sadoku comment reply delete`.
-
-## Maintain memories
-
-Memory maintenance is part of every creation and review task. Do it
-autonomously; do not wait for the user to request it. When a clarification,
-investigation, or edit establishes reusable context, save it during the task.
-Before the final report, check the task's decisions and findings against the
-retrieved memories for each document, even if no document changes or unresolved
-comments remain.
-
-Save context that would prevent a future agent from repeating a question,
-investigation, or mistaken edit, especially:
-
-- Confirmed audience, scope, or terminology whose meaning is not evident in the
-  document.
-- The reason for choosing or rejecting an approach, including a constraint that
-  future edits must account for.
-- Verified external dependencies or background facts needed to interpret the
-  document or recurring feedback.
-
-For example, save "The migration guide targets existing v1 installations;
-fresh-install steps were excluded because they use a separate onboarding guide."
-when that scope and rationale have been confirmed. Include enough context and
-the reason to make a memory useful on its own; do not copy the comment thread.
-
-Compare candidates with existing entries, then use the appropriate command:
+Post each actionable finding at its verified line range:
 
 ```sh
-sadoku memory add --source <markdown-path> --content "<new reusable context and reason>"
-sadoku memory update <memory-id> --source <markdown-path> --content "<corrected context>"
-sadoku memory delete <memory-id> --source <markdown-path>
+sadoku comment add --source <markdown-path-or-url> \
+  --start-line <start-line> --end-line <end-line> \
+  --body "<issue, impact, and suggested improvement or question>" --as-bot
 ```
 
-Add missing context, update superseded entries instead of duplicating them, and
-delete entries verified to be obsolete. Use IDs from `memory list` or successful
-mutation responses. After mutations, list memories again to verify the result.
+`--end-line` can be omitted for a single-line finding. Always pass `--as-bot`.
+`--request-review` is supported on replies, not on new comments. Use IDs returned
+by the CLI; do not edit, resolve, or delete existing comments or replies.
 
-Do not save guesses, temporary progress, one-off requests, readily discoverable
-document content, personal data, credentials, tokens, or URL queries and
-fragments. Do not turn an unconfirmed proposal or an unanswered question into a
-fact. If nothing qualifies, do not manufacture an entry: state briefly in the
-final report that memories were checked and no changes were needed. Otherwise
-report what was added, updated, or deleted.
+List comments again to verify that each new finding was saved with bot
+authorship at the intended location. On resumption or a partial failure, check
+what was saved before retrying so comments are not duplicated. Leave comments
+open for human consideration. If no concrete issue is found, post nothing.
+
+Report the reviewed target, the main review criteria and relevant background
+applied, findings and posted comment IDs, and any limits on what was verified.
+Summarize context only when relevant; do not copy the full instructions or memory
+list into the report. Do not claim the review is complete if a target,
+instruction scope, or document memories could not be read.
 
 ## Failure handling
 
 - If `sadoku` is unavailable, report that it must be installed or exposed on
-  `PATH`; do not fall back to direct storage access.
-- If no unresolved comments exist, make no document edits unless independently
-  requested; still complete the memory check.
-- If a reply fails, leave the comment open and report the command error.
-- If a memory command fails, report the error and any context left unsaved; do
-  not claim it was persisted.
+  `PATH`; do not substitute direct storage access or sidecar files.
+- Resolve registration, instruction, memory, or comment retrieval failures before
+  reviewing or posting findings against unknown guidance, context, or threads.
+  Preserve existing guidance and memories.
+- If the document changes before comments are posted, re-read the content and
+  verify the findings and line ranges first.
+- If posting or verification fails, report which comments were confirmed saved
+  and which remain incomplete. Do not claim an unsuccessful post was saved.
