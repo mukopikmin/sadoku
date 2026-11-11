@@ -1685,7 +1685,7 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
-  it("shows active and stale comments in the unresolved comments view", async () => {
+  it("shows all comment states by default and filters resolved comments", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -1800,9 +1800,21 @@ describe("App", () => {
     expect(await screen.findByText("Active comment.")).not.toBeNull();
     expect(screen.getByText("Stale comment.")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
-    const unresolvedTab = screen.getByRole("tab", { name: "Unresolved" });
-    expect(within(unresolvedTab).getByText("2")).not.toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
     expect(screen.getByText("Resolved comment.")).not.toBeNull();
+    const filters = within(
+      screen.getByRole("group", { name: "Comment filters" }),
+    );
+    for (const name of ["Active", "Stale", "Resolved"]) {
+      expect(
+        filters.getByRole("button", { name }).getAttribute("aria-pressed"),
+      ).toBe("false");
+      expect(
+        within(filters.getByRole("button", { name })).getByText("1"),
+      ).not.toBeNull();
+    }
+    fireEvent.click(filters.getByRole("button", { name: "Resolved" }));
+    expect(screen.getByText("Resolved comment.")).not.toBeNull();
+    expect(screen.queryByText("Active comment.")).toBeNull();
+    expect(screen.queryByText("Stale comment.")).toBeNull();
   });
 });

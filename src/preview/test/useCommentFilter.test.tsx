@@ -6,7 +6,7 @@ import { act, cleanup, renderHook } from "./domTestUtils";
 afterEach(cleanup);
 
 describe("useCommentFilter", () => {
-  it("filters unresolved comments and derives counts from updated data", () => {
+  it("filters all comment states and derives counts from updated data", () => {
     const active = createComment();
     const stale = createComment({ id: 2, state: "stale" });
     const resolved = createComment({ id: 3, state: "resolved" });
@@ -15,9 +15,8 @@ describe("useCommentFilter", () => {
       { initialProps: { comments: [active, stale, resolved] } },
     );
 
-    expect(result.current.filter).toBe("all");
-    expect(result.current.visibleComments).toEqual([active, stale]);
-    expect(result.current.resolvedComments).toEqual([resolved]);
+    expect(result.current.filter).toBeNull();
+    expect(result.current.visibleComments).toEqual([active, stale, resolved]);
     act(() => result.current.setFilter("active"));
     expect(result.current.visibleComments).toEqual([active]);
     act(() => result.current.setFilter("stale"));
@@ -27,20 +26,23 @@ describe("useCommentFilter", () => {
     expect(result.current.filter).toBe("stale");
     expect(result.current.visibleComments).toEqual([]);
     expect(result.current.emptyText).toBe("No stale unresolved comments.");
-    expect(result.current.unresolvedCount).toBe(1);
-    expect(result.current.filters.all.comments).toHaveLength(1);
+    expect(result.current.totalCount).toBe(3);
     expect(result.current.filters.active.comments).toHaveLength(1);
     expect(result.current.filters.stale.comments).toHaveLength(0);
-    expect(result.current.resolvedComments).toHaveLength(2);
+    expect(result.current.filters.resolved.comments).toHaveLength(2);
 
+    act(() => result.current.setFilter("resolved"));
+    expect(result.current.visibleComments).toHaveLength(2);
     rerender({ comments: [createComment({ state: "stale" })] });
+    expect(result.current.emptyText).toBe("No resolved comments.");
+    act(() => result.current.setFilter("stale"));
     expect(result.current.visibleComments).toHaveLength(1);
     act(() => result.current.setFilter("active"));
     expect(result.current.visibleComments).toEqual([]);
     expect(result.current.emptyText).toBe("No active unresolved comments.");
     rerender({ comments: [] });
-    act(() => result.current.setFilter("all"));
-    expect(result.current.emptyText).toBe("No unresolved comments.");
-    expect(result.current.unresolvedCount).toBe(0);
+    act(() => result.current.setFilter(null));
+    expect(result.current.emptyText).toBe("No comments.");
+    expect(result.current.totalCount).toBe(0);
   });
 });

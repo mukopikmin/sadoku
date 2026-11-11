@@ -10,26 +10,48 @@ const comments = [
   createComment({ id: 3, state: "resolved" }),
 ];
 
-it("clears selection on category/filter changes and keeps tab counts independent of the active filter", () => {
-  const actions = createCommentActions({
-    onDeleteComment: vi.fn(async () => {}),
-  });
-  const { result } = renderHook(() => useCommentList(comments, actions));
-  expect(result.current.sections.unresolved.count).toBe(2);
+it("clears selection when filters change and toggles the current filter off", () => {
+  const { result } = renderHook(() =>
+    useCommentList(comments, createCommentActions()),
+  );
+  expect(result.current.commentFilter.visibleComments).toEqual(comments);
   act(() => result.current.bulk.toggle(1));
   act(() => result.current.selectFilter("stale"));
   expect(result.current.bulk.selectedIds).toEqual([]);
-  expect(result.current.selectedSection.comments.map(({ id }) => id)).toEqual([
-    2,
-  ]);
-  expect(result.current.sections.unresolved.count).toBe(2);
-  act(() => result.current.selectCategory("resolved"));
-  expect(result.current.selectedSection.comments.map(({ id }) => id)).toEqual([
-    3,
-  ]);
+  expect(
+    result.current.commentFilter.visibleComments.map(({ id }) => id),
+  ).toEqual([2]);
+  act(() => result.current.selectFilter("resolved"));
+  expect(
+    result.current.commentFilter.visibleComments.map(({ id }) => id),
+  ).toEqual([3]);
+  act(() => result.current.selectFilter("resolved"));
+  expect(result.current.commentFilter.filter).toBeNull();
+  expect(result.current.commentFilter.visibleComments).toEqual(comments);
 });
 
-it("locks category and filter changes during confirmation/deletion, and continues after partial failure", async () => {
+it("only resolves or reopens eligible selected comments in the unfiltered list", async () => {
+  const actions = createCommentActions({
+    onResolveComment: vi.fn(async () => {}),
+    onReopenComment: vi.fn(async () => {}),
+  });
+  const { result } = renderHook(() => useCommentList(comments, actions));
+  act(() => result.current.bulk.toggleAll());
+  expect(result.current.canResolve).toBe(true);
+  expect(result.current.canReopen).toBe(true);
+  await act(async () => {
+    await result.current.bulk.run("resolve");
+  });
+  expect(vi.mocked(actions.onResolveComment).mock.calls).toEqual([[1], [2]]);
+  expect(result.current.bulk.selectedIds).toEqual([3]);
+  await act(async () => {
+    await result.current.bulk.run("reopen");
+  });
+  expect(vi.mocked(actions.onReopenComment).mock.calls).toEqual([[3]]);
+  expect(result.current.bulk.selectedIds).toEqual([]);
+});
+
+it("locks filter changes during confirmation/deletion, and continues after partial failure", async () => {
   const actions = createCommentActions({
     onDeleteComment: vi.fn(async () => {}),
   });
@@ -41,11 +63,10 @@ it("locks category and filter changes during confirmation/deletion, and continue
   act(() => result.current.bulk.toggleAll());
   act(() => result.current.setDeleteOpen(true));
   act(() => {
-    result.current.selectCategory("resolved");
+    result.current.selectFilter("resolved");
     result.current.selectFilter("stale");
   });
-  expect(result.current.selectedCategory).toBe("unresolved");
-  expect(result.current.commentFilter.filter).toBe("all");
+  expect(result.current.commentFilter.filter).toBeNull();
   let completion!: Promise<void>;
   act(() => {
     completion = result.current.confirmDelete();
