@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf16"
 )
 
@@ -59,8 +60,14 @@ func mapLines(before, after string) map[int]lineRange {
 	prevOld, prevNew := -1, -1
 	for _, m := range matches {
 		if prevOld+1 <= m.old-1 && prevNew+1 <= m.new-1 {
+			changed := mapChangedLines(old[prevOld+1:m.old], new[prevNew+1:m.new])
 			for n := prevOld + 1; n < m.old; n++ {
-				result[n+1] = lineRange{prevNew + 2, m.new}
+				r, ok := changed[n-prevOld]
+				if ok {
+					result[n+1] = lineRange{prevNew + 1 + r.start, prevNew + 1 + r.end}
+				} else if changed == nil {
+					result[n+1] = lineRange{prevNew + 2, m.new}
+				}
 			}
 		}
 		if m.old < len(old) {
@@ -70,6 +77,101 @@ func mapLines(before, after string) map[int]lineRange {
 	}
 	return result
 }
+
+// Refine replacement hunks by matching characters, so adjacent edited lines do
+// not all inherit the entire hunk. A line can still span multiple new lines
+// when a paragraph is rewrapped. Unmatched lines use the replacement between
+// their nearest matches; an empty replacement means deletion. Large rewrites
+// retain the coarse mapping to bound refinement's memory and CPU cost.
+func mapChangedLines(before, after []string) map[int]lineRange {
+	if len(before) == 1 && len(after) == 1 {
+		return nil
+	}
+	old, new := []rune(strings.Join(before, "\n")), []rune(strings.Join(after, "\n"))
+	oldLines, newLines := runeLineNumbers(old), runeLineNumbers(new)
+	result := map[int]lineRange{}
+	type region struct{ oldStart, oldEnd, newStart, newEnd int }
+	pending := []region{{0, len(old), 0, len(new)}}
+	work := 1_000_000
+	for len(pending) > 0 {
+		r := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		oldLength, newLength := r.oldEnd-r.oldStart, r.newEnd-r.newStart
+		if oldLength == 0 || newLength == 0 {
+			continue
+		}
+		if oldLength > work/newLength {
+			return nil
+		}
+		work -= oldLength * newLength
+		// Anchor the longest contiguous surviving text first. Isolated shared
+		// letters in a deleted neighbor must not steal the edited line's anchor.
+		lengths := make([]int, newLength+1)
+		bestOld, bestNew, longest := 0, 0, 0
+		for i := r.oldEnd - 1; i >= r.oldStart; i-- {
+			for j := r.newStart; j < r.newEnd; j++ {
+				length := 0
+				if old[i] == new[j] {
+					length = lengths[j-r.newStart+1] + 1
+				}
+				lengths[j-r.newStart] = length
+				if length > longest {
+					bestOld, bestNew, longest = i, j, length
+				}
+			}
+		}
+		if longest == 0 {
+			continue
+		}
+		for n := 0; n < longest; n++ {
+			if unicode.IsSpace(old[bestOld+n]) {
+				continue
+			}
+			oldLine, newLine := oldLines[bestOld+n], newLines[bestNew+n]
+			mapped, ok := result[oldLine]
+			if !ok {
+				mapped = lineRange{newLine, newLine}
+			} else {
+				mapped.start, mapped.end = min(mapped.start, newLine), max(mapped.end, newLine)
+			}
+			result[oldLine] = mapped
+		}
+		pending = append(pending,
+			region{r.oldStart, bestOld, r.newStart, bestNew},
+			region{bestOld + longest, r.oldEnd, bestNew + longest, r.newEnd},
+		)
+	}
+	prevOld, prevNew := 0, 0
+	for line := 1; line <= len(before)+1; line++ {
+		r, ok := result[line]
+		if line == len(before)+1 {
+			r.start, ok = len(after)+1, true
+		}
+		if !ok {
+			continue
+		}
+		if prevNew+1 < r.start {
+			for n := prevOld + 1; n < line; n++ {
+				result[n] = lineRange{prevNew + 1, r.start - 1}
+			}
+		}
+		prevOld, prevNew = line, r.end
+	}
+	return result
+}
+
+func runeLineNumbers(text []rune) []int {
+	lines := make([]int, len(text))
+	line := 1
+	for i, char := range text {
+		lines[i] = line
+		if char == '\n' {
+			line++
+		}
+	}
+	return lines
+}
+
 func ResolveComments(doc Comments, markdown string) Comments {
 	if doc.SourceSnapshot != nil && *doc.SourceSnapshot == markdown {
 		for i := range doc.Comments {
