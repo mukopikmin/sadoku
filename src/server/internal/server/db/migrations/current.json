@@ -24,5 +24,13 @@
       "CREATE INDEX idx_comment_document_id ON comment(document_id)",
       "CREATE INDEX idx_comment_document_start_line ON comment(document_id, start_line)"
     ]
+  },
+  {
+    "version": "0017",
+    "name": "document_table_layout",
+    "checksum": "sha256:a7319bf78501988cf28eb91835dde561c7e69a2d6deabedbe80ba80fbb6a23c9",
+    "statements": [
+      "CREATE TABLE document_table_layout (document_id INTEGER PRIMARY KEY NOT NULL, state TEXT NOT NULL CHECK (json_valid(state)), FOREIGN KEY (document_id) REFERENCES comment_document(id) ON DELETE CASCADE)"
+    ]
   }
 ]

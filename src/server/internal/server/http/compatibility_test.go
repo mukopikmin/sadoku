@@ -76,6 +76,9 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 		switch string(methods.Get(i).Name()) {
 		case "ListGlobalInstructions", "CreateGlobalInstruction", "UpdateGlobalInstruction", "DeleteGlobalInstruction":
 			continue
+		case "GetTableLayouts", "UpdateTableLayout":
+			// New RPCs are covered by TestTableLayoutWorkflowAcrossClientsAndEdits.
+			continue
 		}
 		if !covered[string(methods.Get(i).Name())] {
 			t.Errorf("missing legacy RPC transcript: %s", methods.Get(i).Name())

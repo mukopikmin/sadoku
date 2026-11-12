@@ -217,7 +217,9 @@ const json = (method: string, body: unknown): RequestInit => ({
     method === "UpdateDocumentTitle" ||
     method === "ListDocumentRevisions" ||
     method === "GetDocumentRevision" ||
-    method === "RestoreDocumentRevision"
+    method === "RestoreDocumentRevision" ||
+    method === "GetTableLayouts" ||
+    method === "UpdateTableLayout"
   ) {
     return globalThis.fetch(input, init);
   }

@@ -12,6 +12,11 @@ export const documentRevisionQueryKey = (
 ) => ["document-revision", documentId, revisionId] as const;
 export const commentsQueryKey = (documentId?: number) =>
   ["comments", documentId] as const;
+export const tableLayoutsQueryKey = (
+  documentId: number | undefined,
+  markdown: string,
+  documentPath?: string,
+) => ["table-layouts", documentId, markdown, documentPath] as const;
 export const instructionsQueryKey = (scope?: InstructionScope) =>
   ["instructions", scope] as const;
 export const tagsQueryKey = ["tags"] as const;

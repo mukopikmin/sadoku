@@ -60,6 +60,24 @@ func (s *Service) GetDocument(ctx context.Context, req *connect.Request[pb.GetDo
 	res.Header().Set("Cache-Control", "no-store")
 	return res, nil
 }
+func (s *Service) GetTableLayouts(ctx context.Context, req *connect.Request[pb.GetTableLayoutsRequest]) (*connect.Response[pb.GetTableLayoutsResponse], error) {
+	out := new(pb.GetTableLayoutsResponse)
+	if err := invoke(ctx, s, "GetTableLayouts", req.Msg, out); err != nil {
+		return nil, err
+	}
+	res := connect.NewResponse(out)
+	res.Header().Set("Cache-Control", "no-store")
+	return res, nil
+}
+func (s *Service) UpdateTableLayout(ctx context.Context, req *connect.Request[pb.UpdateTableLayoutRequest]) (*connect.Response[pb.TableLayout], error) {
+	out := new(pb.TableLayout)
+	if err := invoke(ctx, s, "UpdateTableLayout", req.Msg, out); err != nil {
+		return nil, err
+	}
+	res := connect.NewResponse(out)
+	res.Header().Set("Cache-Control", "no-store")
+	return res, nil
+}
 func (s *Service) ListDocumentRevisions(ctx context.Context, req *connect.Request[pb.ListDocumentRevisionsRequest]) (*connect.Response[pb.ListDocumentRevisionsResponse], error) {
 	out := new(pb.ListDocumentRevisionsResponse)
 	if err := invoke(ctx, s, "ListDocumentRevisions", req.Msg, out); err != nil {

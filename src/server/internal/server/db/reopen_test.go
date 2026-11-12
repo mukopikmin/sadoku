@@ -77,7 +77,7 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 								t.Fatalf("retry changed repaired %s data", table)
 							}
 						}
-						if len(data["schema_migration"]) != 16 || !reflect.DeepEqual(data["comment_reply"], beforeData["comment_reply"]) {
+						if len(data["schema_migration"]) != 17 || !reflect.DeepEqual(data["comment_reply"], beforeData["comment_reply"]) {
 							t.Fatal("retry lost replies or did not apply all migrations")
 						}
 					} else if !reflect.DeepEqual(upgradedData, data) {

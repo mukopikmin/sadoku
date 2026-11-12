@@ -9,6 +9,8 @@ service PreviewService {
   rpc CreateDocument(CreateDocumentRequest) returns (DocumentSummary);
   rpc UpdateDocumentTitle(UpdateDocumentTitleRequest) returns (DocumentSummary);
   rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+  rpc GetTableLayouts(GetTableLayoutsRequest) returns (GetTableLayoutsResponse);
+  rpc UpdateTableLayout(UpdateTableLayoutRequest) returns (TableLayout);
   rpc ListDocumentRevisions(ListDocumentRevisionsRequest) returns (ListDocumentRevisionsResponse);
   rpc GetDocumentRevision(GetDocumentRevisionRequest) returns (DocumentRevision);
   rpc RestoreDocumentRevision(RestoreDocumentRevisionRequest) returns (RestoreDocumentRevisionResponse);
@@ -102,6 +104,30 @@ message DocumentSummary {
 message UpdateDocumentTitleRequest { uint64 document_id = 1; string title = 2; }
 
 message GetDocumentRequest { uint64 document_id = 1; }
+message TablePosition {
+  uint32 start_line = 1;
+  uint32 end_line = 2;
+  uint32 column_count = 3;
+}
+message TableLayout {
+  string id = 1;
+  uint32 start_line = 2;
+  uint32 end_line = 3;
+  uint32 column_count = 4;
+  repeated double column_widths = 5;
+}
+message GetTableLayoutsRequest {
+  uint64 document_id = 1;
+  string displayed_markdown = 2;
+  repeated TablePosition tables = 3;
+}
+message GetTableLayoutsResponse { repeated TableLayout tables = 1; }
+message UpdateTableLayoutRequest {
+  uint64 document_id = 1;
+  string displayed_markdown = 2;
+  string table_id = 3;
+  repeated double column_widths = 4;
+}
 message DocumentRevisionSummary {
   uint64 id = 1;
   string recorded_at = 2;

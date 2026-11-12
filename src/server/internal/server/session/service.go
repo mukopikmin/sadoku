@@ -34,30 +34,33 @@ type TagReference struct {
 	Name string `json:"name"`
 }
 type Input struct {
-	ID                ID             `json:"id"`
-	DocumentID        ID             `json:"documentId"`
-	RevisionID        ID             `json:"revisionId"`
-	InstructionID     ID             `json:"instructionId"`
-	MemoryID          ID             `json:"memoryId"`
-	CommentID         ID             `json:"commentId"`
-	ReplyID           ID             `json:"replyId"`
-	Directory         string         `json:"directory"`
-	Filename          string         `json:"filename"`
-	Title             string         `json:"title"`
-	ExpectedMarkdown  *string        `json:"expectedMarkdown"`
-	Content           string         `json:"content"`
-	Name              string         `json:"name"`
-	BackgroundColor   string         `json:"backgroundColor"`
-	Tags              []TagReference `json:"tags"`
-	Body              string         `json:"body"`
-	StartLine         int            `json:"startLine"`
-	EndLine           int            `json:"endLine"`
-	Resolved          bool           `json:"resolved"`
-	AsBot             bool           `json:"-"`
-	RequestReview     bool           `json:"-"`
-	HeadSHA           string         `json:"headSha"`
-	DisplayedMarkdown string         `json:"displayedMarkdown"`
-	CreatedAt         string         `json:"createdAt"`
+	ID                ID                `json:"id"`
+	DocumentID        ID                `json:"documentId"`
+	RevisionID        ID                `json:"revisionId"`
+	InstructionID     ID                `json:"instructionId"`
+	MemoryID          ID                `json:"memoryId"`
+	CommentID         ID                `json:"commentId"`
+	ReplyID           ID                `json:"replyId"`
+	Directory         string            `json:"directory"`
+	Filename          string            `json:"filename"`
+	Title             string            `json:"title"`
+	ExpectedMarkdown  *string           `json:"expectedMarkdown"`
+	Content           string            `json:"content"`
+	Name              string            `json:"name"`
+	BackgroundColor   string            `json:"backgroundColor"`
+	Tags              []TagReference    `json:"tags"`
+	Body              string            `json:"body"`
+	StartLine         int               `json:"startLine"`
+	EndLine           int               `json:"endLine"`
+	Resolved          bool              `json:"resolved"`
+	AsBot             bool              `json:"-"`
+	RequestReview     bool              `json:"-"`
+	HeadSHA           string            `json:"headSha"`
+	DisplayedMarkdown string            `json:"displayedMarkdown"`
+	Tables            []u.TablePosition `json:"tables"`
+	TableID           string            `json:"tableId"`
+	ColumnWidths      []float64         `json:"columnWidths"`
+	CreatedAt         string            `json:"createdAt"`
 	config.Settings
 }
 
@@ -203,6 +206,8 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		doc.Tags, err = r.Tags(ctx, id)
 		return doc, err
+	case "GetTableLayouts", "UpdateTableLayout":
+		return s.tableLayouts(ctx, operation, in)
 	case "GetDocument":
 		source := s.Sources[id]
 		githubHead := ""
