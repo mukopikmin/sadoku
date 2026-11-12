@@ -15,6 +15,12 @@ import {
   minimumColumnWidth,
 } from "../../models/tableLayout";
 
+// Inline-flex links form unbreakable boxes even when the cell allows wrapping.
+const cellContentStyles = {
+  "& a": { display: "inline" },
+  "& code": { whiteSpace: "normal", overflowWrap: "anywhere" },
+} as const;
+
 export const renderMarkdownTable = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
@@ -70,7 +76,12 @@ export const MarkdownTableColumnHeader = ({
   const resize = useContext(TableColumnResizeContext);
   const index = useContext(TableColumnIndexContext);
   return (
-    <Table.ColumnHeader overflowWrap="anywhere" position="relative" {...props}>
+    <Table.ColumnHeader
+      overflowWrap="anywhere"
+      css={cellContentStyles}
+      position="relative"
+      {...props}
+    >
       {children}
       {resize && index !== undefined && (
         <chakra.button
@@ -111,5 +122,5 @@ export const MarkdownTableCell = ({
   node: _node,
   ...props
 }: MarkdownComponentProps<"td">) => (
-  <Table.Cell overflowWrap="anywhere" {...props} />
+  <Table.Cell overflowWrap="anywhere" css={cellContentStyles} {...props} />
 );
