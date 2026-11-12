@@ -36,7 +36,6 @@ export type CommentableBlockLayout = {
     "data-source-end-line": number;
   };
   content: (children: React.ReactNode) => React.ReactNode;
-  gutter: React.ReactNode;
   anchor: (element: React.ReactElement) => React.ReactNode;
   thread: React.ReactNode;
   onContentClick: React.MouseEventHandler<HTMLElement>;
@@ -74,7 +73,7 @@ export const CommentableBlock = ({
   onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
-  const floating = useBreakpointValue(
+  const compact = useBreakpointValue(
     { base: true, md: false },
     { fallback: "md" },
   );
@@ -97,10 +96,6 @@ export const CommentableBlock = ({
     listDepth === 0
       ? 0
       : markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm;
-  const commentGutterLeft =
-    listDepth === 0
-      ? "calc(-1 * var(--chakra-spacing-10))"
-      : `calc(-1 * var(--chakra-spacing-10) - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
@@ -130,13 +125,10 @@ export const CommentableBlock = ({
     <Flex
       className="comment-line-gutter"
       align="start"
-      direction={floating ? "row" : "column"}
+      direction={compact ? "row" : "column"}
       wrap="wrap"
       gap="1"
-      left={floating ? undefined : commentGutterLeft}
       mb="0"
-      position={floating ? "static" : "absolute"}
-      top={floating ? undefined : "0.1rem"}
     >
       <Tooltip content={`Add comment on ${formatRangeLabel(pendingRange)}`}>
         <IconButton
@@ -277,12 +269,10 @@ export const CommentableBlock = ({
   const anchor = (element: React.ReactElement) => (
     <Popover.Anchor asChild>{element}</Popover.Anchor>
   );
-  const inlineGutter = floating ? null : gutter;
   const layout = renderLayout ? (
     renderLayout({
       blockProps,
       content,
-      gutter: inlineGutter,
       anchor,
       thread,
       onContentClick: composer.contentClick,
@@ -291,7 +281,6 @@ export const CommentableBlock = ({
     <Box {...blockProps}>
       {anchor(
         <Box className="commentable-content" onClick={composer.contentClick}>
-          {inlineGutter}
           <Box className="comment-markdown-body">{content(children)}</Box>
         </Box>,
       )}
@@ -300,16 +289,16 @@ export const CommentableBlock = ({
   );
   return (
     <Popover.Root
-      open={Boolean(floating && gutter)}
+      open={Boolean(gutter)}
       autoFocus={false}
       closeOnInteractOutside={false}
       onOpenChange={({ open }) => {
         if (!open) onCloseCommentForm();
       }}
       positioning={{
-        placement: "top-start",
+        placement: compact ? "top-start" : "left-start",
         strategy: "fixed",
-        flip: true,
+        flip: compact ? true : ["top-start", "bottom-start"],
         slide: true,
         // Keep actions reachable even when a code block is taller than the viewport.
         overlap: true,
@@ -317,10 +306,14 @@ export const CommentableBlock = ({
       }}
     >
       {layout}
-      {floating && gutter && (
+      {gutter && (
         <Portal>
           <Popover.Positioner>
-            <Popover.Content aria-label="Comment actions" width="auto" p="2">
+            <Popover.Content
+              aria-label="Comment actions"
+              width="auto"
+              p={compact ? "2" : "0"}
+            >
               {gutter}
             </Popover.Content>
           </Popover.Positioner>

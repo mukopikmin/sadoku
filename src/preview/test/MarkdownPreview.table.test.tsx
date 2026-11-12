@@ -69,9 +69,7 @@ describe("MarkdownPreview table comments", () => {
     expect(row.getAttribute("data-source-end-line")).toBe(String(line));
 
     fireEvent.click(cell);
-    fireEvent.click(
-      screen.getByRole("button", { name: `Add comment on line ${line}` }),
-    );
+    fireEvent.click(screen.getByLabelText(`Add comment on line ${line}`));
     const textbox = screen.getByRole("textbox", { name: "Comment body" });
     const threadCell = textbox.closest("td")!;
     expect(threadCell.colSpan).toBe(2);
@@ -98,12 +96,10 @@ describe("MarkdownPreview table comments", () => {
     renderMarkdown(markdown, [], { onCreateComment });
     fireEvent.click(screen.getByText(first));
     fireEvent.click(screen.getByText(last), { shiftKey: true });
-    const button = screen.getByRole("button", {
-      name: `Add comment on lines ${start}-${end}`,
-    });
-    expect(button.closest("tr")?.getAttribute("data-source-line")).toBe(
-      String(end),
+    const button = screen.getByLabelText(
+      `Add comment on lines ${start}-${end}`,
     );
+    expect(button.closest("tr")).toBeNull();
     fireEvent.click(button);
     fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
       target: { value: "Review these rows." },
@@ -121,18 +117,14 @@ describe("MarkdownPreview table comments", () => {
   it("uses only the selected row for raw Markdown and edit suggestions", async () => {
     renderMarkdown(markdown);
     fireEvent.click(screen.getByRole("cell", { name: "One" }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "View raw Markdown for line 3" }),
-    );
+    fireEvent.click(screen.getByLabelText("View raw Markdown for line 3"));
     const dialog = await screen.findByRole("dialog", {
       name: "Raw Markdown — line 3",
     });
     expect(within(dialog).getByText("| One | 1 |")).not.toBeNull();
     fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 3" }),
-    );
+    fireEvent.click(screen.getByLabelText("Add comment on line 3"));
     fireEvent.click(screen.getByRole("button", { name: "Suggest edit" }));
     expect(
       (

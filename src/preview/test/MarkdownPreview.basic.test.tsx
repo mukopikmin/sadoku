@@ -88,9 +88,7 @@ describe("MarkdownPreview basic rendering", () => {
     renderMarkdown("intro\n\n<!-- one\ntwo -->", [], { onCreateComment });
 
     fireEvent.click(screen.getByText("two", { exact: false }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on lines 3-4" }),
-    );
+    fireEvent.click(screen.getByLabelText("Add comment on lines 3-4"));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Review this comment" } },
@@ -145,9 +143,7 @@ Review carefully.
     ).toBe("8");
 
     fireEvent.click(screen.getByText("Reviewer"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 2" }),
-    );
+    fireEvent.click(screen.getByLabelText("Add comment on line 2"));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       {
@@ -324,16 +320,13 @@ After
     );
     expect(nestedItemContent).not.toBeNull();
     fireEvent.click(nestedItemContent!);
-    const nestedItemGutter = container.querySelector(
-      '[data-source-line="3"] .comment-line-gutter',
-    );
+    const nestedItemGutter = screen
+      .getByLabelText("Add comment on line 3")
+      .closest(".comment-line-gutter");
     expect(nestedItemGutter).not.toBeNull();
+    expect(container.contains(nestedItemGutter)).toBe(false);
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Add comment on line 3",
-      }),
-    );
+    fireEvent.click(screen.getByLabelText("Add comment on line 3"));
     const nestedCommentThread = container.querySelector(
       '[data-source-line="3"] .comment-thread',
     );

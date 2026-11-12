@@ -34,9 +34,7 @@ describe("MarkdownPreview code and Mermaid", () => {
         });
       }
       fireEvent.click(block.querySelector("pre")!);
-      fireEvent.click(
-        screen.getByRole("button", { name: "Add comment on lines 1-3" }),
-      );
+      fireEvent.click(screen.getByLabelText("Add comment on lines 1-3"));
       expect(screen.getByText(/Commenting on lines 1-3/)).not.toBeNull();
       fireEvent.change(screen.getByRole("textbox"), {
         target: { value: "Review this code block." },
@@ -106,14 +104,10 @@ Paragraph with **formatting**.
 `);
 
     fireEvent.click(container.querySelector(".commentable-content p")!);
-    expect(
-      screen.getByRole("button", {
-        name: "Add comment on line 3",
-      }),
-    ).not.toBeNull();
-    const rawMarkdownButton = screen.getByRole("button", {
-      name: "View raw Markdown for line 3",
-    });
+    expect(screen.getByLabelText("Add comment on line 3")).not.toBeNull();
+    const rawMarkdownButton = screen.getByLabelText(
+      "View raw Markdown for line 3",
+    );
 
     fireEvent.click(rawMarkdownButton);
 
@@ -138,12 +132,10 @@ Paragraph with **formatting**.
     const { container } = renderMarkdown("Paragraph\n");
 
     fireEvent.click(container.querySelector(".commentable-content p")!);
-    const addCommentButton = screen.getByRole("button", {
-      name: "Add comment on line 1",
-    });
-    const rawMarkdownButton = screen.getByRole("button", {
-      name: "View raw Markdown for line 1",
-    });
+    const addCommentButton = screen.getByLabelText("Add comment on line 1");
+    const rawMarkdownButton = screen.getByLabelText(
+      "View raw Markdown for line 1",
+    );
 
     expect(addCommentButton.getAttribute("title")).toBeNull();
     expect(rawMarkdownButton.getAttribute("title")).toBeNull();

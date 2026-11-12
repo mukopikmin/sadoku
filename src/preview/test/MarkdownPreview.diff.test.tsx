@@ -178,9 +178,7 @@ describe("rendered document diff", () => {
     );
     const added = screen.getByRole("group", { name: "Added content" });
     fireEvent.click(within(added).getByRole("cell", { name: "New" }));
-    fireEvent.click(
-      within(added).getByRole("button", { name: "Add comment on line 3" }),
-    );
+    fireEvent.click(screen.getByLabelText("Add comment on line 3"));
     fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
       target: { value: "Review added row" },
     });
@@ -295,9 +293,7 @@ describe("rendered document diff", () => {
       fireEvent.click(
         container.querySelector(`[data-source-line="${line}"] p`)!,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: `Add comment on line ${line}` }),
-      );
+      fireEvent.click(screen.getByLabelText(`Add comment on line ${line}`));
       fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
         target: { value: "Unfinished review" },
       });
@@ -342,9 +338,7 @@ describe("rendered document diff", () => {
     ).toBeNull();
     expect(highlights()[0].dataset.startLine).toBe("1");
     expect(highlights()[0].dataset.endLine).toBe("7");
-    expect(
-      screen.getByRole("button", { name: "Add comment on lines 1-7" }),
-    ).not.toBeNull();
+    expect(screen.getByLabelText("Add comment on lines 1-7")).not.toBeNull();
 
     rerender(preview(markdown, "# Title\n\nRemoved text\n\nEnd"));
     expect(highlights()).toHaveLength(2);
@@ -422,11 +416,9 @@ describe("rendered document diff", () => {
       ),
     ).not.toBeNull();
     fireEvent.click(within(removed).getByText("Old text"));
-    expect(screen.queryByRole("button", { name: /Add comment on/ })).toBeNull();
+    expect(screen.queryByLabelText(/Add comment on/)).toBeNull();
     fireEvent.click(container.querySelector('[data-source-line="3"] p')!);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on line 3" }),
-    );
+    fireEvent.click(screen.getByLabelText("Add comment on line 3"));
     fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
       target: { value: "Review addition" },
     });

@@ -1,5 +1,5 @@
 import { Table } from "@chakra-ui/react";
-import { Children, cloneElement, isValidElement, useContext } from "react";
+import { Children, isValidElement, useContext } from "react";
 import type { ReactNode } from "react";
 import { CommentableBlock } from "./CommentableBlock";
 import {
@@ -30,7 +30,6 @@ export const CommentableTableRow = ({
       renderLayout={({
         blockProps,
         content,
-        gutter,
         anchor,
         thread,
         onContentClick,
@@ -44,18 +43,7 @@ export const CommentableTableRow = ({
                 className={`${blockProps.className} commentable-content`}
                 onClick={onContentClick}
               >
-                {cells.map((cell, index) =>
-                  index === 0
-                    ? cloneElement(
-                        cell,
-                        {},
-                        <>
-                          {gutter}
-                          {cell.props.children}
-                        </>,
-                      )
-                    : cell,
-                )}
+                {cells}
               </Table.Row>,
             ),
           )}

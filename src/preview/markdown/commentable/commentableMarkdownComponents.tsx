@@ -189,23 +189,8 @@ export const createCommentableMarkdownComponents = (): Components => ({
   ul: sharedMarkdownComponents.ul,
   p: createCommentableComponent("p", renderMarkdownParagraph),
   pre: createCommentablePre(),
-  table: function CommentableTable({ children, node, ...props }) {
-    const context = useCommentRenderingContext();
-    const range = getSourceRange({ node });
-    const selectedEnd = context.selectedRange?.endLine;
-    const showGutter =
-      !context.activeRange &&
-      range !== undefined &&
-      selectedEnd !== undefined &&
-      selectedEnd >= range.startLine &&
-      selectedEnd <= range.endLine;
-    return renderMarkdownTable(
-      props,
-      children,
-      "commentable-table",
-      showGutter,
-    );
-  },
+  table: ({ children, node: _node, ...props }) =>
+    renderMarkdownTable(props, children, "commentable-table"),
   tbody: sharedMarkdownComponents.tbody,
   td: sharedMarkdownComponents.td,
   th: sharedMarkdownComponents.th,

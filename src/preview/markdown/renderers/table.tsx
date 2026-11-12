@@ -9,22 +9,12 @@ export const renderMarkdownTable = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
   containerClassName?: string,
-  reserveCommentGutter = false,
 ) => (
   <Box
     className={containerClassName}
-    // Keep the desktop comment gutter inside the scroll viewport without
-    // moving the table away from the document's normal left edge.
-    ps={containerClassName ? { md: "10" } : undefined}
-    ms={containerClassName ? { md: "-10" } : undefined}
-    maxW={
-      containerClassName
-        ? { base: "100%", md: "calc(100% + var(--chakra-spacing-10))" }
-        : "100%"
-    }
+    maxW="100%"
     overflowX="auto"
     py="2"
-    pb={reserveCommentGutter ? { md: "12" } : undefined}
     w="fit-content"
   >
     <Table.Root

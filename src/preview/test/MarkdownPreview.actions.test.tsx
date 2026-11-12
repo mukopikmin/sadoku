@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-describe("shared mobile comment actions", () => {
+describe("shared comment actions", () => {
   it.each([
     ["# Heading", "h1", "line 1"],
     ["Paragraph", "p", "line 1"],
@@ -37,6 +37,40 @@ describe("shared mobile comment actions", () => {
       expect(container.contains(actions)).toBe(false);
       expect(container.querySelector(".comment-line-gutter")).toBeNull();
       expect(container.querySelector(selector)).toBe(element);
+      fireEvent.keyDown(actions, { key: "Escape" });
+      await waitFor(() =>
+        expect(screen.queryByLabelText("Comment actions")).toBeNull(),
+      );
+    },
+  );
+
+  it.each([
+    ["# Heading", "h1", "line 1"],
+    ["Paragraph", "p", "line 1"],
+    ["- Item", "li .commentable-content", "line 1"],
+    ["> Quote", "blockquote", "line 1"],
+    ["```ts\nconst value = 1;\n```", "pre", "lines 1-3"],
+  ])(
+    "portals desktop actions for %s outside the document",
+    async (markdown, selector, label) => {
+      vi.mocked(window.matchMedia).mockImplementation((query) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {},
+        dispatchEvent: () => true,
+      }));
+      const { container } = renderMarkdown(markdown);
+      fireEvent.click(container.querySelector(selector)!);
+      const actions = await screen.findByLabelText("Comment actions");
+      expect(
+        within(actions).getByLabelText(`Add comment on ${label}`),
+      ).not.toBeNull();
+      expect(container.contains(actions)).toBe(false);
+      expect(container.querySelector(".comment-line-gutter")).toBeNull();
       fireEvent.keyDown(actions, { key: "Escape" });
       await waitFor(() =>
         expect(screen.queryByLabelText("Comment actions")).toBeNull(),
