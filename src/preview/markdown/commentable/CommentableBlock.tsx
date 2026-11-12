@@ -8,7 +8,8 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 import { CodeXml, FilePenLine, Link, Plus } from "lucide-react";
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
+import { MarkdownBlockActionsContext } from "../MarkdownBlockActionsContext";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -66,6 +67,8 @@ export const CommentableBlock = ({
     onCloseCommentForm,
     onSelectCommentRange,
   });
+  const [blockActionsElement, setBlockActionsElement] =
+    useState<HTMLSpanElement | null>(null);
   const { state, pendingRange, textareaRef } = composer;
   const isSaving = state.status === "saving";
   const error = state.status === "error" ? state.message : undefined;
@@ -135,6 +138,7 @@ export const CommentableBlock = ({
                 <Plus aria-hidden="true" />
               </IconButton>
             </Tooltip>
+            <Box as="span" display="contents" ref={setBlockActionsElement} />
             {headingId && isSelected && (
               <Tooltip content="Update URL with heading link">
                 <IconButton
@@ -175,7 +179,9 @@ export const CommentableBlock = ({
         )}
         <Box className="comment-markdown-body">
           <SourceLineContext.Provider value={sourceLines}>
-            {children}
+            <MarkdownBlockActionsContext.Provider value={blockActionsElement}>
+              {children}
+            </MarkdownBlockActionsContext.Provider>
           </SourceLineContext.Provider>
         </Box>
       </Box>

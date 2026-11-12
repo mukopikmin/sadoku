@@ -66,6 +66,12 @@ describe("resizable Markdown table", () => {
     );
     fireEvent.click(handle);
     expect(container.querySelector(".commentable-block-selected")).toBeNull();
+    fireEvent.click(screen.getByRole("table"));
+    expect(
+      container
+        .querySelector(".comment-line-gutter")
+        ?.contains(screen.getByRole("button", { name: "Reset column widths" })),
+    ).toBe(true);
     fireEvent.click(
       screen.getByRole("button", { name: "Reset column widths" }),
     );

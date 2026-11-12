@@ -1,4 +1,16 @@
-import { Box, Button, Flex, Stack, Table, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  IconButton,
+  Stack,
+  Table,
+  Text,
+} from "@chakra-ui/react";
+import { RotateCcw } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Tooltip } from "../components/ui/tooltip";
+import { MarkdownBlockActionsContext } from "./MarkdownBlockActionsContext";
 import { createContext, useContext, type ReactNode } from "react";
 import type { TableLayout } from "../models/tableLayout";
 import { minimumColumnWidth } from "../models/tableLayout";
@@ -62,6 +74,7 @@ const ManagedMarkdownTable = ({
   save: (id: string, widths: number[]) => Promise<TableLayout>;
 }) => {
   const resize = useTableColumnResize(layout, save);
+  const blockActionsElement = useContext(MarkdownBlockActionsContext);
   const widths = Array.from(
     { length: layout.columnCount },
     (_, index) => resize.widths[index] ?? 0,
@@ -74,6 +87,25 @@ const ManagedMarkdownTable = ({
   const allAdjusted = widths.every((width) => width > 0);
   return (
     <TableColumnResizeContext.Provider value={resize}>
+      {blockActionsElement &&
+        createPortal(
+          <Tooltip content="Reset column widths">
+            <IconButton
+              aria-label="Reset column widths"
+              size="xs"
+              variant="outline"
+              bg="canvas"
+              borderColor="border"
+              color="fg.muted"
+              disabled={!adjusted}
+              onClick={resize.reset}
+              type="button"
+            >
+              <RotateCcw aria-hidden="true" />
+            </IconButton>
+          </Tooltip>,
+          blockActionsElement,
+        )}
       <Stack gap="1" py="2" minW="0" maxW="100%">
         <Box
           maxW="100%"
@@ -103,36 +135,30 @@ const ManagedMarkdownTable = ({
             {children}
           </Table.Root>
         </Box>
-        <Flex
-          gap="2"
-          align="center"
-          flexWrap="wrap"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Button
-            size="xs"
-            variant="ghost"
-            disabled={!adjusted}
-            onClick={resize.reset}
+        {resize.state.status !== "idle" && (
+          <Flex
+            gap="2"
+            align="center"
+            flexWrap="wrap"
+            onClick={(event) => event.stopPropagation()}
           >
-            Reset column widths
-          </Button>
-          {resize.state.status === "saving" && (
-            <Text role="status" fontSize="xs" color="fg.muted">
-              Saving column widths…
-            </Text>
-          )}
-          {resize.state.status === "error" && (
-            <>
-              <Text role="alert" fontSize="xs">
-                Could not save column widths. {resize.state.message}
+            {resize.state.status === "saving" && (
+              <Text role="status" fontSize="xs" color="fg.muted">
+                Saving column widths…
               </Text>
-              <Button size="xs" variant="outline" onClick={resize.retry}>
-                Retry
-              </Button>
-            </>
-          )}
-        </Flex>
+            )}
+            {resize.state.status === "error" && (
+              <>
+                <Text role="alert" fontSize="xs">
+                  Could not save column widths. {resize.state.message}
+                </Text>
+                <Button size="xs" variant="outline" onClick={resize.retry}>
+                  Retry
+                </Button>
+              </>
+            )}
+          </Flex>
+        )}
       </Stack>
     </TableColumnResizeContext.Provider>
   );
