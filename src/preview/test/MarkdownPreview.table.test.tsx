@@ -1,11 +1,61 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ActiveComment } from "../models/comment";
 import { createComment, fireEvent, screen, waitFor, within } from "./testUtils";
 import { renderMarkdown } from "./markdownPreviewTestUtils";
 
+afterEach(() => vi.restoreAllMocks());
+
 const markdown = "| Name | Count |\n| --- | ---: |\n| One | 1 |\n| Two | 2 |";
 
 describe("MarkdownPreview table comments", () => {
+  it("floats actions outside the table on small screens and clears them on Escape", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+      matches: query.includes("0px"),
+      media: query,
+      onchange: null,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+      dispatchEvent: () => true,
+    }));
+    const { container } = renderMarkdown(markdown);
+    const cell = screen.getByRole("cell", { name: "One" });
+    fireEvent.click(cell);
+    const actions = await screen.findByLabelText("Table row actions");
+    expect(
+      within(actions).getByLabelText("Add comment on line 3"),
+    ).not.toBeNull();
+    expect(screen.getByRole("table").querySelector("button")).toBeNull();
+    expect(cell.textContent).toBe("One");
+    expect(container.contains(actions)).toBe(false);
+    fireEvent.keyDown(actions, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Table row actions")).toBeNull(),
+    );
+  });
+
+  it("opens the row composer from floating actions", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+      matches: query.includes("0px"),
+      media: query,
+      onchange: null,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+      dispatchEvent: () => true,
+    }));
+    renderMarkdown(markdown);
+    fireEvent.click(screen.getByRole("cell", { name: "Two" }));
+    const actions = await screen.findByLabelText("Table row actions");
+    fireEvent.click(within(actions).getByLabelText("Add comment on line 4"));
+    expect(
+      await screen.findByRole("textbox", { name: "Comment body" }),
+    ).not.toBeNull();
+    expect(screen.queryByLabelText("Table row actions")).toBeNull();
+  });
+
   it.each([
     ["columnheader", "Name", 1],
     ["cell", "One", 3],
