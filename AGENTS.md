@@ -36,6 +36,33 @@ them when making changes.
   formatting, workflow linting, and existing required CI checks to validate
   these changes.
 
+### Implementation simplicity
+
+- Prefer the simplest design that satisfies the confirmed requirements,
+  correctness, type safety, and data preservation. Judge simplicity by clear
+  control flow, few state owners, and narrow responsibilities. Reuse existing
+  repository and library APIs before adding abstractions, dependencies, or
+  infrastructure for hypothetical future needs.
+- Give each piece of state one owner and derive values where practical. Keep
+  independent lifecycles, such as editing and asynchronous saving, independent;
+  avoid mirrored caches, redundant flags, and effects that only synchronize
+  duplicate state. Use refs when event timing requires them, with a clear role.
+- Prefer explicit props/data flow and straightforward branches. Introduce a
+  custom registry, cross-tree Portal, generic framework, or extra indirection
+  only for a concrete requirement that direct composition cannot reasonably meet.
+- Keep operations scoped to their intent. A width-only update should validate
+  and update the target widths without running whole-document structural
+  reconciliation. Share focused invariants rather than routing every operation
+  through one broad save path or duplicating validation across layers.
+- Before submitting, review the changed execution paths for unused exposed
+  actions, duplicated checks/state, nested conditionals, unnecessary full-state
+  work, and speculative abstractions. Remove them or explain the concrete
+  constraint requiring the remaining machinery in the PR description.
+- Preserve required validation, ownership checks, concurrency protection,
+  transaction boundaries, migration safety, and behavioral tests when simplifying.
+  For behavior changes, verify the relevant failure/recovery paths as well as
+  successful operations; for behavior-preserving refactors, run the affected checks.
+
 ## 2. Production Go Backend
 
 - The production server and CLI are implemented in Go. `src/server/cmd/sadoku/main.go` is
