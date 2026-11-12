@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cloud-run-preview-${{ github.event.pull_request.number || github.ref }}
+  group: pr-preview-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
   queue: max
 
@@ -89,7 +89,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     concurrency:
-      group: cloud-run-preview-service
+      group: pr-preview-service
       cancel-in-progress: false
       queue: max
     permissions:
@@ -222,7 +222,7 @@ jobs:
           fi
           url="${public_origin%/}/revisions/${tag}/"
           echo "url=${url}" >> "${GITHUB_OUTPUT}"
-          printf '## Cloud Run preview\n\n%s\n\nRevision: `%s` (Ready)\n' \
+          printf '## PR preview\n\n%s\n\nRevision: `%s` (Ready)\n' \
             "${url}" "${REVISION}" >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Create or update preview comment
@@ -243,7 +243,7 @@ jobs:
               return;
             }
 
-            const marker = '<!-- sadoku-cloud-run-preview -->';
+            const marker = '<!-- sadoku-pr-preview -->';
             const body = [
               marker,
               `Preview: ${process.env.PREVIEW_URL}`,
@@ -273,7 +273,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     concurrency:
-      group: cloud-run-preview-service
+      group: pr-preview-service
       cancel-in-progress: false
       queue: max
     permissions:

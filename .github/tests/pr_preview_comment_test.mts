@@ -6,7 +6,7 @@ const assertStringIncludes = (actual: string, expected: string) =>
 
 // Exercise the actual inline action without contacting GitHub.
 const workflow = await readFile(
-  new URL("../workflows/cloud_run_preview.yml", import.meta.url),
+  new URL("../workflows/pr_preview.yml", import.meta.url),
   "utf8",
 );
 const script = workflow
@@ -23,7 +23,7 @@ const runScript = new Function(
   `return (async () => {\n${script}\n})();`,
 );
 const head = "a".repeat(40);
-const marker = "<!-- sadoku-cloud-run-preview -->";
+const marker = "<!-- sadoku-pr-preview -->";
 const url = "https://preview.example.com/revisions/pr-42/";
 
 type Comment = {
