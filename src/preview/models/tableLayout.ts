@@ -14,6 +14,15 @@ export type TableLayout = TablePosition & {
   columnWidths: number[];
 };
 
+export class TableLayoutReloadRequiredError extends Error {
+  constructor() {
+    super(
+      "The table could not be identified after the document changed. Reload the preview before changing column widths.",
+    );
+    this.name = "TableLayoutReloadRequiredError";
+  }
+}
+
 export const minimumColumnWidth = 64;
 export const maximumColumnWidth = 2000;
 export const clampColumnWidth = (width: number) =>

@@ -141,3 +141,49 @@ func TestTableLayoutsCannotReuseAnotherDocumentsIdentityOrRevision(t *testing.T)
 		t.Fatal("accepted a comparison revision owned by another document")
 	}
 }
+
+func TestWidthOnlySaveDoesNotTouchOtherTablesOrRevisionMetadata(t *testing.T) {
+	r := testRepository(t)
+	doc, err := r.Ensure(t.Context(), "width-only.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	markdown := "| A |\n| - |\n\n| B |\n| - |"
+	state, err := u.ResolveTableLayouts(u.TableLayoutState{}, markdown, []u.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 1}, {StartLine: 4, EndLine: 5, ColumnCount: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Tables[0].ColumnWidths = []float64{100}
+	state.Tables[1].ColumnWidths = []float64{200}
+	if err = r.SaveTableLayouts(t.Context(), doc.ID, state); err != nil {
+		t.Fatal(err)
+	}
+	for _, statement := range []string{
+		`CREATE TRIGGER no_table_insert BEFORE INSERT ON markdown_table_layout BEGIN SELECT RAISE(ABORT,'unexpected table insert'); END`,
+		`CREATE TRIGGER no_table_update BEFORE UPDATE ON markdown_table_layout BEGIN SELECT RAISE(ABORT,'unexpected table update'); END`,
+		`CREATE TRIGGER no_table_delete BEFORE DELETE ON markdown_table_layout BEGIN SELECT RAISE(ABORT,'unexpected table delete'); END`,
+		`CREATE TRIGGER no_revision_insert BEFORE INSERT ON document_revision BEGIN SELECT RAISE(ABORT,'unexpected revision'); END`,
+		`CREATE TRIGGER no_document_update BEFORE UPDATE ON comment_document BEGIN SELECT RAISE(ABORT,'unexpected document update'); END`,
+	} {
+		if _, err = r.DB.ExecContext(t.Context(), statement); err != nil {
+			t.Fatal(err)
+		}
+	}
+	updated, err := r.SaveTableColumnWidths(t.Context(), doc.ID, state.Tables[0].ID, markdown, []float64{150})
+	if err != nil || !reflect.DeepEqual(updated.ColumnWidths, []float64{150}) {
+		t.Fatalf("width-only save: %+v %v", updated, err)
+	}
+	if _, err = r.SaveTableColumnWidths(t.Context(), doc.ID, state.Tables[0].ID, "stale source", []float64{170}); err == nil {
+		t.Fatal("accepted stale revision")
+	}
+	if _, err = r.SaveTableColumnWidths(t.Context(), doc.ID, state.Tables[0].ID, markdown, []float64{20}); err == nil {
+		t.Fatal("accepted invalid width")
+	}
+	restored, err := r.ReadTableLayouts(t.Context(), doc.ID)
+	if err != nil || !reflect.DeepEqual(restored.Tables[0].ColumnWidths, []float64{150}) || !reflect.DeepEqual(restored.Tables[1], state.Tables[1]) {
+		t.Fatalf("affected another table or lost previous width: %+v %v", restored, err)
+	}
+	if _, err = r.SaveTableColumnWidths(t.Context(), doc.ID, state.Tables[0].ID, markdown, nil); err != nil {
+		t.Fatal(err)
+	}
+}

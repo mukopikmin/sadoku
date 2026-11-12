@@ -6,15 +6,14 @@ import {
   type PointerEvent,
 } from "react";
 import { toaster } from "../components/ui/toaster";
-import { clampColumnWidth, type TableLayout } from "../models/tableLayout";
-
-type SaveState =
-  | { status: "idle" | "saving" }
-  | { status: "error"; message: string };
+import {
+  clampColumnWidth,
+  TableLayoutReloadRequiredError,
+  type TableLayout,
+} from "../models/tableLayout";
 
 type Drag = {
   pointerId: number;
-  index: number;
   startX: number;
   startWidth: number;
   before: number[];
@@ -25,16 +24,18 @@ export const useTableColumnResize = (
   save: (id: string, widths: number[]) => Promise<TableLayout>,
 ) => {
   const [draft, setDraft] = useState<number[]>();
-  const [state, setState] = useState<SaveState>({ status: "idle" });
+  const [isSaving, setIsSaving] = useState(false);
   const widths = draft ?? layout.columnWidths;
   const widthsRef = useRef(widths);
   useEffect(() => {
     widthsRef.current = widths;
   }, [widths]);
   const drag = useRef<Drag | undefined>(undefined);
-  const version = useRef(0);
+  const editVersion = useRef(0);
+  const saveVersion = useRef(0);
 
   const changeWidth = (index: number, width: number) => {
+    editVersion.current++;
     const next = Array.from({ length: layout.columnCount }, (_, i) =>
       i === index ? width : (widthsRef.current[i] ?? 0),
     );
@@ -43,29 +44,36 @@ export const useTableColumnResize = (
     return next;
   };
   const persist = async (next: number[]) => {
-    const request = ++version.current;
-    setState({ status: "saving" });
+    const request = ++saveVersion.current;
+    const savedEdit = editVersion.current;
+    setIsSaving(true);
     try {
       await save(layout.id, next);
-      if (version.current === request) {
-        setDraft(undefined);
-        setState({ status: "idle" });
+      if (saveVersion.current === request) {
+        if (editVersion.current === savedEdit) setDraft(undefined);
+        setIsSaving(false);
       }
     } catch (error) {
-      if (version.current === request) {
+      if (saveVersion.current === request) {
         const message = error instanceof Error ? error.message : String(error);
-        setState({ status: "error", message });
+        setIsSaving(false);
         toaster.create({
           type: "error",
           title: "Could not save column widths",
           description: message,
           closable: true,
-          action: {
-            label: "Retry",
-            onClick: () => {
-              void persist(widthsRef.current);
-            },
-          },
+          action:
+            error instanceof TableLayoutReloadRequiredError
+              ? {
+                  label: "Reload preview",
+                  onClick: () => globalThis.location.reload(),
+                }
+              : {
+                  label: "Retry",
+                  onClick: () => {
+                    void persist(widthsRef.current);
+                  },
+                },
         });
       }
     }
@@ -77,24 +85,21 @@ export const useTableColumnResize = (
     widthsRef.current = drag.current.before;
     setDraft(drag.current.before);
     drag.current = undefined;
-    setState({ status: "idle" });
+    editVersion.current++;
   };
 
   return {
     widths,
-    state,
+    isSaving,
     reset: () => void persist(changeAllToAuto()),
-    retry: () => void persist(widthsRef.current),
     handleProps: (index: number) => ({
       onPointerDown: (event: PointerEvent<HTMLElement>) => {
         if (event.button !== 0 || drag.current) return;
         event.preventDefault();
         event.stopPropagation();
         // An earlier save must not clear a draft during this gesture.
-        version.current++;
-        setState({ status: "idle" });
+        editVersion.current++;
         drag.current = {
-          index,
           pointerId: event.pointerId,
           startX: event.clientX,
           startWidth: measureWidth(event.currentTarget),
@@ -155,6 +160,8 @@ export const useTableColumnResize = (
   };
 
   function changeAllToAuto() {
+    editVersion.current++;
+    drag.current = undefined;
     widthsRef.current = [];
     setDraft([]);
     return [];

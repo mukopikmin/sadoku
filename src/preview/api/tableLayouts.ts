@@ -1,3 +1,4 @@
+import { Code, ConnectError } from "@connectrpc/connect";
 import type { TableLayout as TableLayoutMessage } from "../gen/sadoku/preview/v1/preview_pb";
 import {
   maximumColumnWidth,
@@ -73,3 +74,8 @@ export const saveTableLayout = async (
       columnWidths,
     }),
   );
+
+export const isTableLayoutConflict = (error: unknown): boolean => {
+  const code = ConnectError.from(error).code;
+  return code === Code.Aborted || code === Code.NotFound;
+};

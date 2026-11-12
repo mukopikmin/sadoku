@@ -1,8 +1,17 @@
+import { loadPreviewDocument } from "../api/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { toaster } from "../components/ui/toaster";
-import { loadTableLayouts, saveTableLayout } from "../api/tableLayouts";
-import { extractTablePositions, type TableLayout } from "../models/tableLayout";
+import {
+  isTableLayoutConflict,
+  loadTableLayouts,
+  saveTableLayout,
+} from "../api/tableLayouts";
+import {
+  extractTablePositions,
+  TableLayoutReloadRequiredError,
+  type TableLayout,
+} from "../models/tableLayout";
 import { extractAgentFrontMatter } from "../pages/markdown/frontMatter";
 import { tableLayoutsQueryKey } from "./previewQueryKeys";
 
@@ -23,7 +32,10 @@ export const useTableLayouts = (
   const queryKey = tableLayoutsQueryKey(documentId, markdown, documentPath);
   const query = useQuery({
     queryKey,
-    queryFn: () => loadTableLayouts(documentId!, markdown, positions),
+    queryFn: () => {
+      if (documentId === undefined) throw new Error("No document selected.");
+      return loadTableLayouts(documentId, markdown, positions);
+    },
     enabled: documentId !== undefined && positions.length > 0,
     // A cached old revision must reconcile again after a restore or navigation.
     staleTime: 0,
@@ -37,21 +49,55 @@ export const useTableLayouts = (
       title: "Could not restore column widths",
       description: error.message,
       closable: true,
-      action: {
-        label: "Retry",
-        onClick: () => {
-          void refetch();
-        },
-      },
+      action: isTableLayoutConflict(error)
+        ? {
+            label: "Reload preview",
+            onClick: () => globalThis.location.reload(),
+          }
+        : {
+            label: "Retry",
+            onClick: () => {
+              void refetch();
+            },
+          },
     });
   }, [error, errorUpdatedAt, refetch]);
   const mutation = useMutation({
-    mutationFn: ({ id, widths }: { id: string; widths: number[] }) =>
-      saveTableLayout(documentId!, markdown, id, widths),
+    mutationFn: async ({ id, widths }: { id: string; widths: number[] }) => {
+      if (documentId === undefined) throw new Error("No document selected.");
+      try {
+        return await saveTableLayout(documentId, markdown, id, widths);
+      } catch (error) {
+        if (!isTableLayoutConflict(error)) throw error;
+      }
+      // Reconcile once against fresh source; never guess a replacement table ID.
+      const latest = await loadPreviewDocument(documentId);
+      const latestPositions = extractTablePositions(
+        extractAgentFrontMatter(latest.markdown, documentPath)?.bodyMarkdown ??
+          latest.markdown,
+      );
+      const layouts = await loadTableLayouts(
+        documentId,
+        latest.markdown,
+        latestPositions,
+      );
+      const matched = layouts.find((layout) => layout.id === id);
+      if (!matched) throw new TableLayoutReloadRequiredError();
+      return saveTableLayout(
+        documentId,
+        latest.markdown,
+        id,
+        widths.slice(0, matched.columnCount),
+      );
+    },
     scope: { id: `table-layouts-${documentId}` },
     onSuccess: (layout) => {
       queryClient.setQueryData<TableLayout[]>(queryKey, (current) =>
-        current?.map((entry) => (entry.id === layout.id ? layout : entry)),
+        current?.map((entry) =>
+          entry.id === layout.id
+            ? { ...entry, columnWidths: layout.columnWidths }
+            : entry,
+        ),
       );
     },
   });
@@ -61,14 +107,13 @@ export const useTableLayouts = (
       : query.isFetching
         ? ({ status: "loading" } as const)
         : query.error
-          ? ({ status: "error", message: query.error.message } as const)
+          ? ({ status: "error" } as const)
           : query.data !== undefined
             ? ({ status: "ready", tables: query.data } as const)
             : ({ status: "loading" } as const);
 
   return {
     state,
-    retry: () => void query.refetch(),
     save: (id: string, widths: number[]) =>
       mutation.mutateAsync({ id, widths }),
   };

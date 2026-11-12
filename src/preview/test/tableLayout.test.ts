@@ -1,3 +1,4 @@
+import { Code, ConnectError } from "@connectrpc/connect";
 import { previewClient } from "../api/connect";
 import { create } from "@bufbuild/protobuf";
 import {
@@ -6,7 +7,11 @@ import {
 } from "../gen/sadoku/preview/v1/preview_pb";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { extractTablePositions } from "../models/tableLayout";
-import { loadTableLayouts, toTableLayout } from "../api/tableLayouts";
+import {
+  isTableLayoutConflict,
+  loadTableLayouts,
+  toTableLayout,
+} from "../api/tableLayouts";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -91,4 +96,19 @@ describe("table layout correspondence", () => {
       "Invalid table layout response.",
     );
   });
+});
+
+it("only treats document/table conflicts as recoverable save errors", () => {
+  expect(isTableLayoutConflict(new ConnectError("changed", Code.Aborted))).toBe(
+    true,
+  );
+  expect(
+    isTableLayoutConflict(new ConnectError("missing", Code.NotFound)),
+  ).toBe(true);
+  expect(
+    isTableLayoutConflict(new ConnectError("offline", Code.Unavailable)),
+  ).toBe(false);
+  expect(
+    isTableLayoutConflict(new ConnectError("invalid", Code.InvalidArgument)),
+  ).toBe(false);
 });

@@ -138,19 +138,10 @@ func (r *Repository) SaveTableLayouts(ctx context.Context, documentID int64, sta
 				return fmt.Errorf("table layout belongs to another document")
 			}
 		}
-		if _, err = tx.ExecContext(ctx, `DELETE FROM markdown_table_column_width WHERE table_id=? AND column_index>=?`, table.ID, len(table.ColumnWidths)); err != nil {
+		if err = saveColumnWidths(ctx, tx, table.ID, table.ColumnWidths); err != nil {
 			return err
 		}
-		for index, width := range table.ColumnWidths {
-			if width == 0 {
-				_, err = tx.ExecContext(ctx, `DELETE FROM markdown_table_column_width WHERE table_id=? AND column_index=?`, table.ID, index)
-			} else {
-				_, err = tx.ExecContext(ctx, `INSERT INTO markdown_table_column_width(table_id,column_index,width_px) VALUES(?,?,?) ON CONFLICT(table_id,column_index) DO UPDATE SET width_px=excluded.width_px WHERE width_px<>excluded.width_px`, table.ID, index, width)
-			}
-			if err != nil {
-				return err
-			}
-		}
+
 	}
 	for _, id := range existing {
 		if !retained[id] {
@@ -160,4 +151,55 @@ func (r *Repository) SaveTableLayouts(ctx context.Context, documentID int64, sta
 		}
 	}
 	return tx.Commit()
+}
+
+// Width-only edits neither reconcile other tables nor rewrite revision metadata.
+func (r *Repository) SaveTableColumnWidths(ctx context.Context, documentID int64, tableID, markdown string, widths []float64) (u.TableLayout, error) {
+	var table u.TableLayout
+	tx, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return table, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	var source *string
+	err = tx.QueryRowContext(ctx, `SELECT r.markdown FROM comment_document d LEFT JOIN document_revision r ON r.id=d.table_layout_revision_id AND r.document_id=d.id WHERE d.id=?`, documentID).Scan(&source)
+	if err != nil {
+		return table, err
+	}
+	if source == nil || *source != markdown {
+		return table, u.Fail("aborted", "The table layout changed. Reload the preview to identify the table again.")
+	}
+	err = tx.QueryRowContext(ctx, `SELECT id,start_line,end_line,column_count FROM markdown_table_layout WHERE id=? AND document_id=?`, tableID, documentID).Scan(&table.ID, &table.StartLine, &table.EndLine, &table.ColumnCount)
+	if errors.Is(err, sql.ErrNoRows) {
+		return table, u.Fail("not_found", "Table layout not found. Reload the preview to identify the table again.")
+	}
+	if err != nil {
+		return table, err
+	}
+	if err = u.ValidateColumnWidths(widths, table.ColumnCount); err != nil {
+		return table, err
+	}
+	if err = saveColumnWidths(ctx, tx, tableID, widths); err != nil {
+		return table, err
+	}
+	table.ColumnWidths = append([]float64{}, widths...)
+	return table, tx.Commit()
+}
+
+func saveColumnWidths(ctx context.Context, tx *sql.Tx, tableID string, widths []float64) error {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM markdown_table_column_width WHERE table_id=? AND column_index>=?`, tableID, len(widths)); err != nil {
+		return err
+	}
+	for index, width := range widths {
+		var err error
+		if width == 0 {
+			_, err = tx.ExecContext(ctx, `DELETE FROM markdown_table_column_width WHERE table_id=? AND column_index=?`, tableID, index)
+		} else {
+			_, err = tx.ExecContext(ctx, `INSERT INTO markdown_table_column_width(table_id,column_index,width_px) VALUES(?,?,?) ON CONFLICT(table_id,column_index) DO UPDATE SET width_px=excluded.width_px WHERE width_px<>excluded.width_px`, tableID, index, width)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

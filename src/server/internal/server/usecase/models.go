@@ -104,6 +104,7 @@ type Repository interface {
 	RecordRevision(context.Context, int64, string) error
 	ReadTableLayouts(context.Context, int64) (TableLayoutState, error)
 	SaveTableLayouts(context.Context, int64, TableLayoutState) error
+	SaveTableColumnWidths(context.Context, int64, string, string, []float64) (TableLayout, error)
 	Tags(context.Context, int64) ([]Tag, error)
 	SaveTag(context.Context, Tag) (Tag, error)
 	DeleteTag(context.Context, int64) error

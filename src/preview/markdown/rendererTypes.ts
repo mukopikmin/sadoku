@@ -7,6 +7,7 @@ export type MarkdownComponentProps<
 };
 
 export type MarkdownElementProps = {
+  id?: string;
   children?: React.ReactNode;
   className?: string;
 };
