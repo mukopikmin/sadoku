@@ -116,6 +116,29 @@ them when making changes.
 ## 4. Preview Client and Generated Assets
 
 - Follow the existing React and TypeScript patterns in `src/preview/`.
+- Preserve type safety at API and parser boundaries. Accept generated Protobuf
+  message types in RPC-to-model conversions and use library-provided AST types
+  and inference when traversing parsed Markdown. Do not duplicate decoded wire
+  types as handwritten input models or use the output model as the input type.
+- Separate protocol decoding from domain validation. Trust primitive types and
+  ranges already guaranteed by the decoder; retain checks for domain rules such
+  as nonempty IDs, finite/bounded widths, ordering, counts, uniqueness, and
+  correspondence with the displayed document. Raw untyped JSON remains `unknown`
+  until validated at its boundary; a type assertion is not validation.
+- Prefer narrowing, discriminated unions, and explicit field comparisons over
+  `any`, non-null assertions, or casts such as `Object.keys(value) as ...`.
+  If a library limitation requires an assertion, keep it at the boundary,
+  explain the invariant that makes it safe, and test that invariant. Do not
+  silence compiler errors with assertions or suppression comments.
+- For handwritten TypeScript changes, run
+  `make check-client-types TYPECHECK_FILES="<changed TS/TSX files and focused tests>"`
+  as well as the relevant existing checks. This checks the selected files and
+  their imports with strict compiler settings. Vite builds and Vitest execution
+  do not replace compiler checking. Report pre-existing dependency errors rather
+  than weakening the settings or presenting a partial check as repository-wide.
+- Build RPC test fixtures with the generated schema constructors. Test remaining
+  domain constraints and response/document mismatches instead of reproducing
+  primitive checks already performed by the protocol decoder.
 - Keep browser-side `fetch`, HTTP status handling, response types, and
   response-to-model conversion in `src/preview/api/`; UI components and pages
   must not call application endpoints directly.

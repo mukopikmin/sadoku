@@ -11,13 +11,14 @@ OUTPUT ?=
 TARGET ?=
 BINARY_VERSION ?= $(VERSION)
 ARGS ?=
+TYPECHECK_FILES ?=
 # The timeout covers an entire package. Windows runners need more time for
 # SQLite migrations and other disk writes, especially with the race detector.
 GO_TEST_TIMEOUT ?= $(if $(filter Windows_NT,$(OS)),10m,120s)
 GO_TEST_FLAGS ?= -race -count=1 -timeout=$(GO_TEST_TIMEOUT)
 GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/assets.go src/server/internal/gen src/server/test/integration
 
-.PHONY: deps build-client test-client test-actions fmt-client check-client-format lint-client \
+.PHONY: deps build-client test-client test-actions fmt-client check-client-format check-client-types lint-client \
  build build-server install dist notices run start test test-server test-server-with-assets \
  test-tools test-migrations test-install test-install-with-assets check vet vet-cross lint lint-go \
  fmt fmt-go fmt-check check-go-format
@@ -46,6 +47,11 @@ lint-client:
 
 check-client-format:
 	$(NPM) --prefix src/proto exec --no -- oxfmt --check ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
+
+# Check changed files and their imports; this is not a repository-wide CI gate.
+check-client-types:
+	$(if $(strip $(TYPECHECK_FILES)),,$(error Specify TYPECHECK_FILES with the TypeScript files and focused tests to check))
+	$(NPM) --prefix src/preview exec --no -- tsc --noEmit --strict --skipLibCheck --esModuleInterop --jsx react-jsx --target es2023 --module esnext --moduleResolution bundler $(TYPECHECK_FILES)
 
 build: build-client
 	$(MAKE) build-server

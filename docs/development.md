@@ -88,6 +88,26 @@ test use oxfmt via
 oxlint via `make lint-client`, including React Hooks checks; generated bindings
 are excluded from linting. Go formatting uses `gofmt`.
 
+For handwritten TypeScript changes, also run strict compiler checking on the
+changed files and their focused tests, for example:
+
+```sh
+make check-client-types TYPECHECK_FILES="src/preview/api/tableLayouts.ts src/preview/models/tableLayout.ts src/preview/test/tableLayout.test.ts"
+```
+
+The target uses the lockfile-pinned TypeScript compiler and checks those entry
+files plus their transitive imports without emitting files. It requires an
+explicit file list; it is not a repository-wide check or a CI type-checking gate.
+Existing errors in imported code still fail the command and must be reported.
+Passing Vite builds, Vitest tests, or oxlint alone does not establish compiler
+type safety.
+
+Use generated Protobuf types for decoded RPC inputs and inferred/library types
+for parsed Markdown. Convert to UI models at the API boundary, checking domain
+constraints and response/document correspondence there. Decode untyped external
+data from `unknown`; do not use assertions as validation. The detailed boundary,
+assertion, and typed-fixture rules are in [AGENTS.md](../AGENTS.md).
+
 See [contributor guidelines](../AGENTS.md), [proxy setup](../src/proxy/README.md), and the
 [release workflow guide](../.agents/skills/sadoku-release/SKILL.md) for details.
 
