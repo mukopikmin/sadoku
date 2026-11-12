@@ -122,12 +122,12 @@ export const CommentableBlock = ({
     <Flex
       className="comment-line-gutter"
       align="start"
-      direction={renderLayout ? "row" : { base: "row", md: "column" }}
+      direction={{ base: "row", md: "column" }}
       wrap="wrap"
       gap="1"
-      left={renderLayout ? undefined : commentGutterLeft}
-      mb={renderLayout ? "1.5" : { base: "1.5", md: "0" }}
-      position={renderLayout ? "static" : { base: "static", md: "absolute" }}
+      left={commentGutterLeft}
+      mb={{ base: "1.5", md: "0" }}
+      position={{ base: "static", md: "absolute" }}
       top={{ md: "0.1rem" }}
     >
       <Tooltip content={`Add comment on ${formatRangeLabel(pendingRange)}`}>
