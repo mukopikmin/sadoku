@@ -4,6 +4,9 @@ import {
   Flex,
   IconButton,
   Stack,
+  Popover,
+  Portal,
+  useBreakpointValue,
   Text,
   Textarea,
 } from "@chakra-ui/react";
@@ -34,6 +37,7 @@ export type CommentableBlockLayout = {
   };
   content: (children: React.ReactNode) => React.ReactNode;
   gutter: React.ReactNode;
+  anchor: (element: React.ReactElement) => React.ReactNode;
   thread: React.ReactNode;
   onContentClick: React.MouseEventHandler<HTMLElement>;
 };
@@ -70,6 +74,10 @@ export const CommentableBlock = ({
   onSelectCommentRange,
   selectedRange,
 }: CommentableBlockProps) => {
+  const floating = useBreakpointValue(
+    { base: true, md: false },
+    { fallback: "md" },
+  );
   const composer = useCommentComposer({
     actions,
     sourceRange,
@@ -122,13 +130,13 @@ export const CommentableBlock = ({
     <Flex
       className="comment-line-gutter"
       align="start"
-      direction={{ base: "row", md: "column" }}
+      direction={floating ? "row" : "column"}
       wrap="wrap"
       gap="1"
-      left={commentGutterLeft}
-      mb={{ base: "1.5", md: "0" }}
-      position={{ base: "static", md: "absolute" }}
-      top={{ md: "0.1rem" }}
+      left={floating ? undefined : commentGutterLeft}
+      mb="0"
+      position={floating ? "static" : "absolute"}
+      top={floating ? undefined : "0.1rem"}
     >
       <Tooltip content={`Add comment on ${formatRangeLabel(pendingRange)}`}>
         <IconButton
@@ -266,22 +274,58 @@ export const CommentableBlock = ({
     </Stack>
   );
 
-  if (renderLayout) {
-    return renderLayout({
+  const anchor = (element: React.ReactElement) => (
+    <Popover.Anchor asChild>{element}</Popover.Anchor>
+  );
+  const inlineGutter = floating ? null : gutter;
+  const layout = renderLayout ? (
+    renderLayout({
       blockProps,
       content,
-      gutter,
+      gutter: inlineGutter,
+      anchor,
       thread,
       onContentClick: composer.contentClick,
-    });
-  }
-  return (
+    })
+  ) : (
     <Box {...blockProps}>
-      <Box className="commentable-content" onClick={composer.contentClick}>
-        {gutter}
-        <Box className="comment-markdown-body">{content(children)}</Box>
-      </Box>
+      {anchor(
+        <Box className="commentable-content" onClick={composer.contentClick}>
+          {inlineGutter}
+          <Box className="comment-markdown-body">{content(children)}</Box>
+        </Box>,
+      )}
       {thread}
     </Box>
+  );
+  return (
+    <Popover.Root
+      open={Boolean(floating && gutter)}
+      autoFocus={false}
+      closeOnInteractOutside={false}
+      onOpenChange={({ open }) => {
+        if (!open) onCloseCommentForm();
+      }}
+      positioning={{
+        placement: "top-start",
+        strategy: "fixed",
+        flip: true,
+        slide: true,
+        // Keep actions reachable even when a code block is taller than the viewport.
+        overlap: true,
+        hideWhenDetached: true,
+      }}
+    >
+      {layout}
+      {floating && gutter && (
+        <Portal>
+          <Popover.Positioner>
+            <Popover.Content aria-label="Comment actions" width="auto" p="2">
+              {gutter}
+            </Popover.Content>
+          </Popover.Positioner>
+        </Portal>
+      )}
+    </Popover.Root>
   );
 };

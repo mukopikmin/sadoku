@@ -1,6 +1,5 @@
-import { Popover, Portal, Table, useBreakpointValue } from "@chakra-ui/react";
+import { Table } from "@chakra-ui/react";
 import { Children, cloneElement, isValidElement, useContext } from "react";
-import type { FlexProps } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 import { CommentableBlock } from "./CommentableBlock";
 import {
@@ -17,10 +16,6 @@ export const CommentableTableRow = ({
   ...props
 }: MarkdownComponentProps<"tr">) => {
   const context = useCommentRenderingContext();
-  const floating = useBreakpointValue(
-    { base: true, md: false },
-    { fallback: "md" },
-  );
   const ancestors = useContext(SourceLineContext);
   const sourceRange = getSourceRange({ node });
   if (!sourceRange || ancestors.has(sourceRange.startLine)) {
@@ -36,26 +31,13 @@ export const CommentableTableRow = ({
         blockProps,
         content,
         gutter,
+        anchor,
         thread,
         onContentClick,
       }) => (
-        <Popover.Root
-          open={Boolean(floating && gutter)}
-          autoFocus={false}
-          closeOnInteractOutside={false}
-          onOpenChange={({ open }) => {
-            if (!open) context.onCloseCommentForm();
-          }}
-          positioning={{
-            placement: "top-start",
-            strategy: "fixed",
-            flip: true,
-            slide: true,
-            hideWhenDetached: true,
-          }}
-        >
+        <>
           {content(
-            <Popover.Anchor asChild>
+            anchor(
               <Table.Row
                 {...props}
                 {...blockProps}
@@ -68,40 +50,21 @@ export const CommentableTableRow = ({
                         cell,
                         {},
                         <>
-                          {!floating && gutter}
+                          {gutter}
                           {cell.props.children}
                         </>,
                       )
                     : cell,
                 )}
-              </Table.Row>
-            </Popover.Anchor>,
-          )}
-          {floating && gutter && (
-            <Portal>
-              <Popover.Positioner>
-                <Popover.Content
-                  aria-label="Table row actions"
-                  width="auto"
-                  p="2"
-                >
-                  {isValidElement<FlexProps>(gutter)
-                    ? cloneElement(gutter, {
-                        mb: "0",
-                        left: "auto",
-                        top: "auto",
-                      })
-                    : gutter}
-                </Popover.Content>
-              </Popover.Positioner>
-            </Portal>
+              </Table.Row>,
+            ),
           )}
           {thread && (
             <Table.Row>
               <Table.Cell colSpan={cells.length}>{thread}</Table.Cell>
             </Table.Row>
           )}
-        </Popover.Root>
+        </>
       )}
     >
       {children}

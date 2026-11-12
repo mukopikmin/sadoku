@@ -22,7 +22,7 @@ describe("MarkdownPreview table comments", () => {
     const { container } = renderMarkdown(markdown);
     const cell = screen.getByRole("cell", { name: "One" });
     fireEvent.click(cell);
-    const actions = await screen.findByLabelText("Table row actions");
+    const actions = await screen.findByLabelText("Comment actions");
     expect(
       within(actions).getByLabelText("Add comment on line 3"),
     ).not.toBeNull();
@@ -31,7 +31,7 @@ describe("MarkdownPreview table comments", () => {
     expect(container.contains(actions)).toBe(false);
     fireEvent.keyDown(actions, { key: "Escape" });
     await waitFor(() =>
-      expect(screen.queryByLabelText("Table row actions")).toBeNull(),
+      expect(screen.queryByLabelText("Comment actions")).toBeNull(),
     );
   });
 
@@ -48,12 +48,12 @@ describe("MarkdownPreview table comments", () => {
     }));
     renderMarkdown(markdown);
     fireEvent.click(screen.getByRole("cell", { name: "Two" }));
-    const actions = await screen.findByLabelText("Table row actions");
+    const actions = await screen.findByLabelText("Comment actions");
     fireEvent.click(within(actions).getByLabelText("Add comment on line 4"));
     expect(
       await screen.findByRole("textbox", { name: "Comment body" }),
     ).not.toBeNull();
-    expect(screen.queryByLabelText("Table row actions")).toBeNull();
+    expect(screen.queryByLabelText("Comment actions")).toBeNull();
   });
 
   it.each([
