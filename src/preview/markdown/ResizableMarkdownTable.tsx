@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  Flex,
-  IconButton,
-  Stack,
-  Table,
-  Text,
-} from "@chakra-ui/react";
+import { Box, IconButton, Stack, Table, Text } from "@chakra-ui/react";
 import { RotateCcw } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Tooltip } from "../components/ui/tooltip";
@@ -135,29 +127,10 @@ const ManagedMarkdownTable = ({
             {children}
           </Table.Root>
         </Box>
-        {resize.state.status !== "idle" && (
-          <Flex
-            gap="2"
-            align="center"
-            flexWrap="wrap"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {resize.state.status === "saving" && (
-              <Text role="status" fontSize="xs" color="fg.muted">
-                Saving column widths…
-              </Text>
-            )}
-            {resize.state.status === "error" && (
-              <>
-                <Text role="alert" fontSize="xs">
-                  Could not save column widths. {resize.state.message}
-                </Text>
-                <Button size="xs" variant="outline" onClick={resize.retry}>
-                  Retry
-                </Button>
-              </>
-            )}
-          </Flex>
+        {resize.state.status === "saving" && (
+          <Text role="status" fontSize="xs" color="fg.muted">
+            Saving column widths…
+          </Text>
         )}
       </Stack>
     </TableColumnResizeContext.Provider>

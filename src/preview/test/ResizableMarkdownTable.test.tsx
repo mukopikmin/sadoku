@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MarkdownPreview } from "../pages/markdown/MarkdownPreview";
 import { TableLayoutContext } from "../markdown/tableLayoutContext";
 import type { TableLayout } from "../models/tableLayout";
 import {
+  cleanup,
   createCommentActions,
   fireEvent,
   render,
@@ -14,6 +15,8 @@ import {
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
 }));
+
+afterEach(cleanup);
 
 const markdown = "| A | B | C |\n| - | - | - |\n| x | y | z |";
 const layout: TableLayout = {
@@ -88,5 +91,40 @@ describe("resizable Markdown table", () => {
         .getByRole("button", { name: "Reset column widths" })
         .hasAttribute("disabled"),
     ).toBe(true);
+  });
+  it("shows save failures in a toast and retries from the notification", async () => {
+    const save = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Offline"))
+      .mockImplementation(async (_id, columnWidths) => ({
+        ...layout,
+        columnWidths,
+      }));
+    const { container } = render(
+      <TableLayoutContext.Provider
+        value={{
+          state: { status: "ready", tables: [layout] },
+          retry: vi.fn(),
+          save,
+        }}
+      >
+        <MarkdownPreview
+          actions={createCommentActions()}
+          comments={[]}
+          markdown={markdown}
+          showHtmlComments
+          theme="default"
+        />
+      </TableLayoutContext.Provider>,
+    );
+    fireEvent.keyDown(
+      screen.getByRole("separator", { name: "Resize column 1" }),
+      { key: "ArrowRight" },
+    );
+    await screen.findByText("Could not save column widths");
+    expect(container.textContent).not.toContain("Could not save column widths");
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save).toHaveBeenLastCalledWith("table", [110, 200, 300]);
   });
 });

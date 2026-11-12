@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { toaster } from "../components/ui/toaster";
 import { loadTableLayouts, saveTableLayout } from "../api/tableLayouts";
 import { extractTablePositions, type TableLayout } from "../models/tableLayout";
 import { extractAgentFrontMatter } from "../pages/markdown/frontMatter";
@@ -28,6 +29,22 @@ export const useTableLayouts = (
     staleTime: 0,
     refetchOnMount: "always",
   });
+  const { error, errorUpdatedAt, refetch } = query;
+  useEffect(() => {
+    if (!error) return;
+    toaster.create({
+      type: "error",
+      title: "Could not restore column widths",
+      description: error.message,
+      closable: true,
+      action: {
+        label: "Retry",
+        onClick: () => {
+          void refetch();
+        },
+      },
+    });
+  }, [error, errorUpdatedAt, refetch]);
   const mutation = useMutation({
     mutationFn: ({ id, widths }: { id: string; widths: number[] }) =>
       saveTableLayout(documentId!, markdown, id, widths),

@@ -1,3 +1,4 @@
+import { toaster } from "../components/ui/toaster";
 import { describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor } from "./domTestUtils";
 import { queryHook } from "./hookTestUtils";
@@ -82,7 +83,18 @@ describe("server table layout state", () => {
         message: "Offline",
       }),
     );
-    act(() => result.current.retry());
+    expect(toaster.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: "error",
+        description: "Offline",
+        action: expect.objectContaining({ label: "Retry" }),
+      }),
+    );
+    act(() =>
+      vi.mocked(toaster.create).mock.calls.at(-1)![0].action!.onClick!(),
+    );
     await waitFor(() => expect(result.current.state.status).toBe("ready"));
   });
 });
+
+vi.mock("../components/ui/toaster", () => ({ toaster: { create: vi.fn() } }));

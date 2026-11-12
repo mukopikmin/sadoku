@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
+import { toaster } from "../components/ui/toaster";
 import { clampColumnWidth, type TableLayout } from "../models/tableLayout";
 
 type SaveState =
@@ -52,9 +53,19 @@ export const useTableColumnResize = (
       }
     } catch (error) {
       if (version.current === request) {
-        setState({
-          status: "error",
-          message: error instanceof Error ? error.message : String(error),
+        const message = error instanceof Error ? error.message : String(error);
+        setState({ status: "error", message });
+        toaster.create({
+          type: "error",
+          title: "Could not save column widths",
+          description: message,
+          closable: true,
+          action: {
+            label: "Retry",
+            onClick: () => {
+              void persist(widthsRef.current);
+            },
+          },
         });
       }
     }

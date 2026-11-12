@@ -1,3 +1,4 @@
+import { toaster } from "../components/ui/toaster";
 import { describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor } from "./domTestUtils";
 import { useTableColumnResize } from "../markdown/useTableColumnResize";
@@ -105,7 +106,12 @@ describe("column resizing", () => {
       }),
     );
     expect(result.current.widths).toEqual([100, 210, 300]);
-    act(() => result.current.retry());
+    expect(toaster.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: "error", description: "Offline" }),
+    );
+    act(() =>
+      vi.mocked(toaster.create).mock.calls.at(-1)![0].action!.onClick!(),
+    );
     await waitFor(() => expect(result.current.state.status).toBe("idle"));
     expect(save).toHaveBeenLastCalledWith("table", [100, 210, 300]);
     act(() => result.current.reset());
@@ -128,3 +134,5 @@ describe("column resizing", () => {
     expect(result.current.widths).toEqual([180, 0, 0]);
   });
 });
+
+vi.mock("../components/ui/toaster", () => ({ toaster: { create: vi.fn() } }));
