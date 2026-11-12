@@ -14,8 +14,12 @@ import {
 } from "../markdownRenderers";
 import { CommentableBlock } from "./CommentableBlock";
 import {
+  CommentableTableHeader,
+  CommentableTableRow,
+} from "./CommentableTable";
+import {
   type CommentableComponentProps,
-  type CommentRenderingContextValue,
+  getCommentableBlockProps,
   getSourceLine,
   getSourceRange,
   SourceLineContext,
@@ -45,43 +49,6 @@ const splitListItemChildren = (
     else itemChildren.push(child);
   }
   return { itemChildren, nestedLists };
-};
-
-export const getCommentableBlockProps = (
-  context: CommentRenderingContextValue,
-  sourceRange: { endLine: number; startLine: number },
-) => {
-  const {
-    commentsByLine,
-    drafts: _drafts,
-    markdown: _,
-    rangeHighlights,
-    ...props
-  } = context;
-  const { endLine, startLine } = sourceRange;
-  const comments = [...commentsByLine.entries()].flatMap(([line, comments]) =>
-    line >= startLine && line <= endLine ? comments : [],
-  );
-  return {
-    ...props,
-    comments,
-    hasRangeHighlight: rangeHighlights.some(
-      (range) => range.endLine >= startLine && range.startLine <= endLine,
-    ),
-    isAdding:
-      props.activeCommentLine !== undefined &&
-      props.activeCommentLine >= startLine &&
-      props.activeCommentLine <= endLine,
-    isRangeActionLine:
-      props.selectedRange !== undefined &&
-      props.selectedRange.endLine >= startLine &&
-      props.selectedRange.endLine <= endLine,
-    isSelected: props.selectedRange
-      ? props.selectedRange.startLine === startLine &&
-        props.selectedRange.endLine === endLine
-      : false,
-    sourceRange,
-  };
 };
 
 const createCommentableComponent = (
@@ -222,11 +189,14 @@ export const createCommentableMarkdownComponents = (): Components => ({
   ul: sharedMarkdownComponents.ul,
   p: createCommentableComponent("p", renderMarkdownParagraph),
   pre: createCommentablePre(),
-  table: createCommentableComponent("table", renderMarkdownTable),
+  table: ({ children, node: _node, ...props }) =>
+    renderMarkdownTable(props, children, "commentable-table"),
   tbody: sharedMarkdownComponents.tbody,
   td: sharedMarkdownComponents.td,
   th: sharedMarkdownComponents.th,
-  thead: sharedMarkdownComponents.thead,
-  tr: sharedMarkdownComponents.tr,
+  thead: CommentableTableHeader,
+  tr: CommentableTableRow,
   code: sharedMarkdownComponents.code,
 });
+
+export { getCommentableBlockProps } from "./commentRendering";

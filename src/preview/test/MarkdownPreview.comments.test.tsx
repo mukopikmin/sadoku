@@ -27,7 +27,7 @@ describe("MarkdownPreview comments", () => {
 
     fireEvent.click(header);
     expect(
-      screen.getByRole("button", { name: "Add comment on lines 1-3" }),
+      screen.getByRole("button", { name: "Add comment on line 1" }),
     ).not.toBeNull();
     fireEvent.click(diagram.querySelector("rect")!, { shiftKey: true });
     expect(

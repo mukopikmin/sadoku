@@ -30,16 +30,16 @@ export const markdownStyles = `
     margin-bottom: 0;
   }
 
-  .comment-markdown-body :where(th, td) {
+  :is(.comment-markdown-body, .commentable-table) :where(th, td) {
     border: 1px solid var(--chakra-colors-border-default);
     padding: var(--chakra-spacing-2) var(--chakra-spacing-3);
   }
 
-  .comment-markdown-body th {
+  :is(.comment-markdown-body, .commentable-table) th {
     font-weight: 600;
   }
 
-  .comment-markdown-body tr {
+  :is(.comment-markdown-body, .commentable-table) tr {
     border-top: 1px solid var(--chakra-colors-border-muted);
   }
 
@@ -59,7 +59,8 @@ export const markdownStyles = `
   }
 
   :root[data-show-highlight-boundaries="true"] .markdown-range-highlight,
-  :root[data-show-highlight-boundaries="true"] .commentable-content::before {
+  :root[data-show-highlight-boundaries="true"] .commentable-content:not(tr)::before,
+  :root[data-show-highlight-boundaries="true"] tr.commentable-content {
     outline: 1px solid var(--chakra-colors-accent);
     outline-offset: -1px;
   }
@@ -117,8 +118,9 @@ export const markdownStyles = `
     display: contents;
   }
 
-  /* Individual block bounds are shown only by the boundary debug setting. */
-  .commentable-content::before {
+  /* Individual block bounds are shown only by the boundary debug setting.
+     Table rows use the overlay directly: pseudo-elements create extra cells. */
+  .commentable-content:not(tr)::before {
     content: "";
     position: absolute;
     z-index: -1;

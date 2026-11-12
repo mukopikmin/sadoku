@@ -164,6 +164,32 @@ describe("rendered document diff", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("comments on individual rows of an added table", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    render(
+      <MarkdownPreview
+        actions={createCommentActions({ onCreateComment })}
+        comments={[]}
+        markdown={"| Name |\n| --- |\n| New |\n| Kept |"}
+        previousMarkdown={"| Name |\n| --- |\n| Old |\n| Kept |"}
+        showHtmlComments
+        theme="default"
+      />,
+    );
+    const added = screen.getByRole("group", { name: "Added content" });
+    fireEvent.click(within(added).getByRole("cell", { name: "New" }));
+    fireEvent.click(
+      within(added).getByRole("button", { name: "Add comment on line 3" }),
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
+      target: { value: "Review added row" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(3, "Review added row", 3),
+    );
+  });
+
   it("limits list changes to the affected items and keeps their source lines", () => {
     const { container } = render(
       preview(

@@ -18,6 +18,8 @@ export const commentableBlockSelector = [
   ":scope > .document-diff-addition > .comment-markdown-list .commentable-block",
   ":scope > .document-diff-addition > dl .commentable-block",
   ":scope > dl .commentable-block",
+  ":scope > .commentable-table .commentable-block",
+  ":scope > .document-diff-addition > .commentable-table .commentable-block",
 ].join(", ");
 
 export const getCommentableLines = (preview: Element): number[] =>
@@ -61,9 +63,11 @@ export const measureRangeHighlightLayouts = (
         for (const block of blocks) {
           const content =
             overlaps(block) || Number(block.dataset.sourceLine) === anchorLine
-              ? block.querySelector<HTMLElement>(
-                  ":scope > .commentable-content",
-                )
+              ? block.matches(".commentable-content")
+                ? block
+                : block.querySelector<HTMLElement>(
+                    ":scope > .commentable-content",
+                  )
               : null;
           if (content && !claimed.has(content)) {
             contents.push(content);

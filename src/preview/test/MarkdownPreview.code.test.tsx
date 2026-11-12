@@ -170,33 +170,6 @@ Paragraph with **formatting**.
     ).not.toBeNull();
   });
 
-  it("creates comments for the full table range", async () => {
-    const onCreateComment = vi.fn(async () => {});
-    const { container } = renderMarkdown(
-      `| Name | Count |
-| --- | ---: |
-| One | 1 |
-`,
-      [],
-      { onCreateComment },
-    );
-
-    fireEvent.click(container.querySelector("table")!);
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Add comment on lines 1-3",
-      }),
-    );
-    fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: "Review this table." },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
-
-    await waitFor(() =>
-      expect(onCreateComment).toHaveBeenCalledWith(1, "Review this table.", 3),
-    );
-  });
-
   it("preserves indented code as literal text inside a code block", () => {
     const { container } = renderMarkdown(`    const indented = "<escaped>";
     console.log(indented);

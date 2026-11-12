@@ -8,8 +8,15 @@ import type {
 export const renderMarkdownTable = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
+  containerClassName?: string,
 ) => (
-  <Box maxW="100%" overflowX="auto" py="2" w="fit-content">
+  <Box
+    className={containerClassName}
+    maxW="100%"
+    overflowX="auto"
+    py="2"
+    w="fit-content"
+  >
     <Table.Root
       fontSize="inherit"
       m="0"

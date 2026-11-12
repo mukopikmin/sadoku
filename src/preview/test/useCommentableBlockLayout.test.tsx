@@ -73,6 +73,36 @@ afterEach(() => {
 });
 
 describe("commentable block layout", () => {
+  it.each([false, true])(
+    "measures table rows separately from their threads with diff %s",
+    (diff) => {
+      const preview = document.createElement("div");
+      const table = `<div class="commentable-table"><table>
+      <thead><tr class="commentable-block commentable-content" data-source-line="1"><th>Header</th></tr></thead>
+      <tbody>
+        <tr class="commentable-block commentable-content" data-source-line="3"><td>First</td></tr>
+        <tr><td><div class="comment-thread">Thread</div></td></tr>
+        <tr class="commentable-block commentable-content" data-source-line="4"><td>Second</td></tr>
+      </tbody></table></div>`;
+      preview.innerHTML = diff
+        ? `<div class="document-diff-addition">${table}</div>`
+        : table;
+      preview.getBoundingClientRect = () => mockRect(100, 500);
+      preview.querySelector('[data-source-line="3"]')!.getBoundingClientRect =
+        () => mockRect(140, 180);
+      preview.querySelector(".comment-thread")!.getBoundingClientRect = () =>
+        mockRect(180, 300);
+      expect(getCommentableLines(preview)).toEqual([1, 3, 4]);
+      expect(
+        measureRangeHighlightLayouts(preview, [
+          { startLine: 3, endLine: 3, kind: "selection" },
+        ]),
+      ).toEqual([
+        { startLine: 3, endLine: 3, kind: "selection", top: 40, bottom: 80 },
+      ]);
+    },
+  );
+
   it.each(["hover", "comment", "selection"] as const)(
     "uses the full padded content bounds for %s, including indented diff blocks",
     (kind) => {
