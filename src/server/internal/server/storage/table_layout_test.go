@@ -46,3 +46,98 @@ func TestTableLayoutsSurviveReopenAndCascadeWithDocument(t *testing.T) {
 		t.Fatal("accepted layouts for a missing document")
 	}
 }
+
+func TestNormalizedTableWidthUpdatesReuseRevisionAndRollbackAtomically(t *testing.T) {
+	r := testRepository(t)
+	doc, err := r.Ensure(t.Context(), "layout.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := u.ResolveTableLayouts(u.TableLayoutState{}, "| A | B |\n| - | - |", []u.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 2}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = r.InitializeSnapshot(t.Context(), doc.ID, state.Markdown); err != nil {
+		t.Fatal(err)
+	}
+	state.Tables[0].ColumnWidths = []float64{100, 200}
+	if err = r.SaveTableLayouts(t.Context(), doc.ID, state); err != nil {
+		t.Fatal(err)
+	}
+	var initialRevision int64
+	if err = r.DB.QueryRowContext(t.Context(), "SELECT table_layout_revision_id FROM comment_document WHERE id=?", doc.ID).Scan(&initialRevision); err != nil {
+		t.Fatal(err)
+	}
+	state.Tables[0].ColumnWidths = []float64{150, 0}
+	if err = r.SaveTableLayouts(t.Context(), doc.ID, state); err != nil {
+		t.Fatal(err)
+	}
+	var count int
+	if err = r.DB.QueryRowContext(t.Context(), "SELECT count(*) FROM document_revision WHERE document_id=?", doc.ID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("duplicated snapshot: %d %v", count, err)
+	}
+	if err = r.DB.QueryRowContext(t.Context(), "SELECT count(*) FROM markdown_table_column_width WHERE table_id=?", state.Tables[0].ID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("automatic width persisted: %d %v", count, err)
+	}
+	state.Markdown = "changed source"
+	state.Tables[0].ColumnWidths = []float64{10}
+	if err = r.SaveTableLayouts(t.Context(), doc.ID, state); err == nil {
+		t.Fatal("invalid width accepted")
+	}
+	restored, err := r.ReadTableLayouts(t.Context(), doc.ID)
+	if err != nil || restored.Markdown != "| A | B |\n| - | - |" || !reflect.DeepEqual(restored.Tables[0].ColumnWidths, []float64{150}) {
+		t.Fatalf("failed save changed state: %+v %v", restored, err)
+	}
+	var revision int64
+	if err = r.DB.QueryRowContext(t.Context(), "SELECT table_layout_revision_id FROM comment_document WHERE id=?", doc.ID).Scan(&revision); err != nil || revision != initialRevision {
+		t.Fatal("failed save changed revision reference")
+	}
+	if err = r.DB.QueryRowContext(t.Context(), "SELECT count(*) FROM document_revision WHERE document_id=?", doc.ID).Scan(&count); err != nil || count != 1 {
+		t.Fatal("failed save left an extra revision")
+	}
+	state.Markdown = restored.Markdown
+	state.Tables[0].ColumnWidths = nil
+	if err = r.SaveTableLayouts(t.Context(), doc.ID, state); err != nil {
+		t.Fatal(err)
+	}
+	if err = r.DB.QueryRowContext(t.Context(), "SELECT count(*) FROM markdown_table_column_width WHERE table_id=?", state.Tables[0].ID).Scan(&count); err != nil || count != 0 {
+		t.Fatal("reset retained widths")
+	}
+}
+
+func TestTableLayoutsCannotReuseAnotherDocumentsIdentityOrRevision(t *testing.T) {
+	r := testRepository(t)
+	one, err := r.Ensure(t.Context(), "one.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	two, err := r.Ensure(t.Context(), "two.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := u.ResolveTableLayouts(u.TableLayoutState{}, "| A |\n| - |", []u.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 1}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Tables[0].ColumnWidths = []float64{200}
+	if err = r.SaveTableLayouts(t.Context(), one.ID, state); err != nil {
+		t.Fatal(err)
+	}
+	if err = r.SaveTableLayouts(t.Context(), two.ID, state); err == nil {
+		t.Fatal("accepted another document's table ID")
+	}
+	restored, err := r.ReadTableLayouts(t.Context(), one.ID)
+	if err != nil || !reflect.DeepEqual(restored, state) {
+		t.Fatalf("modified another document: %+v %v", restored, err)
+	}
+	var count int
+	if err = r.DB.QueryRowContext(t.Context(), "SELECT count(*) FROM document_revision WHERE document_id=?", two.ID).Scan(&count); err != nil || count != 0 {
+		t.Fatal("failed identity transfer left a revision")
+	}
+	if _, err = r.DB.ExecContext(t.Context(), "UPDATE comment_document SET table_layout_revision_id=(SELECT table_layout_revision_id FROM comment_document WHERE id=?) WHERE id=?", one.ID, two.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = r.ReadTableLayouts(t.Context(), two.ID); err == nil {
+		t.Fatal("accepted a comparison revision owned by another document")
+	}
+}

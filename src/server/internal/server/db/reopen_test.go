@@ -77,7 +77,7 @@ func TestOpenRetriesLegacyResolutionFailureWithoutRecreatingDatabase(t *testing.
 								t.Fatalf("retry changed repaired %s data", table)
 							}
 						}
-						if len(data["schema_migration"]) != 17 || !reflect.DeepEqual(data["comment_reply"], beforeData["comment_reply"]) {
+						if len(data["schema_migration"]) != 18 || !reflect.DeepEqual(data["comment_reply"], beforeData["comment_reply"]) {
 							t.Fatal("retry lost replies or did not apply all migrations")
 						}
 					} else if !reflect.DeepEqual(upgradedData, data) {
@@ -111,6 +111,10 @@ func migrationData(t *testing.T, database *sql.DB) map[string][][]any {
 				}
 				if err := rows.Scan(pointers...); err != nil {
 					t.Fatal(err)
+				}
+				// New nullable layout reference is absent in the legacy fixture.
+				if table == "comment_document" && columns[len(columns)-1] != "table_layout_revision_id" {
+					values = append(values, nil)
 				}
 				result[table] = append(result[table], values)
 			}

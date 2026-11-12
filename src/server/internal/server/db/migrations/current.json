@@ -32,5 +32,26 @@
     "statements": [
       "CREATE TABLE document_table_layout (document_id INTEGER PRIMARY KEY NOT NULL, state TEXT NOT NULL CHECK (json_valid(state)), FOREIGN KEY (document_id) REFERENCES comment_document(id) ON DELETE CASCADE)"
     ]
+  },
+  {
+    "version": "0018",
+    "name": "normalize_table_layouts",
+    "checksum": "sha256:763c57a278eb6eb522664d90e553de509b0de6b0526a74224fd54906c5d2ce9b",
+    "statements": [
+      "CREATE TABLE table_layout_migration_validation (valid INTEGER NOT NULL CHECK (valid=1))",
+      "INSERT INTO table_layout_migration_validation SELECT CASE WHEN json_type(state,'$.markdown')='text' AND json_type(state,'$.tables')='array' THEN 1 ELSE 0 END FROM document_table_layout",
+      "INSERT INTO table_layout_migration_validation SELECT CASE WHEN json_type(t.value,'$.id')='text' AND length(json_extract(t.value,'$.id'))>0 AND json_type(t.value,'$.startLine')='integer' AND json_type(t.value,'$.endLine')='integer' AND json_type(t.value,'$.columnCount')='integer' AND json_extract(t.value,'$.startLine')>=1 AND json_extract(t.value,'$.endLine')>json_extract(t.value,'$.startLine') AND json_extract(t.value,'$.columnCount') BETWEEN 1 AND 1000 AND json_type(t.value,'$.columnWidths')='array' AND json_array_length(t.value,'$.columnWidths')<=json_extract(t.value,'$.columnCount') THEN 1 ELSE 0 END FROM document_table_layout l,json_each(l.state,'$.tables') t",
+      "INSERT INTO table_layout_migration_validation SELECT CASE WHEN w.type IN ('integer','real') AND (w.value=0 OR w.value BETWEEN 64 AND 2000) THEN 1 ELSE 0 END FROM document_table_layout l,json_each(l.state,'$.tables') t,json_each(t.value,'$.columnWidths') w",
+      "ALTER TABLE comment_document ADD COLUMN table_layout_revision_id INTEGER REFERENCES document_revision(id)",
+      "CREATE TABLE markdown_table_layout (id TEXT PRIMARY KEY NOT NULL CHECK(length(id)>0), document_id INTEGER NOT NULL REFERENCES comment_document(id) ON DELETE CASCADE, start_line INTEGER NOT NULL CHECK(start_line>=1), end_line INTEGER NOT NULL CHECK(end_line>start_line), column_count INTEGER NOT NULL CHECK(column_count BETWEEN 1 AND 1000))",
+      "CREATE INDEX idx_markdown_table_layout_document ON markdown_table_layout(document_id)",
+      "CREATE TABLE markdown_table_column_width (table_id TEXT NOT NULL REFERENCES markdown_table_layout(id) ON DELETE CASCADE, column_index INTEGER NOT NULL CHECK(column_index>=0), width_px REAL NOT NULL CHECK(width_px BETWEEN 64 AND 2000), PRIMARY KEY(table_id,column_index))",
+      "INSERT INTO document_revision(document_id,markdown) SELECT l.document_id,json_extract(l.state,'$.markdown') FROM document_table_layout l WHERE NOT EXISTS (SELECT 1 FROM document_revision r WHERE r.document_id=l.document_id AND r.markdown=json_extract(l.state,'$.markdown'))",
+      "UPDATE comment_document SET table_layout_revision_id=(SELECT r.id FROM document_revision r JOIN document_table_layout l ON l.document_id=r.document_id WHERE r.document_id=comment_document.id AND r.markdown=json_extract(l.state,'$.markdown') ORDER BY r.id DESC LIMIT 1) WHERE id IN (SELECT document_id FROM document_table_layout)",
+      "INSERT INTO markdown_table_layout SELECT json_extract(t.value,'$.id'),l.document_id,json_extract(t.value,'$.startLine'),json_extract(t.value,'$.endLine'),json_extract(t.value,'$.columnCount') FROM document_table_layout l,json_each(l.state,'$.tables') t",
+      "INSERT INTO markdown_table_column_width SELECT json_extract(t.value,'$.id'),CAST(w.key AS INTEGER),w.value FROM document_table_layout l,json_each(l.state,'$.tables') t,json_each(t.value,'$.columnWidths') w WHERE w.value<>0",
+      "DROP TABLE document_table_layout",
+      "DROP TABLE table_layout_migration_validation"
+    ]
   }
 ]
