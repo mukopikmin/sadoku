@@ -151,6 +151,9 @@ them when making changes.
   much as practical, keeping components primarily responsible for rendering and
   wiring user interactions. This includes input validation, asynchronous
   operations, side effects, and state transitions.
+- Avoid nested conditional (`?:`) operators for state transitions and layout
+  decisions. Use early returns or named derived values with explicit branches;
+  keep simple single-level conditional expressions local when they are clearer.
 - Represent the UI's meaningful states in the hook's return type. Prefer
   discriminated unions for mutually exclusive states (such as loading, ready,
   empty, error, editing, or saving), with the data and actions available in each

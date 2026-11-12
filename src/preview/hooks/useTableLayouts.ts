@@ -15,6 +15,10 @@ import {
 import { extractAgentFrontMatter } from "../pages/markdown/frontMatter";
 import { tableLayoutsQueryKey } from "./previewQueryKeys";
 
+type TableLayoutsState =
+  | { status: "ready"; tables: TableLayout[] }
+  | { status: "loading" | "error" };
+
 export const useTableLayouts = (
   documentId: number | undefined,
   markdown: string,
@@ -101,19 +105,16 @@ export const useTableLayouts = (
       );
     },
   });
-  const state =
-    positions.length === 0
-      ? ({ status: "ready", tables: [] } as const)
-      : query.isFetching
-        ? ({ status: "loading" } as const)
-        : query.error
-          ? ({ status: "error" } as const)
-          : query.data !== undefined
-            ? ({ status: "ready", tables: query.data } as const)
-            : ({ status: "loading" } as const);
+  const getState = (): TableLayoutsState => {
+    if (positions.length === 0) return { status: "ready", tables: [] };
+    if (query.isFetching) return { status: "loading" };
+    if (query.error) return { status: "error" };
+    if (query.data === undefined) return { status: "loading" };
+    return { status: "ready", tables: query.data };
+  };
 
   return {
-    state,
+    state: getState(),
     save: (id: string, widths: number[]) =>
       mutation.mutateAsync({ id, widths }),
   };

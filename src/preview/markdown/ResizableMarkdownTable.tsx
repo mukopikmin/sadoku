@@ -74,6 +74,12 @@ const ManagedMarkdownTable = ({
     0,
   );
   const allAdjusted = widths.every((width) => width > 0);
+  let tableWidth = "auto";
+  if (adjusted && allAdjusted) {
+    tableWidth = `${minimumWidth}px`;
+  } else if (adjusted) {
+    tableWidth = "100%";
+  }
   return (
     <TableColumnResizeContext.Provider value={resize}>
       <Stack gap="1" py="2" minW="0" maxW="100%">
@@ -89,7 +95,7 @@ const ManagedMarkdownTable = ({
             size="sm"
             variant="outline"
             tableLayout={adjusted ? "fixed" : "auto"}
-            w={adjusted ? (allAdjusted ? `${minimumWidth}px` : "100%") : "auto"}
+            w={tableWidth}
             minW={adjusted ? `${minimumWidth}px` : undefined}
             maxW={adjusted ? undefined : "100%"}
             {...elementProps}
