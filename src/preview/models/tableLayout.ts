@@ -20,10 +20,7 @@ export const clampColumnWidth = (width: number) =>
   Math.min(maximumColumnWidth, Math.max(minimumColumnWidth, Math.round(width)));
 
 export const extractTablePositions = (markdown: string): TablePosition[] => {
-  const root = unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .parse(markdown) as Root;
+  const root = unified().use(remarkParse).use(remarkGfm).parse(markdown);
   const tables: TablePosition[] = [];
   const visit = (node: Root | RootContent) => {
     if (node.type === "table" && node.position) {
@@ -33,7 +30,7 @@ export const extractTablePositions = (markdown: string): TablePosition[] => {
         columnCount: node.children[0].children.length,
       });
     } else if ("children" in node) {
-      for (const child of node.children) visit(child as RootContent);
+      for (const child of node.children) visit(child);
     }
   };
   visit(root);

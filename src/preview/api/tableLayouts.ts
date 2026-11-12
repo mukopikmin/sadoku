@@ -1,3 +1,4 @@
+import type { TableLayout as TableLayoutMessage } from "../gen/sadoku/preview/v1/preview_pb";
 import {
   maximumColumnWidth,
   minimumColumnWidth,
@@ -6,18 +7,13 @@ import {
 } from "../models/tableLayout";
 import { previewClient } from "./connect";
 
-export const parseTableLayout = (value: TableLayout): TableLayout => {
+export const toTableLayout = (value: TableLayoutMessage): TableLayout => {
   if (
-    typeof value.id !== "string" ||
     !value.id ||
-    !Number.isSafeInteger(value.startLine) ||
     value.startLine < 1 ||
-    !Number.isSafeInteger(value.endLine) ||
     value.endLine <= value.startLine ||
-    !Number.isSafeInteger(value.columnCount) ||
     value.columnCount < 1 ||
     value.columnCount > 1000 ||
-    !Array.isArray(value.columnWidths) ||
     value.columnWidths.length > value.columnCount ||
     value.columnWidths.some(
       (width) =>
@@ -47,14 +43,15 @@ export const loadTableLayouts = async (
     displayedMarkdown,
     tables,
   });
-  const layouts = response.tables.map(parseTableLayout);
+  const layouts = response.tables.map(toTableLayout);
   if (
     layouts.length !== tables.length ||
     new Set(layouts.map((layout) => layout.id)).size !== layouts.length ||
-    layouts.some((layout, index) =>
-      (Object.keys(tables[index]) as (keyof TablePosition)[]).some(
-        (key) => layout[key] !== tables[index][key],
-      ),
+    layouts.some(
+      (layout, index) =>
+        layout.startLine !== tables[index].startLine ||
+        layout.endLine !== tables[index].endLine ||
+        layout.columnCount !== tables[index].columnCount,
     )
   ) {
     throw new Error("Table layouts do not match the displayed document.");
@@ -68,7 +65,7 @@ export const saveTableLayout = async (
   tableId: string,
   columnWidths: number[],
 ): Promise<TableLayout> =>
-  parseTableLayout(
+  toTableLayout(
     await previewClient.updateTableLayout({
       documentId: BigInt(documentId),
       displayedMarkdown,
