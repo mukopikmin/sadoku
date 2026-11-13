@@ -2,7 +2,6 @@ import {
   Badge,
   Box,
   Button,
-  ButtonGroup,
   Checkbox,
   Flex,
   Stack,
@@ -108,30 +107,30 @@ export const CommentList = ({ actions, comments }: CommentListProps) => {
   return (
     <Stack gap="4">
       <Stack gap="2">
-        <ButtonGroup
-          aria-label="Comment filters"
-          role="group"
-          size="sm"
-          variant="outline"
-          flexWrap="wrap"
-        >
+        <Flex aria-label="Comment filters" role="group" gap="4" wrap="wrap">
           {(Object.keys(commentFilter.filters) as CommentFilter[]).map(
             (filter) => (
-              <Button
+              <Checkbox.Root
                 key={filter}
-                aria-pressed={commentFilter.filter === filter}
+                checked={commentFilter.selectedFilters.includes(filter)}
                 disabled={bulk.isPending || isDeleteDialogOpen}
-                onClick={() => selectFilter(filter)}
-                variant={commentFilter.filter === filter ? "solid" : "outline"}
+                onCheckedChange={() => selectFilter(filter)}
+                size="sm"
               >
-                {commentFilter.filters[filter].label}
+                <Checkbox.HiddenInput />
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Label>
+                  {commentFilter.filters[filter].label}
+                </Checkbox.Label>
                 <Badge aria-hidden="true" size="sm" variant="solid">
                   {commentFilter.filters[filter].comments.length}
                 </Badge>
-              </Button>
+              </Checkbox.Root>
             ),
           )}
-        </ButtonGroup>
+        </Flex>
         <Text color="fg.muted" fontSize="sm" aria-live="polite">
           Showing {commentFilter.visibleComments.length} of{" "}
           {commentFilter.totalCount} comments
@@ -175,9 +174,10 @@ export const CommentList = ({ actions, comments }: CommentListProps) => {
             {(["resolve", "reopen"] as const)
               .filter((operation) =>
                 operation === "resolve"
-                  ? commentFilter.filter !== "resolved"
-                  : commentFilter.filter === null ||
-                    commentFilter.filter === "resolved",
+                  ? commentFilter.selectedFilters.some(
+                      (filter) => filter !== "resolved",
+                    )
+                  : commentFilter.selectedFilters.includes("resolved"),
               )
               .map((operation) => (
                 <Button

@@ -17,7 +17,7 @@ export const useCommentList = (
   const selectFilter = (filter: CommentFilter) => {
     if (deleting.current || bulk.isPending || isDeleteDialogOpen) return;
     bulk.clearSelection();
-    commentFilter.setFilter(commentFilter.filter === filter ? null : filter);
+    commentFilter.toggleFilter(filter);
   };
 
   return {

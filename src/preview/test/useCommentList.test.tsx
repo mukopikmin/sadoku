@@ -14,20 +14,22 @@ it("clears selection when filters change and toggles the current filter off", ()
   const { result } = renderHook(() =>
     useCommentList(comments, createCommentActions()),
   );
-  expect(result.current.commentFilter.visibleComments).toEqual(comments);
+  expect(result.current.commentFilter.visibleComments).toEqual(
+    comments.slice(0, 2),
+  );
   act(() => result.current.bulk.toggle(1));
   act(() => result.current.selectFilter("stale"));
   expect(result.current.bulk.selectedIds).toEqual([]);
   expect(
     result.current.commentFilter.visibleComments.map(({ id }) => id),
-  ).toEqual([2]);
+  ).toEqual([1]);
   act(() => result.current.selectFilter("resolved"));
   expect(
     result.current.commentFilter.visibleComments.map(({ id }) => id),
-  ).toEqual([3]);
+  ).toEqual([1, 3]);
   act(() => result.current.selectFilter("resolved"));
-  expect(result.current.commentFilter.filter).toBeNull();
-  expect(result.current.commentFilter.visibleComments).toEqual(comments);
+  expect(result.current.commentFilter.selectedFilters).toEqual(["active"]);
+  expect(result.current.commentFilter.visibleComments).toEqual([comments[0]]);
 });
 
 it("only resolves or reopens eligible selected comments in the unfiltered list", async () => {
@@ -36,6 +38,7 @@ it("only resolves or reopens eligible selected comments in the unfiltered list",
     onReopenComment: vi.fn(async () => {}),
   });
   const { result } = renderHook(() => useCommentList(comments, actions));
+  act(() => result.current.selectFilter("resolved"));
   act(() => result.current.bulk.toggleAll());
   expect(result.current.canResolve).toBe(true);
   expect(result.current.canReopen).toBe(true);
@@ -66,7 +69,10 @@ it("locks filter changes during confirmation/deletion, and continues after parti
     result.current.selectFilter("resolved");
     result.current.selectFilter("stale");
   });
-  expect(result.current.commentFilter.filter).toBeNull();
+  expect(result.current.commentFilter.selectedFilters).toEqual([
+    "active",
+    "stale",
+  ]);
   let completion!: Promise<void>;
   act(() => {
     completion = result.current.confirmDelete();

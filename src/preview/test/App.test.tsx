@@ -1685,7 +1685,7 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
-  it("shows all comment states by default and filters resolved comments", async () => {
+  it("defaults to unresolved comments and optionally includes resolved comments", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -1800,21 +1800,21 @@ describe("App", () => {
     expect(await screen.findByText("Active comment.")).not.toBeNull();
     expect(screen.getByText("Stale comment.")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
-    expect(screen.getByText("Resolved comment.")).not.toBeNull();
+    expect(screen.queryByText("Resolved comment.")).toBeNull();
     const filters = within(
       screen.getByRole("group", { name: "Comment filters" }),
     );
-    for (const name of ["Active", "Stale", "Resolved"]) {
-      expect(
-        filters.getByRole("button", { name }).getAttribute("aria-pressed"),
-      ).toBe("false");
-      expect(
-        within(filters.getByRole("button", { name })).getByText("1"),
-      ).not.toBeNull();
-    }
-    fireEvent.click(filters.getByRole("button", { name: "Resolved" }));
-    expect(screen.getByText("Resolved comment.")).not.toBeNull();
-    expect(screen.queryByText("Active comment.")).toBeNull();
-    expect(screen.queryByText("Stale comment.")).toBeNull();
+    expect(
+      (filters.getByRole("checkbox", { name: "Active" }) as HTMLInputElement)
+        .checked,
+    ).toBe(true);
+    expect(
+      (filters.getByRole("checkbox", { name: "Stale" }) as HTMLInputElement)
+        .checked,
+    ).toBe(true);
+    fireEvent.click(filters.getByRole("checkbox", { name: "Resolved" }));
+    expect(await screen.findByText("Resolved comment.")).not.toBeNull();
+    expect(screen.getByText("Active comment.")).not.toBeNull();
+    expect(screen.getByText("Stale comment.")).not.toBeNull();
   });
 });

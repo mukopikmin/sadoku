@@ -4,7 +4,10 @@ import { type Comment } from "../../models/comment";
 export type CommentFilter = Comment["state"];
 
 export const useCommentFilter = (comments: Comment[]) => {
-  const [filter, setFilter] = useState<CommentFilter | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<CommentFilter[]>([
+    "active",
+    "stale",
+  ]);
   const filters = {
     active: {
       label: "Active",
@@ -24,11 +27,23 @@ export const useCommentFilter = (comments: Comment[]) => {
   };
 
   return {
-    filter,
-    setFilter,
+    selectedFilters,
+    toggleFilter: (filter: CommentFilter) =>
+      setSelectedFilters((current) =>
+        current.includes(filter)
+          ? current.filter((value) => value !== filter)
+          : [...current, filter],
+      ),
     filters,
     totalCount: comments.length,
-    visibleComments: filter === null ? comments : filters[filter].comments,
-    emptyText: filter === null ? "No comments." : filters[filter].emptyText,
+    visibleComments: comments.filter((comment) =>
+      selectedFilters.includes(comment.state),
+    ),
+    emptyText:
+      selectedFilters.length === 0
+        ? "Select a comment state to show comments."
+        : selectedFilters.length === 1
+          ? filters[selectedFilters[0]].emptyText
+          : "No comments matching the selected states.",
   };
 };
