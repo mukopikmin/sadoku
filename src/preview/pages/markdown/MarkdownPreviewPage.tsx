@@ -1,6 +1,8 @@
 import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 import { isUnresolvedComment } from "../../models/comment";
 import { MarkdownPreview, type MarkdownPreviewProps } from "./MarkdownPreview";
+import { useTableLayouts } from "../../hooks/useTableLayouts";
+import { TableLayoutContext } from "../../markdown/tableLayoutContext";
 
 type MarkdownPreviewPageProps = Pick<
   MarkdownPreviewProps,
@@ -21,19 +23,22 @@ export const MarkdownPreviewPage = ({
 }: MarkdownPreviewPageProps) => {
   const commentsQuery = useCommentsQuery(documentId);
   const actions = useCommentActions(documentId);
+  const tableLayouts = useTableLayouts(documentId, markdown, documentPath);
   if (!commentsQuery.data) return null;
 
   const unresolvedComments =
     commentsQuery.data.comments.filter(isUnresolvedComment);
   return (
-    <MarkdownPreview
-      actions={actions}
-      comments={unresolvedComments}
-      documentPath={documentPath}
-      markdown={markdown}
-      previousMarkdown={previousMarkdown}
-      showHtmlComments={showHtmlComments}
-      theme={theme}
-    />
+    <TableLayoutContext.Provider value={tableLayouts}>
+      <MarkdownPreview
+        actions={actions}
+        comments={unresolvedComments}
+        documentPath={documentPath}
+        markdown={markdown}
+        previousMarkdown={previousMarkdown}
+        showHtmlComments={showHtmlComments}
+        theme={theme}
+      />
+    </TableLayoutContext.Provider>
   );
 };

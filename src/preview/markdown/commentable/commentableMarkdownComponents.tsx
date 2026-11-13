@@ -89,6 +89,7 @@ const createCommentableComponent = (
   renderElement?: (
     elementProps: Omit<CommentableComponentProps, "children" | "node">,
     children: React.ReactNode,
+    node?: CommentableComponentProps["node"],
   ) => React.ReactNode,
   isHeading = false,
 ) => {
@@ -97,7 +98,7 @@ const createCommentableComponent = (
     const ancestorSourceLines = useContext(SourceLineContext);
     const sourceRange = getSourceRange({ node });
     const element = renderElement
-      ? renderElement(elementProps, children)
+      ? renderElement(elementProps, children, node)
       : createElement(tagName, elementProps, children);
     if (!sourceRange || ancestorSourceLines.has(sourceRange.startLine)) {
       return element;
@@ -168,7 +169,9 @@ const createCommentablePre = () => {
   };
 };
 
-export const createCommentableMarkdownComponents = (): Components => ({
+export const createCommentableMarkdownComponents = (): Components & {
+  "html-comment": ReturnType<typeof createCommentableComponent>;
+} => ({
   a: sharedMarkdownComponents.a,
   blockquote: createCommentableComponent(
     "blockquote",
@@ -222,7 +225,9 @@ export const createCommentableMarkdownComponents = (): Components => ({
   ul: sharedMarkdownComponents.ul,
   p: createCommentableComponent("p", renderMarkdownParagraph),
   pre: createCommentablePre(),
-  table: createCommentableComponent("table", renderMarkdownTable),
+  table: createCommentableComponent("table", (props, children, node) =>
+    renderMarkdownTable(props, children, getSourceLine({ node })),
+  ),
   tbody: sharedMarkdownComponents.tbody,
   td: sharedMarkdownComponents.td,
   th: sharedMarkdownComponents.th,

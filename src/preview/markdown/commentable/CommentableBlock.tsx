@@ -7,8 +7,12 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import { CodeXml, FilePenLine, Link, Plus } from "lucide-react";
+import { CodeXml, FilePenLine, Link, Plus, RotateCcw } from "lucide-react";
 import { useContext, useMemo } from "react";
+import { TableLayoutContext } from "../tableLayoutContext";
+import { TableResizeControllerContext } from "../tableResizeControllerContext";
+import { useTableColumnResize } from "../useTableColumnResize";
+import type { TableLayout } from "../../models/tableLayout";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -39,8 +43,63 @@ type CommentableBlockProps = CommentControlProps & {
   sourceRange: CommentRange;
 };
 
-export const CommentableBlock = ({
+export const CommentableBlock = (props: CommentableBlockProps) => {
+  const layouts = useContext(TableLayoutContext);
+  const ancestorController = useContext(TableResizeControllerContext);
+  const layout =
+    layouts?.state.status === "ready"
+      ? layouts.state.tables.find(
+          (table) => table.startLine === props.sourceRange.startLine,
+        )
+      : undefined;
+  if (layout && layouts && ancestorController?.tableId !== layout.id) {
+    return (
+      <TableCommentableBlock {...props} layout={layout} save={layouts.save} />
+    );
+  }
+  return <CommentableBlockContent {...props} />;
+};
+
+const TableCommentableBlock = ({
+  layout,
+  save,
+  ...props
+}: CommentableBlockProps & {
+  layout: TableLayout;
+  save: (id: string, widths: number[]) => Promise<TableLayout>;
+}) => {
+  const resize = useTableColumnResize(layout, save);
+  return (
+    <TableResizeControllerContext.Provider
+      value={{ ...resize, tableId: layout.id }}
+    >
+      <CommentableBlockContent
+        {...props}
+        additionalActions={
+          <Tooltip content="Reset column widths">
+            <IconButton
+              aria-label="Reset column widths"
+              size="xs"
+              variant="outline"
+              bg="canvas"
+              borderColor="border"
+              color="fg.muted"
+              disabled={!resize.widths.some((width) => width > 0)}
+              onClick={resize.reset}
+              type="button"
+            >
+              <RotateCcw aria-hidden="true" />
+            </IconButton>
+          </Tooltip>
+        }
+      />
+    </TableResizeControllerContext.Provider>
+  );
+};
+
+const CommentableBlockContent = ({
   actions,
+  additionalActions,
   activeRange,
   children,
   className,
@@ -56,7 +115,7 @@ export const CommentableBlock = ({
   onOpenRawMarkdown,
   onSelectCommentRange,
   selectedRange,
-}: CommentableBlockProps) => {
+}: CommentableBlockProps & { additionalActions?: React.ReactNode }) => {
   const composer = useCommentComposer({
     actions,
     sourceRange,
@@ -135,6 +194,7 @@ export const CommentableBlock = ({
                 <Plus aria-hidden="true" />
               </IconButton>
             </Tooltip>
+            {additionalActions}
             {headingId && isSelected && (
               <Tooltip content="Update URL with heading link">
                 <IconButton

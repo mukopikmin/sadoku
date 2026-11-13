@@ -71,3 +71,23 @@ reapplying migrations, original checksums, preservation of comment/reply IDs,
 constraints and cascade behavior, foreign-key validation, rollback, and retry
 following an explicit operator repair. The old WASM fixture stays unchanged; its
 missing source metadata is backfilled without operator repair.
+
+## Normalized table layouts (0018)
+
+Table identities and manual widths move from the 0017 JSON state into
+`markdown_table_layout` and `markdown_table_column_width`. Zero widths become
+absent rows (automatic sizing). The comparison Markdown reuses an identical
+revision belonging to the document, or records the supplied historical snapshot
+when none exists. `comment_document.table_layout_revision_id` tracks that
+comparison independently of comment revision references; existing comment
+references and revision IDs remain unchanged. All changes commit together.
+
+0017 permitted any valid JSON. 0018 rejects missing or incorrectly typed snapshot,
+table, or width metadata, invalid ranges/counts/widths, and duplicate table IDs.
+It does not invent missing historical Markdown or identifiers. On failure, the
+transaction leaves the original JSON and migration history intact. With the app
+stopped, back up the database, inspect the affected `document_table_layout.state`
+rows, and repair them only using trusted saved metadata; then reopen to retry.
+If the required information is unavailable, retain the database and use the
+previous version until it can be recovered. Do not substitute the current file
+for an unknown comparison snapshot or delete the database to bypass migration.
