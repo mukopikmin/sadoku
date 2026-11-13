@@ -10,8 +10,9 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import { CodeXml, FilePenLine, Link, Plus } from "lucide-react";
+import { CodeXml, FilePenLine, Link, Plus, RotateCcw } from "lucide-react";
 import { useContext, useMemo } from "react";
+import { TableResizeControllerContext } from "../tableResizeControllerContext";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -77,6 +78,7 @@ export const CommentableBlock = ({
     { base: true, md: false },
     { fallback: "md" },
   );
+  const resize = useContext(TableResizeControllerContext);
   const composer = useCommentComposer({
     actions,
     sourceRange,
@@ -147,6 +149,23 @@ export const CommentableBlock = ({
           <Plus aria-hidden="true" />
         </IconButton>
       </Tooltip>
+      {resize && (
+        <Tooltip content="Reset column widths">
+          <IconButton
+            aria-label="Reset column widths"
+            size="xs"
+            variant="outline"
+            bg="canvas"
+            borderColor="border"
+            color="fg.muted"
+            disabled={!resize.widths.some((width) => width > 0)}
+            onClick={resize.reset}
+            type="button"
+          >
+            <RotateCcw aria-hidden="true" />
+          </IconButton>
+        </Tooltip>
+      )}
       {headingId && isSelected && (
         <Tooltip content="Update URL with heading link">
           <IconButton

@@ -51,6 +51,12 @@ const (
 	// PreviewServiceGetDocumentProcedure is the fully-qualified name of the PreviewService's
 	// GetDocument RPC.
 	PreviewServiceGetDocumentProcedure = "/sadoku.preview.v1.PreviewService/GetDocument"
+	// PreviewServiceGetTableLayoutsProcedure is the fully-qualified name of the PreviewService's
+	// GetTableLayouts RPC.
+	PreviewServiceGetTableLayoutsProcedure = "/sadoku.preview.v1.PreviewService/GetTableLayouts"
+	// PreviewServiceUpdateTableLayoutProcedure is the fully-qualified name of the PreviewService's
+	// UpdateTableLayout RPC.
+	PreviewServiceUpdateTableLayoutProcedure = "/sadoku.preview.v1.PreviewService/UpdateTableLayout"
 	// PreviewServiceListDocumentRevisionsProcedure is the fully-qualified name of the PreviewService's
 	// ListDocumentRevisions RPC.
 	PreviewServiceListDocumentRevisionsProcedure = "/sadoku.preview.v1.PreviewService/ListDocumentRevisions"
@@ -150,6 +156,8 @@ type PreviewServiceClient interface {
 	CreateDocument(context.Context, *connect.Request[v1.CreateDocumentRequest]) (*connect.Response[v1.DocumentSummary], error)
 	UpdateDocumentTitle(context.Context, *connect.Request[v1.UpdateDocumentTitleRequest]) (*connect.Response[v1.DocumentSummary], error)
 	GetDocument(context.Context, *connect.Request[v1.GetDocumentRequest]) (*connect.Response[v1.GetDocumentResponse], error)
+	GetTableLayouts(context.Context, *connect.Request[v1.GetTableLayoutsRequest]) (*connect.Response[v1.GetTableLayoutsResponse], error)
+	UpdateTableLayout(context.Context, *connect.Request[v1.UpdateTableLayoutRequest]) (*connect.Response[v1.TableLayout], error)
 	ListDocumentRevisions(context.Context, *connect.Request[v1.ListDocumentRevisionsRequest]) (*connect.Response[v1.ListDocumentRevisionsResponse], error)
 	GetDocumentRevision(context.Context, *connect.Request[v1.GetDocumentRevisionRequest]) (*connect.Response[v1.DocumentRevision], error)
 	RestoreDocumentRevision(context.Context, *connect.Request[v1.RestoreDocumentRevisionRequest]) (*connect.Response[v1.RestoreDocumentRevisionResponse], error)
@@ -227,6 +235,18 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+PreviewServiceGetDocumentProcedure,
 			connect.WithSchema(previewServiceMethods.ByName("GetDocument")),
+			connect.WithClientOptions(opts...),
+		),
+		getTableLayouts: connect.NewClient[v1.GetTableLayoutsRequest, v1.GetTableLayoutsResponse](
+			httpClient,
+			baseURL+PreviewServiceGetTableLayoutsProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("GetTableLayouts")),
+			connect.WithClientOptions(opts...),
+		),
+		updateTableLayout: connect.NewClient[v1.UpdateTableLayoutRequest, v1.TableLayout](
+			httpClient,
+			baseURL+PreviewServiceUpdateTableLayoutProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("UpdateTableLayout")),
 			connect.WithClientOptions(opts...),
 		),
 		listDocumentRevisions: connect.NewClient[v1.ListDocumentRevisionsRequest, v1.ListDocumentRevisionsResponse](
@@ -420,6 +440,8 @@ type previewServiceClient struct {
 	createDocument          *connect.Client[v1.CreateDocumentRequest, v1.DocumentSummary]
 	updateDocumentTitle     *connect.Client[v1.UpdateDocumentTitleRequest, v1.DocumentSummary]
 	getDocument             *connect.Client[v1.GetDocumentRequest, v1.GetDocumentResponse]
+	getTableLayouts         *connect.Client[v1.GetTableLayoutsRequest, v1.GetTableLayoutsResponse]
+	updateTableLayout       *connect.Client[v1.UpdateTableLayoutRequest, v1.TableLayout]
 	listDocumentRevisions   *connect.Client[v1.ListDocumentRevisionsRequest, v1.ListDocumentRevisionsResponse]
 	getDocumentRevision     *connect.Client[v1.GetDocumentRevisionRequest, v1.DocumentRevision]
 	restoreDocumentRevision *connect.Client[v1.RestoreDocumentRevisionRequest, v1.RestoreDocumentRevisionResponse]
@@ -480,6 +502,16 @@ func (c *previewServiceClient) UpdateDocumentTitle(ctx context.Context, req *con
 // GetDocument calls sadoku.preview.v1.PreviewService.GetDocument.
 func (c *previewServiceClient) GetDocument(ctx context.Context, req *connect.Request[v1.GetDocumentRequest]) (*connect.Response[v1.GetDocumentResponse], error) {
 	return c.getDocument.CallUnary(ctx, req)
+}
+
+// GetTableLayouts calls sadoku.preview.v1.PreviewService.GetTableLayouts.
+func (c *previewServiceClient) GetTableLayouts(ctx context.Context, req *connect.Request[v1.GetTableLayoutsRequest]) (*connect.Response[v1.GetTableLayoutsResponse], error) {
+	return c.getTableLayouts.CallUnary(ctx, req)
+}
+
+// UpdateTableLayout calls sadoku.preview.v1.PreviewService.UpdateTableLayout.
+func (c *previewServiceClient) UpdateTableLayout(ctx context.Context, req *connect.Request[v1.UpdateTableLayoutRequest]) (*connect.Response[v1.TableLayout], error) {
+	return c.updateTableLayout.CallUnary(ctx, req)
 }
 
 // ListDocumentRevisions calls sadoku.preview.v1.PreviewService.ListDocumentRevisions.
@@ -640,6 +672,8 @@ type PreviewServiceHandler interface {
 	CreateDocument(context.Context, *connect.Request[v1.CreateDocumentRequest]) (*connect.Response[v1.DocumentSummary], error)
 	UpdateDocumentTitle(context.Context, *connect.Request[v1.UpdateDocumentTitleRequest]) (*connect.Response[v1.DocumentSummary], error)
 	GetDocument(context.Context, *connect.Request[v1.GetDocumentRequest]) (*connect.Response[v1.GetDocumentResponse], error)
+	GetTableLayouts(context.Context, *connect.Request[v1.GetTableLayoutsRequest]) (*connect.Response[v1.GetTableLayoutsResponse], error)
+	UpdateTableLayout(context.Context, *connect.Request[v1.UpdateTableLayoutRequest]) (*connect.Response[v1.TableLayout], error)
 	ListDocumentRevisions(context.Context, *connect.Request[v1.ListDocumentRevisionsRequest]) (*connect.Response[v1.ListDocumentRevisionsResponse], error)
 	GetDocumentRevision(context.Context, *connect.Request[v1.GetDocumentRevisionRequest]) (*connect.Response[v1.DocumentRevision], error)
 	RestoreDocumentRevision(context.Context, *connect.Request[v1.RestoreDocumentRevisionRequest]) (*connect.Response[v1.RestoreDocumentRevisionResponse], error)
@@ -713,6 +747,18 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		PreviewServiceGetDocumentProcedure,
 		svc.GetDocument,
 		connect.WithSchema(previewServiceMethods.ByName("GetDocument")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceGetTableLayoutsHandler := connect.NewUnaryHandler(
+		PreviewServiceGetTableLayoutsProcedure,
+		svc.GetTableLayouts,
+		connect.WithSchema(previewServiceMethods.ByName("GetTableLayouts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceUpdateTableLayoutHandler := connect.NewUnaryHandler(
+		PreviewServiceUpdateTableLayoutProcedure,
+		svc.UpdateTableLayout,
+		connect.WithSchema(previewServiceMethods.ByName("UpdateTableLayout")),
 		connect.WithHandlerOptions(opts...),
 	)
 	previewServiceListDocumentRevisionsHandler := connect.NewUnaryHandler(
@@ -909,6 +955,10 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceUpdateDocumentTitleHandler.ServeHTTP(w, r)
 		case PreviewServiceGetDocumentProcedure:
 			previewServiceGetDocumentHandler.ServeHTTP(w, r)
+		case PreviewServiceGetTableLayoutsProcedure:
+			previewServiceGetTableLayoutsHandler.ServeHTTP(w, r)
+		case PreviewServiceUpdateTableLayoutProcedure:
+			previewServiceUpdateTableLayoutHandler.ServeHTTP(w, r)
 		case PreviewServiceListDocumentRevisionsProcedure:
 			previewServiceListDocumentRevisionsHandler.ServeHTTP(w, r)
 		case PreviewServiceGetDocumentRevisionProcedure:
@@ -1000,6 +1050,14 @@ func (UnimplementedPreviewServiceHandler) UpdateDocumentTitle(context.Context, *
 
 func (UnimplementedPreviewServiceHandler) GetDocument(context.Context, *connect.Request[v1.GetDocumentRequest]) (*connect.Response[v1.GetDocumentResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.GetDocument is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) GetTableLayouts(context.Context, *connect.Request[v1.GetTableLayoutsRequest]) (*connect.Response[v1.GetTableLayoutsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.GetTableLayouts is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) UpdateTableLayout(context.Context, *connect.Request[v1.UpdateTableLayoutRequest]) (*connect.Response[v1.TableLayout], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.UpdateTableLayout is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) ListDocumentRevisions(context.Context, *connect.Request[v1.ListDocumentRevisionsRequest]) (*connect.Response[v1.ListDocumentRevisionsResponse], error) {

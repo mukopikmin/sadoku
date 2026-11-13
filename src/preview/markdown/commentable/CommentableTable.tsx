@@ -1,3 +1,4 @@
+import { MarkdownTableRow } from "../renderers/table";
 import { Table } from "@chakra-ui/react";
 import { Children, isValidElement, useContext } from "react";
 import type { ReactNode } from "react";
@@ -19,7 +20,7 @@ export const CommentableTableRow = ({
   const ancestors = useContext(SourceLineContext);
   const sourceRange = getSourceRange({ node });
   if (!sourceRange || ancestors.has(sourceRange.startLine)) {
-    return <Table.Row {...props}>{children}</Table.Row>;
+    return <MarkdownTableRow {...props}>{children}</MarkdownTableRow>;
   }
   const cells = Children.toArray(children).filter(
     isValidElement<{ children?: ReactNode }>,
@@ -37,20 +38,20 @@ export const CommentableTableRow = ({
         <>
           {content(
             anchor(
-              <Table.Row
+              <MarkdownTableRow
                 {...props}
                 {...blockProps}
                 className={`${blockProps.className} commentable-content`}
                 onClick={onContentClick}
               >
                 {cells}
-              </Table.Row>,
+              </MarkdownTableRow>,
             ),
           )}
           {thread && (
-            <Table.Row>
+            <MarkdownTableRow>
               <Table.Cell colSpan={cells.length}>{thread}</Table.Cell>
-            </Table.Row>
+            </MarkdownTableRow>
           )}
         </>
       )}

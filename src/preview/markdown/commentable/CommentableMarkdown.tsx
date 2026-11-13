@@ -4,13 +4,24 @@ import { remarkDocumentDiff } from "../remarkDocumentDiff";
 import { DeletedMarkdownBlock } from "./DeletedMarkdownBlock";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeAutolinkHeadings, {
+  type Options as AutolinkOptions,
+} from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import {
   sharedMarkdownRehypePlugins,
   sharedMarkdownRemarkPlugins,
 } from "../markdownRenderers";
 import { createCommentableMarkdownComponents } from "./commentableMarkdownComponents";
+
+const headingLinkOptions: AutolinkOptions = {
+  behavior: "wrap",
+  properties: { className: ["heading-anchor"] },
+  test: (heading) =>
+    !heading.children.some(
+      (child) => child.type === "element" && child.tagName === "a",
+    ),
+};
 
 type CommentableMarkdownProps = {
   children: string;
@@ -63,17 +74,7 @@ export const CommentableMarkdown = ({
       components={components}
       rehypePlugins={[
         rehypeSlug,
-        [
-          rehypeAutolinkHeadings,
-          {
-            behavior: "wrap",
-            properties: { className: "heading-anchor" },
-            test: (heading) =>
-              !heading.children.some(
-                (child) => child.type === "element" && child.tagName === "a",
-              ),
-          },
-        ],
+        [rehypeAutolinkHeadings, headingLinkOptions],
         ...sharedMarkdownRehypePlugins,
       ]}
       remarkPlugins={

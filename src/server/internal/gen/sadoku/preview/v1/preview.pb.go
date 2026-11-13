@@ -789,6 +789,314 @@ func (x *GetDocumentRequest) GetDocumentId() uint64 {
 	return 0
 }
 
+type TablePosition struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StartLine     uint32                 `protobuf:"varint,1,opt,name=start_line,json=startLine,proto3" json:"start_line,omitempty"`
+	EndLine       uint32                 `protobuf:"varint,2,opt,name=end_line,json=endLine,proto3" json:"end_line,omitempty"`
+	ColumnCount   uint32                 `protobuf:"varint,3,opt,name=column_count,json=columnCount,proto3" json:"column_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TablePosition) Reset() {
+	*x = TablePosition{}
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TablePosition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TablePosition) ProtoMessage() {}
+
+func (x *TablePosition) ProtoReflect() protoreflect.Message {
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TablePosition.ProtoReflect.Descriptor instead.
+func (*TablePosition) Descriptor() ([]byte, []int) {
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *TablePosition) GetStartLine() uint32 {
+	if x != nil {
+		return x.StartLine
+	}
+	return 0
+}
+
+func (x *TablePosition) GetEndLine() uint32 {
+	if x != nil {
+		return x.EndLine
+	}
+	return 0
+}
+
+func (x *TablePosition) GetColumnCount() uint32 {
+	if x != nil {
+		return x.ColumnCount
+	}
+	return 0
+}
+
+type TableLayout struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	StartLine     uint32                 `protobuf:"varint,2,opt,name=start_line,json=startLine,proto3" json:"start_line,omitempty"`
+	EndLine       uint32                 `protobuf:"varint,3,opt,name=end_line,json=endLine,proto3" json:"end_line,omitempty"`
+	ColumnCount   uint32                 `protobuf:"varint,4,opt,name=column_count,json=columnCount,proto3" json:"column_count,omitempty"`
+	ColumnWidths  []float64              `protobuf:"fixed64,5,rep,packed,name=column_widths,json=columnWidths,proto3" json:"column_widths,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TableLayout) Reset() {
+	*x = TableLayout{}
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TableLayout) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TableLayout) ProtoMessage() {}
+
+func (x *TableLayout) ProtoReflect() protoreflect.Message {
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TableLayout.ProtoReflect.Descriptor instead.
+func (*TableLayout) Descriptor() ([]byte, []int) {
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *TableLayout) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TableLayout) GetStartLine() uint32 {
+	if x != nil {
+		return x.StartLine
+	}
+	return 0
+}
+
+func (x *TableLayout) GetEndLine() uint32 {
+	if x != nil {
+		return x.EndLine
+	}
+	return 0
+}
+
+func (x *TableLayout) GetColumnCount() uint32 {
+	if x != nil {
+		return x.ColumnCount
+	}
+	return 0
+}
+
+func (x *TableLayout) GetColumnWidths() []float64 {
+	if x != nil {
+		return x.ColumnWidths
+	}
+	return nil
+}
+
+type GetTableLayoutsRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DocumentId        uint64                 `protobuf:"varint,1,opt,name=document_id,json=documentId,proto3" json:"document_id,omitempty"`
+	DisplayedMarkdown string                 `protobuf:"bytes,2,opt,name=displayed_markdown,json=displayedMarkdown,proto3" json:"displayed_markdown,omitempty"`
+	Tables            []*TablePosition       `protobuf:"bytes,3,rep,name=tables,proto3" json:"tables,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GetTableLayoutsRequest) Reset() {
+	*x = GetTableLayoutsRequest{}
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTableLayoutsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTableLayoutsRequest) ProtoMessage() {}
+
+func (x *GetTableLayoutsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTableLayoutsRequest.ProtoReflect.Descriptor instead.
+func (*GetTableLayoutsRequest) Descriptor() ([]byte, []int) {
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetTableLayoutsRequest) GetDocumentId() uint64 {
+	if x != nil {
+		return x.DocumentId
+	}
+	return 0
+}
+
+func (x *GetTableLayoutsRequest) GetDisplayedMarkdown() string {
+	if x != nil {
+		return x.DisplayedMarkdown
+	}
+	return ""
+}
+
+func (x *GetTableLayoutsRequest) GetTables() []*TablePosition {
+	if x != nil {
+		return x.Tables
+	}
+	return nil
+}
+
+type GetTableLayoutsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tables        []*TableLayout         `protobuf:"bytes,1,rep,name=tables,proto3" json:"tables,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTableLayoutsResponse) Reset() {
+	*x = GetTableLayoutsResponse{}
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTableLayoutsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTableLayoutsResponse) ProtoMessage() {}
+
+func (x *GetTableLayoutsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTableLayoutsResponse.ProtoReflect.Descriptor instead.
+func (*GetTableLayoutsResponse) Descriptor() ([]byte, []int) {
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetTableLayoutsResponse) GetTables() []*TableLayout {
+	if x != nil {
+		return x.Tables
+	}
+	return nil
+}
+
+type UpdateTableLayoutRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DocumentId        uint64                 `protobuf:"varint,1,opt,name=document_id,json=documentId,proto3" json:"document_id,omitempty"`
+	DisplayedMarkdown string                 `protobuf:"bytes,2,opt,name=displayed_markdown,json=displayedMarkdown,proto3" json:"displayed_markdown,omitempty"`
+	TableId           string                 `protobuf:"bytes,3,opt,name=table_id,json=tableId,proto3" json:"table_id,omitempty"`
+	ColumnWidths      []float64              `protobuf:"fixed64,4,rep,packed,name=column_widths,json=columnWidths,proto3" json:"column_widths,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *UpdateTableLayoutRequest) Reset() {
+	*x = UpdateTableLayoutRequest{}
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTableLayoutRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTableLayoutRequest) ProtoMessage() {}
+
+func (x *UpdateTableLayoutRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTableLayoutRequest.ProtoReflect.Descriptor instead.
+func (*UpdateTableLayoutRequest) Descriptor() ([]byte, []int) {
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *UpdateTableLayoutRequest) GetDocumentId() uint64 {
+	if x != nil {
+		return x.DocumentId
+	}
+	return 0
+}
+
+func (x *UpdateTableLayoutRequest) GetDisplayedMarkdown() string {
+	if x != nil {
+		return x.DisplayedMarkdown
+	}
+	return ""
+}
+
+func (x *UpdateTableLayoutRequest) GetTableId() string {
+	if x != nil {
+		return x.TableId
+	}
+	return ""
+}
+
+func (x *UpdateTableLayoutRequest) GetColumnWidths() []float64 {
+	if x != nil {
+		return x.ColumnWidths
+	}
+	return nil
+}
+
 type DocumentRevisionSummary struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -799,7 +1107,7 @@ type DocumentRevisionSummary struct {
 
 func (x *DocumentRevisionSummary) Reset() {
 	*x = DocumentRevisionSummary{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[14]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -811,7 +1119,7 @@ func (x *DocumentRevisionSummary) String() string {
 func (*DocumentRevisionSummary) ProtoMessage() {}
 
 func (x *DocumentRevisionSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[14]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -824,7 +1132,7 @@ func (x *DocumentRevisionSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DocumentRevisionSummary.ProtoReflect.Descriptor instead.
 func (*DocumentRevisionSummary) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{14}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *DocumentRevisionSummary) GetId() uint64 {
@@ -853,7 +1161,7 @@ type DocumentRevision struct {
 
 func (x *DocumentRevision) Reset() {
 	*x = DocumentRevision{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[15]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -865,7 +1173,7 @@ func (x *DocumentRevision) String() string {
 func (*DocumentRevision) ProtoMessage() {}
 
 func (x *DocumentRevision) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[15]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -878,7 +1186,7 @@ func (x *DocumentRevision) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DocumentRevision.ProtoReflect.Descriptor instead.
 func (*DocumentRevision) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{15}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DocumentRevision) GetId() uint64 {
@@ -918,7 +1226,7 @@ type ListDocumentRevisionsRequest struct {
 
 func (x *ListDocumentRevisionsRequest) Reset() {
 	*x = ListDocumentRevisionsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[16]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -930,7 +1238,7 @@ func (x *ListDocumentRevisionsRequest) String() string {
 func (*ListDocumentRevisionsRequest) ProtoMessage() {}
 
 func (x *ListDocumentRevisionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[16]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -943,7 +1251,7 @@ func (x *ListDocumentRevisionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDocumentRevisionsRequest.ProtoReflect.Descriptor instead.
 func (*ListDocumentRevisionsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{16}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListDocumentRevisionsRequest) GetDocumentId() uint64 {
@@ -962,7 +1270,7 @@ type ListDocumentRevisionsResponse struct {
 
 func (x *ListDocumentRevisionsResponse) Reset() {
 	*x = ListDocumentRevisionsResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[17]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -974,7 +1282,7 @@ func (x *ListDocumentRevisionsResponse) String() string {
 func (*ListDocumentRevisionsResponse) ProtoMessage() {}
 
 func (x *ListDocumentRevisionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[17]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -987,7 +1295,7 @@ func (x *ListDocumentRevisionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDocumentRevisionsResponse.ProtoReflect.Descriptor instead.
 func (*ListDocumentRevisionsResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{17}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListDocumentRevisionsResponse) GetRevisions() []*DocumentRevisionSummary {
@@ -1007,7 +1315,7 @@ type GetDocumentRevisionRequest struct {
 
 func (x *GetDocumentRevisionRequest) Reset() {
 	*x = GetDocumentRevisionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[18]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1019,7 +1327,7 @@ func (x *GetDocumentRevisionRequest) String() string {
 func (*GetDocumentRevisionRequest) ProtoMessage() {}
 
 func (x *GetDocumentRevisionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[18]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1032,7 +1340,7 @@ func (x *GetDocumentRevisionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDocumentRevisionRequest.ProtoReflect.Descriptor instead.
 func (*GetDocumentRevisionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{18}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GetDocumentRevisionRequest) GetDocumentId() uint64 {
@@ -1060,7 +1368,7 @@ type RestoreDocumentRevisionRequest struct {
 
 func (x *RestoreDocumentRevisionRequest) Reset() {
 	*x = RestoreDocumentRevisionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[19]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1072,7 +1380,7 @@ func (x *RestoreDocumentRevisionRequest) String() string {
 func (*RestoreDocumentRevisionRequest) ProtoMessage() {}
 
 func (x *RestoreDocumentRevisionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[19]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1085,7 +1393,7 @@ func (x *RestoreDocumentRevisionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreDocumentRevisionRequest.ProtoReflect.Descriptor instead.
 func (*RestoreDocumentRevisionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{19}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *RestoreDocumentRevisionRequest) GetDocumentId() uint64 {
@@ -1117,7 +1425,7 @@ type RestoreDocumentRevisionResponse struct {
 
 func (x *RestoreDocumentRevisionResponse) Reset() {
 	*x = RestoreDocumentRevisionResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[20]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1129,7 +1437,7 @@ func (x *RestoreDocumentRevisionResponse) String() string {
 func (*RestoreDocumentRevisionResponse) ProtoMessage() {}
 
 func (x *RestoreDocumentRevisionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[20]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1142,7 +1450,7 @@ func (x *RestoreDocumentRevisionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreDocumentRevisionResponse.ProtoReflect.Descriptor instead.
 func (*RestoreDocumentRevisionResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{20}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{25}
 }
 
 type GetDocumentResponse struct {
@@ -1162,7 +1470,7 @@ type GetDocumentResponse struct {
 
 func (x *GetDocumentResponse) Reset() {
 	*x = GetDocumentResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[21]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1174,7 +1482,7 @@ func (x *GetDocumentResponse) String() string {
 func (*GetDocumentResponse) ProtoMessage() {}
 
 func (x *GetDocumentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[21]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1187,7 +1495,7 @@ func (x *GetDocumentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDocumentResponse.ProtoReflect.Descriptor instead.
 func (*GetDocumentResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{21}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetDocumentResponse) GetFileUrl() string {
@@ -1261,7 +1569,7 @@ type GetDirectoryStatusRequest struct {
 
 func (x *GetDirectoryStatusRequest) Reset() {
 	*x = GetDirectoryStatusRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[22]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1273,7 +1581,7 @@ func (x *GetDirectoryStatusRequest) String() string {
 func (*GetDirectoryStatusRequest) ProtoMessage() {}
 
 func (x *GetDirectoryStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[22]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1286,7 +1594,7 @@ func (x *GetDirectoryStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDirectoryStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetDirectoryStatusRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{22}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{27}
 }
 
 type GetDirectoryStatusResponse struct {
@@ -1301,7 +1609,7 @@ type GetDirectoryStatusResponse struct {
 
 func (x *GetDirectoryStatusResponse) Reset() {
 	*x = GetDirectoryStatusResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[23]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1313,7 +1621,7 @@ func (x *GetDirectoryStatusResponse) String() string {
 func (*GetDirectoryStatusResponse) ProtoMessage() {}
 
 func (x *GetDirectoryStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[23]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1326,7 +1634,7 @@ func (x *GetDirectoryStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDirectoryStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetDirectoryStatusResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{23}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GetDirectoryStatusResponse) GetState() string {
@@ -1367,7 +1675,7 @@ type DirectoryError struct {
 
 func (x *DirectoryError) Reset() {
 	*x = DirectoryError{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[24]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1379,7 +1687,7 @@ func (x *DirectoryError) String() string {
 func (*DirectoryError) ProtoMessage() {}
 
 func (x *DirectoryError) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[24]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1392,7 +1700,7 @@ func (x *DirectoryError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DirectoryError.ProtoReflect.Descriptor instead.
 func (*DirectoryError) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{24}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *DirectoryError) GetName() string {
@@ -1417,7 +1725,7 @@ type GetSettingsRequest struct {
 
 func (x *GetSettingsRequest) Reset() {
 	*x = GetSettingsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[25]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1429,7 +1737,7 @@ func (x *GetSettingsRequest) String() string {
 func (*GetSettingsRequest) ProtoMessage() {}
 
 func (x *GetSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[25]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1442,7 +1750,7 @@ func (x *GetSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSettingsRequest.ProtoReflect.Descriptor instead.
 func (*GetSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{25}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{30}
 }
 
 type Settings struct {
@@ -1462,7 +1770,7 @@ type Settings struct {
 
 func (x *Settings) Reset() {
 	*x = Settings{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[26]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1474,7 +1782,7 @@ func (x *Settings) String() string {
 func (*Settings) ProtoMessage() {}
 
 func (x *Settings) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[26]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1487,7 +1795,7 @@ func (x *Settings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Settings.ProtoReflect.Descriptor instead.
 func (*Settings) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{26}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *Settings) GetTheme() string {
@@ -1570,7 +1878,7 @@ type UpdateSettingsRequest struct {
 
 func (x *UpdateSettingsRequest) Reset() {
 	*x = UpdateSettingsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[27]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1582,7 +1890,7 @@ func (x *UpdateSettingsRequest) String() string {
 func (*UpdateSettingsRequest) ProtoMessage() {}
 
 func (x *UpdateSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[27]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1595,7 +1903,7 @@ func (x *UpdateSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSettingsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{27}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UpdateSettingsRequest) GetTheme() string {
@@ -1669,7 +1977,7 @@ type GetGitHubAccountRequest struct {
 
 func (x *GetGitHubAccountRequest) Reset() {
 	*x = GetGitHubAccountRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[28]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1681,7 +1989,7 @@ func (x *GetGitHubAccountRequest) String() string {
 func (*GetGitHubAccountRequest) ProtoMessage() {}
 
 func (x *GetGitHubAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[28]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1694,7 +2002,7 @@ func (x *GetGitHubAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGitHubAccountRequest.ProtoReflect.Descriptor instead.
 func (*GetGitHubAccountRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{28}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{33}
 }
 
 type GetGitHubAccountResponse struct {
@@ -1708,7 +2016,7 @@ type GetGitHubAccountResponse struct {
 
 func (x *GetGitHubAccountResponse) Reset() {
 	*x = GetGitHubAccountResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[29]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1720,7 +2028,7 @@ func (x *GetGitHubAccountResponse) String() string {
 func (*GetGitHubAccountResponse) ProtoMessage() {}
 
 func (x *GetGitHubAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[29]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1733,7 +2041,7 @@ func (x *GetGitHubAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGitHubAccountResponse.ProtoReflect.Descriptor instead.
 func (*GetGitHubAccountResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{29}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetGitHubAccountResponse) GetOk() bool {
@@ -1768,7 +2076,7 @@ type GitHubAccount struct {
 
 func (x *GitHubAccount) Reset() {
 	*x = GitHubAccount{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[30]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1780,7 +2088,7 @@ func (x *GitHubAccount) String() string {
 func (*GitHubAccount) ProtoMessage() {}
 
 func (x *GitHubAccount) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[30]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1793,7 +2101,7 @@ func (x *GitHubAccount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitHubAccount.ProtoReflect.Descriptor instead.
 func (*GitHubAccount) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{30}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GitHubAccount) GetLogin() string {
@@ -1825,7 +2133,7 @@ type ListTagsRequest struct {
 
 func (x *ListTagsRequest) Reset() {
 	*x = ListTagsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[31]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1837,7 +2145,7 @@ func (x *ListTagsRequest) String() string {
 func (*ListTagsRequest) ProtoMessage() {}
 
 func (x *ListTagsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[31]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1850,7 +2158,7 @@ func (x *ListTagsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTagsRequest.ProtoReflect.Descriptor instead.
 func (*ListTagsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{31}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{36}
 }
 
 type ListTagsResponse struct {
@@ -1862,7 +2170,7 @@ type ListTagsResponse struct {
 
 func (x *ListTagsResponse) Reset() {
 	*x = ListTagsResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[32]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1874,7 +2182,7 @@ func (x *ListTagsResponse) String() string {
 func (*ListTagsResponse) ProtoMessage() {}
 
 func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[32]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1887,7 +2195,7 @@ func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTagsResponse.ProtoReflect.Descriptor instead.
 func (*ListTagsResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{32}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListTagsResponse) GetTags() []*TagSummary {
@@ -1906,7 +2214,7 @@ type DeleteTagRequest struct {
 
 func (x *DeleteTagRequest) Reset() {
 	*x = DeleteTagRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[33]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1918,7 +2226,7 @@ func (x *DeleteTagRequest) String() string {
 func (*DeleteTagRequest) ProtoMessage() {}
 
 func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[33]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1931,7 +2239,7 @@ func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTagRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTagRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{33}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *DeleteTagRequest) GetId() uint64 {
@@ -1949,7 +2257,7 @@ type DeleteTagResponse struct {
 
 func (x *DeleteTagResponse) Reset() {
 	*x = DeleteTagResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[34]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1961,7 +2269,7 @@ func (x *DeleteTagResponse) String() string {
 func (*DeleteTagResponse) ProtoMessage() {}
 
 func (x *DeleteTagResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[34]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1974,7 +2282,7 @@ func (x *DeleteTagResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTagResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTagResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{34}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{39}
 }
 
 type UpdateTagRequest struct {
@@ -1988,7 +2296,7 @@ type UpdateTagRequest struct {
 
 func (x *UpdateTagRequest) Reset() {
 	*x = UpdateTagRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[35]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2000,7 +2308,7 @@ func (x *UpdateTagRequest) String() string {
 func (*UpdateTagRequest) ProtoMessage() {}
 
 func (x *UpdateTagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[35]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2013,7 +2321,7 @@ func (x *UpdateTagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTagRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTagRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{35}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *UpdateTagRequest) GetId() uint64 {
@@ -2050,7 +2358,7 @@ type TagReference struct {
 
 func (x *TagReference) Reset() {
 	*x = TagReference{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[36]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2062,7 +2370,7 @@ func (x *TagReference) String() string {
 func (*TagReference) ProtoMessage() {}
 
 func (x *TagReference) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[36]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2075,7 +2383,7 @@ func (x *TagReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TagReference.ProtoReflect.Descriptor instead.
 func (*TagReference) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{36}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *TagReference) GetReference() isTagReference_Reference {
@@ -2129,7 +2437,7 @@ type ReplaceDocumentTagsRequest struct {
 
 func (x *ReplaceDocumentTagsRequest) Reset() {
 	*x = ReplaceDocumentTagsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[37]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2141,7 +2449,7 @@ func (x *ReplaceDocumentTagsRequest) String() string {
 func (*ReplaceDocumentTagsRequest) ProtoMessage() {}
 
 func (x *ReplaceDocumentTagsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[37]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2154,7 +2462,7 @@ func (x *ReplaceDocumentTagsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceDocumentTagsRequest.ProtoReflect.Descriptor instead.
 func (*ReplaceDocumentTagsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{37}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *ReplaceDocumentTagsRequest) GetDocumentId() uint64 {
@@ -2180,7 +2488,7 @@ type ReplaceDocumentTagsResponse struct {
 
 func (x *ReplaceDocumentTagsResponse) Reset() {
 	*x = ReplaceDocumentTagsResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[38]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2192,7 +2500,7 @@ func (x *ReplaceDocumentTagsResponse) String() string {
 func (*ReplaceDocumentTagsResponse) ProtoMessage() {}
 
 func (x *ReplaceDocumentTagsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[38]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2205,7 +2513,7 @@ func (x *ReplaceDocumentTagsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceDocumentTagsResponse.ProtoReflect.Descriptor instead.
 func (*ReplaceDocumentTagsResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{38}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *ReplaceDocumentTagsResponse) GetTags() []*Tag {
@@ -2227,7 +2535,7 @@ type Instruction struct {
 
 func (x *Instruction) Reset() {
 	*x = Instruction{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[39]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2239,7 +2547,7 @@ func (x *Instruction) String() string {
 func (*Instruction) ProtoMessage() {}
 
 func (x *Instruction) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[39]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2252,7 +2560,7 @@ func (x *Instruction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Instruction.ProtoReflect.Descriptor instead.
 func (*Instruction) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{39}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *Instruction) GetId() uint64 {
@@ -2291,7 +2599,7 @@ type ListGlobalInstructionsRequest struct {
 
 func (x *ListGlobalInstructionsRequest) Reset() {
 	*x = ListGlobalInstructionsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[40]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2303,7 +2611,7 @@ func (x *ListGlobalInstructionsRequest) String() string {
 func (*ListGlobalInstructionsRequest) ProtoMessage() {}
 
 func (x *ListGlobalInstructionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[40]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2316,7 +2624,7 @@ func (x *ListGlobalInstructionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGlobalInstructionsRequest.ProtoReflect.Descriptor instead.
 func (*ListGlobalInstructionsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{40}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{45}
 }
 
 type ListGlobalInstructionsResponse struct {
@@ -2328,7 +2636,7 @@ type ListGlobalInstructionsResponse struct {
 
 func (x *ListGlobalInstructionsResponse) Reset() {
 	*x = ListGlobalInstructionsResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[41]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2340,7 +2648,7 @@ func (x *ListGlobalInstructionsResponse) String() string {
 func (*ListGlobalInstructionsResponse) ProtoMessage() {}
 
 func (x *ListGlobalInstructionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[41]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2353,7 +2661,7 @@ func (x *ListGlobalInstructionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGlobalInstructionsResponse.ProtoReflect.Descriptor instead.
 func (*ListGlobalInstructionsResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{41}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *ListGlobalInstructionsResponse) GetInstructions() []*Instruction {
@@ -2372,7 +2680,7 @@ type CreateGlobalInstructionRequest struct {
 
 func (x *CreateGlobalInstructionRequest) Reset() {
 	*x = CreateGlobalInstructionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[42]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2384,7 +2692,7 @@ func (x *CreateGlobalInstructionRequest) String() string {
 func (*CreateGlobalInstructionRequest) ProtoMessage() {}
 
 func (x *CreateGlobalInstructionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[42]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2397,7 +2705,7 @@ func (x *CreateGlobalInstructionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGlobalInstructionRequest.ProtoReflect.Descriptor instead.
 func (*CreateGlobalInstructionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{42}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *CreateGlobalInstructionRequest) GetContent() string {
@@ -2417,7 +2725,7 @@ type UpdateGlobalInstructionRequest struct {
 
 func (x *UpdateGlobalInstructionRequest) Reset() {
 	*x = UpdateGlobalInstructionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[43]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2429,7 +2737,7 @@ func (x *UpdateGlobalInstructionRequest) String() string {
 func (*UpdateGlobalInstructionRequest) ProtoMessage() {}
 
 func (x *UpdateGlobalInstructionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[43]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2442,7 +2750,7 @@ func (x *UpdateGlobalInstructionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateGlobalInstructionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateGlobalInstructionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{43}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *UpdateGlobalInstructionRequest) GetInstructionId() uint64 {
@@ -2468,7 +2776,7 @@ type DeleteGlobalInstructionRequest struct {
 
 func (x *DeleteGlobalInstructionRequest) Reset() {
 	*x = DeleteGlobalInstructionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[44]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2480,7 +2788,7 @@ func (x *DeleteGlobalInstructionRequest) String() string {
 func (*DeleteGlobalInstructionRequest) ProtoMessage() {}
 
 func (x *DeleteGlobalInstructionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[44]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2493,7 +2801,7 @@ func (x *DeleteGlobalInstructionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGlobalInstructionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteGlobalInstructionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{44}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *DeleteGlobalInstructionRequest) GetInstructionId() uint64 {
@@ -2511,7 +2819,7 @@ type DeleteGlobalInstructionResponse struct {
 
 func (x *DeleteGlobalInstructionResponse) Reset() {
 	*x = DeleteGlobalInstructionResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[45]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2523,7 +2831,7 @@ func (x *DeleteGlobalInstructionResponse) String() string {
 func (*DeleteGlobalInstructionResponse) ProtoMessage() {}
 
 func (x *DeleteGlobalInstructionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[45]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2536,7 +2844,7 @@ func (x *DeleteGlobalInstructionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGlobalInstructionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteGlobalInstructionResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{45}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{50}
 }
 
 type ListInstructionsRequest struct {
@@ -2548,7 +2856,7 @@ type ListInstructionsRequest struct {
 
 func (x *ListInstructionsRequest) Reset() {
 	*x = ListInstructionsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[46]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2560,7 +2868,7 @@ func (x *ListInstructionsRequest) String() string {
 func (*ListInstructionsRequest) ProtoMessage() {}
 
 func (x *ListInstructionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[46]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2573,7 +2881,7 @@ func (x *ListInstructionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInstructionsRequest.ProtoReflect.Descriptor instead.
 func (*ListInstructionsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{46}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ListInstructionsRequest) GetDocumentId() uint64 {
@@ -2592,7 +2900,7 @@ type ListInstructionsResponse struct {
 
 func (x *ListInstructionsResponse) Reset() {
 	*x = ListInstructionsResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[47]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2604,7 +2912,7 @@ func (x *ListInstructionsResponse) String() string {
 func (*ListInstructionsResponse) ProtoMessage() {}
 
 func (x *ListInstructionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[47]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2617,7 +2925,7 @@ func (x *ListInstructionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInstructionsResponse.ProtoReflect.Descriptor instead.
 func (*ListInstructionsResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{47}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *ListInstructionsResponse) GetInstructions() []*Instruction {
@@ -2637,7 +2945,7 @@ type CreateInstructionRequest struct {
 
 func (x *CreateInstructionRequest) Reset() {
 	*x = CreateInstructionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[48]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2649,7 +2957,7 @@ func (x *CreateInstructionRequest) String() string {
 func (*CreateInstructionRequest) ProtoMessage() {}
 
 func (x *CreateInstructionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[48]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2662,7 +2970,7 @@ func (x *CreateInstructionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateInstructionRequest.ProtoReflect.Descriptor instead.
 func (*CreateInstructionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{48}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *CreateInstructionRequest) GetDocumentId() uint64 {
@@ -2690,7 +2998,7 @@ type UpdateInstructionRequest struct {
 
 func (x *UpdateInstructionRequest) Reset() {
 	*x = UpdateInstructionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[49]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2702,7 +3010,7 @@ func (x *UpdateInstructionRequest) String() string {
 func (*UpdateInstructionRequest) ProtoMessage() {}
 
 func (x *UpdateInstructionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[49]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2715,7 +3023,7 @@ func (x *UpdateInstructionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateInstructionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateInstructionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{49}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *UpdateInstructionRequest) GetDocumentId() uint64 {
@@ -2749,7 +3057,7 @@ type DeleteInstructionRequest struct {
 
 func (x *DeleteInstructionRequest) Reset() {
 	*x = DeleteInstructionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[50]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2761,7 +3069,7 @@ func (x *DeleteInstructionRequest) String() string {
 func (*DeleteInstructionRequest) ProtoMessage() {}
 
 func (x *DeleteInstructionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[50]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2774,7 +3082,7 @@ func (x *DeleteInstructionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteInstructionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteInstructionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{50}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *DeleteInstructionRequest) GetDocumentId() uint64 {
@@ -2799,7 +3107,7 @@ type DeleteInstructionResponse struct {
 
 func (x *DeleteInstructionResponse) Reset() {
 	*x = DeleteInstructionResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[51]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2811,7 +3119,7 @@ func (x *DeleteInstructionResponse) String() string {
 func (*DeleteInstructionResponse) ProtoMessage() {}
 
 func (x *DeleteInstructionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[51]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2824,7 +3132,7 @@ func (x *DeleteInstructionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteInstructionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteInstructionResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{51}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{56}
 }
 
 type Memory struct {
@@ -2840,7 +3148,7 @@ type Memory struct {
 
 func (x *Memory) Reset() {
 	*x = Memory{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[52]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2852,7 +3160,7 @@ func (x *Memory) String() string {
 func (*Memory) ProtoMessage() {}
 
 func (x *Memory) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[52]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2865,7 +3173,7 @@ func (x *Memory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Memory.ProtoReflect.Descriptor instead.
 func (*Memory) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{52}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *Memory) GetId() uint64 {
@@ -2912,7 +3220,7 @@ type ListMemoriesRequest struct {
 
 func (x *ListMemoriesRequest) Reset() {
 	*x = ListMemoriesRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[53]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2924,7 +3232,7 @@ func (x *ListMemoriesRequest) String() string {
 func (*ListMemoriesRequest) ProtoMessage() {}
 
 func (x *ListMemoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[53]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2937,7 +3245,7 @@ func (x *ListMemoriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMemoriesRequest.ProtoReflect.Descriptor instead.
 func (*ListMemoriesRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{53}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ListMemoriesRequest) GetDocumentId() uint64 {
@@ -2956,7 +3264,7 @@ type ListMemoriesResponse struct {
 
 func (x *ListMemoriesResponse) Reset() {
 	*x = ListMemoriesResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[54]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2968,7 +3276,7 @@ func (x *ListMemoriesResponse) String() string {
 func (*ListMemoriesResponse) ProtoMessage() {}
 
 func (x *ListMemoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[54]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2981,7 +3289,7 @@ func (x *ListMemoriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMemoriesResponse.ProtoReflect.Descriptor instead.
 func (*ListMemoriesResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{54}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *ListMemoriesResponse) GetMemories() []*Memory {
@@ -3001,7 +3309,7 @@ type DeleteMemoryRequest struct {
 
 func (x *DeleteMemoryRequest) Reset() {
 	*x = DeleteMemoryRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[55]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3013,7 +3321,7 @@ func (x *DeleteMemoryRequest) String() string {
 func (*DeleteMemoryRequest) ProtoMessage() {}
 
 func (x *DeleteMemoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[55]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3026,7 +3334,7 @@ func (x *DeleteMemoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteMemoryRequest.ProtoReflect.Descriptor instead.
 func (*DeleteMemoryRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{55}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *DeleteMemoryRequest) GetDocumentId() uint64 {
@@ -3051,7 +3359,7 @@ type DeleteMemoryResponse struct {
 
 func (x *DeleteMemoryResponse) Reset() {
 	*x = DeleteMemoryResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[56]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3063,7 +3371,7 @@ func (x *DeleteMemoryResponse) String() string {
 func (*DeleteMemoryResponse) ProtoMessage() {}
 
 func (x *DeleteMemoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[56]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3076,7 +3384,7 @@ func (x *DeleteMemoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteMemoryResponse.ProtoReflect.Descriptor instead.
 func (*DeleteMemoryResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{56}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{61}
 }
 
 type CommentAuthor struct {
@@ -3088,7 +3396,7 @@ type CommentAuthor struct {
 
 func (x *CommentAuthor) Reset() {
 	*x = CommentAuthor{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[57]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3100,7 +3408,7 @@ func (x *CommentAuthor) String() string {
 func (*CommentAuthor) ProtoMessage() {}
 
 func (x *CommentAuthor) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[57]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3113,7 +3421,7 @@ func (x *CommentAuthor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommentAuthor.ProtoReflect.Descriptor instead.
 func (*CommentAuthor) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{57}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *CommentAuthor) GetType() string {
@@ -3137,7 +3445,7 @@ type CommentReply struct {
 
 func (x *CommentReply) Reset() {
 	*x = CommentReply{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[58]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3149,7 +3457,7 @@ func (x *CommentReply) String() string {
 func (*CommentReply) ProtoMessage() {}
 
 func (x *CommentReply) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[58]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3162,7 +3470,7 @@ func (x *CommentReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommentReply.ProtoReflect.Descriptor instead.
 func (*CommentReply) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{58}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *CommentReply) GetId() uint64 {
@@ -3234,7 +3542,7 @@ type Comment struct {
 
 func (x *Comment) Reset() {
 	*x = Comment{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[59]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3246,7 +3554,7 @@ func (x *Comment) String() string {
 func (*Comment) ProtoMessage() {}
 
 func (x *Comment) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[59]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3259,7 +3567,7 @@ func (x *Comment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Comment.ProtoReflect.Descriptor instead.
 func (*Comment) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{59}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *Comment) GetId() uint64 {
@@ -3404,7 +3712,7 @@ type ListCommentsRequest struct {
 
 func (x *ListCommentsRequest) Reset() {
 	*x = ListCommentsRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[60]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3416,7 +3724,7 @@ func (x *ListCommentsRequest) String() string {
 func (*ListCommentsRequest) ProtoMessage() {}
 
 func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[60]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3429,7 +3737,7 @@ func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCommentsRequest.ProtoReflect.Descriptor instead.
 func (*ListCommentsRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{60}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *ListCommentsRequest) GetDocumentId() uint64 {
@@ -3450,7 +3758,7 @@ type CommentsDocument struct {
 
 func (x *CommentsDocument) Reset() {
 	*x = CommentsDocument{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[61]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3462,7 +3770,7 @@ func (x *CommentsDocument) String() string {
 func (*CommentsDocument) ProtoMessage() {}
 
 func (x *CommentsDocument) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[61]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3475,7 +3783,7 @@ func (x *CommentsDocument) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommentsDocument.ProtoReflect.Descriptor instead.
 func (*CommentsDocument) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{61}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *CommentsDocument) GetFilePath() string {
@@ -3511,7 +3819,7 @@ type CreateCommentRequest struct {
 
 func (x *CreateCommentRequest) Reset() {
 	*x = CreateCommentRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[62]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3523,7 +3831,7 @@ func (x *CreateCommentRequest) String() string {
 func (*CreateCommentRequest) ProtoMessage() {}
 
 func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[62]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3536,7 +3844,7 @@ func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCommentRequest.ProtoReflect.Descriptor instead.
 func (*CreateCommentRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{62}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *CreateCommentRequest) GetDocumentId() uint64 {
@@ -3578,7 +3886,7 @@ type UpdateCommentRequest struct {
 
 func (x *UpdateCommentRequest) Reset() {
 	*x = UpdateCommentRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[63]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3590,7 +3898,7 @@ func (x *UpdateCommentRequest) String() string {
 func (*UpdateCommentRequest) ProtoMessage() {}
 
 func (x *UpdateCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[63]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3603,7 +3911,7 @@ func (x *UpdateCommentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCommentRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCommentRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{63}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *UpdateCommentRequest) GetDocumentId() uint64 {
@@ -3637,7 +3945,7 @@ type DeleteCommentRequest struct {
 
 func (x *DeleteCommentRequest) Reset() {
 	*x = DeleteCommentRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[64]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3649,7 +3957,7 @@ func (x *DeleteCommentRequest) String() string {
 func (*DeleteCommentRequest) ProtoMessage() {}
 
 func (x *DeleteCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[64]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3662,7 +3970,7 @@ func (x *DeleteCommentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCommentRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCommentRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{64}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *DeleteCommentRequest) GetDocumentId() uint64 {
@@ -3687,7 +3995,7 @@ type DeleteCommentResponse struct {
 
 func (x *DeleteCommentResponse) Reset() {
 	*x = DeleteCommentResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[65]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3699,7 +4007,7 @@ func (x *DeleteCommentResponse) String() string {
 func (*DeleteCommentResponse) ProtoMessage() {}
 
 func (x *DeleteCommentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[65]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3712,7 +4020,7 @@ func (x *DeleteCommentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCommentResponse.ProtoReflect.Descriptor instead.
 func (*DeleteCommentResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{65}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{70}
 }
 
 type SetCommentResolutionRequest struct {
@@ -3726,7 +4034,7 @@ type SetCommentResolutionRequest struct {
 
 func (x *SetCommentResolutionRequest) Reset() {
 	*x = SetCommentResolutionRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[66]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3738,7 +4046,7 @@ func (x *SetCommentResolutionRequest) String() string {
 func (*SetCommentResolutionRequest) ProtoMessage() {}
 
 func (x *SetCommentResolutionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[66]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3751,7 +4059,7 @@ func (x *SetCommentResolutionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetCommentResolutionRequest.ProtoReflect.Descriptor instead.
 func (*SetCommentResolutionRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{66}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *SetCommentResolutionRequest) GetDocumentId() uint64 {
@@ -3786,7 +4094,7 @@ type CreateReplyRequest struct {
 
 func (x *CreateReplyRequest) Reset() {
 	*x = CreateReplyRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[67]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3798,7 +4106,7 @@ func (x *CreateReplyRequest) String() string {
 func (*CreateReplyRequest) ProtoMessage() {}
 
 func (x *CreateReplyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[67]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3811,7 +4119,7 @@ func (x *CreateReplyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateReplyRequest.ProtoReflect.Descriptor instead.
 func (*CreateReplyRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{67}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *CreateReplyRequest) GetDocumentId() uint64 {
@@ -3847,7 +4155,7 @@ type UpdateReplyRequest struct {
 
 func (x *UpdateReplyRequest) Reset() {
 	*x = UpdateReplyRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[68]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3859,7 +4167,7 @@ func (x *UpdateReplyRequest) String() string {
 func (*UpdateReplyRequest) ProtoMessage() {}
 
 func (x *UpdateReplyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[68]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3872,7 +4180,7 @@ func (x *UpdateReplyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateReplyRequest.ProtoReflect.Descriptor instead.
 func (*UpdateReplyRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{68}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *UpdateReplyRequest) GetDocumentId() uint64 {
@@ -3914,7 +4222,7 @@ type DeleteReplyRequest struct {
 
 func (x *DeleteReplyRequest) Reset() {
 	*x = DeleteReplyRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[69]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3926,7 +4234,7 @@ func (x *DeleteReplyRequest) String() string {
 func (*DeleteReplyRequest) ProtoMessage() {}
 
 func (x *DeleteReplyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[69]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3939,7 +4247,7 @@ func (x *DeleteReplyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteReplyRequest.ProtoReflect.Descriptor instead.
 func (*DeleteReplyRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{69}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *DeleteReplyRequest) GetDocumentId() uint64 {
@@ -3971,7 +4279,7 @@ type DeleteReplyResponse struct {
 
 func (x *DeleteReplyResponse) Reset() {
 	*x = DeleteReplyResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[70]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3983,7 +4291,7 @@ func (x *DeleteReplyResponse) String() string {
 func (*DeleteReplyResponse) ProtoMessage() {}
 
 func (x *DeleteReplyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[70]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3996,7 +4304,7 @@ func (x *DeleteReplyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteReplyResponse.ProtoReflect.Descriptor instead.
 func (*DeleteReplyResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{70}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{75}
 }
 
 type ExportCommentToGitHubRequest struct {
@@ -4015,7 +4323,7 @@ type ExportCommentToGitHubRequest struct {
 
 func (x *ExportCommentToGitHubRequest) Reset() {
 	*x = ExportCommentToGitHubRequest{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[71]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4027,7 +4335,7 @@ func (x *ExportCommentToGitHubRequest) String() string {
 func (*ExportCommentToGitHubRequest) ProtoMessage() {}
 
 func (x *ExportCommentToGitHubRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[71]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4040,7 +4348,7 @@ func (x *ExportCommentToGitHubRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportCommentToGitHubRequest.ProtoReflect.Descriptor instead.
 func (*ExportCommentToGitHubRequest) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{71}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *ExportCommentToGitHubRequest) GetDocumentId() uint64 {
@@ -4109,7 +4417,7 @@ type ExportCommentToGitHubResponse struct {
 
 func (x *ExportCommentToGitHubResponse) Reset() {
 	*x = ExportCommentToGitHubResponse{}
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[72]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4121,7 +4429,7 @@ func (x *ExportCommentToGitHubResponse) String() string {
 func (*ExportCommentToGitHubResponse) ProtoMessage() {}
 
 func (x *ExportCommentToGitHubResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[72]
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4134,7 +4442,7 @@ func (x *ExportCommentToGitHubResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportCommentToGitHubResponse.ProtoReflect.Descriptor instead.
 func (*ExportCommentToGitHubResponse) Descriptor() ([]byte, []int) {
-	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{72}
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *ExportCommentToGitHubResponse) GetUrl() string {
@@ -4209,7 +4517,32 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\x05title\x18\x02 \x01(\tR\x05title\"5\n" +
 	"\x12GetDocumentRequest\x12\x1f\n" +
 	"\vdocument_id\x18\x01 \x01(\x04R\n" +
-	"documentId\"J\n" +
+	"documentId\"l\n" +
+	"\rTablePosition\x12\x1d\n" +
+	"\n" +
+	"start_line\x18\x01 \x01(\rR\tstartLine\x12\x19\n" +
+	"\bend_line\x18\x02 \x01(\rR\aendLine\x12!\n" +
+	"\fcolumn_count\x18\x03 \x01(\rR\vcolumnCount\"\x9f\x01\n" +
+	"\vTableLayout\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"start_line\x18\x02 \x01(\rR\tstartLine\x12\x19\n" +
+	"\bend_line\x18\x03 \x01(\rR\aendLine\x12!\n" +
+	"\fcolumn_count\x18\x04 \x01(\rR\vcolumnCount\x12#\n" +
+	"\rcolumn_widths\x18\x05 \x03(\x01R\fcolumnWidths\"\xa2\x01\n" +
+	"\x16GetTableLayoutsRequest\x12\x1f\n" +
+	"\vdocument_id\x18\x01 \x01(\x04R\n" +
+	"documentId\x12-\n" +
+	"\x12displayed_markdown\x18\x02 \x01(\tR\x11displayedMarkdown\x128\n" +
+	"\x06tables\x18\x03 \x03(\v2 .sadoku.preview.v1.TablePositionR\x06tables\"Q\n" +
+	"\x17GetTableLayoutsResponse\x126\n" +
+	"\x06tables\x18\x01 \x03(\v2\x1e.sadoku.preview.v1.TableLayoutR\x06tables\"\xaa\x01\n" +
+	"\x18UpdateTableLayoutRequest\x12\x1f\n" +
+	"\vdocument_id\x18\x01 \x01(\x04R\n" +
+	"documentId\x12-\n" +
+	"\x12displayed_markdown\x18\x02 \x01(\tR\x11displayedMarkdown\x12\x19\n" +
+	"\btable_id\x18\x03 \x01(\tR\atableId\x12#\n" +
+	"\rcolumn_widths\x18\x04 \x03(\x01R\fcolumnWidths\"J\n" +
 	"\x17DocumentRevisionSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x1f\n" +
 	"\vrecorded_at\x18\x02 \x01(\tR\n" +
@@ -4502,7 +4835,7 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\bend_line\x18\b \x01(\rR\aendLine\"G\n" +
 	"\x1dExportCommentToGitHubResponse\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
-	"\x05state\x18\x02 \x01(\tR\x05state2\xce\x1c\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state2\x9a\x1e\n" +
 	"\x0ePreviewService\x12Y\n" +
 	"\n" +
 	"GetSession\x12$.sadoku.preview.v1.GetSessionRequest\x1a%.sadoku.preview.v1.GetSessionResponse\x12b\n" +
@@ -4510,7 +4843,9 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\rListDocuments\x12'.sadoku.preview.v1.ListDocumentsRequest\x1a(.sadoku.preview.v1.ListDocumentsResponse\x12^\n" +
 	"\x0eCreateDocument\x12(.sadoku.preview.v1.CreateDocumentRequest\x1a\".sadoku.preview.v1.DocumentSummary\x12h\n" +
 	"\x13UpdateDocumentTitle\x12-.sadoku.preview.v1.UpdateDocumentTitleRequest\x1a\".sadoku.preview.v1.DocumentSummary\x12\\\n" +
-	"\vGetDocument\x12%.sadoku.preview.v1.GetDocumentRequest\x1a&.sadoku.preview.v1.GetDocumentResponse\x12z\n" +
+	"\vGetDocument\x12%.sadoku.preview.v1.GetDocumentRequest\x1a&.sadoku.preview.v1.GetDocumentResponse\x12h\n" +
+	"\x0fGetTableLayouts\x12).sadoku.preview.v1.GetTableLayoutsRequest\x1a*.sadoku.preview.v1.GetTableLayoutsResponse\x12`\n" +
+	"\x11UpdateTableLayout\x12+.sadoku.preview.v1.UpdateTableLayoutRequest\x1a\x1e.sadoku.preview.v1.TableLayout\x12z\n" +
 	"\x15ListDocumentRevisions\x12/.sadoku.preview.v1.ListDocumentRevisionsRequest\x1a0.sadoku.preview.v1.ListDocumentRevisionsResponse\x12i\n" +
 	"\x13GetDocumentRevision\x12-.sadoku.preview.v1.GetDocumentRevisionRequest\x1a#.sadoku.preview.v1.DocumentRevision\x12\x80\x01\n" +
 	"\x17RestoreDocumentRevision\x121.sadoku.preview.v1.RestoreDocumentRevisionRequest\x1a2.sadoku.preview.v1.RestoreDocumentRevisionResponse\x12q\n" +
@@ -4554,7 +4889,7 @@ func file_sadoku_preview_v1_preview_proto_rawDescGZIP() []byte {
 	return file_sadoku_preview_v1_preview_proto_rawDescData
 }
 
-var file_sadoku_preview_v1_preview_proto_msgTypes = make([]protoimpl.MessageInfo, 73)
+var file_sadoku_preview_v1_preview_proto_msgTypes = make([]protoimpl.MessageInfo, 78)
 var file_sadoku_preview_v1_preview_proto_goTypes = []any{
 	(*GetSessionRequest)(nil),               // 0: sadoku.preview.v1.GetSessionRequest
 	(*GetSessionResponse)(nil),              // 1: sadoku.preview.v1.GetSessionResponse
@@ -4570,163 +4905,174 @@ var file_sadoku_preview_v1_preview_proto_goTypes = []any{
 	(*DocumentSummary)(nil),                 // 11: sadoku.preview.v1.DocumentSummary
 	(*UpdateDocumentTitleRequest)(nil),      // 12: sadoku.preview.v1.UpdateDocumentTitleRequest
 	(*GetDocumentRequest)(nil),              // 13: sadoku.preview.v1.GetDocumentRequest
-	(*DocumentRevisionSummary)(nil),         // 14: sadoku.preview.v1.DocumentRevisionSummary
-	(*DocumentRevision)(nil),                // 15: sadoku.preview.v1.DocumentRevision
-	(*ListDocumentRevisionsRequest)(nil),    // 16: sadoku.preview.v1.ListDocumentRevisionsRequest
-	(*ListDocumentRevisionsResponse)(nil),   // 17: sadoku.preview.v1.ListDocumentRevisionsResponse
-	(*GetDocumentRevisionRequest)(nil),      // 18: sadoku.preview.v1.GetDocumentRevisionRequest
-	(*RestoreDocumentRevisionRequest)(nil),  // 19: sadoku.preview.v1.RestoreDocumentRevisionRequest
-	(*RestoreDocumentRevisionResponse)(nil), // 20: sadoku.preview.v1.RestoreDocumentRevisionResponse
-	(*GetDocumentResponse)(nil),             // 21: sadoku.preview.v1.GetDocumentResponse
-	(*GetDirectoryStatusRequest)(nil),       // 22: sadoku.preview.v1.GetDirectoryStatusRequest
-	(*GetDirectoryStatusResponse)(nil),      // 23: sadoku.preview.v1.GetDirectoryStatusResponse
-	(*DirectoryError)(nil),                  // 24: sadoku.preview.v1.DirectoryError
-	(*GetSettingsRequest)(nil),              // 25: sadoku.preview.v1.GetSettingsRequest
-	(*Settings)(nil),                        // 26: sadoku.preview.v1.Settings
-	(*UpdateSettingsRequest)(nil),           // 27: sadoku.preview.v1.UpdateSettingsRequest
-	(*GetGitHubAccountRequest)(nil),         // 28: sadoku.preview.v1.GetGitHubAccountRequest
-	(*GetGitHubAccountResponse)(nil),        // 29: sadoku.preview.v1.GetGitHubAccountResponse
-	(*GitHubAccount)(nil),                   // 30: sadoku.preview.v1.GitHubAccount
-	(*ListTagsRequest)(nil),                 // 31: sadoku.preview.v1.ListTagsRequest
-	(*ListTagsResponse)(nil),                // 32: sadoku.preview.v1.ListTagsResponse
-	(*DeleteTagRequest)(nil),                // 33: sadoku.preview.v1.DeleteTagRequest
-	(*DeleteTagResponse)(nil),               // 34: sadoku.preview.v1.DeleteTagResponse
-	(*UpdateTagRequest)(nil),                // 35: sadoku.preview.v1.UpdateTagRequest
-	(*TagReference)(nil),                    // 36: sadoku.preview.v1.TagReference
-	(*ReplaceDocumentTagsRequest)(nil),      // 37: sadoku.preview.v1.ReplaceDocumentTagsRequest
-	(*ReplaceDocumentTagsResponse)(nil),     // 38: sadoku.preview.v1.ReplaceDocumentTagsResponse
-	(*Instruction)(nil),                     // 39: sadoku.preview.v1.Instruction
-	(*ListGlobalInstructionsRequest)(nil),   // 40: sadoku.preview.v1.ListGlobalInstructionsRequest
-	(*ListGlobalInstructionsResponse)(nil),  // 41: sadoku.preview.v1.ListGlobalInstructionsResponse
-	(*CreateGlobalInstructionRequest)(nil),  // 42: sadoku.preview.v1.CreateGlobalInstructionRequest
-	(*UpdateGlobalInstructionRequest)(nil),  // 43: sadoku.preview.v1.UpdateGlobalInstructionRequest
-	(*DeleteGlobalInstructionRequest)(nil),  // 44: sadoku.preview.v1.DeleteGlobalInstructionRequest
-	(*DeleteGlobalInstructionResponse)(nil), // 45: sadoku.preview.v1.DeleteGlobalInstructionResponse
-	(*ListInstructionsRequest)(nil),         // 46: sadoku.preview.v1.ListInstructionsRequest
-	(*ListInstructionsResponse)(nil),        // 47: sadoku.preview.v1.ListInstructionsResponse
-	(*CreateInstructionRequest)(nil),        // 48: sadoku.preview.v1.CreateInstructionRequest
-	(*UpdateInstructionRequest)(nil),        // 49: sadoku.preview.v1.UpdateInstructionRequest
-	(*DeleteInstructionRequest)(nil),        // 50: sadoku.preview.v1.DeleteInstructionRequest
-	(*DeleteInstructionResponse)(nil),       // 51: sadoku.preview.v1.DeleteInstructionResponse
-	(*Memory)(nil),                          // 52: sadoku.preview.v1.Memory
-	(*ListMemoriesRequest)(nil),             // 53: sadoku.preview.v1.ListMemoriesRequest
-	(*ListMemoriesResponse)(nil),            // 54: sadoku.preview.v1.ListMemoriesResponse
-	(*DeleteMemoryRequest)(nil),             // 55: sadoku.preview.v1.DeleteMemoryRequest
-	(*DeleteMemoryResponse)(nil),            // 56: sadoku.preview.v1.DeleteMemoryResponse
-	(*CommentAuthor)(nil),                   // 57: sadoku.preview.v1.CommentAuthor
-	(*CommentReply)(nil),                    // 58: sadoku.preview.v1.CommentReply
-	(*Comment)(nil),                         // 59: sadoku.preview.v1.Comment
-	(*ListCommentsRequest)(nil),             // 60: sadoku.preview.v1.ListCommentsRequest
-	(*CommentsDocument)(nil),                // 61: sadoku.preview.v1.CommentsDocument
-	(*CreateCommentRequest)(nil),            // 62: sadoku.preview.v1.CreateCommentRequest
-	(*UpdateCommentRequest)(nil),            // 63: sadoku.preview.v1.UpdateCommentRequest
-	(*DeleteCommentRequest)(nil),            // 64: sadoku.preview.v1.DeleteCommentRequest
-	(*DeleteCommentResponse)(nil),           // 65: sadoku.preview.v1.DeleteCommentResponse
-	(*SetCommentResolutionRequest)(nil),     // 66: sadoku.preview.v1.SetCommentResolutionRequest
-	(*CreateReplyRequest)(nil),              // 67: sadoku.preview.v1.CreateReplyRequest
-	(*UpdateReplyRequest)(nil),              // 68: sadoku.preview.v1.UpdateReplyRequest
-	(*DeleteReplyRequest)(nil),              // 69: sadoku.preview.v1.DeleteReplyRequest
-	(*DeleteReplyResponse)(nil),             // 70: sadoku.preview.v1.DeleteReplyResponse
-	(*ExportCommentToGitHubRequest)(nil),    // 71: sadoku.preview.v1.ExportCommentToGitHubRequest
-	(*ExportCommentToGitHubResponse)(nil),   // 72: sadoku.preview.v1.ExportCommentToGitHubResponse
+	(*TablePosition)(nil),                   // 14: sadoku.preview.v1.TablePosition
+	(*TableLayout)(nil),                     // 15: sadoku.preview.v1.TableLayout
+	(*GetTableLayoutsRequest)(nil),          // 16: sadoku.preview.v1.GetTableLayoutsRequest
+	(*GetTableLayoutsResponse)(nil),         // 17: sadoku.preview.v1.GetTableLayoutsResponse
+	(*UpdateTableLayoutRequest)(nil),        // 18: sadoku.preview.v1.UpdateTableLayoutRequest
+	(*DocumentRevisionSummary)(nil),         // 19: sadoku.preview.v1.DocumentRevisionSummary
+	(*DocumentRevision)(nil),                // 20: sadoku.preview.v1.DocumentRevision
+	(*ListDocumentRevisionsRequest)(nil),    // 21: sadoku.preview.v1.ListDocumentRevisionsRequest
+	(*ListDocumentRevisionsResponse)(nil),   // 22: sadoku.preview.v1.ListDocumentRevisionsResponse
+	(*GetDocumentRevisionRequest)(nil),      // 23: sadoku.preview.v1.GetDocumentRevisionRequest
+	(*RestoreDocumentRevisionRequest)(nil),  // 24: sadoku.preview.v1.RestoreDocumentRevisionRequest
+	(*RestoreDocumentRevisionResponse)(nil), // 25: sadoku.preview.v1.RestoreDocumentRevisionResponse
+	(*GetDocumentResponse)(nil),             // 26: sadoku.preview.v1.GetDocumentResponse
+	(*GetDirectoryStatusRequest)(nil),       // 27: sadoku.preview.v1.GetDirectoryStatusRequest
+	(*GetDirectoryStatusResponse)(nil),      // 28: sadoku.preview.v1.GetDirectoryStatusResponse
+	(*DirectoryError)(nil),                  // 29: sadoku.preview.v1.DirectoryError
+	(*GetSettingsRequest)(nil),              // 30: sadoku.preview.v1.GetSettingsRequest
+	(*Settings)(nil),                        // 31: sadoku.preview.v1.Settings
+	(*UpdateSettingsRequest)(nil),           // 32: sadoku.preview.v1.UpdateSettingsRequest
+	(*GetGitHubAccountRequest)(nil),         // 33: sadoku.preview.v1.GetGitHubAccountRequest
+	(*GetGitHubAccountResponse)(nil),        // 34: sadoku.preview.v1.GetGitHubAccountResponse
+	(*GitHubAccount)(nil),                   // 35: sadoku.preview.v1.GitHubAccount
+	(*ListTagsRequest)(nil),                 // 36: sadoku.preview.v1.ListTagsRequest
+	(*ListTagsResponse)(nil),                // 37: sadoku.preview.v1.ListTagsResponse
+	(*DeleteTagRequest)(nil),                // 38: sadoku.preview.v1.DeleteTagRequest
+	(*DeleteTagResponse)(nil),               // 39: sadoku.preview.v1.DeleteTagResponse
+	(*UpdateTagRequest)(nil),                // 40: sadoku.preview.v1.UpdateTagRequest
+	(*TagReference)(nil),                    // 41: sadoku.preview.v1.TagReference
+	(*ReplaceDocumentTagsRequest)(nil),      // 42: sadoku.preview.v1.ReplaceDocumentTagsRequest
+	(*ReplaceDocumentTagsResponse)(nil),     // 43: sadoku.preview.v1.ReplaceDocumentTagsResponse
+	(*Instruction)(nil),                     // 44: sadoku.preview.v1.Instruction
+	(*ListGlobalInstructionsRequest)(nil),   // 45: sadoku.preview.v1.ListGlobalInstructionsRequest
+	(*ListGlobalInstructionsResponse)(nil),  // 46: sadoku.preview.v1.ListGlobalInstructionsResponse
+	(*CreateGlobalInstructionRequest)(nil),  // 47: sadoku.preview.v1.CreateGlobalInstructionRequest
+	(*UpdateGlobalInstructionRequest)(nil),  // 48: sadoku.preview.v1.UpdateGlobalInstructionRequest
+	(*DeleteGlobalInstructionRequest)(nil),  // 49: sadoku.preview.v1.DeleteGlobalInstructionRequest
+	(*DeleteGlobalInstructionResponse)(nil), // 50: sadoku.preview.v1.DeleteGlobalInstructionResponse
+	(*ListInstructionsRequest)(nil),         // 51: sadoku.preview.v1.ListInstructionsRequest
+	(*ListInstructionsResponse)(nil),        // 52: sadoku.preview.v1.ListInstructionsResponse
+	(*CreateInstructionRequest)(nil),        // 53: sadoku.preview.v1.CreateInstructionRequest
+	(*UpdateInstructionRequest)(nil),        // 54: sadoku.preview.v1.UpdateInstructionRequest
+	(*DeleteInstructionRequest)(nil),        // 55: sadoku.preview.v1.DeleteInstructionRequest
+	(*DeleteInstructionResponse)(nil),       // 56: sadoku.preview.v1.DeleteInstructionResponse
+	(*Memory)(nil),                          // 57: sadoku.preview.v1.Memory
+	(*ListMemoriesRequest)(nil),             // 58: sadoku.preview.v1.ListMemoriesRequest
+	(*ListMemoriesResponse)(nil),            // 59: sadoku.preview.v1.ListMemoriesResponse
+	(*DeleteMemoryRequest)(nil),             // 60: sadoku.preview.v1.DeleteMemoryRequest
+	(*DeleteMemoryResponse)(nil),            // 61: sadoku.preview.v1.DeleteMemoryResponse
+	(*CommentAuthor)(nil),                   // 62: sadoku.preview.v1.CommentAuthor
+	(*CommentReply)(nil),                    // 63: sadoku.preview.v1.CommentReply
+	(*Comment)(nil),                         // 64: sadoku.preview.v1.Comment
+	(*ListCommentsRequest)(nil),             // 65: sadoku.preview.v1.ListCommentsRequest
+	(*CommentsDocument)(nil),                // 66: sadoku.preview.v1.CommentsDocument
+	(*CreateCommentRequest)(nil),            // 67: sadoku.preview.v1.CreateCommentRequest
+	(*UpdateCommentRequest)(nil),            // 68: sadoku.preview.v1.UpdateCommentRequest
+	(*DeleteCommentRequest)(nil),            // 69: sadoku.preview.v1.DeleteCommentRequest
+	(*DeleteCommentResponse)(nil),           // 70: sadoku.preview.v1.DeleteCommentResponse
+	(*SetCommentResolutionRequest)(nil),     // 71: sadoku.preview.v1.SetCommentResolutionRequest
+	(*CreateReplyRequest)(nil),              // 72: sadoku.preview.v1.CreateReplyRequest
+	(*UpdateReplyRequest)(nil),              // 73: sadoku.preview.v1.UpdateReplyRequest
+	(*DeleteReplyRequest)(nil),              // 74: sadoku.preview.v1.DeleteReplyRequest
+	(*DeleteReplyResponse)(nil),             // 75: sadoku.preview.v1.DeleteReplyResponse
+	(*ExportCommentToGitHubRequest)(nil),    // 76: sadoku.preview.v1.ExportCommentToGitHubRequest
+	(*ExportCommentToGitHubResponse)(nil),   // 77: sadoku.preview.v1.ExportCommentToGitHubResponse
 }
 var file_sadoku_preview_v1_preview_proto_depIdxs = []int32{
 	2,  // 0: sadoku.preview.v1.GetSessionResponse.pull_request:type_name -> sadoku.preview.v1.PullRequest
 	5,  // 1: sadoku.preview.v1.GetStatisticsResponse.comment_count:type_name -> sadoku.preview.v1.CommentCount
 	11, // 2: sadoku.preview.v1.ListDocumentsResponse.documents:type_name -> sadoku.preview.v1.DocumentSummary
 	6,  // 3: sadoku.preview.v1.DocumentSummary.tags:type_name -> sadoku.preview.v1.Tag
-	14, // 4: sadoku.preview.v1.ListDocumentRevisionsResponse.revisions:type_name -> sadoku.preview.v1.DocumentRevisionSummary
-	6,  // 5: sadoku.preview.v1.GetDocumentResponse.tags:type_name -> sadoku.preview.v1.Tag
-	24, // 6: sadoku.preview.v1.GetDirectoryStatusResponse.error:type_name -> sadoku.preview.v1.DirectoryError
-	30, // 7: sadoku.preview.v1.GetGitHubAccountResponse.account:type_name -> sadoku.preview.v1.GitHubAccount
-	7,  // 8: sadoku.preview.v1.ListTagsResponse.tags:type_name -> sadoku.preview.v1.TagSummary
-	36, // 9: sadoku.preview.v1.ReplaceDocumentTagsRequest.tags:type_name -> sadoku.preview.v1.TagReference
-	6,  // 10: sadoku.preview.v1.ReplaceDocumentTagsResponse.tags:type_name -> sadoku.preview.v1.Tag
-	39, // 11: sadoku.preview.v1.ListGlobalInstructionsResponse.instructions:type_name -> sadoku.preview.v1.Instruction
-	39, // 12: sadoku.preview.v1.ListInstructionsResponse.instructions:type_name -> sadoku.preview.v1.Instruction
-	52, // 13: sadoku.preview.v1.ListMemoriesResponse.memories:type_name -> sadoku.preview.v1.Memory
-	57, // 14: sadoku.preview.v1.CommentReply.author:type_name -> sadoku.preview.v1.CommentAuthor
-	57, // 15: sadoku.preview.v1.Comment.author:type_name -> sadoku.preview.v1.CommentAuthor
-	57, // 16: sadoku.preview.v1.Comment.resolved_by:type_name -> sadoku.preview.v1.CommentAuthor
-	58, // 17: sadoku.preview.v1.Comment.replies:type_name -> sadoku.preview.v1.CommentReply
-	59, // 18: sadoku.preview.v1.CommentsDocument.comments:type_name -> sadoku.preview.v1.Comment
-	0,  // 19: sadoku.preview.v1.PreviewService.GetSession:input_type -> sadoku.preview.v1.GetSessionRequest
-	3,  // 20: sadoku.preview.v1.PreviewService.GetStatistics:input_type -> sadoku.preview.v1.GetStatisticsRequest
-	8,  // 21: sadoku.preview.v1.PreviewService.ListDocuments:input_type -> sadoku.preview.v1.ListDocumentsRequest
-	10, // 22: sadoku.preview.v1.PreviewService.CreateDocument:input_type -> sadoku.preview.v1.CreateDocumentRequest
-	12, // 23: sadoku.preview.v1.PreviewService.UpdateDocumentTitle:input_type -> sadoku.preview.v1.UpdateDocumentTitleRequest
-	13, // 24: sadoku.preview.v1.PreviewService.GetDocument:input_type -> sadoku.preview.v1.GetDocumentRequest
-	16, // 25: sadoku.preview.v1.PreviewService.ListDocumentRevisions:input_type -> sadoku.preview.v1.ListDocumentRevisionsRequest
-	18, // 26: sadoku.preview.v1.PreviewService.GetDocumentRevision:input_type -> sadoku.preview.v1.GetDocumentRevisionRequest
-	19, // 27: sadoku.preview.v1.PreviewService.RestoreDocumentRevision:input_type -> sadoku.preview.v1.RestoreDocumentRevisionRequest
-	22, // 28: sadoku.preview.v1.PreviewService.GetDirectoryStatus:input_type -> sadoku.preview.v1.GetDirectoryStatusRequest
-	25, // 29: sadoku.preview.v1.PreviewService.GetSettings:input_type -> sadoku.preview.v1.GetSettingsRequest
-	27, // 30: sadoku.preview.v1.PreviewService.UpdateSettings:input_type -> sadoku.preview.v1.UpdateSettingsRequest
-	28, // 31: sadoku.preview.v1.PreviewService.GetGitHubAccount:input_type -> sadoku.preview.v1.GetGitHubAccountRequest
-	31, // 32: sadoku.preview.v1.PreviewService.ListTags:input_type -> sadoku.preview.v1.ListTagsRequest
-	35, // 33: sadoku.preview.v1.PreviewService.UpdateTag:input_type -> sadoku.preview.v1.UpdateTagRequest
-	33, // 34: sadoku.preview.v1.PreviewService.DeleteTag:input_type -> sadoku.preview.v1.DeleteTagRequest
-	37, // 35: sadoku.preview.v1.PreviewService.ReplaceDocumentTags:input_type -> sadoku.preview.v1.ReplaceDocumentTagsRequest
-	40, // 36: sadoku.preview.v1.PreviewService.ListGlobalInstructions:input_type -> sadoku.preview.v1.ListGlobalInstructionsRequest
-	42, // 37: sadoku.preview.v1.PreviewService.CreateGlobalInstruction:input_type -> sadoku.preview.v1.CreateGlobalInstructionRequest
-	43, // 38: sadoku.preview.v1.PreviewService.UpdateGlobalInstruction:input_type -> sadoku.preview.v1.UpdateGlobalInstructionRequest
-	44, // 39: sadoku.preview.v1.PreviewService.DeleteGlobalInstruction:input_type -> sadoku.preview.v1.DeleteGlobalInstructionRequest
-	46, // 40: sadoku.preview.v1.PreviewService.ListInstructions:input_type -> sadoku.preview.v1.ListInstructionsRequest
-	48, // 41: sadoku.preview.v1.PreviewService.CreateInstruction:input_type -> sadoku.preview.v1.CreateInstructionRequest
-	49, // 42: sadoku.preview.v1.PreviewService.UpdateInstruction:input_type -> sadoku.preview.v1.UpdateInstructionRequest
-	50, // 43: sadoku.preview.v1.PreviewService.DeleteInstruction:input_type -> sadoku.preview.v1.DeleteInstructionRequest
-	53, // 44: sadoku.preview.v1.PreviewService.ListMemories:input_type -> sadoku.preview.v1.ListMemoriesRequest
-	55, // 45: sadoku.preview.v1.PreviewService.DeleteMemory:input_type -> sadoku.preview.v1.DeleteMemoryRequest
-	60, // 46: sadoku.preview.v1.PreviewService.ListComments:input_type -> sadoku.preview.v1.ListCommentsRequest
-	62, // 47: sadoku.preview.v1.PreviewService.CreateComment:input_type -> sadoku.preview.v1.CreateCommentRequest
-	63, // 48: sadoku.preview.v1.PreviewService.UpdateComment:input_type -> sadoku.preview.v1.UpdateCommentRequest
-	64, // 49: sadoku.preview.v1.PreviewService.DeleteComment:input_type -> sadoku.preview.v1.DeleteCommentRequest
-	66, // 50: sadoku.preview.v1.PreviewService.SetCommentResolution:input_type -> sadoku.preview.v1.SetCommentResolutionRequest
-	67, // 51: sadoku.preview.v1.PreviewService.CreateReply:input_type -> sadoku.preview.v1.CreateReplyRequest
-	68, // 52: sadoku.preview.v1.PreviewService.UpdateReply:input_type -> sadoku.preview.v1.UpdateReplyRequest
-	69, // 53: sadoku.preview.v1.PreviewService.DeleteReply:input_type -> sadoku.preview.v1.DeleteReplyRequest
-	71, // 54: sadoku.preview.v1.PreviewService.ExportCommentToGitHub:input_type -> sadoku.preview.v1.ExportCommentToGitHubRequest
-	1,  // 55: sadoku.preview.v1.PreviewService.GetSession:output_type -> sadoku.preview.v1.GetSessionResponse
-	4,  // 56: sadoku.preview.v1.PreviewService.GetStatistics:output_type -> sadoku.preview.v1.GetStatisticsResponse
-	9,  // 57: sadoku.preview.v1.PreviewService.ListDocuments:output_type -> sadoku.preview.v1.ListDocumentsResponse
-	11, // 58: sadoku.preview.v1.PreviewService.CreateDocument:output_type -> sadoku.preview.v1.DocumentSummary
-	11, // 59: sadoku.preview.v1.PreviewService.UpdateDocumentTitle:output_type -> sadoku.preview.v1.DocumentSummary
-	21, // 60: sadoku.preview.v1.PreviewService.GetDocument:output_type -> sadoku.preview.v1.GetDocumentResponse
-	17, // 61: sadoku.preview.v1.PreviewService.ListDocumentRevisions:output_type -> sadoku.preview.v1.ListDocumentRevisionsResponse
-	15, // 62: sadoku.preview.v1.PreviewService.GetDocumentRevision:output_type -> sadoku.preview.v1.DocumentRevision
-	20, // 63: sadoku.preview.v1.PreviewService.RestoreDocumentRevision:output_type -> sadoku.preview.v1.RestoreDocumentRevisionResponse
-	23, // 64: sadoku.preview.v1.PreviewService.GetDirectoryStatus:output_type -> sadoku.preview.v1.GetDirectoryStatusResponse
-	26, // 65: sadoku.preview.v1.PreviewService.GetSettings:output_type -> sadoku.preview.v1.Settings
-	26, // 66: sadoku.preview.v1.PreviewService.UpdateSettings:output_type -> sadoku.preview.v1.Settings
-	29, // 67: sadoku.preview.v1.PreviewService.GetGitHubAccount:output_type -> sadoku.preview.v1.GetGitHubAccountResponse
-	32, // 68: sadoku.preview.v1.PreviewService.ListTags:output_type -> sadoku.preview.v1.ListTagsResponse
-	6,  // 69: sadoku.preview.v1.PreviewService.UpdateTag:output_type -> sadoku.preview.v1.Tag
-	34, // 70: sadoku.preview.v1.PreviewService.DeleteTag:output_type -> sadoku.preview.v1.DeleteTagResponse
-	38, // 71: sadoku.preview.v1.PreviewService.ReplaceDocumentTags:output_type -> sadoku.preview.v1.ReplaceDocumentTagsResponse
-	41, // 72: sadoku.preview.v1.PreviewService.ListGlobalInstructions:output_type -> sadoku.preview.v1.ListGlobalInstructionsResponse
-	39, // 73: sadoku.preview.v1.PreviewService.CreateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
-	39, // 74: sadoku.preview.v1.PreviewService.UpdateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
-	45, // 75: sadoku.preview.v1.PreviewService.DeleteGlobalInstruction:output_type -> sadoku.preview.v1.DeleteGlobalInstructionResponse
-	47, // 76: sadoku.preview.v1.PreviewService.ListInstructions:output_type -> sadoku.preview.v1.ListInstructionsResponse
-	39, // 77: sadoku.preview.v1.PreviewService.CreateInstruction:output_type -> sadoku.preview.v1.Instruction
-	39, // 78: sadoku.preview.v1.PreviewService.UpdateInstruction:output_type -> sadoku.preview.v1.Instruction
-	51, // 79: sadoku.preview.v1.PreviewService.DeleteInstruction:output_type -> sadoku.preview.v1.DeleteInstructionResponse
-	54, // 80: sadoku.preview.v1.PreviewService.ListMemories:output_type -> sadoku.preview.v1.ListMemoriesResponse
-	56, // 81: sadoku.preview.v1.PreviewService.DeleteMemory:output_type -> sadoku.preview.v1.DeleteMemoryResponse
-	61, // 82: sadoku.preview.v1.PreviewService.ListComments:output_type -> sadoku.preview.v1.CommentsDocument
-	59, // 83: sadoku.preview.v1.PreviewService.CreateComment:output_type -> sadoku.preview.v1.Comment
-	59, // 84: sadoku.preview.v1.PreviewService.UpdateComment:output_type -> sadoku.preview.v1.Comment
-	65, // 85: sadoku.preview.v1.PreviewService.DeleteComment:output_type -> sadoku.preview.v1.DeleteCommentResponse
-	59, // 86: sadoku.preview.v1.PreviewService.SetCommentResolution:output_type -> sadoku.preview.v1.Comment
-	59, // 87: sadoku.preview.v1.PreviewService.CreateReply:output_type -> sadoku.preview.v1.Comment
-	59, // 88: sadoku.preview.v1.PreviewService.UpdateReply:output_type -> sadoku.preview.v1.Comment
-	70, // 89: sadoku.preview.v1.PreviewService.DeleteReply:output_type -> sadoku.preview.v1.DeleteReplyResponse
-	72, // 90: sadoku.preview.v1.PreviewService.ExportCommentToGitHub:output_type -> sadoku.preview.v1.ExportCommentToGitHubResponse
-	55, // [55:91] is the sub-list for method output_type
-	19, // [19:55] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	14, // 4: sadoku.preview.v1.GetTableLayoutsRequest.tables:type_name -> sadoku.preview.v1.TablePosition
+	15, // 5: sadoku.preview.v1.GetTableLayoutsResponse.tables:type_name -> sadoku.preview.v1.TableLayout
+	19, // 6: sadoku.preview.v1.ListDocumentRevisionsResponse.revisions:type_name -> sadoku.preview.v1.DocumentRevisionSummary
+	6,  // 7: sadoku.preview.v1.GetDocumentResponse.tags:type_name -> sadoku.preview.v1.Tag
+	29, // 8: sadoku.preview.v1.GetDirectoryStatusResponse.error:type_name -> sadoku.preview.v1.DirectoryError
+	35, // 9: sadoku.preview.v1.GetGitHubAccountResponse.account:type_name -> sadoku.preview.v1.GitHubAccount
+	7,  // 10: sadoku.preview.v1.ListTagsResponse.tags:type_name -> sadoku.preview.v1.TagSummary
+	41, // 11: sadoku.preview.v1.ReplaceDocumentTagsRequest.tags:type_name -> sadoku.preview.v1.TagReference
+	6,  // 12: sadoku.preview.v1.ReplaceDocumentTagsResponse.tags:type_name -> sadoku.preview.v1.Tag
+	44, // 13: sadoku.preview.v1.ListGlobalInstructionsResponse.instructions:type_name -> sadoku.preview.v1.Instruction
+	44, // 14: sadoku.preview.v1.ListInstructionsResponse.instructions:type_name -> sadoku.preview.v1.Instruction
+	57, // 15: sadoku.preview.v1.ListMemoriesResponse.memories:type_name -> sadoku.preview.v1.Memory
+	62, // 16: sadoku.preview.v1.CommentReply.author:type_name -> sadoku.preview.v1.CommentAuthor
+	62, // 17: sadoku.preview.v1.Comment.author:type_name -> sadoku.preview.v1.CommentAuthor
+	62, // 18: sadoku.preview.v1.Comment.resolved_by:type_name -> sadoku.preview.v1.CommentAuthor
+	63, // 19: sadoku.preview.v1.Comment.replies:type_name -> sadoku.preview.v1.CommentReply
+	64, // 20: sadoku.preview.v1.CommentsDocument.comments:type_name -> sadoku.preview.v1.Comment
+	0,  // 21: sadoku.preview.v1.PreviewService.GetSession:input_type -> sadoku.preview.v1.GetSessionRequest
+	3,  // 22: sadoku.preview.v1.PreviewService.GetStatistics:input_type -> sadoku.preview.v1.GetStatisticsRequest
+	8,  // 23: sadoku.preview.v1.PreviewService.ListDocuments:input_type -> sadoku.preview.v1.ListDocumentsRequest
+	10, // 24: sadoku.preview.v1.PreviewService.CreateDocument:input_type -> sadoku.preview.v1.CreateDocumentRequest
+	12, // 25: sadoku.preview.v1.PreviewService.UpdateDocumentTitle:input_type -> sadoku.preview.v1.UpdateDocumentTitleRequest
+	13, // 26: sadoku.preview.v1.PreviewService.GetDocument:input_type -> sadoku.preview.v1.GetDocumentRequest
+	16, // 27: sadoku.preview.v1.PreviewService.GetTableLayouts:input_type -> sadoku.preview.v1.GetTableLayoutsRequest
+	18, // 28: sadoku.preview.v1.PreviewService.UpdateTableLayout:input_type -> sadoku.preview.v1.UpdateTableLayoutRequest
+	21, // 29: sadoku.preview.v1.PreviewService.ListDocumentRevisions:input_type -> sadoku.preview.v1.ListDocumentRevisionsRequest
+	23, // 30: sadoku.preview.v1.PreviewService.GetDocumentRevision:input_type -> sadoku.preview.v1.GetDocumentRevisionRequest
+	24, // 31: sadoku.preview.v1.PreviewService.RestoreDocumentRevision:input_type -> sadoku.preview.v1.RestoreDocumentRevisionRequest
+	27, // 32: sadoku.preview.v1.PreviewService.GetDirectoryStatus:input_type -> sadoku.preview.v1.GetDirectoryStatusRequest
+	30, // 33: sadoku.preview.v1.PreviewService.GetSettings:input_type -> sadoku.preview.v1.GetSettingsRequest
+	32, // 34: sadoku.preview.v1.PreviewService.UpdateSettings:input_type -> sadoku.preview.v1.UpdateSettingsRequest
+	33, // 35: sadoku.preview.v1.PreviewService.GetGitHubAccount:input_type -> sadoku.preview.v1.GetGitHubAccountRequest
+	36, // 36: sadoku.preview.v1.PreviewService.ListTags:input_type -> sadoku.preview.v1.ListTagsRequest
+	40, // 37: sadoku.preview.v1.PreviewService.UpdateTag:input_type -> sadoku.preview.v1.UpdateTagRequest
+	38, // 38: sadoku.preview.v1.PreviewService.DeleteTag:input_type -> sadoku.preview.v1.DeleteTagRequest
+	42, // 39: sadoku.preview.v1.PreviewService.ReplaceDocumentTags:input_type -> sadoku.preview.v1.ReplaceDocumentTagsRequest
+	45, // 40: sadoku.preview.v1.PreviewService.ListGlobalInstructions:input_type -> sadoku.preview.v1.ListGlobalInstructionsRequest
+	47, // 41: sadoku.preview.v1.PreviewService.CreateGlobalInstruction:input_type -> sadoku.preview.v1.CreateGlobalInstructionRequest
+	48, // 42: sadoku.preview.v1.PreviewService.UpdateGlobalInstruction:input_type -> sadoku.preview.v1.UpdateGlobalInstructionRequest
+	49, // 43: sadoku.preview.v1.PreviewService.DeleteGlobalInstruction:input_type -> sadoku.preview.v1.DeleteGlobalInstructionRequest
+	51, // 44: sadoku.preview.v1.PreviewService.ListInstructions:input_type -> sadoku.preview.v1.ListInstructionsRequest
+	53, // 45: sadoku.preview.v1.PreviewService.CreateInstruction:input_type -> sadoku.preview.v1.CreateInstructionRequest
+	54, // 46: sadoku.preview.v1.PreviewService.UpdateInstruction:input_type -> sadoku.preview.v1.UpdateInstructionRequest
+	55, // 47: sadoku.preview.v1.PreviewService.DeleteInstruction:input_type -> sadoku.preview.v1.DeleteInstructionRequest
+	58, // 48: sadoku.preview.v1.PreviewService.ListMemories:input_type -> sadoku.preview.v1.ListMemoriesRequest
+	60, // 49: sadoku.preview.v1.PreviewService.DeleteMemory:input_type -> sadoku.preview.v1.DeleteMemoryRequest
+	65, // 50: sadoku.preview.v1.PreviewService.ListComments:input_type -> sadoku.preview.v1.ListCommentsRequest
+	67, // 51: sadoku.preview.v1.PreviewService.CreateComment:input_type -> sadoku.preview.v1.CreateCommentRequest
+	68, // 52: sadoku.preview.v1.PreviewService.UpdateComment:input_type -> sadoku.preview.v1.UpdateCommentRequest
+	69, // 53: sadoku.preview.v1.PreviewService.DeleteComment:input_type -> sadoku.preview.v1.DeleteCommentRequest
+	71, // 54: sadoku.preview.v1.PreviewService.SetCommentResolution:input_type -> sadoku.preview.v1.SetCommentResolutionRequest
+	72, // 55: sadoku.preview.v1.PreviewService.CreateReply:input_type -> sadoku.preview.v1.CreateReplyRequest
+	73, // 56: sadoku.preview.v1.PreviewService.UpdateReply:input_type -> sadoku.preview.v1.UpdateReplyRequest
+	74, // 57: sadoku.preview.v1.PreviewService.DeleteReply:input_type -> sadoku.preview.v1.DeleteReplyRequest
+	76, // 58: sadoku.preview.v1.PreviewService.ExportCommentToGitHub:input_type -> sadoku.preview.v1.ExportCommentToGitHubRequest
+	1,  // 59: sadoku.preview.v1.PreviewService.GetSession:output_type -> sadoku.preview.v1.GetSessionResponse
+	4,  // 60: sadoku.preview.v1.PreviewService.GetStatistics:output_type -> sadoku.preview.v1.GetStatisticsResponse
+	9,  // 61: sadoku.preview.v1.PreviewService.ListDocuments:output_type -> sadoku.preview.v1.ListDocumentsResponse
+	11, // 62: sadoku.preview.v1.PreviewService.CreateDocument:output_type -> sadoku.preview.v1.DocumentSummary
+	11, // 63: sadoku.preview.v1.PreviewService.UpdateDocumentTitle:output_type -> sadoku.preview.v1.DocumentSummary
+	26, // 64: sadoku.preview.v1.PreviewService.GetDocument:output_type -> sadoku.preview.v1.GetDocumentResponse
+	17, // 65: sadoku.preview.v1.PreviewService.GetTableLayouts:output_type -> sadoku.preview.v1.GetTableLayoutsResponse
+	15, // 66: sadoku.preview.v1.PreviewService.UpdateTableLayout:output_type -> sadoku.preview.v1.TableLayout
+	22, // 67: sadoku.preview.v1.PreviewService.ListDocumentRevisions:output_type -> sadoku.preview.v1.ListDocumentRevisionsResponse
+	20, // 68: sadoku.preview.v1.PreviewService.GetDocumentRevision:output_type -> sadoku.preview.v1.DocumentRevision
+	25, // 69: sadoku.preview.v1.PreviewService.RestoreDocumentRevision:output_type -> sadoku.preview.v1.RestoreDocumentRevisionResponse
+	28, // 70: sadoku.preview.v1.PreviewService.GetDirectoryStatus:output_type -> sadoku.preview.v1.GetDirectoryStatusResponse
+	31, // 71: sadoku.preview.v1.PreviewService.GetSettings:output_type -> sadoku.preview.v1.Settings
+	31, // 72: sadoku.preview.v1.PreviewService.UpdateSettings:output_type -> sadoku.preview.v1.Settings
+	34, // 73: sadoku.preview.v1.PreviewService.GetGitHubAccount:output_type -> sadoku.preview.v1.GetGitHubAccountResponse
+	37, // 74: sadoku.preview.v1.PreviewService.ListTags:output_type -> sadoku.preview.v1.ListTagsResponse
+	6,  // 75: sadoku.preview.v1.PreviewService.UpdateTag:output_type -> sadoku.preview.v1.Tag
+	39, // 76: sadoku.preview.v1.PreviewService.DeleteTag:output_type -> sadoku.preview.v1.DeleteTagResponse
+	43, // 77: sadoku.preview.v1.PreviewService.ReplaceDocumentTags:output_type -> sadoku.preview.v1.ReplaceDocumentTagsResponse
+	46, // 78: sadoku.preview.v1.PreviewService.ListGlobalInstructions:output_type -> sadoku.preview.v1.ListGlobalInstructionsResponse
+	44, // 79: sadoku.preview.v1.PreviewService.CreateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
+	44, // 80: sadoku.preview.v1.PreviewService.UpdateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
+	50, // 81: sadoku.preview.v1.PreviewService.DeleteGlobalInstruction:output_type -> sadoku.preview.v1.DeleteGlobalInstructionResponse
+	52, // 82: sadoku.preview.v1.PreviewService.ListInstructions:output_type -> sadoku.preview.v1.ListInstructionsResponse
+	44, // 83: sadoku.preview.v1.PreviewService.CreateInstruction:output_type -> sadoku.preview.v1.Instruction
+	44, // 84: sadoku.preview.v1.PreviewService.UpdateInstruction:output_type -> sadoku.preview.v1.Instruction
+	56, // 85: sadoku.preview.v1.PreviewService.DeleteInstruction:output_type -> sadoku.preview.v1.DeleteInstructionResponse
+	59, // 86: sadoku.preview.v1.PreviewService.ListMemories:output_type -> sadoku.preview.v1.ListMemoriesResponse
+	61, // 87: sadoku.preview.v1.PreviewService.DeleteMemory:output_type -> sadoku.preview.v1.DeleteMemoryResponse
+	66, // 88: sadoku.preview.v1.PreviewService.ListComments:output_type -> sadoku.preview.v1.CommentsDocument
+	64, // 89: sadoku.preview.v1.PreviewService.CreateComment:output_type -> sadoku.preview.v1.Comment
+	64, // 90: sadoku.preview.v1.PreviewService.UpdateComment:output_type -> sadoku.preview.v1.Comment
+	70, // 91: sadoku.preview.v1.PreviewService.DeleteComment:output_type -> sadoku.preview.v1.DeleteCommentResponse
+	64, // 92: sadoku.preview.v1.PreviewService.SetCommentResolution:output_type -> sadoku.preview.v1.Comment
+	64, // 93: sadoku.preview.v1.PreviewService.CreateReply:output_type -> sadoku.preview.v1.Comment
+	64, // 94: sadoku.preview.v1.PreviewService.UpdateReply:output_type -> sadoku.preview.v1.Comment
+	75, // 95: sadoku.preview.v1.PreviewService.DeleteReply:output_type -> sadoku.preview.v1.DeleteReplyResponse
+	77, // 96: sadoku.preview.v1.PreviewService.ExportCommentToGitHub:output_type -> sadoku.preview.v1.ExportCommentToGitHubResponse
+	59, // [59:97] is the sub-list for method output_type
+	21, // [21:59] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_sadoku_preview_v1_preview_proto_init() }
@@ -4736,28 +5082,28 @@ func file_sadoku_preview_v1_preview_proto_init() {
 	}
 	file_sadoku_preview_v1_preview_proto_msgTypes[1].OneofWrappers = []any{}
 	file_sadoku_preview_v1_preview_proto_msgTypes[11].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[15].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[19].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[21].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[23].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[20].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[24].OneofWrappers = []any{}
 	file_sadoku_preview_v1_preview_proto_msgTypes[26].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[27].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[29].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[30].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[36].OneofWrappers = []any{
+	file_sadoku_preview_v1_preview_proto_msgTypes[28].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[31].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[32].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[34].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[35].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[41].OneofWrappers = []any{
 		(*TagReference_Id)(nil),
 		(*TagReference_Name)(nil),
 	}
-	file_sadoku_preview_v1_preview_proto_msgTypes[58].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[59].OneofWrappers = []any{}
-	file_sadoku_preview_v1_preview_proto_msgTypes[61].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[63].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[64].OneofWrappers = []any{}
+	file_sadoku_preview_v1_preview_proto_msgTypes[66].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sadoku_preview_v1_preview_proto_rawDesc), len(file_sadoku_preview_v1_preview_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   73,
+			NumMessages:   78,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
