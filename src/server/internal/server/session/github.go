@@ -171,7 +171,7 @@ func (s *Session) preparePullSnapshot(ctx context.Context, p *Pull, settings con
 			parts[i] = encodeComponent(parts[i])
 		}
 		encoded := strings.Join(parts, "/")
-		doc, err := s.Repository.Ensure(p.URL + "/files/" + encoded)
+		doc, err := s.Repository.Ensure(ctx, p.URL+"/files/"+encoded)
 		if err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ func (s *Session) preparePullSnapshot(ctx context.Context, p *Pull, settings con
 		s.Documents = append(s.Documents, doc)
 		s.Sources[doc.ID] = fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s?ref=%s", encodeComponent(p.Owner), encodeComponent(p.Repo), encoded, encodeComponent(p.HeadSHA))
 		identity, _, _ := Source(s.Sources[doc.ID])
-		commentDoc, found, err := s.Repository.FindDocument(identity)
+		commentDoc, found, err := s.Repository.FindDocument(ctx, identity)
 		if err != nil {
 			return err
 		}
@@ -213,7 +213,7 @@ func GitHubAccount(ctx context.Context) (any, error) {
 	}
 	var account map[string]any
 	if err = json.Unmarshal([]byte(decodeText(b, true)), &account); err != nil {
-		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}, nil
+		return map[string]any{"ok": false, "message": "GitHub returned an invalid account."}, nil //nolint:nilerr // Account lookup failures are represented by ok=false in the response.
 	}
 	login, ok := account["login"].(string)
 	if !ok || login == "" {
@@ -290,14 +290,14 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, a
 	if markdown != in.DisplayedMarkdown {
 		return nil, exportFailure("export_markdown_changed")
 	}
-	comments, err := s.readComments(doc.ID)
+	comments, err := s.readComments(ctx, doc.ID)
 	if err != nil {
 		return nil, err
 	}
 	changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
 	comments = u.ResolveComments(comments, markdown)
 	if changed && len(comments.Comments) > 0 {
-		if err = s.saveComments(doc.ID, comments); err != nil {
+		if err = s.saveComments(ctx, doc.ID, comments); err != nil {
 			return nil, err
 		}
 	}
@@ -406,7 +406,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, a
 		return nil, exportFailure("export_outside_diff")
 	}
 	// Recheck local data and remote head after all paginated reads.
-	latest, err := s.readComments(doc.ID)
+	latest, err := s.readComments(ctx, doc.ID)
 	if err != nil {
 		return nil, err
 	}

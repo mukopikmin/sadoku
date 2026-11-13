@@ -42,7 +42,7 @@ func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
 		return err
 	}
 	path := filepath.Join(directory, "sadoku.sqlite3")
-	database, err := db.Open(path)
+	database, err := db.OpenContext(ctx, path)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 	}
 	var listener net.Listener
 	for port := options.Port; port <= 65535; port++ {
-		listener, err = net.Listen("tcp", net.JoinHostPort(options.Host, fmt.Sprint(port)))
+		listener, err = (&net.ListenConfig{}).Listen(ctx, "tcp", net.JoinHostPort(options.Host, fmt.Sprint(port)))
 		if err == nil {
 			break
 		}
@@ -150,7 +150,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 
 	if options.Open {
 		go func() {
-			if browserErr := cli.OpenBrowser(previewURL); browserErr != nil {
+			if browserErr := cli.OpenBrowser(ctx, previewURL); browserErr != nil {
 				fmt.Fprintf(os.Stderr, "[%s] Failed to open browser automatically: %s\n", db.Now(), browserErr)
 			}
 		}()
@@ -161,7 +161,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 		defer close(shutdownDone)
 		select {
 		case <-ctx.Done():
-			shutdownCtx, stop := context.WithTimeout(context.Background(), 5*time.Second)
+			shutdownCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 			defer stop()
 			_ = server.Shutdown(shutdownCtx)
 		case <-done:
@@ -176,7 +176,7 @@ func startSession(ctx context.Context, options cli.StartOptions, out io.Writer, 
 		timer.Stop()
 	}
 	mu.Unlock()
-	if err == http.ErrServerClosed {
+	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
 	return err

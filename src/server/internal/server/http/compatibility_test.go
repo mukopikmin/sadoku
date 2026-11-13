@@ -122,7 +122,7 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 				if profile.GitHubResponses != nil {
 					break
 				}
-				if _, err := repo.SaveNote("memory", u.Note{DocumentID: int64(id + 1), Content: content}); err != nil {
+				if _, err := repo.SaveNote(t.Context(), "memory", u.Note{DocumentID: int64(id + 1), Content: content}); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -204,9 +204,9 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 						}
 					}
 					body := bytes.ReplaceAll(step.Body, []byte("$COMMENT_CREATED_AT"), []byte(createdAt))
-					request := httptest.NewRequest(step.Method, step.Path, bytes.NewReader(body))
+					request := httptest.NewRequestWithContext(t.Context(), step.Method, step.Path, bytes.NewReader(body))
 					if step.RawBody != nil {
-						request = httptest.NewRequest(step.Method, step.Path, strings.NewReader(*step.RawBody))
+						request = httptest.NewRequestWithContext(t.Context(), step.Method, step.Path, strings.NewReader(*step.RawBody))
 					}
 					if step.Body != nil {
 						request.Header.Set("Content-Type", "application/json")

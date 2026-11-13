@@ -19,7 +19,7 @@ func TestPreviewURL(t *testing.T) {
 		}
 	}
 	t.Chdir("../../../..")
-	workflow := readTestFile(t, ".github/workflows/cloud_run_preview.yml")
+	workflow := readTestFile(t, ".github/workflows/pr_preview.yml")
 	_, block, ok := strings.Cut(workflow, "      - name: Verify revision readiness and resolve preview URL\n")
 	if !ok {
 		t.Fatal("missing readiness step")
@@ -84,7 +84,7 @@ fi
 			output, summary := filepath.Join(dir, "output"), filepath.Join(dir, "summary")
 			writeTestFile(t, output, "", 0644)
 			writeTestFile(t, summary, "", 0644)
-			cmd := exec.Command("bash", filepath.Join(dir, "preview.sh"))
+			cmd := exec.CommandContext(t.Context(), "bash", filepath.Join(dir, "preview.sh"))
 			cmd.Env = []string{"PATH=" + dir + ":/usr/bin:/bin", "FIXTURES=" + dir, "PROJECT_ID=example-project", "REGION=asia-northeast1", "SERVICE=sadoku", "PROXY_SERVICE=" + tc.service, "PROXY_REGION=" + tc.region, "EXPECTED_PROXY_REGION=" + tc.region, "PR_NUMBER=42", "PREVIEW_TAG=pr-42", "REVISION=sadoku-revision", "GITHUB_OUTPUT=" + output, "GITHUB_STEP_SUMMARY=" + summary}
 			out, err := cmd.CombinedOutput()
 			if (err == nil) != tc.valid {

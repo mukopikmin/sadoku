@@ -94,24 +94,39 @@ The document instructions dialog shows both global guidance and instructions
 for that document. Choose **Manage global instructions** there to open the same
 management dialog. Apply both; document instructions take precedence when they
 directly conflict with global instructions. Agents must retrieve both scopes;
-Sadoku does not inject instructions into unrelated agent sessions. The
-`sadoku-review` skill retrieves global instructions at the start of a review.
+Sadoku does not inject instructions into unrelated agent sessions. All three
+skills below retrieve both instruction scopes and document memories before
+working on a target. Instructions guide the work; memories provide background
+and earlier decision rationale that agents verify against current evidence.
+Current user requests and applicable project instructions take precedence over
+Sadoku instructions; memories do not override either. Empty settings are valid,
+but retrieval failures must be resolved before proceeding with unknown guidance
+or context. Initial setup uses this context to prepare writing guidance, review
+uses it to choose review criteria, and comment responses use it to interpret
+feedback and check proposed changes.
 
-For compatible coding agents, install the `sadoku-review` skill with
-[Agent Package Manager](https://github.com/microsoft/apm):
+For compatible coding agents, install the skills with
+[Agent Package Manager](https://github.com/microsoft/apm). Each requires
+`sadoku` on `PATH`.
 
-```sh
-apm install mukopikmin/sadoku --skill sadoku-review
-```
-
-The skill requires `sadoku` on `PATH`.
-
-For interactive document creation, install `sadoku-init`:
+| Workflow | Skill | Behavior |
+| --- | --- | --- |
+| Initialize a document | `sadoku-init` | Establish the filename and title, create and register the document, and save writing guidance and optional memories before drafting. |
+| AI reviews and comments | `sadoku-review` | Read an existing document and post AI-authored findings without editing the body. |
+| AI acts on human comments | `sadoku-address-comments` | Apply human feedback, including human replies to AI findings, and reply for human confirmation. |
 
 ```sh
 apm install mukopikmin/sadoku --skill sadoku-init
+apm install mukopikmin/sadoku --skill sadoku-review
+apm install mukopikmin/sadoku --skill sadoku-address-comments
 ```
 
-This skill establishes a filename and title through conversation, creates an
-empty document, and uses the CLI to save writing instructions and optional
-background memories before drafting. It also requires `sadoku` on `PATH`.
+The comment-response skill leaves threads unresolved for human confirmation and
+checks for useful document memories after the work. The review skill derives its
+criteria from the user's request and both instruction scopes, and uses verified
+memories to account for background and earlier decisions. It leaves findings as
+open comments for human consideration.
+
+**Breaking change in skills package 0.4.0:** `sadoku-review` now means AI review
+and comment creation. Existing prompts that use it to apply feedback should use
+`sadoku-address-comments`; document creation should use `sadoku-init`.

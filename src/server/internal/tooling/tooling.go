@@ -3,6 +3,7 @@ package tooling
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -110,7 +111,7 @@ func build(version, output string, t *target) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("go", "-C", "src/server", "build", "-trimpath", "-tags", "netgo,osusergo,sqlite_omit_load_extension", "-ldflags", linkFlags, "-o", absoluteOutput, "./cmd/sadoku")
+	cmd := exec.CommandContext(context.Background(), "go", "-C", "src/server", "build", "-trimpath", "-tags", "netgo,osusergo,sqlite_omit_load_extension", "-ldflags", linkFlags, "-o", absoluteOutput, "./cmd/sadoku")
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=1", "GOOS="+osName, "GOARCH="+arch)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -128,7 +129,7 @@ func install(version string) error {
 }
 
 func installInto(dir, version string, compile func(string, string) error) error {
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil { // #nosec G301 -- This directory contains distributable binaries or test fixtures, not private application data.
 		return err
 	}
 	temp, err := os.CreateTemp(dir, ".sadoku-*")
@@ -141,7 +142,7 @@ func installInto(dir, version string, compile func(string, string) error) error 
 	if err = compile(version, name); err != nil {
 		return err
 	}
-	if err = os.Chmod(name, 0755); err != nil {
+	if err = os.Chmod(name, 0755); err != nil { // #nosec G302 -- The artifact must remain executable or readable for installation/distribution; it contains no secrets.
 		return err
 	}
 	path := filepath.Join(dir, "sadoku")
@@ -178,7 +179,7 @@ type commandResult struct {
 
 func execute(name string, args ...string) commandResult {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(context.Background(), name, args...)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()

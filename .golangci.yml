@@ -11,12 +11,31 @@ issues:
 linters:
   default: none
   enable:
+    - bodyclose
+    - contextcheck
     - errcheck
+    - errorlint
+    - gosec
     - govet
     - ineffassign
+    - nilerr
+    - noctx
+    - nolintlint
+    - rowserrcheck
+    - sqlclosecheck
     - staticcheck
     - unused
   settings:
+    gosec:
+      excludes:
+        # Sadoku intentionally opens user-selected files and runs local tools.
+        # Keep the G702/G703 taint checks for command injection/path traversal.
+        - G204
+        - G304
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
     staticcheck:
       # Start with correctness checks; gofmt remains responsible for formatting.
       checks:

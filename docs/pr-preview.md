@@ -1,10 +1,10 @@
-# Cloud Run previews
+# PR previews
 
 [Back to development](development.md)
 
 ## Deployment behavior
 
-The [Preview workflow](../.github/workflows/cloud_run_preview.yml) deploys
+The [Preview workflow](../.github/workflows/pr_preview.yml) deploys
 same-repository pull requests with a `pr-<number>` revision tag and application
 changes pushed to `main` with a stable `main` tag. Main builds use the pushed
 commit, including merge results. Closing a PR removes its tag while preserving
@@ -41,7 +41,7 @@ binary build separately, with dependency downloads before source copies.
 
 Docker runs `scripts/preview_entrypoint.sh` to prepare
 [sample data](preview.md), then executes `scripts/cloud_run_entrypoint.sh`.
-Cloud Run previews disable SSE with `--no-sync` to avoid idle open requests.
+PR previews disable SSE with `--no-sync` to avoid idle open requests.
 Use **Reload preview** to fetch external changes; comment saving still works.
 The server stays running without `--keep-alive`.
 
@@ -52,6 +52,10 @@ restarting or redeploying creates fresh samples. Running the Cloud Run
 entrypoint directly skips preparation and uses its own source/storage defaults.
 
 ## GitHub configuration
+
+The deployment environment retains the internal name `cloud-run-preview` so
+existing secrets and OIDC configuration continue to apply. The workflow and
+documentation use PR preview as the feature name.
 
 Configure these repository or `cloud-run-preview` environment **secrets**:
 

@@ -32,7 +32,7 @@ func eventStream(t *testing.T, serverURL, path string) (<-chan streamEvent, func
 		cancel()
 		t.Fatal(err)
 	}
-	response, err := http.DefaultClient.Do(req)
+	response, err := http.DefaultClient.Do(req) //nolint:bodyclose // closeStream owns the streaming body and is returned and registered with t.Cleanup.
 	if err != nil {
 		cancel()
 		t.Fatal(err)
@@ -147,7 +147,7 @@ func TestSSEWatchesAtomicSavesAndRecreatedFiles(t *testing.T) {
 				return err
 			}
 			after := bytes.Repeat([]byte("x"), len(before))
-			if err = os.WriteFile(file, after, 0600); err != nil {
+			if err = os.WriteFile(file, after, 0600); err != nil { // #nosec G703 -- The path comes from the test harness and is confined to its temporary fixtures.
 				return err
 			}
 			return os.Chtimes(file, info.ModTime(), info.ModTime())
@@ -196,15 +196,15 @@ func TestCommentNotificationWriterProcess(t *testing.T) {
 func TestSSECommentsFromAnotherCLIProcessAreScoped(t *testing.T) {
 	s, server, file := setup(t)
 	events, _ := eventStream(t, server.URL, "/__sadoku/documents/1/events")
-	other, err := s.Repository.Ensure(filepath.Join(filepath.Dir(file), "other.md"))
+	other, err := s.Repository.Ensure(t.Context(), filepath.Join(filepath.Dir(file), "other.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	comments, err := s.Repository.ReadComments(other.ID)
+	comments, err := s.Repository.ReadComments(t.Context(), other.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = s.Repository.SaveComments(other.ID, comments); err != nil {
+	if err = s.Repository.SaveComments(t.Context(), other.ID, comments); err != nil {
 		t.Fatal(err)
 	}
 	expectNoEvent(t, events)
@@ -220,7 +220,7 @@ func TestSSECommentsFromAnotherCLIProcessAreScoped(t *testing.T) {
 		t.Fatalf("CLI: %v\n%s", err, output)
 	}
 	expectEvent(t, events, "comments")
-	saved, err := s.Repository.ReadComments(1)
+	saved, err := s.Repository.ReadComments(t.Context(), 1)
 	if err != nil || len(saved.Comments) != 1 || saved.Comments[0].Body != "from another process" {
 		t.Fatalf("committed comments: %+v %v", saved, err)
 	}

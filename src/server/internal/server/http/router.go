@@ -150,7 +150,7 @@ func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 	}
 	prefix := ""
 	if r.options.TrustForwardedPrefix {
-		prefix = req.Header.Get("X-Forwarded-Prefix")
+		prefix = html.EscapeString(req.Header.Get("X-Forwarded-Prefix"))
 	}
 	e := r.manifest["main.tsx"]
 	var css strings.Builder
@@ -183,7 +183,7 @@ func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 	if r.immutable[name] {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 	}
-	_, _ = w.Write(b)
+	_, _ = w.Write(b) // #nosec G705 -- The response serves validated embedded build assets.
 }
 func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/__sadoku/"), "/")
@@ -479,7 +479,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 			r.session.Mu.Lock()
-			tags, tagErr := r.session.Repository.Tags(0)
+			tags, tagErr := r.session.Repository.Tags(req.Context(), 0)
 			r.session.Mu.Unlock()
 			if tagErr != nil {
 				respondError(w, tagErr)

@@ -62,7 +62,7 @@ func addDocument(ctx context.Context, repo *storage.Repository, source string, o
 		}
 		// Check tag references before creating a file that cannot be rolled back.
 		if tags != nil {
-			known, err := repo.Tags(0)
+			known, err := repo.Tags(ctx, 0)
 			if err != nil {
 				return err
 			}
@@ -81,7 +81,7 @@ func addDocument(ctx context.Context, repo *storage.Repository, source string, o
 		if !strings.Contains(filename, ".") {
 			filename += ".md"
 		}
-		if existing, found, err := repo.FindDocument(filepath.Join(filepath.Dir(path), filename)); err != nil {
+		if existing, found, err := repo.FindDocument(ctx, filepath.Join(filepath.Dir(path), filename)); err != nil {
 			return err
 		} else if found {
 			return fmt.Errorf("Document is already registered: %d. Use `sadoku document update %d` to change its attributes.", existing.ID, existing.ID)
@@ -93,13 +93,13 @@ func addDocument(ctx context.Context, repo *storage.Repository, source string, o
 		}
 		doc = result.(u.Document)
 		if tags != nil {
-			doc, err = repo.UpdateDocumentAttributes(doc.ID, nil, tags)
+			doc, err = repo.UpdateDocumentAttributes(ctx, doc.ID, nil, tags)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
-		doc, err = repo.RegisterDocument(identity, title, tags)
+		doc, err = repo.RegisterDocument(ctx, identity, title, tags)
 		if err != nil {
 			return err
 		}

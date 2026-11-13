@@ -21,23 +21,48 @@ type failedRegistration struct {
 	stage string
 }
 
-func (r failedRegistration) Ensure(path string) (u.Document, error) {
+func TestInvokeCancelsWhileWaitingForDatabaseConnection(t *testing.T) {
+	repo := directoryRepository(t)
+	conn, err := repo.DB.Conn(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close() }()
+	s := &Session{Repository: repo}
+	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() {
+		_, err := s.Invoke(ctx, "GetStatistics", Input{})
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("operation error = %v, want expired deadline", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("canceled operation kept waiting for the database connection")
+	}
+}
+
+func (r failedRegistration) Ensure(ctx context.Context, path string) (u.Document, error) {
 	if r.stage == "ensure" {
 		return u.Document{}, errors.New("registration failed")
 	}
-	return r.Repository.Ensure(path)
+	return r.Repository.Ensure(ctx, path)
 }
-func (r failedRegistration) SetTitle(id int64, title *string) error {
+func (r failedRegistration) SetTitle(ctx context.Context, id int64, title *string) error {
 	if r.stage == "title" {
 		return errors.New("title failed")
 	}
-	return r.Repository.SetTitle(id, title)
+	return r.Repository.SetTitle(ctx, id, title)
 }
-func (r failedRegistration) InitializeSnapshot(id int64, markdown string) error {
+func (r failedRegistration) InitializeSnapshot(ctx context.Context, id int64, markdown string) error {
 	if r.stage == "snapshot" {
 		return errors.New("snapshot failed")
 	}
-	return r.Repository.InitializeSnapshot(id, markdown)
+	return r.Repository.InitializeSnapshot(ctx, id, markdown)
 }
 
 func TestCreationReportsTheSavedFileWhenRegistrationFails(t *testing.T) {
@@ -82,10 +107,10 @@ type blockedRevision struct {
 	entered, release chan struct{}
 }
 
-func (r blockedRevision) Revision(documentID, revisionID int64) (u.Revision, error) {
+func (r blockedRevision) Revision(ctx context.Context, documentID, revisionID int64) (u.Revision, error) {
 	close(r.entered)
 	<-r.release
-	return r.Repository.Revision(documentID, revisionID)
+	return r.Repository.Revision(ctx, documentID, revisionID)
 }
 
 func TestConcurrentRestoreReportsBusyAndClearsAfterCompletion(t *testing.T) {
@@ -100,7 +125,7 @@ func TestConcurrentRestoreReportsBusyAndClearsAfterCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.InitializeSnapshots(context.Background())
-	revisions, err := repo.Revisions(s.Documents[0].ID)
+	revisions, err := repo.Revisions(t.Context(), s.Documents[0].ID)
 	if err != nil {
 		t.Fatal(err)
 	}

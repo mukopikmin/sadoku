@@ -13,7 +13,7 @@ import (
 func TestMain(m *testing.M) {
 	if os.Getenv("SADOKU_HTTP_GH_HELPER") == "1" {
 		if path := os.Getenv("SADOKU_HTTP_GH_RESPONSES"); path != "" {
-			data, err := os.ReadFile(path)
+			data, err := os.ReadFile(path) // #nosec G703 -- The path comes from the test harness and is confined to its temporary fixtures.
 			var responses map[string]json.RawMessage
 			if err != nil || json.Unmarshal(data, &responses) != nil {
 				os.Exit(2)
@@ -61,7 +61,7 @@ func installHTTPGitHubFixture(t *testing.T, directory string) {
 			t.Fatal(err)
 		}
 		defer func() { _ = source.Close() }()
-		file, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0700)
+		file, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0700) // #nosec G302 -- The artifact must remain executable or readable for installation/distribution; it contains no secrets.
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -86,7 +86,7 @@ func installHTTPGitHubFixture(t *testing.T, directory string) {
 func TestGitHubAccountWithoutCLIIsServerError(t *testing.T) {
 	_, server, _ := setup(t)
 	t.Setenv("PATH", t.TempDir())
-	body := restRequest(t, server.URL, "GET", "/__sadoku/github-account", "", "", 500)
+	body := restRequest(t.Context(), t, server.URL, "GET", "/__sadoku/github-account", "", "", 500)
 	if string(body) != "Internal Server Error" {
 		t.Fatalf("missing gh response: %s", body)
 	}
@@ -110,7 +110,7 @@ func TestGitHubAccountPreservesDiagnosticsAndOptionalFields(t *testing.T) {
 			t.Setenv("SADOKU_HTTP_GH_STDOUT", test.stdout)
 			t.Setenv("SADOKU_HTTP_GH_STDERR", test.stderr)
 			t.Setenv("SADOKU_HTTP_GH_FAIL", test.fail)
-			got := restRequest(t, server.URL, "GET", "/__sadoku/github-account", "", "", 200)
+			got := restRequest(t.Context(), t, server.URL, "GET", "/__sadoku/github-account", "", "", 200)
 			var gotJSON, wantJSON any
 			if err := json.Unmarshal(got, &gotJSON); err != nil {
 				t.Fatal(err)

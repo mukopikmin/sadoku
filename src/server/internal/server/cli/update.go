@@ -34,7 +34,7 @@ func download(ctx context.Context, url string) ([]byte, error) {
 	client := &http.Client{Timeout: 2 * time.Minute}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Could not download %s: %s", url, err)
+		return nil, fmt.Errorf("Could not download %s: %w", url, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 200 {
@@ -219,14 +219,14 @@ func Update(ctx context.Context, channel string, out io.Writer) error {
 	}
 	temporary, err := os.CreateTemp(filepath.Dir(executable), ".sadoku-update-*")
 	if err != nil {
-		return fmt.Errorf("Sadoku installation directory is not writable: %s", err)
+		return fmt.Errorf("Sadoku installation directory is not writable: %w", err)
 	}
 	temporaryPath := temporary.Name()
 	if runtime.GOOS == "windows" {
 		temporaryPath += ".exe"
 		_ = temporary.Close()
 		_ = os.Remove(temporary.Name())
-		temporary, err = os.OpenFile(temporaryPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0700)
+		temporary, err = os.OpenFile(temporaryPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0700) // #nosec G302 -- The artifact must remain executable or readable for installation/distribution; it contains no secrets.
 		if err != nil {
 			return err
 		}

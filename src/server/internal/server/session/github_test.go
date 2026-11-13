@@ -36,7 +36,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	// Previous versions stored PR comments at the Contents API's canonical URL,
 	// separately from the PR document registration and its archival revisions.
 	canonical := "https://api.github.com/repos/owner/repo/contents/readme.md"
-	old, err := repo.Ensure(canonical)
+	old, err := repo.Ensure(t.Context(), canonical)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = repo.SaveComments(old.ID, comments); err != nil {
+	if err = repo.SaveComments(t.Context(), old.ID, comments); err != nil {
 		t.Fatal(err)
 	}
 	responses := map[string]any{
@@ -65,7 +65,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	mutationLog := filepath.Join(root, "mutation.json")
 	fmt.Fprintf(&script, "graphql) cat > %s; printf '%%s' %s ;;\n", quote(mutationLog), quote(`{"data":{"addPullRequestReview":{"pullRequestReview":{"id":"review1","state":"PENDING"}}}}`))
 	script.WriteString("*) exit 1 ;;\nesac\n")
-	if err = os.WriteFile(filepath.Join(root, "gh"), []byte(script.String()), 0700); err != nil {
+	if err = os.WriteFile(filepath.Join(root, "gh"), []byte(script.String()), 0700); err != nil { // #nosec G306 -- This owner-only executable is a test CLI fixture.
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))

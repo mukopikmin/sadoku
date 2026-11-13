@@ -88,34 +88,32 @@ type Comments struct {
 
 // Repository is the persistence port shared by HTTP and command-line use cases.
 type Repository interface {
-	Ensure(string) (Document, error)
-	FindDocument(string) (Document, bool, error)
+	Ensure(context.Context, string) (Document, error)
+	FindDocument(context.Context, string) (Document, bool, error)
 	EnsureMany(context.Context, []string) ([]Document, error)
-	DocumentsContext(context.Context) ([]Document, error)
-	InitializeSnapshotContext(context.Context, int64, string) error
-	Documents() ([]Document, error)
-	SetTitle(int64, *string) error
-	Snapshot(int64) (*string, *string, error)
-	SaveComments(int64, Comments) error
-	ReadComments(int64) (Comments, error)
-	CommentsNotificationPath(int64) (string, error)
-	CommentsNotificationSourcePath(string) (string, error)
-	Revisions(int64) ([]Revision, error)
-	Revision(int64, int64) (Revision, error)
-	RecordRevision(int64, string) error
-	InitializeSnapshot(int64, string) error
-	Tags(int64) ([]Tag, error)
-	SaveTag(Tag) (Tag, error)
-	DeleteTag(int64) error
-	ReplaceTags(int64, []int64) error
-	ReplaceTagReferences(int64, []TagReference) ([]Tag, error)
-	Notes(string, int64) ([]Note, error)
-	SaveNote(string, Note) (Note, error)
-	DeleteNote(string, int64, int64) error
-	GlobalInstructions() ([]Note, error)
-	SaveGlobalInstruction(Note) (Note, error)
-	DeleteGlobalInstruction(int64) error
-	Statistics() (any, error)
+	Documents(context.Context) ([]Document, error)
+	InitializeSnapshot(context.Context, int64, string) error
+	SetTitle(context.Context, int64, *string) error
+	Snapshot(context.Context, int64) (*string, *string, error)
+	SaveComments(context.Context, int64, Comments) error
+	ReadComments(context.Context, int64) (Comments, error)
+	CommentsNotificationPath(context.Context, int64) (string, error)
+	CommentsNotificationSourcePath(context.Context, string) (string, error)
+	Revisions(context.Context, int64) ([]Revision, error)
+	Revision(context.Context, int64, int64) (Revision, error)
+	RecordRevision(context.Context, int64, string) error
+	Tags(context.Context, int64) ([]Tag, error)
+	SaveTag(context.Context, Tag) (Tag, error)
+	DeleteTag(context.Context, int64) error
+	ReplaceTags(context.Context, int64, []int64) error
+	ReplaceTagReferences(context.Context, int64, []TagReference) ([]Tag, error)
+	Notes(context.Context, string, int64) ([]Note, error)
+	SaveNote(context.Context, string, Note) (Note, error)
+	DeleteNote(context.Context, string, int64, int64) error
+	GlobalInstructions(context.Context) ([]Note, error)
+	SaveGlobalInstruction(context.Context, Note) (Note, error)
+	DeleteGlobalInstruction(context.Context, int64) error
+	Statistics(context.Context) (any, error)
 }
 
 func PositiveID(id int64) error {

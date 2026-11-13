@@ -2,9 +2,11 @@ package db
 
 import (
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,6 +16,25 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestOpenContextHonorsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	path := filepath.Join(t.TempDir(), "comments.sqlite3")
+	database, err := OpenContext(ctx, path)
+	if database != nil {
+		_ = database.Close()
+		t.Fatal("canceled initialization returned a database")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("initialization error = %v, want cancellation", err)
+	}
+	database, err = OpenContext(t.Context(), path)
+	if err != nil {
+		t.Fatalf("initialization after cancellation: %v", err)
+	}
+	defer func() { _ = database.Close() }()
+}
 
 func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
 	names := []string{"comments # % 日本語.sqlite3"}
@@ -40,7 +61,7 @@ func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
 			}
 			defer func() { _ = database.Close() }()
 			var count int
-			if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 16 {
+			if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 16 {
 				t.Fatalf("reopened database migrations: %d, %v", count, err)
 			}
 		})
@@ -57,23 +78,23 @@ func TestReplacementConnectionsPreserveConstraints(t *testing.T) {
 	// migrations. Foreign keys and busy handling must survive pool replacement.
 	database.SetMaxIdleConns(0)
 	var timeout int
-	if err = database.QueryRow("PRAGMA busy_timeout").Scan(&timeout); err != nil || timeout != 5000 {
+	if err = database.QueryRowContext(t.Context(), "PRAGMA busy_timeout").Scan(&timeout); err != nil || timeout != 5000 {
 		t.Fatalf("replacement connection busy timeout: %d, %v", timeout, err)
 	}
-	if _, err = database.Exec("INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(999,'orphan',?,?)", Now(), Now()); err == nil {
+	if _, err = database.ExecContext(t.Context(), "INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(999,'orphan',?,?)", Now(), Now()); err == nil {
 		t.Fatal("replacement connection accepted an orphan instruction")
 	}
-	if _, err = database.Exec("INSERT INTO comment_document(id,file_path,created_at,updated_at) VALUES(1,'doc.md',?,?)", Now(), Now()); err != nil {
+	if _, err = database.ExecContext(t.Context(), "INSERT INTO comment_document(id,file_path,created_at,updated_at) VALUES(1,'doc.md',?,?)", Now(), Now()); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = database.Exec("INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(1,'instruction',?,?)", Now(), Now()); err != nil {
+	if _, err = database.ExecContext(t.Context(), "INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(1,'instruction',?,?)", Now(), Now()); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = database.Exec("DELETE FROM comment_document WHERE id=1"); err != nil {
+	if _, err = database.ExecContext(t.Context(), "DELETE FROM comment_document WHERE id=1"); err != nil {
 		t.Fatal(err)
 	}
 	var count int
-	if err = database.QueryRow("SELECT COUNT(*) FROM document_instruction").Scan(&count); err != nil || count != 0 {
+	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM document_instruction").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("replacement connection did not cascade deletion: %d, %v", count, err)
 	}
 }
@@ -104,11 +125,11 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		}
 		defer func() { _ = database.Close() }()
 		var count int
-		if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 16 {
+		if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 16 {
 			t.Fatalf("legacy migrations: %d, %v", count, err)
 		}
 		var sourceText, sourceHash string
-		if err := database.QueryRow("SELECT source_text,source_hash FROM comment WHERE id=1").Scan(&sourceText, &sourceHash); err != nil || sourceText != "" || sourceHash != "" {
+		if err := database.QueryRowContext(t.Context(), "SELECT source_text,source_hash FROM comment WHERE id=1").Scan(&sourceText, &sourceHash); err != nil || sourceText != "" || sourceHash != "" {
 			t.Fatalf("legacy source placeholders: %q %q %v", sourceText, sourceHash, err)
 		}
 		want := []string{"legacy.md", "WASM 文書", "既存のコメント", "返信", "# 保存済み", "指示", "メモリー", "タグ"}
@@ -120,7 +141,7 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		for i := range got {
 			dest[i] = &got[i]
 		}
-		err = database.QueryRow(`SELECT d.file_path,d.title,c.body,r.body,v.markdown,i.content,m.content,t.name
+		err = database.QueryRowContext(t.Context(), `SELECT d.file_path,d.title,c.body,r.body,v.markdown,i.content,m.content,t.name
 			FROM comment_document d
 			JOIN comment c ON c.document_id=d.id
 			JOIN comment_reply r ON r.comment_id=c.id
@@ -132,11 +153,11 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		if err != nil || !reflect.DeepEqual(got, want) {
 			t.Fatalf("legacy data: %q, %v; want %q", got, err, want)
 		}
-		if _, err = database.Exec("UPDATE comment SET body='CGO で更新' WHERE id=1"); err != nil {
+		if _, err = database.ExecContext(t.Context(), "UPDATE comment SET body='CGO で更新' WHERE id=1"); err != nil {
 			t.Fatal(err)
 		}
 		var integrity string
-		if err = database.QueryRow("PRAGMA integrity_check").Scan(&integrity); err != nil || integrity != "ok" {
+		if err = database.QueryRowContext(t.Context(), "PRAGMA integrity_check").Scan(&integrity); err != nil || integrity != "ok" {
 			t.Fatalf("legacy database integrity: %q, %v", integrity, err)
 		}
 		if err = database.Close(); err != nil {
@@ -152,10 +173,10 @@ func TestMigrationCompatibility(t *testing.T) {
 		t.Fatal(err)
 	}
 	var count int
-	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 16 {
+	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 16 {
 		t.Fatalf("migration count %d: %v", count, err)
 	}
-	_, err = database.Exec("INSERT INTO comment_document(file_path,created_at,updated_at,title) VALUES('old.md',?,?,'Old title')", Now(), Now())
+	_, err = database.ExecContext(t.Context(), "INSERT INTO comment_document(file_path,created_at,updated_at,title) VALUES('old.md',?,?,'Old title')", Now(), Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,10 +187,10 @@ func TestMigrationCompatibility(t *testing.T) {
 	}
 	defer func() { _ = database.Close() }()
 	var title string
-	if err = database.QueryRow("SELECT title FROM comment_document").Scan(&title); err != nil || title != "Old title" {
+	if err = database.QueryRowContext(t.Context(), "SELECT title FROM comment_document").Scan(&title); err != nil || title != "Old title" {
 		t.Fatalf("lost existing document: %q %v", title, err)
 	}
-	if _, err = database.Exec("UPDATE schema_migration SET checksum='changed' WHERE version='0001'"); err != nil {
+	if _, err = database.ExecContext(t.Context(), "UPDATE schema_migration SET checksum='changed' WHERE version='0001'"); err != nil {
 		t.Fatal(err)
 	}
 	if err = Migrate(database); err == nil {
@@ -209,30 +230,30 @@ func TestFailedMigrationBatchRollsBackAndCanBeRetried(t *testing.T) {
 	defer func() { _ = database.Close() }()
 	database.SetMaxOpenConns(1)
 	// A pre-existing table makes migration 0006 fail after earlier versions ran.
-	if _, err = database.Exec("CREATE TABLE document_instruction (sentinel TEXT); INSERT INTO document_instruction VALUES ('preserved')"); err != nil {
+	if _, err = database.ExecContext(t.Context(), "CREATE TABLE document_instruction (sentinel TEXT); INSERT INTO document_instruction VALUES ('preserved')"); err != nil {
 		t.Fatal(err)
 	}
 	if err = Migrate(database); err == nil || !strings.Contains(err.Error(), "migration 0006") {
 		t.Fatalf("expected migration 0006 failure: %v", err)
 	}
 	var count int
-	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 0 {
+	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("failed batch left migration records: %d, %v", count, err)
 	}
-	if err = database.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE name='comment_document'").Scan(&count); err != nil || count != 0 {
+	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM sqlite_master WHERE name='comment_document'").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("failed batch left schema changes: %d, %v", count, err)
 	}
 	var sentinel string
-	if err = database.QueryRow("SELECT sentinel FROM document_instruction").Scan(&sentinel); err != nil || sentinel != "preserved" {
+	if err = database.QueryRowContext(t.Context(), "SELECT sentinel FROM document_instruction").Scan(&sentinel); err != nil || sentinel != "preserved" {
 		t.Fatalf("failed batch changed existing data: %q, %v", sentinel, err)
 	}
-	if _, err = database.Exec("DROP TABLE document_instruction"); err != nil {
+	if _, err = database.ExecContext(t.Context(), "DROP TABLE document_instruction"); err != nil {
 		t.Fatal(err)
 	}
 	if err = Migrate(database); err != nil {
 		t.Fatalf("retry after removing the conflict: %v", err)
 	}
-	if err = database.QueryRow("SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 16 {
+	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 16 {
 		t.Fatalf("retried migrations: %d, %v", count, err)
 	}
 }
@@ -253,7 +274,7 @@ func TestUpgradeAddsGlobalInstructionsWithoutMovingDocumentContext(t *testing.T)
 		"INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(1,'Local instruction','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 		"INSERT INTO document_memory(document_id,content,created_at,updated_at) VALUES(1,'Local memory','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 	} {
-		if _, err := database.Exec(statement); err != nil {
+		if _, err := database.ExecContext(t.Context(), statement); err != nil {
 			_ = database.Close()
 			t.Fatal(err)
 		}
@@ -266,12 +287,12 @@ func TestUpgradeAddsGlobalInstructionsWithoutMovingDocumentContext(t *testing.T)
 	defer func() { _ = database.Close() }()
 	for table, expected := range map[string]string{"document_instruction": "Local instruction", "document_memory": "Local memory"} {
 		var content string
-		if err := database.QueryRow("SELECT content FROM " + table + " WHERE document_id=1").Scan(&content); err != nil || content != expected {
+		if err := database.QueryRowContext(t.Context(), "SELECT content FROM "+table+" WHERE document_id=1").Scan(&content); err != nil || content != expected {
 			t.Fatalf("%s: %q %v", table, content, err)
 		}
 	}
 	var count int
-	if err := database.QueryRow("SELECT COUNT(*) FROM global_instruction").Scan(&count); err != nil || count != 0 {
+	if err := database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM global_instruction").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("global instructions: %d %v", count, err)
 	}
 }
@@ -288,7 +309,7 @@ func TestMigrationLedgerRejectsInterruptedOrUnknownHistory(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err = database.Exec(test.statement); err != nil {
+			if _, err = database.ExecContext(t.Context(), test.statement); err != nil {
 				_ = database.Close()
 				t.Fatal(err)
 			}
@@ -308,7 +329,7 @@ func TestUpgradeLegacySnapshots(t *testing.T) {
 	defer func() { _ = database.Close() }()
 	// Recreate a pre-0012 database using the original, immutable statements.
 	for _, table := range []string{"global_instruction", "comment_reply", "comment", "document_tag_link", "document_tag", "document_memory", "document_instruction", "comment_document", "document_revision", "schema_migration"} {
-		if _, err = database.Exec("DROP TABLE " + table); err != nil {
+		if _, err = database.ExecContext(t.Context(), "DROP TABLE "+table); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -318,21 +339,21 @@ func TestUpgradeLegacySnapshots(t *testing.T) {
 	}
 	for _, m := range migrations[:11] {
 		for _, statement := range m.Statements {
-			if _, err = database.Exec(statement); err != nil {
+			if _, err = database.ExecContext(t.Context(), statement); err != nil {
 				t.Fatal(err)
 			}
 		}
 	}
-	_, err = database.Exec("INSERT INTO comment_document(file_path,created_at,updated_at,source_snapshot,previous_source_snapshot) VALUES('old.md',?,?,'new','old')", Now(), Now())
+	_, err = database.ExecContext(t.Context(), "INSERT INTO comment_document(file_path,created_at,updated_at,source_snapshot,previous_source_snapshot) VALUES('old.md',?,?,'new','old')", Now(), Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = database.Exec(`CREATE TABLE schema_migration(version TEXT PRIMARY KEY,name TEXT,checksum TEXT,state TEXT,started_at TEXT,finished_at TEXT,error_message TEXT)`)
+	_, err = database.ExecContext(t.Context(), `CREATE TABLE schema_migration(version TEXT PRIMARY KEY,name TEXT,checksum TEXT,state TEXT,started_at TEXT,finished_at TEXT,error_message TEXT)`)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, m := range migrations[:11] {
-		if _, err = database.Exec("INSERT INTO schema_migration VALUES(?,?,?,'applied',?,?,NULL)", m.Version, m.Name, m.Checksum, Now(), Now()); err != nil {
+		if _, err = database.ExecContext(t.Context(), "INSERT INTO schema_migration VALUES(?,?,?,'applied',?,?,NULL)", m.Version, m.Name, m.Checksum, Now(), Now()); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -340,7 +361,7 @@ func TestUpgradeLegacySnapshots(t *testing.T) {
 		t.Fatal(err)
 	}
 	var current, previous string
-	err = database.QueryRow(`SELECT (SELECT markdown FROM document_revision WHERE id=source_revision_id),(SELECT markdown FROM document_revision WHERE id=previous_source_revision_id) FROM comment_document`).Scan(&current, &previous)
+	err = database.QueryRowContext(t.Context(), `SELECT (SELECT markdown FROM document_revision WHERE id=source_revision_id),(SELECT markdown FROM document_revision WHERE id=previous_source_revision_id) FROM comment_document`).Scan(&current, &previous)
 	if err != nil || current != "new" || previous != "old" {
 		t.Fatalf("snapshots: %q %q %v", current, previous, err)
 	}

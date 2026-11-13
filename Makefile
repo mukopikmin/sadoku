@@ -19,7 +19,7 @@ GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/ass
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format lint-client \
  build build-server install dist notices run start test test-server test-server-with-assets \
- test-tools test-install test-install-with-assets check vet vet-cross lint lint-go \
+ test-tools test-migrations test-install test-install-with-assets check vet vet-cross lint lint-go \
  fmt fmt-go fmt-check check-go-format
 
 deps:
@@ -36,7 +36,7 @@ test-client:
 	$(NPM) --prefix src/preview test
 
 test-actions:
-	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
+	$(NODE) --test .github/tests/pr_preview_comment_test.mts
 
 fmt-client:
 	$(NPM) --prefix src/proto exec --no -- oxfmt ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
@@ -79,9 +79,12 @@ test-server: build-client
 test-server-with-assets:
 	$(GO) -C src/server test $(GO_TEST_FLAGS) ./...
 
+test-migrations: build-client
+	$(GO) -C src/server test $(GO_TEST_FLAGS) -v ./internal/server/db
+
 test-tools:
 	$(GO) -C src/server test -race -count=1 ./internal/tooling
-	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
+	$(NODE) --test .github/tests/pr_preview_comment_test.mts
 
 test-install: build-client
 	$(MAKE) test-install-with-assets

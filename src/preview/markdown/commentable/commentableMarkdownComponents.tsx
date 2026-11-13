@@ -105,6 +105,7 @@ const createCommentableComponent = (
 
     return (
       <CommentableBlock
+        key={sourceRange.startLine}
         {...getCommentableBlockProps(context, sourceRange)}
         headingId={
           isHeading && typeof elementProps.id === "string"
@@ -131,6 +132,7 @@ const createCommentableListItem = () => {
     return (
       <List.Item {...elementProps}>
         <CommentableBlock
+          key={line}
           {...getCommentableBlockProps(context, {
             startLine: line,
             endLine: line,
@@ -156,7 +158,10 @@ const createCommentablePre = () => {
     }
 
     return (
-      <CommentableBlock {...getCommentableBlockProps(context, sourceRange)}>
+      <CommentableBlock
+        key={sourceRange.startLine}
+        {...getCommentableBlockProps(context, sourceRange)}
+      >
         {element}
       </CommentableBlock>
     );

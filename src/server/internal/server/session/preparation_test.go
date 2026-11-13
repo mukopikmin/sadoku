@@ -17,11 +17,11 @@ type snapshotRepository struct {
 	failID int64
 }
 
-func (r snapshotRepository) InitializeSnapshotContext(ctx context.Context, id int64, markdown string) error {
+func (r snapshotRepository) InitializeSnapshot(ctx context.Context, id int64, markdown string) error {
 	if id == r.failID {
 		return errors.New("snapshot write failed")
 	}
-	return r.Repository.InitializeSnapshotContext(ctx, id, markdown)
+	return r.Repository.InitializeSnapshot(ctx, id, markdown)
 }
 func snapshotSession(t *testing.T, count int) (*Session, *storage.Repository) {
 	t.Helper()
@@ -36,7 +36,7 @@ func snapshotSession(t *testing.T, count int) (*Session, *storage.Repository) {
 	s := &Session{Repository: repo, Sources: map[int64]string{}}
 	for i := 1; i <= count; i++ {
 		source := filepath.Join(root, fmt.Sprintf("%d.md", i))
-		doc, err := repo.Ensure(source)
+		doc, err := repo.Ensure(t.Context(), source)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +66,7 @@ func TestBackgroundSnapshotsContinueAfterFailuresAndSkipDeletedFiles(t *testing.
 		t.Fatalf("read order/deleted file: %v", reads)
 	}
 	for _, id := range []int64{1, 4} {
-		snapshot, _, err := repo.Snapshot(id)
+		snapshot, _, err := repo.Snapshot(t.Context(), id)
 		if err != nil || snapshot == nil {
 			t.Fatalf("later snapshot %d: %v %v", id, snapshot, err)
 		}
@@ -75,7 +75,7 @@ func TestBackgroundSnapshotsContinueAfterFailuresAndSkipDeletedFiles(t *testing.
 func TestBackgroundSnapshotPreservesContentSavedDuringItsRead(t *testing.T) {
 	s, repo := snapshotSession(t, 1)
 	s.ReadRemote = func(ctx context.Context, source string) (string, error) {
-		if err := repo.InitializeSnapshotContext(ctx, 1, "newer displayed content"); err != nil {
+		if err := repo.InitializeSnapshot(ctx, 1, "newer displayed content"); err != nil {
 			return "", err
 		}
 		return "older background content", nil
@@ -83,11 +83,11 @@ func TestBackgroundSnapshotPreservesContentSavedDuringItsRead(t *testing.T) {
 	if progress := s.InitializeSnapshots(context.Background()); progress.Completed != 1 {
 		t.Fatalf("queue: %+v", progress)
 	}
-	snapshot, _, err := repo.Snapshot(1)
+	snapshot, _, err := repo.Snapshot(t.Context(), 1)
 	if err != nil || snapshot == nil || *snapshot != "newer displayed content" {
 		t.Fatalf("snapshot overwritten: %v %v", snapshot, err)
 	}
-	history, err := repo.Revisions(1)
+	history, err := repo.Revisions(t.Context(), 1)
 	if err != nil || len(history) != 1 {
 		t.Fatalf("extra archival revision: %+v %v", history, err)
 	}

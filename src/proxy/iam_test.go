@@ -335,7 +335,7 @@ func TestIAMTokenAcrossTagsAndSpoofedHeaders(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tag := range []string{"v1", "staging"} {
-		r := httptest.NewRequest("POST", publicOrigin+"/revisions/"+tag+"/documents?audience=https://evil.test", strings.NewReader("request payload"))
+		r := httptest.NewRequestWithContext(t.Context(), "POST", publicOrigin+"/revisions/"+tag+"/documents?audience=https://evil.test", strings.NewReader("request payload"))
 		r.Header.Set("Authorization", "Bearer application-token")
 		r.Header.Set("X-Serverless-Authorization", "Bearer forged-token")
 		r.Header.Set("Connection", "X-Serverless-Authorization")
@@ -373,7 +373,7 @@ func TestIAMFailureDoesNotForward(t *testing.T) {
 	}
 	body := &trackedBody{Reader: strings.NewReader("payload")}
 	defer func() { _ = body.Close() }() // The HTTP server owns the incoming body.
-	r := httptest.NewRequest("POST", publicOrigin+"/revisions/v1/", body)
+	r := httptest.NewRequestWithContext(t.Context(), "POST", publicOrigin+"/revisions/v1/", body)
 	w := httptest.NewRecorder()
 	proxy.ServeHTTP(w, r)
 	if w.Code != 502 || w.Body.String() != "Upstream request failed.\n" ||
@@ -391,8 +391,12 @@ func TestIAMTransportClosesBodyOnCredentialFailure(t *testing.T) {
 		}),
 	}
 	body := &trackedBody{Reader: strings.NewReader("payload")}
-	r := httptest.NewRequest("POST", backendURL, body)
-	if _, err := transport.RoundTrip(r); !errors.Is(err, errIDToken) || !body.closed {
+	r := httptest.NewRequestWithContext(t.Context(), "POST", backendURL, body)
+	response, err := transport.RoundTrip(r)
+	if response != nil {
+		defer func() { _ = response.Body.Close() }()
+	}
+	if !errors.Is(err, errIDToken) || !body.closed {
 		t.Fatal("failed RoundTrip did not close its owned request body")
 	}
 }
@@ -409,7 +413,7 @@ func TestUnsafeCustomIDTokensAreRejected(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got := serve(proxy, "GET", "/revisions/v1/", nil).Code; got != 502 {
+		if got := serve(t, proxy, "GET", "/revisions/v1/", nil).Code; got != 502 {
 			t.Fatal("unsafe token was accepted")
 		}
 	}
@@ -428,7 +432,7 @@ func TestBackendRejectionDoesNotReplayAuthenticatedRequest(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		w := serve(proxy, "POST", "/revisions/v1/", strings.NewReader("payload"))
+		w := serve(t, proxy, "POST", "/revisions/v1/", strings.NewReader("payload"))
 		if w.Code != status || tokenCalls != 1 || backendCalls != 1 {
 			t.Fatal("backend rejection retried or changed an authenticated request")
 		}
