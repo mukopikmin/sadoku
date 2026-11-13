@@ -233,7 +233,7 @@ describe("directory preview", () => {
       await screen.findByRole("treeitem", { name: "alpha.md" }),
     ).not.toBeNull();
     expect(
-      screen.getByRole("treeitem", { name: "beta.mdDeleted" }),
+      screen.getByRole("treeitem", { name: "beta.md Deleted" }),
     ).not.toBeNull();
     expect(screen.getByRole("treeitem", { name: /guides/ })).not.toBeNull();
     expect(
@@ -272,7 +272,7 @@ describe("directory preview", () => {
     expect(screen.queryByRole("button", { name: "← Documents" })).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     expect(
-      await screen.findByRole("treeitem", { name: "beta.mdDeleted" }),
+      await screen.findByRole("treeitem", { name: "beta.md Deleted" }),
     ).not.toBeNull();
     expect(location.pathname).toBe("/");
   });
@@ -306,7 +306,7 @@ describe("directory preview", () => {
     render(<App />);
 
     fireEvent.click(
-      await screen.findByRole("treeitem", { name: "beta.mdDeleted" }),
+      await screen.findByRole("treeitem", { name: "beta.md Deleted" }),
     );
     expect(await screen.findByText("Deleted document")).not.toBeNull();
     expect(screen.getByText(/saved snapshot is being shown/)).not.toBeNull();
@@ -397,7 +397,7 @@ describe("directory preview", () => {
 
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     fireEvent.click(
-      await screen.findByRole("treeitem", { name: "beta.mdDeleted" }),
+      await screen.findByRole("treeitem", { name: "beta.md Deleted" }),
     );
     await screen.findByText("Deleted document");
     await waitFor(() => expect(scrollY).toBe(0));
@@ -500,10 +500,10 @@ describe("directory preview", () => {
     await screen.findByRole("heading", { name: "Document 1" });
     const documentOneEvents = DirectoryEventSource.instances.at(-1)!;
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
-    await screen.findByRole("treeitem", { name: "beta.mdDeleted" });
+    await screen.findByRole("treeitem", { name: "beta.md Deleted" });
     expect(documentOneEvents.closed).toBe(true);
     expect(keepAliveEvents.closed).toBe(false);
-    fireEvent.click(screen.getByRole("treeitem", { name: "beta.mdDeleted" }));
+    fireEvent.click(screen.getByRole("treeitem", { name: "beta.md Deleted" }));
     expect(screen.queryByRole("heading", { name: "Document 1" })).toBeNull();
     await screen.findByRole("heading", { name: "Document 2" });
     expect(DirectoryEventSource.instances.at(-1)?.url).toBe(
@@ -523,7 +523,7 @@ describe("directory preview", () => {
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     await waitFor(() =>
       expect(
-        screen.getByRole("treeitem", { name: "beta.mdDeleted" }),
+        screen.getByRole("treeitem", { name: "beta.md Deleted" }),
       ).not.toBeNull(),
     );
   });
