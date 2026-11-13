@@ -1,3 +1,15 @@
+// Default to desktop media queries in JSDOM; responsive tests can override this.
+globalThis.matchMedia ??= (query) => ({
+  matches: query.startsWith("(min-width:"),
+  media: query,
+  onchange: null,
+  addListener() {},
+  removeListener() {},
+  addEventListener() {},
+  removeEventListener() {},
+  dispatchEvent: () => true,
+});
+
 import { cleanup as testingLibraryCleanup } from "@testing-library/react";
 
 class TestResizeObserver implements ResizeObserver {

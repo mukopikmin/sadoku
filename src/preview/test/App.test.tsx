@@ -1534,7 +1534,16 @@ describe("App", () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "matchMedia",
-      vi.fn(() => ({ matches: true })),
+      vi.fn((query: string) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {},
+        dispatchEvent: () => true,
+      })),
     );
     vi.stubGlobal(
       "fetch",

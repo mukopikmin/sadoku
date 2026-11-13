@@ -185,15 +185,11 @@ describe("MarkdownPreview heading navigation", () => {
       expect(fireEvent.click(anchor.querySelector(selector)!)).toBe(false);
       expect(selection.toString()).toBe("Heading text");
       expect(globalThis.location.hash).toBe("");
-      expect(
-        screen.queryByRole("button", { name: "Add comment on line 1" }),
-      ).toBeNull();
+      expect(screen.queryByLabelText("Add comment on line 1")).toBeNull();
 
       selection.removeAllRanges();
       fireEvent.click(anchor);
-      expect(
-        screen.getByRole("button", { name: "Add comment on line 1" }),
-      ).not.toBeNull();
+      expect(screen.getByLabelText("Add comment on line 1")).not.toBeNull();
     },
   );
 
@@ -209,14 +205,12 @@ Paragraph
 `);
 
     fireEvent.click(screen.getByText("Paragraph"));
-    expect(
-      screen.queryByRole("button", { name: "Update URL with heading link" }),
-    ).toBeNull();
+    expect(screen.queryByLabelText("Update URL with heading link")).toBeNull();
 
     fireEvent.click(screen.getByRole("heading", { level: 2, name: "Title" }));
-    const headingLinkButton = screen.getByRole("button", {
-      name: "Update URL with heading link",
-    });
+    const headingLinkButton = screen.getByLabelText(
+      "Update URL with heading link",
+    );
     expect(headingLinkButton.closest(".comment-line-gutter")).not.toBeNull();
     expect(headingLinkButton.getAttribute("title")).toBeNull();
 
