@@ -113,7 +113,7 @@ See [contributor guidelines](../AGENTS.md), [proxy setup](../src/proxy/README.md
 
 See [stable release operations](releases.md) for tag metadata and workflow safeguards.
 See [preview sample data](preview.md) for local demos and
-[Cloud Run previews](cloud-run-preview.md) for hosted preview setup and operation.
+[PR previews](pr-preview.md) for hosted preview setup and operation.
 
 Task-specific plans, investigations, and verification notes belong in
 [`docs/work/`](work/README.md). They may be committed, but have explicit deletion

@@ -68,4 +68,4 @@ These cover filtering, document tag editing, and tag management. Tag colors use
 the CLI default, and display titles remain unset.
 
 For hosted previews and their instance lifecycle, see
-[Cloud Run previews](cloud-run-preview.md).
+[PR previews](pr-preview.md).

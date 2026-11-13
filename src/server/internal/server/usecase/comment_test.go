@@ -61,13 +61,79 @@ func TestRebaseComments(t *testing.T) {
 	after := "# Title\ninserted\nfirst edited\nsecond\nend"
 	doc := Comments{SourceSnapshot: &before, Comments: []Comment{{ID: 1, StartLine: 2, EndLine: 3}, {ID: 2, StartLine: 4, EndLine: 4}}}
 	doc = ResolveComments(doc, after)
-	if c := doc.Comments[0]; c.StartLine != 2 || c.EndLine != 4 || c.Stale || c.CurrentSourceText == nil {
+	if c := doc.Comments[0]; c.StartLine != 3 || c.EndLine != 4 || c.Stale || c.CurrentSourceText == nil {
 		t.Fatalf("rebased: %+v", c)
 	}
 	if c := doc.Comments[1]; !c.Stale || !c.SourceDeleted || c.CurrentSourceText != nil {
 		t.Fatalf("deleted: %+v", c)
 	}
 }
+
+func TestRebaseCommentsKeepsEditedRangesSeparate(t *testing.T) {
+	for _, test := range []struct {
+		name, before, after string
+		start, end          int
+		wantStart, wantEnd  int
+	}{
+		{"adjacent edits", "# Title\nTarget paragraph\nNeighbor paragraph\nend", "# Title\nTarget paragraph edited\nNeighbor paragraph edited\nend", 2, 2, 2, 2},
+		{"adjacent replacements", "# Title\nTarget old\nNeighbor old\nend", "# Title\nTarget new\nNeighbor new\nend", 2, 2, 2, 2},
+		{"edited list items", "# Title\n- First item\n- Second item\nend", "# Title\n- First changed\n- Second changed\nend", 3, 3, 3, 3},
+		{"insert before edited target", "# Title\nTarget paragraph\nend", "# Title\nNew introduction\nTarget paragraph edited\nend", 2, 2, 3, 3},
+		{"insert after edited target", "# Title\nTarget paragraph\nend", "# Title\nTarget paragraph edited\nNew conclusion\nend", 2, 2, 2, 2},
+		{"split target", "# Title\nTarget paragraph continues here\nNeighbor paragraph\nend", "# Title\nTarget paragraph\ncontinues here\nNeighbor paragraph edited\nend", 2, 2, 2, 3},
+		{"merge target", "# Title\nTarget paragraph\ncontinues here\nNeighbor paragraph\nend", "# Title\nTarget paragraph continues here\nNeighbor paragraph edited\nend", 2, 3, 2, 2},
+		{"Japanese and emoji", "# 見出し\n対象の文章です🐱\n隣の文章です🐶\n終わり", "# 見出し\n導入を追加\n対象の文章を修正しました🐱\n隣の文章を修正しました🐶\n終わり", 2, 2, 3, 3},
+		{"unchanged target after nearby deletion", "# Title\nremove me\nTarget paragraph\nend", "# Title\nTarget paragraph\nend", 3, 3, 2, 2},
+		{"full replacement", "# Title\nabc\nend", "# Title\nXYZ\nUVW\nend", 2, 2, 2, 3},
+		{"full replacement beside edited text", "# Title\nabc\nTarget paragraph\nend", "# Title\nXYZ\nTarget paragraph edited\nend", 2, 2, 2, 2},
+		{"large replacement", "# Title\n" + strings.Repeat("a", 1000) + "\nend", "# Title\n" + strings.Repeat("b", 1000) + "\n" + strings.Repeat("c", 1000) + "\nend", 2, 2, 2, 3},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			doc, _, err := ChangeComment("CreateComment", Comments{}, CommentInput{StartLine: test.start, EndLine: test.end, Body: "Review"}, test.before, "created")
+			if err != nil {
+				t.Fatal(err)
+			}
+			original := *doc.Comments[0].SourceText
+			for _, markdown := range []string{test.after, "prefix\n" + test.after} {
+				doc = ResolveComments(doc, markdown)
+				c := doc.Comments[0]
+				shift := 0
+				if strings.HasPrefix(markdown, "prefix\n") {
+					shift = 1
+				}
+				if c.Stale || c.SourceDeleted || c.StartLine != test.wantStart+shift || c.EndLine != test.wantEnd+shift || c.DisplayLine != c.StartLine {
+					t.Fatalf("comment attached to surrounding text: %+v", c)
+				}
+				if c.CurrentSourceText == nil || *c.CurrentSourceText != *RangeText(markdown, test.wantStart+shift, test.wantEnd+shift) {
+					t.Fatalf("incorrect current source: %+v", c)
+				}
+				if *c.SourceText != original || c.OriginalStartLine != test.start || c.OriginalEndLine != test.end {
+					t.Fatalf("original source changed: %+v", c)
+				}
+			}
+		})
+	}
+}
+
+func TestRebaseDeletedCommentBesideEditedText(t *testing.T) {
+	before := "# Title\nDELETE\nTarget paragraph\nend"
+	doc, _, err := ChangeComment("CreateComment", Comments{}, CommentInput{StartLine: 2, EndLine: 2, Body: "Review removed text"}, before, "created")
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, _, err = ChangeComment("CreateComment", doc, CommentInput{StartLine: 3, EndLine: 3, Body: "Review remaining text"}, before, "created")
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc = ResolveComments(doc, "# Title\nTarget paragraph edited\nend")
+	if c := doc.Comments[0]; !c.Stale || !c.SourceDeleted || c.CurrentSourceText != nil {
+		t.Fatalf("deleted comment attached to edited neighbor: %+v", c)
+	}
+	if c := doc.Comments[1]; c.Stale || c.StartLine != 2 || c.EndLine != 2 || c.CurrentSourceText == nil || *c.CurrentSourceText != "Target paragraph edited" {
+		t.Fatalf("remaining comment did not follow edited text: %+v", c)
+	}
+}
+
 func TestSourceRangesAndStableHashes(t *testing.T) {
 	for _, test := range []struct {
 		start, end int
