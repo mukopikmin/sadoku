@@ -50,8 +50,8 @@ Run `sadoku --help` for all commands and options.
   See [GitHub export details](docs/github-comment-export.md) for limitations.
 
 Comments can also be managed from the terminal and coding agents. See
-[CLI and coding agents](docs/cli-and-agents.md) for commands and the
-`sadoku-review` skill.
+[CLI and coding agents](docs/cli-and-agents.md) for commands and skills to initialize documents, post AI review comments,
+and act on human feedback.
 
 ### Markdown
 

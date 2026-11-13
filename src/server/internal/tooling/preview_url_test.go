@@ -19,7 +19,7 @@ func TestPreviewURL(t *testing.T) {
 		}
 	}
 	t.Chdir("../../../..")
-	workflow := readTestFile(t, ".github/workflows/cloud_run_preview.yml")
+	workflow := readTestFile(t, ".github/workflows/pr_preview.yml")
 	_, block, ok := strings.Cut(workflow, "      - name: Verify revision readiness and resolve preview URL\n")
 	if !ok {
 		t.Fatal("missing readiness step")

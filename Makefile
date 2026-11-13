@@ -36,7 +36,7 @@ test-client:
 	$(NPM) --prefix src/preview test
 
 test-actions:
-	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
+	$(NODE) --test .github/tests/pr_preview_comment_test.mts
 
 fmt-client:
 	$(NPM) --prefix src/proto exec --no -- oxfmt ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
@@ -84,7 +84,7 @@ test-migrations: build-client
 
 test-tools:
 	$(GO) -C src/server test -race -count=1 ./internal/tooling
-	$(NODE) --test .github/tests/cloud_run_preview_comment_test.mts
+	$(NODE) --test .github/tests/pr_preview_comment_test.mts
 
 test-install: build-client
 	$(MAKE) test-install-with-assets
