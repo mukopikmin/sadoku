@@ -18,7 +18,7 @@ const flushFrames = () =>
 const scroll = (top: number) =>
   act(() => {
     position = top;
-    fireEvent.scroll(globalThis);
+    fireEvent.scroll(window);
   });
 
 beforeEach(() => {
@@ -45,6 +45,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  document.body.innerHTML = "";
   vi.unstubAllGlobals();
   clearScrollPositions();
 });
@@ -96,4 +97,38 @@ it("waits for content and cancels stale restoration frames on rapid navigation",
   expect(frames.size).toBe(1);
   flushFrames();
   expect(position).toBe(900);
+});
+
+it("scrolls to the innermost target block instead of restoring the saved position", () => {
+  document.body.innerHTML = `<header></header><div class="markdown-preview">
+    <div class="commentable-block" data-source-line="1" data-source-end-line="10">
+      <div class="commentable-block" data-source-line="3" data-source-end-line="5"></div>
+    </div></div>`;
+  const target = document.querySelector<HTMLElement>('[data-source-line="3"]');
+  if (!target) throw new Error("Expected the target block");
+  const scrollIntoView = vi.fn();
+  target.scrollIntoView = scrollIntoView;
+  const { rerender } = renderHook(
+    ({ line }: { line?: number }) =>
+      useScrollPosition(1, "preview", true, line),
+    { initialProps: { line: undefined as number | undefined } },
+  );
+  flushFrames();
+  scroll(900);
+  rerender({ line: 4 });
+  flushFrames();
+  expect(scrollIntoView).toHaveBeenCalledWith({
+    block: "start",
+    behavior: "instant",
+  });
+});
+
+it("falls back to restoration when the target is not rendered", () => {
+  renderHook(() => useScrollPosition(1, "preview", true, 999));
+  flushFrames();
+  expect(globalThis.scrollTo).toHaveBeenCalledWith({
+    top: 0,
+    left: 0,
+    behavior: "instant",
+  });
 });

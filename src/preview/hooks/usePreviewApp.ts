@@ -27,6 +27,7 @@ export const usePreviewApp = () => {
   const {
     documentId: selectedDocumentId,
     isDocumentList,
+    hash,
     pathname,
     rawDocumentId,
     view,
@@ -59,10 +60,17 @@ export const usePreviewApp = () => {
     selectedDocumentId,
     shouldLoadDocument,
   );
+  const targetComment = commentsQuery.data?.comments.find(
+    (comment) =>
+      hash === `comment-${comment.id}` &&
+      comment.state !== "stale" &&
+      comment.currentSource?.state === "available",
+  );
   const saveScrollPosition = useScrollPosition(
     selectedDocumentId,
     view,
     Boolean(documentQuery.data && commentsQuery.data),
+    view === "preview" ? targetComment?.startLine : undefined,
   );
   const { collapsed, documentHeaderRef, headerRef } =
     useCollapsedDocumentHeader(
@@ -120,6 +128,16 @@ export const usePreviewApp = () => {
           ? "/documents/$documentId/comments"
           : "/documents/$documentId",
       params: { documentId: String(selectedDocumentId) },
+    });
+  };
+
+  const openComment = (commentId: number) => {
+    if (selectedDocumentId === undefined) return;
+    saveScrollPosition();
+    void navigate({
+      to: "/documents/$documentId",
+      params: { documentId: String(selectedDocumentId) },
+      hash: `comment-${commentId}`,
     });
   };
 
@@ -306,6 +324,7 @@ export const usePreviewApp = () => {
       documents,
       memoryCount: memoriesQuery.data?.length ?? 0,
       onChangeView: changeView,
+      onOpenComment: openComment,
       onOpenInstructions: instructionsDisclosure.onOpen,
       onOpenMemories: memoriesDisclosure.onOpen,
       onOpenTags: documentTagsDisclosure.onOpen,
