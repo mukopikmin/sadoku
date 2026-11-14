@@ -1,45 +1,49 @@
 import { useState } from "react";
-import { type Comment, isUnresolvedComment } from "../../models/comment";
+import { type Comment } from "../../models/comment";
 
-export type CommentFilter = "all" | "active" | "stale";
+export type CommentFilter = Comment["state"];
 
 export const useCommentFilter = (comments: Comment[]) => {
-  const [filter, setFilter] = useState<CommentFilter>("all");
-  const unresolvedComments = comments.filter(isUnresolvedComment);
-  const resolvedComments = comments.filter(
-    (comment) => comment.state === "resolved",
-  );
-  const activeComments = unresolvedComments.filter(
-    (comment) => comment.state === "active",
-  );
-  const staleComments = unresolvedComments.filter(
-    (comment) => comment.state === "stale",
-  );
+  const [selectedFilters, setSelectedFilters] = useState<CommentFilter[]>([
+    "active",
+    "stale",
+  ]);
   const filters = {
-    all: {
-      label: "All",
-      comments: unresolvedComments,
-      emptyText: "No unresolved comments.",
-    },
     active: {
       label: "Active",
-      comments: activeComments,
+      comments: comments.filter((comment) => comment.state === "active"),
       emptyText: "No active unresolved comments.",
     },
     stale: {
       label: "Stale",
-      comments: staleComments,
+      comments: comments.filter((comment) => comment.state === "stale"),
       emptyText: "No stale unresolved comments.",
+    },
+    resolved: {
+      label: "Resolved",
+      comments: comments.filter((comment) => comment.state === "resolved"),
+      emptyText: "No resolved comments.",
     },
   };
 
   return {
-    filter,
-    setFilter,
+    selectedFilters,
+    toggleFilter: (filter: CommentFilter) =>
+      setSelectedFilters((current) =>
+        current.includes(filter)
+          ? current.filter((value) => value !== filter)
+          : [...current, filter],
+      ),
     filters,
-    resolvedComments,
-    unresolvedCount: unresolvedComments.length,
-    visibleComments: filters[filter].comments,
-    emptyText: filters[filter].emptyText,
+    totalCount: comments.length,
+    visibleComments: comments.filter((comment) =>
+      selectedFilters.includes(comment.state),
+    ),
+    emptyText:
+      selectedFilters.length === 0
+        ? "Select a comment state to show comments."
+        : selectedFilters.length === 1
+          ? filters[selectedFilters[0]].emptyText
+          : "No comments matching the selected states.",
   };
 };

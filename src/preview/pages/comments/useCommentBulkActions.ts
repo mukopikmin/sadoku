@@ -54,6 +54,16 @@ export const useCommentBulkActions = (
 
   const run = async (operation: BulkOperation) => {
     if (pending.current || selectedIds.length === 0) return false;
+    const targetIds = selectedIds.filter((id) => {
+      const comment = comments.find((comment) => comment.id === id)!;
+      return (
+        operation === "delete" ||
+        (operation === "resolve"
+          ? comment.state !== "resolved"
+          : comment.state === "resolved")
+      );
+    });
+    if (targetIds.length === 0) return false;
     pending.current = true;
     setState({ status: "pending", operation });
     const action = {
@@ -65,7 +75,7 @@ export const useCommentBulkActions = (
     let firstError = "";
     // Each mutation may read and rewrite the document. Keep them sequential so
     // bulk changes cannot overwrite one another, and continue after failures.
-    for (const id of selectedIds) {
+    for (const id of targetIds) {
       try {
         await action(id);
       } catch (error) {
@@ -73,13 +83,16 @@ export const useCommentBulkActions = (
         firstError ||= error instanceof Error ? error.message : String(error);
       }
     }
-    setSelection(failed);
+    setSelection([
+      ...selectedIds.filter((id) => !targetIds.includes(id)),
+      ...failed,
+    ]);
     setState(
       failed.length === 0
         ? { status: "idle" }
         : {
             status: "error",
-            message: `Could not ${operation} ${failed.length} of ${selectedIds.length} selected comments. ${firstError}`,
+            message: `Could not ${operation} ${failed.length} of ${targetIds.length} selected comments. ${firstError}`,
           },
     );
     pending.current = false;
