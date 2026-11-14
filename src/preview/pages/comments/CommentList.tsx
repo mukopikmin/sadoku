@@ -115,7 +115,6 @@ export const CommentList = ({ actions, comments }: CommentListProps) => {
                 checked={commentFilter.selectedFilters.includes(filter)}
                 disabled={bulk.isPending || isDeleteDialogOpen}
                 onCheckedChange={() => selectFilter(filter)}
-                size="sm"
               >
                 <Checkbox.HiddenInput />
                 <Checkbox.Control>
