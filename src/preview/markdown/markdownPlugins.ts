@@ -1,4 +1,5 @@
 import remarkGfm from "remark-gfm";
+import { remarkAlerts } from "./remarkAlerts";
 
 type MarkdownAstNode = {
   children?: MarkdownAstNode[];
@@ -86,5 +87,6 @@ export const sharedMarkdownRehypePlugins = [];
 
 export const sharedMarkdownRemarkPlugins = [
   remarkGfm,
+  remarkAlerts,
   preserveUnsupportedSyntax,
 ];
