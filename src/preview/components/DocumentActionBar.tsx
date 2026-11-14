@@ -75,20 +75,14 @@ export const DocumentActionBar = ({
           >
             <TableOfContents markdown={markdown} />
             {commentNavigation && commentNavigation.count > 0 && (
-              <Group
-                attached
-                role="group"
-                aria-label="Comment navigation"
-                bg="bg.muted"
-                rounded="l2"
-              >
+              <Group role="group" aria-label="Comment navigation" gap="1">
                 <Tooltip content="Previous comment location">
                   <IconButton
                     aria-label="Previous comment location"
                     disabled={!commentNavigation.previous}
                     onClick={() => commentNavigation.previous?.()}
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                   >
                     <ArrowUp aria-hidden="true" />
                   </IconButton>
@@ -118,7 +112,7 @@ export const DocumentActionBar = ({
                     disabled={!commentNavigation.next}
                     onClick={() => commentNavigation.next?.()}
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                   >
                     <ArrowDown aria-hidden="true" />
                   </IconButton>
