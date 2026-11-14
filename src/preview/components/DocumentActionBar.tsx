@@ -5,9 +5,9 @@ import {
   Button,
   Flex,
   Group,
+  Icon,
   IconButton,
   Portal,
-  Text,
   useElementRect,
 } from "@chakra-ui/react";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
@@ -19,6 +19,7 @@ import {
   FileDiff,
   FileText,
   History,
+  MessagesSquare,
 } from "lucide-react";
 import type { useDocumentDiff } from "../hooks/useDocumentDiff";
 import type { CommentNavigation } from "../hooks/useCommentNavigation";
@@ -43,10 +44,6 @@ export const DocumentActionBar = ({
   onOpenMemories,
   onOpenRevisions,
 }: DocumentActionBarProps) => {
-  const locationCountLabel =
-    commentNavigation?.count === 1
-      ? "1 location"
-      : `${commentNavigation?.count ?? 0} locations`;
   const { ref, rect } = useElementRect();
   const contentRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -75,10 +72,12 @@ export const DocumentActionBar = ({
           >
             <TableOfContents markdown={markdown} />
             {commentNavigation && commentNavigation.count > 0 && (
-              <Group role="group" aria-label="Comment navigation" gap="1">
+              <Group attached role="group" aria-label="Comment navigation">
                 <Tooltip content="Previous comment location">
                   <IconButton
                     aria-label="Previous comment location"
+                    data-group-item=""
+                    data-first=""
                     disabled={!commentNavigation.previous}
                     onClick={() => commentNavigation.previous?.()}
                     size="sm"
@@ -87,28 +86,33 @@ export const DocumentActionBar = ({
                     <ArrowUp aria-hidden="true" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip content="Visible unresolved comment locations">
-                  <Text
-                    tabIndex={0}
-                    aria-label={
+                <Tooltip content="Comments">
+                  <Box
+                    as="span"
+                    role="img"
+                    aria-label="Comments"
+                    data-group-item=""
+                    data-between=""
+                    aria-description={
                       commentNavigation.position === null
                         ? `${commentNavigation.count} comment locations`
                         : `Comment location ${commentNavigation.position} of ${commentNavigation.count}`
                     }
-                    aria-live="polite"
-                    aria-atomic="true"
-                    fontSize="sm"
-                    whiteSpace="nowrap"
-                    px="1"
+                    alignSelf="stretch"
+                    display="inline-flex"
+                    alignItems="center"
+                    borderWidth="1px"
+                    borderColor="border"
+                    px="2"
                   >
-                    {commentNavigation.position === null
-                      ? locationCountLabel
-                      : `${commentNavigation.position}/${commentNavigation.count}`}
-                  </Text>
+                    <Icon as={MessagesSquare} size="sm" aria-hidden="true" />
+                  </Box>
                 </Tooltip>
                 <Tooltip content="Next comment location">
                   <IconButton
                     aria-label="Next comment location"
+                    data-group-item=""
+                    data-last=""
                     disabled={!commentNavigation.next}
                     onClick={() => commentNavigation.next?.()}
                     size="sm"

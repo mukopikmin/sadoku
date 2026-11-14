@@ -103,11 +103,18 @@ describe("document changes option", () => {
       name: "Next comment location",
     });
     expect(next.hasAttribute("disabled")).toBe(false);
-    expect(screen.getByText("1 location")).not.toBeNull();
+    expect(screen.getByRole("img", { name: "Comments" }).textContent).toBe("");
+    expect(
+      within(
+        screen.getByRole("group", { name: "Comment navigation" }),
+      ).getAllByRole("button"),
+    ).toHaveLength(2);
     fireEvent.click(next);
-    expect(screen.getByLabelText("Comment location 1 of 1").textContent).toBe(
-      "1/1",
-    );
+    expect(
+      screen
+        .getByRole("img", { name: "Comments" })
+        .getAttribute("aria-description"),
+    ).toBe("Comment location 1 of 1");
     const target = container.querySelector<HTMLElement>(
       "[data-comment-navigation-current]",
     );
