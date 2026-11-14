@@ -148,6 +148,13 @@ export const markdownStyles = `
     margin-left: calc(0em - var(--comment-indent-offset, 0em));
   }
 
+  .comment-thread[data-comment-navigation-current],
+  .commentable-block:has(> .comment-thread[data-comment-navigation-current]) > .commentable-content,
+  .document-diff-deletion:has(.comment-thread[data-comment-navigation-current]) {
+    outline: 2px solid var(--chakra-colors-accent);
+    outline-offset: 2px;
+  }
+
   .document-diff-addition,
   .document-diff-deletion {
     display: flex;
