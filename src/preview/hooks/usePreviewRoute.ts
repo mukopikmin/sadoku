@@ -9,6 +9,7 @@ export const parseDocumentId = (value: string | undefined) => {
 
 export const usePreviewRoute = () => {
   const matchRoute = useMatchRoute();
+  const hash = useRouterState({ select: (state) => state.location.hash });
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -24,6 +25,7 @@ export const usePreviewRoute = () => {
 
   return {
     documentId: parseDocumentId(rawDocumentId),
+    hash,
     isDocumentList: pathname === "/",
     pathname,
     rawDocumentId,

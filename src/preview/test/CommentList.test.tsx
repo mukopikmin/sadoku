@@ -30,6 +30,49 @@ const getFilterButton = (name: string) =>
   ).getByRole("button", { name });
 
 describe("CommentList", () => {
+  it("opens located comments and leaves unavailable targets as plain labels", () => {
+    const onOpenComment = vi.fn();
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        onOpenComment={onOpenComment}
+        comments={[
+          createComment({
+            id: 1,
+            currentSource: { state: "available", text: "Body" },
+          }),
+          createComment({
+            id: 2,
+            state: "stale",
+            currentSource: { state: "unavailable" },
+          }),
+          createComment({ id: 3, currentSource: { state: "deleted" } }),
+          createComment({
+            id: 4,
+            state: "resolved",
+            currentSource: { state: "available", text: "Body" },
+          }),
+        ]}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open comment 1 in document: Line 3",
+      }),
+    );
+    expect(onOpenComment).toHaveBeenCalledWith(1);
+    expect(
+      screen.getAllByRole("button", { name: /Open comment .* in document/ }),
+    ).toHaveLength(1);
+    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open comment 4 in document: Line 3",
+      }),
+    );
+    expect(onOpenComment).toHaveBeenCalledWith(4);
+  });
+
   it("filters unresolved comments, keeps total counts, and clears selection on changes", async () => {
     const comments = [
       createComment({ body: "Active comment." }),

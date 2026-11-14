@@ -1,6 +1,7 @@
 import { renderWithRouter as render } from "./routerTestUtils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "./testUtils";
+import { createComment } from "./commentFixtures";
 import { App } from "../App";
 import { clearScrollPositions } from "../hooks/useScrollPosition";
 
@@ -31,6 +32,7 @@ const installFetch = (
   failDocumentId?: number,
   pendingDocument?: Promise<Response>,
   directoryStatuses?: Array<Record<string, unknown>>,
+  documentComments: Array<Record<string, unknown>> = [],
 ) =>
   vi.stubGlobal(
     "fetch",
@@ -110,7 +112,7 @@ const installFetch = (
       if (commentsMatch) {
         return Promise.resolve(
           Response.json({
-            comments: [],
+            comments: documentComments,
             filePath: `/tmp/${commentsMatch[1]}.md`,
           }),
         );
@@ -134,6 +136,39 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
+  it("opens a comment location in the document and returns to comments", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    installFetch(undefined, undefined, undefined, [
+      {
+        ...createComment({ startLine: 1, endLine: 1 }),
+        currentSourceText: "# Document 1",
+      },
+    ]);
+    history.replaceState(null, "", "/documents/1/comments");
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Open comment 1 in document: Line 1 (originally line 3)",
+      }),
+    );
+    await waitFor(() => expect(location.pathname).toBe("/documents/1"));
+    expect(location.hash).toBe("#comment-1");
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    const block = scrollIntoView.mock.contexts.at(-1);
+    if (!(block instanceof HTMLElement))
+      throw new Error("Expected a document block");
+    expect(block.getAttribute("data-source-line")).toBe("1");
+    history.back();
+    await screen.findByRole("tabpanel", { name: "Unresolved" });
+    expect(location.pathname).toBe("/documents/1/comments");
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+  });
+
   it("opens revisions from the document view and switches the rendered content", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     installFetch();

@@ -20,6 +20,7 @@ type Props = {
   documents?: DocumentSummary[] | null;
   memoryCount: number;
   onChangeView: (view: PreviewView) => void;
+  onOpenComment?: (commentId: number) => void;
   onOpenInstructions: () => void;
   onOpenMemories: () => void;
   onOpenTags: () => void;
@@ -39,6 +40,7 @@ export const DocumentPreviewPage = ({
   documents,
   memoryCount,
   onChangeView,
+  onOpenComment,
   onOpenInstructions,
   onOpenMemories,
   onOpenTags,
@@ -151,6 +153,7 @@ export const DocumentPreviewPage = ({
         <CommentListPage
           documentId={documentId}
           documentDeleted={document.deleted}
+          onOpenComment={onOpenComment}
         />
       )}
       <DocumentActionBar

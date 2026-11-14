@@ -22,6 +22,7 @@ import { type CommentFilter } from "./useCommentFilter";
 export type CommentListProps = {
   actions: CommentActions;
   comments: Comment[];
+  onOpenComment?: (commentId: number) => void;
 };
 
 import { type CommentDisplayCategory, useCommentList } from "./useCommentList";
@@ -49,6 +50,7 @@ type CommentSectionProps = {
   actions: CommentActions;
   children: ReactNode;
   comments: Comment[];
+  onOpenComment?: (commentId: number) => void;
   bulk: ReturnType<typeof useCommentBulkActions>;
   emptyText: string;
 };
@@ -59,6 +61,7 @@ const CommentSection = ({
   comments,
   bulk,
   emptyText,
+  onOpenComment,
 }: CommentSectionProps) => (
   <Box as="section">
     {children}
@@ -90,6 +93,13 @@ const CommentSection = ({
                 comment={comment}
                 disabled={bulk.isPending}
                 lineLabel={formatLineLabel(comment)}
+                onOpenDocument={
+                  onOpenComment &&
+                  comment.state !== "stale" &&
+                  comment.currentSource?.state === "available"
+                    ? () => onOpenComment(comment.id)
+                    : undefined
+                }
                 showSource
                 showState
               />
@@ -101,7 +111,11 @@ const CommentSection = ({
   </Box>
 );
 
-export const CommentList = ({ actions, comments }: CommentListProps) => {
+export const CommentList = ({
+  actions,
+  comments,
+  onOpenComment,
+}: CommentListProps) => {
   const list = useCommentList(comments, actions);
   const {
     selectedCategory,
@@ -191,6 +205,7 @@ export const CommentList = ({ actions, comments }: CommentListProps) => {
             bulk={bulk}
             comments={selectedSection.comments}
             emptyText={selectedSection.emptyText}
+            onOpenComment={onOpenComment}
           >
             {selectedSection.comments.length > 0 && (
               <Flex
@@ -289,9 +304,11 @@ export const CommentList = ({ actions, comments }: CommentListProps) => {
 export const CommentListPage = ({
   documentId,
   documentDeleted = false,
+  onOpenComment,
 }: {
   documentId?: number;
   documentDeleted?: boolean;
+  onOpenComment?: (commentId: number) => void;
 }) => {
   const commentsQuery = useCommentsQuery(documentId);
   const actions = useCommentActions(documentId);
@@ -300,6 +317,7 @@ export const CommentListPage = ({
     <CommentList
       key={documentId}
       actions={actions}
+      onOpenComment={onOpenComment}
       comments={
         documentDeleted
           ? commentsQuery.data.comments.map((comment) => ({
