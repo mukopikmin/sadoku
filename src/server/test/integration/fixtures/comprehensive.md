@@ -368,6 +368,31 @@ Footnote-looking text should remain plain text.[^note]
 
 Math-looking text should remain plain text: $a^2 + b^2 = c^2$.
 
+## GitHub Alerts
+
+> [!NOTE]
+> Useful context with **bold text** and [documentation][docs].
+
+> [!TIP]
+> A helpful suggestion.
+>
+> - Try this first.
+> - Then check the result.
+
+> [!IMPORTANT]
+> Key information to remember.
+>
+> A second paragraph keeps the context together.
+
+> [!WARNING]
+> Check your configuration before continuing.
+
+> [!CAUTION]
+> This operation can permanently remove data.
+
+> [!UNKNOWN]
+> Unsupported markers remain ordinary quotes.
+
 ## HTML Comments
 
 Paragraph before an HTML comment.
