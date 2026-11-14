@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Card, Flex, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Card, Flex, Link, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { Comment } from "../../models/comment";
@@ -64,15 +64,16 @@ export const CommentItem = ({
             <Text color="fg.muted" fontSize="xs" fontWeight="normal" pr="8">
               <span>#{comment.id}</span> ·{" "}
               {onOpenDocument ? (
-                <Button
-                  size="xs"
-                  variant="plain"
-                  disabled={isDisabled}
-                  onClick={onOpenDocument}
-                  aria-label={`Open comment ${comment.id} in document: ${lineLabel}`}
-                >
-                  {lineLabel}
-                </Button>
+                <Link asChild variant="underline">
+                  <button
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={onOpenDocument}
+                    aria-label={`Open comment ${comment.id} in document: ${lineLabel}`}
+                  >
+                    {lineLabel}
+                  </button>
+                </Link>
               ) : (
                 <span>{lineLabel}</span>
               )}
