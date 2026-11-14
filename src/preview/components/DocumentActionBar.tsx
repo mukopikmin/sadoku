@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Flex,
+  Group,
   IconButton,
   Portal,
   Text,
@@ -42,6 +43,10 @@ export const DocumentActionBar = ({
   onOpenMemories,
   onOpenRevisions,
 }: DocumentActionBarProps) => {
+  const locationCountLabel =
+    commentNavigation?.count === 1
+      ? "1 location"
+      : `${commentNavigation?.count ?? 0} locations`;
   const { ref, rect } = useElementRect();
   const contentRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -69,12 +74,13 @@ export const DocumentActionBar = ({
             translate="none"
           >
             <TableOfContents markdown={markdown} />
-            {commentNavigation && (
-              <Flex
+            {commentNavigation && commentNavigation.count > 0 && (
+              <Group
+                attached
                 role="group"
                 aria-label="Comment navigation"
-                align="center"
-                gap="1"
+                bg="bg.muted"
+                rounded="l2"
               >
                 <Tooltip content="Previous comment location">
                   <IconButton
@@ -82,32 +88,42 @@ export const DocumentActionBar = ({
                     disabled={!commentNavigation.previous}
                     onClick={() => commentNavigation.previous?.()}
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                   >
                     <ArrowUp aria-hidden="true" />
                   </IconButton>
                 </Tooltip>
-                <Text
-                  aria-live="polite"
-                  aria-atomic="true"
-                  fontSize="sm"
-                  whiteSpace="nowrap"
-                >
-                  Comment locations {commentNavigation.position ?? "–"} /{" "}
-                  {commentNavigation.count}
-                </Text>
+                <Tooltip content="Visible unresolved comment locations">
+                  <Text
+                    tabIndex={0}
+                    aria-label={
+                      commentNavigation.position === null
+                        ? `${commentNavigation.count} comment locations`
+                        : `Comment location ${commentNavigation.position} of ${commentNavigation.count}`
+                    }
+                    aria-live="polite"
+                    aria-atomic="true"
+                    fontSize="sm"
+                    whiteSpace="nowrap"
+                    px="1"
+                  >
+                    {commentNavigation.position === null
+                      ? locationCountLabel
+                      : `${commentNavigation.position}/${commentNavigation.count}`}
+                  </Text>
+                </Tooltip>
                 <Tooltip content="Next comment location">
                   <IconButton
                     aria-label="Next comment location"
                     disabled={!commentNavigation.next}
                     onClick={() => commentNavigation.next?.()}
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                   >
                     <ArrowDown aria-hidden="true" />
                   </IconButton>
                 </Tooltip>
-              </Flex>
+              </Group>
             )}
             {diff && (
               <Tooltip

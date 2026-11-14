@@ -93,14 +93,21 @@ const page = (
 describe("document changes option", () => {
   it("navigates visible deleted comments and removes navigation in the comment view", async () => {
     const { container, rerender } = render(page("Old text"));
-    const next = screen.getByRole("button", { name: "Next comment location" });
-    expect(next.hasAttribute("disabled")).toBe(true);
+    expect(
+      screen.queryByRole("group", { name: "Comment navigation" }),
+    ).toBeNull();
     fireEvent.click(
       screen.getByRole("button", { name: "Changes since previous snapshot" }),
     );
-    await waitFor(() => expect(next.hasAttribute("disabled")).toBe(false));
+    const next = await screen.findByRole("button", {
+      name: "Next comment location",
+    });
+    expect(next.hasAttribute("disabled")).toBe(false);
+    expect(screen.getByText("1 location")).not.toBeNull();
     fireEvent.click(next);
-    expect(screen.getByText("Comment locations 1 / 1")).not.toBeNull();
+    expect(screen.getByLabelText("Comment location 1 of 1").textContent).toBe(
+      "1/1",
+    );
     const target = container.querySelector<HTMLElement>(
       "[data-comment-navigation-current]",
     );
@@ -116,14 +123,18 @@ describe("document changes option", () => {
       screen.getByRole("button", { name: "Changes since previous snapshot" }),
     );
     await waitFor(() =>
-      expect(screen.getByText("Comment locations – / 0")).not.toBeNull(),
+      expect(
+        screen.queryByRole("group", { name: "Comment navigation" }),
+      ).toBeNull(),
     );
     rerender(page("Old text", "comments"));
     expect(
       screen.queryByRole("group", { name: "Comment navigation" }),
     ).toBeNull();
     rerender(page("Old text"));
-    expect(screen.getByText("Comment locations – / 0")).not.toBeNull();
+    expect(
+      screen.queryByRole("group", { name: "Comment navigation" }),
+    ).toBeNull();
   });
 
   it("passes stale comments to the removed content when changes are shown", () => {
