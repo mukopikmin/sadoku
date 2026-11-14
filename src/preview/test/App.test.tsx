@@ -435,8 +435,7 @@ describe("App", () => {
       const toc = await screen.findByRole("navigation", {
         name: "Table of contents",
       });
-      const details = within(toc).getByRole("link", { name: "Details" });
-      expect(details.getAttribute("href")).toBe("#details");
+      const details = within(toc).getByRole("treeitem", { name: "Details" });
       fireEvent.click(details);
       await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
       expect(scrollIntoView.mock.instances.at(-1)).toBe(
