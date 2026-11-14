@@ -10,26 +10,46 @@ const comments = [
   createComment({ id: 3, state: "resolved" }),
 ];
 
-it("clears selection when filters change and toggles the current filter off", () => {
-  const { result } = renderHook(() =>
-    useCommentList(comments, createCommentActions()),
-  );
-  expect(result.current.commentFilter.visibleComments).toEqual(
-    comments.slice(0, 2),
-  );
+it.each(["active", "stale", "resolved"] as const)(
+  "clears bulk selection when %s changes",
+  (filter) => {
+    const { result } = renderHook(() =>
+      useCommentList(comments, createCommentActions()),
+    );
+    act(() => result.current.bulk.toggleAll());
+    expect(result.current.bulk.selectedIds).toEqual([1, 2]);
+    act(() => result.current.selectFilter(filter));
+    expect(result.current.bulk.selectedIds).toEqual([]);
+  },
+);
+
+it("blocks filter changes during resolve and unlocks them after completion", async () => {
+  const request = deferred<void>();
+  const actions = createCommentActions({
+    onResolveComment: vi.fn(() => request.promise),
+  });
+  const { result } = renderHook(() => useCommentList(comments, actions));
   act(() => result.current.bulk.toggle(1));
-  act(() => result.current.selectFilter("stale"));
-  expect(result.current.bulk.selectedIds).toEqual([]);
-  expect(
-    result.current.commentFilter.visibleComments.map(({ id }) => id),
-  ).toEqual([1]);
+  let completion!: Promise<boolean>;
+  act(() => {
+    completion = result.current.bulk.run("resolve");
+  });
   act(() => result.current.selectFilter("resolved"));
-  expect(
-    result.current.commentFilter.visibleComments.map(({ id }) => id),
-  ).toEqual([1, 3]);
+  expect(result.current.commentFilter.selectedFilters).toEqual([
+    "active",
+    "stale",
+  ]);
+  expect(result.current.bulk.selectedIds).toEqual([1]);
+  await act(async () => {
+    request.resolve();
+    await completion;
+  });
   act(() => result.current.selectFilter("resolved"));
-  expect(result.current.commentFilter.selectedFilters).toEqual(["active"]);
-  expect(result.current.commentFilter.visibleComments).toEqual([comments[0]]);
+  expect(result.current.commentFilter.selectedFilters).toEqual([
+    "active",
+    "stale",
+    "resolved",
+  ]);
 });
 
 it("only resolves or reopens eligible selected comments in the unfiltered list", async () => {

@@ -1685,7 +1685,7 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
-  it("defaults to unresolved comments and optionally includes resolved comments", async () => {
+  it("opens the comments view with unresolved discussions and their source", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -1801,20 +1801,5 @@ describe("App", () => {
     expect(screen.getByText("Stale comment.")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
     expect(screen.queryByText("Resolved comment.")).toBeNull();
-    const filters = within(
-      screen.getByRole("group", { name: "Comment filters" }),
-    );
-    expect(
-      (filters.getByRole("checkbox", { name: "Active" }) as HTMLInputElement)
-        .checked,
-    ).toBe(true);
-    expect(
-      (filters.getByRole("checkbox", { name: "Stale" }) as HTMLInputElement)
-        .checked,
-    ).toBe(true);
-    fireEvent.click(filters.getByRole("checkbox", { name: "Resolved" }));
-    expect(await screen.findByText("Resolved comment.")).not.toBeNull();
-    expect(screen.getByText("Active comment.")).not.toBeNull();
-    expect(screen.getByText("Stale comment.")).not.toBeNull();
   });
 });

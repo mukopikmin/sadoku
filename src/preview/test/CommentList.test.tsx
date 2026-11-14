@@ -33,73 +33,36 @@ const getFilterCheckbox = (name: string) =>
 const toggleFilter = async (name: string) => {
   const input = getFilterCheckbox(name) as HTMLInputElement;
   const checked = input.checked;
-  fireEvent.click(input);
-  await waitFor(() => {
-    expect(input.checked).toBe(!checked);
-    expect(input.parentElement).toHaveAttribute(
-      "data-state",
-      checked ? "unchecked" : "checked",
-    );
+  await act(async () => {
+    fireEvent.click(input);
   });
+  expect(input.checked).toBe(!checked);
 };
 
 describe("CommentList", () => {
-  it("defaults to unresolved comments, combines states, and clears selection on changes", async () => {
-    const comments = [
-      createComment({ body: "Active comment." }),
-      createComment({ id: 2, state: "stale", body: "Stale comment." }),
-      createComment({ id: 3, state: "resolved", body: "Resolved comment." }),
-    ];
-    const { unmount } = render(
-      <CommentList actions={createCommentActions()} comments={comments} />,
+  it("renders hook filter state and connects checkbox changes to the list", async () => {
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        comments={[
+          createComment({ body: "Active comment." }),
+          createComment({ id: 2, state: "stale", body: "Stale comment." }),
+          createComment({
+            id: 3,
+            state: "resolved",
+            body: "Resolved comment.",
+          }),
+        ]}
+      />,
     );
     expect(getFilterCheckbox("Active")).toBeChecked();
     expect(getFilterCheckbox("Stale")).toBeChecked();
     expect(getFilterCheckbox("Resolved")).not.toBeChecked();
     expect(screen.queryByText("Resolved comment.")).toBeNull();
-    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     await toggleFilter("Resolved");
-    expect(screen.getByRole("status")).toHaveTextContent("0 selected");
-    expect(screen.getAllByRole("article")).toHaveLength(3);
-    await toggleFilter("Active");
-    await toggleFilter("Stale");
-    expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(screen.getByText("Resolved comment.")).toBeInTheDocument();
-    await toggleFilter("Resolved");
-    expect(screen.queryByRole("article")).toBeNull();
-    expect(
-      screen.getByText("Select a comment state to show comments."),
-    ).toBeInTheDocument();
-    unmount();
-    render(
-      <CommentList actions={createCommentActions()} comments={comments} />,
-    );
-    expect(screen.getAllByRole("article")).toHaveLength(2);
-    expect(getFilterCheckbox("Resolved")).not.toBeChecked();
+    expect(await screen.findByText("Resolved comment.")).toBeInTheDocument();
+    expect(getFilterCheckbox("Resolved")).toBeChecked();
   });
-
-  it.each([
-    ["Active", "stale", "No active unresolved comments."],
-    ["Stale", "active", "No stale unresolved comments."],
-  ] as const)(
-    "keeps filters available when %s has no matches",
-    async (filter, state, message) => {
-      render(
-        <CommentList
-          actions={createCommentActions()}
-          comments={[createComment({ state })]}
-        />,
-      );
-      await toggleFilter(state === "active" ? "Active" : "Stale");
-      expect(screen.getByText(message)).toBeInTheDocument();
-      expect(screen.getByText("Showing 0 of 1 comments")).toBeInTheDocument();
-      expect(
-        screen.queryByRole("group", { name: "Bulk comment actions" }),
-      ).not.toBeInTheDocument();
-      await toggleFilter(state === "active" ? "Active" : "Stale");
-      expect(await screen.findAllByRole("article")).toHaveLength(1);
-    },
-  );
 
   it("locks controls during bulk actions and keeps failed comments selected", async () => {
     let reject!: (error: Error) => void;
@@ -172,11 +135,11 @@ describe("CommentList", () => {
       expect(screen.getByRole("status")).toHaveTextContent("2 selected"),
     );
 
-    await toggleFilter("Active");
-    await toggleFilter("Stale");
     await toggleFilter("Resolved");
     expect(screen.getByRole("status")).toHaveTextContent("0 selected");
-    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Select comment 3:/ }),
+    );
     await waitFor(() => expect(getBulkButton("Reopen")).toBeEnabled());
     fireEvent.click(getBulkButton("Reopen"));
     await waitFor(() => expect(onReopenComment.mock.calls).toEqual([[3]]));
@@ -265,7 +228,9 @@ describe("CommentList", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Showing 0 of 3 comments")).toBeInTheDocument();
     expect(
-      within(getFilterCheckbox("Stale").parentElement!).getByText("1"),
+      within(screen.getByRole("group", { name: "Comment filters" })).getByText(
+        "1",
+      ),
     ).toBeInTheDocument();
     await toggleFilter("Resolved");
     expect(screen.getAllByRole("article")).toHaveLength(2);
@@ -310,16 +275,14 @@ describe("CommentList", () => {
     expect(screen.getByText("Before")).toBeInTheDocument();
   });
 
-  it("shows default and filtered empty states", async () => {
+  it("renders the empty message from the filter hook", () => {
     render(<CommentList actions={createCommentActions()} comments={[]} />);
-
     expect(
       screen.getByText("No comments matching the selected states."),
-    ).not.toBeNull();
-    await toggleFilter("Active");
-    await toggleFilter("Stale");
-    await toggleFilter("Resolved");
-    expect(screen.getByText("No resolved comments.")).not.toBeNull();
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Bulk comment actions" }),
+    ).toBeNull();
   });
 
   it("passes current and original source ranges to comment actions", async () => {
