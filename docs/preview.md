@@ -27,10 +27,8 @@ Set a nonempty `SADOKU_SOURCE` to skip preparation and preserve the configured
 
 The seed script copies Markdown from `src/server/test/integration/fixtures/`
 with its directory structure intact. Original fixtures are unchanged. Samples
-include five documents (one deleted), twenty-one comments, human and bot authors,
-replies, review requests, instructions, memories, and tags. Seeded review text
-and tag names are in English. Long document and global instructions exercise
-bounded text scrolling and instruction editing in the guidance dialogs.
+include deleted documents, human and bot comments, replies, review requests,
+instructions, memories, and tags. Review text and tag names are in English.
 
 | Document | Examples to try |
 | --- | --- |
@@ -40,32 +38,12 @@ bounded text scrolling and instruction editing in the guidance dialogs.
 | `guides/overview.md` | Deleted document with a saved snapshot, comments, and memory |
 | `guides/setup/local.md` | Nested path with no comments, instructions, memories, or previous snapshot |
 
-`comprehensive.md` has 27 saved revisions, allowing the twenty-item revision list
-to be exercised with an older predecessor outside the list. On `second.md`,
-toggle **Changes** to compare API-key access with OAuth and inspect comments over
-the diff. Range comments cover consecutive paragraphs, the table and code, and
-review notes spanning a deletion. A partially overlapping range extends from the
-table through the Mermaid diagram. Check that shared blocks have one highlight,
-removed content splits the outline, and selecting the code block takes priority
-inside the overlap. Click a range’s first paragraph, then Shift-click its last
-block; toggle **Changes** to check that selection persists. Both overlapping
-threads remain available at their code and diagram endpoints.
+Use **Changes** on `second.md` to explore prose and block differences, including
+overlapping comment ranges. `comprehensive.md` has enough history to exercise the
+revision list limit. Tags cover active, archived, and unassigned cases; the
+nested document is untagged and has no previous snapshot.
 
-`guides/setup/local.md` has no **Changes** option because it has no
-previous snapshot.
-
-For a small prose edit, open `second.md`, enable **Changes**, and find
-**Paragraph Diff Check**. The timeout changes from `30` to `45` seconds. The old
-and new versions of that entire two-line paragraph are highlighted; the following
-unchanged paragraph appears once without a diff background. Comparisons use
-source lines, while rendered changes use complete paragraphs and list items to
-preserve Markdown structure. Restart the sample launcher with `SADOKU_SOURCE`
-unset to regenerate existing samples.
-
-Tags include `Needs review`, `Markdown`, `Archived` (on the deleted document),
-and `Unassigned` (with no documents). The nested document remains untagged.
-These cover filtering, document tag editing, and tag management. Tag colors use
-the CLI default, and display titles remain unset.
+Restart the launcher with `SADOKU_SOURCE` unset to regenerate samples.
 
 For hosted previews and their instance lifecycle, see
 [PR previews](pr-preview.md).

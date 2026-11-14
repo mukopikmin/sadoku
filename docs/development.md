@@ -39,30 +39,11 @@ Install the official [golangci-lint binary](https://github.com/golangci/golangci
 for the version pinned in [`.golangci-lint-version`](../.golangci-lint-version)
 and put it on `PATH` before running lint or `make check`. Set `GOLANGCI_LINT`
 to use a binary at another path. CI installs the same pinned version.
-The shared [configuration](../.golangci.yml) enables correctness checks with
-`staticcheck`, `errcheck`, `errorlint`, `ineffassign`, `unused`, and `govet`,
-plus `rowserrcheck` and `sqlclosecheck` for SQL resource and iteration errors.
-`bodyclose` checks HTTP response cleanup, and `nilerr` catches branches that
-discard a non-nil error by returning nil. `nolintlint` requires suppressions to
-name specific linters, explain the reason, and remain necessary.
-`contextcheck` verifies context propagation. `noctx` covers HTTP, listeners,
-subprocesses, and SQL, including tests. Repository operations require the caller's
-context and pass it to SQL queries and transactions. HTTP and CLI operations
-propagate their context through the session and persistence boundaries. Committed
-comment changes publish their notification with a bounded, detached context so a
-late disconnect cannot skip publication. Shutdown and shared token
-refresh retain context values while detaching cancellation.
-`gosec` checks security-sensitive operations, with G204 and G304 disabled because
-Sadoku deliberately executes local tools and opens user-selected files. Command
-injection and path traversal taint analysis (G702/G703) remain enabled. Local
-`#nosec` comments identify reviewed cases such as executable artifact permissions,
-fixed SQL table allowlists, and test fixture paths.
-Tests are included and generated code is excluded. Formatting stays with `gofmt`;
-cross-platform vet checks remain available through `make vet-cross`.
-
-Keep intentional error discards local and explicit, such as cleanup and
-best-effort log or HTTP output. Check errors when writing persistent data or
-creating test fixtures instead of suppressing the linter for an entire file.
+The shared [configuration](../.golangci.yml) defines the enabled linters and
+exceptions. Tests are included; generated code is excluded. Keep error discards
+local and explicit. Linter suppressions must name the check and explain why it
+is necessary; check errors for persistent writes and test fixture creation.
+Cross-platform vet checks are available through `make vet-cross`.
 
 Build, install, server test, server lint, and vet targets build the client assets
 first. Run `make deps` before these targets when setting up a checkout. The standalone
@@ -102,12 +83,6 @@ Existing errors in imported code still fail the command and must be reported.
 Passing Vite builds, Vitest tests, or oxlint alone does not establish compiler
 type safety.
 
-Use generated Protobuf types for decoded RPC inputs and inferred/library types
-for parsed Markdown. Convert to UI models at the API boundary, checking domain
-constraints and response/document correspondence there. Decode untyped external
-data from `unknown`; do not use assertions as validation. The detailed boundary,
-assertion, and typed-fixture rules are in [AGENTS.md](../AGENTS.md).
-
 See [contributor guidelines](../AGENTS.md), [proxy setup](../src/proxy/README.md), and the
 [release workflow guide](../.agents/skills/sadoku-release/SKILL.md) for details.
 
@@ -131,6 +106,10 @@ repository tooling, generated Go bindings, and integration tests.
 `src/preview/` owns the browser client and generated TypeScript bindings.
 `src/proxy/` remains an independent Go module. `src/proto/` owns protobuf
 schemas, Buf configuration, and Node-based generation tools.
+
+See the [RPC adapter boundary](../src/server/internal/server/http/api/README.md)
+and [legacy HTTP fixture rules](../src/server/internal/server/http/testdata/README.md)
+for protocol conversion and compatibility test maintenance.
 
 The root Makefile coordinates these applications. Client builds copy browser
 assets into `src/server/internal/preview/dist/` for Go embedding; neither copy
