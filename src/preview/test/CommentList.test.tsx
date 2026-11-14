@@ -34,7 +34,13 @@ const toggleFilter = async (name: string) => {
   const input = getFilterCheckbox(name) as HTMLInputElement;
   const checked = input.checked;
   fireEvent.click(input);
-  await waitFor(() => expect(input.checked).toBe(!checked));
+  await waitFor(() => {
+    expect(input.checked).toBe(!checked);
+    expect(input.parentElement).toHaveAttribute(
+      "data-state",
+      checked ? "unchecked" : "checked",
+    );
+  });
 };
 
 describe("CommentList", () => {
@@ -91,7 +97,7 @@ describe("CommentList", () => {
         screen.queryByRole("group", { name: "Bulk comment actions" }),
       ).not.toBeInTheDocument();
       await toggleFilter(state === "active" ? "Active" : "Stale");
-      expect(screen.getAllByRole("article")).toHaveLength(1);
+      expect(await screen.findAllByRole("article")).toHaveLength(1);
     },
   );
 
