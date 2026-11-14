@@ -39,7 +39,8 @@ Run `sadoku --help` for all commands and options.
 ### Review
 
 - Use the **+** button beside a document block to comment. Comments support
-  Markdown and replies; discussions can be resolved and reopened.
+  Markdown and replies; discussions can be resolved and reopened. Use the up/down
+  arrows in the bottom toolbar to move between visible comment locations.
 - Use **Changes** to compare with the previous saved snapshot, or **Revisions**
   to browse history and restore a local file. Remote documents are read-only.
 - Directory previews let you browse and create Markdown files. Discovery limits

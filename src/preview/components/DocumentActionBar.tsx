@@ -6,15 +6,25 @@ import {
   Flex,
   IconButton,
   Portal,
+  Text,
   useElementRect,
 } from "@chakra-ui/react";
 import { TableOfContents } from "../pages/markdown/TableOfContents";
 import { useCallback } from "react";
-import { Brain, FileDiff, FileText, History } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Brain,
+  FileDiff,
+  FileText,
+  History,
+} from "lucide-react";
 import type { useDocumentDiff } from "../hooks/useDocumentDiff";
+import type { CommentNavigation } from "../hooks/useCommentNavigation";
 import { Tooltip } from "./ui/tooltip";
 
 type DocumentActionBarProps = {
+  commentNavigation?: CommentNavigation;
   markdown: string;
   diff?: ReturnType<typeof useDocumentDiff>;
   memoryCount: number;
@@ -24,6 +34,7 @@ type DocumentActionBarProps = {
 };
 
 export const DocumentActionBar = ({
+  commentNavigation,
   markdown,
   diff,
   memoryCount,
@@ -58,6 +69,46 @@ export const DocumentActionBar = ({
             translate="none"
           >
             <TableOfContents markdown={markdown} />
+            {commentNavigation && (
+              <Flex
+                role="group"
+                aria-label="Comment navigation"
+                align="center"
+                gap="1"
+              >
+                <Tooltip content="Previous comment location">
+                  <IconButton
+                    aria-label="Previous comment location"
+                    disabled={!commentNavigation.previous}
+                    onClick={() => commentNavigation.previous?.()}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <ArrowUp aria-hidden="true" />
+                  </IconButton>
+                </Tooltip>
+                <Text
+                  aria-live="polite"
+                  aria-atomic="true"
+                  fontSize="sm"
+                  whiteSpace="nowrap"
+                >
+                  Comment locations {commentNavigation.position ?? "–"} /{" "}
+                  {commentNavigation.count}
+                </Text>
+                <Tooltip content="Next comment location">
+                  <IconButton
+                    aria-label="Next comment location"
+                    disabled={!commentNavigation.next}
+                    onClick={() => commentNavigation.next?.()}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <ArrowDown aria-hidden="true" />
+                  </IconButton>
+                </Tooltip>
+              </Flex>
+            )}
             {diff && (
               <Tooltip
                 content={

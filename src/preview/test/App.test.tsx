@@ -627,6 +627,13 @@ describe("App", () => {
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole("tab", { name: "Comments, 0 unresolved" })
+          .getAttribute("aria-selected"),
+      ).toBe("true"),
+    );
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 
     await waitFor(() => expect(initializeMermaid).toHaveBeenCalledTimes(2));

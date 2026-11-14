@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DocumentPreviewPage } from "../pages/DocumentPreviewPage";
 import {
   cleanup,
@@ -7,6 +7,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "./testUtils";
 
@@ -37,9 +38,23 @@ vi.mock("../hooks/useComments", () => ({
   }),
   useCommentActions: () => createCommentActions(),
 }));
-afterEach(cleanup);
+const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+beforeEach(() => {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+});
+afterEach(() => {
+  cleanup();
+  if (originalScrollIntoView) {
+    HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  } else {
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+  }
+});
 
-const page = (previousMarkdown?: string) => (
+const page = (
+  previousMarkdown?: string,
+  view: "preview" | "comments" = "preview",
+) => (
   <DocumentPreviewPage
     document={{
       deleted: false,
@@ -71,11 +86,46 @@ const page = (previousMarkdown?: string) => (
     }}
     staleCommentCount={0}
     unresolvedCommentCount={0}
-    view="preview"
+    view={view}
   />
 );
 
 describe("document changes option", () => {
+  it("navigates visible deleted comments and removes navigation in the comment view", async () => {
+    const { container, rerender } = render(page("Old text"));
+    const next = screen.getByRole("button", { name: "Next comment location" });
+    expect(next.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Changes since previous snapshot" }),
+    );
+    await waitFor(() => expect(next.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(next);
+    expect(screen.getByText("Comment locations 1 / 1")).not.toBeNull();
+    const target = container.querySelector<HTMLElement>(
+      "[data-comment-navigation-current]",
+    );
+    expect(target?.textContent).toContain("Deleted text review");
+    expect(target?.scrollIntoView).toHaveBeenCalledOnce();
+    expect(next.hasAttribute("disabled")).toBe(true);
+    expect(
+      screen
+        .getByRole("button", { name: "Previous comment location" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Changes since previous snapshot" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Comment locations – / 0")).not.toBeNull(),
+    );
+    rerender(page("Old text", "comments"));
+    expect(
+      screen.queryByRole("group", { name: "Comment navigation" }),
+    ).toBeNull();
+    rerender(page("Old text"));
+    expect(screen.getByText("Comment locations – / 0")).not.toBeNull();
+  });
+
   it("passes stale comments to the removed content when changes are shown", () => {
     render(page("Old text"));
     expect(screen.queryByText("Deleted text review")).toBeNull();
