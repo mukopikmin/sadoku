@@ -11,6 +11,7 @@ import { DocumentBreadcrumb } from "../components/DocumentBreadcrumb";
 import type { DocumentSummary, PreviewDocument } from "../models/document";
 import type { ResolvedPreviewSettings } from "../models/theme";
 import type { PreviewView } from "../models/previewView";
+import { useCommentNavigation } from "../hooks/useCommentNavigation";
 
 type Props = {
   document: PreviewDocument;
@@ -51,6 +52,7 @@ export const DocumentPreviewPage = ({
   view,
 }: Props) => {
   const { showHtmlComments } = settings;
+  const { previewRef, navigation: commentNavigation } = useCommentNavigation();
   const [revisionsOpen, setRevisionsOpen] = useState(false);
   const diff = useDocumentDiff(
     documentId,
@@ -136,17 +138,19 @@ export const DocumentPreviewPage = ({
         </Text>
       )}
       {view === "preview" ? (
-        <MarkdownPreviewPage
-          documentId={documentId}
-          documentPath={documentPath}
-          key={`${documentId}-${settings.theme}-${settings.fontScale}`}
-          markdown={document.markdown}
-          previousMarkdown={
-            diff.state.status === "on" ? document.previousMarkdown : undefined
-          }
-          showHtmlComments={showHtmlComments}
-          theme={settings.theme === "dark" ? "dark" : "default"}
-        />
+        <Box ref={previewRef}>
+          <MarkdownPreviewPage
+            documentId={documentId}
+            documentPath={documentPath}
+            key={`${documentId}-${settings.theme}-${settings.fontScale}`}
+            markdown={document.markdown}
+            previousMarkdown={
+              diff.state.status === "on" ? document.previousMarkdown : undefined
+            }
+            showHtmlComments={showHtmlComments}
+            theme={settings.theme === "dark" ? "dark" : "default"}
+          />
+        </Box>
       ) : (
         <CommentListPage
           documentId={documentId}
@@ -154,6 +158,7 @@ export const DocumentPreviewPage = ({
         />
       )}
       <DocumentActionBar
+        commentNavigation={view === "preview" ? commentNavigation : undefined}
         markdown={document.markdown}
         diff={diff}
         memoryCount={memoryCount}
