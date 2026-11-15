@@ -22,7 +22,7 @@ them when making changes.
 - Use `make deps` to install protocol tooling and preview dependencies from lockfiles.
   `src/proto/package.json` declares dependencies only; define shared commands in Make.
 - Keep `src/proto/package-lock.json` and
-  `src/preview/package-lock.json` consistent with dependency changes.
+  `src/ui/package-lock.json` consistent with dependency changes.
 - Add or update focused tests for application behavior changes. Do not rely only
   on a successful build.
 - Keep test additions proportional to the change. Changes limited to preview
@@ -71,7 +71,7 @@ them when making changes.
   `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
 - Use Go's standard library for runtime facilities and chi for HTTP routing.
   Keep domain operations as functions and plain data with explicit persistence ports.
-- Run `make build-client` before Go builds or tests; `src/server/internal/preview/assets.go`
+- Run `make build-client` before Go builds or tests; `src/server/internal/ui/assets.go`
   embeds the generated client. Never commit client build outputs.
 - Validate Go changes with `make check-go-format`, `make lint-go`, `make vet`, and `make test-server`.
   For proxy changes, use `make proxy-check-format`, `make proxy-lint`, and
@@ -142,7 +142,7 @@ them when making changes.
 
 ## 4. Preview Client and Generated Assets
 
-- Follow the existing React and TypeScript patterns in `src/preview/`.
+- Follow the existing React and TypeScript patterns in `src/ui/`.
 - Preserve type safety at API and parser boundaries. Accept generated Protobuf
   message types in RPC-to-model conversions and use library-provided AST types
   and inference when traversing parsed Markdown. Do not duplicate decoded wire
@@ -167,7 +167,7 @@ them when making changes.
   domain constraints and response/document mismatches instead of reproducing
   primitive checks already performed by the protocol decoder.
 - Keep browser-side `fetch`, HTTP status handling, response types, and
-  response-to-model conversion in `src/preview/api/`; UI components and pages
+  response-to-model conversion in `src/ui/api/`; UI components and pages
   must not call application endpoints directly.
 - Manage server-backed preview state through the existing React Query hooks.
   Reuse query keys and invalidation helpers instead of creating independent
@@ -188,14 +188,14 @@ them when making changes.
   booleans and optional values. Keep independent state independent; trivial
   rendering details do not require a custom hook solely for extraction.
 - Build preview UI with Chakra UI components and existing Sadoku semantic
-  tokens. Reuse components under `src/preview/components/ui/` before introducing
+  tokens. Reuse components under `src/ui/components/ui/` before introducing
   a new dialog, notification, or common control implementation.
 - Prefer Chakra's built-in variants, palettes, sizes, and text styles. Keep
   related controls on a common toolkit size and use `textStyle="label"` for
   settings labels. Compare rendered dimensions and both themes before changing
   shared styles. Add overrides only for concrete requirements the toolkit cannot
   meet, and explain why in the PR. Define reusable colors as semantic tokens in
-  `src/preview/theme.ts` with light and dark values; do not hard-code
+  `src/ui/theme.ts` with light and dark values; do not hard-code
   theme-specific colors in feature components. Remove unused overrides.
 - Let parent `Stack` or `Flex` components own spacing with `gap`; avoid redundant
   child margins and spacing-only wrappers. Render optional content as optional
@@ -213,18 +213,18 @@ them when making changes.
   included in the selectable comment-highlight area.
 - Keep the Markdown support summary in `README.md` aligned with supported
   behavior. Update the summary and tests when support changes.
-- `src/preview/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
+- `src/ui/dist/`, root `dist/`, `sadoku`, and `THIRD_PARTY_NOTICES.md` are
   generated outputs and MUST NOT be committed.
-- `src/server/internal/preview/dist/` is also generated and MUST NOT be committed.
+- `src/server/internal/ui/dist/` is also generated and MUST NOT be committed.
 - Build client assets with `make build-client`; do not edit generated files
-  under `src/preview/dist/`.
+  under `src/ui/dist/`.
 - Keep Mermaid rendering functional without CDN or other network access.
 
 ## 5. Testing Conventions
 
 - Co-locate server and tooling unit tests as `*_test.go`.
 - Put cross-module Go server workflows in `src/server/test/integration/`.
-- Put preview client tests in `src/preview/test/` using Vitest and Testing
+- Put preview client tests in `src/ui/test/` using Vitest and Testing
   Library.
 - Prioritize focused tests of custom hooks for UI state transitions, branching
   logic, input validation, asynchronous operations, side effects, and error

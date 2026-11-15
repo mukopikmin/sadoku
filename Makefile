@@ -16,7 +16,7 @@ TYPECHECK_FILES ?=
 # SQLite migrations and other disk writes, especially with the race detector.
 GO_TEST_TIMEOUT ?= $(if $(filter Windows_NT,$(OS)),10m,120s)
 GO_TEST_FLAGS ?= -race -count=1 -timeout=$(GO_TEST_TIMEOUT)
-GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/assets.go src/server/internal/gen src/server/test/integration
+GO_SOURCES := src/server/cmd src/server/internal src/server/internal/ui/assets.go src/server/internal/gen src/server/test/integration
 
 .PHONY: deps build-client test-client test-actions fmt-client check-client-format check-client-types lint-client \
  build build-server install dist notices run start test test-server test-server-with-assets \
@@ -25,33 +25,33 @@ GO_SOURCES := src/server/cmd src/server/internal src/server/internal/preview/ass
 
 deps:
 	$(NPM) --prefix src/proto ci --ignore-scripts
-	$(NPM) --prefix src/preview ci
+	$(NPM) --prefix src/ui ci
 
 build-client:
-	$(NPM) --prefix src/preview run build
-	rm -rf src/server/internal/preview/dist
-	mkdir -p src/server/internal/preview
-	cp -R src/preview/dist src/server/internal/preview/dist
+	$(NPM) --prefix src/ui run build
+	rm -rf src/server/internal/ui/dist
+	mkdir -p src/server/internal/ui
+	cp -R src/ui/dist src/server/internal/ui/dist
 
 test-client:
-	$(NPM) --prefix src/preview test
+	$(NPM) --prefix src/ui test
 
 test-actions:
 	$(NODE) --test .github/tests/pr_preview_comment_test.mts
 
 fmt-client:
-	$(NPM) --prefix src/proto exec --no -- oxfmt ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
+	$(NPM) --prefix src/proto exec --no -- oxfmt ".github/tests/*.mts" "src/ui/**/*.{ts,tsx}"
 
 lint-client:
-	$(NPM) --prefix src/proto exec --no -- oxlint --deny-warnings --report-unused-disable-directives .github/tests src/preview
+	$(NPM) --prefix src/proto exec --no -- oxlint --deny-warnings --report-unused-disable-directives .github/tests src/ui
 
 check-client-format:
-	$(NPM) --prefix src/proto exec --no -- oxfmt --check ".github/tests/*.mts" "src/preview/**/*.{ts,tsx}"
+	$(NPM) --prefix src/proto exec --no -- oxfmt --check ".github/tests/*.mts" "src/ui/**/*.{ts,tsx}"
 
 # Check changed files and their imports; this is not a repository-wide CI gate.
 check-client-types:
 	$(if $(strip $(TYPECHECK_FILES)),,$(error Specify TYPECHECK_FILES with the TypeScript files and focused tests to check))
-	$(NPM) --prefix src/preview exec --no -- tsc --noEmit --strict --skipLibCheck --esModuleInterop --jsx react-jsx --target es2023 --module esnext --moduleResolution bundler $(TYPECHECK_FILES)
+	$(NPM) --prefix src/ui exec --no -- tsc --noEmit --strict --skipLibCheck --esModuleInterop --jsx react-jsx --target es2023 --module esnext --moduleResolution bundler $(TYPECHECK_FILES)
 
 build: build-client
 	$(MAKE) build-server
@@ -114,8 +114,8 @@ vet: build-client
 
 # Repository tooling needs native SQLite CGO APIs; cross-check application Go code.
 vet-cross: vet
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) -C src/server vet ./cmd/sadoku ./internal/server/... ./internal/preview/... ./internal/gen/... ./test/integration/...
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) -C src/server vet ./cmd/sadoku ./internal/server/... ./internal/preview/... ./internal/gen/... ./test/integration/...
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) -C src/server vet ./cmd/sadoku ./internal/server/... ./internal/ui/... ./internal/gen/... ./test/integration/...
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) -C src/server vet ./cmd/sadoku ./internal/server/... ./internal/ui/... ./internal/gen/... ./test/integration/...
 
 fmt: fmt-go fmt-client
 

@@ -12,7 +12,7 @@ on:
       - src/proto/package.json
       - src/proto/package-lock.json
       - src/proto/**
-      - src/preview/gen/**
+      - src/ui/gen/**
       - src/server/internal/gen/**
       - src/server/go.mod
       - src/server/go.sum
@@ -29,7 +29,7 @@ on:
       - src/proto/package.json
       - src/proto/package-lock.json
       - src/proto/**
-      - src/preview/gen/**
+      - src/ui/gen/**
       - src/server/internal/gen/**
       - src/server/go.mod
       - src/server/go.sum

@@ -1,6 +1,6 @@
-// Package preview contains the built browser client embedded in the Go binary.
+// Package ui contains the built browser client embedded in the Go binary.
 // Run make build-client before building or testing the server.
-package preview
+package ui
 
 import "embed"
 
