@@ -73,7 +73,7 @@ For handwritten TypeScript changes, also run strict compiler checking on the
 changed files and their focused tests, for example:
 
 ```sh
-make check-client-types TYPECHECK_FILES="src/preview/api/tableLayouts.ts src/preview/models/tableLayout.ts src/preview/test/tableLayout.test.ts"
+make check-client-types TYPECHECK_FILES="src/ui/api/tableLayouts.ts src/ui/models/tableLayout.ts src/ui/test/tableLayout.test.ts"
 ```
 
 The target uses the lockfile-pinned TypeScript compiler and checks those entry
@@ -103,7 +103,7 @@ For nightly builds, pass `--nightly` to `scripts/install.sh` or `-Nightly` to
 
 `src/server/` owns the Go application module, entry points, internal server and
 repository tooling, generated Go bindings, and integration tests.
-`src/preview/` owns the browser client and generated TypeScript bindings.
+`src/ui/` owns the browser client and generated TypeScript bindings.
 `src/proxy/` remains an independent Go module. `src/proto/` owns protobuf
 schemas, Buf configuration, and Node-based generation tools.
 
@@ -112,5 +112,5 @@ and [legacy HTTP fixture rules](../src/server/internal/server/http/testdata/READ
 for protocol conversion and compatibility test maintenance.
 
 The root Makefile coordinates these applications. Client builds copy browser
-assets into `src/server/internal/preview/dist/` for Go embedding; neither copy
+assets into `src/server/internal/ui/dist/` for Go embedding; neither copy
 of the generated assets is committed.

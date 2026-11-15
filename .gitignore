@@ -5,7 +5,7 @@ mdview
 /sadoku
 /sadoku.exe
 THIRD_PARTY_NOTICES.md
-src/preview/dist/
+src/ui/dist/
 *.mdview-comments.json
 *.sadoku-comments.json
 .codex/
@@ -14,5 +14,5 @@ npm-debug.log*
 .DS_Store
 gha-creds-*.json
 
-src/server/internal/preview/dist/
+src/server/internal/ui/dist/
 src/proto/node_modules/

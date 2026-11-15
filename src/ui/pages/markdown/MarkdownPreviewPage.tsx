@@ -3,6 +3,7 @@ import { isUnresolvedComment } from "../../models/comment";
 import { MarkdownPreview, type MarkdownPreviewProps } from "./MarkdownPreview";
 import { useTableLayouts } from "../../hooks/useTableLayouts";
 import { TableLayoutContext } from "../../markdown/tableLayoutContext";
+import { memo } from "react";
 
 type MarkdownPreviewPageProps = Pick<
   MarkdownPreviewProps,
@@ -13,14 +14,14 @@ type MarkdownPreviewPageProps = Pick<
   | "theme"
 > & { documentId?: number };
 
-export const MarkdownPreviewPage = ({
+export const MarkdownPreviewPage = memo(function MarkdownPreviewPage({
   documentId,
   documentPath,
   markdown,
   previousMarkdown,
   showHtmlComments,
   theme,
-}: MarkdownPreviewPageProps) => {
+}: MarkdownPreviewPageProps) {
   const commentsQuery = useCommentsQuery(documentId);
   const actions = useCommentActions(documentId);
   const tableLayouts = useTableLayouts(documentId, markdown, documentPath);
@@ -41,4 +42,4 @@ export const MarkdownPreviewPage = ({
       />
     </TableLayoutContext.Provider>
   );
-};
+});
