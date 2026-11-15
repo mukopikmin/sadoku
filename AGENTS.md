@@ -69,8 +69,8 @@ them when making changes.
   the executable entry point and delegates to `src/server/internal/server/app.go`.
 - Keep native code under the corresponding `src/server/internal/server/` boundaries: `cli/`,
   `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
-- Use Go's standard library for runtime facilities. Keep domain operations as
-  functions and plain data with explicit persistence ports.
+- Use Go's standard library for runtime facilities and chi for HTTP routing.
+  Keep domain operations as functions and plain data with explicit persistence ports.
 - Run `make build-client` before Go builds or tests; `src/server/internal/preview/assets.go`
   embeds the generated client. Never commit client build outputs.
 - Validate Go changes with `make check-go-format`, `make lint-go`, `make vet`, and `make test-server`.
