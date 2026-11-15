@@ -1,3 +1,8 @@
+/// <reference types="node" />
+
+import { Blob as NodeBlob } from "node:buffer";
+import { cleanup as testingLibraryCleanup } from "@testing-library/react";
+
 // Default to desktop media queries in JSDOM; responsive tests can override this.
 globalThis.matchMedia ??= (query) => ({
   matches: query.startsWith("(min-width:"),
@@ -10,7 +15,16 @@ globalThis.matchMedia ??= (query) => ({
   dispatchEvent: () => true,
 });
 
-import { cleanup as testingLibraryCleanup } from "@testing-library/react";
+// Shiki's WASM loader needs Blob.stream(), which JSDOM does not implement.
+Object.defineProperty(globalThis, "Blob", {
+  value: NodeBlob,
+  configurable: true,
+  writable: true,
+});
+
+// JSDOM resolves animation styles but does not run animations or emit their
+// completion events. Let Chakra finish presence transitions immediately.
+Element.prototype.getAnimations ??= () => [];
 
 class TestResizeObserver implements ResizeObserver {
   disconnect() {}

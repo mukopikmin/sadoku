@@ -435,8 +435,7 @@ describe("App", () => {
       const toc = await screen.findByRole("navigation", {
         name: "Table of contents",
       });
-      const details = within(toc).getByRole("link", { name: "Details" });
-      expect(details.getAttribute("href")).toBe("#details");
+      const details = within(toc).getByRole("treeitem", { name: "Details" });
       fireEvent.click(details);
       await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
       expect(scrollIntoView.mock.instances.at(-1)).toBe(
@@ -1694,7 +1693,7 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Settings" })).not.toBeNull();
   });
 
-  it("shows active and stale comments in the unresolved comments view", async () => {
+  it("opens the comments view with unresolved discussions and their source", async () => {
     vi.stubGlobal("EventSource", TestEventSource);
     vi.stubGlobal(
       "fetch",
@@ -1809,9 +1808,6 @@ describe("App", () => {
     expect(await screen.findByText("Active comment.")).not.toBeNull();
     expect(screen.getByText("Stale comment.")).not.toBeNull();
     expect(screen.getByText("Old body")).not.toBeNull();
-    const unresolvedTab = screen.getByRole("tab", { name: "Unresolved" });
-    expect(within(unresolvedTab).getByText("2")).not.toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
-    expect(screen.getByText("Resolved comment.")).not.toBeNull();
+    expect(screen.queryByText("Resolved comment.")).toBeNull();
   });
 });
