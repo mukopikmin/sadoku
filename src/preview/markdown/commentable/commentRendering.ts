@@ -87,3 +87,40 @@ export const hasTextSelectionWithin = (element: Element): boolean => {
     element.contains(selection.focusNode)
   );
 };
+
+export const getCommentableBlockProps = (
+  context: CommentRenderingContextValue,
+  sourceRange: { endLine: number; startLine: number },
+) => {
+  const {
+    commentsByLine,
+    drafts: _drafts,
+    markdown: _,
+    rangeHighlights,
+    ...props
+  } = context;
+  const { endLine, startLine } = sourceRange;
+  const comments = [...commentsByLine.entries()].flatMap(([line, comments]) =>
+    line >= startLine && line <= endLine ? comments : [],
+  );
+  return {
+    ...props,
+    comments,
+    hasRangeHighlight: rangeHighlights.some(
+      (range) => range.endLine >= startLine && range.startLine <= endLine,
+    ),
+    isAdding:
+      props.activeCommentLine !== undefined &&
+      props.activeCommentLine >= startLine &&
+      props.activeCommentLine <= endLine,
+    isRangeActionLine:
+      props.selectedRange !== undefined &&
+      props.selectedRange.endLine >= startLine &&
+      props.selectedRange.endLine <= endLine,
+    isSelected: props.selectedRange
+      ? props.selectedRange.startLine === startLine &&
+        props.selectedRange.endLine === endLine
+      : false,
+    sourceRange,
+  };
+};

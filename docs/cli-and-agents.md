@@ -29,11 +29,9 @@ sadoku tag list
 sadoku tag delete <tag-id>
 ```
 
-Tag creation and listing return JSON. Each listed tag includes its document
-count. New tags are not attached to any document; names must be unique. Tags
-created through the CLI always use the default background color (`#718096`).
-Deleting a tag also removes it from every document without deleting the
-documents.
+Tags are shared across documents and have unique names. New tags are unattached;
+deleting a tag removes its associations without deleting documents. Colors are
+read-only through the CLI.
 
 Set a registered document's title and complete tag collection:
 
@@ -51,12 +49,8 @@ collection with existing tag IDs, up to 20 distinct tags. Repeated IDs count onc
 Title and tag changes are saved atomically. Tag definitions are managed separately
 with `tag add/list/delete`; replacing associations does not delete tags.
 
-`document add` also accepts `--tags` to set initial associations. `document update`
-returns the updated document, including its tags, as JSON. Document listing and
-inspection also include `tags`, containing each tag's `id`, `name`, and
-`backgroundColor`, or an empty array when no tags are attached. Colors are
-read-only through the CLI. The former `document tag add/delete` commands have
-been replaced by `document update --tags`.
+`document add` also accepts `--tags`. Tag creation and listing, plus document
+update, listing, and inspection return JSON, including associated tags where applicable.
 
 Use `sadoku --help` for document, tag, comment, instruction, and memory
 commands. Instructions provide guidance for agents; memories provide
@@ -75,35 +69,18 @@ sadoku instruction set --source document.md --content "Use concrete examples."
 ```
 
 Choose exactly one of `--global`, `--document <id>`, or `--source <file.md|url>`.
-Each scope stores a single instruction text: one shared value for the database
-and one value per document. `get` and `set` return `{ "content": "..." }`;
-an unset value is an empty string. `set` replaces the whole text, and setting an
-explicitly empty string (`--content ""`) clears it. Omitting `--content` or
-providing only whitespace is an error. In the UI, edit the text and save;
-leave it empty and save to clear it.
+Each scope stores one instruction text. `get` returns `{ "content": "..." }`,
+with an empty string when unset. `set` replaces the text and returns the same
+shape; `--content ""` clears it. Missing or whitespace-only content is invalid.
+Memories hold multiple entries of document-specific background.
 
-Existing databases automatically merge multiple instructions within each scope
-in ID order, separated by blank lines. Instruction commands are `get` and `set`;
-instruction IDs are not accepted.
-Use `set` to explicitly replace the complete text; there is no append operation.
-The existing API response shapes remain available for compatibility. Global
-instructions remain separate from document instructions and memories. Memories
-continue to support multiple entries.
-
-The document instructions dialog shows both global guidance and instructions
-for that document. Choose **Manage global instructions** there to open the same
-management dialog. Apply both; document instructions take precedence when they
-directly conflict with global instructions. Agents must retrieve both scopes;
-Sadoku does not inject instructions into unrelated agent sessions. All three
-skills below retrieve both instruction scopes and document memories before
-working on a target. Instructions guide the work; memories provide background
-and earlier decision rationale that agents verify against current evidence.
+Agents retrieve both instruction scopes and document memories before working.
 Current user requests and applicable project instructions take precedence over
-Sadoku instructions; memories do not override either. Empty settings are valid,
-but retrieval failures must be resolved before proceeding with unknown guidance
-or context. Initial setup uses this context to prepare writing guidance, review
-uses it to choose review criteria, and comment responses use it to interpret
-feedback and check proposed changes.
+Sadoku instructions; document instructions override conflicting global guidance.
+Memories provide background to verify against current evidence and do not
+override instructions. Empty values are valid, but retrieval failures must be
+resolved before proceeding. Sadoku does not inject this context into unrelated
+agent sessions.
 
 For compatible coding agents, install the skills with
 [Agent Package Manager](https://github.com/microsoft/apm). Each requires
@@ -121,12 +98,5 @@ apm install mukopikmin/sadoku --skill sadoku-review
 apm install mukopikmin/sadoku --skill sadoku-address-comments
 ```
 
-The comment-response skill leaves threads unresolved for human confirmation and
-checks for useful document memories after the work. The review skill derives its
-criteria from the user's request and both instruction scopes, and uses verified
-memories to account for background and earlier decisions. It leaves findings as
-open comments for human consideration.
-
-**Breaking change in skills package 0.4.0:** `sadoku-review` now means AI review
-and comment creation. Existing prompts that use it to apply feedback should use
-`sadoku-address-comments`; document creation should use `sadoku-init`.
+Review findings and comment-response threads remain open for human confirmation.
+The comment-response skill also checks for useful document memories after work.

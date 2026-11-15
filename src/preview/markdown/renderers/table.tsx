@@ -25,8 +25,13 @@ export const renderMarkdownTable = (
   elementProps: Omit<MarkdownElementProps, "children">,
   children: React.ReactNode,
   startLine?: number,
+  containerClassName?: string,
 ) => (
-  <ResizableMarkdownTable elementProps={elementProps} startLine={startLine}>
+  <ResizableMarkdownTable
+    elementProps={elementProps}
+    startLine={startLine}
+    containerClassName={containerClassName}
+  >
     {children}
   </ResizableMarkdownTable>
 );

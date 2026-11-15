@@ -95,9 +95,7 @@ describe("GitHub Markdown alerts", () => {
     expect(block?.getAttribute("data-source-line")).toBe("3");
     expect(block?.getAttribute("data-source-end-line")).toBe("4");
     fireEvent.click(screen.getByText("Note"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment on lines 3-4" }),
-    );
+    fireEvent.click(screen.getByLabelText("Add comment on lines 3-4"));
     fireEvent.change(
       screen.getByPlaceholderText("Write a GitHub PR comment..."),
       { target: { value: "Review alert" } },

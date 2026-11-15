@@ -24,90 +24,45 @@ const getBulkButton = (name: string) =>
     { name },
   );
 
-const getFilterButton = (name: string) =>
-  within(
-    screen.getByRole("group", { name: "Unresolved comment filters" }),
-  ).getByRole("button", { name });
+const getFilterCheckbox = (name: string) =>
+  within(screen.getByRole("group", { name: "Comment filters" })).getByRole(
+    "checkbox",
+    { name },
+  );
+
+const toggleFilter = async (name: string) => {
+  const input = getFilterCheckbox(name) as HTMLInputElement;
+  const checked = input.checked;
+  await act(async () => {
+    fireEvent.click(input);
+  });
+  expect(input.checked).toBe(!checked);
+};
 
 describe("CommentList", () => {
-  it("filters unresolved comments, keeps total counts, and clears selection on changes", async () => {
-    const comments = [
-      createComment({ body: "Active comment." }),
-      createComment({ id: 2, body: "Stale comment.", state: "stale" }),
-      createComment({ id: 3, body: "Resolved comment.", state: "resolved" }),
-    ];
-    const { unmount } = render(
-      <CommentList actions={createCommentActions()} comments={comments} />,
-    );
-
-    expect(getFilterButton("All")).toHaveAttribute("aria-pressed", "true");
-    expect(within(getFilterButton("All")).getByText("2")).toBeInTheDocument();
-    for (const name of ["Active", "Stale"]) {
-      expect(within(getFilterButton(name)).getByText("1")).toBeInTheDocument();
-    }
-    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("2 selected"),
-    );
-    fireEvent.click(getFilterButton("Stale"));
-    expect(screen.getByRole("status")).toHaveTextContent("0 selected");
-    expect(screen.queryByText("Active comment.")).not.toBeInTheDocument();
-    expect(screen.getByText("Stale comment.")).toBeInTheDocument();
-    expect(
-      screen.getByText("Showing 1 of 2 unresolved comments"),
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("tab", { name: "Unresolved" })).getByText("2"),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("1 selected"),
-    );
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
-    expect(
-      screen.queryByRole("group", { name: "Unresolved comment filters" }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByText("Resolved comment.")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("0 selected");
-    fireEvent.click(screen.getByRole("tab", { name: "Unresolved" }));
-    expect(getFilterButton("Stale")).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(getFilterButton("All"));
-    expect(screen.getByRole("status")).toHaveTextContent("0 selected");
-    expect(screen.getAllByRole("article")).toHaveLength(2);
-
-    fireEvent.click(getFilterButton("Active"));
-    unmount();
+  it("renders hook filter state and connects checkbox changes to the list", async () => {
     render(
-      <CommentList actions={createCommentActions()} comments={comments} />,
+      <CommentList
+        actions={createCommentActions()}
+        comments={[
+          createComment({ body: "Active comment." }),
+          createComment({ id: 2, state: "stale", body: "Stale comment." }),
+          createComment({
+            id: 3,
+            state: "resolved",
+            body: "Resolved comment.",
+          }),
+        ]}
+      />,
     );
-    expect(getFilterButton("All")).toHaveAttribute("aria-pressed", "true");
+    expect(getFilterCheckbox("Active")).toBeChecked();
+    expect(getFilterCheckbox("Stale")).toBeChecked();
+    expect(getFilterCheckbox("Resolved")).not.toBeChecked();
+    expect(screen.queryByText("Resolved comment.")).toBeNull();
+    await toggleFilter("Resolved");
+    expect(await screen.findByText("Resolved comment.")).toBeInTheDocument();
+    expect(getFilterCheckbox("Resolved")).toBeChecked();
   });
-
-  it.each([
-    ["Active", "stale", "No active unresolved comments."],
-    ["Stale", "active", "No stale unresolved comments."],
-  ] as const)(
-    "keeps filters available when %s has no matches",
-    (filter, state, message) => {
-      render(
-        <CommentList
-          actions={createCommentActions()}
-          comments={[createComment({ state })]}
-        />,
-      );
-      fireEvent.click(getFilterButton(filter));
-      expect(screen.getByText(message)).toBeInTheDocument();
-      expect(
-        screen.getByText("Showing 0 of 1 unresolved comments"),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("group", { name: "Bulk comment actions" }),
-      ).not.toBeInTheDocument();
-      fireEvent.click(getFilterButton("All"));
-      expect(screen.getAllByRole("article")).toHaveLength(1);
-    },
-  );
 
   it("locks controls during bulk actions and keeps failed comments selected", async () => {
     let reject!: (error: Error) => void;
@@ -139,7 +94,7 @@ describe("CommentList", () => {
     for (const button of screen.getAllByRole("button")) {
       expect(button).toBeDisabled();
     }
-    expect(screen.getByRole("tab", { name: "Resolved" })).toBeDisabled();
+    expect(getFilterCheckbox("Resolved")).toBeDisabled();
     await act(async () => reject(new Error("Connection lost.")));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not resolve 1 of 2 selected comments. Connection lost.",
@@ -153,7 +108,7 @@ describe("CommentList", () => {
     expect(getBulkButton("Resolve")).toBeEnabled();
   });
 
-  it("selects comments within the current tab and reopens selected comments", async () => {
+  it("selects comments within the current filter and reopens selected comments", async () => {
     const onReopenComment = vi.fn().mockResolvedValue(undefined);
     render(
       <CommentList
@@ -180,9 +135,11 @@ describe("CommentList", () => {
       expect(screen.getByRole("status")).toHaveTextContent("2 selected"),
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
+    await toggleFilter("Resolved");
     expect(screen.getByRole("status")).toHaveTextContent("0 selected");
-    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Select comment 3:/ }),
+    );
     await waitFor(() => expect(getBulkButton("Reopen")).toBeEnabled());
     fireEvent.click(getBulkButton("Reopen"));
     await waitFor(() => expect(onReopenComment.mock.calls).toEqual([[3]]));
@@ -203,9 +160,9 @@ describe("CommentList", () => {
         ]}
       />,
     );
-    fireEvent.click(getFilterButton("Active"));
-    const filterButtons = screen.getAllByRole("button", {
-      name: /^(All|Active|Stale)$/,
+    await toggleFilter("Stale");
+    const filterButtons = screen.getAllByRole("checkbox", {
+      name: /^(Active|Stale|Resolved)$/,
     });
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     await waitFor(() =>
@@ -259,7 +216,8 @@ describe("CommentList", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
     render(<CommentListPage documentId={42} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Active" }));
+    await screen.findByRole("checkbox", { name: "Stale" });
+    await toggleFilter("Stale");
     fireEvent.click(
       await screen.findByRole("checkbox", { name: "Select all" }),
     );
@@ -268,11 +226,13 @@ describe("CommentList", () => {
     expect(
       await screen.findByText("No active unresolved comments."),
     ).toBeInTheDocument();
+    expect(screen.getByText("Showing 0 of 3 comments")).toBeInTheDocument();
     expect(
-      screen.getByText("Showing 0 of 1 unresolved comments"),
+      within(screen.getByRole("group", { name: "Comment filters" })).getByText(
+        "1",
+      ),
     ).toBeInTheDocument();
-    expect(within(getFilterButton("Stale")).getByText("1")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
+    await toggleFilter("Resolved");
     expect(screen.getAllByRole("article")).toHaveLength(2);
     expect(screen.getByRole("status")).toHaveTextContent("0 selected");
     const mutations = fetchMock.mock.calls.filter(
@@ -315,70 +275,14 @@ describe("CommentList", () => {
     expect(screen.getByText("Before")).toBeInTheDocument();
   });
 
-  it("groups comments, displays counts, and supports tab keyboard navigation", () => {
-    render(
-      <CommentList
-        actions={createCommentActions()}
-        comments={[
-          createComment({ body: "Active comment.", id: 1 }),
-          createComment({
-            body: "Stale comment.",
-            id: 2,
-            sourceText: "Old body",
-            state: "stale",
-          }),
-          createComment({
-            body: "Resolved comment.",
-            id: 3,
-            state: "resolved",
-          }),
-        ]}
-      />,
-    );
-
-    const unresolvedTab = screen.getByRole("tab", { name: "Unresolved" });
-    const resolvedTab = screen.getByRole("tab", { name: "Resolved" });
-    expect(unresolvedTab.getAttribute("aria-selected")).toBe("true");
-    expect(within(unresolvedTab).getByText("2")).not.toBeNull();
-    expect(within(resolvedTab).getByText("1")).not.toBeNull();
-    const unresolvedPanel = screen.getByRole("tabpanel", {
-      name: "Unresolved",
-    });
-    expect(within(unresolvedPanel).getByText("Active comment.")).not.toBeNull();
-    expect(within(unresolvedPanel).getByText("Stale comment.")).not.toBeNull();
-    expect(
-      within(screen.getByText("Stale comment.").closest("article")!).getByText(
-        "Stale",
-      ),
-    ).not.toBeNull();
-    expect(
-      within(screen.getByText("Stale comment.").closest("article")!).getByText(
-        "At comment time",
-      ),
-    ).not.toBeNull();
-    expect(within(unresolvedPanel).getByText("Old body")).not.toBeNull();
-    expect(within(unresolvedPanel).getAllByRole("article")).toHaveLength(2);
-
-    fireEvent.click(resolvedTab);
-    const resolvedPanel = screen.getByRole("tabpanel", { name: "Resolved" });
-    expect(within(resolvedPanel).getAllByRole("article")).toHaveLength(1);
-    expect(within(resolvedPanel).getByText("Resolved comment.")).not.toBeNull();
-    expect(within(resolvedPanel).getByText("Resolved")).not.toBeNull();
-
-    fireEvent.keyDown(resolvedTab, { key: "ArrowLeft" });
-    expect(screen.getByRole("tabpanel", { name: "Unresolved" })).not.toBeNull();
-    expect(document.activeElement).toBe(unresolvedTab);
-
-    fireEvent.keyDown(unresolvedTab, { key: "ArrowLeft" });
-    expect(screen.getByRole("tabpanel", { name: "Resolved" })).not.toBeNull();
-  });
-
-  it("shows category-specific empty states", () => {
+  it("renders the empty message from the filter hook", () => {
     render(<CommentList actions={createCommentActions()} comments={[]} />);
-
-    expect(screen.getByText("No unresolved comments.")).not.toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Resolved" }));
-    expect(screen.getByText("No resolved comments.")).not.toBeNull();
+    expect(
+      screen.getByText("No comments matching the selected states."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Bulk comment actions" }),
+    ).toBeNull();
   });
 
   it("passes current and original source ranges to comment actions", async () => {

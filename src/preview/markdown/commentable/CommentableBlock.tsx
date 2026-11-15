@@ -4,15 +4,15 @@ import {
   Flex,
   IconButton,
   Stack,
+  Popover,
+  Portal,
+  useBreakpointValue,
   Text,
   Textarea,
 } from "@chakra-ui/react";
 import { CodeXml, FilePenLine, Link, Plus, RotateCcw } from "lucide-react";
 import { useContext, useMemo } from "react";
-import { TableLayoutContext } from "../tableLayoutContext";
 import { TableResizeControllerContext } from "../tableResizeControllerContext";
-import { useTableColumnResize } from "../useTableColumnResize";
-import type { TableLayout } from "../../models/tableLayout";
 import type React from "react";
 import { submitCommentOnShortcut } from "../../components/comments/commentShortcuts";
 import { CommentItem } from "../../components/comments/CommentItem";
@@ -31,6 +31,17 @@ import {
   SourceLineContext,
 } from "./commentRendering";
 
+export type CommentableBlockLayout = {
+  blockProps: React.HTMLAttributes<HTMLElement> & {
+    "data-source-line": number;
+    "data-source-end-line": number;
+  };
+  content: (children: React.ReactNode) => React.ReactNode;
+  anchor: (element: React.ReactElement) => React.ReactNode;
+  thread: React.ReactNode;
+  onContentClick: React.MouseEventHandler<HTMLElement>;
+};
+
 type CommentableBlockProps = CommentControlProps & {
   children: React.ReactNode;
   className?: string;
@@ -41,65 +52,11 @@ type CommentableBlockProps = CommentControlProps & {
   isRangeActionLine: boolean;
   isSelected: boolean;
   sourceRange: CommentRange;
+  renderLayout?: (layout: CommentableBlockLayout) => React.ReactNode;
 };
 
-export const CommentableBlock = (props: CommentableBlockProps) => {
-  const layouts = useContext(TableLayoutContext);
-  const ancestorController = useContext(TableResizeControllerContext);
-  const layout =
-    layouts?.state.status === "ready"
-      ? layouts.state.tables.find(
-          (table) => table.startLine === props.sourceRange.startLine,
-        )
-      : undefined;
-  if (layout && layouts && ancestorController?.tableId !== layout.id) {
-    return (
-      <TableCommentableBlock {...props} layout={layout} save={layouts.save} />
-    );
-  }
-  return <CommentableBlockContent {...props} />;
-};
-
-const TableCommentableBlock = ({
-  layout,
-  save,
-  ...props
-}: CommentableBlockProps & {
-  layout: TableLayout;
-  save: (id: string, widths: number[]) => Promise<TableLayout>;
-}) => {
-  const resize = useTableColumnResize(layout, save);
-  return (
-    <TableResizeControllerContext.Provider
-      value={{ ...resize, tableId: layout.id }}
-    >
-      <CommentableBlockContent
-        {...props}
-        additionalActions={
-          <Tooltip content="Reset column widths">
-            <IconButton
-              aria-label="Reset column widths"
-              size="xs"
-              variant="outline"
-              bg="canvas"
-              borderColor="border"
-              color="fg.muted"
-              disabled={!resize.widths.some((width) => width > 0)}
-              onClick={resize.reset}
-              type="button"
-            >
-              <RotateCcw aria-hidden="true" />
-            </IconButton>
-          </Tooltip>
-        }
-      />
-    </TableResizeControllerContext.Provider>
-  );
-};
-
-const CommentableBlockContent = ({
+export const CommentableBlock = ({
   actions,
-  additionalActions,
   activeRange,
   children,
   className,
@@ -110,12 +67,18 @@ const CommentableBlockContent = ({
   isRangeActionLine,
   isSelected,
   sourceRange,
+  renderLayout,
   onCloseCommentForm,
   onOpenCommentForm,
   onOpenRawMarkdown,
   onSelectCommentRange,
   selectedRange,
-}: CommentableBlockProps & { additionalActions?: React.ReactNode }) => {
+}: CommentableBlockProps) => {
+  const compact = useBreakpointValue(
+    { base: true, md: false },
+    { fallback: "md" },
+  );
+  const resize = useContext(TableResizeControllerContext);
   const composer = useCommentComposer({
     actions,
     sourceRange,
@@ -135,194 +98,246 @@ const CommentableBlockContent = ({
     listDepth === 0
       ? 0
       : markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm;
-  const commentGutterLeft =
-    listDepth === 0
-      ? "calc(-1 * var(--chakra-spacing-10))"
-      : `calc(-1 * var(--chakra-spacing-10) - ${commentIndentEm}em)`;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
 
-  return (
-    <Box
-      className={[
-        "commentable-block",
-        isSelected ? "commentable-block-selected" : undefined,
-        isSelected ? "commentable-block-range-selected" : undefined,
-        hasRangeHighlight ? "commentable-block-highlighted" : undefined,
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      data-source-end-line={sourceRange.endLine}
-      data-source-line={sourceRange.startLine}
-      style={
-        {
-          "--comment-indent-offset": `${commentIndentEm}em`,
-        } as React.CSSProperties
-      }
+  const blockProps: CommentableBlockLayout["blockProps"] = {
+    className: [
+      "commentable-block",
+      isSelected ? "commentable-block-selected" : undefined,
+      isSelected ? "commentable-block-range-selected" : undefined,
+      hasRangeHighlight ? "commentable-block-highlighted" : undefined,
+      className,
+    ]
+      .filter(Boolean)
+      .join(" "),
+    "data-source-end-line": sourceRange.endLine,
+    "data-source-line": sourceRange.startLine,
+    style: {
+      "--comment-indent-offset": `${commentIndentEm}em`,
+    } as React.CSSProperties,
+  };
+  const content = (children: React.ReactNode) => (
+    <SourceLineContext.Provider value={sourceLines}>
+      {children}
+    </SourceLineContext.Provider>
+  );
+  const gutter = isRangeActionLine && !isAdding && (
+    <Flex
+      className="comment-line-gutter"
+      align="start"
+      direction={compact ? "row" : "column"}
+      wrap="wrap"
+      gap="1"
+      mb="0"
     >
-      <Box className="commentable-content" onClick={composer.contentClick}>
-        {isRangeActionLine && !isAdding && (
-          <Flex
-            className="comment-line-gutter"
-            align="start"
-            direction={{ base: "row", md: "column" }}
-            wrap="wrap"
-            gap="1"
-            left={commentGutterLeft}
-            mb={{ base: "1.5", md: "0" }}
-            position={{ base: "static", md: "absolute" }}
-            top={{ md: "0.1rem" }}
+      <Tooltip content={`Add comment on ${formatRangeLabel(pendingRange)}`}>
+        <IconButton
+          aria-label={`Add comment on ${formatRangeLabel(pendingRange)}`}
+          bg="canvas"
+          borderColor="accent"
+          className="comment-line-button"
+          color="accent"
+          onClick={onOpenCommentForm}
+          size="xs"
+          type="button"
+          variant="outline"
+          _focusVisible={{ borderColor: "accent", color: "accent" }}
+          _hover={{ borderColor: "accent", color: "accent" }}
+        >
+          <Plus aria-hidden="true" />
+        </IconButton>
+      </Tooltip>
+      {resize && (
+        <Tooltip content="Reset column widths">
+          <IconButton
+            aria-label="Reset column widths"
+            size="xs"
+            variant="outline"
+            bg="canvas"
+            borderColor="border"
+            color="fg.muted"
+            disabled={!resize.widths.some((width) => width > 0)}
+            onClick={resize.reset}
+            type="button"
           >
-            <Tooltip
-              content={`Add comment on ${formatRangeLabel(pendingRange)}`}
-            >
+            <RotateCcw aria-hidden="true" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {headingId && isSelected && (
+        <Tooltip content="Update URL with heading link">
+          <IconButton
+            aria-label="Update URL with heading link"
+            bg="canvas"
+            borderColor="border"
+            color="fg.muted"
+            onClick={composer.setHeadingLink}
+            size="xs"
+            type="button"
+            variant="outline"
+          >
+            <Link aria-hidden="true" />
+          </IconButton>
+        </Tooltip>
+      )}
+      <Tooltip
+        content={`View raw Markdown for ${formatRangeLabel(pendingRange)}`}
+      >
+        <IconButton
+          aria-label={`View raw Markdown for ${formatRangeLabel(pendingRange)}`}
+          bg="canvas"
+          borderColor="border"
+          color="fg.muted"
+          onClick={() => onOpenRawMarkdown(pendingRange)}
+          size="xs"
+          type="button"
+          variant="outline"
+        >
+          <CodeXml aria-hidden="true" />
+        </IconButton>
+      </Tooltip>
+    </Flex>
+  );
+  const thread = (isAdding || comments.length > 0 || error) && (
+    <Stack className="comment-thread" gap="3">
+      {comments.map((comment) => (
+        <CommentItem
+          actions={actions}
+          comment={comment}
+          key={comment.id}
+          lineLabel={
+            comment.startLine === comment.endLine
+              ? `Line ${comment.startLine}`
+              : `Lines ${comment.startLine}-${comment.endLine}`
+          }
+        />
+      ))}
+      {isAdding && (
+        <Box
+          borderLeftColor="accent"
+          borderLeftWidth="3px"
+          mb="1.5"
+          pb="0.5"
+          pl="3"
+          pt="2"
+        >
+          <Flex align="center" justify="space-between" gap="2" mb="1">
+            <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
+              Commenting on {formatRangeLabel(pendingRange)}.
+            </Text>
+            <Tooltip content="Suggest edit">
               <IconButton
-                aria-label={`Add comment on ${formatRangeLabel(pendingRange)}`}
-                bg="canvas"
-                borderColor="accent"
-                className="comment-line-button"
-                color="accent"
-                onClick={onOpenCommentForm}
+                aria-label="Suggest edit"
+                disabled={isSaving}
+                onClick={composer.insertSuggestion}
                 size="xs"
                 type="button"
-                variant="outline"
-                _focusVisible={{ borderColor: "accent", color: "accent" }}
-                _hover={{ borderColor: "accent", color: "accent" }}
+                variant="ghost"
               >
-                <Plus aria-hidden="true" />
-              </IconButton>
-            </Tooltip>
-            {additionalActions}
-            {headingId && isSelected && (
-              <Tooltip content="Update URL with heading link">
-                <IconButton
-                  aria-label="Update URL with heading link"
-                  bg="canvas"
-                  borderColor="border"
-                  color="fg.muted"
-                  onClick={composer.setHeadingLink}
-                  size="xs"
-                  type="button"
-                  variant="outline"
-                >
-                  <Link aria-hidden="true" />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip
-              content={`View raw Markdown for ${formatRangeLabel(
-                pendingRange,
-              )}`}
-            >
-              <IconButton
-                aria-label={`View raw Markdown for ${formatRangeLabel(
-                  pendingRange,
-                )}`}
-                bg="canvas"
-                borderColor="border"
-                color="fg.muted"
-                onClick={() => onOpenRawMarkdown(pendingRange)}
-                size="xs"
-                type="button"
-                variant="outline"
-              >
-                <CodeXml aria-hidden="true" />
+                <FilePenLine aria-hidden="true" />
               </IconButton>
             </Tooltip>
           </Flex>
-        )}
-        <Box className="comment-markdown-body">
-          <SourceLineContext.Provider value={sourceLines}>
-            {children}
-          </SourceLineContext.Provider>
-        </Box>
-      </Box>
-      {(isAdding || comments.length > 0 || error) && (
-        <Stack className="comment-thread" gap="3">
-          {comments.map((comment) => (
-            <CommentItem
-              actions={actions}
-              comment={comment}
-              key={comment.id}
-              lineLabel={
-                comment.startLine === comment.endLine
-                  ? `Line ${comment.startLine}`
-                  : `Lines ${comment.startLine}-${comment.endLine}`
-              }
-            />
-          ))}
-          {isAdding && (
-            <Box
-              borderLeftColor="accent"
-              borderLeftWidth="3px"
-              mb="1.5"
-              pb="0.5"
-              pl="3"
-              pt="2"
+          <Textarea
+            aria-label="Comment body"
+            autoFocus
+            fontSize="comment"
+            minH="90px"
+            onChange={(event) => composer.change(event.target.value)}
+            onKeyDown={(event) =>
+              submitCommentOnShortcut(event, () => {
+                void composer.create();
+              })
+            }
+            placeholder="Write a GitHub PR comment..."
+            ref={textareaRef}
+            value={draft}
+          />
+          <Flex wrap="wrap" gap="2">
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={isSaving || draft.trim() === ""}
+              onClick={composer.create}
+              type="button"
             >
-              <Flex align="center" justify="space-between" gap="2" mb="1">
-                <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
-                  Commenting on {formatRangeLabel(pendingRange)}.
-                </Text>
-                <Tooltip content="Suggest edit">
-                  <IconButton
-                    aria-label="Suggest edit"
-                    disabled={isSaving}
-                    onClick={composer.insertSuggestion}
-                    size="xs"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <FilePenLine aria-hidden="true" />
-                  </IconButton>
-                </Tooltip>
-              </Flex>
-              <Textarea
-                aria-label="Comment body"
-                autoFocus
-                fontSize="comment"
-                minH="90px"
-                onChange={(event) => composer.change(event.target.value)}
-                onKeyDown={(event) =>
-                  submitCommentOnShortcut(event, () => {
-                    void composer.create();
-                  })
-                }
-                placeholder="Write a GitHub PR comment..."
-                ref={textareaRef}
-                value={draft}
-              />
-              <Flex wrap="wrap" gap="2">
-                <Button
-                  size="xs"
-                  variant="outline"
-                  disabled={isSaving || draft.trim() === ""}
-                  onClick={composer.create}
-                  type="button"
-                >
-                  Add comment
-                </Button>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  disabled={isSaving}
-                  onClick={onCloseCommentForm}
-                  type="button"
-                >
-                  Cancel
-                </Button>
-              </Flex>
-            </Box>
-          )}
-          {error && (
-            <Text color="fg.error" fontSize="sm">
-              {error}
-            </Text>
-          )}
-        </Stack>
+              Add comment
+            </Button>
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={isSaving}
+              onClick={onCloseCommentForm}
+              type="button"
+            >
+              Cancel
+            </Button>
+          </Flex>
+        </Box>
       )}
+      {error && (
+        <Text color="fg.error" fontSize="sm">
+          {error}
+        </Text>
+      )}
+    </Stack>
+  );
+
+  const anchor = (element: React.ReactElement) => (
+    <Popover.Anchor asChild>{element}</Popover.Anchor>
+  );
+  const layout = renderLayout ? (
+    renderLayout({
+      blockProps,
+      content,
+      anchor,
+      thread,
+      onContentClick: composer.contentClick,
+    })
+  ) : (
+    <Box {...blockProps}>
+      {anchor(
+        <Box className="commentable-content" onClick={composer.contentClick}>
+          <Box className="comment-markdown-body">{content(children)}</Box>
+        </Box>,
+      )}
+      {thread}
     </Box>
+  );
+  return (
+    <Popover.Root
+      open={Boolean(gutter)}
+      autoFocus={false}
+      closeOnInteractOutside={false}
+      onOpenChange={({ open }) => {
+        if (!open) onCloseCommentForm();
+      }}
+      positioning={{
+        placement: compact ? "top-start" : "left-start",
+        strategy: "fixed",
+        flip: compact ? true : ["top-start", "bottom-start"],
+        slide: true,
+        // Keep actions reachable even when a code block is taller than the viewport.
+        overlap: true,
+        hideWhenDetached: true,
+      }}
+    >
+      {layout}
+      {gutter && (
+        <Portal>
+          <Popover.Positioner>
+            <Popover.Content
+              aria-label="Comment actions"
+              width="auto"
+              p={compact ? "2" : "0"}
+            >
+              {gutter}
+            </Popover.Content>
+          </Popover.Positioner>
+        </Portal>
+      )}
+    </Popover.Root>
   );
 };
