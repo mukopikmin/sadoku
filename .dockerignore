@@ -2,8 +2,8 @@
 .github
 .codex
 node_modules
-src/preview/node_modules
-src/preview/dist
+src/ui/node_modules
+src/ui/dist
 dist
 dist-test
 /sadoku
@@ -16,4 +16,4 @@ npm-debug.log*
 gha-creds-*.json
 
 src/proto/node_modules
-src/server/internal/preview/dist
+src/server/internal/ui/dist

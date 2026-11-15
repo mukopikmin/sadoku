@@ -9,8 +9,8 @@ proto-lint:
 
 proto-generate:
 	cd src/proto && $(NPM) exec --no -- buf generate
-	$(NPM) --prefix src/proto exec --no -- oxfmt "src/preview/gen/**/*.ts"
+	$(NPM) --prefix src/proto exec --no -- oxfmt "src/ui/gen/**/*.ts"
 
 proto-check: proto-lint proto-generate
-	git add --intent-to-add -- src/preview/gen src/server/internal/gen
-	git diff --exit-code -- src/preview/gen src/server/internal/gen
+	git add --intent-to-add -- src/ui/gen src/server/internal/gen
+	git diff --exit-code -- src/ui/gen src/server/internal/gen

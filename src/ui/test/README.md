@@ -22,5 +22,5 @@ Choose the smallest helper needed by the test:
   highlighting, and notifications.
 - `routerTestUtils.tsx` adds the router for application navigation tests.
 
-To run one environment, use `npm --prefix src/preview test -- --project node` or
-`npm --prefix src/preview test -- --project dom` from the repository root.
+To run one environment, use `npm --prefix src/ui test -- --project node` or
+`npm --prefix src/ui test -- --project dom` from the repository root.
