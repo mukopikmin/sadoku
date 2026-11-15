@@ -68,15 +68,14 @@ describe("resizable Markdown table", () => {
     );
     fireEvent.click(handle);
     expect(container.querySelector(".commentable-block-selected")).toBeNull();
-    fireEvent.click(screen.getByRole("table"));
+    fireEvent.click(screen.getByRole("cell", { name: "x" }));
+    await screen.findByLabelText("Reset column widths");
     expect(
-      container
+      document
         .querySelector(".comment-line-gutter")
-        ?.contains(screen.getByRole("button", { name: "Reset column widths" })),
+        ?.contains(screen.getByLabelText("Reset column widths")),
     ).toBe(true);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Reset column widths" }),
-    );
+    fireEvent.click(screen.getByLabelText("Reset column widths"));
     await waitFor(() => expect(saved).toHaveBeenLastCalledWith("table", []));
     await waitFor(() =>
       expect(
@@ -86,9 +85,7 @@ describe("resizable Markdown table", () => {
       ).toBe(true),
     );
     expect(
-      screen
-        .getByRole("button", { name: "Reset column widths" })
-        .hasAttribute("disabled"),
+      screen.getByLabelText("Reset column widths").hasAttribute("disabled"),
     ).toBe(true);
   });
   it("shows save failures in a toast and retries from the notification", async () => {
@@ -134,7 +131,7 @@ describe("resizable Markdown table", () => {
       .split("\n")
       .map((line) => "> " + line)
       .join("\n");
-    const { container } = render(
+    render(
       <TableLayoutContext.Provider
         value={{ state: { status: "ready", tables: [layout] }, save }}
       >
@@ -147,10 +144,10 @@ describe("resizable Markdown table", () => {
         />
       </TableLayoutContext.Provider>,
     );
-    fireEvent.click(screen.getByRole("table"));
-    const reset = screen.getByRole("button", { name: "Reset column widths" });
+    fireEvent.click(screen.getByRole("cell", { name: "x" }));
+    const reset = await screen.findByLabelText("Reset column widths");
     expect(
-      container.querySelector(".comment-line-gutter")?.contains(reset),
+      document.querySelector(".comment-line-gutter")?.contains(reset),
     ).toBe(true);
     fireEvent.click(reset);
     await waitFor(() => expect(save).toHaveBeenCalledWith("table", []));
