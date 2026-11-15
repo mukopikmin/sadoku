@@ -326,7 +326,7 @@ describe("directory preview", () => {
       expect(location.pathname).toBe("/documents/1/comments"),
     );
     expect(
-      await screen.findByRole("tabpanel", { name: "Unresolved" }),
+      await screen.findByRole("group", { name: "Comment filters" }),
     ).not.toBeNull();
 
     history.replaceState(null, "", "/documents/1");
@@ -370,7 +370,7 @@ describe("directory preview", () => {
     fireEvent.click(
       screen.getByRole("tab", { name: "Comments, 0 unresolved" }),
     );
-    await screen.findByRole("tabpanel", { name: "Unresolved" });
+    await screen.findByRole("group", { name: "Comment filters" });
     await waitFor(() => expect(scrollY).toBe(0));
     setScrollY(340);
 
@@ -409,7 +409,7 @@ describe("directory preview", () => {
     history.replaceState(null, "", "/documents/2/comments");
     const { unmount } = render(<App />);
     expect(
-      await screen.findByRole("tabpanel", { name: "Unresolved" }),
+      await screen.findByRole("group", { name: "Comment filters" }),
     ).not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
     expect(
