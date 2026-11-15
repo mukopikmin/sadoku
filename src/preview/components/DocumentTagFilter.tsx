@@ -7,7 +7,6 @@ import {
 } from "@chakra-ui/react";
 import { useMemo } from "react";
 import type { DocumentTag } from "../models/document";
-import { filterTagsBySearch } from "../models/documentTree";
 import { TagPicker, type TagPickerOption } from "./ui/TagPicker";
 
 type DocumentTagFilterProps = {
@@ -15,10 +14,11 @@ type DocumentTagFilterProps = {
   filteredDocumentCount: number;
   onClearFilters: () => void;
   onSearchChange: (value: string) => void;
-  onSelectedTagIdsChange: (ids: number[]) => void;
+  onSelectTag: (id: number) => void;
+  onRemoveTag: (id: number) => void;
   searchValue: string;
-  selectedTagIds: number[];
-  tags: DocumentTag[];
+  selectedTags: DocumentTag[];
+  matchingTags: DocumentTag[];
 };
 
 export const DocumentTagFilter = ({
@@ -26,16 +26,12 @@ export const DocumentTagFilter = ({
   filteredDocumentCount,
   onClearFilters,
   onSearchChange,
-  onSelectedTagIdsChange,
+  onSelectTag,
+  onRemoveTag,
   searchValue,
-  selectedTagIds,
-  tags,
+  selectedTags,
+  matchingTags,
 }: DocumentTagFilterProps) => {
-  const selectedTags = tags.filter((tag) => selectedTagIds.includes(tag.id));
-  const matchingTags = useMemo(
-    () => filterTagsBySearch(tags, searchValue),
-    [searchValue, tags],
-  );
   const collection = useMemo(
     () =>
       createListCollection<TagPickerOption>({
@@ -60,23 +56,15 @@ export const DocumentTagFilter = ({
         label="Filter by tag"
         maxWidth="320px"
         onInputValueChange={onSearchChange}
-        onRemove={(tag) =>
-          onSelectedTagIdsChange(selectedTagIds.filter((id) => id !== tag.id))
-        }
+        onRemove={(tag) => onRemoveTag(tag.id)}
         onSelect={({ tag }) => {
-          if (!tag) return;
-          onSelectedTagIdsChange(
-            selectedTagIds.includes(tag.id)
-              ? selectedTagIds.filter((id) => id !== tag.id)
-              : [...selectedTagIds, tag.id],
-          );
-          onSearchChange("");
+          if (tag) onSelectTag(tag.id);
         }}
         placeholder="Search tags to add"
         removeLabel={(tag) => `Remove ${tag.name} filter`}
         selectedTags={selectedTags}
       />
-      {selectedTagIds.length > 0 && (
+      {selectedTags.length > 0 && (
         <HStack gap="2" wrap="wrap">
           <Text color="fg.muted" fontSize="sm">
             Showing {filteredDocumentCount} of {documentCount} documents
