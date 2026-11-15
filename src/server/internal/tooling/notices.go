@@ -150,7 +150,7 @@ func generateNotices(output string) error {
 	if err != nil {
 		return err
 	}
-	npmDeps, err := npmNotices("src/preview/package-lock.json", "src/preview/node_modules")
+	npmDeps, err := npmNotices("src/ui/package-lock.json", "src/ui/node_modules")
 	if err != nil {
 		return err
 	}

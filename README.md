@@ -65,7 +65,7 @@ Mermaid diagrams render only in documents.
 Table columns can be resized by dragging or using the arrow keys on a focused
 header boundary. Widths are saved; use **Reset column widths** for automatic sizing.
 Narrow screens scroll horizontally.
-Japanese fonts are bundled; see [font licenses](src/preview/public/fonts/noto-sans-jp/README.md).
+Japanese fonts are bundled; see [font licenses](src/ui/public/fonts/noto-sans-jp/README.md).
 
 ### Settings and storage
 

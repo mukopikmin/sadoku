@@ -86,7 +86,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             src/proto/package-lock.json
-            src/preview/package-lock.json
+            src/ui/package-lock.json
 
       - name: Install dependencies
         run: make deps

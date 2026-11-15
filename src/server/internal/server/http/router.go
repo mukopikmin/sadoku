@@ -15,11 +15,11 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1/previewv1connect"
-	"github.com/mukopikmin/sadoku/internal/preview"
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/http/api"
 	"github.com/mukopikmin/sadoku/internal/server/session"
 	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/ui"
 )
 
 type Options struct {
@@ -42,7 +42,7 @@ type router struct {
 }
 
 func New(s *session.Session, options Options) (http.Handler, error) {
-	assets, err := fs.Sub(preview.Assets, "dist")
+	assets, err := fs.Sub(ui.Assets, "dist")
 	if err != nil {
 		return nil, err
 	}

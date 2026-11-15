@@ -1,5 +1,5 @@
 {
-  "name": "sadoku-preview-client",
+  "name": "sadoku-ui-client",
   "version": "0.1.0",
   "private": true,
   "type": "module",
