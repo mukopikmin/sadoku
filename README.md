@@ -60,11 +60,9 @@ highlighting, plus Mermaid diagrams rendered offline. Raw HTML is escaped;
 footnotes, definition lists, and math/LaTeX are not supported.
 Comments and replies support Markdown with GitHub-style line breaks;
 Mermaid diagrams render only in documents.
-Table columns can be resized by dragging the header boundaries or using the
-arrow keys on a focused boundary. Widths are saved on the server and restored
-across browsers using the same storage. Widths follow column positions; when
-columns are removed, trailing saved widths are discarded. Use **Reset column
-widths** to return to automatic sizing. Narrow screens scroll horizontally.
+Table columns can be resized by dragging or using the arrow keys on a focused
+header boundary. Widths are saved; use **Reset column widths** for automatic sizing.
+Narrow screens scroll horizontally.
 Japanese fonts are bundled; see [font licenses](src/preview/public/fonts/noto-sans-jp/README.md).
 
 ### Settings and storage

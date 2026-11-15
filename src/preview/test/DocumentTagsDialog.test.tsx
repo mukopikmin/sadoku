@@ -225,9 +225,8 @@ describe("DocumentTagsDialog", () => {
       new Response("Could not save tags", { status: 500 }),
     );
     fireEvent.click(create);
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Could not save tags",
-    );
+    const error = await screen.findByText("Could not save tags");
+    expect(error.getAttribute("role")).toBe("status");
     expect((input as HTMLInputElement).value).toBe("new");
     expect(screen.queryByRole("button", { name: "Remove new tag" })).toBeNull();
     await readyInput();

@@ -10,6 +10,31 @@ export type TableOfContentsItem = {
   text: string;
 };
 
+export type TableOfContentsNode = TableOfContentsItem & {
+  children: TableOfContentsNode[];
+};
+
+export const buildTableOfContentsTree = (
+  items: TableOfContentsItem[],
+): TableOfContentsNode => {
+  const root: TableOfContentsNode = {
+    id: "",
+    level: 0,
+    text: "Table of contents",
+    children: [],
+  };
+  const parents = [root];
+  for (const item of items) {
+    while (parents.length > 1 && parents.at(-1)!.level >= item.level) {
+      parents.pop();
+    }
+    const node = { ...item, children: [] };
+    parents.at(-1)!.children.push(node);
+    parents.push(node);
+  }
+  return root;
+};
+
 export const extractTableOfContents = (
   markdown: string,
 ): TableOfContentsItem[] => {

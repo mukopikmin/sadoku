@@ -108,11 +108,11 @@ it("keeps a single table of contents and its open state when the bar updates", a
     name: "Table of contents",
   });
   rerender(bar(3));
-  expect(screen.getAllByRole("button", { name: "Table of contents" })).toEqual([
-    trigger,
-  ]);
+  expect(
+    screen.getAllByRole("button", { name: "Table of contents", hidden: true }),
+  ).toEqual([trigger]);
   expect(screen.getByRole("navigation", { name: "Table of contents" })).toBe(
     contents,
   );
-  expect(screen.getByRole("link", { name: "Introduction" })).not.toBeNull();
+  expect(screen.getByRole("treeitem", { name: "Introduction" })).not.toBeNull();
 });

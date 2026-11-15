@@ -42,12 +42,17 @@ describe("MarkdownPreview heading navigation", () => {
       name: "Table of contents",
     });
     expect(
-      within(navigation)
-        .getByRole("link", { name: "Only heading" })
-        .getAttribute("href"),
-    ).toBe("#only-heading");
+      screen
+        .getByRole("dialog", { name: "Table of contents" })
+        .getAttribute("aria-modal"),
+    ).toBe("true");
+    expect(
+      within(navigation).getByRole("treeitem", { name: "Only heading" }),
+    ).not.toBeNull();
 
-    fireEvent.click(trigger);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close table of contents" }),
+    );
     await waitFor(() =>
       expect(trigger.getAttribute("aria-expanded")).toBe("false"),
     );
@@ -74,30 +79,28 @@ describe("MarkdownPreview heading navigation", () => {
     await waitFor(() =>
       expect(
         screen
-          .getByRole("button", { name: "Table of contents" })
+          .getByRole("button", { name: "Table of contents", hidden: true })
           .getAttribute("aria-expanded"),
       ).toBe("true"),
     );
-    const expectedLinks = [
-      ["Title!", "#title"],
-      ["Title!", "#title-1"],
-      ["日本語", "#日本語"],
-      ["Rich Heading", "#rich-heading"],
-    ];
-    const navigation = screen.getByRole("navigation", {
-      name: "Table of contents",
-    });
-    const links = [...navigation.querySelectorAll<HTMLAnchorElement>("a")];
-    expect(links).toHaveLength(4);
-    expectedLinks.forEach(([name, href], index) => {
-      expect(links[index].textContent).toBe(name);
-      expect(links[index].getAttribute("href")).toBe(href);
-      const id = decodeURIComponent(href.slice(1));
-      expect(document.getElementById(id)).not.toBeNull();
-    });
-    expect(
-      links.map((link) => link.parentElement?.dataset.headingLevel),
-    ).toEqual(["1", "2", "3", "6"]);
+    const tree = screen.getByRole("tree", { name: "Table of contents" });
+    const nodes = within(tree).getAllByRole("treeitem");
+    expect(nodes).toHaveLength(4);
+    expect(nodes.map((node) => node.getAttribute("aria-level"))).toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+    ]);
+    const labels = ["Title!", "Title!", "日本語", "Rich Heading"];
+    labels.forEach((label, index) =>
+      expect(within(tree).getAllByRole("treeitem", { name: label })).toContain(
+        nodes[index],
+      ),
+    );
+    ["title", "title-1", "日本語", "rich-heading"].forEach((id) =>
+      expect(document.getElementById(id)).not.toBeNull(),
+    );
   });
 
   it("closes the table of contents after a link updates the hash and scrolls", async () => {
@@ -114,9 +117,8 @@ describe("MarkdownPreview heading navigation", () => {
     const navigation = await screen.findByRole("navigation", {
       name: "Table of contents",
     });
-    const targetLink = within(navigation).getByRole("link", { name: "Target" });
-    fireEvent.click(targetLink);
-    globalThis.location.hash = targetLink.getAttribute("href")!;
+    const target = within(navigation).getByRole("treeitem", { name: "Target" });
+    fireEvent.click(target);
 
     await waitFor(() => expect(globalThis.location.hash).toBe("#target"));
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
