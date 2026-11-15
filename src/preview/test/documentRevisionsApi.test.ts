@@ -1,4 +1,9 @@
 import { afterEach, expect, it, vi } from "vitest";
+import { create } from "@bufbuild/protobuf";
+import {
+  DocumentRevisionSchema,
+  DocumentRevisionSummarySchema,
+} from "../gen/sadoku/preview/v1/preview_pb";
 import {
   loadDocumentRevision,
   loadDocumentRevisions,
@@ -44,18 +49,24 @@ it("restores through Connect, preserving empty expected content and server error
 });
 
 it("converts safe revision IDs and preserves empty saved Markdown", () => {
-  expect(toDocumentRevision({ id: 2n, recordedAt, markdown: "" })).toEqual({
+  expect(
+    toDocumentRevision(
+      create(DocumentRevisionSchema, { id: 2n, recordedAt, markdown: "" }),
+    ),
+  ).toEqual({
     id: 2,
     recordedAt,
     markdown: "",
   });
   expect(
-    toDocumentRevision({
-      id: 2n,
-      recordedAt,
-      markdown: "new",
-      previousMarkdown: "",
-    }),
+    toDocumentRevision(
+      create(DocumentRevisionSchema, {
+        id: 2n,
+        recordedAt,
+        markdown: "new",
+        previousMarkdown: "",
+      }),
+    ),
   ).toEqual({
     id: 2,
     recordedAt,
@@ -64,11 +75,12 @@ it("converts safe revision IDs and preserves empty saved Markdown", () => {
   });
   expect(
     toDocumentRevisions([
-      { id: 3n, recordedAt, markdown: "ignored" },
-      {
-        id: 2n,
+      create(DocumentRevisionSchema, {
+        id: 3n,
         recordedAt,
-      },
+        markdown: "ignored",
+      }),
+      create(DocumentRevisionSummarySchema, { id: 2n, recordedAt }),
     ]),
   ).toEqual([
     { id: 3, recordedAt },
@@ -77,41 +89,42 @@ it("converts safe revision IDs and preserves empty saved Markdown", () => {
 });
 
 it.each([
-  null,
-  {},
-  { id: 0, recordedAt },
-  { id: 1.5, recordedAt },
-  { id: Number.MAX_SAFE_INTEGER + 1, recordedAt },
-  { id: "1", recordedAt },
-  { id: 1, recordedAt: "invalid" },
-  { id: 1, recordedAt: "2026-02-30T00:00:00.000Z" },
-])("rejects malformed saved revision metadata: %j", (value) => {
-  expect(() => toDocumentRevisionSummary(value)).toThrow(
-    "Invalid saved revision response.",
-  );
+  { name: "zero ID", id: 0n, recordedAt },
+  {
+    name: "unsafe ID",
+    id: BigInt(Number.MAX_SAFE_INTEGER) + 1n,
+    recordedAt,
+  },
+  { name: "missing timestamp", id: 1n, recordedAt: "" },
+  { name: "malformed timestamp", id: 1n, recordedAt: "invalid" },
+  {
+    name: "invalid calendar date",
+    id: 1n,
+    recordedAt: "2026-02-30T00:00:00.000Z",
+  },
+])("rejects saved revision metadata with $name", ({ id, recordedAt }) => {
+  expect(() =>
+    toDocumentRevisionSummary(
+      create(DocumentRevisionSummarySchema, { id, recordedAt }),
+    ),
+  ).toThrow("Invalid saved revision response.");
 });
 
-it("rejects oversized, duplicate, and out-of-order revision lists and invalid Markdown", () => {
-  for (const ids of [
-    [2, 2],
-    [1, 2],
-    Array.from({ length: 21 }, (_, i) => 21 - i),
-  ]) {
-    expect(() =>
-      toDocumentRevisions(ids.map((id) => ({ id, recordedAt }))),
-    ).toThrow("Invalid saved revisions response.");
-  }
+it.each([
+  { name: "duplicate IDs", ids: [2n, 2n] },
+  { name: "out-of-order IDs", ids: [1n, 2n] },
+  {
+    name: "more than 20 entries",
+    ids: Array.from({ length: 21 }, (_, i) => BigInt(21 - i)),
+  },
+])("rejects revision lists with $name", ({ ids }) => {
   expect(() =>
-    toDocumentRevision({ id: 1, recordedAt, markdown: null }),
-  ).toThrow("Invalid saved revision response.");
-  expect(() =>
-    toDocumentRevision({
-      id: 1,
-      recordedAt,
-      markdown: "new",
-      previousMarkdown: null,
-    }),
-  ).toThrow("Invalid saved revision response.");
+    toDocumentRevisions(
+      ids.map((id) =>
+        create(DocumentRevisionSummarySchema, { id, recordedAt }),
+      ),
+    ),
+  ).toThrow("Invalid saved revisions response.");
 });
 
 it("requests document-scoped revision metadata and bodies through Connect", async () => {

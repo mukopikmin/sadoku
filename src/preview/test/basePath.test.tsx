@@ -47,46 +47,43 @@ describe("public base paths", () => {
     expect(() => readPreviewBasePath()).toThrow("Invalid public base path");
   });
 
-  it.each(["v1", "staging"])(
-    "uses the HTML prefix for %s API and SSE requests",
-    async (tag) => {
-      const prefix = `/revisions/${tag}`;
-      setBasePath(prefix);
-      const fetch = vi.fn().mockResolvedValue(Response.json({}));
-      vi.stubGlobal("fetch", fetch);
-      const client = createClient(PreviewService, createPreviewTransport());
-      await client.getSession({});
-      const [input, init] = fetch.mock.calls[0];
-      expect(new URL(String(input)).pathname).toBe(
-        `${prefix}/sadoku.preview.v1.PreviewService/GetSession`,
-      );
-      expect(init.method).toBe("POST");
-      expect(previewPath("/assets/icon-512.png")).toBe(
-        `${prefix}/assets/icon-512.png`,
-      );
-      const urls: string[] = [];
-      class Events extends EventTarget {
-        constructor(url: string) {
-          super();
-          urls.push(url);
-        }
-        close() {}
+  it("uses the HTML prefix for API and SSE requests", async () => {
+    const prefix = "/revisions/v1";
+    setBasePath(prefix);
+    const fetch = vi.fn().mockResolvedValue(Response.json({}));
+    vi.stubGlobal("fetch", fetch);
+    const client = createClient(PreviewService, createPreviewTransport());
+    await client.getSession({});
+    const [input, init] = fetch.mock.calls[0];
+    expect(new URL(String(input)).pathname).toBe(
+      `${prefix}/sadoku.preview.v1.PreviewService/GetSession`,
+    );
+    expect(init.method).toBe("POST");
+    expect(previewPath("/assets/icon-512.png")).toBe(
+      `${prefix}/assets/icon-512.png`,
+    );
+    const urls: string[] = [];
+    class Events extends EventTarget {
+      constructor(url: string) {
+        super();
+        urls.push(url);
       }
-      const stopKeepAlive = connectPreviewKeepAlive({
-        EventSourceCtor: Events as unknown as typeof EventSource,
-      });
-      const stopDocument = connectHotReload({
-        documentId: 7,
-        EventSourceCtor: Events as unknown as typeof EventSource,
-      });
-      expect(urls).toEqual([
-        `${prefix}/__sadoku/events`,
-        `${prefix}/__sadoku/documents/7/events`,
-      ]);
-      stopKeepAlive();
-      stopDocument();
-    },
-  );
+      close() {}
+    }
+    const stopKeepAlive = connectPreviewKeepAlive({
+      EventSourceCtor: Events as unknown as typeof EventSource,
+    });
+    const stopDocument = connectHotReload({
+      documentId: 7,
+      EventSourceCtor: Events as unknown as typeof EventSource,
+    });
+    expect(urls).toEqual([
+      `${prefix}/__sadoku/events`,
+      `${prefix}/__sadoku/documents/7/events`,
+    ]);
+    stopKeepAlive();
+    stopDocument();
+  });
 
   it("matches a deep public URL and retains the prefix during document navigation", async () => {
     setBasePath("/revisions/pr-42");

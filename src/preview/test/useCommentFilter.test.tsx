@@ -14,6 +14,11 @@ it("defaults to unresolved states and independently combines states with live co
   );
   expect(result.current.selectedFilters).toEqual(["active", "stale"]);
   expect(result.current.visibleComments).toEqual([active, stale]);
+  expect(result.current.filters).toMatchObject({
+    active: { comments: [active] },
+    stale: { comments: [stale] },
+    resolved: { comments: [resolved] },
+  });
   act(() => result.current.toggleFilter("resolved"));
   expect(result.current.visibleComments).toEqual([active, stale, resolved]);
   act(() => {
@@ -37,43 +42,35 @@ const comments = states.map((state, index) =>
   createComment({ id: index + 1, state }),
 );
 
-it.each(
-  Array.from(
-    { length: 8 },
-    (_, mask) =>
-      [mask, states.filter((_, index) => mask & (1 << index))] as const,
-  ),
-)(
-  "derives the visible comments for state combination %i",
-  (_mask, selected) => {
+// The transition and single-state tests cover the other six combinations.
+it.each([
+  { excluded: "stale", selected: ["active", "resolved"], visibleIds: [1, 3] },
+  { excluded: "active", selected: ["stale", "resolved"], visibleIds: [2, 3] },
+] as const)(
+  "combines unresolved and resolved comments without $excluded",
+  ({ excluded, selected, visibleIds }) => {
     const { result } = renderHook(() => useCommentFilter(comments));
     act(() => {
-      for (const state of states) {
-        if (selected.includes(state) !== (state !== "resolved"))
-          result.current.toggleFilter(state);
-      }
+      result.current.toggleFilter("resolved");
+      result.current.toggleFilter(excluded);
     });
     expect([...result.current.selectedFilters].sort()).toEqual(
       [...selected].sort(),
     );
-    expect(result.current.visibleComments).toEqual(
-      comments.filter((comment) => selected.includes(comment.state)),
+    expect(result.current.visibleComments.map(({ id }) => id)).toEqual(
+      visibleIds,
     );
     expect(result.current.totalCount).toBe(3);
-    for (const state of states)
-      expect(result.current.filters[state].comments).toEqual(
-        comments.filter((comment) => comment.state === state),
-      );
   },
 );
 
 it.each([
-  ["active", "No active unresolved comments."],
-  ["stale", "No stale unresolved comments."],
-  ["resolved", "No resolved comments."],
+  ["active", "No active unresolved comments.", comments[0]],
+  ["stale", "No stale unresolved comments.", comments[1]],
+  ["resolved", "No resolved comments.", comments[2]],
 ] as const)(
   "keeps %s selected when it has no matches and includes new matches",
-  (state, message) => {
+  (state, message, matchingComment) => {
     const { result, rerender } = renderHook(
       ({ comments }) => useCommentFilter(comments),
       { initialProps: { comments } },
@@ -92,9 +89,7 @@ it.each([
     expect(result.current.emptyText).toBe(message);
     expect(result.current.filters[state].comments).toEqual([]);
     rerender({ comments });
-    expect(result.current.visibleComments).toEqual(
-      comments.filter((comment) => comment.state === state),
-    );
+    expect(result.current.visibleComments).toEqual([matchingComment]);
   },
 );
 

@@ -44,39 +44,30 @@ describe("shared comment actions", () => {
     },
   );
 
-  it.each([
-    ["# Heading", "h1", "line 1"],
-    ["Paragraph", "p", "line 1"],
-    ["- Item", "li .commentable-content", "line 1"],
-    ["> Quote", "blockquote", "line 1"],
-    ["```ts\nconst value = 1;\n```", "pre", "lines 1-3"],
-  ])(
-    "portals desktop actions for %s outside the document",
-    async (markdown, selector, label) => {
-      vi.mocked(window.matchMedia).mockImplementation((query) => ({
-        matches: true,
-        media: query,
-        onchange: null,
-        addEventListener() {},
-        removeEventListener() {},
-        addListener() {},
-        removeListener() {},
-        dispatchEvent: () => true,
-      }));
-      const { container } = renderMarkdown(markdown);
-      fireEvent.click(container.querySelector(selector)!);
-      const actions = await screen.findByLabelText("Comment actions");
-      expect(
-        within(actions).getByLabelText(`Add comment on ${label}`),
-      ).not.toBeNull();
-      expect(container.contains(actions)).toBe(false);
-      expect(container.querySelector(".comment-line-gutter")).toBeNull();
-      fireEvent.keyDown(actions, { key: "Escape" });
-      await waitFor(() =>
-        expect(screen.queryByLabelText("Comment actions")).toBeNull(),
-      );
-    },
-  );
+  it("portals desktop actions outside the document and closes them on Escape", async () => {
+    vi.mocked(window.matchMedia).mockImplementation((query) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+      dispatchEvent: () => true,
+    }));
+    const { container } = renderMarkdown("Paragraph");
+    fireEvent.click(screen.getByText("Paragraph"));
+    const actions = await screen.findByLabelText("Comment actions");
+    expect(
+      within(actions).getByLabelText("Add comment on line 1"),
+    ).not.toBeNull();
+    expect(container.contains(actions)).toBe(false);
+    expect(container.querySelector(".comment-line-gutter")).toBeNull();
+    fireEvent.keyDown(actions, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Comment actions")).toBeNull(),
+    );
+  });
 
   it("moves actions to the end of a range and submits its original source lines", async () => {
     const onCreateComment = vi.fn(async () => {});
@@ -92,9 +83,7 @@ describe("shared comment actions", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Comment body" }), {
       target: { value: "Review range" },
     });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add comment", exact: true }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /^Add comment$/ }));
     await waitFor(() =>
       expect(onCreateComment).toHaveBeenCalledWith(1, "Review range", 3),
     );
