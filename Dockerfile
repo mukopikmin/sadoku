@@ -10,11 +10,11 @@ COPY Makefile ./
 COPY src/proto/tasks.mk ./src/proto/
 COPY src/proxy/tasks.mk ./src/proxy/
 COPY src/proto/package.json src/proto/package-lock.json ./src/proto/
-COPY src/preview/package.json src/preview/package-lock.json ./src/preview/
+COPY src/ui/package.json src/ui/package-lock.json ./src/ui/
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
     make deps
-COPY src/preview/ ./src/preview/
+COPY src/ui/ ./src/ui/
 RUN make build-client
 
 FROM golang:1.27.3-bookworm AS go-toolchain
@@ -39,7 +39,7 @@ COPY src/proto/tasks.mk ./src/proto/
 COPY src/proxy/tasks.mk ./src/proxy/
 COPY src/server/cmd/ ./src/server/cmd/
 COPY src/server/internal/ ./src/server/internal/
-COPY --from=client /workspace/src/preview/dist/ ./src/server/internal/preview/dist/
+COPY --from=client /workspace/src/ui/dist/ ./src/server/internal/ui/dist/
 RUN make build-server
 
 # The Linux binary is statically linked, including SQLite. Alpine supplies the

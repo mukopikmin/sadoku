@@ -39,7 +39,8 @@ Run `sadoku --help` for all commands and options.
 ### Review
 
 - Use the **+** button beside a document block to comment. Comments support
-  Markdown and replies; discussions can be resolved and reopened.
+  Markdown and replies; discussions can be resolved and reopened. Use the up/down
+  arrows in the bottom toolbar to move between visible comment locations.
 - Use **Changes** to compare with the previous saved snapshot, or **Revisions**
   to browse history and restore a local file. Remote documents are read-only.
 - Directory previews let you browse and create Markdown files. Discovery limits
@@ -56,14 +57,16 @@ and act on human feedback.
 ### Markdown
 
 Supports GitHub Flavored Markdown, including tables, task lists, and syntax
-highlighting, plus Mermaid diagrams rendered offline. Raw HTML is escaped;
+highlighting, plus GitHub-style alerts (`NOTE`, `TIP`, `IMPORTANT`, `WARNING`,
+and `CAUTION`) and Mermaid diagrams rendered offline. Table headers and body rows
+can be commented on individually or selected as a range. Raw HTML is escaped;
 footnotes, definition lists, and math/LaTeX are not supported.
 Comments and replies support Markdown with GitHub-style line breaks;
 Mermaid diagrams render only in documents.
 Table columns can be resized by dragging or using the arrow keys on a focused
 header boundary. Widths are saved; use **Reset column widths** for automatic sizing.
 Narrow screens scroll horizontally.
-Japanese fonts are bundled; see [font licenses](src/preview/public/fonts/noto-sans-jp/README.md).
+Japanese fonts are bundled; see [font licenses](src/ui/public/fonts/noto-sans-jp/README.md).
 
 ### Settings and storage
 

@@ -1,0 +1,126 @@
+import { createContext, useContext } from "react";
+import type { CommentActions } from "../../api/commentActions";
+import type { ActiveComment } from "../../models/comment";
+import type { MarkdownElementProps } from "../markdownRenderers";
+import type { CommentRange, RangeHighlight } from "./commentRanges";
+
+export type CommentRangeSelectionOptions = {
+  extend: boolean;
+};
+
+type SourcePosition = {
+  end?: {
+    line?: number;
+  };
+  start?: {
+    line?: number;
+  };
+};
+
+export type SourceNode = {
+  position?: SourcePosition;
+};
+
+export type CommentableComponentProps = MarkdownElementProps & {
+  node?: SourceNode;
+};
+
+export type CommentControlProps = {
+  actions: CommentActions;
+  activeCommentLine?: number;
+  activeRange?: CommentRange;
+  onCloseCommentForm: () => void;
+  onOpenCommentForm: () => void;
+  onOpenRawMarkdown: (range: CommentRange) => void;
+  onSelectCommentRange: (
+    range: CommentRange,
+    options: CommentRangeSelectionOptions,
+  ) => void;
+  selectedRange?: CommentRange;
+};
+
+export type CommentRenderingContextValue = CommentControlProps & {
+  drafts?: Map<number, string>;
+  commentsByLine: Map<number, ActiveComment[]>;
+  markdown: string;
+  rangeHighlights: readonly RangeHighlight[];
+};
+
+export const SourceLineContext = createContext<ReadonlySet<number>>(new Set());
+
+export const CommentRenderingContext = createContext<
+  CommentRenderingContextValue | undefined
+>(undefined);
+
+export const useCommentRenderingContext = (): CommentRenderingContextValue => {
+  const value = useContext(CommentRenderingContext);
+  if (!value) throw new Error("Missing comment rendering context.");
+  return value;
+};
+
+export const getSourceLine = (props: {
+  node?: SourceNode;
+}): number | undefined => props.node?.position?.start?.line;
+
+export const getSourceRange = (props: {
+  node?: SourceNode;
+}): CommentRange | undefined => {
+  const startLine = props.node?.position?.start?.line;
+  if (startLine === undefined) return undefined;
+  return {
+    startLine,
+    endLine: props.node?.position?.end?.line ?? startLine,
+  };
+};
+
+export const formatRangeLabel = (range: CommentRange): string =>
+  range.startLine === range.endLine
+    ? `line ${range.startLine}`
+    : `lines ${range.startLine}-${range.endLine}`;
+
+export const hasTextSelectionWithin = (element: Element): boolean => {
+  const selection = element.ownerDocument.getSelection();
+  if (!selection || selection.isCollapsed) return false;
+
+  return (
+    element.contains(selection.anchorNode) ||
+    element.contains(selection.focusNode)
+  );
+};
+
+export const getCommentableBlockProps = (
+  context: CommentRenderingContextValue,
+  sourceRange: { endLine: number; startLine: number },
+) => {
+  const {
+    commentsByLine,
+    drafts: _drafts,
+    markdown: _,
+    rangeHighlights,
+    ...props
+  } = context;
+  const { endLine, startLine } = sourceRange;
+  const comments = [...commentsByLine.entries()].flatMap(([line, comments]) =>
+    line >= startLine && line <= endLine ? comments : [],
+  );
+  return {
+    ...props,
+    comments,
+    hasRangeHighlight: rangeHighlights.some(
+      (range) => range.endLine >= startLine && range.startLine <= endLine,
+    ),
+    isAdding:
+      props.activeCommentLine !== undefined &&
+      props.activeCommentLine >= startLine &&
+      props.activeCommentLine <= endLine,
+    isRangeActionLine:
+      props.selectedRange !== undefined &&
+      props.selectedRange.endLine >= startLine &&
+      props.selectedRange.endLine <= endLine,
+    isSelected: props.selectedRange
+      ? props.selectedRange.startLine === startLine &&
+        props.selectedRange.endLine === endLine
+      : false,
+    sourceRange,
+  };
+};
