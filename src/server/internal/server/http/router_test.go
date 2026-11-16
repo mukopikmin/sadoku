@@ -247,3 +247,55 @@ func TestNoSyncDisablesEvents(t *testing.T) {
 		t.Fatal("missing no-sync bootstrap")
 	}
 }
+
+func TestRoutingFallbacksPreserveHTTPResponses(t *testing.T) {
+	_, server, _ := setup(t)
+	for _, tc := range []struct {
+		method, path string
+		status       int
+		body         string
+	}{
+		{"GET", "/__sadoku/unknown", 404, "Not found."},
+		{"GET", "/__sadoku/events/unknown", 404, "Not found."},
+		{"POST", "/__sadoku/settings", 405, "Method not allowed."},
+		{"HEAD", "/__sadoku/documents", 405, ""},
+		{"POST", "/__sadoku/events", 405, "Method not allowed."},
+		{"GET", "/__sadoku/documents/1/unknown", 405, "Method not allowed."},
+		{"POST", "/__sadoku/documents/01/unknown", 404, "Document not found."},
+		{"GET", "/__sadoku/global-instructions/invalid", 404, "Instruction not found."},
+		{"POST", "/documents/1", 405, "Method not allowed."},
+		{"GET", "/assets-missing", 404, "Asset not found."},
+		{"POST", "/assets/missing.js", 405, "Method not allowed."},
+	} {
+		t.Run(tc.method+" "+tc.path, func(t *testing.T) {
+			body := restRequest(t.Context(), t, server.URL, tc.method, tc.path, "", "", tc.status)
+			if string(body) != tc.body {
+				t.Fatalf("body = %q, want %q", body, tc.body)
+			}
+		})
+	}
+}
+
+func TestRESTDecodedParametersAndBodyCannotOverrideRouteIDs(t *testing.T) {
+	_, server, _ := setup(t)
+	body := restRequest(t.Context(), t, server.URL, "GET", "/__sadoku/documents/%31", "", "", 200)
+	var document struct{ ID int64 }
+	if err := json.Unmarshal(body, &document); err != nil || document.ID != 1 {
+		t.Fatalf("decoded document route: %s (%v)", body, err)
+	}
+	body = restRequest(t.Context(), t, server.URL, "POST", "/__sadoku/documents/1/instructions",
+		`{"content":"Original","documentId":999,"instructionId":999}`, "application/json", 201)
+	var instruction struct{ ID int64 }
+	if err := json.Unmarshal(body, &instruction); err != nil || instruction.ID != 1 {
+		t.Fatalf("create instruction: %s (%v)", body, err)
+	}
+	body = restRequest(t.Context(), t, server.URL, "PUT", "/__sadoku/documents/%31/instructions/%30x1",
+		`{"content":"Updated","documentId":999,"instructionId":999}`, "application/json", 200)
+	var updated struct {
+		ID, DocumentID int64
+		Content        string
+	}
+	if err := json.Unmarshal(body, &updated); err != nil || updated.ID != 1 || updated.DocumentID != 1 || updated.Content != "Updated" {
+		t.Fatalf("update instruction: %s (%v)", body, err)
+	}
+}
