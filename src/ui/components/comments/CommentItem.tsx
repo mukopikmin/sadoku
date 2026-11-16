@@ -1,4 +1,4 @@
-import { Badge, Box, Card, Flex, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Card, Flex, Link, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { Comment } from "../../models/comment";
@@ -16,6 +16,7 @@ export type CommentItemProps = {
   comment: Comment;
   disabled?: boolean;
   lineLabel: string;
+  onOpenDocument?: () => void;
   showSource?: boolean;
   showState?: boolean;
   variant?: "card";
@@ -26,6 +27,7 @@ export const CommentItem = ({
   comment,
   disabled = false,
   lineLabel,
+  onOpenDocument,
   showSource = false,
   showState = false,
   variant,
@@ -60,7 +62,21 @@ export const CommentItem = ({
         <Stack gap="4" position="relative">
           <Stack gap="2">
             <Text color="fg.muted" fontSize="xs" fontWeight="normal" pr="8">
-              <span>#{comment.id}</span> · <span>{lineLabel}</span>
+              <span>#{comment.id}</span> ·{" "}
+              {onOpenDocument ? (
+                <Link asChild variant="underline">
+                  <button
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={onOpenDocument}
+                    aria-label={`Open comment ${comment.id} in document: ${lineLabel}`}
+                  >
+                    {lineLabel}
+                  </button>
+                </Link>
+              ) : (
+                <span>{lineLabel}</span>
+              )}
             </Text>
             {(comment.author.type === "bot" ||
               (showState && comment.state !== "active")) && (

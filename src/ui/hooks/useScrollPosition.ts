@@ -11,6 +11,7 @@ export const useScrollPosition = (
   documentId: number | undefined,
   view: ScrollView,
   contentReady: boolean,
+  targetLine?: number,
 ) => {
   const saveScrollPosition = useCallback(() => {
     if (documentId !== undefined && contentReady) {
@@ -30,7 +31,34 @@ export const useScrollPosition = (
     // removed and the browser already clamped scrollY to the new page height.
     globalThis.addEventListener("scroll", trackPosition, true);
     const frame = globalThis.requestAnimationFrame(() => {
-      globalThis.scrollTo({ top: position, left: 0, behavior: "instant" });
+      let target: HTMLElement | undefined;
+      if (targetLine !== undefined) {
+        const blocks = document.querySelectorAll<HTMLElement>(
+          ".markdown-preview .commentable-block[data-source-line]",
+        );
+        for (const block of blocks) {
+          const start = Number(block.dataset.sourceLine);
+          const end = Number(block.dataset.sourceEndLine);
+          if (
+            start <= targetLine &&
+            targetLine <= end &&
+            (!target ||
+              end - start <
+                Number(target.dataset.sourceEndLine) -
+                  Number(target.dataset.sourceLine))
+          ) {
+            target = block;
+          }
+        }
+      }
+      if (target) {
+        const headerHeight =
+          document.querySelector("header")?.getBoundingClientRect().height ?? 0;
+        target.style.scrollMarginTop = `${headerHeight}px`;
+        target.scrollIntoView({ block: "start", behavior: "instant" });
+      } else {
+        globalThis.scrollTo({ top: position, left: 0, behavior: "instant" });
+      }
       restored = true;
     });
 
@@ -38,7 +66,7 @@ export const useScrollPosition = (
       globalThis.removeEventListener("scroll", trackPosition, true);
       globalThis.cancelAnimationFrame(frame);
     };
-  }, [contentReady, documentId, saveScrollPosition, view]);
+  }, [contentReady, documentId, saveScrollPosition, targetLine, view]);
 
   return saveScrollPosition;
 };
