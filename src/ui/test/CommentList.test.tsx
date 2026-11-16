@@ -40,6 +40,49 @@ const toggleFilter = async (name: string) => {
 };
 
 describe("CommentList", () => {
+  it("opens located comments and leaves unavailable targets as plain labels", async () => {
+    const onOpenComment = vi.fn();
+    render(
+      <CommentList
+        actions={createCommentActions()}
+        onOpenComment={onOpenComment}
+        comments={[
+          createComment({
+            id: 1,
+            currentSource: { state: "available", text: "Body" },
+          }),
+          createComment({
+            id: 2,
+            state: "stale",
+            currentSource: { state: "unavailable" },
+          }),
+          createComment({ id: 3, currentSource: { state: "deleted" } }),
+          createComment({
+            id: 4,
+            state: "resolved",
+            currentSource: { state: "available", text: "Body" },
+          }),
+        ]}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open comment 1 in document: Line 3",
+      }),
+    );
+    expect(onOpenComment).toHaveBeenCalledWith(1);
+    expect(
+      screen.getAllByRole("button", { name: /Open comment .* in document/ }),
+    ).toHaveLength(1);
+    await toggleFilter("Resolved");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open comment 4 in document: Line 3",
+      }),
+    );
+    expect(onOpenComment).toHaveBeenCalledWith(4);
+  });
+
   it("renders hook filter state and connects checkbox changes to the list", async () => {
     render(
       <CommentList
