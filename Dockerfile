@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:26.13.0-bookworm-slim AS client
+FROM node:26.13.1-bookworm-slim AS client
 
 RUN apt-get update && apt-get install -y --no-install-recommends make && rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +17,7 @@ RUN --mount=type=secret,id=proxy_ca \
 COPY src/ui/ ./src/ui/
 RUN make build-client
 
-FROM golang:1.27.3-bookworm AS go-toolchain
+FROM golang:1.27.4-bookworm AS go-toolchain
 
 FROM debian:bookworm-slim AS builder
 
@@ -44,7 +44,7 @@ RUN make build-server
 
 # The Linux binary is statically linked, including SQLite. Alpine supplies the
 # shell and utilities used by the preview launcher without a Debian runtime.
-FROM alpine:3.23
+FROM alpine:3.24
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
