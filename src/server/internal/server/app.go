@@ -23,14 +23,21 @@ import (
 )
 
 func Run(ctx context.Context, args []string, out io.Writer) error {
-	return cli.Execute(ctx, args, out, func(ctx context.Context, options cli.StartOptions) error { return Start(ctx, options, out) })
+	return cli.Execute(ctx, args, out, func(ctx context.Context, options cli.StartOptions, settings config.Settings) error {
+		return startWithSettings(ctx, options, out, settings)
+	})
 }
+
 func Start(ctx context.Context, options cli.StartOptions, out io.Writer) error {
-	_, source, _ := session.Source(options.Source)
 	settings, _, err := config.Read()
 	if err != nil {
 		return err
 	}
+	return startWithSettings(ctx, options, out, settings)
+}
+
+func startWithSettings(ctx context.Context, options cli.StartOptions, out io.Writer, settings config.Settings) error {
+	_, source, _ := session.Source(options.Source)
 	if options.MaxDepth != nil {
 		settings.MaxDepth = *options.MaxDepth
 	}
