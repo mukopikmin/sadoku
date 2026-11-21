@@ -1,5 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { loadSettings, saveSettings } from "../api/settings";
 import { errorMessage } from "../models/uiState";
 import type {
@@ -15,45 +20,41 @@ const getPreferredThemeMode = (): ThemeMode =>
     ? "dark"
     : "light";
 
+const settingsOptions = queryOptions({
+  queryFn: loadSettings,
+  queryKey: settingsQueryKey,
+  // The preview owns edits once loaded. Reload explicitly after a load failure.
+  staleTime: Infinity,
+});
+
+const defaults = {
+  showHighlightBoundaries: false,
+  showHtmlComments: true,
+  codeWrap: "scroll",
+  excludedDirectories: [".git", "node_modules"],
+  fontScale: 1,
+  markdownExtensions: [".md", ".markdown"],
+  maxDepth: 2,
+  maxFiles: 20,
+} satisfies Omit<ResolvedPreviewSettings, "theme">;
+
 export const usePreviewSettings = () => {
-  const [settings, setSettings] = useState<ResolvedPreviewSettings>(() => ({
-    showHighlightBoundaries: false,
-    showHtmlComments: true,
-    codeWrap: "scroll",
-    excludedDirectories: [".git", "node_modules"],
-    fontScale: 1,
-    markdownExtensions: [".md", ".markdown"],
-    maxDepth: 2,
-    maxFiles: 20,
-    theme: getPreferredThemeMode(),
-  }));
-  const settingsRef = useRef(settings);
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
-  const [userChangedSettings, setUserChangedSettings] = useState(false);
+  const [preferredTheme] = useState(getPreferredThemeMode);
   const queryClient = useQueryClient();
-  const settingsQuery = useQuery({
-    queryFn: loadSettings,
-    queryKey: settingsQueryKey,
+  const settingsQuery = useQuery(settingsOptions);
+  const resolveSettings = (
+    value: typeof settingsQuery.data,
+  ): ResolvedPreviewSettings => ({
+    ...defaults,
+    ...value,
+    codeWrap: value?.codeWrap ?? defaults.codeWrap,
+    theme: value?.theme ?? preferredTheme,
   });
+  const settings = resolveSettings(settingsQuery.data);
   const saveMutation = useMutation({
     mutationFn: saveSettings,
     scope: { id: "preview-settings" },
-    onSuccess: (settings) => {
-      queryClient.setQueryData(settingsQueryKey, settings);
-    },
   });
-
-  useEffect(() => {
-    if (userChangedSettings || settingsQuery.data === undefined) return;
-    setSettings((current) => ({
-      ...current,
-      ...settingsQuery.data,
-      codeWrap: settingsQuery.data.codeWrap ?? current.codeWrap,
-      theme: settingsQuery.data.theme ?? current.theme,
-    }));
-  }, [settingsQuery.data, userChangedSettings]);
 
   useEffect(() => {
     globalThis.document.documentElement.style.setProperty(
@@ -82,10 +83,10 @@ export const usePreviewSettings = () => {
   }, [settings.theme]);
 
   const changeSettings = (changes: Partial<ResolvedPreviewSettings>) => {
-    setUserChangedSettings(true);
-    const next = { ...settingsRef.current, ...changes };
-    settingsRef.current = next;
-    setSettings(next);
+    const current = queryClient.getQueryData(settingsOptions.queryKey);
+    if (!current) return;
+    const next = { ...resolveSettings(current), ...changes };
+    queryClient.setQueryData(settingsOptions.queryKey, next);
     saveMutation.mutate(next);
   };
 
@@ -136,13 +137,15 @@ export const usePreviewSettings = () => {
     changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
+    reloadSettings: () => {
+      void settingsQuery.refetch();
+    },
     state: settingsState(
       settings,
       settingsQuery.isPending,
       settingsQuery.error,
       saveMutation.isPending,
       saveMutation.error,
-      userChangedSettings,
     ),
   };
 };
@@ -158,7 +161,6 @@ const settingsState = (
   loadError: Error | null,
   saving: boolean,
   saveError: Error | null,
-  changed: boolean,
 ): PreviewSettingsState => {
   if (saving) return { status: "saving", settings };
   if (saveError)
@@ -168,12 +170,12 @@ const settingsState = (
       message: errorMessage(saveError),
       settings,
     };
-  if (!changed && loadError)
+  if (loadError)
     return {
       status: "error",
       operation: "load",
       message: errorMessage(loadError),
       settings,
     };
-  return { status: !changed && loading ? "loading" : "ready", settings };
+  return { status: loading ? "loading" : "ready", settings };
 };
