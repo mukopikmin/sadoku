@@ -1,8 +1,9 @@
 # RPC adapter boundary
 
 `preview_rpc.go` implements the generated Connect service. `rpc.go` converts
-Protobuf messages to application inputs and results to generated responses;
-RPC and REST share session operations without calling each other's endpoints.
+Protobuf messages to application inputs and results to generated responses.
+Document and revision RPCs use typed session methods and direct Protobuf
+conversion in `documents.go`. REST and CLI also call those session methods.
 Generate Go and TypeScript bindings together with `make proto-generate`.
 
 The schema controls public response fields. Response conversion discards unknown

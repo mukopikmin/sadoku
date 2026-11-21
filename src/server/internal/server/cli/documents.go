@@ -87,11 +87,10 @@ func addDocument(ctx context.Context, repo *storage.Repository, source string, o
 			return fmt.Errorf("Document is already registered: %d. Use `sadoku document update %d` to change its attributes.", existing.ID, existing.ID)
 		}
 		s := &session.Session{Root: filepath.Dir(path), CanCreate: true, Repository: repo, Sources: map[int64]string{}}
-		result, err := s.Invoke(ctx, "CreateDocument", session.Input{Filename: filepath.Base(source), Title: o.Values["title"]})
+		doc, err = s.CreateDocument(ctx, "", filepath.Base(source), o.Values["title"])
 		if err != nil {
 			return documentError(err)
 		}
-		doc = result.(u.Document)
 		if tags != nil {
 			doc, err = repo.UpdateDocumentAttributes(ctx, doc.ID, nil, tags)
 			if err != nil {
