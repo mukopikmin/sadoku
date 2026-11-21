@@ -4,12 +4,11 @@ import { getCommentAnchorLine } from "./commentRanges";
 import {
   measureHighlightGroups,
   useHighlightLayouts,
+  type HighlightLayout,
 } from "../useHighlightLayouts";
 
-export type RangeHighlightLayout = RangeHighlight & {
-  bottom: number;
-  top: number;
-};
+export type RangeHighlightLayout = RangeHighlight &
+  Pick<HighlightLayout, "top" | "bottom" | "outsetLeft" | "outsetRight">;
 
 export const commentableBlockSelector = [
   ":scope > .commentable-block",
@@ -48,8 +47,9 @@ export const measureRangeHighlightLayouts = (
     [...rangeHighlights]
       .sort((a, b) => priority[a.kind] - priority[b.kind])
       .flatMap((range) => {
-        const groups: HTMLElement[][] = [];
+        const groups: { elements: HTMLElement[]; table?: HTMLElement }[] = [];
         let contents: HTMLElement[] = [];
+        let table: HTMLElement | undefined;
         const overlaps = (block: HTMLElement) => {
           const startLine = Number(block.dataset.sourceLine);
           const endLine = Number(block.dataset.sourceEndLine ?? startLine);
@@ -69,17 +69,26 @@ export const measureRangeHighlightLayouts = (
                     ":scope > .commentable-content",
                   )
               : null;
-          if (content && !claimed.has(content)) {
-            contents.push(content);
-          } else if (contents.length > 0 && (isDiff || content)) {
-            // A deletion or unselected block separates visible parts of the range.
-            groups.push(contents);
+          const contentTable =
+            content?.closest<HTMLElement>(".commentable-table") ?? undefined;
+          if (
+            contents.length > 0 &&
+            (content ? contentTable !== table || claimed.has(content) : isDiff)
+          ) {
+            // Keep wide table highlights separate from text and preserve gaps in diff mode.
+            groups.push({ elements: contents, table });
             contents = [];
           }
+          if (content && !claimed.has(content)) {
+            contents.push(content);
+            table = contentTable;
+          }
         }
-        if (contents.length > 0) groups.push(contents);
-        for (const content of groups.flat()) claimed.add(content);
-        return groups.map((elements) => ({ range, elements }));
+        if (contents.length > 0) groups.push({ elements: contents, table });
+        for (const { elements } of groups) {
+          for (const element of elements) claimed.add(element);
+        }
+        return groups.map((group) => ({ range, ...group }));
       }),
   );
 };
@@ -110,7 +119,11 @@ export const useCommentableBlockLayout = (
     },
     [rangeHighlights, interactionRange],
   );
-  const rangeHighlightLayouts = useHighlightLayouts(previewRef, measure);
+  const rangeHighlightLayouts = useHighlightLayouts(
+    previewRef,
+    measure,
+    ".commentable-table",
+  );
 
   // Measure after every commit: Markdown DOM can change without changing the ref.
   // State updates below preserve identity when the measured values are unchanged.

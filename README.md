@@ -65,7 +65,8 @@ Comments and replies support Markdown with GitHub-style line breaks;
 Mermaid diagrams render only in documents.
 Table columns can be resized by dragging or using the arrow keys on a focused
 header boundary. Widths are saved; use **Reset column widths** for automatic sizing.
-Narrow screens scroll horizontally.
+Standalone tables can extend past the text column and scroll horizontally when
+they exceed the available screen width.
 Japanese fonts are bundled; see [font licenses](src/ui/public/fonts/noto-sans-jp/README.md).
 
 ### Settings and storage

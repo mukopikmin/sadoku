@@ -15,6 +15,10 @@ export const HighlightOverlay = ({
         bg={`highlight.${layout.kind}.bg`}
         height={`${Math.max(0, layout.bottom - layout.top)}px`}
         key={`${layout.kind}-${index}`}
+        style={{
+          left: layout.outsetLeft ? -layout.outsetLeft : undefined,
+          right: layout.outsetRight ? -layout.outsetRight : undefined,
+        }}
         top={`${layout.top}px`}
       />
     ))}
