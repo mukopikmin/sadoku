@@ -80,6 +80,8 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	// These operations do not read or mutate session state. In particular, a
 	// slow statistics query or GitHub command must not serialize progress RPCs.
 	switch operation {
+	case "ListComments":
+		return s.listComments(ctx, int64(in.DocumentID))
 	case "GetStatistics":
 		return s.Repository.Statistics(ctx)
 
@@ -341,11 +343,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		note, err := r.SaveNote(ctx, kind, u.Note{ID: noteID, DocumentID: id, Content: in.Content})
 		return note, noteFailure(kind, err)
-	case "ListComments", "CreateComment", "UpdateComment", "DeleteComment", "SetCommentResolution", "CreateReply", "UpdateReply", "DeleteReply":
-		githubHead := ""
-		if s.GitHub != nil {
-			githubHead = s.GitHub.HeadSHA
-		}
+	case "CreateComment", "UpdateComment", "DeleteComment", "SetCommentResolution", "CreateReply", "UpdateReply", "DeleteReply":
 		comments, err := s.readComments(ctx, id)
 		if err != nil {
 			return nil, err
@@ -354,7 +352,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if comments.SourceSnapshot != nil {
 			markdown = *comments.SourceSnapshot
 		}
-		if operation == "ListComments" || operation == "CreateComment" {
+		if operation == "CreateComment" {
 			markdown, err = s.readOutsideLock(ctx, s.Sources[id])
 			if err == nil || os.IsNotExist(err) {
 				// A comment may have changed while the file/network read was pending.
@@ -371,19 +369,6 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		if err != nil {
 			return nil, err
-		}
-		if operation == "ListComments" {
-			changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
-			comments = u.ResolveComments(comments, markdown)
-			if changed && len(comments.Comments) > 0 {
-				if err = s.saveComments(ctx, id, comments); err != nil {
-					return nil, err
-				}
-			}
-			if s.GitHub != nil {
-				comments.GitHubHeadSHA = githubHead
-			}
-			return comments, nil
 		}
 		if operation == "CreateComment" {
 			if err := validateCommentRange(in.StartLine, in.EndLine); err != nil {
