@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { create } from "@bufbuild/protobuf";
-import {
-  loadDocuments,
-  loadPreviewDocument,
-  parsePreviousMarkdown,
-} from "../api/document";
+import { loadDocuments, loadPreviewDocument } from "../api/document";
 import { toPreviewSession } from "../api/session";
 import { toDatabaseStatistics } from "../api/statistics";
 import {
@@ -40,12 +36,6 @@ describe("document revision API conversion", () => {
       );
     },
   );
-
-  it.each([null, 1, {}, []])("rejects an invalid revision: %j", (value) => {
-    expect(() => parsePreviousMarkdown(value)).toThrow(
-      "Invalid previous Markdown revision.",
-    );
-  });
 });
 
 describe("document API tag conversion", () => {

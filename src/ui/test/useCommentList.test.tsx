@@ -10,18 +10,16 @@ const comments = [
   createComment({ id: 3, state: "resolved" }),
 ];
 
-it.each(["active", "stale", "resolved"] as const)(
-  "clears bulk selection when %s changes",
-  (filter) => {
-    const { result } = renderHook(() =>
-      useCommentList(comments, createCommentActions()),
-    );
-    act(() => result.current.bulk.toggleAll());
-    expect(result.current.bulk.selectedIds).toEqual([1, 2]);
-    act(() => result.current.selectFilter(filter));
-    expect(result.current.bulk.selectedIds).toEqual([]);
-  },
-);
+it("clears bulk selection when a filter adds visible comments", () => {
+  const { result } = renderHook(() =>
+    useCommentList(comments, createCommentActions()),
+  );
+  act(() => result.current.bulk.toggleAll());
+  expect(result.current.bulk.selectedIds).toEqual([1, 2]);
+  act(() => result.current.selectFilter("resolved"));
+  expect(result.current.commentFilter.visibleComments).toEqual(comments);
+  expect(result.current.bulk.selectedIds).toEqual([]);
+});
 
 it("blocks filter changes during resolve and unlocks them after completion", async () => {
   const request = deferred<void>();

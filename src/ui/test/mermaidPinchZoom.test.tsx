@@ -83,12 +83,14 @@ describe("Mermaid zoom dialog trackpad pinch zoom", () => {
     expect(viewport.scrollTop).toBe(0);
   });
 
-  it("caps the fitted size when the viewport grows beyond natural size", () => {
+  it("refits an unzoomed diagram when the viewport grows or shrinks, without exceeding natural size", () => {
     const { viewport, resize } = createViewport();
     resize(800, 600);
     expect(diagramSize(viewport)).toEqual({ width: 400, height: 200 });
     resize(160, 200);
     expect(diagramSize(viewport)).toEqual({ width: 160, height: 80 });
+    expect(viewport.scrollLeft).toBe(0);
+    expect(viewport.scrollTop).toBe(0);
   });
 
   it("zooms in and out relative to the fitted diagram", () => {
@@ -222,14 +224,6 @@ describe("Mermaid zoom dialog trackpad pinch zoom", () => {
     expect(diagramSize(viewport)).toEqual({ width: 640, height: 320 });
     expect(viewport.scrollLeft).toBeCloseTo(240);
     expect(viewport.scrollTop).toBeCloseTo(100);
-  });
-
-  it("refits an unzoomed diagram when the viewport resizes", () => {
-    const { viewport, resize } = createViewport();
-    resize(160, 200);
-    expect(diagramSize(viewport)).toEqual({ width: 160, height: 80 });
-    expect(viewport.scrollLeft).toBe(0);
-    expect(viewport.scrollTop).toBe(0);
   });
 
   it("observes viewport changes and cleans up after closing", () => {

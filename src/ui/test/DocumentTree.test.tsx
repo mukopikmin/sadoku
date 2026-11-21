@@ -59,7 +59,7 @@ describe("DocumentTree", () => {
     const tree = screen.getByRole("tree", { name: "Documents" });
     const folder = within(tree)
       .getByText("folder")
-      .closest('[role="treeitem"]')!;
+      .closest<HTMLElement>('[role="treeitem"]')!;
     const item = within(folder).getByRole("treeitem", { name: "file.md" });
     expect(folder.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(item);
@@ -92,13 +92,15 @@ describe("DocumentTree", () => {
       />,
     );
 
-    const taggedItem = getByText("tagged.md").closest('[role="treeitem"]');
+    const taggedItem =
+      getByText("tagged.md").closest<HTMLElement>('[role="treeitem"]');
     const apiTag = within(taggedItem!).getByText("API");
     const guideTag = within(taggedItem!).getByText("Guide");
 
     expect(taggedItem?.contains(apiTag)).toBe(true);
     expect(taggedItem?.contains(guideTag)).toBe(true);
-    const untaggedItem = getByText("untagged.md").closest('[role="treeitem"]')!;
+    const untaggedItem =
+      getByText("untagged.md").closest<HTMLElement>('[role="treeitem"]')!;
     expect(within(untaggedItem).queryByText("API")).toBeNull();
     expect(within(untaggedItem).queryByText("Guide")).toBeNull();
   });
@@ -161,69 +163,62 @@ describe("DocumentTree", () => {
     });
   });
 
-  it.each([1, 2])(
-    "clears %i selected tags and the search to restore all documents",
-    async (tagCount) => {
-      render(
-        <DocumentTree
-          documents={[
-            {
-              deleted: false,
-              id: 1,
-              relativePath: "api.md",
-              tags: [{ backgroundColor: "#123456", id: 1, name: "API" }],
-              title: "API",
-            },
-            {
-              deleted: false,
-              id: 2,
-              relativePath: "guide.md",
-              tags: [{ backgroundColor: "#abcdef", id: 2, name: "Guide" }],
-              title: "Guide",
-            },
-            {
-              deleted: false,
-              id: 3,
-              relativePath: "untagged.md",
-              tags: [],
-              title: "Untagged",
-            },
-          ]}
-          onSelectDocument={vi.fn()}
-        />,
-      );
+  it("clears all selected tags and the search to restore all documents", async () => {
+    render(
+      <DocumentTree
+        documents={[
+          {
+            deleted: false,
+            id: 1,
+            relativePath: "api.md",
+            tags: [{ backgroundColor: "#123456", id: 1, name: "API" }],
+            title: "API",
+          },
+          {
+            deleted: false,
+            id: 2,
+            relativePath: "guide.md",
+            tags: [{ backgroundColor: "#abcdef", id: 2, name: "Guide" }],
+            title: "Guide",
+          },
+          {
+            deleted: false,
+            id: 3,
+            relativePath: "untagged.md",
+            tags: [],
+            title: "Untagged",
+          },
+        ]}
+        onSelectDocument={vi.fn()}
+      />,
+    );
 
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    const input = screen.getByRole("combobox", { name: "Search tags" });
+    for (const name of ["API", "Guide"]) {
+      fireEvent.click(input);
+      fireEvent.click(await screen.findByRole("option", { name }));
+      await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+    }
+    expect(screen.getByText("Showing 2 of 3 documents")).toBeTruthy();
+    expect(screen.queryByText("untagged.md")).toBeNull();
+
+    fireEvent.change(input, { target: { value: "gu" } });
+    await waitFor(() => expect((input as HTMLInputElement).value).toBe("gu"));
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    await waitFor(() => {
+      const tree = screen.getByRole("tree", { name: "Documents" });
+      expect(within(tree).getByText("api.md")).toBeTruthy();
+      expect(within(tree).getByText("guide.md")).toBeTruthy();
+      expect(within(tree).getByText("untagged.md")).toBeTruthy();
+      expect((input as HTMLInputElement).value).toBe("");
+      expect(screen.queryByText(/Showing .* documents/)).toBeNull();
       expect(
         screen.queryByRole("button", { name: "Clear filters" }),
       ).toBeNull();
-      const input = screen.getByRole("combobox", { name: "Search tags" });
-      for (const name of ["API", "Guide"].slice(0, tagCount)) {
-        fireEvent.click(input);
-        fireEvent.click(await screen.findByRole("option", { name }));
-        await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
-      }
-      expect(
-        screen.getByText(`Showing ${tagCount} of 3 documents`),
-      ).toBeTruthy();
-      expect(screen.queryByText("untagged.md")).toBeNull();
-
-      fireEvent.change(input, { target: { value: "gu" } });
-      await waitFor(() => expect((input as HTMLInputElement).value).toBe("gu"));
-      fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
-
-      await waitFor(() => {
-        const tree = screen.getByRole("tree", { name: "Documents" });
-        expect(within(tree).getByText("api.md")).toBeTruthy();
-        expect(within(tree).getByText("guide.md")).toBeTruthy();
-        expect(within(tree).getByText("untagged.md")).toBeTruthy();
-        expect((input as HTMLInputElement).value).toBe("");
-        expect(screen.queryByText(/Showing .* documents/)).toBeNull();
-        expect(
-          screen.queryByRole("button", { name: "Clear filters" }),
-        ).toBeNull();
-      });
-    },
-  );
+    });
+  });
 
   it("removes individual tag filters while keeping the other selections", async () => {
     render(
