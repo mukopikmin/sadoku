@@ -5,7 +5,7 @@ updates:
   - package-ecosystem: "npm"
     directories:
       - "/src/proto"
-      - "/src/preview"
+      - "/src/ui"
     schedule:
       interval: "weekly"
     cooldown:

@@ -14,12 +14,13 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/go-chi/chi/v5"
 	"github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1/previewv1connect"
-	"github.com/mukopikmin/sadoku/internal/preview"
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/http/api"
 	"github.com/mukopikmin/sadoku/internal/server/session"
 	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/ui"
 )
 
 type Options struct {
@@ -37,12 +38,12 @@ type router struct {
 	options   Options
 	assets    fs.FS
 	manifest  map[string]entry
-	mux       *http.ServeMux
+	mux       *chi.Mux
 	immutable map[string]bool
 }
 
 func New(s *session.Session, options Options) (http.Handler, error) {
-	assets, err := fs.Sub(preview.Assets, "dist")
+	assets, err := fs.Sub(ui.Assets, "dist")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func New(s *session.Session, options Options) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := &router{session: s, options: options, assets: assets, manifest: map[string]entry{}, mux: http.NewServeMux(), immutable: map[string]bool{}}
+	r := &router{session: s, options: options, assets: assets, manifest: map[string]entry{}, mux: chi.NewRouter(), immutable: map[string]bool{}}
 	if err = json.Unmarshal(b, &r.manifest); err != nil {
 		return nil, err
 	}
@@ -67,8 +68,18 @@ func New(s *session.Session, options Options) (http.Handler, error) {
 		}
 	}
 	servicePath, handler := previewv1connect.NewPreviewServiceHandler(&api.Service{Session: s}, connect.WithReadMaxBytes(32<<20), connect.WithRequireConnectProtocolHeader())
-	r.mux.Handle(servicePath, handler)
-	r.mux.HandleFunc("/", r.handle)
+	// Match decoded paths, as the previous net/http router did.
+	r.mux.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			chi.RouteContext(req.Context()).RoutePath = req.URL.Path
+			next.ServeHTTP(w, req)
+		})
+	})
+	r.mux.Handle(servicePath+"*", handler)
+	r.mux.HandleFunc("/assets/*", r.asset)
+	r.mux.Route("/__sadoku", r.registerREST)
+	r.mux.NotFound(r.handle)
+	r.mux.MethodNotAllowed(r.handle)
 	return r, nil
 }
 
@@ -82,6 +93,9 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			respondError(w, u.Fail("invalid_argument", "Invalid public base path."))
 			return
 		}
+	}
+	if strings.HasPrefix(req.URL.Path, "/__sadoku/") && !r.validateRESTPath(w, req) {
+		return
 	}
 	if validateRPC(w, req) {
 		if req.URL.Path == "/sadoku.preview.v1.PreviewService/CreateDocument" && strings.HasPrefix(strings.ToLower(req.Header.Get("Content-Type")), "application/json") {
@@ -141,7 +155,7 @@ func (r *router) handle(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if strings.HasPrefix(p, "/__sadoku") {
-		r.rest(w, req)
+		r.restNotFound(w, req)
 		return
 	}
 	if req.Method != "GET" && req.Method != "HEAD" {
@@ -185,216 +199,31 @@ func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 	}
 	_, _ = w.Write(b) // #nosec G705 -- The response serves validated embedded build assets.
 }
-func (r *router) rest(w http.ResponseWriter, req *http.Request) {
-	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/__sadoku/"), "/")
-	export := req.Method == "POST" && len(parts) == 5 && parts[0] == "documents" && parts[2] == "comments" && parts[4] == "github"
-	if len(parts) >= 2 && parts[0] == "documents" {
-		id, err := parseRESTResourceID(parts[1])
-		if err != nil || !regexp.MustCompile(`^[1-9][0-9]*$`).MatchString(parts[1]) || u.PositiveID(id) != nil {
-			if export {
-				githubExportError(w, "export_document_not_found", 0)
-			} else {
-				respondError(w, u.Fail("not_found", "Document not found."))
-			}
-			return
-		}
-		if export {
-			if r.session.ExportInProgress() {
-				githubExportError(w, "export_busy", 0)
-				return
-			}
-			r.session.Mu.Lock()
-			_, findErr := r.session.Find(id)
-			available := r.session.GitHub != nil
-			r.session.Mu.Unlock()
-			if findErr != nil {
-				githubExportError(w, "export_document_not_found", 0)
-				return
-			}
-			if !available {
-				githubExportError(w, "export_unavailable", 404)
-				return
-			}
-			commentID, err := parseRESTResourceID(parts[3])
-			if err != nil || u.PositiveID(commentID) != nil {
-				githubExportError(w, "export_comment_not_found", 0)
-				return
-			}
-		}
-	}
-	operation := ""
-	input := session.Input{}
+func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string, status int) {
+	input := restParameters(req)
 	method := req.Method
-	status := 200
-	if len(parts) == 1 {
-		switch parts[0] {
-		case "events":
-			if method != "GET" {
-				textError(w, "Method not allowed.", 405)
-				return
-			}
-			r.events(w, req, 0)
-			return
-		case "documents":
-			if method == "GET" {
-				operation = "ListDocuments"
-			}
-		case "settings":
-			if method == "GET" {
-				operation = "GetSettings"
-			}
-			if method == "PUT" {
-				operation = "UpdateSettings"
-			}
-		case "directory-status":
-			if method == "GET" {
-				operation = "GetDirectoryStatus"
-			}
-		case "github-account":
-			if method == "GET" {
-				operation = "GetGitHubAccount"
-			}
-		case "global-instructions":
-			if method == "GET" {
-				operation = "ListGlobalInstructions"
-			}
-			if method == "POST" {
-				operation = "CreateGlobalInstruction"
-				status = 201
-			}
-		case "tags":
-			if method == "GET" {
-				operation = "ListTags"
-			}
-		}
-	}
-	if len(parts) == 2 && parts[0] == "global-instructions" {
-		n, err := parseRESTResourceID(parts[1])
-		if err != nil || u.PositiveID(n) != nil {
-			respondError(w, u.Fail("not_found", "Instruction not found."))
+	export := operation == "ExportCommentToGitHub"
+	if export {
+		if r.session.ExportInProgress() {
+			githubExportError(w, "export_busy", 0)
 			return
 		}
-		input.InstructionID = session.ID(n)
-		if method == "PUT" {
-			operation = "UpdateGlobalInstruction"
+		r.session.Mu.Lock()
+		_, findErr := r.session.Find(int64(input.DocumentID))
+		available := r.session.GitHub != nil
+		r.session.Mu.Unlock()
+		if findErr != nil {
+			githubExportError(w, "export_document_not_found", 0)
+			return
 		}
-		if method == "DELETE" {
-			operation = "DeleteGlobalInstruction"
-			status = 204
+		if !available {
+			githubExportError(w, "export_unavailable", 404)
+			return
 		}
-	}
-	if len(parts) == 2 && parts[0] == "tags" {
-		n, _ := parseRESTResourceID(parts[1])
-		input.ID = session.ID(n)
-		if method == "DELETE" {
-			operation = "DeleteTag"
-			status = 204
+		if u.PositiveID(int64(input.CommentID)) != nil {
+			githubExportError(w, "export_comment_not_found", 0)
+			return
 		}
-		if method == "PATCH" {
-			operation = "UpdateTag"
-		}
-	}
-	if len(parts) >= 2 && parts[0] == "documents" {
-		id, _ := parseRESTResourceID(parts[1])
-		input.DocumentID = session.ID(id)
-		if len(parts) == 2 && method == "GET" {
-			operation = "GetDocument"
-		}
-		if len(parts) >= 3 {
-			switch parts[2] {
-			case "events":
-				if len(parts) == 3 && method == "GET" {
-					r.events(w, req, id)
-					return
-				}
-			case "tags":
-				if len(parts) == 3 && method == "PUT" {
-					operation = "ReplaceDocumentTags"
-				}
-			case "instructions", "memories":
-				kind := "Instruction"
-				if parts[2] == "memories" {
-					kind = "Memory"
-				}
-				if len(parts) == 3 {
-					if method == "GET" {
-						operation = "ListInstructions"
-						if kind == "Memory" {
-							operation = "ListMemories"
-						}
-					}
-					if method == "POST" && kind == "Instruction" {
-						operation = "CreateInstruction"
-						status = 201
-					}
-				}
-				if len(parts) == 4 {
-					n, _ := parseRESTResourceID(parts[3])
-					input.InstructionID = session.ID(n)
-					input.MemoryID = session.ID(n)
-					if method == "PUT" && kind == "Instruction" {
-						operation = "UpdateInstruction"
-					}
-					if method == "DELETE" {
-						operation = "Delete" + kind
-						status = 204
-					}
-				}
-			case "comments":
-				if len(parts) == 3 {
-					if method == "GET" {
-						operation = "ListComments"
-					}
-					if method == "POST" {
-						operation = "CreateComment"
-					}
-				}
-				if len(parts) >= 4 {
-					n, _ := parseRESTResourceID(parts[3])
-					input.CommentID = session.ID(n)
-					if len(parts) == 4 {
-						if method == "PUT" {
-							operation = "UpdateComment"
-						}
-						if method == "DELETE" {
-							operation = "DeleteComment"
-							status = 204
-						}
-					}
-					if len(parts) == 5 && method == "POST" {
-						switch parts[4] {
-						case "resolve", "reopen":
-							operation = "SetCommentResolution"
-							input.Resolved = parts[4] == "resolve"
-						case "replies":
-							operation = "CreateReply"
-						case "github":
-							operation = "ExportCommentToGitHub"
-						}
-					}
-					if len(parts) == 6 && parts[4] == "replies" {
-						n, _ := parseRESTResourceID(parts[5])
-						input.ReplyID = session.ID(n)
-						if method == "PUT" {
-							operation = "UpdateReply"
-						}
-						if method == "DELETE" {
-							operation = "DeleteReply"
-							status = 204
-						}
-					}
-				}
-			}
-		}
-	}
-	if operation == "" {
-		known := len(parts) > 0 && (parts[0] == "global-instructions" || parts[0] == "settings" || parts[0] == "tags" || parts[0] == "documents" || parts[0] == "github-account" || parts[0] == "directory-status")
-		if known {
-			textError(w, "Method not allowed.", 405)
-		} else {
-			textError(w, "Not found.", 404)
-		}
-		return
 	}
 	if req.Body != nil && (method == "POST" || method == "PUT" || method == "PATCH") && operation != "SetCommentResolution" {
 		invalidBody := func(message string) {
@@ -499,32 +328,6 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request) {
 			}
 			invalidBody(message)
 			return
-		}
-		// Route parameters always take precedence over JSON input.
-		if len(parts) >= 2 {
-			n, _ := parseRESTResourceID(parts[1])
-			if parts[0] == "documents" {
-				input.DocumentID = session.ID(n)
-			} else if parts[0] == "tags" {
-				input.ID = session.ID(n)
-			}
-		}
-		if len(parts) >= 4 && parts[2] == "comments" {
-			n, _ := parseRESTResourceID(parts[3])
-			input.CommentID = session.ID(n)
-		}
-	}
-	if len(parts) >= 4 && parts[0] == "documents" {
-		n, _ := parseRESTResourceID(parts[3])
-		if parts[2] == "instructions" {
-			input.InstructionID = session.ID(n)
-		}
-		if parts[2] == "memories" {
-			input.MemoryID = session.ID(n)
-		}
-		if len(parts) == 6 && parts[2] == "comments" && parts[4] == "replies" {
-			n, _ = parseRESTResourceID(parts[5])
-			input.ReplyID = session.ID(n)
 		}
 	}
 	result, err := r.session.Invoke(req.Context(), operation, input)
