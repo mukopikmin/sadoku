@@ -303,11 +303,12 @@ jobs:
           [[ "${SERVICE}" =~ ^[a-z]([a-z0-9-]{0,47}[a-z0-9])?$ ]]
           [[ "${PR_NUMBER}" =~ ^[1-9][0-9]*$ ]]
           tag="pr-${PR_NUMBER}"
-          existing="$(gcloud run services describe "${SERVICE}" \
+          has_tag="$(gcloud run services describe "${SERVICE}" \
             --project "${PROJECT_ID}" \
             --region "${REGION}" \
-            --format="value(status.traffic.filter(tag=${tag}).tag)" 2>/dev/null || true)"
-          if [[ "${existing}" != "${tag}" ]]; then
+            --format=json |
+            jq -er --arg tag "${tag}" 'any(.status.traffic[]?; .tag == $tag) | tostring')"
+          if [[ "${has_tag}" == false ]]; then
             echo "Tag ${tag} is already absent; nothing to remove."
             exit 0
           fi
