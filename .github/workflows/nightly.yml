@@ -12,14 +12,13 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: nightly-release
-  cancel-in-progress: true
-
 jobs:
   prepare:
     name: Prepare nightly version
-    if: github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     outputs:
       binary-version: ${{ steps.version.outputs.binary-version }}
@@ -53,6 +52,10 @@ jobs:
   release:
     name: Publish nightly release
     needs: build
+    concurrency:
+      group: nightly-release
+      cancel-in-progress: false
+      queue: max
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -70,11 +73,21 @@ jobs:
           merge-multiple: true
           path: dist
 
-      - name: Move nightly tag
+      - name: Advance nightly tag
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          tag="nightly"
-          git tag --force "${tag}" "${{ github.event.workflow_run.head_sha }}"
-          git push origin "refs/tags/${tag}" --force
+          set -euo pipefail
+          ref=refs/tags/nightly
+          previous=""
+          if git show-ref --verify --quiet "${ref}"; then
+            previous="$(git rev-parse "${ref}")"
+            if ! git merge-base --is-ancestor "${previous}" "${TESTED_SHA}"; then
+              echo "::error::This build would roll back or replace the current nightly history."
+              exit 1
+            fi
+          fi
+          git push --force-with-lease="${ref}:${previous}" origin "${TESTED_SHA}:${ref}"
 
       - name: Publish nightly release
         env:
