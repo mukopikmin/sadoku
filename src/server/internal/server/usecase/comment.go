@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf16"
+	"unicode/utf8"
 )
 
 // HashSource matches JavaScript's FNV-1a over UTF-16 code units, including emoji.
@@ -17,19 +18,116 @@ func HashSource(text string) string {
 	return fmt.Sprintf("%08x", hash)
 }
 func RangeText(markdown string, start, end int) *string {
-	lines := strings.Split(markdown, "\n")
-	if start < 1 || end < start || end > len(lines) {
+	if start < 1 || end < start {
 		return nil
 	}
-	text := strings.Join(lines[start-1:end], "\n")
-	return &text
+	line, offset, first := 1, 0, 0
+	for text := range strings.SplitSeq(markdown, "\n") {
+		if line == start {
+			first = offset
+		}
+		offset += len(text)
+		if line == end {
+			quote := markdown[first:offset]
+			return &quote
+		}
+		offset++ // newline
+		line++
+	}
+	return nil
 }
 
 type lineRange struct{ start, end int }
 
-// mapLines uses the same longest-common-subsequence tie breaking as the old server.
-func mapLines(before, after string) map[int]lineRange {
-	old, new := strings.Split(before, "\n"), strings.Split(after, "\n")
+const maxLineDiffCells = 1_000_000
+
+// The changed middle uses one-based line numbers relative to the common prefix.
+// Equal edges need only offsets, even for very large documents.
+type lineDiff struct {
+	prefix, oldEnd, newEnd, oldCount int
+	middle                           map[int]lineRange
+	uncertain                        bool
+}
+
+func compareLines(before, after string) lineDiff {
+	diff := lineDiff{oldEnd: strings.Count(before, "\n") + 1, newEnd: strings.Count(after, "\n") + 1}
+	diff.oldCount = diff.oldEnd
+	for diff.prefix < min(diff.oldEnd, diff.newEnd) {
+		oldLine, oldRest, _ := strings.Cut(before, "\n")
+		newLine, newRest, _ := strings.Cut(after, "\n")
+		if oldLine != newLine {
+			break
+		}
+		before, after = oldRest, newRest
+		diff.prefix++
+	}
+
+	// Preserve the established LCS tie break on repeated lines whenever the
+	// full remaining table fits. For larger inputs peel off the common tail.
+	fits := func() bool {
+		return diff.oldEnd-diff.prefix+1 <= maxLineDiffCells/(diff.newEnd-diff.prefix+1)
+	}
+	if !fits() {
+		for diff.prefix < min(diff.oldEnd, diff.newEnd) {
+			oldBreak, newBreak := strings.LastIndexByte(before, '\n'), strings.LastIndexByte(after, '\n')
+			if before[oldBreak+1:] != after[newBreak+1:] {
+				break
+			}
+			before, after = before[:max(oldBreak, 0)], after[:max(newBreak, 0)]
+			diff.oldEnd--
+			diff.newEnd--
+		}
+	}
+	if diff.oldEnd == diff.prefix || diff.newEnd == diff.prefix {
+		return diff // Pure insertion or deletion.
+	}
+	if !fits() {
+		diff.uncertain = true
+		return diff
+	}
+	diff.middle = mapLines(strings.Split(before, "\n"), strings.Split(after, "\n"))
+	return diff
+}
+
+func (d lineDiff) rebase(c *Comment) {
+	if c.Stale {
+		return
+	}
+	if d.uncertain && c.StartLine <= d.oldEnd && c.EndLine > d.prefix {
+		c.Stale = true
+		return
+	}
+	var mapped lineRange
+	include := func(start, end int) {
+		if mapped.start == 0 || start < mapped.start {
+			mapped.start = start
+		}
+		mapped.end = max(mapped.end, end)
+	}
+	if first, last := max(c.StartLine, 1), min(c.EndLine, d.prefix); first <= last {
+		include(first, last)
+	}
+	if d.middle != nil {
+		for line := max(c.StartLine, d.prefix+1); line <= min(c.EndLine, d.oldEnd); line++ {
+			if r, ok := d.middle[line-d.prefix]; ok {
+				include(d.prefix+r.start, d.prefix+r.end)
+			}
+		}
+	}
+	last := min(c.EndLine, d.oldCount)
+	if last > d.oldEnd && c.StartLine <= last {
+		shift := d.newEnd - d.oldEnd
+		include(max(c.StartLine, d.oldEnd+1)+shift, last+shift)
+	}
+	if mapped.start == 0 {
+		c.Stale = true
+		c.SourceDeleted = true
+		return
+	}
+	c.StartLine, c.EndLine, c.DisplayLine = mapped.start, mapped.end, mapped.start
+}
+
+func mapLines(old, new []string) map[int]lineRange {
 	width := len(new) + 1
 	lengths := make([]uint32, (len(old)+1)*width)
 	for i := len(old) - 1; i >= 0; i-- {
@@ -87,12 +185,21 @@ func mapChangedLines(before, after []string) map[int]lineRange {
 	if len(before) == 1 && len(after) == 1 {
 		return nil
 	}
-	old, new := []rune(strings.Join(before, "\n")), []rune(strings.Join(after, "\n"))
+	const maxCharacterDiffWork = 1_000_000
+	oldText, newText := strings.Join(before, "\n"), strings.Join(after, "\n")
+	newLength := utf8.RuneCountInString(newText)
+	if newLength == 0 || utf8.RuneCountInString(oldText) > maxCharacterDiffWork/newLength {
+		return nil
+	}
+	if oldText == "" {
+		return nil
+	}
+	old, new := []rune(oldText), []rune(newText)
 	oldLines, newLines := runeLineNumbers(old), runeLineNumbers(new)
 	result := map[int]lineRange{}
 	type region struct{ oldStart, oldEnd, newStart, newEnd int }
 	pending := []region{{0, len(old), 0, len(new)}}
-	work := 1_000_000
+	work := maxCharacterDiffWork
 	for len(pending) > 0 {
 		r := pending[len(pending)-1]
 		pending = pending[:len(pending)-1]
@@ -179,32 +286,15 @@ func ResolveComments(doc Comments, markdown string) Comments {
 		}
 		return currentText(doc, markdown)
 	}
-	var mapping map[int]lineRange
-	if doc.SourceSnapshot != nil {
-		mapping = mapLines(*doc.SourceSnapshot, markdown)
+	var diff lineDiff
+	if doc.SourceSnapshot != nil && len(doc.Comments) > 0 {
+		diff = compareLines(*doc.SourceSnapshot, markdown)
 	}
 	for i := range doc.Comments {
 		c := &doc.Comments[i]
 		c.DisplayLine = c.StartLine
-		if mapping != nil {
-			if c.Stale {
-				continue
-			}
-			start, end := int(^uint(0)>>1), 0
-			for line := c.StartLine; line <= c.EndLine; line++ {
-				if r, ok := mapping[line]; ok {
-					start = min(start, r.start)
-					end = max(end, r.end)
-				}
-			}
-			if end == 0 {
-				c.Stale = true
-				c.SourceDeleted = true
-			} else {
-				c.StartLine = start
-				c.EndLine = end
-				c.DisplayLine = start
-			}
+		if doc.SourceSnapshot != nil {
+			diff.rebase(c)
 			continue
 		}
 		if c.SourceText == nil {
