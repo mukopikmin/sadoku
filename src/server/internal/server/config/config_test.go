@@ -42,7 +42,14 @@ func TestSettingsPreserveExistingConfiguration(t *testing.T) {
 	t.Setenv("APPDATA", "")
 	t.Setenv("SADOKU_COMMENTS_DIR", "")
 	t.Setenv("MDVIEW_COMMENTS_DIR", "")
-	if err := AtomicWrite(Path(), []byte("commentsDirectory = '/old/comments'\ncustom = 'keep'\nshow_html_comments = false\n"), 0600); err != nil {
+	if err := AtomicWrite(Path(), []byte(`commentsDirectory = '/old/comments'
+custom = 'keep'
+show_html_comments = false
+
+[start]
+port = 4000
+no_open = true
+`), 0600); err != nil {
 		t.Fatal(err)
 	}
 	s, _, err := Read()
@@ -58,6 +65,10 @@ func TestSettingsPreserveExistingConfiguration(t *testing.T) {
 	s, extra, err := Read()
 	if err != nil || extra["custom"] != "keep" || extra["commentsDirectory"] != "/old/comments" || s.ShowHTMLComments || len(s.ExcludedDirectories) != 0 {
 		t.Fatalf("save %+v %+v %v", s, extra, err)
+	}
+	start, err := ParseStartDefaults(extra)
+	if err != nil || start.Port != 4000 || !start.NoOpen {
+		t.Fatalf("saved start defaults: %+v, %v", start, err)
 	}
 	directory, err := CommentsDirectory()
 	if err != nil || directory != "/old/comments" {
