@@ -57,6 +57,19 @@ const LayoutHarness = ({ ranges }: { ranges: RangeHighlight[] }) => {
       <div className="commentable-block" data-source-line="4">
         <div className="commentable-content" data-testid="second" />
       </div>
+      <div className="commentable-table" data-testid="table">
+        <table>
+          <tbody>
+            <tr
+              className="commentable-block commentable-content"
+              data-source-line="5"
+              data-testid="row"
+            >
+              <td>Cell</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
@@ -240,7 +253,7 @@ describe("commentable block layout", () => {
     const preview = screen.getByTestId("preview");
     const first = screen.getByTestId("first");
     const second = screen.getByTestId("second");
-    expect(preview.dataset.lines).toBe("1,4");
+    expect(preview.dataset.lines).toBe("1,4,5");
     expect(resizeObservers).toHaveLength(1);
     expect(resizeObservers[0].observe).toHaveBeenCalledWith(preview);
 
@@ -268,5 +281,42 @@ describe("commentable block layout", () => {
 
     unmount();
     expect(resizeObservers[0].disconnect).toHaveBeenCalledOnce();
+  });
+
+  it("extends only the table's highlight when the table grows past the text", () => {
+    render(
+      <LayoutHarness
+        ranges={[{ startLine: 4, endLine: 5, kind: "selection" }]}
+      />,
+    );
+    const preview = screen.getByTestId("preview");
+    const table = screen.getByTestId("table");
+    preview.getBoundingClientRect = () => new DOMRect(200, 100, 800, 400);
+    screen.getByTestId("second").getBoundingClientRect = () =>
+      new DOMRect(200, 120, 800, 30);
+    screen.getByTestId("row").getBoundingClientRect = () =>
+      new DOMRect(80, 160, 1200, 40);
+    table.getBoundingClientRect = () => new DOMRect(80, 155, 1040, 50);
+
+    expect(resizeObservers[0].observe).toHaveBeenCalledWith(table);
+    act(() => {
+      resizeObservers[0].callback(
+        [],
+        resizeObservers[0] as unknown as ResizeObserver,
+      );
+    });
+
+    expect(JSON.parse(preview.dataset.layouts ?? "[]")).toEqual([
+      { startLine: 4, endLine: 5, kind: "selection", top: 20, bottom: 50 },
+      {
+        startLine: 4,
+        endLine: 5,
+        kind: "selection",
+        top: 60,
+        bottom: 100,
+        outsetLeft: 120,
+        outsetRight: 120,
+      },
+    ]);
   });
 });
