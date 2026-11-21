@@ -24,42 +24,6 @@ func (s *Service) GetStatistics(ctx context.Context, req *connect.Request[pb.Get
 	res.Header().Set("Cache-Control", "no-store")
 	return res, nil
 }
-func (s *Service) ListDocuments(ctx context.Context, req *connect.Request[pb.ListDocumentsRequest]) (*connect.Response[pb.ListDocumentsResponse], error) {
-	out := new(pb.ListDocumentsResponse)
-	if err := invoke(ctx, s, "ListDocuments", req.Msg, out); err != nil {
-		return nil, err
-	}
-	res := connect.NewResponse(out)
-	res.Header().Set("Cache-Control", "no-store")
-	return res, nil
-}
-func (s *Service) CreateDocument(ctx context.Context, req *connect.Request[pb.CreateDocumentRequest]) (*connect.Response[pb.DocumentSummary], error) {
-	out := new(pb.DocumentSummary)
-	if err := invoke(ctx, s, "CreateDocument", req.Msg, out); err != nil {
-		return nil, err
-	}
-	res := connect.NewResponse(out)
-	res.Header().Set("Cache-Control", "no-store")
-	return res, nil
-}
-func (s *Service) UpdateDocumentTitle(ctx context.Context, req *connect.Request[pb.UpdateDocumentTitleRequest]) (*connect.Response[pb.DocumentSummary], error) {
-	out := new(pb.DocumentSummary)
-	if err := invoke(ctx, s, "UpdateDocumentTitle", req.Msg, out); err != nil {
-		return nil, err
-	}
-	res := connect.NewResponse(out)
-	res.Header().Set("Cache-Control", "no-store")
-	return res, nil
-}
-func (s *Service) GetDocument(ctx context.Context, req *connect.Request[pb.GetDocumentRequest]) (*connect.Response[pb.GetDocumentResponse], error) {
-	out := new(pb.GetDocumentResponse)
-	if err := invoke(ctx, s, "GetDocument", req.Msg, out); err != nil {
-		return nil, err
-	}
-	res := connect.NewResponse(out)
-	res.Header().Set("Cache-Control", "no-store")
-	return res, nil
-}
 func (s *Service) GetTableLayouts(ctx context.Context, req *connect.Request[pb.GetTableLayoutsRequest]) (*connect.Response[pb.GetTableLayoutsResponse], error) {
 	out := new(pb.GetTableLayoutsResponse)
 	if err := invoke(ctx, s, "GetTableLayouts", req.Msg, out); err != nil {
@@ -72,33 +36,6 @@ func (s *Service) GetTableLayouts(ctx context.Context, req *connect.Request[pb.G
 func (s *Service) UpdateTableLayout(ctx context.Context, req *connect.Request[pb.UpdateTableLayoutRequest]) (*connect.Response[pb.TableLayout], error) {
 	out := new(pb.TableLayout)
 	if err := invoke(ctx, s, "UpdateTableLayout", req.Msg, out); err != nil {
-		return nil, err
-	}
-	res := connect.NewResponse(out)
-	res.Header().Set("Cache-Control", "no-store")
-	return res, nil
-}
-func (s *Service) ListDocumentRevisions(ctx context.Context, req *connect.Request[pb.ListDocumentRevisionsRequest]) (*connect.Response[pb.ListDocumentRevisionsResponse], error) {
-	out := new(pb.ListDocumentRevisionsResponse)
-	if err := invoke(ctx, s, "ListDocumentRevisions", req.Msg, out); err != nil {
-		return nil, err
-	}
-	res := connect.NewResponse(out)
-	res.Header().Set("Cache-Control", "no-store")
-	return res, nil
-}
-func (s *Service) GetDocumentRevision(ctx context.Context, req *connect.Request[pb.GetDocumentRevisionRequest]) (*connect.Response[pb.DocumentRevision], error) {
-	out := new(pb.DocumentRevision)
-	if err := invoke(ctx, s, "GetDocumentRevision", req.Msg, out); err != nil {
-		return nil, err
-	}
-	res := connect.NewResponse(out)
-	res.Header().Set("Cache-Control", "no-store")
-	return res, nil
-}
-func (s *Service) RestoreDocumentRevision(ctx context.Context, req *connect.Request[pb.RestoreDocumentRevisionRequest]) (*connect.Response[pb.RestoreDocumentRevisionResponse], error) {
-	out := new(pb.RestoreDocumentRevisionResponse)
-	if err := invoke(ctx, s, "RestoreDocumentRevision", req.Msg, out); err != nil {
 		return nil, err
 	}
 	res := connect.NewResponse(out)
