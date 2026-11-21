@@ -61,6 +61,9 @@ describe("App", () => {
         if (url === "/__sadoku/directory-status") {
           return Promise.resolve(Response.json({ state: "ready" }));
         }
+        if (url === "/__sadoku/settings") {
+          return Promise.resolve(Response.json({ theme: "light" }));
+        }
         if (url === "/__sadoku/github-account") {
           return Promise.resolve(Response.json({ ok: false }));
         }
@@ -93,7 +96,7 @@ describe("App", () => {
     await waitFor(() => expect(document.activeElement).toBe(settings));
     expect(statisticsRequests).not.toHaveBeenCalled();
     const directoryInput =
-      within(settings).getByPlaceholderText("Add a directory");
+      await within(settings).findByPlaceholderText("Add a directory");
     fireEvent.change(directoryInput, { target: { value: "draft" } });
 
     for (const closeWithEscape of [false, true]) {
@@ -1245,7 +1248,7 @@ describe("App", () => {
       expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull(),
     );
     expect(screen.queryByText("HTML COMMENT")).toBeNull();
-    expect(screen.getByText("Before")).not.toBeNull();
+    expect(await screen.findByText("Before")).not.toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Documents" }));
     fireEvent.click(await screen.findByRole("treeitem", { name: "second.md" }));
     await screen.findByText("Before");
@@ -1363,7 +1366,7 @@ describe("App", () => {
     expect(screen.getByText("100%")).not.toBeNull();
 
     fireEvent.click(increaseTextSize);
-    expect(screen.getByText("110%")).not.toBeNull();
+    expect(await screen.findByText("110%")).not.toBeNull();
     expect(
       document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
     ).toBe("1.1");

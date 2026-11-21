@@ -1,5 +1,4 @@
 import type { RefObject } from "react";
-import type { ResolvedPreviewSettings } from "../models/theme";
 import type { DocumentTag } from "../models/document";
 import type { SettingsDialogProps } from "./SettingsDialog";
 import { DocumentInstructionsDialog } from "./DocumentInstructionsDialog";
@@ -18,10 +17,11 @@ type PreviewDialogHostProps = {
   documentTagsDialog: Disclosure;
   globalInstructions: Disclosure;
   globalInstructionsTriggerRef: RefObject<HTMLButtonElement | null>;
-  settings: ResolvedPreviewSettings;
+  settingsState: SettingsDialogProps["state"];
+  onReloadSettings: SettingsDialogProps["onReloadSettings"];
   settingsActions: Omit<
     SettingsDialogProps,
-    "open" | "onOpenChange" | "settings"
+    "open" | "onOpenChange" | "state" | "onReloadSettings"
   >;
   settingsDialog: Disclosure;
   tagsDialog: Disclosure;
@@ -36,7 +36,8 @@ export const PreviewDialogHost = ({
   documentTagsDialog,
   globalInstructions,
   globalInstructionsTriggerRef,
-  settings,
+  settingsState,
+  onReloadSettings,
   settingsActions,
   settingsDialog,
   tagsDialog,
@@ -81,7 +82,8 @@ export const PreviewDialogHost = ({
       {...settingsActions}
       onOpenChange={settingsDialog.setOpen}
       open={settingsDialog.open}
-      settings={settings}
+      state={settingsState}
+      onReloadSettings={onReloadSettings}
     />
   </>
 );

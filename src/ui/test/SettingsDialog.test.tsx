@@ -34,18 +34,24 @@ it("closes statistics when settings closes and keeps it closed on reopening", as
     onFontScaleChange: vi.fn(),
     onMarkdownExtensionsChange: vi.fn(),
     onOpenChange: vi.fn(),
+    onReloadSettings: vi.fn(),
+    onShowHighlightBoundariesChange: vi.fn(),
     onShowHtmlCommentsChange: vi.fn(),
     onThemeModeChange: vi.fn(),
     open: true,
-    settings: {
-      codeWrap: "scroll",
-      excludedDirectories: [],
-      fontScale: 1,
-      markdownExtensions: [".md"],
-      maxDepth: 8,
-      maxFiles: 500,
-      showHtmlComments: true,
-      theme: "light",
+    state: {
+      status: "ready",
+      settings: {
+        codeWrap: "scroll",
+        excludedDirectories: [],
+        fontScale: 1,
+        markdownExtensions: [".md"],
+        maxDepth: 8,
+        maxFiles: 500,
+        showHighlightBoundaries: false,
+        showHtmlComments: true,
+        theme: "light",
+      },
     },
   };
   const view = render(<SettingsDialog {...props} />);
@@ -63,4 +69,40 @@ it("closes statistics when settings closes and keeps it closed on reopening", as
   expect(
     screen.queryByRole("dialog", { name: "Database statistics" }),
   ).toBeNull();
+});
+
+it("shows a save failure in the settings dialog", () => {
+  render(
+    <SettingsDialog
+      onCodeWrapModeChange={vi.fn()}
+      onDirectoryLimitsChange={vi.fn()}
+      onExcludedDirectoriesChange={vi.fn()}
+      onFontScaleChange={vi.fn()}
+      onMarkdownExtensionsChange={vi.fn()}
+      onOpenChange={vi.fn()}
+      onReloadSettings={vi.fn()}
+      onShowHighlightBoundariesChange={vi.fn()}
+      onShowHtmlCommentsChange={vi.fn()}
+      onThemeModeChange={vi.fn()}
+      open
+      state={{
+        status: "error",
+        operation: "save",
+        message: "Offline",
+        settings: {
+          codeWrap: "scroll",
+          excludedDirectories: [],
+          fontScale: 1,
+          markdownExtensions: [".md"],
+          maxDepth: 8,
+          maxFiles: 500,
+          showHighlightBoundaries: false,
+          showHtmlComments: true,
+          theme: "light",
+        },
+      }}
+    />,
+  );
+  expect(screen.getByText("Could not save settings")).toBeTruthy();
+  expect(screen.getByText("Offline")).toBeTruthy();
 });
