@@ -31,6 +31,10 @@ type lineRange struct{ start, end int }
 func mapLines(before, after string) map[int]lineRange {
 	old, new := strings.Split(before, "\n"), strings.Split(after, "\n")
 	width := len(new) + 1
+	const maxCells = 16 * 1024 * 1024
+	if len(old)+1 > maxCells/width {
+		return nil
+	}
 	lengths := make([]uint32, (len(old)+1)*width)
 	for i := len(old) - 1; i >= 0; i-- {
 		for j := len(new) - 1; j >= 0; j-- {
@@ -182,6 +186,9 @@ func ResolveComments(doc Comments, markdown string) Comments {
 	var mapping map[int]lineRange
 	if doc.SourceSnapshot != nil {
 		mapping = mapLines(*doc.SourceSnapshot, markdown)
+		if mapping == nil {
+			return resolveLargeCommentDiff(doc, markdown)
+		}
 	}
 	for i := range doc.Comments {
 		c := &doc.Comments[i]
@@ -240,6 +247,37 @@ func ResolveComments(doc Comments, markdown string) Comments {
 	doc.SourceSnapshot = &markdown
 	return currentText(doc, markdown)
 }
+
+// For large diffs, keep anchors whose previous text has exactly one match in
+// the new document. Ambiguous or edited anchors become stale.
+func resolveLargeCommentDiff(doc Comments, markdown string) Comments {
+	previous := strings.Split(*doc.SourceSnapshot, "\n")
+	source := "\n" + markdown + "\n"
+	for i := range doc.Comments {
+		c := &doc.Comments[i]
+		c.DisplayLine = c.StartLine
+		if c.Stale {
+			continue
+		}
+		if c.StartLine < 1 || c.EndLine < c.StartLine || c.EndLine > len(previous) {
+			c.Stale = true
+			continue
+		}
+		anchor := "\n" + strings.Join(previous[c.StartLine-1:c.EndLine], "\n") + "\n"
+		match := strings.Index(source, anchor)
+		if match < 0 || strings.Contains(source[match+1:], anchor) {
+			c.Stale = true
+			continue
+		}
+		start := strings.Count(source[:match], "\n") + 1
+		c.EndLine = start + c.EndLine - c.StartLine
+		c.StartLine, c.DisplayLine = start, start
+	}
+	doc.PreviousSourceSnapshot = doc.SourceSnapshot
+	doc.SourceSnapshot = &markdown
+	return currentText(doc, markdown)
+}
+
 func currentText(doc Comments, markdown string) Comments {
 	for i := range doc.Comments {
 		c := &doc.Comments[i]

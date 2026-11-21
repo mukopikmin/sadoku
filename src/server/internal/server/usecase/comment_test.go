@@ -241,3 +241,26 @@ func TestCommentValidationAndReplyLifecycle(t *testing.T) {
 		t.Fatal("deleted unknown comment")
 	}
 }
+
+func TestLargeCommentDiffKeepsOnlyUnambiguousAnchors(t *testing.T) {
+	lines := make([]string, 20000)
+	for i := range lines {
+		lines[i] = fmt.Sprintf("line %d", i+1)
+	}
+	before := strings.Join(lines, "\n")
+	after := "Inserted\n" + before + "\n" + lines[9]
+	comments := Comments{
+		SourceSnapshot: &before,
+		Comments: []Comment{
+			{StartLine: 20000, EndLine: 20000, OriginalStartLine: 19999},
+			{StartLine: 10, EndLine: 10, OriginalStartLine: 10},
+		},
+	}
+	got := ResolveComments(comments, after).Comments
+	if got[0].Stale || got[0].StartLine != 20001 || got[0].OriginalStartLine != 19999 {
+		t.Fatalf("unique anchor was lost: %+v", got[0])
+	}
+	if !got[1].Stale || got[1].StartLine != 10 {
+		t.Fatalf("ambiguous anchor was moved: %+v", got[1])
+	}
+}
