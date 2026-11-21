@@ -79,6 +79,7 @@ type Comment struct {
 	SourceDeleted     bool    `json:"sourceDeleted,omitempty"`
 }
 type Comments struct {
+	Version                int64     `json:"-"` // Storage version used to reject stale writes.
 	FilePath               string    `json:"filePath"`
 	Comments               []Comment `json:"comments"`
 	SourceSnapshot         *string   `json:"-"`
