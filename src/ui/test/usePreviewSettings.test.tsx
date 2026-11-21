@@ -91,17 +91,34 @@ it("exposes save failures without rolling back the selected settings and retries
   expect(document.documentElement.dataset.showHighlightBoundaries).toBe("true");
 });
 
-it("reports a load failure while keeping usable defaults", async () => {
+it("keeps the OS theme after a load failure and applies a selected theme even when saving fails", async () => {
+  vi.stubGlobal("matchMedia", () => ({ matches: true }));
   vi.mocked(api.loadSettings).mockRejectedValue(new Error("Unavailable"));
+  vi.mocked(api.saveSettings).mockRejectedValue(new Error("Offline"));
   const { result } = renderHook(usePreviewSettings, queryHook());
   await waitFor(() =>
     expect(result.current.state).toMatchObject({
       status: "error",
       operation: "load",
       message: "Unavailable",
-      settings: { fontScale: 1 },
+      settings: { fontScale: 1, theme: "dark" },
     }),
   );
+  expect(document.documentElement.dataset.theme).toBe("dark");
+  expect(document.documentElement.classList.contains("dark")).toBe(true);
+  act(() => result.current.changeThemeMode("light"));
+  await waitFor(() =>
+    expect(result.current.state).toMatchObject({
+      status: "error",
+      operation: "save",
+      message: "Offline",
+      settings: { theme: "light" },
+    }),
+  );
+  expect(document.documentElement.dataset.theme).toBe("light");
+  expect(document.documentElement.classList.contains("light")).toBe(true);
+  expect(document.documentElement.classList.contains("dark")).toBe(false);
+  expect(document.documentElement.style.colorScheme).toBe("light");
 });
 
 it("serializes writes so an earlier save cannot overwrite the latest settings", async () => {

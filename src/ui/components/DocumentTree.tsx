@@ -17,8 +17,14 @@ export const DocumentTree = ({
   onCreateDocument,
 }: DocumentTreeProps) => {
   const tree = useDocumentTree(documents);
-  const { tags, activeTagIds, filteredDocuments, rootNode, tagSearch } =
-    tree.state;
+  const {
+    tags,
+    selectedTags,
+    matchingTags,
+    filteredDocuments,
+    rootNode,
+    tagSearch,
+  } = tree.state;
 
   return (
     <VStack align="stretch" gap="3">
@@ -28,10 +34,11 @@ export const DocumentTree = ({
           filteredDocumentCount={filteredDocuments.length}
           onClearFilters={tree.clear}
           onSearchChange={tree.setTagSearch}
-          onSelectedTagIdsChange={tree.setSelectedTagIds}
+          onSelectTag={tree.selectTag}
+          onRemoveTag={tree.removeTag}
           searchValue={tagSearch}
-          selectedTagIds={activeTagIds}
-          tags={tags}
+          selectedTags={selectedTags}
+          matchingTags={matchingTags}
         />
       )}
       <VStack

@@ -29,19 +29,60 @@ it("filters documents, reconciles removed tags and clears search with filters", 
     initialProps: { docs: documents },
   });
   act(() => {
-    result.current.setSelectedTagIds([1]);
+    result.current.selectTag(1);
     result.current.setTagSearch("review");
   });
   expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
     1,
   ]);
   rerender({ docs: documents.slice(1) });
-  expect(result.current.state.activeTagIds).toEqual([]);
+  expect(result.current.state.selectedTags).toEqual([]);
   expect(result.current.state.filteredDocuments).toHaveLength(2);
   act(() => result.current.clear());
   expect(result.current.state.tagSearch).toBe("");
   rerender({ docs: [] });
   expect(result.current.state.status).toBe("empty");
+});
+
+it("searches tag choices, combines selections and removes only the requested filter", () => {
+  const urgent = { ...tag, id: 2, name: "urgent" };
+  const docs = documents.map((document) => {
+    if (document.id === 2) return { ...document, tags: [urgent] };
+    return document;
+  });
+  const { result } = renderHook(() => useDocumentTree(docs));
+  act(() => result.current.setTagSearch(" REVIEW "));
+  expect(result.current.state.matchingTags).toEqual([tag]);
+  act(() => {
+    result.current.selectTag(1);
+    result.current.selectTag(2);
+  });
+  expect(result.current.state.tagSearch).toBe("");
+  expect(result.current.state.selectedTags).toEqual([tag, urgent]);
+  expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
+    1, 2,
+  ]);
+  act(() => result.current.setTagSearch("urgent"));
+  act(() => result.current.removeTag(1));
+  expect(result.current.state.selectedTags).toEqual([urgent]);
+  expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
+    2,
+  ]);
+  expect(result.current.state.tagSearch).toBe("urgent");
+  act(() => result.current.clear());
+  expect(result.current.state.selectedTags).toEqual([]);
+  expect(result.current.state.tagSearch).toBe("");
+  expect(result.current.state.filteredDocuments).toEqual(docs);
+});
+
+it("deselects a selected tag and clears the search when selecting it again", () => {
+  const { result } = renderHook(() => useDocumentTree(documents));
+  act(() => result.current.selectTag(1));
+  act(() => result.current.setTagSearch("review"));
+  act(() => result.current.selectTag(1));
+  expect(result.current.state.selectedTags).toEqual([]);
+  expect(result.current.state.tagSearch).toBe("");
+  expect(result.current.state.filteredDocuments).toEqual(documents);
 });
 
 it("lists only immediate directory children and closes before navigating", () => {
