@@ -161,15 +161,19 @@ func (r *Repository) InitializeSnapshot(ctx context.Context, id int64, markdown 
 }
 func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, error) {
 	doc := u.Comments{Comments: []u.Comment{}}
-	if err := r.DB.QueryRowContext(ctx, "SELECT file_path FROM comment_document WHERE id=?", id).Scan(&doc.FilePath); err != nil {
-		return doc, err
-	}
-	var err error
-	doc.SourceSnapshot, doc.PreviousSourceSnapshot, err = r.Snapshot(ctx, id)
+	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return doc, err
 	}
-	rows, err := r.DB.QueryContext(ctx, `SELECT id,local_id,body,author_type,start_line,end_line,original_start_line,original_end_line,created_at,updated_at,resolved,stale,resolved_at,resolved_by_type,source_hash,source_text,source_deleted FROM comment WHERE document_id=? ORDER BY local_id`, id)
+	defer func() { _ = tx.Rollback() }()
+	err = tx.QueryRowContext(ctx, `SELECT file_path,comment_version,
+		(SELECT markdown FROM document_revision WHERE id=d.source_revision_id),
+		(SELECT markdown FROM document_revision WHERE id=d.previous_source_revision_id)
+		FROM comment_document d WHERE id=?`, id).Scan(&doc.FilePath, &doc.Version, &doc.SourceSnapshot, &doc.PreviousSourceSnapshot)
+	if err != nil {
+		return doc, err
+	}
+	rows, err := tx.QueryContext(ctx, `SELECT id,local_id,body,author_type,start_line,end_line,original_start_line,original_end_line,created_at,updated_at,resolved,stale,resolved_at,resolved_by_type,source_hash,source_text,source_deleted FROM comment WHERE document_id=? ORDER BY local_id`, id)
 	if err != nil {
 		return doc, err
 	}
@@ -197,7 +201,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 	}
 	for i, internal := range ids {
 		if err := func() error {
-			replies, err := r.DB.QueryContext(ctx, "SELECT local_id,body,author_type,created_at,updated_at,review_requested FROM comment_reply WHERE comment_id=? ORDER BY local_id", internal)
+			replies, err := tx.QueryContext(ctx, "SELECT local_id,body,author_type,created_at,updated_at,review_requested FROM comment_reply WHERE comment_id=? ORDER BY local_id", internal)
 			if err != nil {
 				return err
 			}
@@ -214,7 +218,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 			return doc, err
 		}
 	}
-	return doc, nil
+	return doc, tx.Commit()
 }
 func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
@@ -224,8 +228,15 @@ func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments)
 	defer func() { _ = tx.Rollback() }()
 	var source string
 	var old *string
-	var currentID *int64
-	if err = tx.QueryRowContext(ctx, "SELECT file_path,source_revision_id,(SELECT markdown FROM document_revision WHERE id=source_revision_id) FROM comment_document WHERE id=?", id).Scan(&source, &currentID, &old); err != nil {
+	// Acquire the write lock and compare the version before replacing any rows.
+	err = tx.QueryRowContext(ctx, `UPDATE comment_document
+		SET comment_version=comment_version+1
+		WHERE id=? AND comment_version=?
+		RETURNING file_path,(SELECT markdown FROM document_revision WHERE id=source_revision_id)`, id, doc.Version).Scan(&source, &old)
+	if errors.Is(err, sql.ErrNoRows) {
+		return u.Fail("aborted", "Comments changed. Reload them and retry.")
+	}
+	if err != nil {
 		return err
 	}
 	if doc.SourceSnapshot != nil && (old == nil || *old != *doc.SourceSnapshot) {
