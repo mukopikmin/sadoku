@@ -81,21 +81,27 @@ Set `SADOKU_COMMENTS_DIR` to change the storage directory. Settings are stored i
 `$XDG_CONFIG_HOME/sadoku/config.toml` (default `~/.config/sadoku/config.toml`) on
 macOS/Linux, or `%APPDATA%\sadoku\config.toml` on Windows.
 
-Set frequently used `sadoku start` options in `[start]` in that file.
+Set frequently used `sadoku start` options in `[start]` in that file. Place the
+directory discovery limits above `[start]` to keep them at the top level.
 
 ```toml
+directory_max_depth = 2
+directory_max_files = 20
+
 [start]
+host = "127.0.0.1"
 port = 4000
 no_open = true
+keep_alive = false
+no_sync = false
+trust_forwarded_prefix = false
 ```
 
 Each explicit CLI option overrides its configured value for that run. For
 example, `sadoku start README.md --port 4500 --no-open=false` starts looking for
-an available port at 4500 and opens the browser. `[start]` also accepts `host`,
-`keep_alive`, `no_sync`, and `trust_forwarded_prefix`. Use `=false` on the
-corresponding CLI flag to turn off a configured boolean. The top-level
-`directory_max_depth` and `directory_max_files` settings supply the defaults for
-`--max-depth` and `--max-files`.
+an available port at 4500 and opens the browser. Use `=false` on the corresponding
+CLI flag to turn off a configured boolean. Use `--max-depth` and `--max-files` to
+override the directory discovery limits.
 
 ## Development
 
