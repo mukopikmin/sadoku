@@ -70,6 +70,14 @@ Options:
   --channel         Update channel.
   -v, --version     Show version.
   -h, --help        Show this help message.
+
+Start defaults
+  Example settings in your Sadoku config.toml
+    [start]
+    port = 4000
+    no_open = true
+  Explicit options override settings for one run. Use --no-open=false to open
+  the browser when no_open is enabled.
 `
 
 type Options struct {
@@ -85,6 +93,7 @@ func Parse(args []string) (Options, error) {
 	o := Options{Values: map[string]string{}, Flags: map[string]bool{}}
 	// Expand short aliases, including clusters such as -hv and attached -p3334.
 	missingContent := false
+	var noOpenAssignment string
 	expanded := []string{}
 	for i, arg := range args {
 		if arg == "--" {
@@ -132,7 +141,12 @@ func Parse(args []string) (Options, error) {
 		name, value, hasValue := strings.Cut(strings.TrimPrefix(a, "--"), "=")
 		if booleanOptions[name] {
 			if name == "no-open" && hasValue {
-				return o, usageError("Unknown option: %s", a)
+				if value != "true" && value != "false" {
+					return o, usageError("Unknown option: %s", a)
+				}
+				if noOpenAssignment == "" {
+					noOpenAssignment = a
+				}
 			}
 			if !hasValue && i+1 < len(expanded) && (expanded[i+1] == "true" || expanded[i+1] == "false") {
 				i++
@@ -157,6 +171,9 @@ func Parse(args []string) (Options, error) {
 		}
 		o.Values[name] = value
 	}
+	if noOpenAssignment != "" && (len(o.Words) == 0 || o.Words[0] != "start") {
+		return o, usageError("Unknown option: %s", noOpenAssignment)
+	}
 	if missingContent && len(o.Words) >= 2 && o.Words[0] == "instruction" && o.Words[1] == "set" {
 		return o, usageError("--content requires a value. Pass --content \"\" to clear the instruction.")
 	}
@@ -176,7 +193,7 @@ type StartOptions struct {
 	Open, KeepAlive, NoSync, TrustForwardedPrefix bool
 	MaxDepth, MaxFiles                            *int
 }
-type Start func(context.Context, StartOptions) error
+type Start func(context.Context, StartOptions, config.Settings) error
 
 func Execute(ctx context.Context, args []string, out io.Writer, start Start) error {
 	o, err := Parse(args)
@@ -203,36 +220,15 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		if len(words) != 2 {
 			return usageError("Missing Markdown file or directory.")
 		}
-		options := StartOptions{Source: words[1], Host: "127.0.0.1", Port: 3334, Open: !o.Flags["no-open"], KeepAlive: o.Flags["keep-alive"], NoSync: o.Flags["no-sync"], TrustForwardedPrefix: o.Flags["trust-forwarded-prefix"]}
-		if v := o.Values["host"]; v != "" {
-			options.Host = v
+		settings, defaults, err := config.ReadForStart()
+		if err != nil {
+			return err
 		}
-		if v := o.Values["port"]; v != "" {
-			n, e := number(v, "port", 1)
-			if e != nil || n > 65535 {
-				return fmt.Errorf("invalid port")
-			}
-			options.Port = int(n)
+		options, err := startOptions(o, defaults)
+		if err != nil {
+			return err
 		}
-		for _, key := range []string{"max-depth", "max-files"} {
-			if v, ok := o.Values[key]; ok {
-				minimum := int64(0)
-				if key == "max-files" {
-					minimum = 1
-				}
-				n, e := number(v, key, minimum)
-				if e != nil {
-					return e
-				}
-				value := int(n)
-				if key == "max-depth" {
-					options.MaxDepth = &value
-				} else {
-					options.MaxFiles = &value
-				}
-			}
-		}
-		return start(ctx, options)
+		return start(ctx, options, settings)
 	}
 	if command == "update" {
 		if len(words) != 1 {

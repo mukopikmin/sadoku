@@ -35,6 +35,16 @@ func TestLegacyCLITranscripts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	expectedHelp := strings.TrimSuffix(string(help), "\n") + `
+Start defaults
+  Example settings in your Sadoku config.toml
+    [start]
+    port = 4000
+    no_open = true
+  Explicit options override settings for one run. Use --no-open=false to open
+  the browser when no_open is enabled.
+
+`
 	var cases []struct {
 		Args           []string
 		Files          map[string]string
@@ -119,7 +129,7 @@ func TestLegacyCLITranscripts(t *testing.T) {
 				code = 1
 			}
 			for _, stream := range []struct{ name, want, got string }{{"stdout", tc.Stdout, normalize(stdout.String())}, {"stderr", tc.Stderr, normalize(stderr.String())}} {
-				stream.want = strings.ReplaceAll(stream.want, "$HELP", string(help))
+				stream.want = strings.ReplaceAll(stream.want, "$HELP", expectedHelp)
 				if stream.want != stream.got {
 					offset := 0
 					for offset < len(stream.want) && offset < len(stream.got) && stream.want[offset] == stream.got[offset] {
