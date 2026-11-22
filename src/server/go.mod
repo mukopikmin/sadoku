@@ -10,7 +10,7 @@ require (
 	github.com/nlnwa/whatwg-url v0.6.2
 	github.com/pelletier/go-toml/v2 v2.4.3
 	golang.org/x/sys v0.50.0
-	golang.org/x/text v0.43.0
+	golang.org/x/text v0.44.0
 	google.golang.org/protobuf v1.36.12
 )
 
