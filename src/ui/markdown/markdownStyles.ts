@@ -51,6 +51,17 @@ export const markdownStyles = `
     position: relative;
   }
 
+  /* Let standalone tables use the space around the text column. */
+  .document-preview-content > .markdown-preview > .markdown-table,
+  .document-preview-content > .markdown-preview > .document-diff-addition > .markdown-table,
+  .document-preview-content > .markdown-preview > .document-diff-deletion .markdown-preview > .markdown-table {
+    align-self: center;
+    background-color: var(--markdown-highlight-bg, transparent);
+    inline-size: max-content;
+    min-inline-size: 100%;
+    max-inline-size: calc(100% + max(0px, 100vi - var(--document-max-width)));
+  }
+
   .markdown-range-highlights {
     inset: 0;
     pointer-events: none;

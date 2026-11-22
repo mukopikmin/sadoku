@@ -187,6 +187,13 @@ describe("MarkdownPreview table comments", () => {
   it("highlights and selects individual rows without remounting the table", () => {
     const { container } = renderMarkdown(markdown);
     const table = screen.getByRole("table");
+    vi.spyOn(
+      container.querySelector(".markdown-preview")!,
+      "getBoundingClientRect",
+    ).mockReturnValue(new DOMRect(240, 0, 880, 300));
+    vi.spyOn(table.parentElement!, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(48, 0, 1264, 300),
+    );
     fireEvent.mouseOver(screen.getByText("One"));
     expect(
       container
@@ -194,11 +201,13 @@ describe("MarkdownPreview table comments", () => {
         ?.getAttribute("data-start-line"),
     ).toBe("3");
     fireEvent.click(screen.getByText("Two"));
-    const highlight = container.querySelector(
+    const highlight = container.querySelector<HTMLElement>(
       ".markdown-range-highlight-selection",
     );
     expect(highlight?.getAttribute("data-start-line")).toBe("4");
     expect(highlight?.getAttribute("data-end-line")).toBe("4");
+    expect(highlight?.style.left).toBe("-192px");
+    expect(highlight?.style.right).toBe("-192px");
     expect(screen.getByRole("table")).toBe(table);
   });
 });

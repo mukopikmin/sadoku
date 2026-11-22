@@ -21,17 +21,27 @@ type Props = {
   containerClassName?: string;
 };
 
-export const ResizableMarkdownTable = ({ startLine, ...props }: Props) => {
+export const ResizableMarkdownTable = ({
+  startLine,
+  containerClassName,
+  ...props
+}: Props) => {
   const context = useContext(TableLayoutContext);
   const layout =
     context?.state.status === "ready"
       ? context.state.tables.find((table) => table.startLine === startLine)
       : undefined;
-  if (!layout || !context) return <StaticMarkdownTable {...props} />;
+  const className = containerClassName
+    ? `markdown-table ${containerClassName}`
+    : "markdown-table";
+  if (!layout || !context) {
+    return <StaticMarkdownTable {...props} containerClassName={className} />;
+  }
   return (
     <ManagedMarkdownTable
       key={layout.id}
       {...props}
+      containerClassName={className}
       layout={layout}
       save={context.save}
     />

@@ -68,7 +68,8 @@ export const DocumentPreviewPage = ({
     <Container
       as="main"
       overflowAnchor="none"
-      maxW="980px"
+      maxW="var(--document-max-width)"
+      css={{ "--document-max-width": "980px" }}
       px={{ base: "8", md: "12" }}
       pt="0"
       pb="8"
@@ -140,7 +141,7 @@ export const DocumentPreviewPage = ({
         </Text>
       )}
       {view === "preview" ? (
-        <Box ref={previewRef}>
+        <Box className="document-preview-content" ref={previewRef}>
           <MarkdownPreviewPage
             documentId={documentId}
             documentPath={documentPath}
