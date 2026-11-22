@@ -103,6 +103,10 @@ an available port at 4500 and opens the browser. Use `=false` on the correspondi
 CLI flag to turn off a configured boolean. Use `--max-depth` and `--max-files` to
 override the directory discovery limits.
 
+`sadoku start` checks the configuration before applying CLI overrides. If the
+TOML is malformed, a `[start]` key is unknown, or a setting has an invalid value,
+the command stops and prints the error with the configuration file path.
+
 ## Development
 
 Requires GNU Make, Go 1.27.3 or later, Node.js matching

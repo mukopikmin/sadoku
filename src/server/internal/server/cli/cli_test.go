@@ -70,6 +70,7 @@ func TestStartDefaults(t *testing.T) {
 	checkStart(t, args, StartOptions{Source: "README.md", Host: "127.0.0.1", Port: 3334, Open: true}, 2, 20)
 	if err := config.AtomicWrite(config.Path(), []byte(`directory_max_depth = 3
 directory_max_files = 12
+custom = "keep"
 
 [start]
 host = "localhost"
@@ -102,22 +103,34 @@ trust_forwarded_prefix = true
 func TestStartRejectsInvalidDefaults(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv("APPDATA", "")
-	for _, test := range []struct{ name, contents, field string }{
-		{"table type", "start = true", "start"},
-		{"host type", "[start]\nhost = true", "start.host"},
-		{"empty host", "[start]\nhost = ''", "start.host"},
-		{"port type", "[start]\nport = '4000'", "start.port"},
-		{"port low", "[start]\nport = 0", "start.port"},
-		{"port high", "[start]\nport = 65536", "start.port"},
-		{"boolean type", "[start]\nno_open = 'true'", "start.no_open"},
+	for _, test := range []struct{ name, contents, diagnostic string }{
+		{"syntax", "[start]\nport = @", ":2:8: toml:"},
+		{"unknown key", "[start]\nprot = 4000", `: unknown setting "start.prot"`},
+		{"misplaced limit", "[start]\ndirectory_max_depth = 1", `: unknown setting "start.directory_max_depth"`},
+		{"table type", "start = true", ": start must be a table"},
+		{"host type", "[start]\nhost = true", ": start.host must be a non-empty string"},
+		{"empty host", "[start]\nhost = ''", ": start.host must be a non-empty string"},
+		{"port type", "[start]\nport = '4000'", ": start.port must be an integer between 1 and 65535"},
+		{"port low", "[start]\nport = 0", ": start.port must be an integer between 1 and 65535"},
+		{"port high", "[start]\nport = 65536", ": start.port must be an integer between 1 and 65535"},
+		{"boolean type", "[start]\nno_open = 'true'", ": start.no_open must be a boolean"},
+		{"invalid directory limit", "directory_max_files = 0", ": directory_max_files in Sadoku config must be a positive integer."},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if err := config.AtomicWrite(config.Path(), []byte(test.contents), 0600); err != nil {
 				t.Fatal(err)
 			}
-			err := Execute(context.Background(), []string{"start", "README.md"}, &bytes.Buffer{}, nil)
-			if err == nil || !strings.Contains(err.Error(), config.Path()+": "+test.field+" must be") {
-				t.Fatalf("expected a configuration error for %s, got %v", test.field, err)
+			err := Execute(context.Background(), []string{"start", "README.md", "--port", "4500"}, &bytes.Buffer{}, func(context.Context, StartOptions, config.Settings) error {
+				t.Fatal("started with an invalid configuration")
+				return nil
+			})
+			if err == nil {
+				t.Fatal("missing configuration error")
+			}
+			var stderr bytes.Buffer
+			WriteError(&stderr, err)
+			if want := config.Path() + test.diagnostic; !strings.HasPrefix(stderr.String(), want) {
+				t.Fatalf("stderr = %q, want prefix %q", stderr.String(), want)
 			}
 			if err := Execute(context.Background(), []string{"start", "--help"}, &bytes.Buffer{}, nil); err != nil {
 				t.Fatalf("help failed with invalid start settings: %v", err)

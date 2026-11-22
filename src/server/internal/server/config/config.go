@@ -42,20 +42,35 @@ func Path() string {
 }
 
 func Read() (Settings, map[string]any, error) {
+	return readConfig(Path(), false)
+}
+
+func readConfig(path string, strict bool) (Settings, map[string]any, error) {
 	s := Defaults()
 	extra := map[string]any{}
-	b, err := os.ReadFile(Path())
+	b, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return s, extra, nil
 	}
 	if err != nil {
 		return s, extra, err
 	}
-	// Earlier versions also ignore syntactically invalid TOML.
-	if err = toml.Unmarshal(b, &extra); err != nil {
-		return s, map[string]any{}, nil //nolint:nilerr // Preserve the historical fallback to defaults for malformed TOML.
+	if err := toml.Unmarshal(b, &extra); err != nil {
+		if !strict {
+			// Other callers historically fall back to defaults on malformed TOML.
+			return s, map[string]any{}, nil
+		}
+		var decodeErr *toml.DecodeError
+		if errors.As(err, &decodeErr) {
+			line, column := decodeErr.Position()
+			return s, nil, fmt.Errorf("%s:%d:%d: %w", path, line, column, err)
+		}
+		return s, nil, fmt.Errorf("%s: %w", path, err)
 	}
 	s, err = settingsFromConfig(extra)
+	if err != nil && strict {
+		return s, extra, fmt.Errorf("%s: %w", path, err)
+	}
 	return s, extra, err
 }
 
@@ -93,8 +108,8 @@ func Save(s Settings) error {
 	if err != nil {
 		return err
 	}
-	// Runtime reads tolerate malformed TOML; writes must preserve the original
-	// file until the user has repaired it, as earlier versions did.
+	// Read tolerates malformed TOML. Preserve the original file on write until
+	// the user has repaired it.
 	if existing, readErr := os.ReadFile(Path()); readErr == nil {
 		if err = toml.Unmarshal(existing, &extra); err != nil {
 			return err

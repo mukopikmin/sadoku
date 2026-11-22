@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -16,8 +18,21 @@ type StartDefaults struct {
 	NoOpen, KeepAlive, NoSync, TrustForwardedPrefix bool
 }
 
-// ParseStartDefaults validates the start table only for the start command.
-func ParseStartDefaults(values map[string]any) (StartDefaults, error) {
+// ReadForStart validates the config file before the CLI applies overrides.
+func ReadForStart() (Settings, StartDefaults, error) {
+	path := Path()
+	settings, values, err := readConfig(path, true)
+	if err != nil {
+		return settings, StartDefaults{}, err
+	}
+	defaults, err := parseStartDefaults(values)
+	if err != nil {
+		return settings, defaults, fmt.Errorf("%s: %w", path, err)
+	}
+	return settings, defaults, nil
+}
+
+func parseStartDefaults(values map[string]any) (StartDefaults, error) {
 	defaults := StartDefaults{Host: DefaultStartHost, Port: DefaultStartPort}
 	value, exists := values["start"]
 	if !exists {
@@ -25,37 +40,39 @@ func ParseStartDefaults(values map[string]any) (StartDefaults, error) {
 	}
 	start, ok := value.(map[string]any)
 	if !ok {
-		return defaults, fmt.Errorf("%s: start must be a table", Path())
+		return defaults, fmt.Errorf("start must be a table")
 	}
-	if value, exists := start["host"]; exists {
-		host, ok := value.(string)
-		if !ok || strings.TrimSpace(host) == "" {
-			return defaults, fmt.Errorf("%s: start.host must be a non-empty string", Path())
-		}
-		defaults.Host = host
+	booleans := map[string]*bool{
+		"no_open":                &defaults.NoOpen,
+		"keep_alive":             &defaults.KeepAlive,
+		"no_sync":                &defaults.NoSync,
+		"trust_forwarded_prefix": &defaults.TrustForwardedPrefix,
 	}
-	if value, exists := start["port"]; exists {
-		port, ok := value.(int64)
-		if !ok || port < 1 || port > 65535 {
-			return defaults, fmt.Errorf("%s: start.port must be an integer between 1 and 65535", Path())
-		}
-		defaults.Port = int(port)
-	}
-	for _, field := range []struct {
-		key    string
-		target *bool
-	}{
-		{"no_open", &defaults.NoOpen},
-		{"keep_alive", &defaults.KeepAlive},
-		{"no_sync", &defaults.NoSync},
-		{"trust_forwarded_prefix", &defaults.TrustForwardedPrefix},
-	} {
-		if value, exists := start[field.key]; exists {
+	for _, key := range slices.Sorted(maps.Keys(start)) {
+		value := start[key]
+		switch key {
+		case "host":
+			host, ok := value.(string)
+			if !ok || strings.TrimSpace(host) == "" {
+				return defaults, fmt.Errorf("start.host must be a non-empty string")
+			}
+			defaults.Host = host
+		case "port":
+			port, ok := value.(int64)
+			if !ok || port < 1 || port > 65535 {
+				return defaults, fmt.Errorf("start.port must be an integer between 1 and 65535")
+			}
+			defaults.Port = int(port)
+		default:
+			target, ok := booleans[key]
+			if !ok {
+				return defaults, fmt.Errorf("unknown setting %q", "start."+key)
+			}
 			enabled, ok := value.(bool)
 			if !ok {
-				return defaults, fmt.Errorf("%s: start.%s must be a boolean", Path(), field.key)
+				return defaults, fmt.Errorf("start.%s must be a boolean", key)
 			}
-			*field.target = enabled
+			*target = enabled
 		}
 	}
 	return defaults, nil

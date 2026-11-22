@@ -66,7 +66,7 @@ no_open = true
 	if err != nil || extra["custom"] != "keep" || extra["commentsDirectory"] != "/old/comments" || s.ShowHTMLComments || len(s.ExcludedDirectories) != 0 {
 		t.Fatalf("save %+v %+v %v", s, extra, err)
 	}
-	start, err := ParseStartDefaults(extra)
+	_, start, err := ReadForStart()
 	if err != nil || start.Port != 4000 || !start.NoOpen {
 		t.Fatalf("saved start defaults: %+v, %v", start, err)
 	}

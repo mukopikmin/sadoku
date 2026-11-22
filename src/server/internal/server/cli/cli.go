@@ -220,11 +220,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		if len(words) != 2 {
 			return usageError("Missing Markdown file or directory.")
 		}
-		settings, values, err := config.Read()
-		if err != nil {
-			return err
-		}
-		defaults, err := config.ParseStartDefaults(values)
+		settings, defaults, err := config.ReadForStart()
 		if err != nil {
 			return err
 		}
