@@ -1,12 +1,4 @@
-import {
-  Badge,
-  Box,
-  Button,
-  Checkbox,
-  Flex,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, Checkbox, Flex, Stack, Text } from "@chakra-ui/react";
 import { Check, RotateCcw, Trash2 } from "lucide-react";
 import { type ReactNode } from "react";
 import type { CommentActions } from "../../api/commentActions";
@@ -137,9 +129,6 @@ export const CommentList = ({
                 <Checkbox.Label>
                   {commentFilter.filters[filter].label}
                 </Checkbox.Label>
-                <Badge aria-hidden="true" size="sm" variant="solid">
-                  {commentFilter.filters[filter].comments.length}
-                </Badge>
               </Checkbox.Root>
             ),
           )}
