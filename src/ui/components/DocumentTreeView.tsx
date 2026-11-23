@@ -1,6 +1,8 @@
 import {
   Badge,
+  Box,
   createTreeCollection,
+  Flex,
   HStack,
   IconButton,
   TreeView,
@@ -9,6 +11,7 @@ import { ChevronRight, File, Folder, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { type DocumentTreeNode } from "../models/documentTree";
 import { useDocumentTreeExpansion } from "../hooks/useDocumentTreeExpansion";
+import { DocumentCommentProgress } from "./DocumentCommentProgress";
 import { TagLabel } from "./ui/TagLabel";
 import { Tooltip } from "./ui/tooltip";
 
@@ -100,24 +103,27 @@ export const DocumentTreeView = ({
                   width="var(--tree-icon-size)"
                 />
                 <File aria-hidden="true" />
-                <TreeView.ItemText flex="0 1 auto">
-                  {node.name}
-                </TreeView.ItemText>
-                {node.tags && node.tags.length > 0 && (
-                  <HStack gap="1" flexShrink="0" width="fit-content">
-                    {node.tags.map((tag) => (
-                      <TagLabel
-                        key={tag.id}
-                        backgroundColor={tag.backgroundColor}
-                        name={tag.name}
-                      />
-                    ))}
-                  </HStack>
-                )}
-                {node.deleted && (
-                  <Badge ms="auto" colorPalette="red">
-                    Deleted
-                  </Badge>
+                <Flex flex="1" minW="0" align="center" wrap="wrap" gap="2">
+                  <TreeView.ItemText flex="0 1 auto" overflowWrap="anywhere">
+                    {node.name}
+                  </TreeView.ItemText>
+                  {node.tags && node.tags.length > 0 && (
+                    <HStack gap="1" wrap="wrap">
+                      {node.tags.map((tag) => (
+                        <TagLabel
+                          key={tag.id}
+                          backgroundColor={tag.backgroundColor}
+                          name={tag.name}
+                        />
+                      ))}
+                    </HStack>
+                  )}
+                  {node.deleted && <Badge colorPalette="red">Deleted</Badge>}
+                </Flex>
+                {node.commentProgress && (
+                  <Box w="min(42%, 12rem)" flexShrink="0">
+                    <DocumentCommentProgress {...node.commentProgress} />
+                  </Box>
                 )}
               </TreeView.Item>
             )

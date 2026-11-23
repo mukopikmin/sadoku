@@ -2,6 +2,7 @@ import type { DocumentSummary, DocumentTag } from "./document";
 
 export type DocumentTreeNode = {
   children?: DocumentTreeNode[];
+  commentProgress?: DocumentSummary["commentProgress"];
   documentId?: number;
   deleted?: boolean;
   name: string;
@@ -27,6 +28,7 @@ export const createDocumentTree = (
       const path = parts.slice(0, index + 1).join("/");
       if (isDocument) {
         parent.children!.push({
+          commentProgress: document.commentProgress,
           documentId: document.id,
           deleted: document.deleted,
           name: part,

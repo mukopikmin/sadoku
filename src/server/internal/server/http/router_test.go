@@ -176,6 +176,79 @@ func TestConnectWorkflow(t *testing.T) {
 		})
 	}
 }
+
+func TestDocumentCommentProgress(t *testing.T) {
+	_, server, file := setup(t)
+	ctx := t.Context()
+	client := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL)
+	empty, err := client.CreateDocument(ctx, connect.NewRequest(&pb.CreateDocumentRequest{Filename: "empty"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial, err := client.ListDocuments(ctx, connect.NewRequest(&pb.ListDocumentsRequest{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var documentID uint64
+	for _, doc := range initial.Msg.Documents {
+		if doc.CommentProgress != nil {
+			t.Fatal("progress was included without being requested")
+		}
+		if doc.RelativePath == "readme.md" {
+			documentID = doc.Id
+		}
+	}
+	assertCounts := func(total, resolved uint64) {
+		t.Helper()
+		list, err := client.ListDocuments(ctx, connect.NewRequest(&pb.ListDocumentsRequest{IncludeCommentProgress: true}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(list.Msg.Documents) != 2 {
+			t.Fatalf("expected two documents, got %v", list.Msg.Documents)
+		}
+		for _, doc := range list.Msg.Documents {
+			wantTotal, wantResolved := total, resolved
+			if doc.Id == empty.Msg.Id {
+				wantTotal, wantResolved = 0, 0
+			}
+			if got := doc.CommentProgress; got == nil || got.Total != wantTotal || got.Resolved != wantResolved {
+				t.Errorf("%s progress = %v, want %d/%d resolved", doc.RelativePath, got, wantResolved, wantTotal)
+			}
+		}
+	}
+	assertCounts(0, 0)
+	thread, err := client.CreateComment(ctx, connect.NewRequest(&pb.CreateCommentRequest{DocumentId: documentID, StartLine: 3, EndLine: 3, Body: "Review"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := thread.Msg.Id
+	assertCounts(1, 0)
+	if _, err = client.CreateReply(ctx, connect.NewRequest(&pb.CreateReplyRequest{DocumentId: documentID, CommentId: id, Body: "Reply"})); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(file, []byte("# New text\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	comments, err := client.ListComments(ctx, connect.NewRequest(&pb.ListCommentsRequest{DocumentId: documentID}))
+	if err != nil || len(comments.Msg.Comments) != 1 || !comments.Msg.Comments[0].Stale {
+		t.Fatalf("expected one stale thread, got %v, err %v", comments, err)
+	}
+	assertCounts(1, 0)
+	if _, err = client.SetCommentResolution(ctx, connect.NewRequest(&pb.SetCommentResolutionRequest{DocumentId: documentID, CommentId: id, Resolved: true})); err != nil {
+		t.Fatal(err)
+	}
+	assertCounts(1, 1)
+	if _, err = client.SetCommentResolution(ctx, connect.NewRequest(&pb.SetCommentResolutionRequest{DocumentId: documentID, CommentId: id})); err != nil {
+		t.Fatal(err)
+	}
+	assertCounts(1, 0)
+	if _, err = client.DeleteComment(ctx, connect.NewRequest(&pb.DeleteCommentRequest{DocumentId: documentID, CommentId: id})); err != nil {
+		t.Fatal(err)
+	}
+	assertCounts(0, 0)
+}
+
 func TestHTTPAssetsAndValidation(t *testing.T) {
 	_, server, _ := setup(t)
 	request := func(method, path, body string) *http.Response {

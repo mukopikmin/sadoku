@@ -102,9 +102,21 @@ describe("CommentList", () => {
     expect(getFilterCheckbox("Stale")).toBeChecked();
     expect(getFilterCheckbox("Resolved")).not.toBeChecked();
     expect(screen.queryByText("Resolved comment.")).toBeNull();
+    expect(screen.getByText("2 remaining")).toBeInTheDocument();
+    const progress = screen.getByRole("progressbar", {
+      name: "Comment resolution",
+    });
+    expect(progress).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 3 threads resolved",
+    );
     await toggleFilter("Resolved");
     expect(await screen.findByText("Resolved comment.")).toBeInTheDocument();
     expect(getFilterCheckbox("Resolved")).toBeChecked();
+    expect(progress).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 3 threads resolved",
+    );
   });
 
   it("locks controls during bulk actions and keeps failed comments selected", async () => {

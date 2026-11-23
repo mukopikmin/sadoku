@@ -85,7 +85,7 @@ message TagSummary {
   string updated_at = 6;
 }
 
-message ListDocumentsRequest {}
+message ListDocumentsRequest { bool include_comment_progress = 1; }
 message ListDocumentsResponse { repeated DocumentSummary documents = 1; }
 message CreateDocumentRequest {
   string directory = 1;
@@ -99,6 +99,7 @@ message DocumentSummary {
   bool deleted = 4;
   repeated Tag tags = 5;
   optional string display_title = 7;
+  CommentProgress comment_progress = 8;
 }
 
 message UpdateDocumentTitleRequest { uint64 document_id = 1; string title = 2; }
@@ -301,3 +302,8 @@ message ExportCommentToGitHubRequest {
   uint32 end_line = 8;
 }
 message ExportCommentToGitHubResponse { string url = 1; string state = 2; }
+
+message CommentProgress {
+  uint64 total = 1;
+  uint64 resolved = 2;
+}

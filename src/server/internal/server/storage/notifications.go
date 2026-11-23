@@ -1,8 +1,7 @@
 package storage
 
-import "context"
-
 import (
+	"context"
 	"crypto/rand"
 	"os"
 	"path/filepath"
@@ -11,9 +10,7 @@ import (
 	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
-// The filename matches the original TypeScript backend, so changes made by
-// another process (including an older installed CLI) reach the same stream.
-func (r *Repository) CommentsNotificationSourcePath(ctx context.Context, source string) (string, error) {
+func (r *Repository) CommentsNotificationDirectory(ctx context.Context) (string, error) {
 	databasePath := r.Path
 	if databasePath == "" {
 		var sequence int
@@ -24,6 +21,16 @@ func (r *Repository) CommentsNotificationSourcePath(ctx context.Context, source 
 	}
 	directory := filepath.Join(filepath.Dir(databasePath), "notifications")
 	if err := os.MkdirAll(directory, 0700); err != nil {
+		return "", err
+	}
+	return directory, nil
+}
+
+// The filename matches the original TypeScript backend, so changes made by
+// another process (including an older installed CLI) reach the same stream.
+func (r *Repository) CommentsNotificationSourcePath(ctx context.Context, source string) (string, error) {
+	directory, err := r.CommentsNotificationDirectory(ctx)
+	if err != nil {
 		return "", err
 	}
 	return filepath.Join(directory, u.HashSource(source)+".changed"), nil

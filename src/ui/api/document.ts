@@ -29,20 +29,43 @@ export const createDocument = async (
   if (!Number.isSafeInteger(id) || id <= 0 || !document.relativePath) {
     throw new Error("Invalid created document response.");
   }
-  return { ...document, id, tags: document.tags.map(parseDocumentTag) };
+  const { deleted, displayTitle, relativePath, tags, title } = document;
+  return {
+    deleted,
+    displayTitle,
+    id,
+    relativePath,
+    tags: tags.map(parseDocumentTag),
+    title,
+  };
 };
 
 export const loadDocuments = async (): Promise<DocumentSummary[]> => {
-  const { documents } = await previewClient.listDocuments({}).catch((error) => {
-    throw new Error(`Failed to load documents: ${connectHttpStatus(error)}`);
+  const { documents } = await previewClient
+    .listDocuments({ includeCommentProgress: true })
+    .catch((error) => {
+      throw new Error(`Failed to load documents: ${connectHttpStatus(error)}`);
+    });
+  return documents.map(({ commentProgress, ...document }) => {
+    const summary: DocumentSummary = {
+      ...document,
+      id: Number(document.id),
+      tags: document.tags.map(parseDocumentTag),
+    };
+    if (commentProgress) {
+      const total = Number(commentProgress.total);
+      const resolved = Number(commentProgress.resolved);
+      if (
+        !Number.isSafeInteger(total) ||
+        !Number.isSafeInteger(resolved) ||
+        resolved > total
+      ) {
+        throw new Error("Invalid document comment progress.");
+      }
+      summary.commentProgress = { total, resolved };
+    }
+    return summary;
   });
-  return documents.map((document) => ({
-    ...document,
-    id: Number(document.id),
-    tags: Array.isArray(document.tags)
-      ? document.tags.map(parseDocumentTag)
-      : [],
-  }));
 };
 
 export const loadPreviewDocument = async (

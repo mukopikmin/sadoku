@@ -12,6 +12,7 @@ import { type ReactNode } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import { CommentItem } from "../../components/comments/CommentItem";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { DocumentCommentProgress } from "../../components/DocumentCommentProgress";
 import type { Comment } from "../../models/comment";
 import { useCommentActions, useCommentsQuery } from "../../hooks/useComments";
 import { useCommentBulkActions } from "./useCommentBulkActions";
@@ -120,6 +121,10 @@ export const CommentList = ({
 
   return (
     <Stack gap="4">
+      <DocumentCommentProgress
+        total={commentFilter.totalCount}
+        resolved={commentFilter.filters.resolved.comments.length}
+      />
       <Stack gap="2">
         <Flex aria-label="Comment filters" role="group" gap="4" wrap="wrap">
           {(Object.keys(commentFilter.filters) as CommentFilter[]).map(

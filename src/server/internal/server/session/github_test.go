@@ -84,6 +84,14 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	if got := result.(u.Comments); len(got.Comments) != 1 || got.Comments[0].Body != "Review" {
 		t.Fatal(got)
 	}
+	result, err = s.Invoke(t.Context(), "ListDocuments", Input{IncludeCommentProgress: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	summaries := result.(map[string]any)["documents"].([]u.Document)
+	if progress := summaries[0].CommentProgress; progress == nil || *progress != (u.CommentProgress{Total: 1}) {
+		t.Fatalf("progress for the PR document did not include canonical comments: %v", progress)
+	}
 	in := Input{DocumentID: ID(doc.ID), CommentID: 1, HeadSHA: sha, DisplayedMarkdown: markdown, CreatedAt: "2026-10-25T00:00:00.000Z", Body: "Review", StartLine: 2, EndLine: 2}
 	result, err = s.Invoke(context.Background(), "ExportCommentToGitHub", in)
 	if err != nil {

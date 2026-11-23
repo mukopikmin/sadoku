@@ -1,9 +1,11 @@
 import { renderWithRouter as render } from "./routerTestUtils";
+import { create, toJson } from "@bufbuild/protobuf";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "./testUtils";
 import { createComment } from "./commentFixtures";
 import { App } from "../App";
 import { clearScrollPositions } from "../hooks/useScrollPosition";
+import { CommentProgressSchema } from "../gen/sadoku/preview/v1/preview_pb";
 
 class DirectoryEventSource extends EventTarget {
   static instances: DirectoryEventSource[] = [];
@@ -136,6 +138,58 @@ afterEach(() => {
 });
 
 describe("directory preview", () => {
+  it("shows per-document progress and updates it after a comment notification", async () => {
+    vi.stubGlobal("EventSource", DirectoryEventSource);
+    installFetch();
+    const fetchMock = vi.mocked(fetch);
+    const fallback = fetchMock.getMockImplementation();
+    if (!fallback) throw new Error("Missing preview fetch fixture.");
+    let resolved = 1n;
+    fetchMock.mockImplementation((input, init) => {
+      if (String(input) === "/__sadoku/documents") {
+        return Promise.resolve(
+          Response.json(
+            documents.map((doc) => ({
+              ...doc,
+              commentProgress: toJson(
+                CommentProgressSchema,
+                create(CommentProgressSchema, {
+                  total: doc.id === 1 ? 2n : 0n,
+                  resolved: doc.id === 1 ? resolved : 0n,
+                }),
+              ),
+            })),
+          ),
+        );
+      }
+      return fallback(input, init);
+    });
+    history.replaceState(null, "", "/");
+    render(<App />);
+
+    const row = await screen.findByRole("treeitem", { name: /^alpha\.md/ });
+    const progress = within(row).getByRole("progressbar", {
+      name: "Comment resolution",
+    });
+    expect(progress.getAttribute("aria-valuetext")).toBe(
+      "1 of 2 threads resolved",
+    );
+    const emptyRow = screen.getByRole("treeitem", { name: /^beta\.md/ });
+    expect(within(emptyRow).getByText("No comments")).toBeTruthy();
+    expect(within(emptyRow).queryByRole("progressbar")).toBeNull();
+
+    resolved = 2n;
+    DirectoryEventSource.instances
+      .find((source) => source.url === "/__sadoku/events")
+      ?.dispatchEvent(
+        new MessageEvent("invalidate", { data: '{"resources":["documents"]}' }),
+      );
+    expect(await within(row).findByText("All resolved")).toBeTruthy();
+    expect(progress.getAttribute("aria-valuetext")).toBe(
+      "2 of 2 threads resolved",
+    );
+  });
+
   it("opens a comment location in the document and returns to comments", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     const scrollIntoView = vi.fn();

@@ -40,6 +40,7 @@ export const usePreviewApp = () => {
     });
   });
   const documentsQuery = useDocumentsQuery();
+  const refetchDocuments = documentsQuery.refetch;
   const sessionQuery = useSessionQuery();
   const directoryStatusQuery = useDirectoryStatusQuery();
   const directoryStatus = directoryStatusQuery.data;
@@ -115,8 +116,11 @@ export const usePreviewApp = () => {
       connectPreviewKeepAlive({
         onConnectionLost: () => reportConnection(true),
         onConnectionRestored: () => reportConnection(false),
+        onDocumentsChanged: () => {
+          void refetchDocuments();
+        },
       }),
-    [],
+    [refetchDocuments],
   );
 
   const changeView = (nextView: PreviewView) => {
@@ -199,7 +203,6 @@ export const usePreviewApp = () => {
     selectedDocumentId,
   ]);
 
-  const refetchDocuments = documentsQuery.refetch;
   useEffect(() => {
     if (directoryStatus?.state === "ready") void refetchDocuments();
   }, [directoryStatus?.state, refetchDocuments]);

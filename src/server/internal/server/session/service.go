@@ -34,6 +34,8 @@ type TagReference struct {
 	Name string `json:"name"`
 }
 type Input struct {
+	IncludeCommentProgress bool `json:"includeCommentProgress"`
+
 	ID                ID                `json:"id"`
 	DocumentID        ID                `json:"documentId"`
 	RevisionID        ID                `json:"revisionId"`
@@ -112,6 +114,24 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		return *s.directoryStatus, nil
 	case "ListDocuments":
 		docs := append([]u.Document{}, s.Documents...)
+		if in.IncludeCommentProgress {
+			storageIDs := make([]int64, len(docs))
+			for i, doc := range docs {
+				storageID, _, err := s.commentStorage(ctx, doc.ID, false)
+				if err != nil {
+					return nil, err
+				}
+				storageIDs[i] = storageID
+			}
+			progress, err := r.CommentProgress(ctx, storageIDs)
+			if err != nil {
+				return nil, err
+			}
+			for i, storageID := range storageIDs {
+				counts := progress[storageID]
+				docs[i].CommentProgress = &counts
+			}
+		}
 		for i := range docs {
 			tags, err := r.Tags(ctx, docs[i].ID)
 			if err != nil {

@@ -2,7 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Comment } from "../models/comment";
-import { commentsQueryKey } from "../hooks/previewQueryKeys";
+import { commentsQueryKey, documentsQueryKey } from "../hooks/previewQueryKeys";
 import { useCommentActions, useCommentsQuery } from "../hooks/useComments";
 import { createPreviewQueryClient } from "../queryClient";
 import { act, cleanup, renderHook, waitFor } from "./domTestUtils";
@@ -58,6 +58,8 @@ describe("comment hooks", () => {
       comments: [createComment()],
       filePath: "/tmp/example.md",
     });
+    queryClient.setQueryData(documentsQueryKey, []);
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
@@ -89,12 +91,23 @@ describe("comment hooks", () => {
         ) {
           return Promise.resolve(new Response(null, { status: 204 }));
         }
+        if (url === "/__sadoku/documents/42/comments/1/resolve") {
+          return Promise.resolve(
+            Response.json({ ...createComment(), resolved: true }),
+          );
+        }
+        if (url === "/__sadoku/documents/42/comments/1/reopen") {
+          return Promise.resolve(Response.json(createComment()));
+        }
         return Promise.resolve(new Response("Not found.", { status: 404 }));
       }),
     );
     const { result } = renderHook(() => useCommentActions(42), { wrapper });
 
     await act(() => result.current.onCreateComment(3, "New comment.", 3));
+    expect(invalidate).toHaveBeenCalledExactlyOnceWith({
+      queryKey: documentsQueryKey,
+    });
     expect(
       queryClient
         .getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
@@ -102,12 +115,32 @@ describe("comment hooks", () => {
     ).toEqual([1, 2]);
 
     await act(() => result.current.onUpdateComment(1, "Updated comment."));
+    expect(invalidate).toHaveBeenCalledTimes(1);
     expect(
       queryClient.getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
         ?.comments[0].body,
     ).toBe("Updated comment.");
 
+    await act(() => result.current.onResolveComment(1));
+    expect(
+      queryClient.getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
+        ?.comments[0].state,
+    ).toBe("resolved");
+    expect(invalidate).toHaveBeenNthCalledWith(2, {
+      queryKey: documentsQueryKey,
+    });
+    await act(() => result.current.onReopenComment(1));
+    expect(
+      queryClient.getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
+        ?.comments[0].state,
+    ).toBe("active");
+    expect(invalidate).toHaveBeenNthCalledWith(3, {
+      queryKey: documentsQueryKey,
+    });
     await act(() => result.current.onDeleteComment(1));
+    expect(invalidate).toHaveBeenNthCalledWith(4, {
+      queryKey: documentsQueryKey,
+    });
     expect(
       queryClient
         .getQueryData<{ comments: Comment[] }>(commentsQueryKey(42))
