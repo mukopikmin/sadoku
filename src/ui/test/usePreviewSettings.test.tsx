@@ -17,7 +17,14 @@ const defaults = {
   maxFiles: 20,
   markdownExtensions: [".md", ".markdown"],
   theme: "light" as const,
+  wideLayout: false,
 };
+
+const echoSettings = async ({
+  wideLayout = false,
+  ...settings
+}: Parameters<typeof api.saveSettings>[0]) => ({ ...settings, wideLayout });
+
 afterEach(() => {
   cleanup();
   vi.resetAllMocks();
@@ -28,14 +35,15 @@ afterEach(() => {
     "data-theme",
     "data-code-wrap",
     "data-show-highlight-boundaries",
+    "data-wide-layout",
   ])
     document.documentElement.removeAttribute(attribute);
 });
 
-it("starts with OS defaults and does not overwrite local edits with a late load", async () => {
+it("applies edits immediately and merges them with the settings loaded before saving", async () => {
   const load = deferred<Awaited<ReturnType<typeof api.loadSettings>>>();
   vi.mocked(api.loadSettings).mockReturnValue(load.promise);
-  vi.mocked(api.saveSettings).mockImplementation(async (settings) => settings);
+  vi.mocked(api.saveSettings).mockImplementation(echoSettings);
   vi.stubGlobal("matchMedia", () => ({ matches: true }));
   const { result } = renderHook(usePreviewSettings, queryHook());
   expect(result.current.state).toMatchObject({
@@ -44,32 +52,51 @@ it("starts with OS defaults and does not overwrite local edits with a late load"
   });
   act(() => {
     result.current.changeThemeMode("light");
-    result.current.changeFontScale(1.2);
+    result.current.changeWideLayout(true);
   });
-  await waitFor(() => expect(result.current.state.status).toBe("ready"));
+  await waitFor(() =>
+    expect(result.current.state).toMatchObject({
+      status: "saving",
+      settings: { theme: "light", wideLayout: true },
+    }),
+  );
+  expect(document.documentElement.dataset.wideLayout).toBe("true");
+  expect(api.saveSettings).not.toHaveBeenCalled();
+  expect(api.loadSettings).toHaveBeenCalledOnce();
   await act(async () => {
-    load.resolve({ ...defaults, theme: "dark", fontScale: 0.8 });
+    load.resolve({
+      ...defaults,
+      theme: "dark",
+      fontScale: 0.8,
+      codeWrap: "wrap",
+    });
     await load.promise;
   });
+  await waitFor(() => expect(result.current.state.status).toBe("ready"));
   expect(result.current.state.settings).toMatchObject({
     theme: "light",
-    fontScale: 1.2,
+    fontScale: 0.8,
+    wideLayout: true,
+    codeWrap: "wrap",
   });
   expect(document.documentElement.dataset.theme).toBe("light");
   expect(
     document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
-  ).toBe("1.2");
-  expect(api.saveSettings).toHaveBeenLastCalledWith(
-    expect.objectContaining({ theme: "light", fontScale: 1.2 }),
-    expect.anything(),
-  );
+  ).toBe("0.8");
+  expect(api.saveSettings).toHaveBeenLastCalledWith({
+    ...defaults,
+    theme: "light",
+    fontScale: 0.8,
+    wideLayout: true,
+    codeWrap: "wrap",
+  });
 });
 
 it("exposes save failures without rolling back the selected settings and retries on change", async () => {
   vi.mocked(api.loadSettings).mockResolvedValue(defaults);
   vi.mocked(api.saveSettings)
     .mockRejectedValueOnce(new Error("Offline"))
-    .mockImplementation(async (settings) => settings);
+    .mockImplementation(echoSettings);
   const { result } = renderHook(usePreviewSettings, queryHook());
   await waitFor(() => expect(result.current.state.status).toBe("ready"));
   act(() => result.current.changeThemeMode("dark"));
@@ -91,10 +118,13 @@ it("exposes save failures without rolling back the selected settings and retries
   expect(document.documentElement.dataset.showHighlightBoundaries).toBe("true");
 });
 
-it("keeps the OS theme after a load failure and applies a selected theme even when saving fails", async () => {
+it("retains edits after a failed load and retries against the saved settings", async () => {
   vi.stubGlobal("matchMedia", () => ({ matches: true }));
-  vi.mocked(api.loadSettings).mockRejectedValue(new Error("Unavailable"));
-  vi.mocked(api.saveSettings).mockRejectedValue(new Error("Offline"));
+  vi.mocked(api.loadSettings)
+    .mockRejectedValueOnce(new Error("Unavailable"))
+    .mockRejectedValueOnce(new Error("Still unavailable"))
+    .mockResolvedValue({ ...defaults, codeWrap: "wrap" });
+  vi.mocked(api.saveSettings).mockImplementation(echoSettings);
   const { result } = renderHook(usePreviewSettings, queryHook());
   await waitFor(() =>
     expect(result.current.state).toMatchObject({
@@ -106,19 +136,24 @@ it("keeps the OS theme after a load failure and applies a selected theme even wh
   );
   expect(document.documentElement.dataset.theme).toBe("dark");
   expect(document.documentElement.classList.contains("dark")).toBe(true);
-  act(() => result.current.changeThemeMode("light"));
+  act(() => result.current.changeWideLayout(true));
   await waitFor(() =>
     expect(result.current.state).toMatchObject({
       status: "error",
       operation: "save",
-      message: "Offline",
-      settings: { theme: "light" },
+      message: "Still unavailable",
+      settings: { wideLayout: true },
     }),
   );
-  expect(document.documentElement.dataset.theme).toBe("light");
-  expect(document.documentElement.classList.contains("light")).toBe(true);
-  expect(document.documentElement.classList.contains("dark")).toBe(false);
-  expect(document.documentElement.style.colorScheme).toBe("light");
+  expect(api.saveSettings).not.toHaveBeenCalled();
+  expect(document.documentElement.dataset.wideLayout).toBe("true");
+  act(() => result.current.retrySettings());
+  await waitFor(() => expect(result.current.state.status).toBe("ready"));
+  expect(api.saveSettings).toHaveBeenCalledExactlyOnceWith({
+    ...defaults,
+    codeWrap: "wrap",
+    wideLayout: true,
+  });
 });
 
 it("serializes writes so an earlier save cannot overwrite the latest settings", async () => {
@@ -126,7 +161,10 @@ it("serializes writes so an earlier save cannot overwrite the latest settings", 
   const first = deferred<Awaited<ReturnType<typeof api.saveSettings>>>();
   vi.mocked(api.saveSettings)
     .mockReturnValueOnce(first.promise)
-    .mockImplementation(async (settings) => settings);
+    .mockImplementation(async (settings) => ({
+      ...settings,
+      wideLayout: true,
+    }));
   const { result } = renderHook(usePreviewSettings, queryHook());
   await waitFor(() => expect(result.current.state.status).toBe("ready"));
   act(() => result.current.changeFontScale(1.1));
@@ -134,10 +172,16 @@ it("serializes writes so an earlier save cannot overwrite the latest settings", 
   act(() => result.current.changeFontScale(1.2));
   expect(api.saveSettings).toHaveBeenCalledOnce();
   await act(async () => {
-    first.resolve({ ...defaults, fontScale: 1.1 });
+    first.resolve({ ...defaults, fontScale: 1.1, wideLayout: true });
     await first.promise;
   });
   await waitFor(() => expect(api.saveSettings).toHaveBeenCalledTimes(2));
   await waitFor(() => expect(result.current.state.status).toBe("ready"));
   expect(result.current.state.settings.fontScale).toBe(1.2);
+  expect(result.current.state.settings.wideLayout).toBe(true);
+  expect(api.saveSettings).toHaveBeenLastCalledWith({
+    ...defaults,
+    fontScale: 1.2,
+    wideLayout: undefined,
+  });
 });

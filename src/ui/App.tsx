@@ -27,7 +27,12 @@ export const App = () => {
         <PreviewShell>
           <Text fontWeight="semibold">Document not found.</Text>
         </PreviewShell>
-        <Container as="main" maxW="980px" px="8" pb="16">
+        <Container
+          as="main"
+          maxW="var(--preview-max-width)"
+          px={{ base: "8", md: "var(--preview-page-padding)" }}
+          pb="16"
+        >
           <Button asChild variant="outline">
             <RouterLink to="/">Back to documents</RouterLink>
           </Button>

@@ -73,6 +73,7 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 		"excludedDirectories": []string{"nested/vendor"}, "markdownExtensions": []string{".md", ".MD"},
 		"fontScale": 0.74, "showHtmlComments": nil, "extra": true,
 		"showHighlightBoundaries": "true",
+		"wideLayout":              "true",
 	} {
 		t.Run(key, func(t *testing.T) {
 			invalid := make(map[string]any, len(valid))

@@ -4,19 +4,26 @@ import { loadSettings, saveSettings } from "../api/settings";
 import { errorMessage } from "../models/uiState";
 import type {
   CodeWrapMode,
+  PreviewSettings,
   ResolvedPreviewSettings,
   ThemeMode,
 } from "../models/theme";
 
 export const settingsQueryKey = ["settings"] as const;
+const settingsQueryOptions = {
+  queryFn: loadSettings,
+  queryKey: settingsQueryKey,
+};
 
 const getPreferredThemeMode = (): ThemeMode =>
   globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 
+type SettingsChanges = Partial<ResolvedPreviewSettings>;
+
 export const usePreviewSettings = () => {
-  const [settings, setSettings] = useState<ResolvedPreviewSettings>(() => ({
+  const [defaults] = useState<ResolvedPreviewSettings>(() => ({
     showHighlightBoundaries: false,
     showHtmlComments: true,
     codeWrap: "scroll",
@@ -26,34 +33,44 @@ export const usePreviewSettings = () => {
     maxDepth: 2,
     maxFiles: 20,
     theme: getPreferredThemeMode(),
+    wideLayout: false,
   }));
-  const settingsRef = useRef(settings);
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
-  const [userChangedSettings, setUserChangedSettings] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<SettingsChanges>({});
+  // Consecutive events can stage changes before React renders them.
+  const latestChanges = useRef(pendingChanges);
+  const stageChanges = (changes: SettingsChanges) => {
+    latestChanges.current = changes;
+    setPendingChanges(changes);
+  };
   const queryClient = useQueryClient();
-  const settingsQuery = useQuery({
-    queryFn: loadSettings,
-    queryKey: settingsQueryKey,
+  const settingsQuery = useQuery(settingsQueryOptions);
+  const resolveSettings = (
+    saved?: PreviewSettings,
+  ): ResolvedPreviewSettings => ({
+    ...defaults,
+    ...saved,
+    codeWrap: saved?.codeWrap ?? defaults.codeWrap,
+    theme: saved?.theme ?? defaults.theme,
   });
   const saveMutation = useMutation({
-    mutationFn: saveSettings,
+    mutationFn: async (changes: SettingsChanges) => {
+      const saved = await queryClient.ensureQueryData(settingsQueryOptions);
+      return saveSettings({
+        ...resolveSettings(saved),
+        ...changes,
+        wideLayout: changes.wideLayout,
+      });
+    },
     scope: { id: "preview-settings" },
-    onSuccess: (settings) => {
+    onSuccess: (settings, changes) => {
       queryClient.setQueryData(settingsQueryKey, settings);
+      if (latestChanges.current === changes) stageChanges({});
     },
   });
-
-  useEffect(() => {
-    if (userChangedSettings || settingsQuery.data === undefined) return;
-    setSettings((current) => ({
-      ...current,
-      ...settingsQuery.data,
-      codeWrap: settingsQuery.data.codeWrap ?? current.codeWrap,
-      theme: settingsQuery.data.theme ?? current.theme,
-    }));
-  }, [settingsQuery.data, userChangedSettings]);
+  const settings = {
+    ...resolveSettings(settingsQuery.data),
+    ...pendingChanges,
+  };
 
   useEffect(() => {
     globalThis.document.documentElement.style.setProperty(
@@ -65,6 +82,12 @@ export const usePreviewSettings = () => {
   useEffect(() => {
     globalThis.document.documentElement.dataset.codeWrap = settings.codeWrap;
   }, [settings.codeWrap]);
+
+  useEffect(() => {
+    globalThis.document.documentElement.dataset.wideLayout = String(
+      settings.wideLayout,
+    );
+  }, [settings.wideLayout]);
 
   useEffect(() => {
     const root = globalThis.document.documentElement;
@@ -81,12 +104,18 @@ export const usePreviewSettings = () => {
     root.style.colorScheme = settings.theme;
   }, [settings.theme]);
 
-  const changeSettings = (changes: Partial<ResolvedPreviewSettings>) => {
-    setUserChangedSettings(true);
-    const next = { ...settingsRef.current, ...changes };
-    settingsRef.current = next;
-    setSettings(next);
+  const changeSettings = (changes: SettingsChanges) => {
+    const next = { ...latestChanges.current, ...changes };
+    stageChanges(next);
     saveMutation.mutate(next);
+  };
+
+  const retrySettings = () => {
+    if (saveMutation.isError) {
+      saveMutation.mutate(saveMutation.variables);
+    } else {
+      void settingsQuery.refetch();
+    }
   };
 
   const changeCodeWrapMode = (next: CodeWrapMode) => {
@@ -103,6 +132,10 @@ export const usePreviewSettings = () => {
 
   const changeThemeMode = (next: ThemeMode) => {
     changeSettings({ theme: next });
+  };
+
+  const changeWideLayout = (next: boolean) => {
+    changeSettings({ wideLayout: next });
   };
 
   const changeFontScale = (next: number) => {
@@ -136,13 +169,15 @@ export const usePreviewSettings = () => {
     changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
+    changeWideLayout,
+    retrySettings,
     state: settingsState(
       settings,
-      settingsQuery.isPending,
+      (settingsQuery.isPending || settingsQuery.isFetching) &&
+        settingsQuery.data === undefined,
       settingsQuery.error,
       saveMutation.isPending,
       saveMutation.error,
-      userChangedSettings,
     ),
   };
 };
@@ -158,7 +193,6 @@ const settingsState = (
   loadError: Error | null,
   saving: boolean,
   saveError: Error | null,
-  changed: boolean,
 ): PreviewSettingsState => {
   if (saving) return { status: "saving", settings };
   if (saveError)
@@ -168,12 +202,13 @@ const settingsState = (
       message: errorMessage(saveError),
       settings,
     };
-  if (!changed && loadError)
+  if (loading) return { status: "loading", settings };
+  if (loadError)
     return {
       status: "error",
       operation: "load",
       message: errorMessage(loadError),
       settings,
     };
-  return { status: !changed && loading ? "loading" : "ready", settings };
+  return { status: "ready", settings };
 };

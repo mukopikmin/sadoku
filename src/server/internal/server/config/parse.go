@@ -74,19 +74,21 @@ func settingsFromConfig(values map[string]any) (Settings, error) {
 			}
 		}
 	}
-	if value, exists := values["show_html_comments"]; exists {
-		b, ok := value.(bool)
-		if !ok {
-			return s, fmt.Errorf("show_html_comments in Sadoku config must be a boolean.")
+	for _, field := range []struct {
+		key    string
+		target *bool
+	}{
+		{"show_html_comments", &s.ShowHTMLComments},
+		{"show_highlight_boundaries", &s.ShowHighlightBoundaries},
+		{"wide_layout", &s.WideLayout},
+	} {
+		if value, exists := values[field.key]; exists {
+			b, ok := value.(bool)
+			if !ok {
+				return s, fmt.Errorf("%s in Sadoku config must be a boolean.", field.key)
+			}
+			*field.target = b
 		}
-		s.ShowHTMLComments = b
-	}
-	if value, exists := values["show_highlight_boundaries"]; exists {
-		b, ok := value.(bool)
-		if !ok {
-			return s, fmt.Errorf("show_highlight_boundaries in Sadoku config must be a boolean.")
-		}
-		s.ShowHighlightBoundaries = b
 	}
 	if value, exists := values["font_scale"]; exists {
 		n, ok := configNumber(value)

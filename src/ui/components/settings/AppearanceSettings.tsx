@@ -6,6 +6,7 @@ import {
   Switch,
   Text,
 } from "@chakra-ui/react";
+import { useId } from "react";
 import type { CodeWrapMode, ThemeMode } from "../../models/theme";
 import { FONT_SCALES, getAdjacentFontScales } from "./settingsValidation";
 
@@ -22,11 +23,13 @@ type AppearanceSettingsProps = {
   onCodeWrapModeChange: (value: CodeWrapMode) => void;
   onFontScaleChange: (value: number) => void;
   onThemeModeChange: (value: ThemeMode) => void;
+  onWideLayoutChange: (value: boolean) => void;
   onShowHtmlCommentsChange: (value: boolean) => void;
   onShowHighlightBoundariesChange: (value: boolean) => void;
   showHighlightBoundaries: boolean;
   showHtmlComments: boolean;
   themeMode: ThemeMode;
+  wideLayout: boolean;
 };
 
 export const AppearanceSettings = ({
@@ -35,13 +38,16 @@ export const AppearanceSettings = ({
   onCodeWrapModeChange,
   onFontScaleChange,
   onThemeModeChange,
+  onWideLayoutChange,
   onShowHtmlCommentsChange,
   onShowHighlightBoundariesChange,
   showHighlightBoundaries,
   showHtmlComments,
   themeMode,
+  wideLayout,
 }: AppearanceSettingsProps) => {
   const { decrease, increase } = getAdjacentFontScales(fontScale);
+  const wideLayoutDescriptionId = useId();
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
@@ -121,6 +127,33 @@ export const AppearanceSettings = ({
           </IconButton>
         </Flex>
       </Flex>
+      <Switch.Root
+        checked={wideLayout}
+        onCheckedChange={({ checked }) => onWideLayoutChange(checked)}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        gap="4"
+      >
+        <Text as="span">
+          <Switch.Label display="block" textStyle="label">
+            Wide layout
+          </Switch.Label>
+          <Text
+            as="span"
+            color="fg.muted"
+            display="block"
+            fontSize="sm"
+            id={wideLayoutDescriptionId}
+          >
+            Use the maximum table width throughout the preview
+          </Text>
+        </Text>
+        <Switch.HiddenInput aria-describedby={wideLayoutDescriptionId} />
+        <Switch.Control>
+          <Switch.Thumb />
+        </Switch.Control>
+      </Switch.Root>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
         <Text as="div">
           <Text textStyle="label">Wrap code blocks</Text>

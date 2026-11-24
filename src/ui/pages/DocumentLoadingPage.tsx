@@ -16,7 +16,12 @@ export const DocumentLoadingPage = ({
   onSelectDocuments,
   selectedDocument,
 }: Props) => (
-  <Container as="main" maxW="980px" px="8" pb="16">
+  <Container
+    as="main"
+    maxW="var(--preview-max-width)"
+    px={{ base: "8", md: "var(--preview-page-padding)" }}
+    pb="16"
+  >
     {documents && selectedDocument && (
       <DocumentBreadcrumb
         document={selectedDocument}

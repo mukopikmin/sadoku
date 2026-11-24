@@ -82,6 +82,7 @@ const page = (
       maxDepth: 2,
       maxFiles: 20,
       showHtmlComments: true,
+      wideLayout: false,
       theme: "light",
     }}
     staleCommentCount={0}

@@ -19,7 +19,12 @@ export const DocumentListPage = ({
   pullRequest,
   onCreateDocument,
 }: Props) => (
-  <Container as="main" maxW="980px" px="8" pb="16">
+  <Container
+    as="main"
+    maxW="var(--preview-max-width)"
+    px={{ base: "8", md: "var(--preview-page-padding)" }}
+    pb="16"
+  >
     {pullRequest && (
       <>
         <Heading as="h1" fontSize="3xl" fontWeight="semibold" lineHeight="1.25">

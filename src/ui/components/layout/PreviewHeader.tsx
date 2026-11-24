@@ -38,12 +38,12 @@ export const PreviewShell = ({
   >
     <Container
       display="flex"
-      maxW="980px"
+      maxW="var(--preview-max-width)"
       alignItems="center"
       justifyContent="space-between"
       flexWrap="wrap"
       gap="4"
-      px="8"
+      px={{ base: "8", md: "var(--preview-page-padding)" }}
       py="4"
     >
       {children}

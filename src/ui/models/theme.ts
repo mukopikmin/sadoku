@@ -11,6 +11,7 @@ export type PreviewSettings = {
   maxFiles: number;
   markdownExtensions: string[];
   theme?: ThemeMode;
+  wideLayout: boolean;
 };
 
 export type ResolvedPreviewSettings = PreviewSettings & {

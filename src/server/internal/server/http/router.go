@@ -280,7 +280,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string
 					return
 				}
 			}
-			allowed := map[string]bool{"theme": true, "codeWrap": true, "fontScale": true, "maxDepth": true, "maxFiles": true, "excludedDirectories": true, "markdownExtensions": true, "showHtmlComments": true, "showHighlightBoundaries": true}
+			allowed := map[string]bool{"theme": true, "codeWrap": true, "fontScale": true, "maxDepth": true, "maxFiles": true, "excludedDirectories": true, "markdownExtensions": true, "showHtmlComments": true, "showHighlightBoundaries": true, "wideLayout": true}
 			for key := range fields {
 				if !allowed[key] {
 					textError(w, invalidSettingsMessage, 400)

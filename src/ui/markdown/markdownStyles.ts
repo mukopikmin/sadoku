@@ -59,7 +59,7 @@ export const markdownStyles = `
     background-color: var(--markdown-highlight-bg, transparent);
     inline-size: max-content;
     min-inline-size: 100%;
-    max-inline-size: calc(100% + max(0px, 100vi - var(--document-max-width)));
+    max-inline-size: calc(100% + max(0px, 100vi - var(--preview-max-width)));
   }
 
   .markdown-range-highlights {

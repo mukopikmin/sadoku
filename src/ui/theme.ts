@@ -9,6 +9,12 @@ export const sadokuChakraSystem = createSystem(
     globalCss: {
       html: {
         scrollbarGutter: "stable",
+        "--preview-max-width": "980px",
+        "--preview-page-padding": "var(--chakra-spacing-8)",
+      },
+      "html[data-wide-layout='true']": {
+        "--preview-max-width": "100vi",
+        "--preview-page-padding": "var(--chakra-spacing-12)",
       },
       body: {
         bg: "canvas",

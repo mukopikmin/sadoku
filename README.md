@@ -71,8 +71,10 @@ Japanese fonts are bundled; see [font licenses](src/ui/public/fonts/noto-sans-jp
 
 ### Settings and storage
 
-Appearance and review settings are available under **Settings**. Comments,
-instructions, memories, and table widths are saved in `sadoku.sqlite3` under:
+Appearance and review settings are available under **Settings**. Turn on
+**Wide layout** to use the maximum table width throughout the preview.
+Comments, instructions, memories, and table widths are saved in
+`sadoku.sqlite3` under:
 
 - macOS: `~/Library/Application Support/sadoku/comments`
 - Linux: `$XDG_DATA_HOME/sadoku/comments` or `~/.local/share/sadoku/comments`

@@ -1764,6 +1764,7 @@ type Settings struct {
 	MarkdownExtensions      []string               `protobuf:"bytes,7,rep,name=markdown_extensions,json=markdownExtensions,proto3" json:"markdown_extensions,omitempty"`
 	ShowHtmlComments        *bool                  `protobuf:"varint,8,opt,name=show_html_comments,json=showHtmlComments,proto3,oneof" json:"show_html_comments,omitempty"`
 	ShowHighlightBoundaries *bool                  `protobuf:"varint,9,opt,name=show_highlight_boundaries,json=showHighlightBoundaries,proto3,oneof" json:"show_highlight_boundaries,omitempty"`
+	WideLayout              *bool                  `protobuf:"varint,10,opt,name=wide_layout,json=wideLayout,proto3,oneof" json:"wide_layout,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1861,6 +1862,13 @@ func (x *Settings) GetShowHighlightBoundaries() bool {
 	return false
 }
 
+func (x *Settings) GetWideLayout() bool {
+	if x != nil && x.WideLayout != nil {
+		return *x.WideLayout
+	}
+	return false
+}
+
 type UpdateSettingsRequest struct {
 	state                   protoimpl.MessageState `protogen:"open.v1"`
 	Theme                   string                 `protobuf:"bytes,1,opt,name=theme,proto3" json:"theme,omitempty"`
@@ -1872,6 +1880,7 @@ type UpdateSettingsRequest struct {
 	MarkdownExtensions      []string               `protobuf:"bytes,7,rep,name=markdown_extensions,json=markdownExtensions,proto3" json:"markdown_extensions,omitempty"`
 	ShowHtmlComments        *bool                  `protobuf:"varint,8,opt,name=show_html_comments,json=showHtmlComments,proto3,oneof" json:"show_html_comments,omitempty"`
 	ShowHighlightBoundaries *bool                  `protobuf:"varint,9,opt,name=show_highlight_boundaries,json=showHighlightBoundaries,proto3,oneof" json:"show_highlight_boundaries,omitempty"`
+	WideLayout              *bool                  `protobuf:"varint,10,opt,name=wide_layout,json=wideLayout,proto3,oneof" json:"wide_layout,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1965,6 +1974,13 @@ func (x *UpdateSettingsRequest) GetShowHtmlComments() bool {
 func (x *UpdateSettingsRequest) GetShowHighlightBoundaries() bool {
 	if x != nil && x.ShowHighlightBoundaries != nil {
 		return *x.ShowHighlightBoundaries
+	}
+	return false
+}
+
+func (x *UpdateSettingsRequest) GetWideLayout() bool {
+	if x != nil && x.WideLayout != nil {
+		return *x.WideLayout
 	}
 	return false
 }
@@ -4598,7 +4614,7 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\x0eDirectoryError\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\x14\n" +
-	"\x12GetSettingsRequest\"\xc5\x03\n" +
+	"\x12GetSettingsRequest\"\xfb\x03\n" +
 	"\bSettings\x12\x19\n" +
 	"\x05theme\x18\x01 \x01(\tH\x00R\x05theme\x88\x01\x01\x12 \n" +
 	"\tcode_wrap\x18\x02 \x01(\tH\x01R\bcodeWrap\x88\x01\x01\x12\x1d\n" +
@@ -4609,12 +4625,16 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\tmax_files\x18\x06 \x01(\rR\bmaxFiles\x12/\n" +
 	"\x13markdown_extensions\x18\a \x03(\tR\x12markdownExtensions\x121\n" +
 	"\x12show_html_comments\x18\b \x01(\bH\x02R\x10showHtmlComments\x88\x01\x01\x12?\n" +
-	"\x19show_highlight_boundaries\x18\t \x01(\bH\x03R\x17showHighlightBoundaries\x88\x01\x01B\b\n" +
+	"\x19show_highlight_boundaries\x18\t \x01(\bH\x03R\x17showHighlightBoundaries\x88\x01\x01\x12$\n" +
+	"\vwide_layout\x18\n" +
+	" \x01(\bH\x04R\n" +
+	"wideLayout\x88\x01\x01B\b\n" +
 	"\x06_themeB\f\n" +
 	"\n" +
 	"_code_wrapB\x15\n" +
 	"\x13_show_html_commentsB\x1c\n" +
-	"\x1a_show_highlight_boundaries\"\xb0\x03\n" +
+	"\x1a_show_highlight_boundariesB\x0e\n" +
+	"\f_wide_layout\"\xe6\x03\n" +
 	"\x15UpdateSettingsRequest\x12\x14\n" +
 	"\x05theme\x18\x01 \x01(\tR\x05theme\x12\x1b\n" +
 	"\tcode_wrap\x18\x02 \x01(\tR\bcodeWrap\x12\x1d\n" +
@@ -4625,9 +4645,13 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\tmax_files\x18\x06 \x01(\rR\bmaxFiles\x12/\n" +
 	"\x13markdown_extensions\x18\a \x03(\tR\x12markdownExtensions\x121\n" +
 	"\x12show_html_comments\x18\b \x01(\bH\x00R\x10showHtmlComments\x88\x01\x01\x12?\n" +
-	"\x19show_highlight_boundaries\x18\t \x01(\bH\x01R\x17showHighlightBoundaries\x88\x01\x01B\x15\n" +
+	"\x19show_highlight_boundaries\x18\t \x01(\bH\x01R\x17showHighlightBoundaries\x88\x01\x01\x12$\n" +
+	"\vwide_layout\x18\n" +
+	" \x01(\bH\x02R\n" +
+	"wideLayout\x88\x01\x01B\x15\n" +
 	"\x13_show_html_commentsB\x1c\n" +
-	"\x1a_show_highlight_boundaries\"\x19\n" +
+	"\x1a_show_highlight_boundariesB\x0e\n" +
+	"\f_wide_layout\"\x19\n" +
 	"\x17GetGitHubAccountRequest\"\xa2\x01\n" +
 	"\x18GetGitHubAccountResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12?\n" +

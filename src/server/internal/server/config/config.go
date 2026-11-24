@@ -21,6 +21,7 @@ type Settings struct {
 	MarkdownExtensions      []string `json:"markdownExtensions" toml:"markdown_extensions"`
 	ShowHTMLComments        bool     `json:"showHtmlComments" toml:"show_html_comments"`
 	ShowHighlightBoundaries bool     `json:"showHighlightBoundaries,omitempty" toml:"show_highlight_boundaries"`
+	WideLayout              bool     `json:"wideLayout,omitempty" toml:"wide_layout"`
 }
 
 func Defaults() Settings {
