@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, type RefObject } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { ActiveComment } from "../../models/comment";
 import type { MarkdownElementProps } from "../markdownRenderers";
@@ -37,6 +37,7 @@ export type CommentControlProps = {
     options: CommentRangeSelectionOptions,
   ) => void;
   selectedRange?: CommentRange;
+  selectionAnchorRef?: RefObject<HTMLElement | null>;
 };
 
 export type CommentRenderingContextValue = CommentControlProps & {

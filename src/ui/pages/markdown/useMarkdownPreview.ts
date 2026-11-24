@@ -46,6 +46,7 @@ export const useMarkdownPreview = ({
       );
   const renderedMarkdown = frontMatter?.bodyMarkdown ?? markdown;
   const previewRef = useRef<HTMLDivElement>(null);
+  const selectionAnchorRef = useRef<HTMLDivElement>(null);
   const [raw, setRaw] = useState<
     { status: "closed" } | { status: "open"; range: CommentRange }
   >({ status: "closed" });
@@ -109,6 +110,7 @@ export const useMarkdownPreview = ({
       onOpenRawMarkdown: (range) => setRaw({ status: "open", range }),
       onSelectCommentRange: selectCommentRange,
       selectedRange,
+      selectionAnchorRef,
     }),
     [
       actions,
@@ -131,6 +133,7 @@ export const useMarkdownPreview = ({
     frontMatterChanged,
     renderedMarkdown,
     previewRef,
+    selectionAnchorRef,
     rangeHighlightLayouts,
     commentRenderingContext,
     deletedCommentsByLine,
