@@ -39,6 +39,7 @@ it("closes statistics when settings closes and keeps it closed on reopening", as
     onShowHtmlCommentsChange: vi.fn(),
     onThemeModeChange: vi.fn(),
     onWideLayoutChange: vi.fn(),
+    onWideTablesChange: vi.fn(),
     open: true,
     settingsState: {
       status: "ready",
@@ -53,6 +54,7 @@ it("closes statistics when settings closes and keeps it closed on reopening", as
         showHtmlComments: true,
         theme: "light",
         wideLayout: false,
+        wideTables: false,
       },
     },
   };

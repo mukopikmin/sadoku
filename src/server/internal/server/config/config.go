@@ -22,6 +22,7 @@ type Settings struct {
 	ShowHTMLComments        bool     `json:"showHtmlComments" toml:"show_html_comments"`
 	ShowHighlightBoundaries bool     `json:"showHighlightBoundaries,omitempty" toml:"show_highlight_boundaries"`
 	WideLayout              bool     `json:"wideLayout,omitempty" toml:"wide_layout"`
+	WideTables              bool     `json:"wideTables,omitempty" toml:"wide_tables"`
 }
 
 func Defaults() Settings {

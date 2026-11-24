@@ -180,6 +180,7 @@ message Settings {
   optional bool show_html_comments = 8;
   optional bool show_highlight_boundaries = 9;
   optional bool wide_layout = 10;
+  optional bool wide_tables = 11;
 }
 message UpdateSettingsRequest {
   string theme = 1;
@@ -192,6 +193,7 @@ message UpdateSettingsRequest {
   optional bool show_html_comments = 8;
   optional bool show_highlight_boundaries = 9;
   optional bool wide_layout = 10;
+  optional bool wide_tables = 11;
 }
 
 message GetGitHubAccountRequest {}

@@ -18,12 +18,18 @@ const defaults = {
   markdownExtensions: [".md", ".markdown"],
   theme: "light" as const,
   wideLayout: false,
+  wideTables: false,
 };
 
 const echoSettings = async ({
   wideLayout = false,
+  wideTables = false,
   ...settings
-}: Parameters<typeof api.saveSettings>[0]) => ({ ...settings, wideLayout });
+}: Parameters<typeof api.saveSettings>[0]) => ({
+  ...settings,
+  wideLayout,
+  wideTables,
+});
 
 afterEach(() => {
   cleanup();
@@ -36,6 +42,7 @@ afterEach(() => {
     "data-code-wrap",
     "data-show-highlight-boundaries",
     "data-wide-layout",
+    "data-wide-tables",
   ])
     document.documentElement.removeAttribute(attribute);
 });
@@ -88,6 +95,7 @@ it("applies edits immediately and merges them with the settings loaded before sa
     theme: "light",
     fontScale: 0.8,
     wideLayout: true,
+    wideTables: undefined,
     codeWrap: "wrap",
   });
 });
@@ -153,6 +161,7 @@ it("retains edits after a failed load and retries against the saved settings", a
     ...defaults,
     codeWrap: "wrap",
     wideLayout: true,
+    wideTables: undefined,
   });
 });
 
@@ -164,6 +173,7 @@ it("serializes writes so an earlier save cannot overwrite the latest settings", 
     .mockImplementation(async (settings) => ({
       ...settings,
       wideLayout: true,
+      wideTables: true,
     }));
   const { result } = renderHook(usePreviewSettings, queryHook());
   await waitFor(() => expect(result.current.state.status).toBe("ready"));
@@ -172,16 +182,23 @@ it("serializes writes so an earlier save cannot overwrite the latest settings", 
   act(() => result.current.changeFontScale(1.2));
   expect(api.saveSettings).toHaveBeenCalledOnce();
   await act(async () => {
-    first.resolve({ ...defaults, fontScale: 1.1, wideLayout: true });
+    first.resolve({
+      ...defaults,
+      fontScale: 1.1,
+      wideLayout: true,
+      wideTables: true,
+    });
     await first.promise;
   });
   await waitFor(() => expect(api.saveSettings).toHaveBeenCalledTimes(2));
   await waitFor(() => expect(result.current.state.status).toBe("ready"));
   expect(result.current.state.settings.fontScale).toBe(1.2);
   expect(result.current.state.settings.wideLayout).toBe(true);
+  expect(result.current.state.settings.wideTables).toBe(true);
   expect(api.saveSettings).toHaveBeenLastCalledWith({
     ...defaults,
     fontScale: 1.2,
     wideLayout: undefined,
+    wideTables: undefined,
   });
 });

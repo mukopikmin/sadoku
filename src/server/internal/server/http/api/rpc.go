@@ -42,6 +42,9 @@ func invoke(ctx context.Context, s *Service, operation string, in, out proto.Mes
 		if _, ok := fields["wideLayout"]; !ok {
 			input.WideLayout = current.WideLayout
 		}
+		if _, ok := fields["wideTables"]; !ok {
+			input.WideTables = current.WideTables
+		}
 	}
 	result, err := s.Session.Invoke(ctx, operation, input)
 	if err != nil {

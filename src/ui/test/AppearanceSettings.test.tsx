@@ -12,6 +12,7 @@ describe("AppearanceSettings", () => {
     const onShowHtmlCommentsChange = vi.fn();
     const onShowHighlightBoundariesChange = vi.fn();
     const onWideLayoutChange = vi.fn();
+    const onWideTablesChange = vi.fn();
     render(
       <AppearanceSettings
         codeWrapMode="scroll"
@@ -22,10 +23,12 @@ describe("AppearanceSettings", () => {
         onShowHtmlCommentsChange={onShowHtmlCommentsChange}
         onShowHighlightBoundariesChange={onShowHighlightBoundariesChange}
         onWideLayoutChange={onWideLayoutChange}
+        onWideTablesChange={onWideTablesChange}
         showHighlightBoundaries={false}
         showHtmlComments
         themeMode="light"
         wideLayout={false}
+        wideTables={false}
       />,
     );
 
@@ -36,11 +39,14 @@ describe("AppearanceSettings", () => {
 
     const wideLayout = screen.getByRole<HTMLInputElement>("checkbox", {
       name: "Wide layout",
-      description: "Use the maximum table width throughout the preview",
+      description: "Use the available screen width throughout the preview",
     });
     expect(wideLayout.checked).toBe(false);
     fireEvent.click(screen.getByText("Wide layout"));
     await waitFor(() => expect(onWideLayoutChange).toHaveBeenCalledWith(true));
+
+    fireEvent.click(screen.getByText("Wide tables"));
+    await waitFor(() => expect(onWideTablesChange).toHaveBeenCalledWith(true));
 
     const htmlComments = screen.getByRole<HTMLInputElement>("checkbox", {
       name: "Show HTML comments",

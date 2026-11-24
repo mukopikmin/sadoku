@@ -95,6 +95,7 @@ export const usePreviewApp = () => {
     changeShowHtmlComments,
     changeThemeMode,
     changeWideLayout,
+    changeWideTables,
     retrySettings,
     state: settingsState,
   } = usePreviewSettings();
@@ -112,6 +113,7 @@ export const usePreviewApp = () => {
     onShowHtmlCommentsChange: changeShowHtmlComments,
     onThemeModeChange: changeThemeMode,
     onWideLayoutChange: changeWideLayout,
+    onWideTablesChange: changeWideTables,
   };
 
   useEffect(

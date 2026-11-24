@@ -34,6 +34,7 @@ export const usePreviewSettings = () => {
     maxFiles: 20,
     theme: getPreferredThemeMode(),
     wideLayout: false,
+    wideTables: false,
   }));
   const [pendingChanges, setPendingChanges] = useState<SettingsChanges>({});
   // Consecutive events can stage changes before React renders them.
@@ -59,6 +60,7 @@ export const usePreviewSettings = () => {
         ...resolveSettings(saved),
         ...changes,
         wideLayout: changes.wideLayout,
+        wideTables: changes.wideTables,
       });
     },
     scope: { id: "preview-settings" },
@@ -88,6 +90,12 @@ export const usePreviewSettings = () => {
       settings.wideLayout,
     );
   }, [settings.wideLayout]);
+
+  useEffect(() => {
+    globalThis.document.documentElement.dataset.wideTables = String(
+      settings.wideTables,
+    );
+  }, [settings.wideTables]);
 
   useEffect(() => {
     const root = globalThis.document.documentElement;
@@ -138,6 +146,10 @@ export const usePreviewSettings = () => {
     changeSettings({ wideLayout: next });
   };
 
+  const changeWideTables = (next: boolean) => {
+    changeSettings({ wideTables: next });
+  };
+
   const changeFontScale = (next: number) => {
     changeSettings({ fontScale: next });
   };
@@ -170,6 +182,7 @@ export const usePreviewSettings = () => {
     changeShowHtmlComments,
     changeThemeMode,
     changeWideLayout,
+    changeWideTables,
     retrySettings,
     state: settingsState(
       settings,

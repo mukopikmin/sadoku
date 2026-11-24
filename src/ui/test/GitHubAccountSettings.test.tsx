@@ -18,6 +18,7 @@ const settings = {
   showHtmlComments: true,
   theme: "light" as const,
   wideLayout: false,
+  wideTables: false,
 };
 
 it("shows the GitHub CLI authenticated account in settings", async () => {
@@ -50,6 +51,7 @@ it("shows the GitHub CLI authenticated account in settings", async () => {
       onShowHtmlCommentsChange={vi.fn()}
       onThemeModeChange={vi.fn()}
       onWideLayoutChange={vi.fn()}
+      onWideTablesChange={vi.fn()}
       open
       settingsState={{ status: "ready", settings }}
     />,

@@ -51,7 +51,22 @@ export const markdownStyles = `
     position: relative;
   }
 
-  /* Let standalone tables use the space around the text column. */
+  :root[data-wide-tables="true"]:not([data-wide-layout="true"]) #sadoku-client-root {
+    --preview-table-available-width: 100vi;
+    --preview-table-extra-width: max(
+      0px,
+      var(--preview-table-available-width) - var(--preview-max-width)
+    );
+  }
+
+  @supports (width: 100cqi) {
+    :root[data-wide-tables="true"]:not([data-wide-layout="true"]) #sadoku-client-root {
+      container-type: inline-size;
+      --preview-table-available-width: 100cqi;
+    }
+  }
+
+  /* Expand standalone tables into the space around the text column when enabled. */
   .document-preview-content > .markdown-preview > .markdown-table,
   .document-preview-content > .markdown-preview > .document-diff-addition > .markdown-table,
   .document-preview-content > .markdown-preview > .document-diff-deletion .markdown-preview > .markdown-table {
@@ -59,7 +74,7 @@ export const markdownStyles = `
     background-color: var(--markdown-highlight-bg, transparent);
     inline-size: max-content;
     min-inline-size: 100%;
-    max-inline-size: calc(100% + max(0px, 100vi - var(--preview-max-width)));
+    max-inline-size: calc(100% + var(--preview-table-extra-width, 0px));
   }
 
   .markdown-range-highlights {

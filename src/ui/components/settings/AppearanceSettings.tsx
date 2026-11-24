@@ -24,12 +24,14 @@ type AppearanceSettingsProps = {
   onFontScaleChange: (value: number) => void;
   onThemeModeChange: (value: ThemeMode) => void;
   onWideLayoutChange: (value: boolean) => void;
+  onWideTablesChange: (value: boolean) => void;
   onShowHtmlCommentsChange: (value: boolean) => void;
   onShowHighlightBoundariesChange: (value: boolean) => void;
   showHighlightBoundaries: boolean;
   showHtmlComments: boolean;
   themeMode: ThemeMode;
   wideLayout: boolean;
+  wideTables: boolean;
 };
 
 export const AppearanceSettings = ({
@@ -39,15 +41,16 @@ export const AppearanceSettings = ({
   onFontScaleChange,
   onThemeModeChange,
   onWideLayoutChange,
+  onWideTablesChange,
   onShowHtmlCommentsChange,
   onShowHighlightBoundariesChange,
   showHighlightBoundaries,
   showHtmlComments,
   themeMode,
   wideLayout,
+  wideTables,
 }: AppearanceSettingsProps) => {
   const { decrease, increase } = getAdjacentFontScales(fontScale);
-  const wideLayoutDescriptionId = useId();
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between" gap="4">
@@ -127,33 +130,19 @@ export const AppearanceSettings = ({
           </IconButton>
         </Flex>
       </Flex>
-      <Switch.Root
+      <LayoutSwitch
         checked={wideLayout}
-        onCheckedChange={({ checked }) => onWideLayoutChange(checked)}
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        gap="4"
-      >
-        <Text as="span">
-          <Switch.Label display="block" textStyle="label">
-            Wide layout
-          </Switch.Label>
-          <Text
-            as="span"
-            color="fg.muted"
-            display="block"
-            fontSize="sm"
-            id={wideLayoutDescriptionId}
-          >
-            Use the maximum table width throughout the preview
-          </Text>
-        </Text>
-        <Switch.HiddenInput aria-describedby={wideLayoutDescriptionId} />
-        <Switch.Control>
-          <Switch.Thumb />
-        </Switch.Control>
-      </Switch.Root>
+        label="Wide layout"
+        description="Use the available screen width throughout the preview"
+        onChange={onWideLayoutChange}
+      />
+      <LayoutSwitch
+        checked={wideTables}
+        disabled={wideLayout}
+        label="Wide tables"
+        description="Let standalone tables extend past the document column when Wide layout is off"
+        onChange={onWideTablesChange}
+      />
       <Flex alignItems="center" justifyContent="space-between" gap="4">
         <Text as="div">
           <Text textStyle="label">Wrap code blocks</Text>
@@ -208,5 +197,51 @@ export const AppearanceSettings = ({
         </Switch.Root>
       </Flex>
     </>
+  );
+};
+
+const LayoutSwitch = ({
+  checked,
+  description,
+  disabled,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  description: string;
+  disabled?: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) => {
+  const descriptionId = useId();
+  return (
+    <Switch.Root
+      checked={checked}
+      disabled={disabled}
+      onCheckedChange={({ checked }) => onChange(checked)}
+      display="flex"
+      alignItems="center"
+      justifyContent="space-between"
+      gap="4"
+    >
+      <Text as="span">
+        <Switch.Label display="block" textStyle="label">
+          {label}
+        </Switch.Label>
+        <Text
+          as="span"
+          color="fg.muted"
+          display="block"
+          fontSize="sm"
+          id={descriptionId}
+        >
+          {description}
+        </Text>
+      </Text>
+      <Switch.HiddenInput aria-describedby={descriptionId} />
+      <Switch.Control>
+        <Switch.Thumb />
+      </Switch.Control>
+    </Switch.Root>
   );
 };

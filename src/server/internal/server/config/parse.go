@@ -81,6 +81,7 @@ func settingsFromConfig(values map[string]any) (Settings, error) {
 		{"show_html_comments", &s.ShowHTMLComments},
 		{"show_highlight_boundaries", &s.ShowHighlightBoundaries},
 		{"wide_layout", &s.WideLayout},
+		{"wide_tables", &s.WideTables},
 	} {
 		if value, exists := values[field.key]; exists {
 			b, ok := value.(bool)

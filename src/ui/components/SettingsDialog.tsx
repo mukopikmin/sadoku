@@ -27,6 +27,7 @@ export type SettingsDialogProps = {
   onShowHtmlCommentsChange: (value: boolean) => void;
   onThemeModeChange: (value: ThemeMode) => void;
   onWideLayoutChange: (value: boolean) => void;
+  onWideTablesChange: (value: boolean) => void;
   open: boolean;
   settingsState: PreviewSettingsState;
 };
@@ -90,6 +91,7 @@ export const SettingsDialog = ({
                   onFontScaleChange={actions.onFontScaleChange}
                   onThemeModeChange={actions.onThemeModeChange}
                   onWideLayoutChange={actions.onWideLayoutChange}
+                  onWideTablesChange={actions.onWideTablesChange}
                   onShowHtmlCommentsChange={actions.onShowHtmlCommentsChange}
                   onShowHighlightBoundariesChange={
                     actions.onShowHighlightBoundariesChange
@@ -98,6 +100,7 @@ export const SettingsDialog = ({
                   showHtmlComments={settings.showHtmlComments}
                   themeMode={settings.theme}
                   wideLayout={settings.wideLayout}
+                  wideTables={settings.wideTables}
                 />
                 <DirectoryDiscoverySettings
                   excludedDirectories={settings.excludedDirectories}

@@ -12,6 +12,7 @@ export type PreviewSettings = {
   markdownExtensions: string[];
   theme?: ThemeMode;
   wideLayout: boolean;
+  wideTables: boolean;
 };
 
 export type ResolvedPreviewSettings = PreviewSettings & {

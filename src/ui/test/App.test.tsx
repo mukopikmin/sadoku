@@ -35,6 +35,7 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-code-wrap");
   document.documentElement.removeAttribute("data-show-highlight-boundaries");
   document.documentElement.removeAttribute("data-wide-layout");
+  document.documentElement.removeAttribute("data-wide-tables");
   document.documentElement.removeAttribute("style");
   globalThis.localStorage?.clear?.();
   TestEventSource.instances = [];
@@ -1117,6 +1118,7 @@ describe("App", () => {
   it.each([
     { label: "Show highlight boundaries", setting: "showHighlightBoundaries" },
     { label: "Wide layout", setting: "wideLayout" },
+    { label: "Wide tables", setting: "wideTables" },
   ])(
     "defaults $label off and saves and restores the toggle",
     async ({ label, setting }) => {
@@ -1135,7 +1137,10 @@ describe("App", () => {
                   new Response("Offline", { status: 503 }),
                 );
               }
-              savedSettings = JSON.parse(String(init.body));
+              savedSettings = {
+                ...savedSettings,
+                ...JSON.parse(String(init.body)),
+              };
             }
             return Promise.resolve(Response.json(savedSettings));
           }
@@ -1195,6 +1200,23 @@ describe("App", () => {
         name: label,
       });
       expect(restored.checked).toBe(true);
+      if (setting === "wideTables") {
+        const wideLayout = screen.getByRole("checkbox", {
+          name: "Wide layout",
+        });
+        fireEvent.click(wideLayout);
+        await waitFor(() => {
+          expect(savedSettings.wideLayout).toBe(true);
+          expect(restored.disabled).toBe(true);
+        });
+        expect(savedSettings.wideTables).toBe(true);
+        fireEvent.click(wideLayout);
+        await waitFor(() => {
+          expect(savedSettings.wideLayout).toBe(false);
+          expect(restored.disabled).toBe(false);
+        });
+        expect(restored.checked).toBe(true);
+      }
       fireEvent.click(restored);
       await waitFor(() => expect(savedSettings[setting]).toBe(false));
       expect(document.documentElement.dataset[setting]).toBe("false");

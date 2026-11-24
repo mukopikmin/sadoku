@@ -74,6 +74,7 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 		"fontScale": 0.74, "showHtmlComments": nil, "extra": true,
 		"showHighlightBoundaries": "true",
 		"wideLayout":              "true",
+		"wideTables":              "true",
 	} {
 		t.Run(key, func(t *testing.T) {
 			invalid := make(map[string]any, len(valid))

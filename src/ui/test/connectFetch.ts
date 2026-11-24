@@ -57,6 +57,7 @@ const route = (
           showHtmlComments: body.showHtmlComments,
           theme: body.theme,
           wideLayout: body.wideLayout,
+          wideTables: body.wideTables,
         }),
         settings,
       ];

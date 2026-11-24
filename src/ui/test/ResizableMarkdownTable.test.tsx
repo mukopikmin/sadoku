@@ -28,6 +28,27 @@ const layout: TableLayout = {
 };
 
 describe("resizable Markdown table", () => {
+  it("keeps the scroll area keyboard focusable when column widths cannot be loaded", () => {
+    render(
+      <TableLayoutContext.Provider
+        value={{ state: { status: "error" }, save: vi.fn() }}
+      >
+        <MarkdownPreview
+          actions={createCommentActions()}
+          comments={[]}
+          markdown={markdown}
+          showHtmlComments
+          theme="default"
+        />
+      </TableLayoutContext.Provider>,
+    );
+    const scrollArea = screen.getByRole("group", { name: "Scrollable table" });
+    expect(scrollArea.contains(screen.getByRole("table"))).toBe(true);
+    expect(scrollArea.tabIndex).toBe(0);
+    scrollArea.focus();
+    expect(document.activeElement).toBe(scrollArea);
+  });
+
   it("restores widths and wires accessible keyboard resizing and reset without selecting comments", async () => {
     const saved = vi.fn();
     const Preview = () => {

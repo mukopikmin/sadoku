@@ -2,8 +2,12 @@ import type { PreviewSettings, ResolvedPreviewSettings } from "../models/theme";
 import type { Settings } from "../gen/sadoku/preview/v1/preview_pb";
 import { previewClient } from "./connect";
 
-type SettingsUpdate = Omit<ResolvedPreviewSettings, "wideLayout"> & {
+type SettingsUpdate = Omit<
+  ResolvedPreviewSettings,
+  "wideLayout" | "wideTables"
+> & {
   wideLayout?: boolean;
+  wideTables?: boolean;
 };
 
 const toPreviewSettings = (response: Settings): PreviewSettings => {
@@ -64,6 +68,7 @@ const toPreviewSettings = (response: Settings): PreviewSettings => {
     markdownExtensions,
     theme,
     wideLayout: response.wideLayout ?? false,
+    wideTables: response.wideTables ?? false,
   };
 };
 
