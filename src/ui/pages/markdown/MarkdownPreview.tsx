@@ -49,6 +49,7 @@ export const MarkdownPreview = ({
     frontMatterChanged,
     renderedMarkdown,
     previewRef,
+    selectionAnchorRef,
     rangeHighlightLayouts,
     commentRenderingContext,
     deletedCommentsByLine,
@@ -73,7 +74,10 @@ export const MarkdownPreview = ({
           data-document-diff={previousMarkdown !== undefined ? "" : undefined}
           ref={previewRef}
         >
-          <HighlightOverlay layouts={rangeHighlightLayouts} />
+          <HighlightOverlay
+            layouts={rangeHighlightLayouts}
+            selectionAnchorRef={selectionAnchorRef}
+          />
           {frontMatterChanged && previousFrontMatter && (
             <DeletedMarkdownBlock
               previousStartLine={1}
