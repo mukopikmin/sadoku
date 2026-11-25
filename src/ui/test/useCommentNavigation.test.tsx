@@ -97,6 +97,8 @@ describe("useCommentNavigation", () => {
         html={`<header></header>${preview(thread(1) + thread(2) + thread(3))}`}
       />,
     );
+    const root = container.querySelector(".markdown-preview")!.parentElement!;
+    const collect = vi.spyOn(root, "querySelectorAll");
     fireEvent.click(previous());
     expect(screen.getByRole("status").textContent).toBe("1 / 3");
     expect(
@@ -108,6 +110,7 @@ describe("useCommentNavigation", () => {
       window.dispatchEvent(new Event("scroll"));
     });
     expect(screen.getByRole("status").textContent).toBe("– / 3");
+    expect(collect).not.toHaveBeenCalled();
     expect(
       container.querySelector("[data-comment-navigation-current]"),
     ).toBeNull();

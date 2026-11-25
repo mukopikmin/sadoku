@@ -49,52 +49,42 @@ export const useCommentNavigation = () => {
       refresh();
     };
     const refresh = () => {
-      const nextPositions = [
-        ...root.querySelectorAll<HTMLElement>(
-          ".markdown-preview .comment-thread:has(> article)",
-        ),
-      ];
       if (
         current &&
-        (!nextPositions.includes(current) || view.scrollY !== navigatedScrollY)
+        (!positions.includes(current) || view.scrollY !== navigatedScrollY)
       ) {
         clearCurrent();
       }
-      const index = current ? nextPositions.indexOf(current) : -1;
+      const index = current ? positions.indexOf(current) : -1;
       let previous: HTMLElement | undefined;
       let next: HTMLElement | undefined;
       if (index >= 0) {
-        previous = nextPositions[index - 1];
-        next = nextPositions[index + 1];
+        previous = positions[index - 1];
+        next = positions[index + 1];
       } else {
         const headerBottom =
           root.ownerDocument.querySelector("header")?.getBoundingClientRect()
             .bottom ?? 0;
-        previous = nextPositions.findLast(
+        previous = positions.findLast(
           (target) => target.getBoundingClientRect().top < headerBottom,
         );
-        next = nextPositions.find(
+        next = positions.find(
           (target) => target.getBoundingClientRect().top >= headerBottom,
         );
       }
-      const unchanged =
-        positions.length === nextPositions.length &&
-        positions.every((target, i) => target === nextPositions[i]) &&
-        previousTarget === previous &&
-        nextTarget === next;
-      positions = nextPositions;
+      const unchanged = previousTarget === previous && nextTarget === next;
       previousTarget = previous;
       nextTarget = next;
       const position = index < 0 ? null : index + 1;
       setNavigation((existing) => {
         if (
           unchanged &&
-          existing.count === nextPositions.length &&
+          existing.count === positions.length &&
           existing.position === position
         )
           return existing;
         return {
-          count: nextPositions.length,
+          count: positions.length,
           position,
           previous: previous ? () => navigate(previous) : null,
           next: next ? () => navigate(next) : null,
@@ -102,8 +92,28 @@ export const useCommentNavigation = () => {
       });
     };
 
-    refresh();
-    const observer = new MutationObserver(refresh);
+    const collectThreads = () => {
+      positions = [
+        ...root.querySelectorAll<HTMLElement>(
+          ".markdown-preview .comment-thread:has(> article)",
+        ),
+      ];
+      refresh();
+    };
+    collectThreads();
+    const mayContainThread = (node: Node) =>
+      node instanceof Element &&
+      (node.matches(".comment-thread, article") ||
+        node.querySelector(".comment-thread, article") !== null);
+    const observer = new MutationObserver((records) => {
+      if (
+        records.some(({ addedNodes, removedNodes }) =>
+          [...addedNodes, ...removedNodes].some(mayContainThread),
+        )
+      )
+        collectThreads();
+      else refresh();
+    });
     observer.observe(root, { childList: true, subtree: true });
     view.addEventListener("scroll", refresh, { passive: true });
     view.addEventListener("resize", refresh);
