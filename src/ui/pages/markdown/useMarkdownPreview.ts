@@ -56,7 +56,8 @@ export const useMarkdownPreview = ({
     selection.state.status === "none" ? undefined : selection.state.range;
   const activeRange =
     selection.state.status === "composing" ? selection.state.range : undefined;
-  const activeCommentLine = activeRange?.endLine;
+  const actionLine =
+    selection.state.status === "none" ? undefined : selection.state.actionLine;
   const rangeHighlights = useMemo(
     () => deriveRangeHighlights(activeComments, selectedRange),
     [activeComments, selectedRange],
@@ -82,7 +83,7 @@ export const useMarkdownPreview = ({
   useMermaidRendering(
     undefined,
     [
-      activeCommentLine,
+      activeRange,
       comments,
       markdown,
       previousMarkdown,
@@ -96,7 +97,7 @@ export const useMarkdownPreview = ({
   const commentRenderingContext = useMemo<CommentRenderingContextValue>(
     () => ({
       actions,
-      activeCommentLine,
+      actionLine,
       activeRange,
       commentsByLine,
       drafts,
@@ -111,7 +112,7 @@ export const useMarkdownPreview = ({
     }),
     [
       actions,
-      activeCommentLine,
+      actionLine,
       activeRange,
       closeCommentForm,
       commentsByLine,
