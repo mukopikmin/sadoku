@@ -60,16 +60,16 @@ export const measureHighlightGroups = <Range>(
 
 export const useHighlightLayouts = <Layout extends HighlightLayout>(
   previewRef: RefObject<HTMLElement | null>,
-  measure: (preview: HTMLElement, resized: boolean) => Layout[],
+  measure: (preview: HTMLElement, layoutChanged: boolean) => Layout[],
   resizeTargetSelector?: string,
   content?: ReactNode,
 ) => {
   const [layouts, setLayouts] = useState<Layout[]>([]);
   const updateLayouts = useCallback(
-    (resized: boolean) => {
+    (layoutChanged: boolean) => {
       const preview = previewRef.current;
       if (!preview) return;
-      const next = measure(preview, resized);
+      const next = measure(preview, layoutChanged);
       setLayouts((current) =>
         current.length === next.length &&
         current.every(
@@ -89,7 +89,7 @@ export const useHighlightLayouts = <Layout extends HighlightLayout>(
     [previewRef, measure],
   );
 
-  const onResize = useEffectEvent(() => updateLayouts(true));
+  const remeasure = useEffectEvent(() => updateLayouts(true));
   useLayoutEffect(() => {
     updateLayouts(false);
   });
@@ -98,19 +98,49 @@ export const useHighlightLayouts = <Layout extends HighlightLayout>(
     const preview = previewRef.current;
     if (!preview) return;
     const view = preview.ownerDocument.defaultView ?? globalThis;
-    view.addEventListener("resize", onResize);
+    view.addEventListener("resize", remeasure);
     const observer =
       typeof ResizeObserver === "undefined"
         ? undefined
-        : new ResizeObserver(onResize);
+        : new ResizeObserver(remeasure);
     observer?.observe(preview);
-    if (observer && resizeTargetSelector) {
-      preview
-        .querySelectorAll(resizeTargetSelector)
-        .forEach((target) => observer.observe(target));
+    let contentObserver: MutationObserver | undefined;
+    if (resizeTargetSelector) {
+      let targets = new Set<Element>();
+      const syncTargets = () => {
+        if (!observer) return;
+        const next = new Set(preview.querySelectorAll(resizeTargetSelector));
+        for (const target of targets)
+          if (!next.has(target)) observer.unobserve(target);
+        for (const target of next)
+          if (!targets.has(target)) observer.observe(target);
+        targets = next;
+      };
+      syncTargets();
+      // Descendants can replace table rows without resizing the preview or
+      // changing its React children. Ignore writes made by the overlay itself.
+      contentObserver = new MutationObserver((records) => {
+        if (
+          records.every(({ target }) =>
+            (target instanceof Element
+              ? target
+              : target.parentElement
+            )?.closest(".markdown-range-highlights"),
+          )
+        )
+          return;
+        syncTargets();
+        remeasure();
+      });
+      contentObserver.observe(preview, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
     }
     return () => {
-      view.removeEventListener("resize", onResize);
+      view.removeEventListener("resize", remeasure);
+      contentObserver?.disconnect();
       observer?.disconnect();
     };
   }, [previewRef, resizeTargetSelector, content]);

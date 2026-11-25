@@ -353,3 +353,26 @@ it("reuses comment geometry across hover changes and preserves comment priority"
   expect(kinds()).toEqual(["comment"]);
   expect(measure).not.toHaveBeenCalled();
 });
+
+it("tracks a replacement table even when the preview size is unchanged", async () => {
+  const ranges: RangeHighlight[] = [
+    { startLine: 5, endLine: 5, kind: "comment" },
+  ];
+  render(
+    <LayoutHarness ranges={ranges} hover={{ startLine: 5, endLine: 5 }} />,
+  );
+  const table = screen.getByTestId("table");
+  const replacement = document.createElement("div");
+  replacement.className = table.className;
+  replacement.innerHTML = table.innerHTML;
+  replacement.querySelector("tr")!.getBoundingClientRect = () =>
+    mockRect(70, 99);
+  act(() => table.replaceWith(replacement));
+  await waitFor(() =>
+    expect(JSON.parse(screen.getByTestId("preview").dataset.layouts!)).toEqual([
+      { startLine: 5, endLine: 5, kind: "comment", top: 70, bottom: 99 },
+    ]),
+  );
+  expect(resizeObservers[0].observe).toHaveBeenCalledWith(replacement);
+  expect(resizeObservers[0].unobserve).toHaveBeenCalledWith(table);
+});

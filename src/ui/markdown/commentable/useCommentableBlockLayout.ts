@@ -125,11 +125,11 @@ export const useRangeHighlightLayouts = (
     | undefined
   >(undefined);
   const measure = useCallback(
-    (preview: HTMLElement, resized: boolean) => {
+    (preview: HTMLElement, layoutChanged: boolean) => {
       let cached = fixed.current;
       if (
         !cached ||
-        resized ||
+        layoutChanged ||
         cached.content !== content ||
         cached.ranges !== rangeHighlights
       ) {
