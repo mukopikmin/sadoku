@@ -101,6 +101,10 @@ describe("CommentList", () => {
     expect(getFilterCheckbox("Active")).toBeChecked();
     expect(getFilterCheckbox("Stale")).toBeChecked();
     expect(getFilterCheckbox("Resolved")).not.toBeChecked();
+    const filters = within(
+      screen.getByRole("group", { name: "Comment filters" }),
+    );
+    expect(filters.queryByText(/^\d+$/)).not.toBeInTheDocument();
     expect(screen.queryByText("Resolved comment.")).toBeNull();
     await toggleFilter("Resolved");
     expect(await screen.findByText("Resolved comment.")).toBeInTheDocument();
@@ -235,7 +239,7 @@ describe("CommentList", () => {
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   });
 
-  it("resolves only filtered comments through the API and updates the counts", async () => {
+  it("resolves only filtered comments through the API and updates the summary count", async () => {
     const comments = [
       createComment(),
       { ...createComment({ id: 2 }), stale: true },
@@ -270,11 +274,6 @@ describe("CommentList", () => {
       await screen.findByText("No active unresolved comments."),
     ).toBeInTheDocument();
     expect(screen.getByText("Showing 0 of 3 comments")).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("group", { name: "Comment filters" })).getByText(
-        "1",
-      ),
-    ).toBeInTheDocument();
     await toggleFilter("Resolved");
     expect(screen.getAllByRole("article")).toHaveLength(2);
     expect(screen.getByRole("status")).toHaveTextContent("0 selected");
