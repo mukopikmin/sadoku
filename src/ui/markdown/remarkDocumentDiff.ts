@@ -1,4 +1,4 @@
-import type { Blockquote, List, Root, RootContent } from "mdast";
+import type { Blockquote, Definition, List, Root, RootContent } from "mdast";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import { unified } from "unified";
@@ -40,31 +40,38 @@ export const remarkDocumentDiff =
       });
     const oldBlocks = blocksOf(before);
     const newBlocks = blocksOf(tree);
+    const indexDefinitions = (definitions: Definition[], source: string) => {
+      const references = new Map<string, string>();
+      for (const definition of definitions) {
+        // Markdown resolves duplicate identifiers to the first definition.
+        if (!references.has(definition.identifier))
+          references.set(definition.identifier, sourceOf(definition, source));
+      }
+      return references;
+    };
+    const dependenciesOf = (
+      node: RootContent,
+      references: Map<string, string>,
+    ) => {
+      const dependencies = new Set<string>();
+      const visit = (child: RootContent | Root) => {
+        if (child.type === "linkReference" || child.type === "imageReference") {
+          const definition = references.get(child.identifier);
+          if (definition !== undefined) dependencies.add(definition);
+        }
+        if ("children" in child) child.children.forEach(visit);
+      };
+      visit(node);
+      return [...dependencies];
+    };
+    const oldReferences = indexDefinitions(previousDefinitions, previous);
     const signatures = (
       blocks: RootContent[],
-      definitions: RootContent[],
+      references: Map<string, string>,
       source: string,
     ) => {
-      const references = new Map(
-        definitions.flatMap((node) =>
-          node.type === "definition"
-            ? [[node.identifier, sourceOf(node, source)]]
-            : [],
-        ),
-      );
       return blocks
         .map((node) => {
-          const dependencies: string[] = [];
-          const visit = (child: RootContent | Root) => {
-            if (
-              child.type === "linkReference" ||
-              child.type === "imageReference"
-            ) {
-              dependencies.push(references.get(child.identifier) ?? "");
-            }
-            if ("children" in child) child.children.forEach(visit);
-          };
-          visit(node);
           const sourceText = sourceOf(node, source).replaceAll("\r\n", "\n");
           return JSON.stringify([
             // Renumbering an ordered list after an insertion does not change
@@ -76,14 +83,18 @@ export const remarkDocumentDiff =
                   sourceText.replace(/^\d+[.)](?=\s)/, "1."),
                 ]
               : sourceText,
-            dependencies,
+            dependenciesOf(node, references),
           ]);
         })
         .join("\n");
     };
     const diff = suggestionDiff(
-      signatures(oldBlocks, previousDefinitions, previous),
-      signatures(newBlocks, currentDefinitions, current),
+      signatures(oldBlocks, oldReferences, previous),
+      signatures(
+        newBlocks,
+        indexDefinitions(currentDefinitions, current),
+        current,
+      ),
     );
     const changes: { kind: string; node: RootContent; source: string }[] = [];
     let oldIndex = 0;
@@ -123,9 +134,7 @@ export const remarkDocumentDiff =
               previousEndLine: node.position?.end.line,
               markdown: [
                 sourceOf(node, source),
-                ...previousDefinitions.map((definition) =>
-                  sourceOf(definition, previous),
-                ),
+                ...dependenciesOf(node, oldReferences),
               ].join("\n\n"),
             },
           },
