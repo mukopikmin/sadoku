@@ -76,15 +76,16 @@ export const useCommentNavigation = () => {
       previousTarget = previous;
       nextTarget = next;
       const position = index < 0 ? null : index + 1;
+      const count = positions.length;
       setNavigation((existing) => {
         if (
           unchanged &&
-          existing.count === positions.length &&
+          existing.count === count &&
           existing.position === position
         )
           return existing;
         return {
-          count: positions.length,
+          count,
           position,
           previous: previous ? () => navigate(previous) : null,
           next: next ? () => navigate(next) : null,
@@ -106,15 +107,39 @@ export const useCommentNavigation = () => {
       (node.matches(".comment-thread, article") ||
         node.querySelector(".comment-thread, article") !== null);
     const observer = new MutationObserver((records) => {
-      if (
-        records.some(({ addedNodes, removedNodes }) =>
-          [...addedNodes, ...removedNodes].some(mayContainThread),
+      const membershipChanged = records.some((record) => {
+        if (record.type === "childList") {
+          return [...record.addedNodes, ...record.removedNodes].some(
+            mayContainThread,
+          );
+        }
+        const target = record.target;
+        if (!(target instanceof Element)) return false;
+        const oldClasses = (record.oldValue ?? "").split(/\s+/);
+        return ["comment-thread", "markdown-preview"].some(
+          (name) =>
+            oldClasses.includes(name) !== target.classList.contains(name),
+        );
+      });
+      if (membershipChanged) collectThreads();
+      else if (
+        records.some(
+          ({ type, target }) =>
+            type === "childList" &&
+            !(
+              target instanceof Element &&
+              target.closest(".markdown-range-highlights")
+            ),
         )
       )
-        collectThreads();
-      else refresh();
+        refresh();
     });
-    observer.observe(root, { childList: true, subtree: true });
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      attributeFilter: ["class"],
+      attributeOldValue: true,
+    });
     view.addEventListener("scroll", refresh, { passive: true });
     view.addEventListener("resize", refresh);
     return () => {

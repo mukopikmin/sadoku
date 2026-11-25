@@ -164,3 +164,34 @@ describe("useCommentNavigation", () => {
     expect(target.hasAttribute("data-comment-navigation-current")).toBe(false);
   });
 });
+
+it("updates membership when existing elements gain or lose their thread class", async () => {
+  const { container } = render(<Harness html={preview(thread(1))} />);
+  const target = container.querySelector(".comment-thread")!;
+  act(() => target.classList.remove("comment-thread"));
+  await waitFor(() =>
+    expect(screen.getByRole("status").textContent).toBe("– / 0"),
+  );
+  act(() => target.classList.add("comment-thread"));
+  await waitFor(() =>
+    expect(screen.getByRole("status").textContent).toBe("– / 1"),
+  );
+});
+
+it("skips position reads for highlight overlay mutations", async () => {
+  const { container } = render(
+    <Harness
+      html={preview(
+        thread(1) + '<div class="markdown-range-highlights"></div>',
+      )}
+    />,
+  );
+  const rect = vi.mocked(HTMLElement.prototype.getBoundingClientRect);
+  rect.mockClear();
+  await act(async () => {
+    container
+      .querySelector(".markdown-range-highlights")!
+      .append(document.createElement("div"));
+  });
+  expect(rect).not.toHaveBeenCalled();
+});
