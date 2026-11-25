@@ -23,6 +23,7 @@ import {
   getSourceLine,
   getSourceRange,
   SourceLineContext,
+  QuoteContext,
   useCommentRenderingContext,
 } from "./commentRendering";
 
@@ -136,15 +137,31 @@ const createCommentablePre = () => {
   };
 };
 
+const CommentableQuote = createCommentableComponent(
+  "blockquote",
+  renderMarkdownBlockquote,
+);
+
+const ReviewQuote = ({
+  children,
+  node: _node,
+  ...props
+}: CommentableComponentProps) => (
+  <QuoteContext.Provider value={true}>
+    {renderMarkdownBlockquote(props, children)}
+  </QuoteContext.Provider>
+);
+
 export const createCommentableMarkdownComponents = (): Components & {
-  "review-quote": typeof sharedMarkdownComponents.blockquote;
+  "review-quote": typeof ReviewQuote;
   "html-comment": ReturnType<typeof createCommentableComponent>;
 } => ({
   a: sharedMarkdownComponents.a,
-  "review-quote": sharedMarkdownComponents.blockquote,
-  blockquote: createCommentableComponent(
-    "blockquote",
-    renderMarkdownBlockquote,
+  "review-quote": ReviewQuote,
+  blockquote: (props: CommentableComponentProps) => (
+    <QuoteContext.Provider value={!props["data-markdown-alert"]}>
+      <CommentableQuote {...props} />
+    </QuoteContext.Provider>
   ),
   h1: createCommentableComponent(
     "h1",

@@ -130,7 +130,7 @@ export const markdownStyles = `
   }
 
   .commentable-content:not(tr)::before,
-  .comment-list-anchor {
+  .comment-selection-fallback-anchor {
     position: absolute;
     top: 0;
     right: calc(-1 * var(--chakra-spacing-2));

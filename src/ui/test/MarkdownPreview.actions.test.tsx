@@ -89,10 +89,18 @@ describe("shared comment actions", () => {
     );
   });
 
-  it("expands the action anchor when a list selection grows upward", async () => {
-    const getRect = HTMLElement.prototype.getBoundingClientRect;
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function (this: HTMLElement) {
+  it.each([
+    "- Parent\n  - Nested item",
+    "> Parent\n> > Nested item",
+    "> Parent\n> Nested item",
+  ])(
+    "expands the action anchor when a selection grows upward in %s",
+    async (markdown) => {
+      const getRect = HTMLElement.prototype.getBoundingClientRect;
+      vi.spyOn(
+        HTMLElement.prototype,
+        "getBoundingClientRect",
+      ).mockImplementation(function (this: HTMLElement) {
         if (this.matches('[data-source-line="1"] > .commentable-content')) {
           return new DOMRect(24, 40, 600, 30);
         }
@@ -100,25 +108,33 @@ describe("shared comment actions", () => {
           return new DOMRect(64, 70, 560, 30);
         }
         return getRect.call(this);
-      },
-    );
-    const { container } = renderMarkdown("- Parent\n  - Nested item");
-    fireEvent.click(screen.getByText("Nested item"));
-    const anchor = container.querySelector<HTMLElement>(
-      ".markdown-selection-anchor",
-    );
-    expect(anchor?.style.top).toBe("70px");
-    expect(anchor?.style.height).toBe("30px");
+      });
+      const { container } = renderMarkdown(markdown);
+      fireEvent.click(screen.getByText("Nested item"));
+      expect(
+        screen
+          .getByText("Nested item")
+          .closest(".commentable-content")
+          ?.querySelector('[data-part="anchor"][aria-hidden="true"]'),
+      ).not.toBeNull();
+      const anchor = container.querySelector<HTMLElement>(
+        ".markdown-selection-anchor",
+      );
+      expect(anchor?.style.top).toBe("70px");
+      expect(anchor?.style.height).toBe("30px");
 
-    fireEvent.click(screen.getByText("Parent"), { shiftKey: true });
-    const actions = await screen.findByLabelText("Comment actions");
-    expect(
-      within(actions).getByLabelText("Add comment on lines 1-2"),
-    ).not.toBeNull();
-    expect(container.querySelector(".markdown-selection-anchor")).toBe(anchor);
-    expect(anchor?.style.top).toBe("40px");
-    expect(anchor?.style.height).toBe("60px");
-  });
+      fireEvent.click(screen.getByText("Parent"), { shiftKey: true });
+      const actions = await screen.findByLabelText("Comment actions");
+      expect(
+        within(actions).getByLabelText("Add comment on lines 1-2"),
+      ).not.toBeNull();
+      expect(container.querySelector(".markdown-selection-anchor")).toBe(
+        anchor,
+      );
+      expect(anchor?.style.top).toBe("40px");
+      expect(anchor?.style.height).toBe("60px");
+    },
+  );
 
   it("moves actions to the end of a range and submits its original source lines", async () => {
     const onCreateComment = vi.fn(async () => {});
@@ -140,15 +156,14 @@ describe("shared comment actions", () => {
     );
   });
 
-  it("shows one set of actions and one composer for a quote or its nested paragraph", async () => {
+  it("shows one set of actions and one composer when selecting across quoted lines", async () => {
     const onCreateComment = vi.fn(async () => {});
-    const { container } = renderMarkdown(
-      "Introduction\n\n> First\n>\n> Second",
-      [],
-      { onCreateComment },
-    );
+    renderMarkdown("Introduction\n\n> First\n>\n> Second", [], {
+      onCreateComment,
+    });
 
-    fireEvent.click(container.querySelector("blockquote")!);
+    fireEvent.click(screen.getByText("First"));
+    fireEvent.click(screen.getByText("Second"), { shiftKey: true });
     expect(screen.getAllByLabelText("Comment actions")).toHaveLength(1);
     expect(screen.getByLabelText("Add comment on lines 3-5")).not.toBeNull();
 

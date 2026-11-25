@@ -51,6 +51,8 @@ export type CommentRenderingContextValue = CommentControlProps & {
   rangeHighlights: readonly RangeHighlight[];
 };
 
+export const QuoteContext = createContext(false);
+
 export const SourceLineContext = createContext<ReadonlySet<number>>(new Set());
 
 export const CommentRenderingContext = createContext<
