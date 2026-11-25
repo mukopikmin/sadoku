@@ -1,17 +1,14 @@
 import { useCallback, useState } from "react";
 import {
   type CommentRange,
+  type CommentRangeSelection,
   resolveCommentRangeSelection,
 } from "./commentRanges";
 import type { CommentRangeSelectionOptions } from "./commentRendering";
 
 type SelectionState =
   | { status: "none" }
-  | {
-      status: "selected" | "composing";
-      range: CommentRange;
-      anchorLine: number;
-    };
+  | ({ status: "selected" | "composing" } & CommentRangeSelection);
 export const useCommentSelection = () => {
   const [state, setState] = useState<SelectionState>({ status: "none" });
   const selectCommentRange = useCallback(
@@ -23,12 +20,8 @@ export const useCommentSelection = () => {
           current.status === "none" ? undefined : current.anchorLine,
           extend,
         );
-        return selected.range
-          ? {
-              status: "selected",
-              range: selected.range,
-              anchorLine: selected.anchorLine!,
-            }
+        return selected
+          ? { status: "selected", ...selected }
           : { status: "none" };
       });
     },

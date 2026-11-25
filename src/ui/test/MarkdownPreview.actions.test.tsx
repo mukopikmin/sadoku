@@ -140,6 +140,38 @@ describe("shared comment actions", () => {
     );
   });
 
+  it("shows one set of actions and one composer for a quote or its nested paragraph", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      "Introduction\n\n> First\n>\n> Second",
+      [],
+      { onCreateComment },
+    );
+
+    fireEvent.click(container.querySelector("blockquote")!);
+    expect(screen.getAllByLabelText("Comment actions")).toHaveLength(1);
+    expect(screen.getByLabelText("Add comment on lines 3-5")).not.toBeNull();
+
+    fireEvent.click(screen.getByText("Second"));
+    expect(screen.getAllByLabelText("Comment actions")).toHaveLength(1);
+    expect(
+      screen.getByLabelText("View raw Markdown for line 5"),
+    ).not.toBeNull();
+
+    fireEvent.click(screen.getByText("Introduction"), { shiftKey: true });
+    expect(screen.getAllByLabelText("Comment actions")).toHaveLength(1);
+    fireEvent.click(screen.getByLabelText("Add comment on lines 1-5"));
+
+    const composer = screen.getByRole("textbox", { name: "Comment body" });
+    fireEvent.change(composer, {
+      target: { value: "Review this range" },
+    });
+    fireEvent.keyDown(composer, { key: "Enter", ctrlKey: true });
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Review this range", 5),
+    );
+  });
+
   it("keeps heading links available in the floating controls", async () => {
     renderMarkdown("# Heading");
     fireEvent.click(screen.getByRole("heading", { name: "Heading" }));
