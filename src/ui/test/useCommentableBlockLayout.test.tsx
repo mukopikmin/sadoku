@@ -4,6 +4,7 @@ import {
   getCommentableLines,
   measureRangeHighlightLayouts,
   useCommentableBlockLayout,
+  useRangeHighlightLayouts,
 } from "../markdown/commentable/useCommentableBlockLayout";
 import type { RangeHighlight } from "../markdown/commentable/commentRanges";
 import { act, cleanup, render, screen, waitFor } from "./domTestUtils";
@@ -35,10 +36,8 @@ class RecordingResizeObserver {
 
 const LayoutHarness = ({ ranges }: { ranges: RangeHighlight[] }) => {
   const previewRef = useRef<HTMLDivElement>(null);
-  const { commentableLines, rangeHighlightLayouts } = useCommentableBlockLayout(
-    previewRef,
-    ranges,
-  );
+  const { commentableLines } = useCommentableBlockLayout(previewRef);
+  const rangeHighlightLayouts = useRangeHighlightLayouts(previewRef, ranges);
 
   return (
     <div

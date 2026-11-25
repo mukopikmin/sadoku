@@ -7,7 +7,6 @@ import {
 } from "../../markdown/commentable/commentRanges";
 import type { CommentRenderingContextValue } from "../../markdown/commentable/commentRendering";
 import { useCommentableBlockLayout } from "../../markdown/commentable/useCommentableBlockLayout";
-import { useCommentHighlightInteraction } from "../../markdown/commentable/useCommentHighlightInteraction";
 import { useCommentSelection } from "../../markdown/commentable/useCommentSelection";
 import { useMermaidRendering } from "../../markdown/useMermaidRendering";
 import { useHeadingHashNavigation } from "../../markdown/useHeadingHashNavigation";
@@ -51,8 +50,6 @@ export const useMarkdownPreview = ({
     { status: "closed" } | { status: "open"; range: CommentRange }
   >({ status: "closed" });
   const [drafts] = useState(() => new Map<number, string>());
-  const { interactionRange, interactionProps } =
-    useCommentHighlightInteraction();
   const selection = useCommentSelection();
   const { closeCommentForm, openCommentForm, selectCommentRange } = selection;
   const selectedRange =
@@ -64,8 +61,8 @@ export const useMarkdownPreview = ({
     () => deriveRangeHighlights(activeComments, selectedRange),
     [activeComments, selectedRange],
   );
-  const { commentableLines, deletedRanges, rangeHighlightLayouts } =
-    useCommentableBlockLayout(previewRef, rangeHighlights, interactionRange);
+  const { commentableLines, deletedRanges } =
+    useCommentableBlockLayout(previewRef);
   const commentsByLine = useMemo(
     () => groupCommentsByAnchorLine(activeComments, commentableLines),
     [commentableLines, activeComments],
@@ -134,11 +131,9 @@ export const useMarkdownPreview = ({
     renderedMarkdown,
     previewRef,
     selectionAnchorRef,
-    rangeHighlightLayouts,
     commentRenderingContext,
     deletedCommentsByLine,
     raw,
-    interactionProps,
     closeRaw: () => setRaw({ status: "closed" }),
   };
 };
