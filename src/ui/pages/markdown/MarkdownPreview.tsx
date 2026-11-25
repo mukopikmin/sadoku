@@ -1,11 +1,14 @@
 import { Box, DataList } from "@chakra-ui/react";
-import { type ReactNode } from "react";
+import { type ReactNode, type RefObject } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { UnresolvedComment } from "../../models/comment";
 import { CommentableBlock } from "../../markdown/commentable/CommentableBlock";
 import { CommentableMarkdown } from "../../markdown/commentable/CommentableMarkdown";
 import { getCommentableBlockProps } from "../../markdown/commentable/commentableMarkdownComponents";
 import { CommentRenderingContext } from "../../markdown/commentable/commentRendering";
+import { useCommentHighlightInteraction } from "../../markdown/commentable/useCommentHighlightInteraction";
+import { useRangeHighlightLayouts } from "../../markdown/commentable/useCommentableBlockLayout";
+import type { RangeHighlight } from "../../markdown/commentable/commentRanges";
 import { HighlightOverlay } from "../../markdown/HighlightOverlay";
 import { RawMarkdownDialog } from "./RawMarkdownDialog";
 import { DocumentDiffBlock } from "../../markdown/DocumentDiffBlock";
@@ -49,11 +52,9 @@ export const MarkdownPreview = ({
     frontMatterChanged,
     renderedMarkdown,
     previewRef,
-    rangeHighlightLayouts,
     commentRenderingContext,
     deletedCommentsByLine,
     raw,
-    interactionProps,
   } = preview;
 
   return (
@@ -67,13 +68,11 @@ export const MarkdownPreview = ({
           open={raw.status === "open"}
           range={raw.status === "open" ? raw.range : undefined}
         />
-        <Box
-          {...interactionProps}
-          className="markdown-preview"
-          data-document-diff={previousMarkdown !== undefined ? "" : undefined}
-          ref={previewRef}
+        <InteractivePreview
+          diff={previousMarkdown !== undefined}
+          previewRef={previewRef}
+          ranges={commentRenderingContext.rangeHighlights}
         >
-          <HighlightOverlay layouts={rangeHighlightLayouts} />
           {frontMatterChanged && previousFrontMatter && (
             <DeletedMarkdownBlock
               previousStartLine={1}
@@ -132,9 +131,42 @@ export const MarkdownPreview = ({
           >
             {renderedMarkdown}
           </CommentableMarkdown>
-        </Box>
+        </InteractivePreview>
       </DeletedCommentsContext.Provider>
     </CommentRenderingContext.Provider>
+  );
+};
+
+// Keep pointer and focus updates local to the overlay so the Markdown children
+// retain their identity as the highlighted block changes.
+const InteractivePreview = ({
+  children,
+  diff,
+  previewRef,
+  ranges,
+}: {
+  children: ReactNode;
+  diff: boolean;
+  previewRef: RefObject<HTMLDivElement | null>;
+  ranges: readonly RangeHighlight[];
+}) => {
+  const { interactionRange, interactionProps } =
+    useCommentHighlightInteraction();
+  const layouts = useRangeHighlightLayouts(
+    previewRef,
+    ranges,
+    interactionRange,
+  );
+  return (
+    <Box
+      {...interactionProps}
+      className="markdown-preview"
+      data-document-diff={diff ? "" : undefined}
+      ref={previewRef}
+    >
+      <HighlightOverlay layouts={layouts} />
+      {children}
+    </Box>
   );
 };
 
