@@ -137,9 +137,11 @@ const createCommentablePre = () => {
 };
 
 export const createCommentableMarkdownComponents = (): Components & {
+  "review-quote": typeof sharedMarkdownComponents.blockquote;
   "html-comment": ReturnType<typeof createCommentableComponent>;
 } => ({
   a: sharedMarkdownComponents.a,
+  "review-quote": sharedMarkdownComponents.blockquote,
   blockquote: createCommentableComponent(
     "blockquote",
     renderMarkdownBlockquote,
