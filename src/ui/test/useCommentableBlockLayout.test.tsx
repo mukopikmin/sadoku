@@ -34,10 +34,20 @@ class RecordingResizeObserver {
   }
 }
 
-const LayoutHarness = ({ ranges }: { ranges: RangeHighlight[] }) => {
+const LayoutHarness = ({
+  ranges,
+  hover,
+}: {
+  ranges: RangeHighlight[];
+  hover?: { startLine: number; endLine: number };
+}) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const { commentableLines } = useCommentableBlockLayout(previewRef);
-  const rangeHighlightLayouts = useRangeHighlightLayouts(previewRef, ranges);
+  const rangeHighlightLayouts = useRangeHighlightLayouts(
+    previewRef,
+    ranges,
+    hover,
+  );
 
   return (
     <div
@@ -318,4 +328,28 @@ describe("commentable block layout", () => {
       },
     ]);
   });
+});
+
+it("reuses comment geometry across hover changes and preserves comment priority", () => {
+  const ranges: RangeHighlight[] = [
+    { startLine: 1, endLine: 2, kind: "comment" },
+  ];
+  const { rerender } = render(<LayoutHarness ranges={ranges} />);
+  const measure = vi.spyOn(
+    screen.getByTestId("first"),
+    "getBoundingClientRect",
+  );
+  rerender(
+    <LayoutHarness ranges={ranges} hover={{ startLine: 4, endLine: 4 }} />,
+  );
+  const kinds = () =>
+    JSON.parse(screen.getByTestId("preview").dataset.layouts!).map(
+      (layout: RangeHighlight) => layout.kind,
+    );
+  expect(kinds()).toEqual(["comment", "hover"]);
+  rerender(
+    <LayoutHarness ranges={ranges} hover={{ startLine: 1, endLine: 2 }} />,
+  );
+  expect(kinds()).toEqual(["comment"]);
+  expect(measure).not.toHaveBeenCalled();
 });

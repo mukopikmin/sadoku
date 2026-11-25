@@ -160,6 +160,7 @@ const InteractivePreview = ({
     previewRef,
     ranges,
     interactionRange,
+    children,
   );
   return (
     <Box

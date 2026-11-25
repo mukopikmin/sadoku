@@ -2,7 +2,8 @@ import {
   type RefObject,
   useCallback,
   useLayoutEffect,
-  useRef,
+  useEffectEvent,
+  type ReactNode,
   useState,
 } from "react";
 
@@ -59,60 +60,60 @@ export const measureHighlightGroups = <Range>(
 
 export const useHighlightLayouts = <Layout extends HighlightLayout>(
   previewRef: RefObject<HTMLElement | null>,
-  measure: (preview: HTMLElement) => Layout[],
+  measure: (preview: HTMLElement, resized: boolean) => Layout[],
   resizeTargetSelector?: string,
+  content?: ReactNode,
 ) => {
   const [layouts, setLayouts] = useState<Layout[]>([]);
-  const observerRef = useRef<ResizeObserver | undefined>(undefined);
-  const updateLayouts = useCallback(() => {
-    const preview = previewRef.current;
-    if (!preview) return;
-    const next = measure(preview);
-    setLayouts((current) =>
-      current.length === next.length &&
-      current.every(
-        (layout, index) =>
-          layout.top === next[index].top &&
-          layout.bottom === next[index].bottom &&
-          layout.outsetLeft === next[index].outsetLeft &&
-          layout.outsetRight === next[index].outsetRight &&
-          layout.kind === next[index].kind &&
-          layout.startLine === next[index].startLine &&
-          layout.endLine === next[index].endLine,
-      )
-        ? current
-        : next,
-    );
-  }, [previewRef, measure]);
+  const updateLayouts = useCallback(
+    (resized: boolean) => {
+      const preview = previewRef.current;
+      if (!preview) return;
+      const next = measure(preview, resized);
+      setLayouts((current) =>
+        current.length === next.length &&
+        current.every(
+          (layout, index) =>
+            layout.top === next[index].top &&
+            layout.bottom === next[index].bottom &&
+            layout.outsetLeft === next[index].outsetLeft &&
+            layout.outsetRight === next[index].outsetRight &&
+            layout.kind === next[index].kind &&
+            layout.startLine === next[index].startLine &&
+            layout.endLine === next[index].endLine,
+        )
+          ? current
+          : next,
+      );
+    },
+    [previewRef, measure],
+  );
+
+  const onResize = useEffectEvent(() => updateLayouts(true));
+  useLayoutEffect(() => {
+    updateLayouts(false);
+  });
 
   useLayoutEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;
     const view = preview.ownerDocument.defaultView ?? globalThis;
-    view.addEventListener("resize", updateLayouts);
+    view.addEventListener("resize", onResize);
     const observer =
       typeof ResizeObserver === "undefined"
         ? undefined
-        : new ResizeObserver(updateLayouts);
+        : new ResizeObserver(onResize);
     observer?.observe(preview);
-    observerRef.current = observer;
+    if (observer && resizeTargetSelector) {
+      preview
+        .querySelectorAll(resizeTargetSelector)
+        .forEach((target) => observer.observe(target));
+    }
     return () => {
-      view.removeEventListener("resize", updateLayouts);
+      view.removeEventListener("resize", onResize);
       observer?.disconnect();
-      observerRef.current = undefined;
     };
-  }, [previewRef, updateLayouts]);
-
-  useLayoutEffect(() => {
-    updateLayouts();
-    const observer = observerRef.current;
-    const preview = previewRef.current;
-    if (!observer || !preview || !resizeTargetSelector) return;
-
-    const targets = preview.querySelectorAll(resizeTargetSelector);
-    targets.forEach((target) => observer.observe(target));
-    return () => targets.forEach((target) => observer.unobserve(target));
-  });
+  }, [previewRef, resizeTargetSelector, content]);
 
   return layouts;
 };

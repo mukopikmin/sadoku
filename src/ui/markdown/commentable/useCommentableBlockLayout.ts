@@ -1,4 +1,11 @@
-import { type RefObject, useCallback, useLayoutEffect, useState } from "react";
+import {
+  type RefObject,
+  type ReactNode,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+  useState,
+} from "react";
 import type { CommentRange, RangeHighlight } from "./commentRanges";
 import { getCommentAnchorLine } from "./commentRanges";
 import {
@@ -30,6 +37,7 @@ export const getCommentableLines = (preview: Element): number[] =>
 export const measureRangeHighlightLayouts = (
   preview: HTMLElement,
   rangeHighlights: readonly RangeHighlight[],
+  claimed = new Set<HTMLElement>(),
 ): RangeHighlightLayout[] => {
   if (rangeHighlights.length === 0) return [];
   const blocks = [
@@ -41,7 +49,6 @@ export const measureRangeHighlightLayouts = (
   // Claim content in priority order so a block receives exactly one highlight,
   // even when different source ranges overlap the same rendered paragraph.
   const priority = { selection: 0, comment: 1, hover: 2 };
-  const claimed = new Set<HTMLElement>();
 
   return measureHighlightGroups(
     preview,
@@ -106,19 +113,53 @@ export const useRangeHighlightLayouts = (
   previewRef: RefObject<HTMLElement | null>,
   rangeHighlights: readonly RangeHighlight[],
   interactionRange?: CommentRange,
+  content?: ReactNode,
 ) => {
+  const fixed = useRef<
+    | {
+        ranges: readonly RangeHighlight[];
+        content: ReactNode;
+        layouts: RangeHighlightLayout[];
+        claimed: Set<HTMLElement>;
+      }
+    | undefined
+  >(undefined);
   const measure = useCallback(
-    (preview: HTMLElement) => {
-      return measureRangeHighlightLayouts(preview, [
-        ...rangeHighlights,
-        ...(interactionRange
-          ? [{ ...interactionRange, kind: "hover" as const }]
-          : []),
-      ]);
+    (preview: HTMLElement, resized: boolean) => {
+      let cached = fixed.current;
+      if (
+        !cached ||
+        resized ||
+        cached.content !== content ||
+        cached.ranges !== rangeHighlights
+      ) {
+        const claimed = new Set<HTMLElement>();
+        const layouts = measureRangeHighlightLayouts(
+          preview,
+          rangeHighlights,
+          claimed,
+        );
+        cached = { ranges: rangeHighlights, content, layouts, claimed };
+        fixed.current = cached;
+      }
+      if (!interactionRange) return cached.layouts;
+      return [
+        ...cached.layouts,
+        ...measureRangeHighlightLayouts(
+          preview,
+          [{ ...interactionRange, kind: "hover" }],
+          new Set(cached.claimed),
+        ),
+      ];
     },
-    [rangeHighlights, interactionRange],
+    [rangeHighlights, interactionRange, content],
   );
-  return useHighlightLayouts(previewRef, measure, ".commentable-table");
+  return useHighlightLayouts(
+    previewRef,
+    measure,
+    ".commentable-table",
+    content,
+  );
 };
 
 export const useCommentableBlockLayout = (
