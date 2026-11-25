@@ -4,7 +4,7 @@ import type { CommentFilter } from "../pages/comments/useCommentFilter";
 import { createComment } from "./commentFixtures";
 import { act, cleanup, renderHook } from "./domTestUtils";
 afterEach(cleanup);
-it("defaults to unresolved states and independently combines states with live counts", () => {
+it("defaults to unresolved states and combines selected states as comments change", () => {
   const active = createComment();
   const stale = createComment({ id: 2, state: "stale" });
   const resolved = createComment({ id: 3, state: "resolved" });
@@ -14,11 +14,6 @@ it("defaults to unresolved states and independently combines states with live co
   );
   expect(result.current.selectedFilters).toEqual(["active", "stale"]);
   expect(result.current.visibleComments).toEqual([active, stale]);
-  expect(result.current.filters).toMatchObject({
-    active: { comments: [active] },
-    stale: { comments: [stale] },
-    resolved: { comments: [resolved] },
-  });
   act(() => result.current.toggleFilter("resolved"));
   expect(result.current.visibleComments).toEqual([active, stale, resolved]);
   act(() => {
@@ -26,9 +21,9 @@ it("defaults to unresolved states and independently combines states with live co
     result.current.toggleFilter("stale");
   });
   expect(result.current.visibleComments).toEqual([resolved]);
-  rerender({ comments: [active, { ...stale, state: "resolved" }, resolved] });
-  expect(result.current.visibleComments).toHaveLength(2);
-  expect(result.current.filters.resolved.comments).toHaveLength(2);
+  const newlyResolved = { ...stale, state: "resolved" as const };
+  rerender({ comments: [active, newlyResolved, resolved] });
+  expect(result.current.visibleComments).toEqual([newlyResolved, resolved]);
   act(() => result.current.toggleFilter("resolved"));
   expect(result.current.visibleComments).toEqual([]);
   expect(result.current.emptyText).toBe(
@@ -87,7 +82,6 @@ it.each([
     expect(result.current.selectedFilters).toEqual([state]);
     expect(result.current.visibleComments).toEqual([]);
     expect(result.current.emptyText).toBe(message);
-    expect(result.current.filters[state].comments).toEqual([]);
     rerender({ comments });
     expect(result.current.visibleComments).toEqual([matchingComment]);
   },

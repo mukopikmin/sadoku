@@ -339,20 +339,6 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string
 		}
 		return
 	}
-	if operation == "ListDocuments" {
-		documents := result.(map[string]any)["documents"].([]u.Document)
-		summaries := make([]documentSummary, 0, len(documents))
-		for _, document := range documents {
-			summaries = append(summaries, documentSummary{document.ID, document.RelativePath, document.Title, document.DisplayTitle, document.Deleted, publicDocumentTags(document.Tags)})
-		}
-		result = summaries
-	}
-	if operation == "GetDocument" {
-		document := result.(map[string]any)
-		delete(document, "canRestore")
-		delete(document, "previousMarkdown")
-		document["tags"] = publicDocumentTags(document["tags"].([]u.Tag))
-	}
 	if operation == "UpdateTag" {
 		tag := result.(u.Tag)
 		result = map[string]any{"id": tag.ID, "name": tag.Name, "backgroundColor": tag.BackgroundColor, "createdAt": tag.CreatedAt, "updatedAt": tag.UpdatedAt}

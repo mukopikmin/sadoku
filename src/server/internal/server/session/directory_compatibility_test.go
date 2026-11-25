@@ -89,7 +89,7 @@ func TestLegacyDirectoryOrderAndRegistration(t *testing.T) {
 	}
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv("APPDATA", "")
-	if _, err = s.Invoke(context.Background(), "CreateDocument", Input{Filename: "Added"}); err != nil {
+	if _, err = s.CreateDocument(context.Background(), "", "Added", ""); err != nil {
 		t.Fatal(err)
 	}
 	check(fixture.AfterCreate)

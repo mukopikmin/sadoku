@@ -1,8 +1,12 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, type RefObject } from "react";
 import type { CommentActions } from "../../api/commentActions";
 import type { ActiveComment } from "../../models/comment";
 import type { MarkdownElementProps } from "../markdownRenderers";
-import type { CommentRange, RangeHighlight } from "./commentRanges";
+import {
+  isLineInRange,
+  type CommentRange,
+  type RangeHighlight,
+} from "./commentRanges";
 
 export type CommentRangeSelectionOptions = {
   extend: boolean;
@@ -27,7 +31,6 @@ export type CommentableComponentProps = MarkdownElementProps & {
 
 export type CommentControlProps = {
   actions: CommentActions;
-  activeCommentLine?: number;
   activeRange?: CommentRange;
   onCloseCommentForm: () => void;
   onOpenCommentForm: () => void;
@@ -37,9 +40,11 @@ export type CommentControlProps = {
     options: CommentRangeSelectionOptions,
   ) => void;
   selectedRange?: CommentRange;
+  selectionAnchorRef?: RefObject<HTMLElement | null>;
 };
 
 export type CommentRenderingContextValue = CommentControlProps & {
+  actionLine?: number;
   drafts?: Map<number, string>;
   commentsByLine: Map<number, ActiveComment[]>;
   markdown: string;
@@ -93,6 +98,7 @@ export const getCommentableBlockProps = (
   sourceRange: { endLine: number; startLine: number },
 ) => {
   const {
+    actionLine,
     commentsByLine,
     drafts: _drafts,
     markdown: _,
@@ -103,20 +109,19 @@ export const getCommentableBlockProps = (
   const comments = [...commentsByLine.entries()].flatMap(([line, comments]) =>
     line >= startLine && line <= endLine ? comments : [],
   );
+  // Nested blocks can share an end line. Identify the action block by its start line.
+  const isRangeActionLine =
+    actionLine === startLine &&
+    props.selectedRange !== undefined &&
+    isLineInRange(props.selectedRange.endLine, sourceRange);
   return {
     ...props,
     comments,
     hasRangeHighlight: rangeHighlights.some(
       (range) => range.endLine >= startLine && range.startLine <= endLine,
     ),
-    isAdding:
-      props.activeCommentLine !== undefined &&
-      props.activeCommentLine >= startLine &&
-      props.activeCommentLine <= endLine,
-    isRangeActionLine:
-      props.selectedRange !== undefined &&
-      props.selectedRange.endLine >= startLine &&
-      props.selectedRange.endLine <= endLine,
+    isAdding: isRangeActionLine && props.activeRange !== undefined,
+    isRangeActionLine,
     isSelected: props.selectedRange
       ? props.selectedRange.startLine === startLine &&
         props.selectedRange.endLine === endLine

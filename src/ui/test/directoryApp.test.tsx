@@ -450,8 +450,8 @@ describe("directory preview", () => {
     ).not.toBeNull();
     expect(location.pathname).toBe("/documents/2/comments");
     expect(
-      screen.getByRole("dialog", { name: "Document actions" }),
-    ).not.toBeNull();
+      screen.queryByRole("dialog", { name: "Document actions" }),
+    ).toBeNull();
     expect(
       screen
         .getByRole("tab", {
@@ -464,6 +464,9 @@ describe("directory preview", () => {
       await screen.findByRole("heading", { name: "Document 2" }),
     ).not.toBeNull();
     expect(location.pathname).toBe("/documents/2");
+    expect(
+      screen.getByRole("dialog", { name: "Document actions" }),
+    ).not.toBeNull();
 
     unmount();
     history.replaceState(null, "", "/documents/999");

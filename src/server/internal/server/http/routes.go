@@ -23,7 +23,7 @@ func (r *router) registerREST(m chi.Router) {
 			r.rest(w, req, operation, status)
 		})
 	}
-	bind("GET", "/documents", "ListDocuments", 200)
+	m.Get("/documents", r.listDocuments)
 	bind("GET", "/settings", "GetSettings", 200)
 	bind("PUT", "/settings", "UpdateSettings", 200)
 	bind("GET", "/directory-status", "GetDirectoryStatus", 200)
@@ -35,7 +35,7 @@ func (r *router) registerREST(m chi.Router) {
 	bind("GET", "/tags", "ListTags", 200)
 	bind("PATCH", "/tags/{tagID}", "UpdateTag", 200)
 	bind("DELETE", "/tags/{tagID}", "DeleteTag", 204)
-	bind("GET", "/documents/{documentID}", "GetDocument", 200)
+	m.Get("/documents/{documentID}", r.getDocument)
 	bind("PUT", "/documents/{documentID}/tags", "ReplaceDocumentTags", 200)
 	bind("GET", "/documents/{documentID}/instructions", "ListInstructions", 200)
 	bind("POST", "/documents/{documentID}/instructions", "CreateInstruction", 201)

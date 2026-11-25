@@ -33,6 +33,7 @@ export const measureRangeHighlightLayouts = (
   preview: HTMLElement,
   rangeHighlights: readonly RangeHighlight[],
 ): RangeHighlightLayout[] => {
+  if (rangeHighlights.length === 0) return [];
   const blocks = [
     ...preview.querySelectorAll<HTMLElement>(
       `${commentableBlockSelector}, :scope > .document-diff-deletion`,
@@ -103,13 +104,11 @@ const arraysEqual = <Value>(
   left.length === right.length &&
   left.every((value, index) => isEqual(value, right[index]));
 
-export const useCommentableBlockLayout = (
+export const useRangeHighlightLayouts = (
   previewRef: RefObject<HTMLElement | null>,
   rangeHighlights: readonly RangeHighlight[],
   interactionRange?: CommentRange,
 ) => {
-  const [commentableLines, setCommentableLines] = useState<number[]>([]);
-  const [deletedRanges, setDeletedRanges] = useState<CommentRange[]>([]);
   const measure = useCallback(
     (preview: HTMLElement) => {
       return measureRangeHighlightLayouts(preview, [
@@ -121,11 +120,14 @@ export const useCommentableBlockLayout = (
     },
     [rangeHighlights, interactionRange],
   );
-  const rangeHighlightLayouts = useHighlightLayouts(
-    previewRef,
-    measure,
-    ".commentable-table",
-  );
+  return useHighlightLayouts(previewRef, measure, ".commentable-table");
+};
+
+export const useCommentableBlockLayout = (
+  previewRef: RefObject<HTMLElement | null>,
+) => {
+  const [commentableLines, setCommentableLines] = useState<number[]>([]);
+  const [deletedRanges, setDeletedRanges] = useState<CommentRange[]>([]);
 
   // Measure after every commit: Markdown DOM can change without changing the ref.
   // State updates below preserve identity when the measured values are unchanged.
@@ -160,5 +162,5 @@ export const useCommentableBlockLayout = (
     );
   });
 
-  return { commentableLines, deletedRanges, rangeHighlightLayouts };
+  return { commentableLines, deletedRanges };
 };
