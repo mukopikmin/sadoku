@@ -1,4 +1,5 @@
 import type { Blockquote, Definition, List, Root, RootContent } from "mdast";
+import { toMarkdown } from "mdast-util-to-markdown";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import { unified } from "unified";
@@ -16,12 +17,6 @@ export const remarkDocumentDiff =
   ({ previous, current }: { previous: string; current: string }) =>
   (tree: Root) => {
     const before = parser.parse(previous) as Root;
-    const previousDefinitions = before.children.filter(
-      (node) => node.type === "definition",
-    );
-    const currentDefinitions = tree.children.filter(
-      (node) => node.type === "definition",
-    );
     const listOrigins = new Map<RootContent, List>();
     const blocksOf = (root: Root): RootContent[] =>
       root.children.flatMap<RootContent>((node) => {
@@ -40,14 +35,24 @@ export const remarkDocumentDiff =
       });
     const oldBlocks = blocksOf(before);
     const newBlocks = blocksOf(tree);
-    const indexDefinitions = (definitions: Definition[], source: string) => {
+    const indexDefinitions = (root: Root, source: string) => {
       const references = new Map<string, string>();
-      for (const definition of definitions) {
-        // Markdown resolves duplicate identifiers to the first definition.
-        if (!references.has(definition.identifier))
-          references.set(definition.identifier, sourceOf(definition, source));
-      }
-      return references;
+      const definitions: Definition[] = [];
+      const visit = (node: RootContent, nested: boolean) => {
+        if (node.type === "definition" && !references.has(node.identifier)) {
+          // A definition in a list or quote is document-wide. Serialize it
+          // without the container markers before rendering a standalone block.
+          references.set(
+            node.identifier,
+            nested ? toMarkdown(node).trimEnd() : sourceOf(node, source),
+          );
+          definitions.push(node);
+        }
+        if ("children" in node)
+          node.children.forEach((child) => visit(child, true));
+      };
+      root.children.forEach((child) => visit(child, false));
+      return { references, definitions };
     };
     const dependenciesOf = (
       node: RootContent,
@@ -64,7 +69,9 @@ export const remarkDocumentDiff =
       visit(node);
       return [...dependencies];
     };
-    const oldReferences = indexDefinitions(previousDefinitions, previous);
+    const { references: oldReferences } = indexDefinitions(before, previous);
+    const { references: currentReferences, definitions: currentDefinitions } =
+      indexDefinitions(tree, current);
     const signatures = (
       blocks: RootContent[],
       references: Map<string, string>,
@@ -90,11 +97,7 @@ export const remarkDocumentDiff =
     };
     const diff = suggestionDiff(
       signatures(oldBlocks, oldReferences, previous),
-      signatures(
-        newBlocks,
-        indexDefinitions(currentDefinitions, current),
-        current,
-      ),
+      signatures(newBlocks, currentReferences, current),
     );
     const changes: { kind: string; node: RootContent; source: string }[] = [];
     let oldIndex = 0;
@@ -133,8 +136,8 @@ export const remarkDocumentDiff =
               previousStartLine: node.position?.start.line,
               previousEndLine: node.position?.end.line,
               markdown: [
-                sourceOf(node, source),
                 ...dependenciesOf(node, oldReferences),
+                sourceOf(node, source),
               ].join("\n\n"),
             },
           },
@@ -149,5 +152,5 @@ export const remarkDocumentDiff =
         children.push(node);
       }
     }
-    tree.children = [...children, ...currentDefinitions];
+    tree.children = [...currentDefinitions, ...children];
   };

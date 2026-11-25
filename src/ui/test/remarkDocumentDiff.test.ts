@@ -11,7 +11,7 @@ it("includes only the first definition used by each deleted block", () => {
   expect(tree.children).toMatchObject([
     {
       data: {
-        hProperties: { markdown: "![diagram][a] and [link][a]\n\n[a]: /first" },
+        hProperties: { markdown: "[a]: /first\n\n![diagram][a] and [link][a]" },
       },
     },
     { data: { hProperties: { markdown: "Plain paragraph" } } },
