@@ -52,6 +52,7 @@ export const MarkdownPreview = ({
     frontMatterChanged,
     renderedMarkdown,
     previewRef,
+    selectionAnchorRef,
     commentRenderingContext,
     deletedCommentsByLine,
     raw,
@@ -71,6 +72,7 @@ export const MarkdownPreview = ({
         <InteractivePreview
           diff={previousMarkdown !== undefined}
           previewRef={previewRef}
+          selectionAnchorRef={selectionAnchorRef}
           ranges={commentRenderingContext.rangeHighlights}
         >
           {frontMatterChanged && previousFrontMatter && (
@@ -143,11 +145,13 @@ const InteractivePreview = ({
   children,
   diff,
   previewRef,
+  selectionAnchorRef,
   ranges,
 }: {
   children: ReactNode;
   diff: boolean;
   previewRef: RefObject<HTMLDivElement | null>;
+  selectionAnchorRef: RefObject<HTMLDivElement | null>;
   ranges: readonly RangeHighlight[];
 }) => {
   const { interactionRange, interactionProps } =
@@ -164,7 +168,10 @@ const InteractivePreview = ({
       data-document-diff={diff ? "" : undefined}
       ref={previewRef}
     >
-      <HighlightOverlay layouts={layouts} />
+      <HighlightOverlay
+        layouts={layouts}
+        selectionAnchorRef={selectionAnchorRef}
+      />
       {children}
     </Box>
   );

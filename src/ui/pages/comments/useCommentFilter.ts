@@ -11,17 +11,14 @@ export const useCommentFilter = (comments: Comment[]) => {
   const filters = {
     active: {
       label: "Active",
-      comments: comments.filter((comment) => comment.state === "active"),
       emptyText: "No active unresolved comments.",
     },
     stale: {
       label: "Stale",
-      comments: comments.filter((comment) => comment.state === "stale"),
       emptyText: "No stale unresolved comments.",
     },
     resolved: {
       label: "Resolved",
-      comments: comments.filter((comment) => comment.state === "resolved"),
       emptyText: "No resolved comments.",
     },
   };
