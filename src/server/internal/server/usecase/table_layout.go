@@ -70,7 +70,7 @@ func ResolveTableLayouts(before TableLayoutState, markdown string, positions []T
 	}
 	var mapping map[int]lineRange
 	if len(before.Tables) > 0 {
-		mapping = mapTableLines(oldLines, newLines)
+		mapping, _ = boundedLineMap(oldLines, newLines, false)
 	}
 	candidates := make(map[int][]int)
 	counts := make(map[int]int)
@@ -114,27 +114,4 @@ func ValidateColumnWidths(widths []float64, columnCount int) error {
 		}
 	}
 	return nil
-}
-
-// Trim unchanged edges before computing a bounded diff. Ordinary edits in long
-// documents still follow tables without allocating an LCS for the whole file.
-func mapTableLines(before, after []string) map[int]lineRange {
-	result := make(map[int]lineRange)
-	start, oldEnd, newEnd := 0, len(before), len(after)
-	for start < oldEnd && start < newEnd && before[start] == after[start] {
-		result[start+1] = lineRange{start + 1, start + 1}
-		start++
-	}
-	for oldEnd > start && newEnd > start && before[oldEnd-1] == after[newEnd-1] {
-		result[oldEnd] = lineRange{newEnd, newEnd}
-		oldEnd--
-		newEnd--
-	}
-	if oldEnd == start || newEnd == start || int64(oldEnd-start+1)*int64(newEnd-start+1) > 4_000_000 {
-		return result
-	}
-	for line, mapped := range mapLines(strings.Join(before[start:oldEnd], "\n"), strings.Join(after[start:newEnd], "\n")) {
-		result[line+start] = lineRange{mapped.start + start, mapped.end + start}
-	}
-	return result
 }

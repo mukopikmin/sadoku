@@ -241,3 +241,54 @@ func TestCommentValidationAndReplyLifecycle(t *testing.T) {
 		t.Fatal("deleted unknown comment")
 	}
 }
+
+func TestRebaseBeyondLineBudgetPreservesEdgesAndOriginalText(t *testing.T) {
+	before := "heading\n" + strings.Repeat("before\n", 2500) + "footer"
+	after := "heading\n" + strings.Repeat("after\n", 3000) + "footer"
+	original := "before"
+	doc := Comments{SourceSnapshot: &before, Comments: []Comment{
+		{StartLine: 1, EndLine: 1}, {StartLine: 2, EndLine: 2, SourceText: &original},
+		{StartLine: 2502, EndLine: 2502},
+	}}
+	got := ResolveComments(doc, after).Comments
+	if got[0].Stale || got[0].StartLine != 1 || got[2].Stale || got[2].StartLine != 3002 {
+		t.Fatalf("edge anchors: %+v", got)
+	}
+	if !got[1].Stale || got[1].SourceDeleted || *got[1].SourceText != original {
+		t.Fatalf("uncertain anchor: %+v", got[1])
+	}
+}
+
+func TestRebaseDuplicateAtSuffixBoundary(t *testing.T) {
+	before := "first\ntarget"
+	got := ResolveComments(Comments{SourceSnapshot: &before, Comments: []Comment{{StartLine: 2, EndLine: 2}}}, "changed\ntarget\ntarget")
+	if got.Comments[0].StartLine != 2 {
+		t.Fatalf("attached to later duplicate: %+v", got.Comments[0])
+	}
+}
+
+func BenchmarkRebaseSingleEditedLine(b *testing.B) {
+	lines := make([]string, 2000)
+	for i := range lines {
+		lines[i] = fmt.Sprintf("section %d", i)
+	}
+	before := strings.Join(lines, "\n")
+	lines[len(lines)/2] += " revised"
+	after := strings.Join(lines, "\n")
+	doc := Comments{SourceSnapshot: &before, Comments: []Comment{{StartLine: 1, EndLine: 1}}}
+	b.ReportAllocs()
+	for b.Loop() {
+		ResolveComments(doc, after)
+	}
+}
+
+func TestDistantEditsKeepUniqueInteriorAnchorOverBudget(t *testing.T) {
+	middle := strings.Repeat("paragraph\n", 2500) + "unique line\nsecond unique line\n"
+	before := "old heading\n" + middle + "old footer"
+	after := "new heading\nnew introduction\n" + middle + "new footer"
+	doc := Comments{SourceSnapshot: &before, Comments: []Comment{{StartLine: 2502, EndLine: 2503}}}
+	got := ResolveComments(doc, after).Comments[0]
+	if got.Stale || got.StartLine != 2503 || got.EndLine != 2504 {
+		t.Fatalf("interior anchor: %+v", got)
+	}
+}

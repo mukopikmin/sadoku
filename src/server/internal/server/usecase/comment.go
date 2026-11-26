@@ -27,9 +27,83 @@ func RangeText(markdown string, start, end int) *string {
 
 type lineRange struct{ start, end int }
 
-// mapLines uses the same longest-common-subsequence tie breaking as the old server.
-func mapLines(before, after string) map[int]lineRange {
-	old, new := strings.Split(before, "\n"), strings.Split(after, "\n")
+// Trim identical edges and limit the quadratic line diff to the changed region.
+// An unresolved range means the work budget was reached, not that its text was deleted.
+func boundedLineMap(before, after []string, preserveDuplicateOrder bool) (map[int]lineRange, lineRange) {
+	result := make(map[int]lineRange)
+	start, oldEnd, newEnd := 0, len(before), len(after)
+	for start < oldEnd && start < newEnd && before[start] == after[start] {
+		result[start+1] = lineRange{start + 1, start + 1}
+		start++
+	}
+	for oldEnd > start && newEnd > start && before[oldEnd-1] == after[newEnd-1] {
+		oldEnd--
+		newEnd--
+	}
+	// A duplicate across the boundary can make the old LCS choose an earlier
+	// occurrence. Keep its exact choice whenever the remaining matrix fits.
+	if preserveDuplicateOrder && oldEnd < len(before) && len(before)-start+1 <= 4_000_000/(len(after)-start+1) && ambiguousSuffix(before[start:oldEnd], after[start:newEnd], before[oldEnd:]) {
+		oldEnd, newEnd = len(before), len(after)
+	}
+	for i := oldEnd; i < len(before); i++ {
+		line := newEnd + i - oldEnd + 1
+		result[i+1] = lineRange{line, line}
+	}
+	if oldEnd == start || newEnd == start {
+		return result, lineRange{}
+	}
+	if oldEnd-start+1 > 4_000_000/(newEnd-start+1) {
+		if preserveDuplicateOrder {
+			// Distant edits can leave most of a large interior unchanged.
+			// A line unique in both interiors still has an exact anchor.
+			oldPositions := uniqueLinePositions(before[start:oldEnd])
+			newPositions := uniqueLinePositions(after[start:newEnd])
+			for text, old := range oldPositions {
+				if next := newPositions[text]; old > 0 && next > 0 {
+					line := start + next
+					result[start+old] = lineRange{line, line}
+				}
+			}
+		}
+		return result, lineRange{start + 1, oldEnd}
+	}
+	for line, mapped := range mapChangedRegion(before[start:oldEnd], after[start:newEnd]) {
+		result[line+start] = lineRange{mapped.start + start, mapped.end + start}
+	}
+	return result, lineRange{}
+}
+
+// Positive values are one-based positions. Zero marks repeated text.
+func uniqueLinePositions(lines []string) map[string]int {
+	positions := make(map[string]int, len(lines))
+	for i, line := range lines {
+		if _, found := positions[line]; found {
+			positions[line] = 0
+		} else {
+			positions[line] = i + 1
+		}
+	}
+	return positions
+}
+
+func ambiguousSuffix(oldMiddle, newMiddle, suffix []string) bool {
+	middle := make(map[string]bool, len(oldMiddle)+len(newMiddle))
+	for _, line := range oldMiddle {
+		middle[line] = true
+	}
+	for _, line := range newMiddle {
+		middle[line] = true
+	}
+	for _, line := range suffix {
+		if middle[line] {
+			return true
+		}
+	}
+	return false
+}
+
+// Preserve longest-common-subsequence tie breaking within the changed region.
+func mapChangedRegion(old, new []string) map[int]lineRange {
 	width := len(new) + 1
 	lengths := make([]uint32, (len(old)+1)*width)
 	for i := len(old) - 1; i >= 0; i-- {
@@ -180,8 +254,9 @@ func ResolveComments(doc Comments, markdown string) Comments {
 		return currentText(doc, markdown)
 	}
 	var mapping map[int]lineRange
-	if doc.SourceSnapshot != nil {
-		mapping = mapLines(*doc.SourceSnapshot, markdown)
+	var unresolved lineRange
+	if doc.SourceSnapshot != nil && len(doc.Comments) > 0 {
+		mapping, unresolved = boundedLineMap(strings.Split(*doc.SourceSnapshot, "\n"), strings.Split(markdown, "\n"), true)
 	}
 	for i := range doc.Comments {
 		c := &doc.Comments[i]
@@ -189,6 +264,17 @@ func ResolveComments(doc Comments, markdown string) Comments {
 		if mapping != nil {
 			if c.Stale {
 				continue
+			}
+			if unresolved.start != 0 && c.StartLine <= unresolved.end && c.EndLine >= unresolved.start {
+				first, found := mapping[c.StartLine]
+				for line := c.StartLine + 1; found && line <= c.EndLine; line++ {
+					next, ok := mapping[line]
+					found = ok && next.start == first.start+(line-c.StartLine)
+				}
+				if !found {
+					c.Stale = true
+					continue
+				}
 			}
 			start, end := int(^uint(0)>>1), 0
 			for line := c.StartLine; line <= c.EndLine; line++ {
