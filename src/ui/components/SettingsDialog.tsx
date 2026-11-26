@@ -1,10 +1,15 @@
-import { Button, CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
+import {
+  Alert,
+  Button,
+  CloseButton,
+  Dialog,
+  Flex,
+  Portal,
+  Text,
+} from "@chakra-ui/react";
 import { useRef } from "react";
-import type {
-  CodeWrapMode,
-  ResolvedPreviewSettings,
-  ThemeMode,
-} from "../models/theme";
+import type { CodeWrapMode, ThemeMode } from "../models/theme";
+import type { PreviewSettingsState } from "../hooks/usePreviewSettings";
 import { AppearanceSettings } from "./settings/AppearanceSettings";
 import { DirectoryDiscoverySettings } from "./settings/DirectoryDiscoverySettings";
 import { GitHubAccountSettings } from "./settings/GitHubAccountSettings";
@@ -22,18 +27,22 @@ export type SettingsDialogProps = {
   onShowHtmlCommentsChange: (value: boolean) => void;
   onThemeModeChange: (value: ThemeMode) => void;
   open: boolean;
-  settings: ResolvedPreviewSettings;
+  state: PreviewSettingsState;
+  onReloadSettings: () => void;
 };
 
 export const SettingsDialog = ({
   open,
   onOpenChange,
-  settings,
+  state,
+  onReloadSettings,
   ...actions
 }: SettingsDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const statisticsTriggerRef = useRef<HTMLButtonElement>(null);
   const statistics = useNestedDialog(open);
+  const { settings } = state;
+  const loadFailed = state.status === "error" && state.operation === "load";
   return (
     <Dialog.Root
       finalFocusEl={() =>
@@ -57,33 +66,61 @@ export const SettingsDialog = ({
             <Dialog.Body>
               <Flex direction="column" gap="4">
                 <GitHubAccountSettings enabled={open} />
-                <AppearanceSettings
-                  codeWrapMode={settings.codeWrap}
-                  fontScale={settings.fontScale}
-                  onCodeWrapModeChange={actions.onCodeWrapModeChange}
-                  onFontScaleChange={actions.onFontScaleChange}
-                  onThemeModeChange={actions.onThemeModeChange}
-                  onShowHtmlCommentsChange={actions.onShowHtmlCommentsChange}
-                  onShowHighlightBoundariesChange={
-                    actions.onShowHighlightBoundariesChange
-                  }
-                  showHighlightBoundaries={settings.showHighlightBoundaries}
-                  showHtmlComments={settings.showHtmlComments}
-                  themeMode={settings.theme}
-                />
-                <DirectoryDiscoverySettings
-                  excludedDirectories={settings.excludedDirectories}
-                  markdownExtensions={settings.markdownExtensions}
-                  maxDepth={settings.maxDepth}
-                  maxFiles={settings.maxFiles}
-                  onDirectoryLimitsChange={actions.onDirectoryLimitsChange}
-                  onExcludedDirectoriesChange={
-                    actions.onExcludedDirectoriesChange
-                  }
-                  onMarkdownExtensionsChange={
-                    actions.onMarkdownExtensionsChange
-                  }
-                />
+                {state.status === "loading" && (
+                  <Text role="status">Loading settings…</Text>
+                )}
+                {state.status === "saving" && (
+                  <Text role="status">Saving settings…</Text>
+                )}
+                {state.status === "error" && (
+                  <Alert.Root status="error">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                      <Alert.Title>
+                        {loadFailed
+                          ? "Could not load settings"
+                          : "Could not save settings"}
+                      </Alert.Title>
+                      <Alert.Description>{state.message}</Alert.Description>
+                    </Alert.Content>
+                    {loadFailed && (
+                      <Button onClick={onReloadSettings}>Retry</Button>
+                    )}
+                  </Alert.Root>
+                )}
+                {state.status !== "loading" && !loadFailed && (
+                  <>
+                    <AppearanceSettings
+                      codeWrapMode={settings.codeWrap}
+                      fontScale={settings.fontScale}
+                      onCodeWrapModeChange={actions.onCodeWrapModeChange}
+                      onFontScaleChange={actions.onFontScaleChange}
+                      onThemeModeChange={actions.onThemeModeChange}
+                      onShowHtmlCommentsChange={
+                        actions.onShowHtmlCommentsChange
+                      }
+                      onShowHighlightBoundariesChange={
+                        actions.onShowHighlightBoundariesChange
+                      }
+                      showHighlightBoundaries={settings.showHighlightBoundaries}
+                      showHtmlComments={settings.showHtmlComments}
+                      themeMode={settings.theme}
+                    />
+                    <DirectoryDiscoverySettings
+                      excludedDirectories={settings.excludedDirectories}
+                      markdownExtensions={settings.markdownExtensions}
+                      maxDepth={settings.maxDepth}
+                      maxFiles={settings.maxFiles}
+                      onDirectoryLimitsChange={actions.onDirectoryLimitsChange}
+                      onExcludedDirectoriesChange={
+                        actions.onExcludedDirectoriesChange
+                      }
+                      onMarkdownExtensionsChange={
+                        actions.onMarkdownExtensionsChange
+                      }
+                    />
+                  </>
+                )}
                 <Button
                   alignSelf="start"
                   onClick={() => statistics.setOpen(true)}

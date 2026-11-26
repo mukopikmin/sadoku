@@ -96,6 +96,7 @@ export const usePreviewApp = () => {
     changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
+    reloadSettings,
     state: settingsState,
   } = usePreviewSettings();
   const settings = settingsState.settings;
@@ -211,8 +212,9 @@ export const usePreviewApp = () => {
     documentInstructions: instructionsDisclosure,
     documentMemories: memoriesDisclosure,
     documentTagsDialog: documentTagsDisclosure,
-    settings,
+    settingsState,
     settingsActions,
+    onReloadSettings: reloadSettings,
     settingsDialog: settingsDisclosure,
     tagsDialog: tagsDisclosure,
     tagsTriggerRef,

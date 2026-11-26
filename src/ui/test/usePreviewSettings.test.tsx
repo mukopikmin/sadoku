@@ -32,7 +32,7 @@ afterEach(() => {
     document.documentElement.removeAttribute(attribute);
 });
 
-it("starts with OS defaults and does not overwrite local edits with a late load", async () => {
+it("waits for the saved settings before writing any edits", async () => {
   const load = deferred<Awaited<ReturnType<typeof api.loadSettings>>>();
   vi.mocked(api.loadSettings).mockReturnValue(load.promise);
   vi.mocked(api.saveSettings).mockImplementation(async (settings) => settings);
@@ -42,27 +42,25 @@ it("starts with OS defaults and does not overwrite local edits with a late load"
     status: "loading",
     settings: { theme: "dark" },
   });
+  act(() => result.current.changeThemeMode("light"));
+  expect(api.saveSettings).not.toHaveBeenCalled();
+  load.resolve({ ...defaults, theme: "dark", fontScale: 0.8, maxFiles: 80 });
+  await waitFor(() => expect(result.current.state.status).toBe("ready"));
   act(() => {
     result.current.changeThemeMode("light");
-    result.current.changeFontScale(1.2);
+    result.current.changeShowHighlightBoundaries(true);
   });
   await waitFor(() => expect(result.current.state.status).toBe("ready"));
-  await act(async () => {
-    load.resolve({ ...defaults, theme: "dark", fontScale: 0.8 });
-    await load.promise;
-  });
-  expect(result.current.state.settings).toMatchObject({
-    theme: "light",
-    fontScale: 1.2,
-  });
-  expect(document.documentElement.dataset.theme).toBe("light");
-  expect(
-    document.documentElement.style.getPropertyValue("--sadoku-font-scale"),
-  ).toBe("1.2");
   expect(api.saveSettings).toHaveBeenLastCalledWith(
-    expect.objectContaining({ theme: "light", fontScale: 1.2 }),
+    expect.objectContaining({
+      theme: "light",
+      fontScale: 0.8,
+      maxFiles: 80,
+      showHighlightBoundaries: true,
+    }),
     expect.anything(),
   );
+  expect(document.documentElement.dataset.theme).toBe("light");
 });
 
 it("exposes save failures without rolling back the selected settings and retries on change", async () => {
@@ -91,9 +89,11 @@ it("exposes save failures without rolling back the selected settings and retries
   expect(document.documentElement.dataset.showHighlightBoundaries).toBe("true");
 });
 
-it("keeps the OS theme after a load failure and applies a selected theme even when saving fails", async () => {
+it("keeps the OS theme after a load failure and enables editing after retry", async () => {
   vi.stubGlobal("matchMedia", () => ({ matches: true }));
-  vi.mocked(api.loadSettings).mockRejectedValue(new Error("Unavailable"));
+  vi.mocked(api.loadSettings)
+    .mockRejectedValueOnce(new Error("Unavailable"))
+    .mockResolvedValue({ ...defaults, theme: "dark" });
   vi.mocked(api.saveSettings).mockRejectedValue(new Error("Offline"));
   const { result } = renderHook(usePreviewSettings, queryHook());
   await waitFor(() =>
@@ -106,6 +106,10 @@ it("keeps the OS theme after a load failure and applies a selected theme even wh
   );
   expect(document.documentElement.dataset.theme).toBe("dark");
   expect(document.documentElement.classList.contains("dark")).toBe(true);
+  act(() => result.current.changeThemeMode("light"));
+  expect(api.saveSettings).not.toHaveBeenCalled();
+  act(() => result.current.reloadSettings());
+  await waitFor(() => expect(result.current.state.status).toBe("ready"));
   act(() => result.current.changeThemeMode("light"));
   await waitFor(() =>
     expect(result.current.state).toMatchObject({
