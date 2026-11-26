@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -134,6 +135,30 @@ func (r *Repository) RecordRevision(ctx context.Context, id int64, markdown stri
 	}
 	return tx.Commit()
 }
+
+// InitializedSnapshots checks only the current session's IDs without loading Markdown.
+func (r *Repository) InitializedSnapshots(ctx context.Context, ids []int64) (map[int64]bool, error) {
+	encoded, err := json.Marshal(ids)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.DB.QueryContext(ctx, `SELECT id FROM comment_document
+		WHERE id IN (SELECT value FROM json_each(?)) AND source_revision_id IS NOT NULL`, string(encoded))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	initialized := make(map[int64]bool)
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		initialized[id] = true
+	}
+	return initialized, rows.Err()
+}
+
 func (r *Repository) InitializeSnapshot(ctx context.Context, id int64, markdown string) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
