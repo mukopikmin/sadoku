@@ -133,7 +133,7 @@ func mapTableLines(before, after []string) map[int]lineRange {
 	if oldEnd == start || newEnd == start || int64(oldEnd-start+1)*int64(newEnd-start+1) > 4_000_000 {
 		return result
 	}
-	for line, mapped := range mapLines(strings.Join(before[start:oldEnd], "\n"), strings.Join(after[start:newEnd], "\n")) {
+	for line, mapped := range mapLines(before[start:oldEnd], after[start:newEnd]) {
 		result[line+start] = lineRange{mapped.start + start, mapped.end + start}
 	}
 	return result

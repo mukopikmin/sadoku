@@ -56,6 +56,50 @@ func TestRebaseLargeDocumentKeepsDistantMovedRanges(t *testing.T) {
 		t.Fatalf("large document range was lost: %+v", rebased)
 	}
 }
+func TestLargeRewritePreservesUncertainComments(t *testing.T) {
+	before := "header\n" + strings.Repeat("old\n", 1100) + "footer"
+	after := "header\n" + strings.Repeat("replacement\n", 1200) + "footer"
+	doc := Comments{}
+	for _, span := range []lineRange{{1, 1}, {2, 2}, {1102, 1102}, {1, 2}} {
+		var err error
+		doc, _, err = ChangeComment("CreateComment", doc, CommentInput{StartLine: span.start, EndLine: span.end, Body: "Review"}, before, "created")
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	doc = ResolveComments(doc, after)
+	for i, line := range map[int]int{0: 1, 2: 1202} {
+		c := doc.Comments[i]
+		if c.Stale || c.StartLine != line || c.EndLine != line || c.CurrentSourceText == nil || *c.CurrentSourceText != *c.SourceText {
+			t.Fatalf("unchanged edge failed to follow rewrite: %+v", c)
+		}
+	}
+	for _, i := range []int{1, 3} {
+		c := doc.Comments[i]
+		quote := *RangeText(before, c.OriginalStartLine, c.OriginalEndLine)
+		if !c.Stale || c.SourceDeleted || c.CurrentSourceText != nil || c.SourceText == nil || *c.SourceText != quote || c.Body != "Review" {
+			t.Fatalf("uncertain comment lost its source: %+v", c)
+		}
+	}
+}
+
+func TestResolveEmptyReviewAdvancesSnapshot(t *testing.T) {
+	before, after := "old", "new"
+	doc := ResolveComments(Comments{SourceSnapshot: &before}, after)
+	if doc.PreviousSourceSnapshot != &before || doc.SourceSnapshot == nil || *doc.SourceSnapshot != after || len(doc.Comments) != 0 {
+		t.Fatalf("unexpected snapshot transition: %+v", doc)
+	}
+}
+
+func TestRebaseRepeatedTrailingLineKeepsFirstMatch(t *testing.T) {
+	before := "old\nanchor"
+	doc := Comments{SourceSnapshot: &before, Comments: []Comment{{StartLine: 2, EndLine: 2}}}
+	c := ResolveComments(doc, "anchor\nanchor").Comments[0]
+	if c.Stale || c.StartLine != 1 || c.EndLine != 1 {
+		t.Fatalf("repeated line matched the wrong occurrence: %+v", c)
+	}
+}
+
 func TestRebaseComments(t *testing.T) {
 	before := "# Title\nfirst\nsecond\nremoved\nend"
 	after := "# Title\ninserted\nfirst edited\nsecond\nend"
