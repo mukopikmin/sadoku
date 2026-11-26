@@ -12,7 +12,7 @@ func TestCommentWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c := result.(Comment)
+	c := result.Comment
 	if c.Body != "review" || c.ID != 1 || *c.SourceText != "first\nsecond" {
 		t.Fatalf("comment: %+v", c)
 	}
@@ -20,7 +20,7 @@ func TestCommentWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !result.(Comment).Replies[0].ReviewRequested {
+	if !result.Comment.Replies[0].ReviewRequested {
 		t.Fatal("missing review request")
 	}
 	_, _, err = ChangeComment("CreateReply", updated, CommentInput{CommentID: 1, Body: "human", RequestReview: true}, "", "")
@@ -215,7 +215,7 @@ func TestCommentValidationAndReplyLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reply := result.(Comment).Replies[0]
+	reply := result.Comment.Replies[0]
 	if reply.Body != "updated" || reply.CreatedAt != "reply-created" || reply.UpdatedAt != "reply-updated" || !reply.ReviewRequested {
 		t.Fatalf("reply metadata changed: %+v", reply)
 	}

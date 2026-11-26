@@ -254,18 +254,32 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 				return nil, err
 			}
 		}
-		updated, result, err := u.ChangeComment(operation, comments, u.CommentInput{CommentID: int64(in.CommentID), ReplyID: int64(in.ReplyID), StartLine: in.StartLine, EndLine: in.EndLine, Body: in.Body, Resolved: in.Resolved, AsBot: in.AsBot, RequestReview: in.RequestReview}, markdown, db.Now())
+		_, edit, err := u.ChangeComment(operation, comments, u.CommentInput{CommentID: int64(in.CommentID), ReplyID: int64(in.ReplyID), StartLine: in.StartLine, EndLine: in.EndLine, Body: in.Body, Resolved: in.Resolved, AsBot: in.AsBot, RequestReview: in.RequestReview}, markdown, db.Now())
 		if err != nil {
 			if err.Error() == "Comment range is outside the Markdown source." {
 				return nil, u.Fail("invalid_argument", "Comment range does not exist.")
 			}
 			return nil, err
 		}
-		if comment, ok := result.(u.Comment); ok && operation != "CreateComment" && !comment.Stale && comments.SourceSnapshot != nil {
-			comment.CurrentSourceText = u.RangeText(*comments.SourceSnapshot, comment.StartLine, comment.EndLine)
-			result = comment
+		storageID, _, err := s.commentStorage(ctx, id, true)
+		if err != nil {
+			return nil, err
 		}
-		return result, s.saveComments(ctx, id, updated)
+		var snapshot *string
+		if operation == "CreateComment" {
+			snapshot = &markdown
+		}
+		if err := r.SaveCommentEdits(ctx, storageID, comments.Version, snapshot, []u.CommentEdit{edit}); err != nil {
+			return nil, err
+		}
+		if operation == "DeleteComment" || operation == "DeleteReply" {
+			return struct{}{}, nil
+		}
+		comment := edit.Comment
+		if operation != "CreateComment" && !comment.Stale && comments.SourceSnapshot != nil {
+			comment.CurrentSourceText = u.RangeText(*comments.SourceSnapshot, comment.StartLine, comment.EndLine)
+		}
+		return comment, nil
 	case "ExportCommentToGitHub":
 		if s.GitHub == nil {
 			return nil, u.Fail("not_found", `{"error":{"code":"export_unavailable"}}`)
