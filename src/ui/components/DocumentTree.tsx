@@ -1,4 +1,12 @@
-import { Button, Field, HStack, Input, Text, VStack } from "@chakra-ui/react";
+import {
+  Button,
+  Field,
+  Grid,
+  HStack,
+  Input,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 import { Plus } from "lucide-react";
 import { useRef } from "react";
 import type { DocumentSummary } from "../models/document";
@@ -40,28 +48,35 @@ export const DocumentTree = ({
   return (
     <VStack align="stretch" gap="3">
       {documents.length > 0 && (
-        <Field.Root maxW="320px">
-          <Field.Label>Search documents</Field.Label>
-          <Input
-            ref={searchInput}
-            type="search"
-            placeholder="File name or title"
-            value={documentSearch}
-            onChange={(event) =>
-              tree.setDocumentSearch(event.currentTarget.value)
-            }
-          />
-        </Field.Root>
-      )}
-      {tags.length > 0 && (
-        <DocumentTagFilter
-          onSearchChange={tree.setTagSearch}
-          onSelectTag={tree.selectTag}
-          onRemoveTag={tree.removeTag}
-          searchValue={tagSearch}
-          selectedTags={selectedTags}
-          matchingTags={matchingTags}
-        />
+        <Grid
+          alignItems="start"
+          gap="3"
+          maxW="calc(2 * {sizes.xs} + {spacing.3})"
+          templateColumns="repeat(auto-fit, minmax(min(100%, {sizes.2xs}), 1fr))"
+        >
+          <Field.Root maxW="xs">
+            <Field.Label>Search documents</Field.Label>
+            <Input
+              ref={searchInput}
+              type="search"
+              placeholder="File name or title"
+              value={documentSearch}
+              onChange={(event) =>
+                tree.setDocumentSearch(event.currentTarget.value)
+              }
+            />
+          </Field.Root>
+          {tags.length > 0 && (
+            <DocumentTagFilter
+              onSearchChange={tree.setTagSearch}
+              onSelectTag={tree.selectTag}
+              onRemoveTag={tree.removeTag}
+              searchValue={tagSearch}
+              selectedTags={selectedTags}
+              matchingTags={matchingTags}
+            />
+          )}
+        </Grid>
       )}
       {hasFilters && (
         <HStack gap="2" wrap="wrap">

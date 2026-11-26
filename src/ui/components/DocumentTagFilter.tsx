@@ -41,7 +41,7 @@ export const DocumentTagFilter = ({
       inputLabel="Search tags"
       inputValue={searchValue}
       label="Filter by tag"
-      maxWidth="320px"
+      maxWidth="xs"
       onInputValueChange={onSearchChange}
       onRemove={(tag) => onRemoveTag(tag.id)}
       onSelect={({ tag }) => {
