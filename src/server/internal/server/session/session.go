@@ -35,6 +35,7 @@ type Session struct {
 	restoring       sync.Map
 	directoryStatus *DirectoryStatus
 	directoryConfig config.Settings
+	createdPaths    map[string]struct{}
 	ReadRemote      func(context.Context, string) (string, error)
 }
 

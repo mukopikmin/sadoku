@@ -22,11 +22,17 @@ type DirectoryStatus struct {
 	Error      *DirectoryError `json:"error,omitempty"`
 }
 
+type directoryDiscovery struct {
+	documents        []u.Document
+	pendingSnapshots []u.Document
+	status           DirectoryStatus
+}
+
 // Prepare runs only after the listener is available. Directory registration
 // publishes ready before the bounded snapshot queue reads any Markdown bodies.
 func (s *Session) Prepare(ctx context.Context, settings config.Settings) {
 	if s.directoryStatus != nil {
-		documents, status, err := s.discoverDirectory(ctx, settings, func(progress DirectoryStatus) {
+		result, err := s.discoverDirectory(ctx, settings, nil, func(progress DirectoryStatus) {
 			s.Mu.Lock()
 			s.directoryStatus = &progress
 			s.Mu.Unlock()
@@ -43,13 +49,13 @@ func (s *Session) Prepare(ctx context.Context, settings config.Settings) {
 			case errors.Is(err, os.ErrPermission):
 				name = "PermissionDenied"
 			}
-			status.State = "error"
-			status.Error = &DirectoryError{Name: name, Message: err.Error()}
-			s.directoryStatus = &status
+			result.status.State = "error"
+			result.status.Error = &DirectoryError{Name: name, Message: err.Error()}
+			s.directoryStatus = &result.status
 			s.Mu.Unlock()
 			return
 		}
-		s.publishDirectory(documents, status)
+		s.publishDirectory(result.documents, result.status)
 		s.Mu.Unlock()
 	}
 	s.InitializeSnapshots(ctx)
@@ -57,93 +63,106 @@ func (s *Session) Prepare(ctx context.Context, settings config.Settings) {
 
 func (s *Session) ReloadDocuments(ctx context.Context) error {
 	s.Mu.Lock()
-	defer s.Mu.Unlock()
 	if s.directoryStatus == nil || s.directoryStatus.State == "loading" {
+		s.Mu.Unlock()
 		return u.Fail("failed_precondition", "Reloading documents is unavailable in this preview.")
 	}
-	documents, status, err := s.discoverDirectory(ctx, s.directoryConfig, nil)
+	result, err := s.discoverDirectory(ctx, s.directoryConfig, s.createdPaths, nil)
+	if err == nil {
+		s.publishDirectory(result.documents, result.status)
+	}
+	s.Mu.Unlock()
 	if err != nil {
 		return u.Fail("internal", "Could not rescan the open folder: "+err.Error())
 	}
-	newDocuments := []u.Document{}
-	newSources := map[int64]string{}
-	for _, document := range documents {
-		if _, known := s.Sources[document.ID]; !known && !document.Deleted {
-			newDocuments = append(newDocuments, document)
-			newSources[document.ID] = document.FilePath
-		}
+	sources := make(map[int64]string, len(result.pendingSnapshots))
+	for _, document := range result.pendingSnapshots {
+		sources[document.ID] = document.FilePath
 	}
-	s.publishDirectory(documents, status)
-	// File registration is complete. Archive new files without blocking other requests.
-	s.Mu.Unlock()
-	defer s.Mu.Lock()
-	s.initializeSnapshots(ctx, newDocuments, newSources, ReadMarkdown)
+	s.initializeSnapshots(ctx, result.pendingSnapshots, sources, ReadMarkdown)
 	return nil
 }
 
-func (s *Session) discoverDirectory(ctx context.Context, settings config.Settings, report func(DirectoryStatus)) ([]u.Document, DirectoryStatus, error) {
-	status := DirectoryStatus{State: "loading"}
+func (s *Session) discoverDirectory(ctx context.Context, settings config.Settings, created map[string]struct{}, report func(DirectoryStatus)) (directoryDiscovery, error) {
+	result := directoryDiscovery{status: DirectoryStatus{State: "loading"}}
 	paths := []string{}
-	if err := scan(ctx, s.Root, settings, 0, &paths); err != nil {
-		return nil, status, err
+	if err := scan(ctx, s.Root, settings, created, 0, &paths); err != nil {
+		return result, err
+	}
+	remaining := settings.MaxFiles - len(paths)
+	// Include files explicitly created in the preview, even outside discovery limits.
+	for path := range created {
+		if SafeLocal(s.Root, path, false) == nil {
+			paths = append(paths, path)
+		}
 	}
 	sortRegistrationPaths(paths)
 	if err := ctx.Err(); err != nil {
-		return nil, status, err
+		return result, err
 	}
-	status.Detected = len(paths)
+	result.status.Detected = len(paths)
 	if report != nil {
-		report(status)
+		report(result.status)
 	}
-	documents, err := s.Repository.EnsureMany(ctx, paths)
+	registrations, err := s.Repository.EnsureMany(ctx, paths)
 	if err != nil {
-		return nil, status, err
+		return result, err
 	}
-	status.Registered = len(documents)
+	result.status.Registered = len(registrations)
 	if report != nil {
-		report(status)
+		report(result.status)
 	}
 	if err = ctx.Err(); err != nil {
-		return nil, status, err
+		return result, err
 	}
-	registered := make(map[int64]bool, len(documents))
-	for i := range documents {
-		registered[documents[i].ID] = true
-		rel, _ := filepath.Rel(s.Root, documents[i].FilePath)
-		documents[i].RelativePath = filepath.ToSlash(rel)
-		documents[i].Title = filepath.Base(documents[i].FilePath)
-		documents[i].Tags = []u.Tag{}
+	result.documents = make([]u.Document, 0, len(registrations))
+	registered := make(map[int64]bool, len(registrations))
+	for _, registration := range registrations {
+		doc := s.directoryDocument(registration.Document)
+		registered[doc.ID] = true
+		result.documents = append(result.documents, doc)
+		if !registration.HasSnapshot {
+			result.pendingSnapshots = append(result.pendingSnapshots, doc)
+		}
 	}
 	stored, err := s.Repository.Documents(ctx)
 	if err != nil {
-		return nil, status, err
+		return result, err
 	}
 	for _, d := range stored {
 		if err = ctx.Err(); err != nil {
-			return nil, status, err
+			return result, err
 		}
-		if len(documents) >= settings.MaxFiles {
+		if remaining <= 0 && len(created) == 0 {
 			break
 		}
-		if registered[d.ID] || !filepath.IsAbs(d.FilePath) || !Within(s.Root, d.FilePath) {
+		_, explicit := created[d.FilePath]
+		if (!explicit && remaining <= 0) || registered[d.ID] || !filepath.IsAbs(d.FilePath) || !Within(s.Root, d.FilePath) {
 			continue
 		}
 		if _, err := os.Stat(d.FilePath); !os.IsNotExist(err) {
 			continue
 		}
 		d.Deleted = true
-		rel, _ := filepath.Rel(s.Root, d.FilePath)
-		d.RelativePath = filepath.ToSlash(rel)
-		d.Title = filepath.Base(d.FilePath)
-		d.Tags = []u.Tag{}
-		documents = append(documents, d)
+		result.documents = append(result.documents, s.directoryDocument(d))
+		if !explicit {
+			remaining--
+		}
 	}
-	sortDocuments(documents)
+	sortDocuments(result.documents)
 	if err = ctx.Err(); err != nil {
-		return nil, status, err
+		return result, err
 	}
-	status.State = "ready"
-	return documents, status, nil
+	result.status.State = "ready"
+	return result, nil
+}
+
+func (s *Session) directoryDocument(doc u.Document) u.Document {
+	rel, _ := filepath.Rel(s.Root, doc.FilePath)
+	doc.RelativePath = filepath.ToSlash(rel)
+	doc.Title = filepath.Base(doc.FilePath)
+	doc.Tags = []u.Tag{}
+	return doc
 }
 
 // The caller holds Mu so readers see the documents and their sources together.
@@ -202,7 +221,7 @@ func (s *Session) initializeSnapshots(ctx context.Context, documents []u.Documen
 	return progress
 }
 
-func scan(ctx context.Context, root string, settings config.Settings, depth int, paths *[]string) error {
+func scan(ctx context.Context, root string, settings config.Settings, skip map[string]struct{}, depth int, paths *[]string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -234,10 +253,13 @@ func scan(ctx context.Context, root string, settings config.Settings, depth int,
 				}
 			}
 			if !excluded && depth < settings.MaxDepth {
-				if err := scan(ctx, path, settings, depth+1, paths); err != nil {
+				if err := scan(ctx, path, settings, skip, depth+1, paths); err != nil {
 					return err
 				}
 			}
+			continue
+		}
+		if _, skipped := skip[path]; skipped {
 			continue
 		}
 		info, err := entry.Info()

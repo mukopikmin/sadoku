@@ -36,20 +36,20 @@ func (r *Repository) Ensure(ctx context.Context, path string) (u.Document, error
 	err = r.DB.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle)
 	return d, err
 }
-func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.Document, error) {
+func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.RegisteredDocument, error) {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback() }()
-	documents := []u.Document{}
+	documents := []u.RegisteredDocument{}
 	now := db.Now()
 	for _, path := range paths {
 		if _, err = tx.ExecContext(ctx, "INSERT INTO comment_document(file_path,created_at,updated_at) VALUES(?,?,?) ON CONFLICT(file_path) DO NOTHING", path, now, now); err != nil {
 			return nil, err
 		}
-		var d u.Document
-		if err = tx.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle); err != nil {
+		var d u.RegisteredDocument
+		if err = tx.QueryRowContext(ctx, "SELECT id,file_path,title,source_revision_id IS NOT NULL FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle, &d.HasSnapshot); err != nil {
 			return nil, err
 		}
 		documents = append(documents, d)

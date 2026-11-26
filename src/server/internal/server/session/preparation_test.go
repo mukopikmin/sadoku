@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
 	u "github.com/mukopikmin/sadoku/internal/server/usecase"
@@ -101,5 +103,82 @@ func TestBackgroundSnapshotsDoNotStartAnotherFileAfterCancellation(t *testing.T)
 	s.InitializeSnapshots(ctx)
 	if reads != 1 {
 		t.Fatalf("read %d files after cancellation", reads)
+	}
+}
+
+func TestReloadKeepsFilesCreatedPastDiscoveryLimit(t *testing.T) {
+	_, repo := snapshotSession(t, 0)
+	root := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("APPDATA", "")
+	settings := config.Defaults()
+	settings.MaxFiles = 1
+	if err := os.WriteFile(filepath.Join(root, "existing.md"), []byte("# Existing"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := New(t.Context(), root, repo, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Prepare(t.Context(), settings)
+	created, err := s.CreateDocument(t.Context(), "", "created.md", "Saved title")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, deleted := range []bool{false, true} {
+		if deleted {
+			if err := os.Remove(filepath.Join(root, "created.md")); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := s.ReloadDocuments(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+		docs, err := s.ListDocuments(t.Context())
+		if err != nil || len(docs) != 2 || docs[1].RelativePath != "existing.md" ||
+			docs[0].ID != created.ID || docs[0].Deleted != deleted ||
+			docs[0].DisplayTitle == nil || *docs[0].DisplayTitle != "Saved title" {
+			t.Fatalf("documents after reload (deleted=%t): %+v %v", deleted, docs, err)
+		}
+	}
+}
+
+func TestReloadRetriesMissingSnapshot(t *testing.T) {
+	_, repo := snapshotSession(t, 0)
+	root := t.TempDir()
+	settings := config.Defaults()
+	s, err := New(t.Context(), root, repo, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Prepare(t.Context(), settings)
+	path := filepath.Join(root, "added.md")
+	if err := os.WriteFile(path, []byte("# Saved"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := repo.Ensure(t.Context(), path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Repository = snapshotRepository{Repository: repo, failID: doc.ID}
+	if err := s.ReloadDocuments(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if snapshot, _, err := repo.Snapshot(t.Context(), doc.ID); err != nil || snapshot != nil {
+		t.Fatalf("snapshot should be missing after write failure: %v %v", snapshot, err)
+	}
+	s.Repository = repo
+	if err := s.ReloadDocuments(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ReloadDocuments(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	deleted, err := s.GetDocument(t.Context(), doc.ID)
+	if err != nil || !deleted.Deleted || deleted.Markdown != "# Saved" {
+		t.Fatalf("saved copy after deletion: %+v %v", deleted, err)
 	}
 }

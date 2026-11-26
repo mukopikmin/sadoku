@@ -21,6 +21,11 @@ type Document struct {
 	Deleted      bool    `json:"deleted"`
 	Tags         []Tag   `json:"tags"`
 }
+type RegisteredDocument struct {
+	Document
+	HasSnapshot bool
+}
+
 type Revision struct {
 	ID               int64   `json:"id"`
 	RecordedAt       string  `json:"recordedAt"`
@@ -91,7 +96,7 @@ type Comments struct {
 type Repository interface {
 	Ensure(context.Context, string) (Document, error)
 	FindDocument(context.Context, string) (Document, bool, error)
-	EnsureMany(context.Context, []string) ([]Document, error)
+	EnsureMany(context.Context, []string) ([]RegisteredDocument, error)
 	Documents(context.Context) ([]Document, error)
 	InitializeSnapshot(context.Context, int64, string) error
 	SetTitle(context.Context, int64, *string) error

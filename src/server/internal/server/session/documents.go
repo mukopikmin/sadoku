@@ -202,6 +202,10 @@ func (s *Session) CreateDocument(ctx context.Context, directory, filename, title
 	if err := createLocalDocument(s.Root, directory, name); err != nil {
 		return u.Document{}, err
 	}
+	if s.createdPaths == nil {
+		s.createdPaths = make(map[string]struct{})
+	}
+	s.createdPaths[path] = struct{}{}
 
 	doc, err := s.Repository.Ensure(ctx, path)
 	if err != nil {
