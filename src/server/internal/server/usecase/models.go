@@ -92,6 +92,7 @@ type Repository interface {
 	FindDocument(context.Context, string) (Document, bool, error)
 	EnsureMany(context.Context, []string) ([]Document, error)
 	Documents(context.Context) ([]Document, error)
+	InitializedSnapshots(context.Context, []int64) (map[int64]bool, error)
 	InitializeSnapshot(context.Context, int64, string) error
 	SetTitle(context.Context, int64, *string) error
 	Snapshot(context.Context, int64) (*string, *string, error)

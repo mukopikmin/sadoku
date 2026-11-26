@@ -103,3 +103,27 @@ func TestBackgroundSnapshotsDoNotStartAnotherFileAfterCancellation(t *testing.T)
 		t.Fatalf("read %d files after cancellation", reads)
 	}
 }
+
+func TestBackgroundSnapshotsOnlyFetchMissingContent(t *testing.T) {
+	s, repo := snapshotSession(t, 3)
+	if err := repo.InitializeSnapshot(t.Context(), 1, ""); err != nil {
+		t.Fatal(err)
+	}
+	s.Documents[2].Deleted = true
+	reads := 0
+	s.ReadRemote = func(ctx context.Context, source string) (string, error) {
+		if source != s.Sources[2] {
+			t.Fatalf("unexpected fetch: %s", source)
+		}
+		reads++
+		return "snapshot", nil
+	}
+	for range 2 {
+		if progress := s.InitializeSnapshots(t.Context()); progress != (SnapshotProgress{Target: 2, Completed: 2}) {
+			t.Fatalf("snapshot queue: %+v", progress)
+		}
+	}
+	if reads != 1 {
+		t.Fatalf("queue fetched contents %d times", reads)
+	}
+}

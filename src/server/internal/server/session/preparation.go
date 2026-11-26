@@ -129,17 +129,30 @@ func (s *Session) InitializeSnapshots(ctx context.Context) SnapshotProgress {
 		read = ReadMarkdown
 	}
 	s.Mu.Unlock()
-	progress := SnapshotProgress{}
+	ids := make([]int64, 0, len(documents))
 	for _, d := range documents {
 		if !d.Deleted {
-			progress.Target++
+			ids = append(ids, d.ID)
 		}
+	}
+	progress := SnapshotProgress{Target: len(ids)}
+	if len(ids) == 0 || ctx.Err() != nil {
+		return progress
+	}
+	initialized, err := s.Repository.InitializedSnapshots(ctx, ids)
+	if err != nil {
+		progress.Failed = len(ids)
+		return progress
 	}
 	for _, d := range documents {
 		if ctx.Err() != nil {
 			break
 		}
 		if d.Deleted {
+			continue
+		}
+		if initialized[d.ID] {
+			progress.Completed++
 			continue
 		}
 		markdown, err := read(ctx, sources[d.ID])
