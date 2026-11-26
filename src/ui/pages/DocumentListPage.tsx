@@ -6,6 +6,7 @@ import {
   HStack,
   Link,
 } from "@chakra-ui/react";
+import { RefreshCw } from "lucide-react";
 import type { DirectoryStatus } from "../api/directoryStatus";
 import { DocumentTree } from "../components/DocumentTree";
 import type { DocumentSummary } from "../models/document";
@@ -63,6 +64,7 @@ export const DocumentListPage = ({
           type="button"
           variant="outline"
         >
+          <RefreshCw aria-hidden="true" />
           Reload document list
         </Button>
       )}
