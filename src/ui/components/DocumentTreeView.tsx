@@ -6,7 +6,7 @@ import {
   TreeView,
 } from "@chakra-ui/react";
 import { ChevronRight, File, Folder, Plus } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { type DocumentTreeNode } from "../models/documentTree";
 import { useDocumentTreeExpansion } from "../hooks/useDocumentTreeExpansion";
 import { TagLabel } from "./ui/TagLabel";
@@ -15,14 +15,17 @@ import { Tooltip } from "./ui/tooltip";
 type DocumentTreeViewProps = {
   onSelectDocument: (id: number) => void;
   rootNode: DocumentTreeNode;
+  searchQuery: string;
   onCreateDocument?: (directory: string) => void;
 };
 
 export const DocumentTreeView = ({
   onSelectDocument,
   rootNode,
+  searchQuery,
   onCreateDocument,
 }: DocumentTreeViewProps) => {
+  const [focusedValue, setFocusedValue] = useState<string | null>(null);
   const collection = useMemo(
     () =>
       createTreeCollection<DocumentTreeNode>({
@@ -32,14 +35,31 @@ export const DocumentTreeView = ({
       }),
     [rootNode],
   );
-  const expansion = useDocumentTreeExpansion(rootNode, onSelectDocument);
+  const expansion = useDocumentTreeExpansion(
+    rootNode,
+    onSelectDocument,
+    searchQuery,
+  );
+  if (!rootNode.children?.length) return null;
+
+  const focusedPath = focusedValue
+    ? collection.getIndexPath(focusedValue)
+    : undefined;
+  const focusIsVisible =
+    focusedPath &&
+    collection
+      .getValuePath(focusedPath)
+      .slice(0, -1)
+      .every((value) => expansion.expandedValue.includes(value));
 
   return (
     <TreeView.Root
       collection={collection}
       expandOnClick={false}
       expandedValue={expansion.expandedValue}
+      focusedValue={focusIsVisible ? focusedValue : null}
       onExpandedChange={({ expandedValue }) => expansion.expand(expandedValue)}
+      onFocusChange={({ focusedValue }) => setFocusedValue(focusedValue)}
       onSelectionChange={({ selectedNodes }) => expansion.select(selectedNodes)}
     >
       <TreeView.Tree aria-label="Documents">

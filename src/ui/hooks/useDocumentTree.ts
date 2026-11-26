@@ -8,9 +8,14 @@ import {
   reconcileSelectedTagIds,
 } from "../models/documentTree";
 
+const normalizeSearchText = (value: string) =>
+  value.normalize("NFC").toLowerCase();
+
 export const useDocumentTree = (documents: DocumentSummary[]) => {
+  const [documentSearch, setDocumentSearch] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [tagSearch, setTagSearch] = useState("");
+  const searchQuery = normalizeSearchText(documentSearch.trim());
   const tags = useMemo(() => collectDocumentTags(documents), [documents]);
   const activeTagIds = useMemo(
     () => reconcileSelectedTagIds(selectedTagIds, tags),
@@ -24,10 +29,17 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
     () => filterTagsBySearch(tags, tagSearch),
     [tags, tagSearch],
   );
-  const filteredDocuments = useMemo(
-    () => filterDocumentsByTags(documents, activeTagIds),
-    [activeTagIds, documents],
-  );
+  const filteredDocuments = useMemo(() => {
+    const taggedDocuments = filterDocumentsByTags(documents, activeTagIds);
+    if (!searchQuery) return taggedDocuments;
+    return taggedDocuments.filter(({ relativePath, title, displayTitle }) => {
+      const filename = relativePath.slice(relativePath.lastIndexOf("/") + 1);
+      return (
+        normalizeSearchText(filename).includes(searchQuery) ||
+        normalizeSearchText(displayTitle ?? title).includes(searchQuery)
+      );
+    });
+  }, [activeTagIds, documents, searchQuery]);
   const rootNode = useMemo(
     () => createDocumentTree(filteredDocuments),
     [filteredDocuments],
@@ -43,8 +55,11 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
       matchingTags,
       filteredDocuments,
       rootNode,
+      documentSearch,
+      searchQuery,
       tagSearch,
     },
+    setDocumentSearch,
     selectTag: (id: number) => {
       setSelectedTagIds((current) => {
         const active = reconcileSelectedTagIds(current, tags);
@@ -58,6 +73,7 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
     },
     setTagSearch,
     clear: () => {
+      setDocumentSearch("");
       setSelectedTagIds([]);
       setTagSearch("");
     },

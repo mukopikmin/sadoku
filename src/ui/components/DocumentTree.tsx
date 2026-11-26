@@ -1,5 +1,6 @@
-import { Button, Text, VStack } from "@chakra-ui/react";
+import { Button, Field, HStack, Input, Text, VStack } from "@chakra-ui/react";
 import { Plus } from "lucide-react";
+import { useRef } from "react";
 import type { DocumentSummary } from "../models/document";
 import { useDocumentTree } from "../hooks/useDocumentTree";
 import { DocumentTagFilter } from "./DocumentTagFilter";
@@ -17,22 +18,43 @@ export const DocumentTree = ({
   onCreateDocument,
 }: DocumentTreeProps) => {
   const tree = useDocumentTree(documents);
+  const searchInput = useRef<HTMLInputElement>(null);
   const {
+    documentSearch,
     tags,
     selectedTags,
     matchingTags,
     filteredDocuments,
     rootNode,
+    searchQuery,
     tagSearch,
   } = tree.state;
+  const hasFilters = searchQuery !== "" || selectedTags.length > 0;
+  let emptyMessage = "No Markdown documents found.";
+  if (documents.length > 0) {
+    emptyMessage = searchQuery
+      ? "No documents match the current filters."
+      : "No documents match the selected tags.";
+  }
 
   return (
     <VStack align="stretch" gap="3">
+      {documents.length > 0 && (
+        <Field.Root maxW="320px">
+          <Field.Label>Search documents</Field.Label>
+          <Input
+            ref={searchInput}
+            type="search"
+            placeholder="File name or title"
+            value={documentSearch}
+            onChange={(event) =>
+              tree.setDocumentSearch(event.currentTarget.value)
+            }
+          />
+        </Field.Root>
+      )}
       {tags.length > 0 && (
         <DocumentTagFilter
-          documentCount={documents.length}
-          filteredDocumentCount={filteredDocuments.length}
-          onClearFilters={tree.clear}
           onSearchChange={tree.setTagSearch}
           onSelectTag={tree.selectTag}
           onRemoveTag={tree.removeTag}
@@ -40,6 +62,23 @@ export const DocumentTree = ({
           selectedTags={selectedTags}
           matchingTags={matchingTags}
         />
+      )}
+      {hasFilters && (
+        <HStack gap="2" wrap="wrap">
+          <Text role="status" color="fg.muted" fontSize="sm">
+            Showing {filteredDocuments.length} of {documents.length} documents
+          </Text>
+          <Button
+            onClick={() => {
+              tree.clear();
+              searchInput.current?.focus();
+            }}
+            size="sm"
+            variant="outline"
+          >
+            Clear filters
+          </Button>
+        </HStack>
       )}
       <VStack
         align="stretch"
@@ -60,21 +99,17 @@ export const DocumentTree = ({
             <Plus aria-hidden="true" /> New file
           </Button>
         )}
-        {tree.state.status === "empty" ? (
+        {tree.state.status === "empty" && (
           <VStack gap="2" p="6">
-            <Text color="fg.muted">
-              {documents.length === 0
-                ? "No Markdown documents found."
-                : "No documents match the selected tags."}
-            </Text>
+            <Text color="fg.muted">{emptyMessage}</Text>
           </VStack>
-        ) : (
-          <DocumentTreeView
-            onCreateDocument={onCreateDocument}
-            onSelectDocument={onSelectDocument}
-            rootNode={rootNode}
-          />
         )}
+        <DocumentTreeView
+          onCreateDocument={onCreateDocument}
+          onSelectDocument={onSelectDocument}
+          rootNode={rootNode}
+          searchQuery={searchQuery}
+        />
       </VStack>
     </VStack>
   );
