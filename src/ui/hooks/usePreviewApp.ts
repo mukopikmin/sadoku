@@ -235,19 +235,19 @@ export const usePreviewApp = () => {
   );
   if (!isDocumentList && (!rawDocumentId || !selectedDocument))
     return { status: "not-found" as const };
-  const canReloadDirectory = isDocumentList && Boolean(directoryStatus);
+  const isLocalDirectory =
+    Boolean(directoryStatus) || sessionQuery.data?.canCreateDocuments === true;
+  const reloadList = isLocalDirectory
+    ? () => documentsReload.mutate()
+    : reloadPreview;
+  const fetchingList =
+    documentsQuery.isFetching ||
+    directoryStatusQuery.isFetching ||
+    sessionQuery.isFetching;
   const listHeader = {
     ...headerActions,
-    onReloadPreview: canReloadDirectory
-      ? () => documentsReload.mutate()
-      : reloadPreview,
-    reloadAvailable: canReloadDirectory || !isSyncEnabled(),
-    reloading:
-      documentsReload.isPending ||
-      directoryStatus?.state === "loading" ||
-      documentsQuery.isFetching ||
-      directoryStatusQuery.isFetching ||
-      sessionQuery.isFetching,
+    reloadAvailable: !isDocumentList && !isSyncEnabled(),
+    reloading: fetchingList,
     title: selectedDocument?.relativePath ?? "Documents",
   };
   if (selectedDocumentId === undefined)
@@ -261,6 +261,16 @@ export const usePreviewApp = () => {
         documents: documents!,
         onSelectDocument: selectDocument,
         pullRequest: sessionQuery.data?.pullRequest,
+        reload:
+          isLocalDirectory || !isSyncEnabled()
+            ? {
+                onClick: reloadList,
+                disabled: directoryStatus?.state === "loading" || fetchingList,
+                pending:
+                  documentsReload.isPending ||
+                  (!isLocalDirectory && fetchingList),
+              }
+            : undefined,
         onCreateDocument:
           sessionQuery.data?.canCreateDocuments &&
           directoryStatus?.state !== "loading" &&

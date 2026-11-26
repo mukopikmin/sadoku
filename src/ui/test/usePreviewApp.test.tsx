@@ -89,6 +89,8 @@ beforeEach(() => {
   mocks.keepAlive.mockReturnValue(mocks.disconnect);
   mocks.documents.isPending = false;
   mocks.documents.error = null;
+  mocks.directory.data = { state: "ready" };
+  mocks.session.data = { canCreateDocuments: true };
   mocks.route.documentId = 7;
   mocks.route.isDocumentList = false;
   mocks.route.rawDocumentId = "7";
@@ -165,4 +167,22 @@ it("refreshes discovery and session without sync, saves scroll before navigation
   expect(mocks.navigate).toHaveBeenCalledWith({ to: "/" });
   unmount();
   expect(mocks.disconnect).toHaveBeenCalledOnce();
+});
+
+it("keeps the manual refresh in the list when a non-directory session disables sync", async () => {
+  mocks.sync = false;
+  mocks.directory.data = null;
+  mocks.session.data = {};
+  mocks.route.isDocumentList = true;
+  mocks.route.documentId = undefined;
+  mocks.route.rawDocumentId = undefined;
+  mocks.route.pathname = "/";
+  const { result } = renderHook(usePreviewApp);
+  if (result.current.status !== "list" || !result.current.page.reload)
+    throw new Error("Expected a list with a reload action");
+  expect(result.current.header.reloadAvailable).toBe(false);
+  await act(result.current.page.reload.onClick);
+  expect(mocks.documents.refetch).toHaveBeenCalledOnce();
+  expect(mocks.session.refetch).toHaveBeenCalledOnce();
+  expect(mocks.document.refetch).not.toHaveBeenCalled();
 });

@@ -1,4 +1,11 @@
-import { Alert, Container, Heading, HStack, Link } from "@chakra-ui/react";
+import {
+  Alert,
+  Button,
+  Container,
+  Heading,
+  HStack,
+  Link,
+} from "@chakra-ui/react";
 import type { DirectoryStatus } from "../api/directoryStatus";
 import { DocumentTree } from "../components/DocumentTree";
 import type { DocumentSummary } from "../models/document";
@@ -11,6 +18,7 @@ type Props = {
   onSelectDocument: (id: number) => void;
   pullRequest?: PullRequestMetadata;
   onCreateDocument?: (directory: string) => void;
+  reload?: { onClick: () => void; disabled: boolean; pending: boolean };
 };
 export const DocumentListPage = ({
   directoryStatus,
@@ -18,6 +26,7 @@ export const DocumentListPage = ({
   onSelectDocument,
   pullRequest,
   onCreateDocument,
+  reload,
 }: Props) => (
   <Container as="main" maxW="980px" px="8" pb="16">
     {pullRequest && (
@@ -42,8 +51,21 @@ export const DocumentListPage = ({
         )}
       </>
     )}
-    <HStack mb="4" justify="space-between">
+    <HStack mb="4" justify="space-between" flexWrap="wrap">
       <Heading size="md">Documents</Heading>
+      {reload && (
+        <Button
+          disabled={reload.disabled}
+          loading={reload.pending}
+          loadingText="Reloading document list"
+          onClick={reload.onClick}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          Reload document list
+        </Button>
+      )}
     </HStack>
     {directoryStatus?.state === "loading" ? (
       <Alert.Root status="info">

@@ -189,15 +189,23 @@ describe("directory preview", () => {
 
       await screen.findByRole("treeitem", { name: "original.md" });
       expect(reload).not.toHaveBeenCalled();
-      fireEvent.click(
-        await screen.findByRole("button", { name: "Reload preview" }),
+      const list = within(screen.getByRole("main"));
+      const reloadButton = await list.findByRole("button", {
+        name: "Reload document list",
+      });
+      expect(
+        screen.queryByRole("button", { name: "Reload preview" }),
+      ).toBeNull();
+      await waitFor(() =>
+        expect(reloadButton).toHaveProperty("disabled", false),
       );
+      fireEvent.click(reloadButton);
       await screen.findByText("Folder unavailable");
       expect(
         screen.getByRole("treeitem", { name: "original.md" }),
       ).not.toBeNull();
       fireEvent.click(
-        await screen.findByRole("button", { name: "Reload preview" }),
+        await list.findByRole("button", { name: "Reload document list" }),
       );
       expect(
         await screen.findByRole("treeitem", { name: "added.md" }),
