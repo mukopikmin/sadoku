@@ -44,6 +44,26 @@ it("filters documents, reconciles removed tags and clears search with filters", 
   expect(result.current.state.status).toBe("empty");
 });
 
+it("matches directory names and nested paths relative to the document root", () => {
+  const nested = {
+    id: 4,
+    relativePath: "docs/setup/guide.md",
+    title: "Guide",
+    deleted: false,
+    tags: [],
+  };
+  const docs = [...documents, nested];
+  const { result } = renderHook(() => useDocumentTree(docs));
+
+  act(() => result.current.setDocumentSearch(" DOCS "));
+  expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
+    1, 2, 4,
+  ]);
+
+  act(() => result.current.setDocumentSearch("setup/guide.md"));
+  expect(result.current.state.filteredDocuments).toEqual([nested]);
+});
+
 it("searches tag choices, combines selections and removes only the requested filter", () => {
   const urgent = { ...tag, id: 2, name: "urgent" };
   const docs = documents.map((document) => {

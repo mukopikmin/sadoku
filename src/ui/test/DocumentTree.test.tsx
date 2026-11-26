@@ -66,7 +66,7 @@ describe("DocumentTree", () => {
     await waitFor(() => expect(onSelectDocument).toHaveBeenCalledWith(1));
   });
 
-  it("searches file names and display titles in the document tree without tags", async () => {
+  it("searches relative paths and display titles in the document tree without tags", async () => {
     const onSelectDocument = vi.fn();
     render(
       <DocumentTree
@@ -108,6 +108,12 @@ describe("DocumentTree", () => {
     expect(screen.queryByText("guides")).toBeNull();
 
     fireEvent.change(input, { target: { value: "guides" } });
+    expect(
+      await screen.findByRole("treeitem", { name: "setup.md" }),
+    ).toBeTruthy();
+    expect(screen.queryByText("release.md")).toBeNull();
+
+    fireEvent.change(input, { target: { value: "missing.md" } });
     expect(screen.getByRole("status").textContent).toBe(
       "Showing 0 of 2 documents",
     );

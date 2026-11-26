@@ -32,13 +32,11 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
   const filteredDocuments = useMemo(() => {
     const taggedDocuments = filterDocumentsByTags(documents, activeTagIds);
     if (!searchQuery) return taggedDocuments;
-    return taggedDocuments.filter(({ relativePath, title, displayTitle }) => {
-      const filename = relativePath.slice(relativePath.lastIndexOf("/") + 1);
-      return (
-        normalizeSearchText(filename).includes(searchQuery) ||
-        normalizeSearchText(displayTitle ?? title).includes(searchQuery)
-      );
-    });
+    return taggedDocuments.filter(
+      ({ relativePath, title, displayTitle }) =>
+        normalizeSearchText(relativePath).includes(searchQuery) ||
+        normalizeSearchText(displayTitle ?? title).includes(searchQuery),
+    );
   }, [activeTagIds, documents, searchQuery]);
   const rootNode = useMemo(
     () => createDocumentTree(filteredDocuments),

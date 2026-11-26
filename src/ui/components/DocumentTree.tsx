@@ -59,7 +59,7 @@ export const DocumentTree = ({
             <Input
               ref={searchInput}
               type="search"
-              placeholder="File name or title"
+              placeholder="Relative path or title"
               value={documentSearch}
               onChange={(event) =>
                 tree.setDocumentSearch(event.currentTarget.value)
