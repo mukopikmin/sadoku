@@ -32,11 +32,20 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
   const filteredDocuments = useMemo(() => {
     const taggedDocuments = filterDocumentsByTags(documents, activeTagIds);
     if (!searchQuery) return taggedDocuments;
-    return taggedDocuments.filter(
-      ({ relativePath, title, displayTitle }) =>
-        normalizeSearchText(relativePath).includes(searchQuery) ||
-        normalizeSearchText(displayTitle ?? title).includes(searchQuery),
-    );
+    const fromRoot =
+      searchQuery.startsWith("./") || searchQuery.startsWith(".\\");
+    const pathQuery = fromRoot ? searchQuery.slice(2) : searchQuery;
+    const slashPathQuery = pathQuery.replaceAll("\\", "/");
+    const matchesPath = (path: string, query: string) =>
+      fromRoot ? path.startsWith(query) : path.includes(query);
+    return taggedDocuments.filter(({ relativePath, title, displayTitle }) => {
+      const path = normalizeSearchText(relativePath);
+      return (
+        matchesPath(path, pathQuery) ||
+        (slashPathQuery !== pathQuery && matchesPath(path, slashPathQuery)) ||
+        normalizeSearchText(displayTitle ?? title).includes(searchQuery)
+      );
+    });
   }, [activeTagIds, documents, searchQuery]);
   const rootNode = useMemo(
     () => createDocumentTree(filteredDocuments),

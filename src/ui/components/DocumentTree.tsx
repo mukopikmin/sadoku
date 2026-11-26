@@ -78,11 +78,12 @@ export const DocumentTree = ({
           )}
         </Grid>
       )}
-      {hasFilters && (
-        <HStack gap="2" wrap="wrap">
-          <Text role="status" color="fg.muted" fontSize="sm">
-            Showing {filteredDocuments.length} of {documents.length} documents
-          </Text>
+      <HStack gap="2" wrap="wrap" srOnly={!hasFilters}>
+        <Text role="status" color="fg.muted" fontSize="sm">
+          {hasFilters &&
+            `Showing ${filteredDocuments.length} of ${documents.length} documents`}
+        </Text>
+        {hasFilters && (
           <Button
             onClick={() => {
               tree.clear();
@@ -93,8 +94,8 @@ export const DocumentTree = ({
           >
             Clear filters
           </Button>
-        </HStack>
-      )}
+        )}
+      </HStack>
       <VStack
         align="stretch"
         borderColor="border.muted"

@@ -92,6 +92,8 @@ describe("DocumentTree", () => {
     );
 
     const input = screen.getByRole("searchbox", { name: "Search documents" });
+    const resultCount = screen.getByRole("status");
+    expect(resultCount.textContent).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "guides folder" }));
     await waitFor(() => {
       expect(screen.queryByRole("treeitem", { name: "setup.md" })).toBeNull();
@@ -99,6 +101,8 @@ describe("DocumentTree", () => {
 
     fireEvent.change(input, { target: { value: "環境のカ\u3099イド" } });
     const result = await screen.findByRole("treeitem", { name: "setup.md" });
+    expect(screen.getByRole("status")).toBe(resultCount);
+    expect(resultCount.textContent).toBe("Showing 1 of 2 documents");
     expect(screen.queryByText("release.md")).toBeNull();
     fireEvent.click(result);
     await waitFor(() => expect(onSelectDocument).toHaveBeenCalledWith(1));
@@ -126,6 +130,8 @@ describe("DocumentTree", () => {
     fireEvent.click(clear);
     expect(input).toHaveProperty("value", "");
     expect(document.activeElement).toBe(input);
+    expect(screen.getByRole("status")).toBe(resultCount);
+    expect(resultCount.textContent).toBe("");
     expect(screen.queryByRole("treeitem", { name: "setup.md" })).toBeNull();
     expect(screen.getByRole("treeitem", { name: "release.md" })).toBeTruthy();
   });
