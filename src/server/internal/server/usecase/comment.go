@@ -17,15 +17,23 @@ func HashSource(text string) string {
 	return fmt.Sprintf("%08x", hash)
 }
 func RangeText(markdown string, start, end int) *string {
-	return rangeText(strings.Split(markdown, "\n"), start, end)
-}
-
-func rangeText(lines []string, start, end int) *string {
-	if start < 1 || end < start || end > len(lines) {
+	if start < 1 || end < start {
 		return nil
 	}
-	text := strings.Join(lines[start-1:end], "\n")
-	return &text
+	line, offset, first := 1, 0, 0
+	for text := range strings.SplitSeq(markdown, "\n") {
+		if line == start {
+			first = offset
+		}
+		offset += len(text)
+		if line == end {
+			quote := markdown[first:offset]
+			return &quote
+		}
+		offset++ // newline
+		line++
+	}
+	return nil
 }
 
 type lineRange struct{ start, end int }
@@ -247,6 +255,14 @@ func ResolveComments(doc Comments, markdown string) Comments {
 	doc.SourceSnapshot = &markdown
 	return currentText(doc, lines)
 }
+func rangeText(lines []string, start, end int) *string {
+	if start < 1 || end < start || end > len(lines) {
+		return nil
+	}
+	text := strings.Join(lines[start-1:end], "\n")
+	return &text
+}
+
 func currentText(doc Comments, lines []string) Comments {
 	for i := range doc.Comments {
 		c := &doc.Comments[i]
