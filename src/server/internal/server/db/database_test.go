@@ -61,7 +61,7 @@ func TestOpenPreservesLiteralDatabasePaths(t *testing.T) {
 			}
 			defer func() { _ = database.Close() }()
 			var count int
-			if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 18 {
+			if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration").Scan(&count); err != nil || count != 19 {
 				t.Fatalf("reopened database migrations: %d, %v", count, err)
 			}
 		})
@@ -125,7 +125,7 @@ func TestOpenDatabaseWrittenByWasmDriver(t *testing.T) {
 		}
 		defer func() { _ = database.Close() }()
 		var count int
-		if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 18 {
+		if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 19 {
 			t.Fatalf("legacy migrations: %d, %v", count, err)
 		}
 		var sourceText, sourceHash string
@@ -173,7 +173,7 @@ func TestMigrationCompatibility(t *testing.T) {
 		t.Fatal(err)
 	}
 	var count int
-	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 18 {
+	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 19 {
 		t.Fatalf("migration count %d: %v", count, err)
 	}
 	_, err = database.ExecContext(t.Context(), "INSERT INTO comment_document(file_path,created_at,updated_at,title) VALUES('old.md',?,?,'Old title')", Now(), Now())
@@ -253,7 +253,7 @@ func TestFailedMigrationBatchRollsBackAndCanBeRetried(t *testing.T) {
 	if err = Migrate(database); err != nil {
 		t.Fatalf("retry after removing the conflict: %v", err)
 	}
-	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 18 {
+	if err = database.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM schema_migration WHERE state='applied'").Scan(&count); err != nil || count != 19 {
 		t.Fatalf("retried migrations: %d, %v", count, err)
 	}
 }

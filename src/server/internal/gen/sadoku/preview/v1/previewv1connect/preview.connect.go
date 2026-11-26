@@ -146,6 +146,9 @@ const (
 	// PreviewServiceExportCommentToGitHubProcedure is the fully-qualified name of the PreviewService's
 	// ExportCommentToGitHub RPC.
 	PreviewServiceExportCommentToGitHubProcedure = "/sadoku.preview.v1.PreviewService/ExportCommentToGitHub"
+	// PreviewServiceReloadDocumentsProcedure is the fully-qualified name of the PreviewService's
+	// ReloadDocuments RPC.
+	PreviewServiceReloadDocumentsProcedure = "/sadoku.preview.v1.PreviewService/ReloadDocuments"
 )
 
 // PreviewServiceClient is a client for the sadoku.preview.v1.PreviewService service.
@@ -188,6 +191,7 @@ type PreviewServiceClient interface {
 	UpdateReply(context.Context, *connect.Request[v1.UpdateReplyRequest]) (*connect.Response[v1.Comment], error)
 	DeleteReply(context.Context, *connect.Request[v1.DeleteReplyRequest]) (*connect.Response[v1.DeleteReplyResponse], error)
 	ExportCommentToGitHub(context.Context, *connect.Request[v1.ExportCommentToGitHubRequest]) (*connect.Response[v1.ExportCommentToGitHubResponse], error)
+	ReloadDocuments(context.Context, *connect.Request[v1.ReloadDocumentsRequest]) (*connect.Response[v1.ReloadDocumentsResponse], error)
 }
 
 // NewPreviewServiceClient constructs a client for the sadoku.preview.v1.PreviewService service. By
@@ -429,6 +433,12 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("ExportCommentToGitHub")),
 			connect.WithClientOptions(opts...),
 		),
+		reloadDocuments: connect.NewClient[v1.ReloadDocumentsRequest, v1.ReloadDocumentsResponse](
+			httpClient,
+			baseURL+PreviewServiceReloadDocumentsProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("ReloadDocuments")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -472,6 +482,7 @@ type previewServiceClient struct {
 	updateReply             *connect.Client[v1.UpdateReplyRequest, v1.Comment]
 	deleteReply             *connect.Client[v1.DeleteReplyRequest, v1.DeleteReplyResponse]
 	exportCommentToGitHub   *connect.Client[v1.ExportCommentToGitHubRequest, v1.ExportCommentToGitHubResponse]
+	reloadDocuments         *connect.Client[v1.ReloadDocumentsRequest, v1.ReloadDocumentsResponse]
 }
 
 // GetSession calls sadoku.preview.v1.PreviewService.GetSession.
@@ -664,6 +675,11 @@ func (c *previewServiceClient) ExportCommentToGitHub(ctx context.Context, req *c
 	return c.exportCommentToGitHub.CallUnary(ctx, req)
 }
 
+// ReloadDocuments calls sadoku.preview.v1.PreviewService.ReloadDocuments.
+func (c *previewServiceClient) ReloadDocuments(ctx context.Context, req *connect.Request[v1.ReloadDocumentsRequest]) (*connect.Response[v1.ReloadDocumentsResponse], error) {
+	return c.reloadDocuments.CallUnary(ctx, req)
+}
+
 // PreviewServiceHandler is an implementation of the sadoku.preview.v1.PreviewService service.
 type PreviewServiceHandler interface {
 	GetSession(context.Context, *connect.Request[v1.GetSessionRequest]) (*connect.Response[v1.GetSessionResponse], error)
@@ -704,6 +720,7 @@ type PreviewServiceHandler interface {
 	UpdateReply(context.Context, *connect.Request[v1.UpdateReplyRequest]) (*connect.Response[v1.Comment], error)
 	DeleteReply(context.Context, *connect.Request[v1.DeleteReplyRequest]) (*connect.Response[v1.DeleteReplyResponse], error)
 	ExportCommentToGitHub(context.Context, *connect.Request[v1.ExportCommentToGitHubRequest]) (*connect.Response[v1.ExportCommentToGitHubResponse], error)
+	ReloadDocuments(context.Context, *connect.Request[v1.ReloadDocumentsRequest]) (*connect.Response[v1.ReloadDocumentsResponse], error)
 }
 
 // NewPreviewServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -941,6 +958,12 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("ExportCommentToGitHub")),
 		connect.WithHandlerOptions(opts...),
 	)
+	previewServiceReloadDocumentsHandler := connect.NewUnaryHandler(
+		PreviewServiceReloadDocumentsProcedure,
+		svc.ReloadDocuments,
+		connect.WithSchema(previewServiceMethods.ByName("ReloadDocuments")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/sadoku.preview.v1.PreviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PreviewServiceGetSessionProcedure:
@@ -1019,6 +1042,8 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceDeleteReplyHandler.ServeHTTP(w, r)
 		case PreviewServiceExportCommentToGitHubProcedure:
 			previewServiceExportCommentToGitHubHandler.ServeHTTP(w, r)
+		case PreviewServiceReloadDocumentsProcedure:
+			previewServiceReloadDocumentsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1178,4 +1203,8 @@ func (UnimplementedPreviewServiceHandler) DeleteReply(context.Context, *connect.
 
 func (UnimplementedPreviewServiceHandler) ExportCommentToGitHub(context.Context, *connect.Request[v1.ExportCommentToGitHubRequest]) (*connect.Response[v1.ExportCommentToGitHubResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.ExportCommentToGitHub is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) ReloadDocuments(context.Context, *connect.Request[v1.ReloadDocumentsRequest]) (*connect.Response[v1.ReloadDocumentsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sadoku.preview.v1.PreviewService.ReloadDocuments is not implemented"))
 }

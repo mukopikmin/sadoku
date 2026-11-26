@@ -88,7 +88,7 @@ func TestCreationReportsTheSavedFileWhenRegistrationFails(t *testing.T) {
 			s.Repository = failedRegistration{s.Repository, stage}
 			_, err = s.CreateDocument(context.Background(), "", "saved", "Title")
 			var failure *u.Failure
-			if !errors.As(err, &failure) || failure.Kind != "internal" || failure.Message != "The file was created, but could not be added to the preview. Reopen this directory to load it." {
+			if !errors.As(err, &failure) || failure.Kind != "internal" || failure.Message != "The file was created, but could not be added to the preview. Reload the document list to load it." {
 				t.Fatalf("registration failure: %v", err)
 			}
 			contents, err := os.ReadFile(filepath.Join(root, "saved.md"))

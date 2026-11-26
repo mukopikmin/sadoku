@@ -77,6 +77,13 @@ func (s *Service) ListDocuments(ctx context.Context, _ *connect.Request[pb.ListD
 	return documentResponse(&pb.ListDocumentsResponse{Documents: summaries}), nil
 }
 
+func (s *Service) ReloadDocuments(ctx context.Context, _ *connect.Request[pb.ReloadDocumentsRequest]) (*connect.Response[pb.ReloadDocumentsResponse], error) {
+	if err := s.Session.ReloadDocuments(ctx); err != nil {
+		return nil, rpcError(err)
+	}
+	return documentResponse(&pb.ReloadDocumentsResponse{}), nil
+}
+
 func (s *Service) CreateDocument(ctx context.Context, req *connect.Request[pb.CreateDocumentRequest]) (*connect.Response[pb.DocumentSummary], error) {
 	in := req.Msg
 	return documentSummaryResponse(s.Session.CreateDocument(ctx, in.GetDirectory(), in.GetFilename(), in.GetTitle()))

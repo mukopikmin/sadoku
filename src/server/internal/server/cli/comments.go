@@ -145,7 +145,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 				edits = append(edits, edit)
 			}
 		}
-		if err = repo.SaveCommentEdits(ctx, id, nil, edits); err != nil {
+		if err = repo.SaveCommentEdits(ctx, id, comments.Version, nil, edits); err != nil {
 			return err
 		}
 		list := []object{}
@@ -205,7 +205,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 	if op == "CreateComment" {
 		snapshot = &markdown
 	}
-	if err = repo.SaveCommentEdits(ctx, id, snapshot, []u.CommentEdit{edit}); err != nil {
+	if err = repo.SaveCommentEdits(ctx, id, comments.Version, snapshot, []u.CommentEdit{edit}); err != nil {
 		return err
 	}
 	if op == "DeleteComment" {

@@ -10,8 +10,8 @@ import (
 )
 
 // Batch resolution and single edits publish one notification after commit.
-func (r *Repository) SaveCommentEdits(ctx context.Context, id int64, snapshot *string, edits []u.CommentEdit) error {
-	return r.writeComments(ctx, id, snapshot, func(tx *sql.Tx) error {
+func (r *Repository) SaveCommentEdits(ctx context.Context, id, version int64, snapshot *string, edits []u.CommentEdit) error {
+	return r.writeComments(ctx, id, version, snapshot, func(tx *sql.Tx) error {
 		for _, edit := range edits {
 			if err := applyCommentEdit(ctx, tx, id, edit); err != nil {
 				return err

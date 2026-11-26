@@ -24,6 +24,10 @@ func TestCommentEditsOnlyWriteTheirTargetsAndRollBackTogether(t *testing.T) {
 	if err := repo.SaveComments(ctx, document.ID, doc); err != nil {
 		t.Fatal(err)
 	}
+	doc, err = repo.ReadComments(ctx, document.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Guard the untouched sibling against updates as well as replacement.
 	for _, op := range []string{"UPDATE", "DELETE", "INSERT"} {
 		row := "OLD"
@@ -41,21 +45,28 @@ func TestCommentEditsOnlyWriteTheirTargetsAndRollBackTogether(t *testing.T) {
 	}
 	missing := resolve
 	missing.Comment.ID = 3
-	if err := repo.SaveCommentEdits(ctx, document.ID, nil, []u.CommentEdit{resolve, missing}); err == nil {
+	if err := repo.SaveCommentEdits(ctx, document.ID, doc.Version, nil, []u.CommentEdit{resolve, missing}); err == nil {
 		t.Fatal("invalid batch committed")
 	}
 	saved, err := repo.ReadComments(ctx, document.ID)
 	if err != nil || saved.Comments[0].Resolved {
 		t.Fatalf("partial batch: %+v, %v", saved, err)
 	}
-	if err := repo.SaveCommentEdits(ctx, document.ID, nil, []u.CommentEdit{resolve}); err != nil {
+	if err := repo.SaveCommentEdits(ctx, document.ID, doc.Version, nil, []u.CommentEdit{resolve}); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.SaveCommentEdits(ctx, document.ID, doc.Version, nil, []u.CommentEdit{resolve}); err == nil {
+		t.Fatal("stale edit committed")
+	}
+	doc, err = repo.ReadComments(ctx, document.ID)
+	if err != nil {
 		t.Fatal(err)
 	}
 	_, reply, err := u.ChangeComment("CreateReply", doc, u.CommentInput{CommentID: 1, Body: "reply"}, "", db.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := repo.SaveCommentEdits(ctx, document.ID, nil, []u.CommentEdit{reply}); err != nil {
+	if err := repo.SaveCommentEdits(ctx, document.ID, doc.Version, nil, []u.CommentEdit{reply}); err != nil {
 		t.Fatal(err)
 	}
 	saved, err = repo.ReadComments(ctx, document.ID)
