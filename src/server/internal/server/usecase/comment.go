@@ -17,7 +17,10 @@ func HashSource(text string) string {
 	return fmt.Sprintf("%08x", hash)
 }
 func RangeText(markdown string, start, end int) *string {
-	lines := strings.Split(markdown, "\n")
+	return rangeText(strings.Split(markdown, "\n"), start, end)
+}
+
+func rangeText(lines []string, start, end int) *string {
 	if start < 1 || end < start || end > len(lines) {
 		return nil
 	}
@@ -173,11 +176,15 @@ func runeLineNumbers(text []rune) []int {
 }
 
 func ResolveComments(doc Comments, markdown string) Comments {
+	var lines []string
+	if len(doc.Comments) > 0 {
+		lines = strings.Split(markdown, "\n")
+	}
 	if doc.SourceSnapshot != nil && *doc.SourceSnapshot == markdown {
 		for i := range doc.Comments {
 			doc.Comments[i].DisplayLine = doc.Comments[i].StartLine
 		}
-		return currentText(doc, markdown)
+		return currentText(doc, lines)
 	}
 	var mapping map[int]lineRange
 	if doc.SourceSnapshot != nil {
@@ -208,7 +215,7 @@ func ResolveComments(doc Comments, markdown string) Comments {
 			continue
 		}
 		if c.SourceText == nil {
-			c.SourceText = RangeText(markdown, c.StartLine, c.EndLine)
+			c.SourceText = rangeText(lines, c.StartLine, c.EndLine)
 		}
 		if c.SourceText == nil {
 			empty := ""
@@ -222,8 +229,8 @@ func ResolveComments(doc Comments, markdown string) Comments {
 		c.OriginalEndLine = c.EndLine
 		count, start := 0, 0
 		span := c.EndLine - c.StartLine
-		for line := max(1, c.StartLine-40); line <= min(len(strings.Split(markdown, "\n")), c.StartLine+40); line++ {
-			text := RangeText(markdown, line, line+span)
+		for line := max(1, c.StartLine-40); line <= min(len(lines), c.StartLine+40); line++ {
+			text := rangeText(lines, line, line+span)
 			if text != nil && *text == *c.SourceText && HashSource(*text) == *c.SourceHash {
 				count++
 				start = line
@@ -238,14 +245,14 @@ func ResolveComments(doc Comments, markdown string) Comments {
 	}
 	doc.PreviousSourceSnapshot = doc.SourceSnapshot
 	doc.SourceSnapshot = &markdown
-	return currentText(doc, markdown)
+	return currentText(doc, lines)
 }
-func currentText(doc Comments, markdown string) Comments {
+func currentText(doc Comments, lines []string) Comments {
 	for i := range doc.Comments {
 		c := &doc.Comments[i]
 		c.CurrentSourceText = nil
 		if !c.Stale {
-			c.CurrentSourceText = RangeText(markdown, c.StartLine, c.EndLine)
+			c.CurrentSourceText = rangeText(lines, c.StartLine, c.EndLine)
 		}
 	}
 	return doc
