@@ -96,6 +96,7 @@ type Repository interface {
 	SetTitle(context.Context, int64, *string) error
 	Snapshot(context.Context, int64) (*string, *string, error)
 	SaveComments(context.Context, int64, Comments) error
+	SaveCommentEdits(context.Context, int64, *string, []CommentEdit) error
 	ReadComments(context.Context, int64) (Comments, error)
 	CommentsNotificationPath(context.Context, int64) (string, error)
 	CommentsNotificationSourcePath(context.Context, string) (string, error)

@@ -217,49 +217,68 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 	return doc, nil
 }
 func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments) error {
+	return r.writeComments(ctx, id, doc.SourceSnapshot, func(tx *sql.Tx) error {
+		if _, err := tx.ExecContext(ctx, "DELETE FROM comment WHERE document_id=?", id); err != nil {
+			return err
+		}
+		for _, c := range doc.Comments {
+			internal, err := insertComment(ctx, tx, id, c)
+			if err != nil {
+				return err
+			}
+			for _, reply := range c.Replies {
+				if err := insertReply(ctx, tx, internal, reply); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
+func insertComment(ctx context.Context, tx *sql.Tx, id int64, c u.Comment) (int64, error) {
+	var resolver *string
+	if c.ResolvedBy != nil {
+		resolver = &c.ResolvedBy.Type
+	}
+	res, e := tx.ExecContext(ctx, `INSERT INTO comment(document_id,local_id,body,author_type,start_line,end_line,original_start_line,original_end_line,created_at,updated_at,resolved,stale,resolved_at,resolved_by_type,source_hash,source_text,source_deleted) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, c.ID, c.Body, c.Author.Type, c.StartLine, c.EndLine, c.OriginalStartLine, c.OriginalEndLine, c.CreatedAt, c.UpdatedAt, c.Resolved, c.Stale, c.ResolvedAt, resolver, c.SourceHash, c.SourceText, c.SourceDeleted)
+	if e != nil {
+		return 0, e
+	}
+	return res.LastInsertId()
+}
+
+func insertReply(ctx context.Context, tx *sql.Tx, internal int64, reply u.Reply) error {
+	_, err := tx.ExecContext(ctx, "INSERT INTO comment_reply(comment_id,local_id,body,author_type,created_at,updated_at,review_requested) VALUES(?,?,?,?,?,?,?)", internal, reply.ID, reply.Body, reply.Author.Type, reply.CreatedAt, reply.UpdatedAt, reply.ReviewRequested)
+	return err
+}
+
+func (r *Repository) writeComments(ctx context.Context, id int64, snapshot *string, write func(*sql.Tx) error) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
 	var source string
-	var old *string
-	var currentID *int64
-	if err = tx.QueryRowContext(ctx, "SELECT file_path,source_revision_id,(SELECT markdown FROM document_revision WHERE id=source_revision_id) FROM comment_document WHERE id=?", id).Scan(&source, &currentID, &old); err != nil {
+	if err = tx.QueryRowContext(ctx, "UPDATE comment_document SET updated_at=? WHERE id=? RETURNING file_path", db.Now(), id).Scan(&source); err != nil {
 		return err
 	}
-	if doc.SourceSnapshot != nil && (old == nil || *old != *doc.SourceSnapshot) {
-		revID, e := record(ctx, tx, id, *doc.SourceSnapshot)
-		if e != nil {
-			return e
-		}
-		if _, err = tx.ExecContext(ctx, "UPDATE comment_document SET previous_source_revision_id=source_revision_id,source_revision_id=? WHERE id=?", revID, id); err != nil {
+	if snapshot != nil {
+		var old *string
+		if err := tx.QueryRowContext(ctx, `SELECT r.markdown FROM comment_document d LEFT JOIN document_revision r ON r.id=d.source_revision_id WHERE d.id=?`, id).Scan(&old); err != nil {
 			return err
 		}
-	}
-	if _, err = tx.ExecContext(ctx, "DELETE FROM comment WHERE document_id=?", id); err != nil {
-		return err
-	}
-	for _, c := range doc.Comments {
-		var resolver *string
-		if c.ResolvedBy != nil {
-			resolver = &c.ResolvedBy.Type
-		}
-		res, e := tx.ExecContext(ctx, `INSERT INTO comment(document_id,local_id,body,author_type,start_line,end_line,original_start_line,original_end_line,created_at,updated_at,resolved,stale,resolved_at,resolved_by_type,source_hash,source_text,source_deleted) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, c.ID, c.Body, c.Author.Type, c.StartLine, c.EndLine, c.OriginalStartLine, c.OriginalEndLine, c.CreatedAt, c.UpdatedAt, c.Resolved, c.Stale, c.ResolvedAt, resolver, c.SourceHash, c.SourceText, c.SourceDeleted)
-		if e != nil {
-			return e
-		}
-		internal, e := res.LastInsertId()
-		if e != nil {
-			return e
-		}
-		for _, reply := range c.Replies {
-			if _, err = tx.ExecContext(ctx, "INSERT INTO comment_reply(comment_id,local_id,body,author_type,created_at,updated_at,review_requested) VALUES(?,?,?,?,?,?,?)", internal, reply.ID, reply.Body, reply.Author.Type, reply.CreatedAt, reply.UpdatedAt, reply.ReviewRequested); err != nil {
+		if old == nil || *snapshot != *old {
+			revID, err := record(ctx, tx, id, *snapshot)
+			if err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, "UPDATE comment_document SET previous_source_revision_id=source_revision_id,source_revision_id=? WHERE id=?", revID, id); err != nil {
 				return err
 			}
 		}
 	}
-	if _, err = tx.ExecContext(ctx, "UPDATE comment_document SET updated_at=? WHERE id=?", db.Now(), id); err != nil {
+	if err := write(tx); err != nil {
 		return err
 	}
 	if err = tx.Commit(); err != nil {

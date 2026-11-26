@@ -134,15 +134,18 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 			wasResolved[c.ID] = c.ResolvedAt != nil
 		}
 		now := db.Now()
+		edits := make([]u.CommentEdit, 0, len(wanted))
 		for _, c := range comments.Comments {
 			if wanted[c.ID] {
-				comments, _, err = u.ChangeComment("SetCommentResolution", comments, u.CommentInput{CommentID: c.ID, Resolved: operation == "resolve", AsBot: in.AsBot}, markdown, now)
+				var edit u.CommentEdit
+				comments, edit, err = u.ChangeComment("SetCommentResolution", comments, u.CommentInput{CommentID: c.ID, Resolved: operation == "resolve", AsBot: in.AsBot}, markdown, now)
 				if err != nil {
 					return err
 				}
+				edits = append(edits, edit)
 			}
 		}
-		if err = repo.SaveComments(ctx, id, comments); err != nil {
+		if err = repo.SaveCommentEdits(ctx, id, nil, edits); err != nil {
 			return err
 		}
 		list := []object{}
@@ -194,11 +197,15 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 			op = strings.ToUpper(action[:1]) + action[1:] + "Reply"
 		}
 	}
-	updated, result, err := u.ChangeComment(op, comments, in, markdown, db.Now())
+	_, edit, err := u.ChangeComment(op, comments, in, markdown, db.Now())
 	if err != nil {
 		return commentError(err, in)
 	}
-	if err = repo.SaveComments(ctx, id, updated); err != nil {
+	var snapshot *string
+	if op == "CreateComment" {
+		snapshot = &markdown
+	}
+	if err = repo.SaveCommentEdits(ctx, id, snapshot, []u.CommentEdit{edit}); err != nil {
 		return err
 	}
 	if op == "DeleteComment" {
@@ -209,7 +216,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 		_, err = fmt.Fprintf(out, "Deleted reply %d.\n", in.ReplyID)
 		return err
 	}
-	c := result.(u.Comment)
+	c := edit.Comment
 	if op != "CreateComment" && !c.Stale && comments.SourceSnapshot != nil {
 		c.CurrentSourceText = u.RangeText(*comments.SourceSnapshot, c.StartLine, c.EndLine)
 	}

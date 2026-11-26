@@ -258,7 +258,14 @@ type CommentInput struct {
 	Resolved, AsBot, RequestReview bool
 }
 
-func ChangeComment(operation string, doc Comments, in CommentInput, markdown, now string) (Comments, any, error) {
+// CommentEdit carries the affected rows from a validated domain operation.
+type CommentEdit struct {
+	Operation string
+	Comment   Comment
+	Reply     Reply
+}
+
+func ChangeComment(operation string, doc Comments, in CommentInput, markdown, now string) (Comments, CommentEdit, error) {
 	body := TrimSpace(in.Body)
 	author := Author{Type: "human"}
 	if in.AsBot {
@@ -266,11 +273,11 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 	}
 	if operation == "CreateComment" {
 		if body == "" {
-			return doc, nil, Fail("invalid_argument", "Comment body is required.")
+			return doc, CommentEdit{}, Fail("invalid_argument", "Comment body is required.")
 		}
 		text := RangeText(markdown, in.StartLine, in.EndLine)
 		if text == nil {
-			return doc, nil, Fail("invalid_argument", "Comment range is outside the Markdown source.")
+			return doc, CommentEdit{}, Fail("invalid_argument", "Comment range is outside the Markdown source.")
 		}
 		id := int64(1)
 		for _, c := range doc.Comments {
@@ -280,7 +287,7 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		c := Comment{ID: id, Author: author, Body: body, StartLine: in.StartLine, EndLine: in.EndLine, OriginalStartLine: in.StartLine, OriginalEndLine: in.EndLine, CreatedAt: now, UpdatedAt: now, SourceText: text, SourceHash: &hash, CurrentSourceText: text, Replies: []Reply{}}
 		doc.Comments = append(doc.Comments, c)
 		doc.SourceSnapshot = &markdown
-		return doc, c, nil
+		return doc, CommentEdit{Operation: operation, Comment: c}, nil
 	}
 	index := -1
 	for i, c := range doc.Comments {
@@ -290,16 +297,17 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		}
 	}
 	if index < 0 {
-		return doc, nil, Fail("not_found", "Comment not found.")
+		return doc, CommentEdit{}, Fail("not_found", "Comment not found.")
 	}
 	c := doc.Comments[index]
+	edit := CommentEdit{Operation: operation}
 	switch operation {
 	case "DeleteComment":
 		doc.Comments = append(doc.Comments[:index], doc.Comments[index+1:]...)
-		return doc, struct{}{}, nil
+		return doc, CommentEdit{Operation: operation, Comment: c}, nil
 	case "UpdateComment":
 		if body == "" {
-			return doc, nil, Fail("invalid_argument", "Comment body is required.")
+			return doc, CommentEdit{}, Fail("invalid_argument", "Comment body is required.")
 		}
 		c.Body = body
 	case "SetCommentResolution":
@@ -312,19 +320,20 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		}
 	case "CreateReply":
 		if body == "" {
-			return doc, nil, Fail("invalid_argument", "Reply body is required.")
+			return doc, CommentEdit{}, Fail("invalid_argument", "Reply body is required.")
 		}
 		if in.RequestReview && c.Resolved {
-			return doc, nil, Fail("invalid_argument", "Cannot request review on a resolved comment.")
+			return doc, CommentEdit{}, Fail("invalid_argument", "Cannot request review on a resolved comment.")
 		}
 		if in.RequestReview && !in.AsBot {
-			return doc, nil, Fail("invalid_argument", "Review requests require a bot author.")
+			return doc, CommentEdit{}, Fail("invalid_argument", "Review requests require a bot author.")
 		}
 		id := int64(1)
 		for _, r := range c.Replies {
 			id = max(id, r.ID+1)
 		}
-		c.Replies = append(c.Replies, Reply{ID: id, Author: author, Body: body, CreatedAt: now, UpdatedAt: now, ReviewRequested: in.RequestReview})
+		edit.Reply = Reply{ID: id, Author: author, Body: body, CreatedAt: now, UpdatedAt: now, ReviewRequested: in.RequestReview}
+		c.Replies = append(c.Replies, edit.Reply)
 	case "UpdateReply", "DeleteReply":
 		i := -1
 		for n, r := range c.Replies {
@@ -334,27 +343,26 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 			}
 		}
 		if i < 0 {
-			return doc, nil, Fail("not_found", "Reply not found.")
+			return doc, CommentEdit{}, Fail("not_found", "Reply not found.")
 		}
 		if operation == "DeleteReply" {
+			edit.Reply = c.Replies[i]
 			c.Replies = append(c.Replies[:i], c.Replies[i+1:]...)
 		} else {
 			if body == "" {
-				return doc, nil, Fail("invalid_argument", "Reply body is required.")
+				return doc, CommentEdit{}, Fail("invalid_argument", "Reply body is required.")
 			}
 			c.Replies[i].Body = body
 			c.Replies[i].UpdatedAt = now
+			edit.Reply = c.Replies[i]
 		}
 	default:
-		return doc, nil, Fail("unimplemented", "Unknown comment operation.")
+		return doc, CommentEdit{}, Fail("unimplemented", "Unknown comment operation.")
 	}
 	c.UpdatedAt = now
 	doc.Comments[index] = c
-	var result any = c
-	if operation == "DeleteReply" {
-		result = struct{}{}
-	}
-	return doc, result, nil
+	edit.Comment = c
+	return doc, edit, nil
 }
 
 // TrimSpace follows ECMAScript String.trim, including BOM and excluding NEL.
