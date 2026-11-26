@@ -11,6 +11,7 @@ import {
   useDirectoryStatusQuery,
   useDocumentsQuery,
   usePreviewDocumentQuery,
+  useReloadDocuments,
 } from "./useDocuments";
 import { useMemoriesQuery } from "./useMemories";
 import { usePreviewSettings } from "./usePreviewSettings";
@@ -40,13 +41,14 @@ export const usePreviewApp = () => {
     });
   });
   const documentsQuery = useDocumentsQuery();
+  const documentsReload = useReloadDocuments();
   const sessionQuery = useSessionQuery();
   const directoryStatusQuery = useDirectoryStatusQuery();
   const directoryStatus = directoryStatusQuery.data;
   const documents = documentsQuery.data;
   const directoryMode = documents !== null && documents !== undefined;
   const shouldLoadDocument =
-    documentsQuery.isSuccess &&
+    documents !== undefined &&
     (!directoryMode || selectedDocumentId !== undefined);
   const documentQuery = usePreviewDocumentQuery(
     selectedDocumentId,
@@ -175,7 +177,7 @@ export const usePreviewApp = () => {
   useEffect(() => {
     if (
       !isDocumentList &&
-      documentsQuery.isSuccess &&
+      documents !== undefined &&
       (!rawDocumentId ||
         !documents?.some((item) => item.id === selectedDocumentId))
     ) {
@@ -193,7 +195,6 @@ export const usePreviewApp = () => {
     pathname,
     view,
     isDocumentList,
-    documentsQuery.isSuccess,
     rawDocumentId,
     documents,
     selectedDocumentId,
@@ -227,17 +228,23 @@ export const usePreviewApp = () => {
   };
 
   if (documentsQuery.isPending) return { status: "loading" as const };
-  if (documentsQuery.error)
+  if (documentsQuery.error && documents === undefined)
     return { status: "error" as const, message: String(documentsQuery.error) };
   const selectedDocument = documents?.find(
     (item) => item.id === selectedDocumentId,
   );
   if (!isDocumentList && (!rawDocumentId || !selectedDocument))
     return { status: "not-found" as const };
+  const canReloadDirectory = isDocumentList && Boolean(directoryStatus);
   const listHeader = {
     ...headerActions,
-    reloadAvailable: !isSyncEnabled(),
+    onReloadPreview: canReloadDirectory
+      ? () => documentsReload.mutate()
+      : reloadPreview,
+    reloadAvailable: canReloadDirectory || !isSyncEnabled(),
     reloading:
+      documentsReload.isPending ||
+      directoryStatus?.state === "loading" ||
       documentsQuery.isFetching ||
       directoryStatusQuery.isFetching ||
       sessionQuery.isFetching,

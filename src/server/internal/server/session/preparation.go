@@ -26,7 +26,14 @@ type DirectoryStatus struct {
 // publishes ready before the bounded snapshot queue reads any Markdown bodies.
 func (s *Session) Prepare(ctx context.Context, settings config.Settings) {
 	if s.directoryStatus != nil {
-		if err := s.prepareDirectory(ctx, settings); err != nil {
+		documents, status, err := s.discoverDirectory(ctx, settings, func(progress DirectoryStatus) {
+			s.Mu.Lock()
+			s.directoryStatus = &progress
+			s.Mu.Unlock()
+		})
+		s.Mu.Lock()
+		s.directoryConfig = settings
+		if err != nil {
 			name := "Error"
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -36,40 +43,72 @@ func (s *Session) Prepare(ctx context.Context, settings config.Settings) {
 			case errors.Is(err, os.ErrPermission):
 				name = "PermissionDenied"
 			}
-			s.Mu.Lock()
-			status := *s.directoryStatus
 			status.State = "error"
 			status.Error = &DirectoryError{Name: name, Message: err.Error()}
 			s.directoryStatus = &status
 			s.Mu.Unlock()
 			return
 		}
+		s.publishDirectory(documents, status)
+		s.Mu.Unlock()
 	}
 	s.InitializeSnapshots(ctx)
 }
-func (s *Session) prepareDirectory(ctx context.Context, settings config.Settings) error {
+
+func (s *Session) ReloadDocuments(ctx context.Context) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	if s.directoryStatus == nil || s.directoryStatus.State == "loading" {
+		return u.Fail("failed_precondition", "Reloading documents is unavailable in this preview.")
+	}
+	documents, status, err := s.discoverDirectory(ctx, s.directoryConfig, nil)
+	if err != nil {
+		return u.Fail("internal", "Could not rescan the open folder: "+err.Error())
+	}
+	newDocuments := []u.Document{}
+	newSources := map[int64]string{}
+	for _, document := range documents {
+		if _, known := s.Sources[document.ID]; !known && !document.Deleted {
+			newDocuments = append(newDocuments, document)
+			newSources[document.ID] = document.FilePath
+		}
+	}
+	s.publishDirectory(documents, status)
+	// File registration is complete. Archive new files without blocking other requests.
+	s.Mu.Unlock()
+	defer s.Mu.Lock()
+	s.initializeSnapshots(ctx, newDocuments, newSources, ReadMarkdown)
+	return nil
+}
+
+func (s *Session) discoverDirectory(ctx context.Context, settings config.Settings, report func(DirectoryStatus)) ([]u.Document, DirectoryStatus, error) {
+	status := DirectoryStatus{State: "loading"}
 	paths := []string{}
 	if err := scan(ctx, s.Root, settings, 0, &paths); err != nil {
-		return err
+		return nil, status, err
 	}
 	sortRegistrationPaths(paths)
 	if err := ctx.Err(); err != nil {
-		return err
+		return nil, status, err
 	}
-	s.Mu.Lock()
-	s.directoryStatus.Detected = len(paths)
-	s.Mu.Unlock()
+	status.Detected = len(paths)
+	if report != nil {
+		report(status)
+	}
 	documents, err := s.Repository.EnsureMany(ctx, paths)
 	if err != nil {
-		return err
+		return nil, status, err
 	}
-	s.Mu.Lock()
-	s.directoryStatus.Registered = len(documents)
-	s.Mu.Unlock()
+	status.Registered = len(documents)
+	if report != nil {
+		report(status)
+	}
 	if err = ctx.Err(); err != nil {
-		return err
+		return nil, status, err
 	}
+	registered := make(map[int64]bool, len(documents))
 	for i := range documents {
+		registered[documents[i].ID] = true
 		rel, _ := filepath.Rel(s.Root, documents[i].FilePath)
 		documents[i].RelativePath = filepath.ToSlash(rel)
 		documents[i].Title = filepath.Base(documents[i].FilePath)
@@ -77,16 +116,16 @@ func (s *Session) prepareDirectory(ctx context.Context, settings config.Settings
 	}
 	stored, err := s.Repository.Documents(ctx)
 	if err != nil {
-		return err
+		return nil, status, err
 	}
 	for _, d := range stored {
 		if err = ctx.Err(); err != nil {
-			return err
+			return nil, status, err
 		}
 		if len(documents) >= settings.MaxFiles {
 			break
 		}
-		if !filepath.IsAbs(d.FilePath) || !Within(s.Root, d.FilePath) {
+		if registered[d.ID] || !filepath.IsAbs(d.FilePath) || !Within(s.Root, d.FilePath) {
 			continue
 		}
 		if _, err := os.Stat(d.FilePath); !os.IsNotExist(err) {
@@ -101,16 +140,20 @@ func (s *Session) prepareDirectory(ctx context.Context, settings config.Settings
 	}
 	sortDocuments(documents)
 	if err = ctx.Err(); err != nil {
-		return err
+		return nil, status, err
 	}
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	status.State = "ready"
+	return documents, status, nil
+}
+
+// The caller holds Mu so readers see the documents and their sources together.
+func (s *Session) publishDirectory(documents []u.Document, status DirectoryStatus) {
 	s.Documents = documents
+	s.Sources = make(map[int64]string, len(documents))
 	for _, d := range documents {
 		s.Sources[d.ID] = d.FilePath
 	}
-	s.directoryStatus = &DirectoryStatus{State: "ready", Detected: s.directoryStatus.Detected, Registered: s.directoryStatus.Registered}
-	return nil
+	s.directoryStatus = &status
 }
 
 type SnapshotProgress struct{ Target, Completed, Failed int }
@@ -129,6 +172,10 @@ func (s *Session) InitializeSnapshots(ctx context.Context) SnapshotProgress {
 		read = ReadMarkdown
 	}
 	s.Mu.Unlock()
+	return s.initializeSnapshots(ctx, documents, sources, read)
+}
+
+func (s *Session) initializeSnapshots(ctx context.Context, documents []u.Document, sources map[int64]string, read func(context.Context, string) (string, error)) SnapshotProgress {
 	progress := SnapshotProgress{}
 	for _, d := range documents {
 		if !d.Deleted {

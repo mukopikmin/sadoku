@@ -237,7 +237,7 @@ func (s *Session) CreateDocument(ctx context.Context, directory, filename, title
 }
 
 func createdDocumentRegistrationFailure() error {
-	return u.Fail("internal", "The file was created, but could not be added to the preview. Reopen this directory to load it.")
+	return u.Fail("internal", "The file was created, but could not be added to the preview. Reload the document list to load it.")
 }
 func (s *Session) RestoreDocumentRevision(ctx context.Context, id, revisionID int64, expectedMarkdown *string) error {
 	if u.PositiveID(id) == nil && u.PositiveID(revisionID) == nil {

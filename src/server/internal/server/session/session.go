@@ -34,6 +34,7 @@ type Session struct {
 	exporting       atomic.Bool
 	restoring       sync.Map
 	directoryStatus *DirectoryStatus
+	directoryConfig config.Settings
 	ReadRemote      func(context.Context, string) (string, error)
 }
 

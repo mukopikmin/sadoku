@@ -130,12 +130,86 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  document.getElementById("sadoku-client-root")?.remove();
   clearScrollPositions();
   DirectoryEventSource.instances = [];
   vi.unstubAllGlobals();
 });
 
 describe("directory preview", () => {
+  it.each([true, false])(
+    "reloads files from the open folder and can retry a failed scan (sync=%s)",
+    async (syncEnabled) => {
+      const root = document.createElement("div");
+      root.id = "sadoku-client-root";
+      root.dataset.syncEnabled = String(syncEnabled);
+      document.body.append(root);
+      vi.stubGlobal("EventSource", DirectoryEventSource);
+      const original = {
+        id: 1,
+        relativePath: "original.md",
+        title: "original.md",
+        deleted: false,
+      };
+      let files = [original];
+      const reload = vi.fn(async () => {
+        files = [
+          {
+            id: 2,
+            relativePath: "added.md",
+            title: "added.md",
+            deleted: false,
+          },
+          { ...original, deleted: true },
+        ];
+        return Response.json({});
+      });
+      reload.mockResolvedValueOnce(
+        Response.json(
+          { code: "internal", message: "Folder unavailable" },
+          { status: 500 },
+        ),
+      );
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL) => {
+          const path = new URL(String(input), location.origin).pathname;
+          if (path.endsWith("/ReloadDocuments")) return reload();
+          if (path === "/__sadoku/documents") return Response.json(files);
+          if (path === "/__sadoku/directory-status")
+            return Response.json({
+              state: "ready",
+              detected: 1,
+              registered: 1,
+            });
+          return Response.json({});
+        }),
+      );
+      render(<App />);
+
+      await screen.findByRole("treeitem", { name: "original.md" });
+      expect(reload).not.toHaveBeenCalled();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Reload preview" }),
+      );
+      await screen.findByText("Folder unavailable");
+      expect(
+        screen.getByRole("treeitem", { name: "original.md" }),
+      ).not.toBeNull();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Reload preview" }),
+      );
+      expect(
+        await screen.findByRole("treeitem", { name: "added.md" }),
+      ).not.toBeNull();
+      expect(
+        screen.getByRole("treeitem", { name: "original.md Deleted" }),
+      ).not.toBeNull();
+      expect(reload).toHaveBeenCalledTimes(2);
+      expect(location.pathname).toBe("/");
+    },
+  );
+
   it("opens a comment location in the document and returns to comments", async () => {
     vi.stubGlobal("EventSource", DirectoryEventSource);
     const scrollIntoView = vi.fn();

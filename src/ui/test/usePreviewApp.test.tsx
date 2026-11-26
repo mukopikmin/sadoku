@@ -47,6 +47,7 @@ vi.mock("../hooks/usePreviewRoute", () => ({
 }));
 vi.mock("../hooks/useDocuments", () => ({
   useDocumentsQuery: () => mocks.documents,
+  useReloadDocuments: () => ({ isPending: false, mutate: vi.fn() }),
   useDirectoryStatusQuery: () => mocks.directory,
   usePreviewDocumentQuery: () => mocks.document,
 }));
@@ -103,12 +104,15 @@ it("exposes loading, failure, not-found, list and document screens through its r
   const { result, rerender } = renderHook(usePreviewApp);
   expect(result.current.status).toBe("loading");
   mocks.documents.isPending = false;
+  const documents = mocks.documents.data;
+  mocks.documents.data = undefined;
   mocks.documents.error = new Error("Offline");
   rerender();
   expect(result.current).toMatchObject({
     status: "error",
     message: "Error: Offline",
   });
+  mocks.documents.data = documents;
   mocks.documents.error = null;
   mocks.route.rawDocumentId = "bad";
   mocks.route.documentId = undefined;
