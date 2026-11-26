@@ -41,6 +41,7 @@ service PreviewService {
   rpc UpdateReply(UpdateReplyRequest) returns (Comment);
   rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse);
   rpc ExportCommentToGitHub(ExportCommentToGitHubRequest) returns (ExportCommentToGitHubResponse);
+  rpc ReloadDocuments(ReloadDocumentsRequest) returns (ReloadDocumentsResponse);
 }
 
 message GetSessionRequest {}
@@ -301,3 +302,6 @@ message ExportCommentToGitHubRequest {
   uint32 end_line = 8;
 }
 message ExportCommentToGitHubResponse { string url = 1; string state = 2; }
+
+message ReloadDocumentsRequest {}
+message ReloadDocumentsResponse {}
