@@ -178,7 +178,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 		return doc, err
 	}
 	defer func() { _ = rows.Close() }()
-	ids := []int64{}
+	commentIndex := make(map[int64]int)
 	for rows.Next() {
 		var c u.Comment
 		var internal int64
@@ -191,7 +191,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 			c.ResolvedBy = &u.Author{Type: *resolver}
 		}
 		c.Replies = []u.Reply{}
-		ids = append(ids, internal)
+		commentIndex[internal] = len(doc.Comments)
 		doc.Comments = append(doc.Comments, c)
 	}
 	err = rows.Err()
@@ -199,22 +199,24 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 	if err != nil {
 		return doc, err
 	}
-	for i, internal := range ids {
-		if err := func() error {
-			replies, err := tx.QueryContext(ctx, "SELECT local_id,body,author_type,created_at,updated_at,review_requested FROM comment_reply WHERE comment_id=? ORDER BY local_id", internal)
-			if err != nil {
-				return err
+	if len(doc.Comments) != 0 {
+		replies, err := tx.QueryContext(ctx, `SELECT r.comment_id,r.local_id,r.body,r.author_type,r.created_at,r.updated_at,r.review_requested
+			FROM comment c JOIN comment_reply r ON r.comment_id=c.id
+			WHERE c.document_id=? ORDER BY c.local_id,r.local_id`, id)
+		if err != nil {
+			return doc, err
+		}
+		defer func() { _ = replies.Close() }()
+		for replies.Next() {
+			var internal int64
+			var reply u.Reply
+			if err = replies.Scan(&internal, &reply.ID, &reply.Body, &reply.Author.Type, &reply.CreatedAt, &reply.UpdatedAt, &reply.ReviewRequested); err != nil {
+				return doc, err
 			}
-			defer func() { _ = replies.Close() }()
-			for replies.Next() {
-				var reply u.Reply
-				if err := replies.Scan(&reply.ID, &reply.Body, &reply.Author.Type, &reply.CreatedAt, &reply.UpdatedAt, &reply.ReviewRequested); err != nil {
-					return err
-				}
-				doc.Comments[i].Replies = append(doc.Comments[i].Replies, reply)
-			}
-			return replies.Err()
-		}(); err != nil {
+			c := &doc.Comments[commentIndex[internal]]
+			c.Replies = append(c.Replies, reply)
+		}
+		if err := replies.Err(); err != nil {
 			return doc, err
 		}
 	}

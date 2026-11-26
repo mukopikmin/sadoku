@@ -210,31 +210,30 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		if s.GitHub != nil {
 			githubHead = s.GitHub.HeadSHA
 		}
+		readSource := operation == "ListComments" || operation == "CreateComment"
+		var markdown string
+		var sourceErr error
+		if readSource {
+			source := s.Sources[id]
+			markdown, sourceErr = s.readOutsideLock(ctx, source)
+			if sourceErr != nil && !os.IsNotExist(sourceErr) {
+				return nil, sourceErr
+			}
+			if s.Sources[id] != source {
+				return nil, u.Fail("aborted", "The document changed. Reload it and try again.")
+			}
+		}
+		// Fetch once after reacquiring the lock so concurrent edits are included.
 		comments, err := s.readComments(ctx, id)
 		if err != nil {
 			return nil, err
 		}
-		markdown := ""
-		if comments.SourceSnapshot != nil {
-			markdown = *comments.SourceSnapshot
-		}
-		if operation == "ListComments" || operation == "CreateComment" {
-			markdown, err = s.readOutsideLock(ctx, s.Sources[id])
-			if err == nil || os.IsNotExist(err) {
-				// A comment may have changed while the file/network read was pending.
-				var commentErr error
-				comments, commentErr = s.readComments(ctx, id)
-				if commentErr != nil {
-					return nil, commentErr
-				}
+		if !readSource || sourceErr != nil {
+			if comments.SourceSnapshot != nil {
+				markdown = *comments.SourceSnapshot
+			} else if sourceErr != nil {
+				return nil, sourceErr
 			}
-		}
-		if os.IsNotExist(err) && comments.SourceSnapshot != nil {
-			markdown = *comments.SourceSnapshot
-			err = nil
-		}
-		if err != nil {
-			return nil, err
 		}
 		if operation == "ListComments" {
 			changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
