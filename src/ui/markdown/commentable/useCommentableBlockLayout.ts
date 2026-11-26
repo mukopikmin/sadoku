@@ -24,6 +24,8 @@ export const commentableBlockSelector = [
   ":scope > .document-diff-addition > .comment-markdown-list .commentable-block",
   ":scope > .document-diff-addition > dl .commentable-block",
   ":scope > dl .commentable-block",
+  ":scope > blockquote .commentable-block",
+  ":scope > .document-diff-addition > blockquote .commentable-block",
   ":scope > .commentable-table .commentable-block",
   ":scope > .document-diff-addition > .commentable-table .commentable-block",
 ].join(", ");

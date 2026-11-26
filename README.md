@@ -58,9 +58,10 @@ and act on human feedback.
 
 Supports GitHub Flavored Markdown, including tables, task lists, and syntax
 highlighting, plus GitHub-style alerts (`NOTE`, `TIP`, `IMPORTANT`, `WARNING`,
-and `CAUTION`) and Mermaid diagrams rendered offline. Table headers and body rows
-can be commented on individually or selected as a range. Raw HTML is escaped;
-footnotes, definition lists, and math/LaTeX are not supported.
+and `CAUTION`) and Mermaid diagrams rendered offline. You can comment on
+individual lines of quoted text, table headers, and table rows. Shift-click to
+select a range. Raw HTML is escaped; footnotes, definition lists, and math/LaTeX
+are not supported.
 Comments and replies support Markdown with GitHub-style line breaks;
 Mermaid diagrams render only in documents.
 Table columns can be resized by dragging or using the arrow keys on a focused

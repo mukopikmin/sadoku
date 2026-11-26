@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { DocumentDiffBlock } from "../DocumentDiffBlock";
+import { remarkQuoteLines } from "./remarkQuoteLines";
 import { remarkDocumentDiff } from "../remarkDocumentDiff";
 import { DeletedMarkdownBlock } from "./DeletedMarkdownBlock";
 import type { Components } from "react-markdown";
@@ -79,7 +80,7 @@ export const CommentableMarkdown = ({
       ]}
       remarkPlugins={
         previousMarkdown === undefined
-          ? sharedMarkdownRemarkPlugins
+          ? [...sharedMarkdownRemarkPlugins, remarkQuoteLines]
           : [
               ...sharedMarkdownRemarkPlugins,
               [
@@ -89,6 +90,7 @@ export const CommentableMarkdown = ({
                   current: children,
                 },
               ],
+              remarkQuoteLines,
             ]
       }
     >

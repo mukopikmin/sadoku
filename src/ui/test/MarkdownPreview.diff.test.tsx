@@ -162,6 +162,21 @@ describe("rendered document diff", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("highlights the selected source line of an added quote", () => {
+    const { container } = render(
+      preview("> Unchanged\n> Revised", "> Unchanged\n> Old"),
+    );
+    const removed = screen.getByRole("group", { name: "Removed content" });
+    expect(removed.querySelector("[data-source-line]")).toBeNull();
+    fireEvent.click(screen.getByText("Revised"));
+    expect(screen.getByLabelText("Add comment on line 2")).not.toBeNull();
+    const highlight = container.querySelector(
+      ".markdown-range-highlight-selection",
+    );
+    expect(highlight?.getAttribute("data-start-line")).toBe("2");
+    expect(highlight?.getAttribute("data-end-line")).toBe("2");
+  });
+
   it("comments on individual rows of an added table", async () => {
     const onCreateComment = vi.fn(async () => {});
     render(
