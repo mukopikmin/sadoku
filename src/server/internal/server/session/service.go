@@ -100,28 +100,23 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	case "ListTags":
 		tags, err := r.Tags(ctx, 0)
 		return map[string]any{"tags": tags}, err
-	case "UpdateTag", "CreateTag":
-		if operation == "UpdateTag" {
-			if err := u.PositiveID(int64(in.ID)); err != nil {
-				return nil, u.Fail("invalid_argument", "Tag id must be a positive integer.")
-			}
-		}
+	case "UpdateTag":
+		return s.UpdateTag(ctx, int64(in.ID), u.TagPatch{Name: &in.Name, BackgroundColor: &in.BackgroundColor})
+	case "CreateTag":
 		name := u.TrimSpace(in.Name)
 		if err := u.ValidateTagName(name); err != nil {
 			return nil, err
 		}
 		color := in.BackgroundColor
-		if color == "" && operation == "CreateTag" {
+		if color == "" {
 			color = "#718096"
 		}
-		if !regexp.MustCompile(`^#[0-9a-fA-F]{6}$`).MatchString(color) {
-			return nil, u.Fail("invalid_argument", "Tag background color must be a hexadecimal RGB color.")
+		color, err := tagColor(color)
+		if err != nil {
+			return nil, err
 		}
-		tag, err := r.SaveTag(ctx, u.Tag{ID: int64(in.ID), Name: name, BackgroundColor: strings.ToLower(color)})
-		if err != nil && strings.Contains(err.Error(), "UNIQUE") {
-			return nil, u.Fail("already_exists", "Tag name already exists.")
-		}
-		return tag, err
+		tag, err := r.SaveTag(ctx, u.Tag{ID: int64(in.ID), Name: name, BackgroundColor: color})
+		return tag, tagWriteError(err)
 	case "DeleteTag":
 		if err := u.PositiveID(int64(in.ID)); err != nil {
 			return nil, u.Fail("invalid_argument", "Tag id must be a positive integer.")
