@@ -305,44 +305,28 @@ func (r *Repository) Tags(ctx context.Context, documentID int64) ([]u.Tag, error
 	return list, rows.Err()
 }
 func (r *Repository) SaveTag(ctx context.Context, t u.Tag) (u.Tag, error) {
+	if t.ID != 0 {
+		return r.UpdateTag(ctx, t.ID, u.TagPatch{Name: &t.Name, BackgroundColor: &t.BackgroundColor})
+	}
 	now := db.Now()
-	var err error
-	if t.ID == 0 {
-		var res sql.Result
-		res, err = r.DB.ExecContext(ctx, "INSERT INTO document_tag(name,background_color,created_at,updated_at) VALUES(?,?,?,?)", t.Name, t.BackgroundColor, now, now)
-		if err == nil {
-			t.ID, err = res.LastInsertId()
-		}
-	} else {
-		var existing u.Tag
-		err = r.DB.QueryRowContext(ctx, "SELECT name,background_color,created_at,updated_at FROM document_tag WHERE id=?", t.ID).Scan(&existing.Name, &existing.BackgroundColor, &existing.CreatedAt, &existing.UpdatedAt)
-		if errors.Is(err, sql.ErrNoRows) {
-			return t, u.Fail("not_found", "Tag not found.")
-		}
-		if err != nil {
-			return t, err
-		}
-		if existing.Name == t.Name && existing.BackgroundColor == t.BackgroundColor {
-			t.CreatedAt, t.UpdatedAt = existing.CreatedAt, existing.UpdatedAt
-			return t, nil
-		}
-		var res sql.Result
-		res, err = r.DB.ExecContext(ctx, "UPDATE document_tag SET name=?,background_color=?,updated_at=? WHERE id=?", t.Name, t.BackgroundColor, now, t.ID)
-		if err == nil {
-			n, _ := res.RowsAffected()
-			if n == 0 {
-				return t, u.Fail("not_found", "Tag not found.")
-			}
-		}
+	t.CreatedAt, t.UpdatedAt = now, now
+	err := r.DB.QueryRowContext(ctx, "INSERT INTO document_tag(name,background_color,created_at,updated_at) VALUES(?,?,?,?) RETURNING id",
+		t.Name, t.BackgroundColor, now, now).Scan(&t.ID)
+	return t, err
+}
+
+func (r *Repository) UpdateTag(ctx context.Context, id int64, patch u.TagPatch) (u.Tag, error) {
+	tag := u.Tag{ID: id}
+	err := r.DB.QueryRowContext(ctx, `UPDATE document_tag SET
+		updated_at=CASE WHEN name COLLATE BINARY != COALESCE(?1,name) OR background_color != COALESCE(?2,background_color)
+			THEN ?3 ELSE updated_at END,
+		name=COALESCE(?1,name), background_color=COALESCE(?2,background_color)
+		WHERE id=?4 RETURNING name,background_color,created_at,updated_at`,
+		patch.Name, patch.BackgroundColor, db.Now(), id).Scan(&tag.Name, &tag.BackgroundColor, &tag.CreatedAt, &tag.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = u.Fail("not_found", "Tag not found.")
 	}
-	if err != nil {
-		return t, err
-	}
-	t.UpdatedAt = now
-	if err = r.DB.QueryRowContext(ctx, "SELECT created_at FROM document_tag WHERE id=?", t.ID).Scan(&t.CreatedAt); err != nil {
-		return t, err
-	}
-	return t, nil
+	return tag, err
 }
 func (r *Repository) DeleteTag(ctx context.Context, id int64) error {
 	return remove(ctx, r.DB, "DELETE FROM document_tag WHERE id=?", []any{id}, "Tag")

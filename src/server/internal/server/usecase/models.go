@@ -40,6 +40,9 @@ type Tag struct {
 	CreatedAt       string `json:"createdAt,omitempty"`
 	UpdatedAt       string `json:"updatedAt,omitempty"`
 }
+type TagPatch struct {
+	Name, BackgroundColor *string
+}
 type TagReference struct {
 	ID   int64
 	Name string
@@ -113,6 +116,7 @@ type Repository interface {
 	SaveTableColumnWidths(context.Context, int64, string, string, []float64) (TableLayout, error)
 	Tags(context.Context, int64) ([]Tag, error)
 	SaveTag(context.Context, Tag) (Tag, error)
+	UpdateTag(context.Context, int64, TagPatch) (Tag, error)
 	DeleteTag(context.Context, int64) error
 	ReplaceTags(context.Context, int64, []int64) error
 	ReplaceTagReferences(context.Context, int64, []TagReference) ([]Tag, error)
