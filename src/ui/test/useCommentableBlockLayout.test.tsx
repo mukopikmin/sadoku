@@ -34,10 +34,20 @@ class RecordingResizeObserver {
   }
 }
 
-const LayoutHarness = ({ ranges }: { ranges: RangeHighlight[] }) => {
+const LayoutHarness = ({
+  ranges,
+  hover,
+}: {
+  ranges: RangeHighlight[];
+  hover?: { startLine: number; endLine: number };
+}) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const { commentableLines } = useCommentableBlockLayout(previewRef);
-  const rangeHighlightLayouts = useRangeHighlightLayouts(previewRef, ranges);
+  const rangeHighlightLayouts = useRangeHighlightLayouts(
+    previewRef,
+    ranges,
+    hover,
+  );
 
   return (
     <div
@@ -318,4 +328,51 @@ describe("commentable block layout", () => {
       },
     ]);
   });
+});
+
+it("reuses comment geometry across hover changes and preserves comment priority", () => {
+  const ranges: RangeHighlight[] = [
+    { startLine: 1, endLine: 2, kind: "comment" },
+  ];
+  const { rerender } = render(<LayoutHarness ranges={ranges} />);
+  const measure = vi.spyOn(
+    screen.getByTestId("first"),
+    "getBoundingClientRect",
+  );
+  rerender(
+    <LayoutHarness ranges={ranges} hover={{ startLine: 4, endLine: 4 }} />,
+  );
+  const kinds = () =>
+    JSON.parse(screen.getByTestId("preview").dataset.layouts!).map(
+      (layout: RangeHighlight) => layout.kind,
+    );
+  expect(kinds()).toEqual(["comment", "hover"]);
+  rerender(
+    <LayoutHarness ranges={ranges} hover={{ startLine: 1, endLine: 2 }} />,
+  );
+  expect(kinds()).toEqual(["comment"]);
+  expect(measure).not.toHaveBeenCalled();
+});
+
+it("tracks a replacement table even when the preview size is unchanged", async () => {
+  const ranges: RangeHighlight[] = [
+    { startLine: 5, endLine: 5, kind: "comment" },
+  ];
+  render(
+    <LayoutHarness ranges={ranges} hover={{ startLine: 5, endLine: 5 }} />,
+  );
+  const table = screen.getByTestId("table");
+  const replacement = document.createElement("div");
+  replacement.className = table.className;
+  replacement.innerHTML = table.innerHTML;
+  replacement.querySelector("tr")!.getBoundingClientRect = () =>
+    mockRect(70, 99);
+  act(() => table.replaceWith(replacement));
+  await waitFor(() =>
+    expect(JSON.parse(screen.getByTestId("preview").dataset.layouts!)).toEqual([
+      { startLine: 5, endLine: 5, kind: "comment", top: 70, bottom: 99 },
+    ]),
+  );
+  expect(resizeObservers[0].observe).toHaveBeenCalledWith(replacement);
+  expect(resizeObservers[0].unobserve).toHaveBeenCalledWith(table);
 });

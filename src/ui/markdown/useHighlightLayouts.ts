@@ -2,7 +2,8 @@ import {
   type RefObject,
   useCallback,
   useLayoutEffect,
-  useRef,
+  useEffectEvent,
+  type ReactNode,
   useState,
 } from "react";
 
@@ -59,60 +60,90 @@ export const measureHighlightGroups = <Range>(
 
 export const useHighlightLayouts = <Layout extends HighlightLayout>(
   previewRef: RefObject<HTMLElement | null>,
-  measure: (preview: HTMLElement) => Layout[],
+  measure: (preview: HTMLElement, layoutChanged: boolean) => Layout[],
   resizeTargetSelector?: string,
+  content?: ReactNode,
 ) => {
   const [layouts, setLayouts] = useState<Layout[]>([]);
-  const observerRef = useRef<ResizeObserver | undefined>(undefined);
-  const updateLayouts = useCallback(() => {
-    const preview = previewRef.current;
-    if (!preview) return;
-    const next = measure(preview);
-    setLayouts((current) =>
-      current.length === next.length &&
-      current.every(
-        (layout, index) =>
-          layout.top === next[index].top &&
-          layout.bottom === next[index].bottom &&
-          layout.outsetLeft === next[index].outsetLeft &&
-          layout.outsetRight === next[index].outsetRight &&
-          layout.kind === next[index].kind &&
-          layout.startLine === next[index].startLine &&
-          layout.endLine === next[index].endLine,
-      )
-        ? current
-        : next,
-    );
-  }, [previewRef, measure]);
+  const updateLayouts = useCallback(
+    (layoutChanged: boolean) => {
+      const preview = previewRef.current;
+      if (!preview) return;
+      const next = measure(preview, layoutChanged);
+      setLayouts((current) =>
+        current.length === next.length &&
+        current.every(
+          (layout, index) =>
+            layout.top === next[index].top &&
+            layout.bottom === next[index].bottom &&
+            layout.outsetLeft === next[index].outsetLeft &&
+            layout.outsetRight === next[index].outsetRight &&
+            layout.kind === next[index].kind &&
+            layout.startLine === next[index].startLine &&
+            layout.endLine === next[index].endLine,
+        )
+          ? current
+          : next,
+      );
+    },
+    [previewRef, measure],
+  );
+
+  const remeasure = useEffectEvent(() => updateLayouts(true));
+  useLayoutEffect(() => {
+    updateLayouts(false);
+  });
 
   useLayoutEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;
     const view = preview.ownerDocument.defaultView ?? globalThis;
-    view.addEventListener("resize", updateLayouts);
+    view.addEventListener("resize", remeasure);
     const observer =
       typeof ResizeObserver === "undefined"
         ? undefined
-        : new ResizeObserver(updateLayouts);
+        : new ResizeObserver(remeasure);
     observer?.observe(preview);
-    observerRef.current = observer;
+    let contentObserver: MutationObserver | undefined;
+    if (resizeTargetSelector) {
+      let targets = new Set<Element>();
+      const syncTargets = () => {
+        if (!observer) return;
+        const next = new Set(preview.querySelectorAll(resizeTargetSelector));
+        for (const target of targets)
+          if (!next.has(target)) observer.unobserve(target);
+        for (const target of next)
+          if (!targets.has(target)) observer.observe(target);
+        targets = next;
+      };
+      syncTargets();
+      // Descendants can replace table rows without resizing the preview or
+      // changing its React children. Ignore writes made by the overlay itself.
+      contentObserver = new MutationObserver((records) => {
+        if (
+          records.every(({ target }) =>
+            (target instanceof Element
+              ? target
+              : target.parentElement
+            )?.closest(".markdown-range-highlights"),
+          )
+        )
+          return;
+        syncTargets();
+        remeasure();
+      });
+      contentObserver.observe(preview, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
     return () => {
-      view.removeEventListener("resize", updateLayouts);
+      view.removeEventListener("resize", remeasure);
+      contentObserver?.disconnect();
       observer?.disconnect();
-      observerRef.current = undefined;
     };
-  }, [previewRef, updateLayouts]);
-
-  useLayoutEffect(() => {
-    updateLayouts();
-    const observer = observerRef.current;
-    const preview = previewRef.current;
-    if (!observer || !preview || !resizeTargetSelector) return;
-
-    const targets = preview.querySelectorAll(resizeTargetSelector);
-    targets.forEach((target) => observer.observe(target));
-    return () => targets.forEach((target) => observer.unobserve(target));
-  });
+  }, [previewRef, resizeTargetSelector, content]);
 
   return layouts;
 };
