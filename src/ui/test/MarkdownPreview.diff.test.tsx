@@ -67,9 +67,7 @@ describe("rendered document diff", () => {
         within(removed).getByText("Review deleted content"),
       ).not.toBeNull();
       expect(within(removed).getByText("Stale")).not.toBeNull();
-      fireEvent.click(
-        within(removed).getByRole("button", { name: "Resolve", exact: true }),
-      );
+      fireEvent.click(within(removed).getByRole("button", { name: "Resolve" }));
       await waitFor(() => expect(onResolveComment).toHaveBeenCalledWith(1));
       rerender(<MarkdownPreview {...props} />);
       expect(screen.queryByText("Review deleted content")).toBeNull();
@@ -162,6 +160,21 @@ describe("rendered document diff", () => {
         role,
       ).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("highlights the selected source line of an added quote", () => {
+    const { container } = render(
+      preview("> Unchanged\n> Revised", "> Unchanged\n> Old"),
+    );
+    const removed = screen.getByRole("group", { name: "Removed content" });
+    expect(removed.querySelector("[data-source-line]")).toBeNull();
+    fireEvent.click(screen.getByText("Revised"));
+    expect(screen.getByLabelText("Add comment on line 2")).not.toBeNull();
+    const highlight = container.querySelector(
+      ".markdown-range-highlight-selection",
+    );
+    expect(highlight?.getAttribute("data-start-line")).toBe("2");
+    expect(highlight?.getAttribute("data-end-line")).toBe("2");
   });
 
   it("comments on individual rows of an added table", async () => {
@@ -428,3 +441,23 @@ describe("rendered document diff", () => {
     );
   });
 });
+
+it.each([
+  ['> [target]: /first\n>   "Title"\n\n[target]: /shadowed', "/first"],
+  ['[target]: /first "Title"\n\n> [target]: /shadowed', "/first"],
+])(
+  "keeps document-order reference precedence in both revisions: %s",
+  (definitions, url) => {
+    render(
+      preview(
+        "[Added][target]\n\n" + definitions,
+        "[Removed][target]\n\n" + definitions,
+      ),
+    );
+    for (const name of ["Removed", "Added"]) {
+      const link = screen.getByRole("link", { name });
+      expect(link.getAttribute("href")).toBe(url);
+      expect(link.getAttribute("title")).toBe("Title");
+    }
+  },
+);

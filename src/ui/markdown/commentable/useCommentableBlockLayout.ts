@@ -1,4 +1,11 @@
-import { type RefObject, useCallback, useLayoutEffect, useState } from "react";
+import {
+  type RefObject,
+  type ReactNode,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+  useState,
+} from "react";
 import type { CommentRange, RangeHighlight } from "./commentRanges";
 import { getCommentAnchorLine } from "./commentRanges";
 import {
@@ -17,6 +24,8 @@ export const commentableBlockSelector = [
   ":scope > .document-diff-addition > .comment-markdown-list .commentable-block",
   ":scope > .document-diff-addition > dl .commentable-block",
   ":scope > dl .commentable-block",
+  ":scope > blockquote .commentable-block",
+  ":scope > .document-diff-addition > blockquote .commentable-block",
   ":scope > .commentable-table .commentable-block",
   ":scope > .document-diff-addition > .commentable-table .commentable-block",
 ].join(", ");
@@ -30,7 +39,9 @@ export const getCommentableLines = (preview: Element): number[] =>
 export const measureRangeHighlightLayouts = (
   preview: HTMLElement,
   rangeHighlights: readonly RangeHighlight[],
+  claimed = new Set<HTMLElement>(),
 ): RangeHighlightLayout[] => {
+  if (rangeHighlights.length === 0) return [];
   const blocks = [
     ...preview.querySelectorAll<HTMLElement>(
       `${commentableBlockSelector}, :scope > .document-diff-deletion`,
@@ -40,7 +51,6 @@ export const measureRangeHighlightLayouts = (
   // Claim content in priority order so a block receives exactly one highlight,
   // even when different source ranges overlap the same rendered paragraph.
   const priority = { selection: 0, comment: 1, hover: 2 };
-  const claimed = new Set<HTMLElement>();
 
   return measureHighlightGroups(
     preview,
@@ -101,29 +111,64 @@ const arraysEqual = <Value>(
   left.length === right.length &&
   left.every((value, index) => isEqual(value, right[index]));
 
-export const useCommentableBlockLayout = (
+export const useRangeHighlightLayouts = (
   previewRef: RefObject<HTMLElement | null>,
   rangeHighlights: readonly RangeHighlight[],
   interactionRange?: CommentRange,
+  content?: ReactNode,
 ) => {
-  const [commentableLines, setCommentableLines] = useState<number[]>([]);
-  const [deletedRanges, setDeletedRanges] = useState<CommentRange[]>([]);
+  const fixed = useRef<
+    | {
+        ranges: readonly RangeHighlight[];
+        content: ReactNode;
+        layouts: RangeHighlightLayout[];
+        claimed: Set<HTMLElement>;
+      }
+    | undefined
+  >(undefined);
   const measure = useCallback(
-    (preview: HTMLElement) => {
-      return measureRangeHighlightLayouts(preview, [
-        ...rangeHighlights,
-        ...(interactionRange
-          ? [{ ...interactionRange, kind: "hover" as const }]
-          : []),
-      ]);
+    (preview: HTMLElement, layoutChanged: boolean) => {
+      let cached = fixed.current;
+      if (
+        !cached ||
+        layoutChanged ||
+        cached.content !== content ||
+        cached.ranges !== rangeHighlights
+      ) {
+        const claimed = new Set<HTMLElement>();
+        const layouts = measureRangeHighlightLayouts(
+          preview,
+          rangeHighlights,
+          claimed,
+        );
+        cached = { ranges: rangeHighlights, content, layouts, claimed };
+        fixed.current = cached;
+      }
+      if (!interactionRange) return cached.layouts;
+      return [
+        ...cached.layouts,
+        ...measureRangeHighlightLayouts(
+          preview,
+          [{ ...interactionRange, kind: "hover" }],
+          new Set(cached.claimed),
+        ),
+      ];
     },
-    [rangeHighlights, interactionRange],
+    [rangeHighlights, interactionRange, content],
   );
-  const rangeHighlightLayouts = useHighlightLayouts(
+  return useHighlightLayouts(
     previewRef,
     measure,
     ".commentable-table",
+    content,
   );
+};
+
+export const useCommentableBlockLayout = (
+  previewRef: RefObject<HTMLElement | null>,
+) => {
+  const [commentableLines, setCommentableLines] = useState<number[]>([]);
+  const [deletedRanges, setDeletedRanges] = useState<CommentRange[]>([]);
 
   // Measure after every commit: Markdown DOM can change without changing the ref.
   // State updates below preserve identity when the measured values are unchanged.
@@ -158,5 +203,5 @@ export const useCommentableBlockLayout = (
     );
   });
 
-  return { commentableLines, deletedRanges, rangeHighlightLayouts };
+  return { commentableLines, deletedRanges };
 };

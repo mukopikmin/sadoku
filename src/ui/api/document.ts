@@ -45,6 +45,12 @@ export const loadDocuments = async (): Promise<DocumentSummary[]> => {
   }));
 };
 
+export const reloadDocuments = async (): Promise<void> => {
+  await previewClient.reloadDocuments({}).catch((error) => {
+    throw new Error(connectRawMessage(error) || "Failed to reload documents.");
+  });
+};
+
 export const loadPreviewDocument = async (
   documentId: number,
 ): Promise<PreviewDocument> => {

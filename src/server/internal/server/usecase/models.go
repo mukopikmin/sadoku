@@ -21,6 +21,11 @@ type Document struct {
 	Deleted      bool    `json:"deleted"`
 	Tags         []Tag   `json:"tags"`
 }
+type RegisteredDocument struct {
+	Document
+	HasSnapshot bool
+}
+
 type Revision struct {
 	ID               int64   `json:"id"`
 	RecordedAt       string  `json:"recordedAt"`
@@ -34,6 +39,9 @@ type Tag struct {
 	DocumentCount   int64  `json:"documentCount"`
 	CreatedAt       string `json:"createdAt,omitempty"`
 	UpdatedAt       string `json:"updatedAt,omitempty"`
+}
+type TagPatch struct {
+	Name, BackgroundColor *string
 }
 type TagReference struct {
 	ID   int64
@@ -79,6 +87,7 @@ type Comment struct {
 	SourceDeleted     bool    `json:"sourceDeleted,omitempty"`
 }
 type Comments struct {
+	Version                int64     `json:"-"` // Storage version used to reject stale writes.
 	FilePath               string    `json:"filePath"`
 	Comments               []Comment `json:"comments"`
 	SourceSnapshot         *string   `json:"-"`
@@ -90,7 +99,7 @@ type Comments struct {
 type Repository interface {
 	Ensure(context.Context, string) (Document, error)
 	FindDocument(context.Context, string) (Document, bool, error)
-	EnsureMany(context.Context, []string) ([]Document, error)
+	EnsureMany(context.Context, []string) ([]RegisteredDocument, error)
 	Documents(context.Context) ([]Document, error)
 	InitializeSnapshot(context.Context, int64, string) error
 	SetTitle(context.Context, int64, *string) error
@@ -107,6 +116,7 @@ type Repository interface {
 	SaveTableColumnWidths(context.Context, int64, string, string, []float64) (TableLayout, error)
 	Tags(context.Context, int64) ([]Tag, error)
 	SaveTag(context.Context, Tag) (Tag, error)
+	UpdateTag(context.Context, int64, TagPatch) (Tag, error)
 	DeleteTag(context.Context, int64) error
 	ReplaceTags(context.Context, int64, []int64) error
 	ReplaceTagReferences(context.Context, int64, []TagReference) ([]Tag, error)

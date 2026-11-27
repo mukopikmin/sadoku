@@ -167,8 +167,10 @@ describe("resizable Markdown table", () => {
     );
     fireEvent.click(screen.getByRole("cell", { name: "x" }));
     const reset = await screen.findByLabelText("Reset column widths");
+    const actions = screen.getByLabelText("Comment actions");
+    expect(actions.contains(reset)).toBe(true);
     expect(
-      document.querySelector(".comment-line-gutter")?.contains(reset),
+      actions.contains(screen.getByLabelText("Add comment on line 3")),
     ).toBe(true);
     fireEvent.click(reset);
     await waitFor(() => expect(save).toHaveBeenCalledWith("table", []));

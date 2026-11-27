@@ -24,7 +24,8 @@ func layoutDatabase17(t *testing.T, state string) string {
 	for _, statement := range []string{
 		"DROP TABLE markdown_table_column_width", "DROP TABLE markdown_table_layout",
 		"ALTER TABLE comment_document DROP COLUMN table_layout_revision_id",
-		"DELETE FROM schema_migration WHERE version='0018'",
+		"ALTER TABLE comment_document DROP COLUMN comment_version",
+		"DELETE FROM schema_migration WHERE version IN ('0018','0019')",
 		additions[2].Statements[0],
 		"INSERT INTO comment_document(id,file_path,created_at,updated_at) VALUES(1,'one.md','2026-01-01T00:00:00.000Z','2026-01-01T00:00:00.000Z')",
 		"INSERT INTO document_revision(id,document_id,markdown) VALUES(10,1,'saved source')",

@@ -49,52 +49,43 @@ export const useCommentNavigation = () => {
       refresh();
     };
     const refresh = () => {
-      const nextPositions = [
-        ...root.querySelectorAll<HTMLElement>(
-          ".markdown-preview .comment-thread:has(> article)",
-        ),
-      ];
       if (
         current &&
-        (!nextPositions.includes(current) || view.scrollY !== navigatedScrollY)
+        (!positions.includes(current) || view.scrollY !== navigatedScrollY)
       ) {
         clearCurrent();
       }
-      const index = current ? nextPositions.indexOf(current) : -1;
+      const index = current ? positions.indexOf(current) : -1;
       let previous: HTMLElement | undefined;
       let next: HTMLElement | undefined;
       if (index >= 0) {
-        previous = nextPositions[index - 1];
-        next = nextPositions[index + 1];
+        previous = positions[index - 1];
+        next = positions[index + 1];
       } else {
         const headerBottom =
           root.ownerDocument.querySelector("header")?.getBoundingClientRect()
             .bottom ?? 0;
-        previous = nextPositions.findLast(
+        previous = positions.findLast(
           (target) => target.getBoundingClientRect().top < headerBottom,
         );
-        next = nextPositions.find(
+        next = positions.find(
           (target) => target.getBoundingClientRect().top >= headerBottom,
         );
       }
-      const unchanged =
-        positions.length === nextPositions.length &&
-        positions.every((target, i) => target === nextPositions[i]) &&
-        previousTarget === previous &&
-        nextTarget === next;
-      positions = nextPositions;
+      const unchanged = previousTarget === previous && nextTarget === next;
       previousTarget = previous;
       nextTarget = next;
       const position = index < 0 ? null : index + 1;
+      const count = positions.length;
       setNavigation((existing) => {
         if (
           unchanged &&
-          existing.count === nextPositions.length &&
+          existing.count === count &&
           existing.position === position
         )
           return existing;
         return {
-          count: nextPositions.length,
+          count,
           position,
           previous: previous ? () => navigate(previous) : null,
           next: next ? () => navigate(next) : null,
@@ -102,9 +93,53 @@ export const useCommentNavigation = () => {
       });
     };
 
-    refresh();
-    const observer = new MutationObserver(refresh);
-    observer.observe(root, { childList: true, subtree: true });
+    const collectThreads = () => {
+      positions = [
+        ...root.querySelectorAll<HTMLElement>(
+          ".markdown-preview .comment-thread:has(> article)",
+        ),
+      ];
+      refresh();
+    };
+    collectThreads();
+    const mayContainThread = (node: Node) =>
+      node instanceof Element &&
+      (node.matches(".comment-thread, article") ||
+        node.querySelector(".comment-thread, article") !== null);
+    const observer = new MutationObserver((records) => {
+      const membershipChanged = records.some((record) => {
+        if (record.type === "childList") {
+          return [...record.addedNodes, ...record.removedNodes].some(
+            mayContainThread,
+          );
+        }
+        const target = record.target;
+        if (!(target instanceof Element)) return false;
+        const oldClasses = (record.oldValue ?? "").split(/\s+/);
+        return ["comment-thread", "markdown-preview"].some(
+          (name) =>
+            oldClasses.includes(name) !== target.classList.contains(name),
+        );
+      });
+      if (membershipChanged) collectThreads();
+      else if (
+        records.some(
+          ({ type, target }) =>
+            type === "childList" &&
+            !(
+              target instanceof Element &&
+              target.closest(".markdown-range-highlights")
+            ),
+        )
+      )
+        refresh();
+    });
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      attributeFilter: ["class"],
+      attributeOldValue: true,
+    });
     view.addEventListener("scroll", refresh, { passive: true });
     view.addEventListener("resize", refresh);
     return () => {

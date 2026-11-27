@@ -53,5 +53,13 @@
       "DROP TABLE document_table_layout",
       "DROP TABLE table_layout_migration_validation"
     ]
+  },
+  {
+    "version": "0019",
+    "name": "comment_write_version",
+    "checksum": "sha256:3ef63fa1b34773f71e783e0c7c8285a99d2098a2e6be22fb8738d101d63ebeea",
+    "statements": [
+      "ALTER TABLE comment_document ADD COLUMN comment_version INTEGER NOT NULL DEFAULT 0"
+    ]
   }
 ]

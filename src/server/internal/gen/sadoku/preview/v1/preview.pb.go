@@ -4491,6 +4491,78 @@ func (x *ExportCommentToGitHubResponse) GetState() string {
 	return ""
 }
 
+type ReloadDocumentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReloadDocumentsRequest) Reset() {
+	*x = ReloadDocumentsRequest{}
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReloadDocumentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReloadDocumentsRequest) ProtoMessage() {}
+
+func (x *ReloadDocumentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReloadDocumentsRequest.ProtoReflect.Descriptor instead.
+func (*ReloadDocumentsRequest) Descriptor() ([]byte, []int) {
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{78}
+}
+
+type ReloadDocumentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReloadDocumentsResponse) Reset() {
+	*x = ReloadDocumentsResponse{}
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[79]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReloadDocumentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReloadDocumentsResponse) ProtoMessage() {}
+
+func (x *ReloadDocumentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sadoku_preview_v1_preview_proto_msgTypes[79]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReloadDocumentsResponse.ProtoReflect.Descriptor instead.
+func (*ReloadDocumentsResponse) Descriptor() ([]byte, []int) {
+	return file_sadoku_preview_v1_preview_proto_rawDescGZIP(), []int{79}
+}
+
 var File_sadoku_preview_v1_preview_proto protoreflect.FileDescriptor
 
 const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
@@ -4881,7 +4953,9 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\bend_line\x18\b \x01(\rR\aendLine\"G\n" +
 	"\x1dExportCommentToGitHubResponse\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
-	"\x05state\x18\x02 \x01(\tR\x05state2\x9a\x1e\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state\"\x18\n" +
+	"\x16ReloadDocumentsRequest\"\x19\n" +
+	"\x17ReloadDocumentsResponse2\x84\x1f\n" +
 	"\x0ePreviewService\x12Y\n" +
 	"\n" +
 	"GetSession\x12$.sadoku.preview.v1.GetSessionRequest\x1a%.sadoku.preview.v1.GetSessionResponse\x12b\n" +
@@ -4921,7 +4995,8 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\vCreateReply\x12%.sadoku.preview.v1.CreateReplyRequest\x1a\x1a.sadoku.preview.v1.Comment\x12P\n" +
 	"\vUpdateReply\x12%.sadoku.preview.v1.UpdateReplyRequest\x1a\x1a.sadoku.preview.v1.Comment\x12\\\n" +
 	"\vDeleteReply\x12%.sadoku.preview.v1.DeleteReplyRequest\x1a&.sadoku.preview.v1.DeleteReplyResponse\x12z\n" +
-	"\x15ExportCommentToGitHub\x12/.sadoku.preview.v1.ExportCommentToGitHubRequest\x1a0.sadoku.preview.v1.ExportCommentToGitHubResponseb\x06proto3"
+	"\x15ExportCommentToGitHub\x12/.sadoku.preview.v1.ExportCommentToGitHubRequest\x1a0.sadoku.preview.v1.ExportCommentToGitHubResponse\x12h\n" +
+	"\x0fReloadDocuments\x12).sadoku.preview.v1.ReloadDocumentsRequest\x1a*.sadoku.preview.v1.ReloadDocumentsResponseb\x06proto3"
 
 var (
 	file_sadoku_preview_v1_preview_proto_rawDescOnce sync.Once
@@ -4935,7 +5010,7 @@ func file_sadoku_preview_v1_preview_proto_rawDescGZIP() []byte {
 	return file_sadoku_preview_v1_preview_proto_rawDescData
 }
 
-var file_sadoku_preview_v1_preview_proto_msgTypes = make([]protoimpl.MessageInfo, 78)
+var file_sadoku_preview_v1_preview_proto_msgTypes = make([]protoimpl.MessageInfo, 80)
 var file_sadoku_preview_v1_preview_proto_goTypes = []any{
 	(*GetSessionRequest)(nil),               // 0: sadoku.preview.v1.GetSessionRequest
 	(*GetSessionResponse)(nil),              // 1: sadoku.preview.v1.GetSessionResponse
@@ -5015,6 +5090,8 @@ var file_sadoku_preview_v1_preview_proto_goTypes = []any{
 	(*DeleteReplyResponse)(nil),             // 75: sadoku.preview.v1.DeleteReplyResponse
 	(*ExportCommentToGitHubRequest)(nil),    // 76: sadoku.preview.v1.ExportCommentToGitHubRequest
 	(*ExportCommentToGitHubResponse)(nil),   // 77: sadoku.preview.v1.ExportCommentToGitHubResponse
+	(*ReloadDocumentsRequest)(nil),          // 78: sadoku.preview.v1.ReloadDocumentsRequest
+	(*ReloadDocumentsResponse)(nil),         // 79: sadoku.preview.v1.ReloadDocumentsResponse
 }
 var file_sadoku_preview_v1_preview_proto_depIdxs = []int32{
 	2,  // 0: sadoku.preview.v1.GetSessionResponse.pull_request:type_name -> sadoku.preview.v1.PullRequest
@@ -5076,46 +5153,48 @@ var file_sadoku_preview_v1_preview_proto_depIdxs = []int32{
 	73, // 56: sadoku.preview.v1.PreviewService.UpdateReply:input_type -> sadoku.preview.v1.UpdateReplyRequest
 	74, // 57: sadoku.preview.v1.PreviewService.DeleteReply:input_type -> sadoku.preview.v1.DeleteReplyRequest
 	76, // 58: sadoku.preview.v1.PreviewService.ExportCommentToGitHub:input_type -> sadoku.preview.v1.ExportCommentToGitHubRequest
-	1,  // 59: sadoku.preview.v1.PreviewService.GetSession:output_type -> sadoku.preview.v1.GetSessionResponse
-	4,  // 60: sadoku.preview.v1.PreviewService.GetStatistics:output_type -> sadoku.preview.v1.GetStatisticsResponse
-	9,  // 61: sadoku.preview.v1.PreviewService.ListDocuments:output_type -> sadoku.preview.v1.ListDocumentsResponse
-	11, // 62: sadoku.preview.v1.PreviewService.CreateDocument:output_type -> sadoku.preview.v1.DocumentSummary
-	11, // 63: sadoku.preview.v1.PreviewService.UpdateDocumentTitle:output_type -> sadoku.preview.v1.DocumentSummary
-	26, // 64: sadoku.preview.v1.PreviewService.GetDocument:output_type -> sadoku.preview.v1.GetDocumentResponse
-	17, // 65: sadoku.preview.v1.PreviewService.GetTableLayouts:output_type -> sadoku.preview.v1.GetTableLayoutsResponse
-	15, // 66: sadoku.preview.v1.PreviewService.UpdateTableLayout:output_type -> sadoku.preview.v1.TableLayout
-	22, // 67: sadoku.preview.v1.PreviewService.ListDocumentRevisions:output_type -> sadoku.preview.v1.ListDocumentRevisionsResponse
-	20, // 68: sadoku.preview.v1.PreviewService.GetDocumentRevision:output_type -> sadoku.preview.v1.DocumentRevision
-	25, // 69: sadoku.preview.v1.PreviewService.RestoreDocumentRevision:output_type -> sadoku.preview.v1.RestoreDocumentRevisionResponse
-	28, // 70: sadoku.preview.v1.PreviewService.GetDirectoryStatus:output_type -> sadoku.preview.v1.GetDirectoryStatusResponse
-	31, // 71: sadoku.preview.v1.PreviewService.GetSettings:output_type -> sadoku.preview.v1.Settings
-	31, // 72: sadoku.preview.v1.PreviewService.UpdateSettings:output_type -> sadoku.preview.v1.Settings
-	34, // 73: sadoku.preview.v1.PreviewService.GetGitHubAccount:output_type -> sadoku.preview.v1.GetGitHubAccountResponse
-	37, // 74: sadoku.preview.v1.PreviewService.ListTags:output_type -> sadoku.preview.v1.ListTagsResponse
-	6,  // 75: sadoku.preview.v1.PreviewService.UpdateTag:output_type -> sadoku.preview.v1.Tag
-	39, // 76: sadoku.preview.v1.PreviewService.DeleteTag:output_type -> sadoku.preview.v1.DeleteTagResponse
-	43, // 77: sadoku.preview.v1.PreviewService.ReplaceDocumentTags:output_type -> sadoku.preview.v1.ReplaceDocumentTagsResponse
-	46, // 78: sadoku.preview.v1.PreviewService.ListGlobalInstructions:output_type -> sadoku.preview.v1.ListGlobalInstructionsResponse
-	44, // 79: sadoku.preview.v1.PreviewService.CreateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
-	44, // 80: sadoku.preview.v1.PreviewService.UpdateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
-	50, // 81: sadoku.preview.v1.PreviewService.DeleteGlobalInstruction:output_type -> sadoku.preview.v1.DeleteGlobalInstructionResponse
-	52, // 82: sadoku.preview.v1.PreviewService.ListInstructions:output_type -> sadoku.preview.v1.ListInstructionsResponse
-	44, // 83: sadoku.preview.v1.PreviewService.CreateInstruction:output_type -> sadoku.preview.v1.Instruction
-	44, // 84: sadoku.preview.v1.PreviewService.UpdateInstruction:output_type -> sadoku.preview.v1.Instruction
-	56, // 85: sadoku.preview.v1.PreviewService.DeleteInstruction:output_type -> sadoku.preview.v1.DeleteInstructionResponse
-	59, // 86: sadoku.preview.v1.PreviewService.ListMemories:output_type -> sadoku.preview.v1.ListMemoriesResponse
-	61, // 87: sadoku.preview.v1.PreviewService.DeleteMemory:output_type -> sadoku.preview.v1.DeleteMemoryResponse
-	66, // 88: sadoku.preview.v1.PreviewService.ListComments:output_type -> sadoku.preview.v1.CommentsDocument
-	64, // 89: sadoku.preview.v1.PreviewService.CreateComment:output_type -> sadoku.preview.v1.Comment
-	64, // 90: sadoku.preview.v1.PreviewService.UpdateComment:output_type -> sadoku.preview.v1.Comment
-	70, // 91: sadoku.preview.v1.PreviewService.DeleteComment:output_type -> sadoku.preview.v1.DeleteCommentResponse
-	64, // 92: sadoku.preview.v1.PreviewService.SetCommentResolution:output_type -> sadoku.preview.v1.Comment
-	64, // 93: sadoku.preview.v1.PreviewService.CreateReply:output_type -> sadoku.preview.v1.Comment
-	64, // 94: sadoku.preview.v1.PreviewService.UpdateReply:output_type -> sadoku.preview.v1.Comment
-	75, // 95: sadoku.preview.v1.PreviewService.DeleteReply:output_type -> sadoku.preview.v1.DeleteReplyResponse
-	77, // 96: sadoku.preview.v1.PreviewService.ExportCommentToGitHub:output_type -> sadoku.preview.v1.ExportCommentToGitHubResponse
-	59, // [59:97] is the sub-list for method output_type
-	21, // [21:59] is the sub-list for method input_type
+	78, // 59: sadoku.preview.v1.PreviewService.ReloadDocuments:input_type -> sadoku.preview.v1.ReloadDocumentsRequest
+	1,  // 60: sadoku.preview.v1.PreviewService.GetSession:output_type -> sadoku.preview.v1.GetSessionResponse
+	4,  // 61: sadoku.preview.v1.PreviewService.GetStatistics:output_type -> sadoku.preview.v1.GetStatisticsResponse
+	9,  // 62: sadoku.preview.v1.PreviewService.ListDocuments:output_type -> sadoku.preview.v1.ListDocumentsResponse
+	11, // 63: sadoku.preview.v1.PreviewService.CreateDocument:output_type -> sadoku.preview.v1.DocumentSummary
+	11, // 64: sadoku.preview.v1.PreviewService.UpdateDocumentTitle:output_type -> sadoku.preview.v1.DocumentSummary
+	26, // 65: sadoku.preview.v1.PreviewService.GetDocument:output_type -> sadoku.preview.v1.GetDocumentResponse
+	17, // 66: sadoku.preview.v1.PreviewService.GetTableLayouts:output_type -> sadoku.preview.v1.GetTableLayoutsResponse
+	15, // 67: sadoku.preview.v1.PreviewService.UpdateTableLayout:output_type -> sadoku.preview.v1.TableLayout
+	22, // 68: sadoku.preview.v1.PreviewService.ListDocumentRevisions:output_type -> sadoku.preview.v1.ListDocumentRevisionsResponse
+	20, // 69: sadoku.preview.v1.PreviewService.GetDocumentRevision:output_type -> sadoku.preview.v1.DocumentRevision
+	25, // 70: sadoku.preview.v1.PreviewService.RestoreDocumentRevision:output_type -> sadoku.preview.v1.RestoreDocumentRevisionResponse
+	28, // 71: sadoku.preview.v1.PreviewService.GetDirectoryStatus:output_type -> sadoku.preview.v1.GetDirectoryStatusResponse
+	31, // 72: sadoku.preview.v1.PreviewService.GetSettings:output_type -> sadoku.preview.v1.Settings
+	31, // 73: sadoku.preview.v1.PreviewService.UpdateSettings:output_type -> sadoku.preview.v1.Settings
+	34, // 74: sadoku.preview.v1.PreviewService.GetGitHubAccount:output_type -> sadoku.preview.v1.GetGitHubAccountResponse
+	37, // 75: sadoku.preview.v1.PreviewService.ListTags:output_type -> sadoku.preview.v1.ListTagsResponse
+	6,  // 76: sadoku.preview.v1.PreviewService.UpdateTag:output_type -> sadoku.preview.v1.Tag
+	39, // 77: sadoku.preview.v1.PreviewService.DeleteTag:output_type -> sadoku.preview.v1.DeleteTagResponse
+	43, // 78: sadoku.preview.v1.PreviewService.ReplaceDocumentTags:output_type -> sadoku.preview.v1.ReplaceDocumentTagsResponse
+	46, // 79: sadoku.preview.v1.PreviewService.ListGlobalInstructions:output_type -> sadoku.preview.v1.ListGlobalInstructionsResponse
+	44, // 80: sadoku.preview.v1.PreviewService.CreateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
+	44, // 81: sadoku.preview.v1.PreviewService.UpdateGlobalInstruction:output_type -> sadoku.preview.v1.Instruction
+	50, // 82: sadoku.preview.v1.PreviewService.DeleteGlobalInstruction:output_type -> sadoku.preview.v1.DeleteGlobalInstructionResponse
+	52, // 83: sadoku.preview.v1.PreviewService.ListInstructions:output_type -> sadoku.preview.v1.ListInstructionsResponse
+	44, // 84: sadoku.preview.v1.PreviewService.CreateInstruction:output_type -> sadoku.preview.v1.Instruction
+	44, // 85: sadoku.preview.v1.PreviewService.UpdateInstruction:output_type -> sadoku.preview.v1.Instruction
+	56, // 86: sadoku.preview.v1.PreviewService.DeleteInstruction:output_type -> sadoku.preview.v1.DeleteInstructionResponse
+	59, // 87: sadoku.preview.v1.PreviewService.ListMemories:output_type -> sadoku.preview.v1.ListMemoriesResponse
+	61, // 88: sadoku.preview.v1.PreviewService.DeleteMemory:output_type -> sadoku.preview.v1.DeleteMemoryResponse
+	66, // 89: sadoku.preview.v1.PreviewService.ListComments:output_type -> sadoku.preview.v1.CommentsDocument
+	64, // 90: sadoku.preview.v1.PreviewService.CreateComment:output_type -> sadoku.preview.v1.Comment
+	64, // 91: sadoku.preview.v1.PreviewService.UpdateComment:output_type -> sadoku.preview.v1.Comment
+	70, // 92: sadoku.preview.v1.PreviewService.DeleteComment:output_type -> sadoku.preview.v1.DeleteCommentResponse
+	64, // 93: sadoku.preview.v1.PreviewService.SetCommentResolution:output_type -> sadoku.preview.v1.Comment
+	64, // 94: sadoku.preview.v1.PreviewService.CreateReply:output_type -> sadoku.preview.v1.Comment
+	64, // 95: sadoku.preview.v1.PreviewService.UpdateReply:output_type -> sadoku.preview.v1.Comment
+	75, // 96: sadoku.preview.v1.PreviewService.DeleteReply:output_type -> sadoku.preview.v1.DeleteReplyResponse
+	77, // 97: sadoku.preview.v1.PreviewService.ExportCommentToGitHub:output_type -> sadoku.preview.v1.ExportCommentToGitHubResponse
+	79, // 98: sadoku.preview.v1.PreviewService.ReloadDocuments:output_type -> sadoku.preview.v1.ReloadDocumentsResponse
+	60, // [60:99] is the sub-list for method output_type
+	21, // [21:60] is the sub-list for method input_type
 	21, // [21:21] is the sub-list for extension type_name
 	21, // [21:21] is the sub-list for extension extendee
 	0,  // [0:21] is the sub-list for field type_name
@@ -5149,7 +5228,7 @@ func file_sadoku_preview_v1_preview_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sadoku_preview_v1_preview_proto_rawDesc), len(file_sadoku_preview_v1_preview_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   78,
+			NumMessages:   80,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

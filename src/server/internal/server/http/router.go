@@ -201,6 +201,7 @@ func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 }
 func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string, status int) {
 	input := restParameters(req)
+	var tagPatch u.TagPatch
 	method := req.Method
 	export := operation == "ExportCommentToGitHub"
 	if export {
@@ -295,33 +296,13 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string
 			input.Settings = settings
 		}
 		if operation == "UpdateTag" {
-			for _, key := range []string{"name", "backgroundColor"} {
-				if value, ok := fields[key]; ok && string(value) == "null" {
-					textError(w, "Tag values must be strings.", 400)
-					return
-				}
-			}
-			if _, name := fields["name"]; !name {
-				if _, color := fields["backgroundColor"]; !color {
-					textError(w, "Tag name or background color is required.", 400)
-					return
-				}
-			}
-			r.session.Mu.Lock()
-			tags, tagErr := r.session.Repository.Tags(req.Context(), 0)
-			r.session.Mu.Unlock()
-			if tagErr != nil {
-				respondError(w, tagErr)
+			var err error
+			tagPatch, err = decodeTagPatch(fields)
+			if err != nil {
+				respondError(w, err)
 				return
 			}
-			for _, tag := range tags {
-				if tag.ID == int64(input.ID) {
-					input.Name = tag.Name
-					input.BackgroundColor = tag.BackgroundColor
-				}
-			}
-		}
-		if err := decodeRESTInput(operation, fields, &input); err != nil {
+		} else if err := decodeRESTInput(operation, fields, &input); err != nil {
 			message := "Request body must be valid JSON."
 			if operation == "UpdateSettings" {
 				message = invalidSettingsMessage
@@ -330,7 +311,13 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string
 			return
 		}
 	}
-	result, err := r.session.Invoke(req.Context(), operation, input)
+	var result any
+	var err error
+	if operation == "UpdateTag" {
+		result, err = r.session.UpdateTag(req.Context(), int64(input.ID), tagPatch)
+	} else {
+		result, err = r.session.Invoke(req.Context(), operation, input)
+	}
 	if err != nil {
 		if export {
 			respondGitHubExportError(w, err)

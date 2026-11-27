@@ -32,8 +32,9 @@ sadoku start https://github.com/<owner>/<repo>/pull/<number>
 
 Sadoku opens your browser at `127.0.0.1:3334` (or the next available port).
 Use `--no-open` to start without opening a browser, or `--port 4000` to choose
-the starting port. `--no-sync` disables automatic external updates; use **Reload
-preview** to fetch updates manually. The server then runs until Ctrl+C.
+the starting port. `--no-sync` disables automatic external updates. Use **Reload
+preview** in a document or **Reload document list** in the list to fetch updates
+manually. The server then runs until Ctrl+C.
 Run `sadoku --help` for all commands and options.
 
 ### Review
@@ -43,8 +44,10 @@ Run `sadoku --help` for all commands and options.
   arrows in the bottom toolbar to move between visible comment locations.
 - Use **Changes** to compare with the previous saved snapshot, or **Revisions**
   to browse history and restore a local file. Remote documents are read-only.
-- Directory previews let you browse and create Markdown files. Discovery limits
-  can be changed in **Settings → Directory discovery**.
+- Directory previews let you browse and create Markdown files. Use **Reload
+  document list** next to **Documents** to detect files added, removed, or
+  restored on disk. Discovery limits can be changed in **Settings → Directory
+  discovery**.
 - For GitHub PRs, install the [GitHub CLI](https://cli.github.com/) and run
   `gh auth login`. **Save to GitHub review** adds a comment to your pending review;
   finish or discard it on GitHub. Nothing is submitted automatically.
@@ -58,9 +61,10 @@ and act on human feedback.
 
 Supports GitHub Flavored Markdown, including tables, task lists, and syntax
 highlighting, plus GitHub-style alerts (`NOTE`, `TIP`, `IMPORTANT`, `WARNING`,
-and `CAUTION`) and Mermaid diagrams rendered offline. Table headers and body rows
-can be commented on individually or selected as a range. Raw HTML is escaped;
-footnotes, definition lists, and math/LaTeX are not supported.
+and `CAUTION`) and Mermaid diagrams rendered offline. You can comment on
+individual lines of quoted text, table headers, and table rows. Shift-click to
+select a range. Raw HTML is escaped; footnotes, definition lists, and math/LaTeX
+are not supported.
 Comments and replies support Markdown with GitHub-style line breaks;
 Mermaid diagrams render only in documents.
 Table columns can be resized by dragging or using the arrow keys on a focused

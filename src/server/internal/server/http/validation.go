@@ -73,8 +73,6 @@ func decodeRESTInput(operation string, fields map[string]json.RawMessage, target
 	switch operation {
 	case "UpdateSettings":
 		names = []string{"theme", "codeWrap", "fontScale", "maxDepth", "maxFiles", "excludedDirectories", "markdownExtensions", "showHtmlComments", "showHighlightBoundaries", "wideLayout", "wideTables"}
-	case "UpdateTag":
-		names = []string{"name", "backgroundColor"}
 	case "ReplaceDocumentTags":
 		names = []string{"tags"}
 	case "CreateInstruction", "UpdateInstruction", "CreateGlobalInstruction", "UpdateGlobalInstruction":

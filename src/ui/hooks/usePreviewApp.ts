@@ -11,6 +11,7 @@ import {
   useDirectoryStatusQuery,
   useDocumentsQuery,
   usePreviewDocumentQuery,
+  useReloadDocuments,
 } from "./useDocuments";
 import { useMemoriesQuery } from "./useMemories";
 import { usePreviewSettings } from "./usePreviewSettings";
@@ -40,13 +41,14 @@ export const usePreviewApp = () => {
     });
   });
   const documentsQuery = useDocumentsQuery();
+  const documentsReload = useReloadDocuments();
   const sessionQuery = useSessionQuery();
   const directoryStatusQuery = useDirectoryStatusQuery();
   const directoryStatus = directoryStatusQuery.data;
   const documents = documentsQuery.data;
   const directoryMode = documents !== null && documents !== undefined;
   const shouldLoadDocument =
-    documentsQuery.isSuccess &&
+    documents !== undefined &&
     (!directoryMode || selectedDocumentId !== undefined);
   const documentQuery = usePreviewDocumentQuery(
     selectedDocumentId,
@@ -181,7 +183,7 @@ export const usePreviewApp = () => {
   useEffect(() => {
     if (
       !isDocumentList &&
-      documentsQuery.isSuccess &&
+      documents !== undefined &&
       (!rawDocumentId ||
         !documents?.some((item) => item.id === selectedDocumentId))
     ) {
@@ -199,7 +201,6 @@ export const usePreviewApp = () => {
     pathname,
     view,
     isDocumentList,
-    documentsQuery.isSuccess,
     rawDocumentId,
     documents,
     selectedDocumentId,
@@ -233,20 +234,26 @@ export const usePreviewApp = () => {
   };
 
   if (documentsQuery.isPending) return { status: "loading" as const };
-  if (documentsQuery.error)
+  if (documentsQuery.error && documents === undefined)
     return { status: "error" as const, message: String(documentsQuery.error) };
   const selectedDocument = documents?.find(
     (item) => item.id === selectedDocumentId,
   );
   if (!isDocumentList && (!rawDocumentId || !selectedDocument))
     return { status: "not-found" as const };
+  const isLocalDirectory =
+    Boolean(directoryStatus) || sessionQuery.data?.canCreateDocuments === true;
+  const reloadList = isLocalDirectory
+    ? () => documentsReload.mutate()
+    : reloadPreview;
+  const fetchingList =
+    documentsQuery.isFetching ||
+    directoryStatusQuery.isFetching ||
+    sessionQuery.isFetching;
   const listHeader = {
     ...headerActions,
-    reloadAvailable: !isSyncEnabled(),
-    reloading:
-      documentsQuery.isFetching ||
-      directoryStatusQuery.isFetching ||
-      sessionQuery.isFetching,
+    reloadAvailable: !isDocumentList && !isSyncEnabled(),
+    reloading: fetchingList,
     title: selectedDocument?.relativePath ?? "Documents",
   };
   if (selectedDocumentId === undefined)
@@ -260,6 +267,16 @@ export const usePreviewApp = () => {
         documents: documents!,
         onSelectDocument: selectDocument,
         pullRequest: sessionQuery.data?.pullRequest,
+        reload:
+          isLocalDirectory || !isSyncEnabled()
+            ? {
+                onClick: reloadList,
+                disabled: directoryStatus?.state === "loading" || fetchingList,
+                pending:
+                  documentsReload.isPending ||
+                  (!isLocalDirectory && fetchingList),
+              }
+            : undefined,
         onCreateDocument:
           sessionQuery.data?.canCreateDocuments &&
           directoryStatus?.state !== "loading" &&

@@ -36,20 +36,20 @@ func (r *Repository) Ensure(ctx context.Context, path string) (u.Document, error
 	err = r.DB.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle)
 	return d, err
 }
-func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.Document, error) {
+func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.RegisteredDocument, error) {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback() }()
-	documents := []u.Document{}
+	documents := []u.RegisteredDocument{}
 	now := db.Now()
 	for _, path := range paths {
 		if _, err = tx.ExecContext(ctx, "INSERT INTO comment_document(file_path,created_at,updated_at) VALUES(?,?,?) ON CONFLICT(file_path) DO NOTHING", path, now, now); err != nil {
 			return nil, err
 		}
-		var d u.Document
-		if err = tx.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle); err != nil {
+		var d u.RegisteredDocument
+		if err = tx.QueryRowContext(ctx, "SELECT id,file_path,title,source_revision_id IS NOT NULL FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle, &d.HasSnapshot); err != nil {
 			return nil, err
 		}
 		documents = append(documents, d)
@@ -161,15 +161,19 @@ func (r *Repository) InitializeSnapshot(ctx context.Context, id int64, markdown 
 }
 func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, error) {
 	doc := u.Comments{Comments: []u.Comment{}}
-	if err := r.DB.QueryRowContext(ctx, "SELECT file_path FROM comment_document WHERE id=?", id).Scan(&doc.FilePath); err != nil {
-		return doc, err
-	}
-	var err error
-	doc.SourceSnapshot, doc.PreviousSourceSnapshot, err = r.Snapshot(ctx, id)
+	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return doc, err
 	}
-	rows, err := r.DB.QueryContext(ctx, `SELECT id,local_id,body,author_type,start_line,end_line,original_start_line,original_end_line,created_at,updated_at,resolved,stale,resolved_at,resolved_by_type,source_hash,source_text,source_deleted FROM comment WHERE document_id=? ORDER BY local_id`, id)
+	defer func() { _ = tx.Rollback() }()
+	err = tx.QueryRowContext(ctx, `SELECT file_path,comment_version,
+		(SELECT markdown FROM document_revision WHERE id=d.source_revision_id),
+		(SELECT markdown FROM document_revision WHERE id=d.previous_source_revision_id)
+		FROM comment_document d WHERE id=?`, id).Scan(&doc.FilePath, &doc.Version, &doc.SourceSnapshot, &doc.PreviousSourceSnapshot)
+	if err != nil {
+		return doc, err
+	}
+	rows, err := tx.QueryContext(ctx, `SELECT id,local_id,body,author_type,start_line,end_line,original_start_line,original_end_line,created_at,updated_at,resolved,stale,resolved_at,resolved_by_type,source_hash,source_text,source_deleted FROM comment WHERE document_id=? ORDER BY local_id`, id)
 	if err != nil {
 		return doc, err
 	}
@@ -197,7 +201,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 	}
 	for i, internal := range ids {
 		if err := func() error {
-			replies, err := r.DB.QueryContext(ctx, "SELECT local_id,body,author_type,created_at,updated_at,review_requested FROM comment_reply WHERE comment_id=? ORDER BY local_id", internal)
+			replies, err := tx.QueryContext(ctx, "SELECT local_id,body,author_type,created_at,updated_at,review_requested FROM comment_reply WHERE comment_id=? ORDER BY local_id", internal)
 			if err != nil {
 				return err
 			}
@@ -214,7 +218,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 			return doc, err
 		}
 	}
-	return doc, nil
+	return doc, tx.Commit()
 }
 func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
@@ -224,8 +228,15 @@ func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments)
 	defer func() { _ = tx.Rollback() }()
 	var source string
 	var old *string
-	var currentID *int64
-	if err = tx.QueryRowContext(ctx, "SELECT file_path,source_revision_id,(SELECT markdown FROM document_revision WHERE id=source_revision_id) FROM comment_document WHERE id=?", id).Scan(&source, &currentID, &old); err != nil {
+	// Acquire the write lock and compare the version before replacing any rows.
+	err = tx.QueryRowContext(ctx, `UPDATE comment_document
+		SET comment_version=comment_version+1
+		WHERE id=? AND comment_version=?
+		RETURNING file_path,(SELECT markdown FROM document_revision WHERE id=source_revision_id)`, id, doc.Version).Scan(&source, &old)
+	if errors.Is(err, sql.ErrNoRows) {
+		return u.Fail("aborted", "Comments changed. Reload them and retry.")
+	}
+	if err != nil {
 		return err
 	}
 	if doc.SourceSnapshot != nil && (old == nil || *old != *doc.SourceSnapshot) {
@@ -294,44 +305,28 @@ func (r *Repository) Tags(ctx context.Context, documentID int64) ([]u.Tag, error
 	return list, rows.Err()
 }
 func (r *Repository) SaveTag(ctx context.Context, t u.Tag) (u.Tag, error) {
+	if t.ID != 0 {
+		return r.UpdateTag(ctx, t.ID, u.TagPatch{Name: &t.Name, BackgroundColor: &t.BackgroundColor})
+	}
 	now := db.Now()
-	var err error
-	if t.ID == 0 {
-		var res sql.Result
-		res, err = r.DB.ExecContext(ctx, "INSERT INTO document_tag(name,background_color,created_at,updated_at) VALUES(?,?,?,?)", t.Name, t.BackgroundColor, now, now)
-		if err == nil {
-			t.ID, err = res.LastInsertId()
-		}
-	} else {
-		var existing u.Tag
-		err = r.DB.QueryRowContext(ctx, "SELECT name,background_color,created_at,updated_at FROM document_tag WHERE id=?", t.ID).Scan(&existing.Name, &existing.BackgroundColor, &existing.CreatedAt, &existing.UpdatedAt)
-		if errors.Is(err, sql.ErrNoRows) {
-			return t, u.Fail("not_found", "Tag not found.")
-		}
-		if err != nil {
-			return t, err
-		}
-		if existing.Name == t.Name && existing.BackgroundColor == t.BackgroundColor {
-			t.CreatedAt, t.UpdatedAt = existing.CreatedAt, existing.UpdatedAt
-			return t, nil
-		}
-		var res sql.Result
-		res, err = r.DB.ExecContext(ctx, "UPDATE document_tag SET name=?,background_color=?,updated_at=? WHERE id=?", t.Name, t.BackgroundColor, now, t.ID)
-		if err == nil {
-			n, _ := res.RowsAffected()
-			if n == 0 {
-				return t, u.Fail("not_found", "Tag not found.")
-			}
-		}
+	t.CreatedAt, t.UpdatedAt = now, now
+	err := r.DB.QueryRowContext(ctx, "INSERT INTO document_tag(name,background_color,created_at,updated_at) VALUES(?,?,?,?) RETURNING id",
+		t.Name, t.BackgroundColor, now, now).Scan(&t.ID)
+	return t, err
+}
+
+func (r *Repository) UpdateTag(ctx context.Context, id int64, patch u.TagPatch) (u.Tag, error) {
+	tag := u.Tag{ID: id}
+	err := r.DB.QueryRowContext(ctx, `UPDATE document_tag SET
+		updated_at=CASE WHEN name COLLATE BINARY != COALESCE(?1,name) OR background_color != COALESCE(?2,background_color)
+			THEN ?3 ELSE updated_at END,
+		name=COALESCE(?1,name), background_color=COALESCE(?2,background_color)
+		WHERE id=?4 RETURNING name,background_color,created_at,updated_at`,
+		patch.Name, patch.BackgroundColor, db.Now(), id).Scan(&tag.Name, &tag.BackgroundColor, &tag.CreatedAt, &tag.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = u.Fail("not_found", "Tag not found.")
 	}
-	if err != nil {
-		return t, err
-	}
-	t.UpdatedAt = now
-	if err = r.DB.QueryRowContext(ctx, "SELECT created_at FROM document_tag WHERE id=?", t.ID).Scan(&t.CreatedAt); err != nil {
-		return t, err
-	}
-	return t, nil
+	return tag, err
 }
 func (r *Repository) DeleteTag(ctx context.Context, id int64) error {
 	return remove(ctx, r.DB, "DELETE FROM document_tag WHERE id=?", []any{id}, "Tag")

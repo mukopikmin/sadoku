@@ -25,7 +25,7 @@ it("coordinates selection, composing and raw source without losing the document 
   expect(result.current.commentRenderingContext.selectedRange).toEqual(range);
   act(() => result.current.commentRenderingContext.onOpenCommentForm());
   expect(result.current.commentRenderingContext.activeRange).toEqual(range);
-  expect(result.current.commentRenderingContext.activeCommentLine).toBe(2);
+  expect(result.current.commentRenderingContext.actionLine).toBe(1);
   act(() => result.current.commentRenderingContext.onOpenRawMarkdown(range));
   expect(result.current.raw).toEqual({ status: "open", range });
   act(() => result.current.closeRaw());
