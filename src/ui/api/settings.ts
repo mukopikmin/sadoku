@@ -1,107 +1,50 @@
-import type { CodeWrapMode, PreviewSettings, ThemeMode } from "../models/theme";
+import type { PreviewSettings, ResolvedPreviewSettings } from "../models/theme";
+import type { Settings } from "../gen/sadoku/preview/v1/preview_pb";
 import { previewClient } from "./connect";
 
-export type SettingsResponse = {
-  showHighlightBoundaries?: unknown;
-  showHtmlComments?: unknown;
-  codeWrap?: unknown;
-  excludedDirectories?: unknown;
-  fontScale?: unknown;
-  maxDepth?: unknown;
-  maxFiles?: unknown;
-  markdownExtensions?: unknown;
-  theme?: unknown;
+type SettingsUpdate = Omit<
+  ResolvedPreviewSettings,
+  "wideLayout" | "wideTables"
+> & {
+  wideLayout?: boolean;
+  wideTables?: boolean;
 };
 
-export type SettingsUpdate = {
-  showHighlightBoundaries: boolean;
-  showHtmlComments: boolean;
-  codeWrap: CodeWrapMode;
-  excludedDirectories: string[];
-  fontScale: number;
-  maxDepth: number;
-  maxFiles: number;
-  markdownExtensions: string[];
-  theme: ThemeMode;
-};
-
-const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
-  if (
-    response.theme !== undefined &&
-    response.theme !== "dark" &&
-    response.theme !== "light"
-  ) {
+const toPreviewSettings = (response: Settings): PreviewSettings => {
+  const {
+    codeWrap,
+    excludedDirectories,
+    fontScale,
+    markdownExtensions,
+    maxDepth,
+    maxFiles,
+    theme,
+  } = response;
+  if (theme !== undefined && theme !== "dark" && theme !== "light") {
     throw new Error("Settings response contained an invalid theme mode.");
   }
-  if (
-    response.codeWrap !== undefined &&
-    response.codeWrap !== "scroll" &&
-    response.codeWrap !== "wrap"
-  ) {
+  if (codeWrap !== undefined && codeWrap !== "scroll" && codeWrap !== "wrap") {
     throw new Error("Settings response contained an invalid code wrap mode.");
   }
   if (
-    response.showHtmlComments !== undefined &&
-    typeof response.showHtmlComments !== "boolean"
-  ) {
-    throw new Error(
-      "Settings response contained an invalid HTML comment visibility.",
-    );
-  }
-  const showHtmlComments = response.showHtmlComments ?? true;
-  if (
-    response.showHighlightBoundaries !== undefined &&
-    typeof response.showHighlightBoundaries !== "boolean"
-  ) {
-    throw new Error(
-      "Settings response contained an invalid highlight boundary visibility.",
-    );
-  }
-  const showHighlightBoundaries = response.showHighlightBoundaries ?? false;
-  const maxDepth = response.maxDepth ?? 2;
-  const maxFiles = response.maxFiles ?? 20;
-  const excludedDirectories = response.excludedDirectories ?? [
-    ".git",
-    "node_modules",
-  ];
-  const fontScale = response.fontScale ?? 1;
-  const markdownExtensions = response.markdownExtensions ?? [
-    ".md",
-    ".markdown",
-  ];
-  if (
-    !Array.isArray(markdownExtensions) ||
     markdownExtensions.length === 0 ||
-    markdownExtensions.some(
-      (extension) =>
-        typeof extension !== "string" || !/^\.[^.\\/]+$/.test(extension),
-    ) ||
+    markdownExtensions.some((extension) => !/^\.[^.\\/]+$/.test(extension)) ||
     new Set(markdownExtensions.map((extension) => extension.toLowerCase()))
       .size !== markdownExtensions.length
   ) {
     throw new Error("Settings response contained invalid Markdown extensions.");
   }
-  if (
-    typeof fontScale !== "number" ||
-    !Number.isFinite(fontScale) ||
-    fontScale < 0.75 ||
-    fontScale > 1.5
-  ) {
+  if (!Number.isFinite(fontScale) || fontScale < 0.75 || fontScale > 1.5) {
     throw new Error("Settings response contained an invalid font scale.");
   }
-  if (!Number.isInteger(maxDepth) || (maxDepth as number) < 0) {
-    throw new Error("Settings response contained an invalid maximum depth.");
-  }
-  if (!Number.isInteger(maxFiles) || (maxFiles as number) < 1) {
+  if (maxFiles < 1) {
     throw new Error(
       "Settings response contained an invalid maximum file count.",
     );
   }
   if (
-    !Array.isArray(excludedDirectories) ||
     excludedDirectories.some(
       (directory) =>
-        typeof directory !== "string" ||
         directory.length === 0 ||
         directory === "." ||
         directory === ".." ||
@@ -115,15 +58,17 @@ const toPreviewSettings = (response: SettingsResponse): PreviewSettings => {
     );
   }
   return {
-    showHighlightBoundaries,
-    showHtmlComments,
-    codeWrap: response.codeWrap,
+    showHighlightBoundaries: response.showHighlightBoundaries ?? false,
+    showHtmlComments: response.showHtmlComments ?? true,
+    codeWrap,
     excludedDirectories,
     fontScale,
-    maxDepth: maxDepth as number,
-    maxFiles: maxFiles as number,
+    maxDepth,
+    maxFiles,
     markdownExtensions,
-    theme: response.theme,
+    theme,
+    wideLayout: response.wideLayout ?? false,
+    wideTables: response.wideTables ?? false,
   };
 };
 
@@ -131,10 +76,8 @@ export const loadSettings = async (): Promise<PreviewSettings> => {
   return toPreviewSettings(await previewClient.getSettings({}));
 };
 
-const saveSetting = async (
+export const saveSettings = async (
   update: SettingsUpdate,
 ): Promise<PreviewSettings> => {
   return toPreviewSettings(await previewClient.updateSettings(update));
 };
-
-export const saveSettings = saveSetting;

@@ -96,6 +96,9 @@ export const usePreviewApp = () => {
     changeShowHighlightBoundaries,
     changeShowHtmlComments,
     changeThemeMode,
+    changeWideLayout,
+    changeWideTables,
+    retrySettings,
     state: settingsState,
   } = usePreviewSettings();
   const settings = settingsState.settings;
@@ -107,9 +110,12 @@ export const usePreviewApp = () => {
     onExcludedDirectoriesChange: changeExcludedDirectories,
     onFontScaleChange: changeFontScale,
     onMarkdownExtensionsChange: changeMarkdownExtensions,
+    onRetry: retrySettings,
     onShowHighlightBoundariesChange: changeShowHighlightBoundaries,
     onShowHtmlCommentsChange: changeShowHtmlComments,
     onThemeModeChange: changeThemeMode,
+    onWideLayoutChange: changeWideLayout,
+    onWideTablesChange: changeWideTables,
   };
 
   useEffect(
@@ -211,7 +217,7 @@ export const usePreviewApp = () => {
     documentInstructions: instructionsDisclosure,
     documentMemories: memoriesDisclosure,
     documentTagsDialog: documentTagsDisclosure,
-    settings,
+    settingsState,
     settingsActions,
     settingsDialog: settingsDisclosure,
     tagsDialog: tagsDisclosure,

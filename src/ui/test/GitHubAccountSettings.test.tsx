@@ -14,8 +14,11 @@ const settings = {
   markdownExtensions: [".md"],
   maxDepth: 8,
   maxFiles: 500,
+  showHighlightBoundaries: false,
   showHtmlComments: true,
   theme: "light" as const,
+  wideLayout: false,
+  wideTables: false,
 };
 
 it("shows the GitHub CLI authenticated account in settings", async () => {
@@ -43,10 +46,14 @@ it("shows the GitHub CLI authenticated account in settings", async () => {
       onFontScaleChange={vi.fn()}
       onMarkdownExtensionsChange={vi.fn()}
       onOpenChange={onOpenChange}
+      onRetry={vi.fn()}
+      onShowHighlightBoundariesChange={vi.fn()}
       onShowHtmlCommentsChange={vi.fn()}
       onThemeModeChange={vi.fn()}
+      onWideLayoutChange={vi.fn()}
+      onWideTablesChange={vi.fn()}
       open
-      settings={settings}
+      settingsState={{ status: "ready", settings }}
     />,
   );
 

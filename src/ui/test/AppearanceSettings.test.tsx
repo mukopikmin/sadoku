@@ -11,6 +11,8 @@ describe("AppearanceSettings", () => {
     const onCodeWrapModeChange = vi.fn();
     const onShowHtmlCommentsChange = vi.fn();
     const onShowHighlightBoundariesChange = vi.fn();
+    const onWideLayoutChange = vi.fn();
+    const onWideTablesChange = vi.fn();
     render(
       <AppearanceSettings
         codeWrapMode="scroll"
@@ -20,9 +22,13 @@ describe("AppearanceSettings", () => {
         onThemeModeChange={onThemeModeChange}
         onShowHtmlCommentsChange={onShowHtmlCommentsChange}
         onShowHighlightBoundariesChange={onShowHighlightBoundariesChange}
+        onWideLayoutChange={onWideLayoutChange}
+        onWideTablesChange={onWideTablesChange}
         showHighlightBoundaries={false}
         showHtmlComments
         themeMode="light"
+        wideLayout={false}
+        wideTables={false}
       />,
     );
 
@@ -30,6 +36,17 @@ describe("AppearanceSettings", () => {
     fireEvent.click(await screen.findByRole("option", { name: "Dark" }));
     fireEvent.click(screen.getByRole("button", { name: "Increase text size" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Wrap code blocks" }));
+
+    const wideLayout = screen.getByRole<HTMLInputElement>("checkbox", {
+      name: "Wide layout",
+      description: "Use the available screen width throughout the preview",
+    });
+    expect(wideLayout.checked).toBe(false);
+    fireEvent.click(screen.getByText("Wide layout"));
+    await waitFor(() => expect(onWideLayoutChange).toHaveBeenCalledWith(true));
+
+    fireEvent.click(screen.getByText("Wide tables"));
+    await waitFor(() => expect(onWideTablesChange).toHaveBeenCalledWith(true));
 
     const htmlComments = screen.getByRole<HTMLInputElement>("checkbox", {
       name: "Show HTML comments",

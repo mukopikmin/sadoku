@@ -1,10 +1,14 @@
-import { Button, CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
+import {
+  Alert,
+  Button,
+  CloseButton,
+  Dialog,
+  Flex,
+  Portal,
+} from "@chakra-ui/react";
 import { useRef } from "react";
-import type {
-  CodeWrapMode,
-  ResolvedPreviewSettings,
-  ThemeMode,
-} from "../models/theme";
+import type { CodeWrapMode, ThemeMode } from "../models/theme";
+import type { PreviewSettingsState } from "../hooks/usePreviewSettings";
 import { AppearanceSettings } from "./settings/AppearanceSettings";
 import { DirectoryDiscoverySettings } from "./settings/DirectoryDiscoverySettings";
 import { GitHubAccountSettings } from "./settings/GitHubAccountSettings";
@@ -18,19 +22,24 @@ export type SettingsDialogProps = {
   onFontScaleChange: (value: number) => void;
   onMarkdownExtensionsChange: (value: string[]) => void;
   onOpenChange: (open: boolean) => void;
+  onRetry: () => void;
   onShowHighlightBoundariesChange: (value: boolean) => void;
   onShowHtmlCommentsChange: (value: boolean) => void;
   onThemeModeChange: (value: ThemeMode) => void;
+  onWideLayoutChange: (value: boolean) => void;
+  onWideTablesChange: (value: boolean) => void;
   open: boolean;
-  settings: ResolvedPreviewSettings;
+  settingsState: PreviewSettingsState;
 };
 
 export const SettingsDialog = ({
   open,
   onOpenChange,
-  settings,
+  onRetry,
+  settingsState,
   ...actions
 }: SettingsDialogProps) => {
+  const { settings } = settingsState;
   const contentRef = useRef<HTMLDivElement>(null);
   const statisticsTriggerRef = useRef<HTMLButtonElement>(null);
   const statistics = useNestedDialog(open);
@@ -56,6 +65,24 @@ export const SettingsDialog = ({
             </Dialog.Header>
             <Dialog.Body>
               <Flex direction="column" gap="4">
+                {settingsState.status === "error" && (
+                  <Alert.Root status="error">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                      <Alert.Title>
+                        {settingsState.operation === "save"
+                          ? "Could not save settings"
+                          : "Could not load settings"}
+                      </Alert.Title>
+                      <Alert.Description>
+                        {settingsState.message}
+                      </Alert.Description>
+                    </Alert.Content>
+                    <Button size="sm" variant="outline" onClick={onRetry}>
+                      Retry
+                    </Button>
+                  </Alert.Root>
+                )}
                 <GitHubAccountSettings enabled={open} />
                 <AppearanceSettings
                   codeWrapMode={settings.codeWrap}
@@ -63,6 +90,8 @@ export const SettingsDialog = ({
                   onCodeWrapModeChange={actions.onCodeWrapModeChange}
                   onFontScaleChange={actions.onFontScaleChange}
                   onThemeModeChange={actions.onThemeModeChange}
+                  onWideLayoutChange={actions.onWideLayoutChange}
+                  onWideTablesChange={actions.onWideTablesChange}
                   onShowHtmlCommentsChange={actions.onShowHtmlCommentsChange}
                   onShowHighlightBoundariesChange={
                     actions.onShowHighlightBoundariesChange
@@ -70,6 +99,8 @@ export const SettingsDialog = ({
                   showHighlightBoundaries={settings.showHighlightBoundaries}
                   showHtmlComments={settings.showHtmlComments}
                   themeMode={settings.theme}
+                  wideLayout={settings.wideLayout}
+                  wideTables={settings.wideTables}
                 />
                 <DirectoryDiscoverySettings
                   excludedDirectories={settings.excludedDirectories}

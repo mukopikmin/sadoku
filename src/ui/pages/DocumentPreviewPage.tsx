@@ -68,8 +68,7 @@ export const DocumentPreviewPage = ({
     <Container
       as="main"
       overflowAnchor="none"
-      maxW="var(--document-max-width)"
-      css={{ "--document-max-width": "980px" }}
+      maxW="var(--preview-max-width)"
       px={{ base: "8", md: "12" }}
       pt="0"
       pb="8"

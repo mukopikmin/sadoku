@@ -21,6 +21,14 @@ type Props = {
   containerClassName?: string;
 };
 
+const scrollAreaProps = {
+  "aria-label": "Scrollable table",
+  role: "group",
+  tabIndex: 0,
+  maxW: "100%",
+  overflowX: "auto",
+} as const;
+
 export const ResizableMarkdownTable = ({
   startLine,
   containerClassName,
@@ -54,9 +62,8 @@ export const StaticMarkdownTable = ({
   containerClassName,
 }: Props) => (
   <Box
+    {...scrollAreaProps}
     className={containerClassName}
-    maxW="100%"
-    overflowX="auto"
     py="2"
     w="fit-content"
   >
@@ -113,12 +120,7 @@ const ManagedMarkdownTable = ({
           minW="0"
           maxW="100%"
         >
-          <Box
-            maxW="100%"
-            overflowX="auto"
-            tabIndex={0}
-            aria-label="Scrollable table"
-          >
+          <Box {...scrollAreaProps}>
             <Table.Root
               fontSize="inherit"
               m="0"

@@ -34,6 +34,8 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-theme");
   document.documentElement.removeAttribute("data-code-wrap");
   document.documentElement.removeAttribute("data-show-highlight-boundaries");
+  document.documentElement.removeAttribute("data-wide-layout");
+  document.documentElement.removeAttribute("data-wide-tables");
   document.documentElement.removeAttribute("style");
   globalThis.localStorage?.clear?.();
   TestEventSource.instances = [];
@@ -1106,85 +1108,113 @@ describe("App", () => {
     );
   });
 
-  it("defaults highlight boundaries off and saves and restores the toggle", async () => {
-    vi.stubGlobal("EventSource", TestEventSource);
-    let savedSettings: Record<string, unknown> = {};
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-        const url = String(input);
-        if (url === "/__sadoku/settings") {
-          if (init?.method === "PUT") {
-            savedSettings = JSON.parse(String(init.body));
+  it.each([
+    { label: "Show highlight boundaries", setting: "showHighlightBoundaries" },
+    { label: "Wide layout", setting: "wideLayout" },
+    { label: "Wide tables", setting: "wideTables" },
+  ])(
+    "defaults $label off and saves and restores the toggle",
+    async ({ label, setting }) => {
+      vi.stubGlobal("EventSource", TestEventSource);
+      let savedSettings: Record<string, unknown> = {};
+      let failNextSave = setting === "wideLayout";
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (url === "/__sadoku/settings") {
+            if (init?.method === "PUT") {
+              if (failNextSave) {
+                failNextSave = false;
+                return Promise.resolve(
+                  new Response("Offline", { status: 503 }),
+                );
+              }
+              savedSettings = {
+                ...savedSettings,
+                ...JSON.parse(String(init.body)),
+              };
+            }
+            return Promise.resolve(Response.json(savedSettings));
           }
-          return Promise.resolve(Response.json(savedSettings));
-        }
-        if (url === "/__sadoku/documents") {
-          return Promise.resolve(
-            Response.json([
-              { id: 1, relativePath: "test.md", title: "test.md" },
-            ]),
-          );
-        }
-        if (url === "/__sadoku/documents/1") {
-          return Promise.resolve(
-            Response.json({
-              fileUrl: "file:///tmp/test.md",
-              markdown: "# Title\n\nBody",
-              title: "test.md",
-            }),
-          );
-        }
-        if (url.endsWith("/comments")) {
-          return Promise.resolve(Response.json({ comments: [] }));
-        }
-        return Promise.resolve(new Response("Not found.", { status: 404 }));
-      }),
-    );
-    const app = render(<App />);
-    fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
-    await screen.findByText("Body");
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Open settings" }),
-    );
-    const toggle = await screen.findByRole<HTMLInputElement>("checkbox", {
-      name: "Show highlight boundaries",
-    });
-    expect(toggle.checked).toBe(false);
-    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
-      "false",
-    );
-    fireEvent.click(toggle);
-    await waitFor(() =>
-      expect(savedSettings.showHighlightBoundaries).toBe(true),
-    );
-    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
-      "true",
-    );
-    app.unmount();
+          if (url === "/__sadoku/documents") {
+            return Promise.resolve(
+              Response.json([
+                { id: 1, relativePath: "test.md", title: "test.md" },
+              ]),
+            );
+          }
+          if (url === "/__sadoku/documents/1") {
+            return Promise.resolve(
+              Response.json({
+                fileUrl: "file:///tmp/test.md",
+                markdown: "# Title\n\nBody",
+                title: "test.md",
+              }),
+            );
+          }
+          if (url.endsWith("/comments")) {
+            return Promise.resolve(Response.json({ comments: [] }));
+          }
+          return Promise.resolve(new Response("Not found.", { status: 404 }));
+        }),
+      );
+      const app = render(<App />);
+      fireEvent.click(await screen.findByRole("treeitem", { name: "test.md" }));
+      await screen.findByText("Body");
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Open settings" }),
+      );
+      const toggle = await screen.findByRole<HTMLInputElement>("checkbox", {
+        name: label,
+      });
+      expect(toggle.checked).toBe(false);
+      expect(document.documentElement.dataset[setting]).toBe("false");
+      fireEvent.click(toggle);
+      if (setting === "wideLayout") {
+        await screen.findByText("Could not save settings");
+        expect(toggle.checked).toBe(true);
+        expect(savedSettings.wideLayout).toBeUndefined();
+        fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      }
+      await waitFor(() => expect(savedSettings[setting]).toBe(true));
+      expect(document.documentElement.dataset[setting]).toBe("true");
+      app.unmount();
 
-    render(<App />);
-    await screen.findByText("Body");
-    await waitFor(() =>
-      expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
-        "true",
-      ),
-    );
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Open settings" }),
-    );
-    const restored = await screen.findByRole<HTMLInputElement>("checkbox", {
-      name: "Show highlight boundaries",
-    });
-    expect(restored.checked).toBe(true);
-    fireEvent.click(restored);
-    await waitFor(() =>
-      expect(savedSettings.showHighlightBoundaries).toBe(false),
-    );
-    expect(document.documentElement.dataset.showHighlightBoundaries).toBe(
-      "false",
-    );
-  });
+      render(<App />);
+      await screen.findByText("Body");
+      await waitFor(() =>
+        expect(document.documentElement.dataset[setting]).toBe("true"),
+      );
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Open settings" }),
+      );
+      const restored = await screen.findByRole<HTMLInputElement>("checkbox", {
+        name: label,
+      });
+      expect(restored.checked).toBe(true);
+      if (setting === "wideTables") {
+        const wideLayout = screen.getByRole("checkbox", {
+          name: "Wide layout",
+        });
+        fireEvent.click(wideLayout);
+        await waitFor(() => {
+          expect(savedSettings.wideLayout).toBe(true);
+          expect(restored.disabled).toBe(true);
+        });
+        expect(savedSettings.wideTables).toBe(true);
+        fireEvent.click(wideLayout);
+        await waitFor(() => {
+          expect(savedSettings.wideLayout).toBe(false);
+          expect(restored.disabled).toBe(false);
+        });
+        expect(restored.checked).toBe(true);
+      }
+      fireEvent.click(restored);
+      await waitFor(() => expect(savedSettings[setting]).toBe(false));
+      expect(document.documentElement.dataset[setting]).toBe("false");
+    },
+  );
 
   it("saves HTML comment visibility globally and restores it after remounting", async () => {
     vi.stubGlobal("EventSource", TestEventSource);

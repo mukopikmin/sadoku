@@ -69,14 +69,18 @@ Comments and replies support Markdown with GitHub-style line breaks;
 Mermaid diagrams render only in documents.
 Table columns can be resized by dragging or using the arrow keys on a focused
 header boundary. Widths are saved; use **Reset column widths** for automatic sizing.
-Standalone tables can extend past the text column and scroll horizontally when
-they exceed the available screen width.
+Tables fit the document column by default and scroll horizontally when they
+exceed the available width.
 Japanese fonts are bundled; see [font licenses](src/ui/public/fonts/noto-sans-jp/README.md).
 
 ### Settings and storage
 
-Appearance and review settings are available under **Settings**. Comments,
-instructions, memories, and table widths are saved in `sadoku.sqlite3` under:
+Appearance and review settings are available under **Settings**. Turn on
+**Wide layout** to use the available width throughout the preview. With
+**Wide layout** off, turn on **Wide tables** to let standalone tables extend
+past the text column.
+Comments, instructions, memories, and table widths are saved in
+`sadoku.sqlite3` under:
 
 - macOS: `~/Library/Application Support/sadoku/comments`
 - Linux: `$XDG_DATA_HOME/sadoku/comments` or `~/.local/share/sadoku/comments`
