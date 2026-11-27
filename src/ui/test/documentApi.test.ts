@@ -185,10 +185,33 @@ describe("statistics API conversion", () => {
         }),
       ),
     ).toEqual({
-      commentCount: { bot: 4, human: 12 },
+      commentCount: { bot: 4, human: 12, total: 16 },
       databaseSize: 1536,
       documentCount: 3,
     });
+  });
+
+  it("allows an unavailable file size and rejects inconsistent thread counts", () => {
+    const stats = create(GetStatisticsResponseSchema, {
+      commentCount: { human: 1n },
+      details: {
+        replyCount: {},
+        resolvedThreadCount: 1n,
+        staleThreadCount: 1n,
+      },
+    });
+    expect(toDatabaseStatistics(stats)).toMatchObject({
+      details: { unresolvedThreadCount: 0, resolvedThreadCount: 1 },
+    });
+    expect(toDatabaseStatistics(stats).databaseSize).toBeUndefined();
+    expect(() =>
+      toDatabaseStatistics(
+        create(GetStatisticsResponseSchema, {
+          commentCount: { human: 1n },
+          details: { replyCount: {}, resolvedThreadCount: 2n },
+        }),
+      ),
+    ).toThrow("Invalid statistics response.");
   });
 
   it("rejects missing counts and integers outside the safe range", () => {

@@ -95,6 +95,37 @@ type Comments struct {
 	GitHubHeadSHA          string    `json:"githubHeadSha,omitempty"`
 }
 
+type CommentCount struct {
+	Human uint64 `json:"human"`
+	Bot   uint64 `json:"bot"`
+}
+
+type DatabaseStatistics struct {
+	DocumentCount uint64                     `json:"documentCount"`
+	CommentCount  CommentCount               `json:"commentCount"`
+	DatabaseSize  *int64                     `json:"databaseSize,omitempty"`
+	Details       *DatabaseStatisticsDetails `json:"details,omitempty"`
+}
+
+type DatabaseStatisticsDetails struct {
+	ResolvedThreadCount         uint64       `json:"resolvedThreadCount"`
+	StaleThreadCount            uint64       `json:"staleThreadCount"`
+	ReplyCount                  CommentCount `json:"replyCount"`
+	RevisionCount               uint64       `json:"revisionCount"`
+	DocumentsWithRevisionsCount uint64       `json:"documentsWithRevisionsCount"`
+	LastRevisionAt              string       `json:"lastRevisionAt"`
+	TaggedDocumentCount         uint64       `json:"taggedDocumentCount"`
+	TagCount                    uint64       `json:"tagCount"`
+	MemoryCount                 uint64       `json:"memoryCount"`
+	DocumentInstructionCount    uint64       `json:"documentInstructionCount"`
+	GlobalInstructionCount      uint64       `json:"globalInstructionCount"`
+	ReusablePageBytes           uint64       `json:"reusablePageBytes"`
+	DatabasePath                string       `json:"databasePath"`
+	SQLiteVersion               string       `json:"sqliteVersion"`
+	LastMigrationVersion        string       `json:"lastMigrationVersion"`
+	LastMigrationAt             string       `json:"lastMigrationAt"`
+}
+
 // Repository is the persistence port shared by HTTP and command-line use cases.
 type Repository interface {
 	Ensure(context.Context, string) (Document, error)
@@ -126,7 +157,7 @@ type Repository interface {
 	GlobalInstructions(context.Context) ([]Note, error)
 	SaveGlobalInstruction(context.Context, Note) (Note, error)
 	DeleteGlobalInstruction(context.Context, int64) error
-	Statistics(context.Context) (any, error)
+	Statistics(context.Context, bool) (DatabaseStatistics, error)
 }
 
 func PositiveID(id int64) error {

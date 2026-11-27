@@ -98,6 +98,39 @@ func testRepository(t *testing.T) *Repository {
 	return &Repository{DB: database, Path: path}
 }
 
+func TestStatisticsUsesTheFileOpenedBySQLite(t *testing.T) {
+	r := testRepository(t)
+	info, err := os.Stat(r.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Path = filepath.Join(t.TempDir(), "missing.sqlite3")
+	stats, err := r.Statistics(t.Context(), true)
+	if err != nil || stats.DatabaseSize == nil || *stats.DatabaseSize != info.Size() {
+		t.Fatalf("statistics for the open database file = %+v, %v", stats, err)
+	}
+}
+
+func TestStatisticsKeepsCountsWhenFileSizeIsUnavailable(t *testing.T) {
+	database, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = database.Close() })
+	database.SetMaxOpenConns(1)
+	if err := db.Migrate(database); err != nil {
+		t.Fatal(err)
+	}
+	r := &Repository{DB: database}
+	if _, err := r.Ensure(t.Context(), "document.md"); err != nil {
+		t.Fatal(err)
+	}
+	stats, err := r.Statistics(t.Context(), true)
+	if err != nil || stats.DocumentCount != 1 || stats.DatabaseSize != nil {
+		t.Fatalf("statistics with missing file size = %+v, %v", stats, err)
+	}
+}
+
 func TestCommittedSavePublishesNotificationAfterCancellation(t *testing.T) {
 	r := testRepository(t)
 	doc, err := r.Ensure(t.Context(), "document.md")

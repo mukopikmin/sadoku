@@ -13,7 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Service struct{ Session *session.Session }
+type Service struct {
+	Session          *session.Session
+	HideDatabasePath bool
+}
 
 func invoke(ctx context.Context, s *Service, operation string, in, out proto.Message) error {
 	b, err := protojson.Marshal(in)

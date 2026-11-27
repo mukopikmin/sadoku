@@ -119,12 +119,12 @@ type gatedDirectoryRepository struct {
 	statisticsStarted, statisticsRelease           chan struct{}
 }
 
-func (r *gatedDirectoryRepository) Statistics(ctx context.Context) (any, error) {
+func (r *gatedDirectoryRepository) Statistics(ctx context.Context, includeDetails bool) (u.DatabaseStatistics, error) {
 	if r.statisticsStarted != nil {
 		close(r.statisticsStarted)
 		<-r.statisticsRelease
 	}
-	return r.Repository.Statistics(ctx)
+	return r.Repository.Statistics(ctx, includeDetails)
 }
 func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []string) ([]u.RegisteredDocument, error) {
 	close(r.registrationStarted)

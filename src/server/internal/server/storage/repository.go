@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/mukopikmin/sadoku/internal/server/db"
@@ -473,18 +472,4 @@ func remove(ctx context.Context, database *sql.DB, query string, args []any, nam
 }
 func (r *Repository) DeleteNote(ctx context.Context, kind string, docID, id int64) error {
 	return remove(ctx, r.DB, "DELETE FROM "+noteTable(kind)+" WHERE document_id=? AND id=?", []any{docID, id}, "Note")
-}
-func (r *Repository) Statistics(ctx context.Context) (any, error) {
-	var documents, human, bot int64
-	if err := r.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM comment_document").Scan(&documents); err != nil {
-		return nil, err
-	}
-	if err := r.DB.QueryRowContext(ctx, "SELECT COUNT(CASE WHEN author_type='human' THEN 1 END),COUNT(CASE WHEN author_type='bot' THEN 1 END) FROM comment").Scan(&human, &bot); err != nil {
-		return nil, err
-	}
-	var size int64
-	if info, err := os.Stat(r.Path); err == nil {
-		size = info.Size()
-	}
-	return map[string]any{"documentCount": documents, "commentCount": map[string]int64{"human": human, "bot": bot}, "databaseSize": size}, nil
 }

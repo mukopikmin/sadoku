@@ -67,7 +67,8 @@ func New(s *session.Session, options Options) (http.Handler, error) {
 			}
 		}
 	}
-	servicePath, handler := previewv1connect.NewPreviewServiceHandler(&api.Service{Session: s}, connect.WithReadMaxBytes(32<<20), connect.WithRequireConnectProtocolHeader())
+	service := &api.Service{Session: s, HideDatabasePath: options.TrustForwardedPrefix}
+	servicePath, handler := previewv1connect.NewPreviewServiceHandler(service, connect.WithReadMaxBytes(32<<20), connect.WithRequireConnectProtocolHeader())
 	// Match decoded paths, as the previous net/http router did.
 	r.mux.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

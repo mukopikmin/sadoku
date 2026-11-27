@@ -58,12 +58,34 @@ message PullRequest {
   string url = 4;
 }
 
-message GetStatisticsRequest {}
+message GetStatisticsRequest {
+  bool include_details = 1;
+}
 
 message GetStatisticsResponse {
   CommentCount comment_count = 1;
-  uint64 database_size = 2;
+  optional uint64 database_size = 2;
   uint64 document_count = 3;
+  DatabaseStatisticsDetails details = 4;
+}
+
+message DatabaseStatisticsDetails {
+  uint64 resolved_thread_count = 1;
+  uint64 stale_thread_count = 2;
+  CommentCount reply_count = 3;
+  uint64 revision_count = 4;
+  uint64 documents_with_revisions_count = 5;
+  string last_revision_at = 6;
+  uint64 tagged_document_count = 7;
+  uint64 tag_count = 8;
+  uint64 memory_count = 9;
+  uint64 document_instruction_count = 10;
+  uint64 global_instruction_count = 11;
+  uint64 reusable_page_bytes = 12;
+  string database_path = 13;
+  string sqlite_version = 14;
+  string last_migration_version = 15;
+  string last_migration_at = 16;
 }
 
 message CommentCount {
