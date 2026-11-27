@@ -91,12 +91,19 @@ For compatible coding agents, install the skills with
 | Initialize a document | `sadoku-init` | Establish the filename and title, create and register the document, and save writing guidance and optional memories before drafting. |
 | AI reviews and comments | `sadoku-review` | Read an existing document and post AI-authored findings without editing the body. |
 | AI acts on human comments | `sadoku-address-comments` | Apply human feedback, including human replies to AI findings, and reply for human confirmation. |
+| Carry recurring feedback forward | `sadoku-refine-instructions` | Review existing comment threads and turn durable preferences into shared Sadoku instructions. |
 
 ```sh
 apm install mukopikmin/sadoku --skill sadoku-init
 apm install mukopikmin/sadoku --skill sadoku-review
 apm install mukopikmin/sadoku --skill sadoku-address-comments
+apm install mukopikmin/sadoku --skill sadoku-refine-instructions
 ```
 
 Review findings and comment-response threads remain open for human confirmation.
 The comment-response skill also checks for useful document memories after work.
+
+When using `sadoku-refine-instructions`, specify relevant documents or supply
+example comment threads. Ask for a proposal to preview the edits, or ask to
+update global instructions to save supported changes. Existing comments and
+replies are enough to start. Include decision notes if already available.
