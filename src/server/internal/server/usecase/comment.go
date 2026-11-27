@@ -272,6 +272,9 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		if text == nil {
 			return doc, nil, Fail("invalid_argument", "Comment range is outside the Markdown source.")
 		}
+		if len(doc.Comments) > 0 && (doc.SourceSnapshot == nil || *doc.SourceSnapshot != markdown) {
+			doc = ResolveComments(doc, markdown)
+		}
 		id := int64(1)
 		for _, c := range doc.Comments {
 			id = max(id, c.ID+1)

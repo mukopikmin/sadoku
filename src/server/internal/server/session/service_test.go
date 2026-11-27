@@ -224,3 +224,35 @@ func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateCommentRebasesExistingAnchors(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "review.md")
+	if err := os.WriteFile(file, []byte("Heading\nOld body\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := New(t.Context(), file, directoryRepository(t), config.Defaults())
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := Input{DocumentID: ID(s.Documents[0].ID), StartLine: 2, EndLine: 2, Body: "First"}
+	if _, err := s.Invoke(t.Context(), "CreateComment", input); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, []byte("Heading\nInserted\nOld body\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	input.Body = "Second"
+	if _, err := s.Invoke(t.Context(), "CreateComment", input); err != nil {
+		t.Fatal(err)
+	}
+	result, err := s.Invoke(t.Context(), "ListComments", input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	comments := result.(u.Comments).Comments
+	if len(comments) != 2 || comments[0].StartLine != 3 || comments[0].OriginalStartLine != 2 ||
+		comments[0].CurrentSourceText == nil || *comments[0].CurrentSourceText != "Old body" ||
+		comments[1].StartLine != 2 {
+		t.Fatalf("unexpected anchors after adding the second comment: %+v", comments)
+	}
+}
