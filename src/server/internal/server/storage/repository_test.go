@@ -315,9 +315,9 @@ func TestDirectoryRegistrationIsAtomicAndCancellable(t *testing.T) {
 	if _, err = r.EnsureMany(ctx, []string{"cancelled.md"}); !errors.Is(err, context.Canceled) {
 		t.Fatalf("cancelled registration: %v", err)
 	}
-	documents, err = r.EnsureMany(context.Background(), []string{"second.md", "first.md"})
-	if err != nil || len(documents) != 2 || documents[0].FilePath != "second.md" || documents[1].FilePath != "first.md" {
-		t.Fatalf("batch order: %+v %v", documents, err)
+	registered, err := r.EnsureMany(context.Background(), []string{"second.md", "first.md"})
+	if err != nil || len(registered) != 2 || registered[0].FilePath != "second.md" || registered[1].FilePath != "first.md" {
+		t.Fatalf("batch order: %+v %v", registered, err)
 	}
 }
 
