@@ -1,4 +1,7 @@
+import type { CommentProgress } from "./comment";
+
 export type DocumentSummary = {
+  commentProgress?: CommentProgress;
   deleted: boolean;
   id: number;
   relativePath: string;

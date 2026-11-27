@@ -3,7 +3,7 @@ package http
 import "net/http"
 
 func (r *router) listDocuments(w http.ResponseWriter, req *http.Request) {
-	documents, err := r.session.ListDocuments(req.Context())
+	documents, err := r.session.ListDocuments(req.Context(), false)
 	if err != nil {
 		respondError(w, err)
 		return

@@ -15,6 +15,9 @@ import (
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
+	pb "github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1"
+	"github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1/previewv1connect"
 	"github.com/mukopikmin/sadoku/internal/server/cli"
 	"github.com/mukopikmin/sadoku/internal/server/config"
 )
@@ -168,6 +171,19 @@ func TestSSEWatchesAtomicSavesAndRecreatedFiles(t *testing.T) {
 		})
 	}
 }
+
+func TestSSEInvalidatesDocumentProgress(t *testing.T) {
+	_, server, _ := setup(t)
+	events, _ := eventStream(t, server.URL, "/__sadoku/events")
+	client := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL)
+	if _, err := client.CreateComment(t.Context(), connect.NewRequest(&pb.CreateCommentRequest{
+		DocumentId: 1, StartLine: 3, EndLine: 3, Body: "Review",
+	})); err != nil {
+		t.Fatal(err)
+	}
+	expectEvent(t, events, "documents")
+}
+
 func TestSSEIgnoresUnrelatedFilesAndReadAccess(t *testing.T) {
 	_, server, file := setup(t)
 	events, _ := eventStream(t, server.URL, "/__sadoku/documents/1/events")

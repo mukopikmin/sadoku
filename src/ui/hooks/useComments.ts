@@ -13,7 +13,7 @@ import {
   updateReply,
 } from "../api/comments";
 import type { Comment, CommentsDocument } from "../models/comment";
-import { commentsQueryKey } from "./previewQueryKeys";
+import { commentsQueryKey, documentsQueryKey } from "./previewQueryKeys";
 import { usePreviewDocumentQuery } from "./useDocuments";
 
 export const useCommentsQuery = (documentId?: number, enabled = true) =>
@@ -70,6 +70,9 @@ export const useCommentActions = (documentId?: number): CommentActions => {
       targetDocumentId,
     );
   };
+  const refreshDocumentProgress = () => {
+    void queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+  };
 
   const createCommentMutation = useMutation({
     mutationFn: ({
@@ -85,6 +88,7 @@ export const useCommentActions = (documentId?: number): CommentActions => {
     }) => createComment(startLine, body, endLine, targetDocumentId),
     onSuccess: (created, { targetDocumentId }) => {
       updateComments((comments) => [...comments, created], targetDocumentId);
+      refreshDocumentProgress();
     },
   });
   const updateCommentMutation = useMutation({
@@ -126,6 +130,7 @@ export const useCommentActions = (documentId?: number): CommentActions => {
         (comments) => comments.filter((comment) => comment.id !== id),
         targetDocumentId,
       );
+      refreshDocumentProgress();
     },
   });
   const updateReplyMutation = useMutation({
@@ -178,8 +183,10 @@ export const useCommentActions = (documentId?: number): CommentActions => {
       id: number;
       targetDocumentId?: number;
     }) => resolveComment(id, targetDocumentId),
-    onSuccess: (updated, { targetDocumentId }) =>
-      replaceComment(updated, targetDocumentId),
+    onSuccess: (updated, { targetDocumentId }) => {
+      replaceComment(updated, targetDocumentId);
+      refreshDocumentProgress();
+    },
   });
   const reopenCommentMutation = useMutation({
     mutationFn: ({
@@ -189,8 +196,10 @@ export const useCommentActions = (documentId?: number): CommentActions => {
       id: number;
       targetDocumentId?: number;
     }) => reopenComment(id, targetDocumentId),
-    onSuccess: (updated, { targetDocumentId }) =>
-      replaceComment(updated, targetDocumentId),
+    onSuccess: (updated, { targetDocumentId }) => {
+      replaceComment(updated, targetDocumentId);
+      refreshDocumentProgress();
+    },
   });
 
   return {

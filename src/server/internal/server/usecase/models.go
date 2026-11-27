@@ -13,13 +13,18 @@ func (e *Failure) Error() string      { return e.Message }
 func Fail(kind, message string) error { return &Failure{kind, message} }
 
 type Document struct {
-	ID           int64   `json:"id"`
-	FilePath     string  `json:"filePath,omitempty"`
-	RelativePath string  `json:"relativePath"`
-	Title        string  `json:"title"`
-	DisplayTitle *string `json:"displayTitle,omitempty"`
-	Deleted      bool    `json:"deleted"`
-	Tags         []Tag   `json:"tags"`
+	ID              int64            `json:"id"`
+	FilePath        string           `json:"filePath,omitempty"`
+	RelativePath    string           `json:"relativePath"`
+	Title           string           `json:"title"`
+	DisplayTitle    *string          `json:"displayTitle,omitempty"`
+	Deleted         bool             `json:"deleted"`
+	Tags            []Tag            `json:"tags"`
+	CommentProgress *CommentProgress `json:"commentProgress,omitempty"`
+}
+type CommentProgress struct {
+	Total    int64 `json:"total"`
+	Resolved int64 `json:"resolved"`
 }
 type RegisteredDocument struct {
 	Document
@@ -106,6 +111,8 @@ type Repository interface {
 	Snapshot(context.Context, int64) (*string, *string, error)
 	SaveComments(context.Context, int64, Comments) error
 	ReadComments(context.Context, int64) (Comments, error)
+	CommentProgress(context.Context, []int64) (map[int64]CommentProgress, error)
+	CommentsNotificationDirectory(context.Context) (string, error)
 	CommentsNotificationPath(context.Context, int64) (string, error)
 	CommentsNotificationSourcePath(context.Context, string) (string, error)
 	Revisions(context.Context, int64) ([]Revision, error)

@@ -44,10 +44,22 @@ func documentSummary(doc u.Document) (*pb.DocumentSummary, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &pb.DocumentSummary{
+	summary := &pb.DocumentSummary{
 		Id: id, RelativePath: doc.RelativePath, Title: doc.Title,
 		DisplayTitle: doc.DisplayTitle, Deleted: doc.Deleted, Tags: tags,
-	}, nil
+	}
+	if progress := doc.CommentProgress; progress != nil {
+		total, err := documentWireID(progress.Total)
+		if err != nil {
+			return nil, err
+		}
+		resolved, err := documentWireID(progress.Resolved)
+		if err != nil {
+			return nil, err
+		}
+		summary.CommentProgress = &pb.CommentProgress{Total: total, Resolved: resolved}
+	}
+	return summary, nil
 }
 
 func documentSummaryResponse(doc u.Document, err error) (*connect.Response[pb.DocumentSummary], error) {
@@ -61,8 +73,8 @@ func documentSummaryResponse(doc u.Document, err error) (*connect.Response[pb.Do
 	return documentResponse(summary), nil
 }
 
-func (s *Service) ListDocuments(ctx context.Context, _ *connect.Request[pb.ListDocumentsRequest]) (*connect.Response[pb.ListDocumentsResponse], error) {
-	docs, err := s.Session.ListDocuments(ctx)
+func (s *Service) ListDocuments(ctx context.Context, req *connect.Request[pb.ListDocumentsRequest]) (*connect.Response[pb.ListDocumentsResponse], error) {
+	docs, err := s.Session.ListDocuments(ctx, req.Msg.GetIncludeCommentProgress())
 	if err != nil {
 		return nil, rpcError(err)
 	}

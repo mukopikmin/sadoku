@@ -19,10 +19,28 @@ type DocumentPreview struct {
 	PreviousMarkdown, GitHubHeadSHA *string
 }
 
-func (s *Session) ListDocuments(ctx context.Context) ([]u.Document, error) {
+func (s *Session) ListDocuments(ctx context.Context, includeCommentProgress bool) ([]u.Document, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	docs := append([]u.Document{}, s.Documents...)
+	if includeCommentProgress {
+		storageIDs := make([]int64, len(docs))
+		for i, doc := range docs {
+			storageID, _, err := s.commentStorage(ctx, doc.ID, false)
+			if err != nil {
+				return nil, err
+			}
+			storageIDs[i] = storageID
+		}
+		progress, err := s.Repository.CommentProgress(ctx, storageIDs)
+		if err != nil {
+			return nil, err
+		}
+		for i, storageID := range storageIDs {
+			counts := progress[storageID]
+			docs[i].CommentProgress = &counts
+		}
+	}
 	for i := range docs {
 		tags, err := s.Repository.Tags(ctx, docs[i].ID)
 		if err != nil {

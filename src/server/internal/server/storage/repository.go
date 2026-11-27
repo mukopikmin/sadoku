@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -159,6 +160,38 @@ func (r *Repository) InitializeSnapshot(ctx context.Context, id int64, markdown 
 	}
 	return tx.Commit()
 }
+
+func (r *Repository) CommentProgress(ctx context.Context, ids []int64) (map[int64]u.CommentProgress, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	// Pass the IDs together to keep the query scoped to the session without a
+	// separate round trip per document or a bound parameter for every ID.
+	encodedIDs, err := json.Marshal(ids)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.DB.QueryContext(ctx, `
+		SELECT document_id, COUNT(*), COUNT(*) FILTER (WHERE resolved = 1)
+		FROM comment
+		WHERE document_id IN (SELECT value FROM json_each(?))
+		GROUP BY document_id`, string(encodedIDs))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	counts := make(map[int64]u.CommentProgress)
+	for rows.Next() {
+		var id int64
+		var progress u.CommentProgress
+		if err := rows.Scan(&id, &progress.Total, &progress.Resolved); err != nil {
+			return nil, err
+		}
+		counts[id] = progress
+	}
+	return counts, rows.Err()
+}
+
 func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, error) {
 	doc := u.Comments{Comments: []u.Comment{}}
 	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})

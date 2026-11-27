@@ -54,6 +54,8 @@ export type Comment = ActiveComment | StaleComment | ResolvedComment;
 
 export type UnresolvedComment = ActiveComment | StaleComment;
 
+export type CommentProgress = { total: number; resolved: number };
+
 export const isUnresolvedComment = (
   comment: Comment,
 ): comment is UnresolvedComment => comment.state !== "resolved";

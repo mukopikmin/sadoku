@@ -134,7 +134,7 @@ func TestReloadKeepsFilesCreatedPastDiscoveryLimit(t *testing.T) {
 		if err := s.ReloadDocuments(t.Context()); err != nil {
 			t.Fatal(err)
 		}
-		docs, err := s.ListDocuments(t.Context())
+		docs, err := s.ListDocuments(t.Context(), false)
 		if err != nil || len(docs) != 2 || docs[1].RelativePath != "existing.md" ||
 			docs[0].ID != created.ID || docs[0].Deleted != deleted ||
 			docs[0].DisplayTitle == nil || *docs[0].DisplayTitle != "Saved title" {

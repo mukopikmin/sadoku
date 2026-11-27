@@ -12,12 +12,14 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/mukopikmin/sadoku/internal/server/db"
 	"github.com/mukopikmin/sadoku/internal/server/session"
+	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type watchTarget struct {
 	path      string
 	resources []string
 	markdown  bool
+	directory bool
 }
 
 // Watch parent directories, not file handles: editor saves commonly rename a
@@ -49,6 +51,14 @@ func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
 			return
 		}
 		targets = append(targets, watchTarget{path: notification, resources: []string{"comments"}})
+	} else {
+		directory, err := r.session.Repository.CommentsNotificationDirectory(req.Context())
+		if err != nil {
+			r.session.Mu.Unlock()
+			respondError(w, err)
+			return
+		}
+		targets = append(targets, watchTarget{path: directory, resources: []string{"documents"}, directory: true})
 	}
 	r.session.Mu.Unlock()
 	var events <-chan fsnotify.Event
@@ -69,6 +79,9 @@ func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
 			}
 			targets[i].path = filepath.Clean(path)
 			parent := filepath.Dir(path)
+			if targets[i].directory {
+				parent = targets[i].path
+			}
 			if !parents[parent] {
 				if err = watcher.Add(parent); err != nil {
 					respondError(w, err)
@@ -116,6 +129,15 @@ func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
 				return
 			}
 			for _, target := range targets {
+				if target.directory {
+					if event.Has(fsnotify.Create|fsnotify.Write) &&
+						r.isSessionCommentNotification(filepath.Base(event.Name)) {
+						if err := send(target.resources); err != nil {
+							return
+						}
+					}
+					continue
+				}
 				same := filepath.Clean(event.Name) == target.path
 				if runtime.GOOS == "windows" {
 					same = strings.EqualFold(filepath.Clean(event.Name), target.path)
@@ -146,4 +168,20 @@ func (r *router) events(w http.ResponseWriter, req *http.Request, id int64) {
 			flusher.Flush()
 		}
 	}
+}
+
+func (r *router) isSessionCommentNotification(name string) bool {
+	hash, ok := strings.CutSuffix(name, ".changed")
+	if !ok {
+		return false
+	}
+	r.session.Mu.Lock()
+	defer r.session.Mu.Unlock()
+	for _, source := range r.session.Sources {
+		identity, _, _ := session.Source(source)
+		if u.HashSource(identity) == hash {
+			return true
+		}
+	}
+	return false
 }
