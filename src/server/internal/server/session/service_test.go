@@ -86,9 +86,9 @@ func TestCreationReportsTheSavedFileWhenRegistrationFails(t *testing.T) {
 			}
 			s.Prepare(context.Background(), config.Defaults())
 			s.Repository = failedRegistration{s.Repository, stage}
-			_, err = s.Invoke(context.Background(), "CreateDocument", Input{Filename: "saved", Title: "Title"})
+			_, err = s.CreateDocument(context.Background(), "", "saved", "Title")
 			var failure *u.Failure
-			if !errors.As(err, &failure) || failure.Kind != "internal" || failure.Message != "The file was created, but could not be added to the preview. Reopen this directory to load it." {
+			if !errors.As(err, &failure) || failure.Kind != "internal" || failure.Message != "The file was created, but could not be added to the preview. Reload the document list to load it." {
 				t.Fatalf("registration failure: %v", err)
 			}
 			contents, err := os.ReadFile(filepath.Join(root, "saved.md"))
@@ -135,16 +135,19 @@ func TestConcurrentRestoreReportsBusyAndClearsAfterCompletion(t *testing.T) {
 	t.Cleanup(unblock)
 	s.Repository = blockedRevision{repo, entered, release}
 	expected := "Current"
-	in := Input{DocumentID: ID(s.Documents[0].ID), RevisionID: ID(revisions[0].ID), ExpectedMarkdown: &expected}
+	id, revisionID := s.Documents[0].ID, revisions[0].ID
 	done := make(chan error, 1)
-	go func() { _, err := s.Invoke(context.Background(), "RestoreDocumentRevision", in); done <- err }()
+	go func() { err := s.RestoreDocumentRevision(context.Background(), id, revisionID, &expected); done <- err }()
 	select {
 	case <-entered:
 	case <-time.After(5 * time.Second):
 		t.Fatal("restore did not start")
 	}
 	second := make(chan error, 1)
-	go func() { _, err := s.Invoke(context.Background(), "RestoreDocumentRevision", in); second <- err }()
+	go func() {
+		err := s.RestoreDocumentRevision(context.Background(), id, revisionID, &expected)
+		second <- err
+	}()
 	select {
 	case err := <-second:
 		var failure *u.Failure
@@ -161,7 +164,7 @@ func TestConcurrentRestoreReportsBusyAndClearsAfterCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.Repository = repo
-	if _, err := s.Invoke(context.Background(), "RestoreDocumentRevision", in); err != nil {
+	if err := s.RestoreDocumentRevision(context.Background(), id, revisionID, &expected); err != nil {
 		t.Fatal("restore remained busy:", err)
 	}
 }
@@ -183,10 +186,15 @@ func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 			}
 			first := make(chan error, 1)
 			go func() {
-				result, err := s.Invoke(context.Background(), operation, Input{DocumentID: 1, StartLine: 1, EndLine: 1, Body: "Review"})
-				if err == nil && operation == "GetDocument" && result.(map[string]any)["displayTitle"] != "Updated while reading" {
-					err = fmt.Errorf("read returned an outdated title: %v", result)
+				if operation == "GetDocument" {
+					result, err := s.GetDocument(context.Background(), 1)
+					if err == nil && (result.DisplayTitle == nil || *result.DisplayTitle != "Updated while reading") {
+						err = fmt.Errorf("read returned an outdated title: %v", result.DisplayTitle)
+					}
+					first <- err
+					return
 				}
+				_, err := s.Invoke(context.Background(), operation, Input{DocumentID: 1, StartLine: 1, EndLine: 1, Body: "Review"})
 				first <- err
 			}()
 			select {
@@ -195,7 +203,7 @@ func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 				t.Fatal("Markdown read did not start")
 			}
 			second := make(chan error, 1)
-			go func() { _, err := s.Invoke(context.Background(), "GetDocument", Input{DocumentID: 2}); second <- err }()
+			go func() { _, err := s.GetDocument(context.Background(), 2); second <- err }()
 			select {
 			case err := <-second:
 				if err != nil {
@@ -206,7 +214,7 @@ func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 				_ = <-first
 				t.Fatal("slow Markdown read blocked another document")
 			}
-			if _, err := s.Invoke(context.Background(), "UpdateDocumentTitle", Input{DocumentID: 1, Title: "Updated while reading"}); err != nil {
+			if _, err := s.UpdateDocumentTitle(context.Background(), 1, "Updated while reading"); err != nil {
 				t.Fatal(err)
 			}
 			unblock()

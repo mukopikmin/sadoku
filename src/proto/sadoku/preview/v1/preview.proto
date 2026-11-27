@@ -41,6 +41,7 @@ service PreviewService {
   rpc UpdateReply(UpdateReplyRequest) returns (Comment);
   rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse);
   rpc ExportCommentToGitHub(ExportCommentToGitHubRequest) returns (ExportCommentToGitHubResponse);
+  rpc ReloadDocuments(ReloadDocumentsRequest) returns (ReloadDocumentsResponse);
 }
 
 message GetSessionRequest {}
@@ -307,3 +308,6 @@ message CommentProgress {
   uint64 total = 1;
   uint64 resolved = 2;
 }
+
+message ReloadDocumentsRequest {}
+message ReloadDocumentsResponse {}

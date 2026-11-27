@@ -59,6 +59,10 @@ func TestCanceledSaveRollsBackCommentsAndRevisionsWithoutNotification(t *testing
 	if _, err := r.DB.ExecContext(t.Context(), `CREATE TRIGGER cancel_comment_save AFTER INSERT ON comment BEGIN SELECT cancel_save(); END`); err != nil {
 		t.Fatal(err)
 	}
+	comments, err = r.ReadComments(t.Context(), doc.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	changed := "changed"
 	comments.SourceSnapshot = &changed
 	comments.Comments[0].Body = "changed review"
@@ -166,6 +170,10 @@ func TestCommentsAndRevisionsRollbackTogether(t *testing.T) {
 	before, err := os.ReadFile(notification)
 	if err != nil || len(before) == 0 {
 		t.Fatalf("missing committed-change notification: %q %v", before, err)
+	}
+	comments, err = r.ReadComments(t.Context(), doc.ID)
+	if err != nil {
+		t.Fatal(err)
 	}
 	changed := "changed"
 	comments.SourceSnapshot = &changed
@@ -307,9 +315,9 @@ func TestDirectoryRegistrationIsAtomicAndCancellable(t *testing.T) {
 	if _, err = r.EnsureMany(ctx, []string{"cancelled.md"}); !errors.Is(err, context.Canceled) {
 		t.Fatalf("cancelled registration: %v", err)
 	}
-	documents, err = r.EnsureMany(context.Background(), []string{"second.md", "first.md"})
-	if err != nil || len(documents) != 2 || documents[0].FilePath != "second.md" || documents[1].FilePath != "first.md" {
-		t.Fatalf("batch order: %+v %v", documents, err)
+	registered, err := r.EnsureMany(context.Background(), []string{"second.md", "first.md"})
+	if err != nil || len(registered) != 2 || registered[0].FilePath != "second.md" || registered[1].FilePath != "first.md" {
+		t.Fatalf("batch order: %+v %v", registered, err)
 	}
 }
 
@@ -331,5 +339,56 @@ func TestUnchangedTagUpdatePreservesItsTimestamp(t *testing.T) {
 	changed, err := r.SaveTag(t.Context(), tag)
 	if err != nil || changed.UpdatedAt == timestamp {
 		t.Fatalf("changed tag: %+v %v", changed, err)
+	}
+}
+
+func TestSaveCommentsRejectsStaleChangesAcrossConnections(t *testing.T) {
+	first := testRepository(t)
+	database, err := db.Open(first.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = database.Close() })
+	second := &Repository{DB: database, Path: first.Path}
+	ctx := t.Context()
+	doc, err := first.Ensure(ctx, "document.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	read := func(repo *Repository) u.Comments {
+		t.Helper()
+		comments, err := repo.ReadComments(ctx, doc.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return comments
+	}
+	add := func(comments u.Comments, body string) u.Comments {
+		t.Helper()
+		next, _, err := u.ChangeComment("CreateComment", comments, u.CommentInput{StartLine: 1, EndLine: 1, Body: body}, "source", db.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		return next
+	}
+	cli := add(read(first), "From CLI")
+	preview := add(read(second), "From preview")
+	if err := second.SaveComments(ctx, doc.ID, preview); err != nil {
+		t.Fatal(err)
+	}
+	var failure *u.Failure
+	if err := first.SaveComments(ctx, doc.ID, cli); !errors.As(err, &failure) || failure.Kind != "aborted" {
+		t.Fatalf("stale save returned %v", err)
+	}
+	latest := read(first)
+	if len(latest.Comments) != 1 || latest.Comments[0].Body != "From preview" {
+		t.Fatalf("stale save changed persisted comments: %+v", latest.Comments)
+	}
+	if err := first.SaveComments(ctx, doc.ID, add(latest, "From CLI")); err != nil {
+		t.Fatal(err)
+	}
+	saved := read(second).Comments
+	if len(saved) != 2 || saved[0].Body != "From preview" || saved[1].Body != "From CLI" {
+		t.Fatalf("retry lost comments: %+v", saved)
 	}
 }

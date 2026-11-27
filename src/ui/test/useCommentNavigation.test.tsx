@@ -97,6 +97,8 @@ describe("useCommentNavigation", () => {
         html={`<header></header>${preview(thread(1) + thread(2) + thread(3))}`}
       />,
     );
+    const root = container.querySelector(".markdown-preview")!.parentElement!;
+    const collect = vi.spyOn(root, "querySelectorAll");
     fireEvent.click(previous());
     expect(screen.getByRole("status").textContent).toBe("1 / 3");
     expect(
@@ -108,6 +110,7 @@ describe("useCommentNavigation", () => {
       window.dispatchEvent(new Event("scroll"));
     });
     expect(screen.getByRole("status").textContent).toBe("– / 3");
+    expect(collect).not.toHaveBeenCalled();
     expect(
       container.querySelector("[data-comment-navigation-current]"),
     ).toBeNull();
@@ -160,4 +163,35 @@ describe("useCommentNavigation", () => {
     unmount();
     expect(target.hasAttribute("data-comment-navigation-current")).toBe(false);
   });
+});
+
+it("updates membership when existing elements gain or lose their thread class", async () => {
+  const { container } = render(<Harness html={preview(thread(1))} />);
+  const target = container.querySelector(".comment-thread")!;
+  act(() => target.classList.remove("comment-thread"));
+  await waitFor(() =>
+    expect(screen.getByRole("status").textContent).toBe("– / 0"),
+  );
+  act(() => target.classList.add("comment-thread"));
+  await waitFor(() =>
+    expect(screen.getByRole("status").textContent).toBe("– / 1"),
+  );
+});
+
+it("skips position reads for highlight overlay mutations", async () => {
+  const { container } = render(
+    <Harness
+      html={preview(
+        thread(1) + '<div class="markdown-range-highlights"></div>',
+      )}
+    />,
+  );
+  const rect = vi.mocked(HTMLElement.prototype.getBoundingClientRect);
+  rect.mockClear();
+  await act(async () => {
+    container
+      .querySelector(".markdown-range-highlights")!
+      .append(document.createElement("div"));
+  });
+  expect(rect).not.toHaveBeenCalled();
 });

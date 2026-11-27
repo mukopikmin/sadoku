@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -34,19 +32,12 @@ type TagReference struct {
 	Name string `json:"name"`
 }
 type Input struct {
-	IncludeCommentProgress bool `json:"includeCommentProgress"`
-
 	ID                ID                `json:"id"`
 	DocumentID        ID                `json:"documentId"`
-	RevisionID        ID                `json:"revisionId"`
 	InstructionID     ID                `json:"instructionId"`
 	MemoryID          ID                `json:"memoryId"`
 	CommentID         ID                `json:"commentId"`
 	ReplyID           ID                `json:"replyId"`
-	Directory         string            `json:"directory"`
-	Filename          string            `json:"filename"`
-	Title             string            `json:"title"`
-	ExpectedMarkdown  *string           `json:"expectedMarkdown"`
 	Content           string            `json:"content"`
 	Name              string            `json:"name"`
 	BackgroundColor   string            `json:"backgroundColor"`
@@ -67,12 +58,6 @@ type Input struct {
 }
 
 func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, error) {
-	if operation == "RestoreDocumentRevision" && u.PositiveID(int64(in.DocumentID)) == nil && u.PositiveID(int64(in.RevisionID)) == nil {
-		if _, busy := s.restoring.LoadOrStore(in.DocumentID, struct{}{}); busy {
-			return nil, u.Fail("aborted", "A restore is already in progress.")
-		}
-		defer s.restoring.Delete(in.DocumentID)
-	}
 	if operation == "ExportCommentToGitHub" {
 		if !s.exporting.CompareAndSwap(false, true) {
 			return nil, exportFailure("export_busy")
@@ -112,59 +97,26 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 			return nil, u.Fail("unimplemented", "Directory status is unavailable.")
 		}
 		return *s.directoryStatus, nil
-	case "ListDocuments":
-		docs := append([]u.Document{}, s.Documents...)
-		if in.IncludeCommentProgress {
-			storageIDs := make([]int64, len(docs))
-			for i, doc := range docs {
-				storageID, _, err := s.commentStorage(ctx, doc.ID, false)
-				if err != nil {
-					return nil, err
-				}
-				storageIDs[i] = storageID
-			}
-			progress, err := r.CommentProgress(ctx, storageIDs)
-			if err != nil {
-				return nil, err
-			}
-			for i, storageID := range storageIDs {
-				counts := progress[storageID]
-				docs[i].CommentProgress = &counts
-			}
-		}
-		for i := range docs {
-			tags, err := r.Tags(ctx, docs[i].ID)
-			if err != nil {
-				return nil, err
-			}
-			docs[i].Tags = tags
-		}
-		return map[string]any{"documents": docs}, nil
 	case "ListTags":
 		tags, err := r.Tags(ctx, 0)
 		return map[string]any{"tags": tags}, err
-	case "UpdateTag", "CreateTag":
-		if operation == "UpdateTag" {
-			if err := u.PositiveID(int64(in.ID)); err != nil {
-				return nil, u.Fail("invalid_argument", "Tag id must be a positive integer.")
-			}
-		}
+	case "UpdateTag":
+		return s.UpdateTag(ctx, int64(in.ID), u.TagPatch{Name: &in.Name, BackgroundColor: &in.BackgroundColor})
+	case "CreateTag":
 		name := u.TrimSpace(in.Name)
 		if err := u.ValidateTagName(name); err != nil {
 			return nil, err
 		}
 		color := in.BackgroundColor
-		if color == "" && operation == "CreateTag" {
+		if color == "" {
 			color = "#718096"
 		}
-		if !regexp.MustCompile(`^#[0-9a-fA-F]{6}$`).MatchString(color) {
-			return nil, u.Fail("invalid_argument", "Tag background color must be a hexadecimal RGB color.")
+		color, err := tagColor(color)
+		if err != nil {
+			return nil, err
 		}
-		tag, err := r.SaveTag(ctx, u.Tag{ID: int64(in.ID), Name: name, BackgroundColor: strings.ToLower(color)})
-		if err != nil && strings.Contains(err.Error(), "UNIQUE") {
-			return nil, u.Fail("already_exists", "Tag name already exists.")
-		}
-		return tag, err
+		tag, err := r.SaveTag(ctx, u.Tag{ID: int64(in.ID), Name: name, BackgroundColor: color})
+		return tag, tagWriteError(err)
 	case "DeleteTag":
 		if err := u.PositiveID(int64(in.ID)); err != nil {
 			return nil, u.Fail("invalid_argument", "Tag id must be a positive integer.")
@@ -195,8 +147,6 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		}
 		note, err := r.SaveGlobalInstruction(ctx, u.Note{ID: noteID, Content: in.Content})
 		return note, noteFailure("instruction", err)
-	case "CreateDocument":
-		return s.createDocument(ctx, in)
 	}
 	doc, err := s.Find(id)
 	if err != nil {
@@ -206,114 +156,8 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 		return nil, err
 	}
 	switch operation {
-	case "UpdateDocumentTitle":
-		if strings.ContainsAny(in.Title, "\r\n\x00") {
-			return nil, u.Fail("invalid_argument", "Enter a single-line title.")
-		}
-		title := u.TrimSpace(in.Title)
-		var value *string
-		if title != "" {
-			value = &title
-		}
-		if err = r.SetTitle(ctx, id, value); err != nil {
-			return nil, err
-		}
-		doc.DisplayTitle = value
-		for i := range s.Documents {
-			if s.Documents[i].ID == id {
-				s.Documents[i] = doc
-			}
-		}
-		doc.Tags, err = r.Tags(ctx, id)
-		return doc, err
 	case "GetTableLayouts", "UpdateTableLayout":
 		return s.tableLayouts(ctx, operation, in)
-	case "GetDocument":
-		source := s.Sources[id]
-		githubHead := ""
-		if s.GitHub != nil {
-			githubHead = s.GitHub.HeadSHA
-		}
-		markdown, err := s.readOutsideLock(ctx, source)
-		if current, findErr := s.Find(id); findErr == nil && s.Sources[id] == source {
-			doc.DisplayTitle = current.DisplayTitle
-		}
-		if os.IsNotExist(err) {
-			doc.Deleted = true
-			snapshot, _, e := r.Snapshot(ctx, id)
-			if e != nil {
-				return nil, e
-			}
-			if snapshot == nil {
-				return nil, u.Fail("not_found", "Saved Markdown snapshot not found.")
-			}
-			markdown = *snapshot
-			err = nil
-		}
-		if err != nil {
-			return nil, err
-		}
-		if !doc.Deleted {
-			// A request may reach the document before the background queue does.
-			// Preserve the first successfully displayed content, as the old loader did.
-			if err = r.InitializeSnapshot(ctx, id, markdown); err != nil {
-				return nil, err
-			}
-		}
-		var current, previous *string
-		storageID, _, err := s.commentStorage(ctx, id, false)
-		if err != nil {
-			return nil, err
-		}
-		if storageID != 0 {
-			current, previous, err = r.Snapshot(ctx, storageID)
-		}
-		if err != nil {
-			return nil, err
-		}
-		if current != nil && *current != markdown {
-			previous = current
-		}
-		tags, err := r.Tags(ctx, id)
-		if err != nil {
-			return nil, err
-		}
-		_, _, remote := Source(source)
-		fileURL := source
-		if !remote {
-			path := filepath.ToSlash(fileURL)
-			if strings.HasPrefix(path, "//") {
-				host, rest, _ := strings.Cut(strings.TrimPrefix(path, "//"), "/")
-				fileURL = (&url.URL{Scheme: "file", Host: host, Path: "/" + rest}).String()
-			} else {
-				if filepath.VolumeName(fileURL) != "" {
-					path = "/" + path
-				}
-				fileURL = (&url.URL{Scheme: "file", Path: path}).String()
-			}
-		}
-		result := map[string]any{"id": doc.ID, "relativePath": doc.RelativePath, "fileUrl": fileURL, "markdown": markdown, "title": doc.Title, "deleted": doc.Deleted, "tags": tags, "canRestore": !remote && s.GitHub == nil}
-		if doc.DisplayTitle != nil {
-			result["displayTitle"] = *doc.DisplayTitle
-		}
-		if previous != nil && *previous != markdown {
-			result["previousMarkdown"] = *previous
-		}
-		if s.GitHub != nil {
-			result["githubHeadSha"] = githubHead
-		}
-		return result, nil
-	case "ListDocumentRevisions":
-		list, err := r.Revisions(ctx, id)
-		summaries := []map[string]any{}
-		for _, rev := range list {
-			summaries = append(summaries, map[string]any{"id": rev.ID, "recordedAt": rev.RecordedAt})
-		}
-		return map[string]any{"revisions": summaries}, err
-	case "GetDocumentRevision":
-		return r.Revision(ctx, id, int64(in.RevisionID))
-	case "RestoreDocumentRevision":
-		return struct{}{}, s.restore(ctx, doc, in)
 	case "ReplaceDocumentTags":
 		if len(in.Tags) > 20 {
 			return nil, u.Fail("invalid_argument", "A document can have at most 20 tags.")
@@ -468,140 +312,6 @@ func noteFailure(kind string, err error) error {
 		return u.Fail("invalid_argument", name+" content must not be empty.")
 	}
 	return err
-}
-
-var invalidFilename = regexp.MustCompile(`[\\/\x00-\x1f<>:"|?*]`)
-var reservedFilename = regexp.MustCompile(`(?i)^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)`)
-var invalidDirectoryComponent = regexp.MustCompile(`[\\:\x00-\x1f]`)
-
-func (s *Session) createDocument(ctx context.Context, in Input) (any, error) {
-	if !s.CanCreate || (s.directoryStatus != nil && s.directoryStatus.State != "ready") {
-		return nil, u.Fail("failed_precondition", "File creation is unavailable in this preview.")
-	}
-	name, title := u.TrimSpace(in.Filename), u.TrimSpace(in.Title)
-	invalid := name == "" || name == "." || name == ".." || invalidFilename.MatchString(name) || reservedFilename.MatchString(name) || strings.HasSuffix(name, ".") || strings.HasSuffix(name, " ") || strings.ContainsAny(title, "\r\n\x00")
-	if in.Directory != "" {
-		for _, part := range strings.Split(in.Directory, "/") {
-			if part == "" || part == "." || part == ".." || invalidDirectoryComponent.MatchString(part) {
-				invalid = true
-			}
-		}
-	}
-	if invalid {
-		return nil, u.Fail("invalid_argument", "Enter a valid filename, directory, and single-line title.")
-	}
-	if !strings.Contains(name, ".") {
-		name += ".md"
-	}
-	settings, _, err := config.Read()
-	if err != nil {
-		return nil, err
-	}
-	valid := false
-	for _, ext := range settings.MarkdownExtensions {
-		if strings.HasSuffix(strings.ToLower(name), strings.ToLower(ext)) {
-			valid = true
-		}
-	}
-	if !valid {
-		return nil, u.Fail("invalid_argument", "Use a configured Markdown file extension.")
-	}
-	path := filepath.Join(s.Root, filepath.FromSlash(in.Directory), name)
-	if err := createLocalDocument(s.Root, in.Directory, name); err != nil {
-		return nil, err
-	}
-
-	doc, err := s.Repository.Ensure(ctx, path)
-	if err != nil {
-		return nil, createdDocumentRegistrationFailure()
-	}
-	doc.DisplayTitle = nil
-	if title != "" {
-		doc.DisplayTitle = &title
-	}
-	if err = s.Repository.SetTitle(ctx, doc.ID, doc.DisplayTitle); err != nil {
-		return nil, createdDocumentRegistrationFailure()
-	}
-	if err = s.Repository.InitializeSnapshot(ctx, doc.ID, ""); err != nil {
-		return nil, createdDocumentRegistrationFailure()
-	}
-	rel, _ := filepath.Rel(s.Root, path)
-	doc.RelativePath = filepath.ToSlash(rel)
-	doc.Title = name
-	doc.Tags = []u.Tag{}
-	found := false
-	for i, d := range s.Documents {
-		if d.ID == doc.ID {
-			s.Documents[i] = doc
-			found = true
-		}
-	}
-	if !found {
-		s.Documents = append(s.Documents, doc)
-	}
-	s.Sources[doc.ID] = path
-	sortDocuments(s.Documents)
-	return doc, nil
-}
-
-func createdDocumentRegistrationFailure() error {
-	return u.Fail("internal", "The file was created, but could not be added to the preview. Reopen this directory to load it.")
-}
-func (s *Session) restore(ctx context.Context, doc u.Document, in Input) error {
-	_, _, remote := Source(s.Sources[doc.ID])
-	if remote || s.GitHub != nil {
-		return u.Fail("failed_precondition", "Only local files can be restored.")
-	}
-	revision, err := s.Repository.Revision(ctx, doc.ID, int64(in.RevisionID))
-	if err != nil {
-		return err
-	}
-	destination, err := ResolveLocal(s.Root, doc.FilePath, true)
-	if err != nil {
-		return err
-	}
-	contents, err := os.ReadFile(destination)
-	exists := err == nil
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	if (in.ExpectedMarkdown == nil && exists) || (in.ExpectedMarkdown != nil && (!exists || *in.ExpectedMarkdown != decodeText(contents, false))) {
-		return u.Fail("aborted", "The file has changed. Reload the document before restoring.")
-	}
-	if exists {
-		if err = s.Repository.RecordRevision(ctx, doc.ID, decodeText(contents, false)); err != nil {
-			return err
-		}
-	}
-	// Check again after archiving and before atomically replacing the file.
-	if err = SafeLocal(s.Root, doc.FilePath, true); err != nil {
-		return err
-	}
-	latest, readErr := os.ReadFile(destination)
-	if (readErr == nil) != exists || (exists && decodeText(latest, false) != decodeText(contents, false)) {
-		return u.Fail("aborted", "The file has changed. Reload the document before restoring.")
-	}
-	mode := os.FileMode(0600)
-	if info, e := os.Stat(destination); e == nil {
-		mode = info.Mode().Perm()
-	}
-	if err = config.AtomicWrite(destination, []byte(revision.Markdown), mode); err != nil {
-		return err
-	}
-	for i := range s.Documents {
-		if s.Documents[i].ID == doc.ID {
-			s.Documents[i].Deleted = false
-		}
-	}
-	comments, err := s.Repository.ReadComments(ctx, doc.ID)
-	if err != nil {
-		return err
-	}
-	comments = u.ResolveComments(comments, revision.Markdown)
-	if err = s.Repository.SaveComments(ctx, doc.ID, comments); err != nil {
-		return err
-	}
-	return s.Repository.RecordRevision(ctx, doc.ID, revision.Markdown)
 }
 
 func DecodeInput(b []byte) (Input, error) {

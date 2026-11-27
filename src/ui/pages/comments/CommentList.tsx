@@ -1,12 +1,4 @@
-import {
-  Badge,
-  Box,
-  Button,
-  Checkbox,
-  Flex,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, Checkbox, Flex, Stack, Text } from "@chakra-ui/react";
 import { Check, RotateCcw, Trash2 } from "lucide-react";
 import { type ReactNode } from "react";
 import type { CommentActions } from "../../api/commentActions";
@@ -123,7 +115,9 @@ export const CommentList = ({
     <Stack gap="4">
       <DocumentCommentProgress
         total={commentFilter.totalCount}
-        resolved={commentFilter.filters.resolved.comments.length}
+        resolved={
+          comments.filter((comment) => comment.state === "resolved").length
+        }
       />
       <Stack gap="2">
         <Flex aria-label="Comment filters" role="group" gap="4" wrap="wrap">
@@ -142,9 +136,6 @@ export const CommentList = ({
                 <Checkbox.Label>
                   {commentFilter.filters[filter].label}
                 </Checkbox.Label>
-                <Badge aria-hidden="true" size="sm" variant="solid">
-                  {commentFilter.filters[filter].comments.length}
-                </Badge>
               </Checkbox.Root>
             ),
           )}

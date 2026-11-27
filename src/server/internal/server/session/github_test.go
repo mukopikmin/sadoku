@@ -84,11 +84,10 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	if got := result.(u.Comments); len(got.Comments) != 1 || got.Comments[0].Body != "Review" {
 		t.Fatal(got)
 	}
-	result, err = s.Invoke(t.Context(), "ListDocuments", Input{IncludeCommentProgress: true})
+	summaries, err := s.ListDocuments(t.Context(), true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	summaries := result.(map[string]any)["documents"].([]u.Document)
 	if progress := summaries[0].CommentProgress; progress == nil || *progress != (u.CommentProgress{Total: 1}) {
 		t.Fatalf("progress for the PR document did not include canonical comments: %v", progress)
 	}

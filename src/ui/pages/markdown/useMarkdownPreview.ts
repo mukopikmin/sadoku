@@ -7,7 +7,6 @@ import {
 } from "../../markdown/commentable/commentRanges";
 import type { CommentRenderingContextValue } from "../../markdown/commentable/commentRendering";
 import { useCommentableBlockLayout } from "../../markdown/commentable/useCommentableBlockLayout";
-import { useCommentHighlightInteraction } from "../../markdown/commentable/useCommentHighlightInteraction";
 import { useCommentSelection } from "../../markdown/commentable/useCommentSelection";
 import { useMermaidRendering } from "../../markdown/useMermaidRendering";
 import { useHeadingHashNavigation } from "../../markdown/useHeadingHashNavigation";
@@ -46,25 +45,25 @@ export const useMarkdownPreview = ({
       );
   const renderedMarkdown = frontMatter?.bodyMarkdown ?? markdown;
   const previewRef = useRef<HTMLDivElement>(null);
+  const selectionAnchorRef = useRef<HTMLDivElement>(null);
   const [raw, setRaw] = useState<
     { status: "closed" } | { status: "open"; range: CommentRange }
   >({ status: "closed" });
   const [drafts] = useState(() => new Map<number, string>());
-  const { interactionRange, interactionProps } =
-    useCommentHighlightInteraction();
   const selection = useCommentSelection();
   const { closeCommentForm, openCommentForm, selectCommentRange } = selection;
   const selectedRange =
     selection.state.status === "none" ? undefined : selection.state.range;
   const activeRange =
     selection.state.status === "composing" ? selection.state.range : undefined;
-  const activeCommentLine = activeRange?.endLine;
+  const actionLine =
+    selection.state.status === "none" ? undefined : selection.state.actionLine;
   const rangeHighlights = useMemo(
     () => deriveRangeHighlights(activeComments, selectedRange),
     [activeComments, selectedRange],
   );
-  const { commentableLines, deletedRanges, rangeHighlightLayouts } =
-    useCommentableBlockLayout(previewRef, rangeHighlights, interactionRange);
+  const { commentableLines, deletedRanges } =
+    useCommentableBlockLayout(previewRef);
   const commentsByLine = useMemo(
     () => groupCommentsByAnchorLine(activeComments, commentableLines),
     [commentableLines, activeComments],
@@ -84,7 +83,7 @@ export const useMarkdownPreview = ({
   useMermaidRendering(
     undefined,
     [
-      activeCommentLine,
+      activeRange,
       comments,
       markdown,
       previousMarkdown,
@@ -98,7 +97,7 @@ export const useMarkdownPreview = ({
   const commentRenderingContext = useMemo<CommentRenderingContextValue>(
     () => ({
       actions,
-      activeCommentLine,
+      actionLine,
       activeRange,
       commentsByLine,
       drafts,
@@ -109,10 +108,11 @@ export const useMarkdownPreview = ({
       onOpenRawMarkdown: (range) => setRaw({ status: "open", range }),
       onSelectCommentRange: selectCommentRange,
       selectedRange,
+      selectionAnchorRef,
     }),
     [
       actions,
-      activeCommentLine,
+      actionLine,
       activeRange,
       closeCommentForm,
       commentsByLine,
@@ -131,11 +131,10 @@ export const useMarkdownPreview = ({
     frontMatterChanged,
     renderedMarkdown,
     previewRef,
-    rangeHighlightLayouts,
+    selectionAnchorRef,
     commentRenderingContext,
     deletedCommentsByLine,
     raw,
-    interactionProps,
     closeRaw: () => setRaw({ status: "closed" }),
   };
 };

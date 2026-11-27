@@ -69,6 +69,73 @@ describe("shared comment actions", () => {
     );
   });
 
+  it("moves the action anchor to the selected nested list item", async () => {
+    const { container } = renderMarkdown("- Parent\n  1. Nested item");
+    fireEvent.click(screen.getByText("Parent"));
+    const nestedItem = screen.getByText("Nested item");
+    fireEvent.click(nestedItem);
+
+    const actions = await screen.findByLabelText("Comment actions");
+    expect(
+      within(actions).getByLabelText("Add comment on line 2"),
+    ).not.toBeNull();
+    const listAnchors = container.querySelectorAll(
+      '.comment-markdown-list [data-part="anchor"]',
+    );
+    expect(listAnchors).toHaveLength(1);
+    expect(listAnchors[0].getAttribute("aria-hidden")).toBe("true");
+    expect(listAnchors[0].parentElement).toBe(
+      nestedItem.closest(".commentable-content"),
+    );
+  });
+
+  it.each([
+    "- Parent\n  - Nested item",
+    "> Parent\n> > Nested item",
+    "> Parent\n> Nested item",
+  ])(
+    "expands the action anchor when a selection grows upward in %s",
+    async (markdown) => {
+      const getRect = HTMLElement.prototype.getBoundingClientRect;
+      vi.spyOn(
+        HTMLElement.prototype,
+        "getBoundingClientRect",
+      ).mockImplementation(function (this: HTMLElement) {
+        if (this.matches('[data-source-line="1"] > .commentable-content')) {
+          return new DOMRect(24, 40, 600, 30);
+        }
+        if (this.matches('[data-source-line="2"] > .commentable-content')) {
+          return new DOMRect(64, 70, 560, 30);
+        }
+        return getRect.call(this);
+      });
+      const { container } = renderMarkdown(markdown);
+      fireEvent.click(screen.getByText("Nested item"));
+      expect(
+        screen
+          .getByText("Nested item")
+          .closest(".commentable-content")
+          ?.querySelector('[data-part="anchor"][aria-hidden="true"]'),
+      ).not.toBeNull();
+      const anchor = container.querySelector<HTMLElement>(
+        ".markdown-selection-anchor",
+      );
+      expect(anchor?.style.top).toBe("70px");
+      expect(anchor?.style.height).toBe("30px");
+
+      fireEvent.click(screen.getByText("Parent"), { shiftKey: true });
+      const actions = await screen.findByLabelText("Comment actions");
+      expect(
+        within(actions).getByLabelText("Add comment on lines 1-2"),
+      ).not.toBeNull();
+      expect(container.querySelector(".markdown-selection-anchor")).toBe(
+        anchor,
+      );
+      expect(anchor?.style.top).toBe("40px");
+      expect(anchor?.style.height).toBe("60px");
+    },
+  );
+
   it("moves actions to the end of a range and submits its original source lines", async () => {
     const onCreateComment = vi.fn(async () => {});
     const { container } = renderMarkdown("# Heading\n\nParagraph", [], {
@@ -86,6 +153,37 @@ describe("shared comment actions", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Add comment$/ }));
     await waitFor(() =>
       expect(onCreateComment).toHaveBeenCalledWith(1, "Review range", 3),
+    );
+  });
+
+  it("shows one set of actions and one composer when selecting across quoted lines", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    renderMarkdown("Introduction\n\n> First\n>\n> Second", [], {
+      onCreateComment,
+    });
+
+    fireEvent.click(screen.getByText("First"));
+    fireEvent.click(screen.getByText("Second"), { shiftKey: true });
+    expect(screen.getAllByLabelText("Comment actions")).toHaveLength(1);
+    expect(screen.getByLabelText("Add comment on lines 3-5")).not.toBeNull();
+
+    fireEvent.click(screen.getByText("Second"));
+    expect(screen.getAllByLabelText("Comment actions")).toHaveLength(1);
+    expect(
+      screen.getByLabelText("View raw Markdown for line 5"),
+    ).not.toBeNull();
+
+    fireEvent.click(screen.getByText("Introduction"), { shiftKey: true });
+    expect(screen.getAllByLabelText("Comment actions")).toHaveLength(1);
+    fireEvent.click(screen.getByLabelText("Add comment on lines 1-5"));
+
+    const composer = screen.getByRole("textbox", { name: "Comment body" });
+    fireEvent.change(composer, {
+      target: { value: "Review this range" },
+    });
+    fireEvent.keyDown(composer, { key: "Enter", ctrlKey: true });
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(1, "Review this range", 5),
     );
   });
 

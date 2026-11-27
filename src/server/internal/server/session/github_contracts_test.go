@@ -647,11 +647,19 @@ func TestGitHubRequestsKeepTheirSourceAndRecheckSessionChanges(t *testing.T) {
 				return f.in.DisplayedMarkdown, nil
 			}
 			type response struct {
-				value any
+				value DocumentPreview
 				err   error
 			}
 			done := make(chan response, 1)
-			go func() { value, err := f.s.Invoke(context.Background(), operation, f.in); done <- response{value, err} }()
+			go func() {
+				if operation == "GetDocument" {
+					value, err := f.s.GetDocument(context.Background(), id)
+					done <- response{value: value, err: err}
+					return
+				}
+				_, err := f.s.Invoke(context.Background(), "ExportCommentToGitHub", f.in)
+				done <- response{err: err}
+			}()
 			select {
 			case <-entered:
 			case <-time.After(5 * time.Second):
@@ -678,8 +686,8 @@ func TestGitHubRequestsKeepTheirSourceAndRecheckSessionChanges(t *testing.T) {
 				if result.err != nil {
 					t.Fatal(result.err)
 				}
-				value := result.value.(map[string]any)
-				if value["fileUrl"] != originalSource || value["githubHeadSha"] != f.in.HeadSHA || value["markdown"] != f.in.DisplayedMarkdown {
+				value := result.value
+				if value.FileURL != originalSource || value.GitHubHeadSHA == nil || *value.GitHubHeadSHA != f.in.HeadSHA || value.Markdown != f.in.DisplayedMarkdown {
 					t.Fatalf("mixed source heads: %v", value)
 				}
 			} else {

@@ -7,8 +7,9 @@ export type RangeHighlight = CommentRange & {
 };
 
 export type CommentRangeSelection = {
-  anchorLine?: number;
-  range?: CommentRange;
+  actionLine: number;
+  anchorLine: number;
+  range: CommentRange;
 };
 
 export const isLineInRange = (line: number, range: CommentRange): boolean =>
@@ -120,21 +121,24 @@ export const resolveCommentRangeSelection = (
   clickedRange: CommentRange,
   anchorLine: number | undefined,
   extend: boolean,
-): CommentRangeSelection => {
+): CommentRangeSelection | undefined => {
   if (
     currentRange?.startLine === clickedRange.startLine &&
     currentRange.endLine === clickedRange.endLine
   )
-    return {};
+    return undefined;
 
   if (!extend || anchorLine === undefined) {
     return {
+      actionLine: clickedRange.startLine,
       anchorLine: clickedRange.startLine,
       range: { ...clickedRange },
     };
   }
 
   return {
+    actionLine:
+      clickedRange.endLine >= anchorLine ? clickedRange.startLine : anchorLine,
     anchorLine,
     range: {
       endLine: Math.max(anchorLine, clickedRange.endLine),
