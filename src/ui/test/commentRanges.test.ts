@@ -98,6 +98,7 @@ describe("comment ranges", () => {
         false,
       ),
     ).toEqual({
+      actionLine: 3,
       anchorLine: 3,
       range: { startLine: 3, endLine: 3 },
     });
@@ -109,6 +110,7 @@ describe("comment ranges", () => {
         true,
       ),
     ).toEqual({
+      actionLine: 7,
       anchorLine: 3,
       range: { startLine: 3, endLine: 8 },
     });
@@ -120,6 +122,7 @@ describe("comment ranges", () => {
         false,
       ),
     ).toEqual({
+      actionLine: 1,
       anchorLine: 1,
       range: { startLine: 1, endLine: 1 },
     });
@@ -130,6 +133,6 @@ describe("comment ranges", () => {
         1,
         false,
       ),
-    ).toEqual({});
+    ).toBeUndefined();
   });
 });

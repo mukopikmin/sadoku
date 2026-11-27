@@ -108,6 +108,81 @@ describe("MarkdownPreview comments", () => {
     );
   });
 
+  it("posts a comment on a single quoted source line across Markdown breaks and formatting", async () => {
+    const onCreateComment = vi.fn(async () => {});
+    const { container } = renderMarkdown(
+      "Intro\r\n\r\n> **First\r\n> second**  \r\n> third\r\n>\r\n> > Fourth",
+      [],
+      { onCreateComment },
+    );
+    const blocks = container.querySelectorAll<HTMLElement>(
+      "blockquote [data-source-line]",
+    );
+    expect(
+      [...blocks].map((block) => [
+        block.dataset.sourceLine,
+        block.dataset.sourceEndLine,
+      ]),
+    ).toEqual([
+      ["3", "3"],
+      ["4", "4"],
+      ["5", "5"],
+      ["6", "6"],
+      ["7", "7"],
+    ]);
+    const second = screen.getByText("second", { selector: "strong" });
+    fireEvent.click(second);
+    fireEvent.click(screen.getByLabelText("Add comment on line 4"));
+    fireEvent.click(screen.getByRole("button", { name: "Suggest edit" }));
+    expect(container.querySelector("textarea")?.value).toBe(
+      "```suggest\n> second**  \n```",
+    );
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Review second line." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    await waitFor(() =>
+      expect(onCreateComment).toHaveBeenCalledWith(4, "Review second line.", 4),
+    );
+  });
+
+  it("keeps decoded newlines and trimmed code spans on their original quote lines", () => {
+    const { container } = renderMarkdown(
+      "> One &NewLine; two\n> three with `\n> code\n> ` end",
+    );
+    const line = (n: number) =>
+      container.querySelector(`[data-source-line="${n}"] p`);
+    expect(line(1)?.textContent).toMatch(/One\s+two/);
+    expect(line(2)?.textContent).toContain("three with");
+    expect(line(3)?.querySelector("code")?.textContent).toBe("code");
+    expect(line(4)?.textContent).toContain("end");
+  });
+
+  it("anchors an existing quote-wide thread once and extends a selection across quote lines", () => {
+    const comment: ActiveComment = {
+      author: { type: "human" },
+      body: "Review this quote.",
+      id: 1,
+      startLine: 1,
+      endLine: 3,
+      originalStartLine: 1,
+      originalEndLine: 3,
+      state: "active",
+      createdAt: "2026-06-05T00:00:00.000Z",
+      updatedAt: "2026-06-05T00:00:00.000Z",
+    };
+    renderMarkdown("> First\nlazy continuation\n> Third", [comment]);
+    expect(
+      screen
+        .getByText(comment.body)
+        .closest("[data-source-line]")
+        ?.getAttribute("data-source-line"),
+    ).toBe("3");
+    fireEvent.click(screen.getByText("First"));
+    fireEvent.click(screen.getByText("lazy continuation"), { shiftKey: true });
+    expect(screen.getByLabelText("Add comment on lines 1-2")).not.toBeNull();
+  });
+
   it("does not add duplicate source line controls for loose list paragraphs", () => {
     const { container } = renderMarkdown(`- Parent item
 

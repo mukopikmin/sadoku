@@ -29,6 +29,7 @@ import {
   type CommentControlProps,
   formatRangeLabel,
   SourceLineContext,
+  QuoteContext,
 } from "./commentRendering";
 
 export type CommentableBlockLayout = {
@@ -73,6 +74,7 @@ export const CommentableBlock = ({
   onOpenRawMarkdown,
   onSelectCommentRange,
   selectedRange,
+  selectionAnchorRef,
 }: CommentableBlockProps) => {
   const compact = useBreakpointValue(
     { base: true, md: false },
@@ -94,10 +96,12 @@ export const CommentableBlock = ({
   const draft = state.draft;
   const ancestorSourceLines = useContext(SourceLineContext);
   const listDepth = useContext(MarkdownListDepthContext);
-  const commentIndentEm =
-    listDepth === 0
-      ? 0
-      : markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm;
+  const inQuote = useContext(QuoteContext);
+  const inList = listDepth > 0;
+  const useSelectionBounds = inList || inQuote;
+  const commentIndentEm = inList
+    ? markdownTopLevelListIndentEm + (listDepth - 1) * markdownListIndentEm
+    : 0;
   const sourceLines = useMemo(() => {
     return new Set([...ancestorSourceLines, sourceRange.startLine]);
   }, [ancestorSourceLines, sourceRange.startLine]);
@@ -288,6 +292,18 @@ export const CommentableBlock = ({
   const anchor = (element: React.ReactElement) => (
     <Popover.Anchor asChild>{element}</Popover.Anchor>
   );
+  const blockContent = (
+    <Box className="commentable-content" onClick={composer.contentClick}>
+      {useSelectionBounds && gutter && (
+        <Popover.Anchor
+          as="span"
+          aria-hidden="true"
+          className="comment-selection-fallback-anchor"
+        />
+      )}
+      <Box className="comment-markdown-body">{content(children)}</Box>
+    </Box>
+  );
   const layout = renderLayout ? (
     renderLayout({
       blockProps,
@@ -298,11 +314,7 @@ export const CommentableBlock = ({
     })
   ) : (
     <Box {...blockProps}>
-      {anchor(
-        <Box className="commentable-content" onClick={composer.contentClick}>
-          <Box className="comment-markdown-body">{content(children)}</Box>
-        </Box>,
-      )}
+      {useSelectionBounds ? blockContent : anchor(blockContent)}
       {thread}
     </Box>
   );
@@ -315,12 +327,15 @@ export const CommentableBlock = ({
         if (!open) onCloseCommentForm();
       }}
       positioning={{
+        getAnchorElement: useSelectionBounds
+          ? () => selectionAnchorRef?.current ?? null
+          : undefined,
         placement: compact ? "top-start" : "left-start",
         strategy: "fixed",
         flip: compact ? true : ["top-start", "bottom-start"],
         slide: true,
-        // Keep actions reachable even when a code block is taller than the viewport.
-        overlap: true,
+        // Keep actions reachable even when a block anchored to its own content is taller than the viewport.
+        overlap: !useSelectionBounds,
         hideWhenDetached: true,
       }}
     >

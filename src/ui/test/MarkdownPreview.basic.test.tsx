@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import ReactMarkdown from "react-markdown";
 import { initializeMermaid } from "../markdown/mermaid";
 import { fireEvent, screen, waitFor, within } from "./testUtils";
 import { renderMarkdown } from "./markdownPreviewTestUtils";
 
+vi.mock("react-markdown", { spy: true });
 vi.mock("../markdown/mermaid", () => ({
   initializeMermaid: vi.fn(async () => {}),
 }));
@@ -10,6 +12,27 @@ vi.mock("../markdown/mermaid", () => ({
 afterEach(() => vi.mocked(initializeMermaid).mockReset());
 
 describe("MarkdownPreview basic rendering", () => {
+  it("moves the highlight between blocks without rendering the Markdown again", () => {
+    const { container } = renderMarkdown(
+      "[First link](#first)\n\nSecond paragraph",
+    );
+    vi.mocked(ReactMarkdown).mockClear();
+    const highlightLine = () =>
+      container
+        .querySelector(".markdown-range-highlight-hover")
+        ?.getAttribute("data-start-line");
+    const first = screen.getByRole("link", { name: "First link" });
+    const second = screen.getByText("Second paragraph");
+
+    fireEvent.focus(first);
+    expect(highlightLine()).toBe("1");
+    fireEvent.mouseOver(second);
+    expect(highlightLine()).toBe("3");
+    fireEvent.mouseOut(second, { relatedTarget: document.body });
+    expect(highlightLine()).toBe("1");
+    expect(ReactMarkdown).not.toHaveBeenCalled();
+  });
+
   it.each([true, false])(
     "applies HTML comment visibility %s without affecting ordinary Markdown",
     (shown) => {

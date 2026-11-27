@@ -5,10 +5,14 @@ import {
   deriveRangeHighlights,
   groupCommentsByAnchorLine,
 } from "../markdown/commentable/commentRanges";
+import type { ActiveComment } from "../models/comment";
 import { createComment, createCommentActions } from "./commentFixtures";
 
 describe("commentable block highlights", () => {
-  const comment = createComment({ startLine: 1, endLine: 10 });
+  const comment: ActiveComment = {
+    ...createComment({ startLine: 1, endLine: 10 }),
+    state: "active",
+  };
   const context: CommentRenderingContextValue = {
     actions: createCommentActions(),
     commentsByLine: groupCommentsByAnchorLine([comment], [1, 5, 10, 12]),
@@ -56,6 +60,23 @@ describe("commentable block highlights", () => {
     expect(
       getCommentableBlockProps(selectedContext, { startLine: 13, endLine: 13 })
         .hasRangeHighlight,
+    ).toBe(false);
+  });
+
+  it("hides selection controls when an updated block no longer contains the range end", () => {
+    const selectedRange = { startLine: 1, endLine: 3 };
+    const shortenedBlock = { startLine: 1, endLine: 2 };
+    const selectedContext = { ...context, selectedRange, actionLine: 1 };
+
+    expect(
+      getCommentableBlockProps(selectedContext, shortenedBlock)
+        .isRangeActionLine,
+    ).toBe(false);
+    expect(
+      getCommentableBlockProps(
+        { ...selectedContext, activeRange: selectedRange },
+        shortenedBlock,
+      ).isAdding,
     ).toBe(false);
   });
 });

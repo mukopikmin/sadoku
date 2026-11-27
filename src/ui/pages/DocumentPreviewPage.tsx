@@ -127,32 +127,45 @@ export const DocumentPreviewPage = ({
           </Alert.Content>
         </Alert.Root>
       )}
-      {view === "preview" && changes && (
-        <Text
-          role="status"
-          aria-label={`Changes since previous snapshot: ${changes.current.size} added lines, ${changes.previous.size} removed lines`}
-          fontSize="sm"
-          color="fg.muted"
-          mb="4"
-        >
-          Changes since previous snapshot: +{changes.current.size} / −
-          {changes.previous.size} lines
-        </Text>
-      )}
       {view === "preview" ? (
-        <Box className="document-preview-content" ref={previewRef}>
-          <MarkdownPreviewPage
-            documentId={documentId}
-            documentPath={documentPath}
-            key={`${documentId}-${settings.theme}-${settings.fontScale}`}
+        <>
+          {changes && (
+            <Text
+              role="status"
+              aria-label={`Changes since previous snapshot: ${changes.current.size} added lines, ${changes.previous.size} removed lines`}
+              fontSize="sm"
+              color="fg.muted"
+              mb="4"
+            >
+              Changes since previous snapshot: +{changes.current.size} / −
+              {changes.previous.size} lines
+            </Text>
+          )}
+          <Box className="document-preview-content" ref={previewRef}>
+            <MarkdownPreviewPage
+              documentId={documentId}
+              documentPath={documentPath}
+              key={`${documentId}-${settings.theme}-${settings.fontScale}`}
+              markdown={document.markdown}
+              previousMarkdown={
+                diff.state.status === "on"
+                  ? document.previousMarkdown
+                  : undefined
+              }
+              showHtmlComments={showHtmlComments}
+              theme={settings.theme === "dark" ? "dark" : "default"}
+            />
+          </Box>
+          <DocumentActionBar
+            commentNavigation={commentNavigation}
             markdown={document.markdown}
-            previousMarkdown={
-              diff.state.status === "on" ? document.previousMarkdown : undefined
-            }
-            showHtmlComments={showHtmlComments}
-            theme={settings.theme === "dark" ? "dark" : "default"}
+            diff={diff}
+            memoryCount={memoryCount}
+            onOpenInstructions={onOpenInstructions}
+            onOpenMemories={onOpenMemories}
+            onOpenRevisions={() => setRevisionsOpen(true)}
           />
-        </Box>
+        </>
       ) : (
         <CommentListPage
           documentId={documentId}
@@ -160,15 +173,6 @@ export const DocumentPreviewPage = ({
           onOpenComment={onOpenComment}
         />
       )}
-      <DocumentActionBar
-        commentNavigation={view === "preview" ? commentNavigation : undefined}
-        markdown={document.markdown}
-        diff={diff}
-        memoryCount={memoryCount}
-        onOpenInstructions={onOpenInstructions}
-        onOpenMemories={onOpenMemories}
-        onOpenRevisions={() => setRevisionsOpen(true)}
-      />
     </Container>
   );
 };

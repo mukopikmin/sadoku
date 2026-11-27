@@ -126,7 +126,7 @@ func (r *gatedDirectoryRepository) Statistics(ctx context.Context) (any, error) 
 	}
 	return r.Repository.Statistics(ctx)
 }
-func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []string) ([]u.Document, error) {
+func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []string) ([]u.RegisteredDocument, error) {
 	close(r.registrationStarted)
 	select {
 	case <-r.register:

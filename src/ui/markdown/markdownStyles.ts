@@ -129,19 +129,23 @@ export const markdownStyles = `
     display: contents;
   }
 
-  /* Individual block bounds are shown only by the boundary debug setting.
-     Table rows use the overlay directly: pseudo-elements create extra cells. */
-  .commentable-content:not(tr)::before {
-    content: "";
+  .commentable-content:not(tr)::before,
+  .comment-selection-fallback-anchor {
     position: absolute;
-    z-index: -1;
     top: 0;
     right: calc(-1 * var(--chakra-spacing-2));
     bottom: 0;
     left: calc(-1 * var(--chakra-spacing-2) - var(--comment-indent-offset, 0em));
+    pointer-events: none;
+  }
+
+  /* Individual block bounds are shown only by the boundary debug setting.
+     Table rows use the overlay directly: pseudo-elements create extra cells. */
+  .commentable-content:not(tr)::before {
+    content: "";
+    z-index: -1;
     border-radius: var(--chakra-radii-sm);
     background: var(--chakra-colors-transparent);
-    pointer-events: none;
   }
 
   /* Let the shared block/range highlight show through opaque Markdown surfaces. */

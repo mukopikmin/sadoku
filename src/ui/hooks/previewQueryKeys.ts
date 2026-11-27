@@ -2,16 +2,18 @@ import type { InstructionScope } from "../models/instruction";
 
 export const documentsQueryKey = ["documents"] as const;
 export const directoryStatusQueryKey = ["directory-status"] as const;
+export const previewDocumentsQueryKey = ["preview-document"] as const;
 export const previewDocumentQueryKey = (documentId?: number) =>
-  ["preview-document", documentId] as const;
+  [...previewDocumentsQueryKey, documentId] as const;
 export const documentRevisionsQueryKey = (documentId: number) =>
   ["document-revisions", documentId] as const;
 export const documentRevisionQueryKey = (
   documentId: number,
   revisionId?: number,
 ) => ["document-revision", documentId, revisionId] as const;
+export const allCommentsQueryKey = ["comments"] as const;
 export const commentsQueryKey = (documentId?: number) =>
-  ["comments", documentId] as const;
+  [...allCommentsQueryKey, documentId] as const;
 export const tableLayoutsQueryKey = (
   documentId: number | undefined,
   markdown: string,

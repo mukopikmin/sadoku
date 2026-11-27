@@ -487,9 +487,9 @@ describe("App", () => {
           .getAttribute("aria-selected"),
       ).toBe("true");
 
-      expect(screen.getByRole("button", { name: "Table of contents" })).toBe(
-        tocButton,
-      );
+      expect(
+        screen.queryByRole("button", { name: "Table of contents" }),
+      ).toBeNull();
       documentBottom = 180;
       fireEvent.scroll(globalThis);
       await waitFor(() => expect(header.queryByRole("tablist")).toBeNull());
@@ -1037,9 +1037,9 @@ describe("App", () => {
       }),
     );
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: "Document actions" })).toBe(
-        firstActionBar,
-      );
+      expect(
+        screen.queryByRole("dialog", { name: "Document actions" }),
+      ).toBeNull();
       expect(
         screen
           .getByRole("tab", {
@@ -1047,20 +1047,13 @@ describe("App", () => {
           })
           .getAttribute("aria-selected"),
       ).toBe("true");
-      expect(
-        screen.getByRole("button", { name: "Instructions" }),
-      ).not.toBeNull();
-      expect(screen.getByRole("button", { name: "Revisions" })).not.toBeNull();
-      expect(screen.getByTestId("action-bar-spacer")).not.toBeNull();
+      expect(screen.queryByTestId("action-bar-spacer")).toBeNull();
       expect(screen.getByRole("region", { name: "Document header" })).toBe(
         documentHeader,
       );
       expect(
         screen.getByRole("group", { name: "Document title actions" }),
       ).toBe(titleActions);
-      expect(screen.getByRole("button", { name: "Table of contents" })).toBe(
-        tableOfContentsButton,
-      );
     });
     fireEvent.click(screen.getByRole("tab", { name: "Preview" }));
 

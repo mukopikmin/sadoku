@@ -16,6 +16,7 @@ it("models selection, range extension and composing as exclusive states", () => 
   expect(result.current.state).toEqual({
     status: "selected",
     range: { startLine: 4, endLine: 5 },
+    actionLine: 4,
     anchorLine: 4,
   });
   act(() =>
@@ -28,6 +29,7 @@ it("models selection, range extension and composing as exclusive states", () => 
   expect(result.current.state).toEqual({
     status: "composing",
     range: { startLine: 1, endLine: 4 },
+    actionLine: 4,
     anchorLine: 4,
   });
   act(() => result.current.closeCommentForm());
@@ -52,6 +54,7 @@ it("deselects an identical range and exits the composer when selecting another l
   expect(result.current.state).toEqual({
     status: "selected",
     range: { startLine: 8, endLine: 8 },
+    actionLine: 8,
     anchorLine: 8,
   });
 });

@@ -56,6 +56,89 @@ func setup(t *testing.T) (*session.Session, *httptest.Server, string) {
 	t.Cleanup(server.Close)
 	return s, server, file
 }
+
+func TestReloadDocuments(t *testing.T) {
+	_, server, original := setup(t)
+	client := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL, connect.WithProtoJSON())
+	list := func() []*pb.DocumentSummary {
+		t.Helper()
+		response, err := client.ListDocuments(t.Context(), connect.NewRequest(&pb.ListDocumentsRequest{}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return response.Msg.Documents
+	}
+	reload := func() error {
+		_, err := client.ReloadDocuments(t.Context(), connect.NewRequest(&pb.ReloadDocumentsRequest{}))
+		return err
+	}
+	documents := list()
+	if len(documents) != 1 {
+		t.Fatalf("initial documents: %v", documents)
+	}
+	originalID := documents[0].Id
+	_, err := client.UpdateDocumentTitle(t.Context(), connect.NewRequest(&pb.UpdateDocumentTitleRequest{
+		DocumentId: originalID, Title: "Saved title",
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Dir(original)
+	added := filepath.Join(root, "added.md")
+	if err := os.WriteFile(added, []byte("# Added\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(original); err != nil {
+		t.Fatal(err)
+	}
+	if documents = list(); len(documents) != 1 || documents[0].Deleted {
+		t.Fatalf("documents before reload: %v", documents)
+	}
+	if err := reload(); err != nil {
+		t.Fatal(err)
+	}
+	documents = list()
+	if len(documents) != 2 || documents[0].RelativePath != "added.md" || documents[0].Deleted ||
+		documents[1].Id != originalID || !documents[1].Deleted || documents[1].GetDisplayTitle() != "Saved title" {
+		t.Fatalf("documents after reload: %v", documents)
+	}
+	addedID := documents[0].Id
+
+	if err := os.Rename(root, root+"-moved"); err != nil {
+		t.Fatal(err)
+	}
+	if err := reload(); connect.CodeOf(err) != connect.CodeInternal {
+		t.Fatalf("reload with missing directory: %v", err)
+	}
+	if documents = list(); len(documents) != 2 || documents[0].Id != addedID || !documents[1].Deleted {
+		t.Fatalf("documents after failed reload: %v", documents)
+	}
+	if err := os.Rename(root+"-moved", root); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(added, original); err != nil {
+		t.Fatal(err)
+	}
+	binaryClient := previewv1connect.NewPreviewServiceClient(server.Client(), server.URL)
+	if _, err := binaryClient.ReloadDocuments(t.Context(), connect.NewRequest(&pb.ReloadDocumentsRequest{})); err != nil {
+		t.Fatal(err)
+	}
+	documents = list()
+	if len(documents) != 2 || documents[0].Id != addedID || !documents[0].Deleted ||
+		documents[1].Id != originalID || documents[1].Deleted || documents[1].GetDisplayTitle() != "Saved title" {
+		t.Fatalf("documents after recovery: %v", documents)
+	}
+	for _, document := range documents {
+		response, err := client.GetDocument(t.Context(), connect.NewRequest(&pb.GetDocumentRequest{DocumentId: document.Id}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if response.Msg.Deleted != document.Deleted || response.Msg.Markdown != "# Added\n" {
+			t.Fatalf("document %d after recovery: %v", document.Id, response.Msg)
+		}
+	}
+}
+
 func TestConnectWorkflow(t *testing.T) {
 	for _, jsonCodec := range []bool{true, false} {
 		t.Run(map[bool]string{true: "JSON", false: "Protobuf"}[jsonCodec], func(t *testing.T) {

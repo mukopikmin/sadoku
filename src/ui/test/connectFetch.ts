@@ -213,6 +213,7 @@ const json = (method: string, body: unknown): RequestInit => ({
   if (!method) return globalThis.fetch(input, init);
   if (
     method === "GetSession" ||
+    method === "ReloadDocuments" ||
     method === "GetStatistics" ||
     method === "CreateDocument" ||
     method === "UpdateDocumentTitle" ||
