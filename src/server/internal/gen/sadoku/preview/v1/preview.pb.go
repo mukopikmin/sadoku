@@ -290,25 +290,14 @@ func (x *GetStatisticsResponse) GetDetails() *DatabaseStatisticsDetails {
 }
 
 type DatabaseStatisticsDetails struct {
-	state                       protoimpl.MessageState `protogen:"open.v1"`
-	ResolvedThreadCount         uint64                 `protobuf:"varint,1,opt,name=resolved_thread_count,json=resolvedThreadCount,proto3" json:"resolved_thread_count,omitempty"`
-	StaleThreadCount            uint64                 `protobuf:"varint,2,opt,name=stale_thread_count,json=staleThreadCount,proto3" json:"stale_thread_count,omitempty"`
-	ReplyCount                  *CommentCount          `protobuf:"bytes,3,opt,name=reply_count,json=replyCount,proto3" json:"reply_count,omitempty"`
-	RevisionCount               uint64                 `protobuf:"varint,4,opt,name=revision_count,json=revisionCount,proto3" json:"revision_count,omitempty"`
-	DocumentsWithRevisionsCount uint64                 `protobuf:"varint,5,opt,name=documents_with_revisions_count,json=documentsWithRevisionsCount,proto3" json:"documents_with_revisions_count,omitempty"`
-	LastRevisionAt              string                 `protobuf:"bytes,6,opt,name=last_revision_at,json=lastRevisionAt,proto3" json:"last_revision_at,omitempty"`
-	TaggedDocumentCount         uint64                 `protobuf:"varint,7,opt,name=tagged_document_count,json=taggedDocumentCount,proto3" json:"tagged_document_count,omitempty"`
-	TagCount                    uint64                 `protobuf:"varint,8,opt,name=tag_count,json=tagCount,proto3" json:"tag_count,omitempty"`
-	MemoryCount                 uint64                 `protobuf:"varint,9,opt,name=memory_count,json=memoryCount,proto3" json:"memory_count,omitempty"`
-	DocumentInstructionCount    uint64                 `protobuf:"varint,10,opt,name=document_instruction_count,json=documentInstructionCount,proto3" json:"document_instruction_count,omitempty"`
-	GlobalInstructionCount      uint64                 `protobuf:"varint,11,opt,name=global_instruction_count,json=globalInstructionCount,proto3" json:"global_instruction_count,omitempty"`
-	ReusablePageBytes           uint64                 `protobuf:"varint,12,opt,name=reusable_page_bytes,json=reusablePageBytes,proto3" json:"reusable_page_bytes,omitempty"`
-	DatabasePath                string                 `protobuf:"bytes,13,opt,name=database_path,json=databasePath,proto3" json:"database_path,omitempty"`
-	SqliteVersion               string                 `protobuf:"bytes,14,opt,name=sqlite_version,json=sqliteVersion,proto3" json:"sqlite_version,omitempty"`
-	LastMigrationVersion        string                 `protobuf:"bytes,15,opt,name=last_migration_version,json=lastMigrationVersion,proto3" json:"last_migration_version,omitempty"`
-	LastMigrationAt             string                 `protobuf:"bytes,16,opt,name=last_migration_at,json=lastMigrationAt,proto3" json:"last_migration_at,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
+	state                               protoimpl.MessageState `protogen:"open.v1"`
+	ResolvedThreadCount                 uint64                 `protobuf:"varint,1,opt,name=resolved_thread_count,json=resolvedThreadCount,proto3" json:"resolved_thread_count,omitempty"`
+	ReplyCount                          *CommentCount          `protobuf:"bytes,3,opt,name=reply_count,json=replyCount,proto3" json:"reply_count,omitempty"`
+	RevisionCount                       uint64                 `protobuf:"varint,4,opt,name=revision_count,json=revisionCount,proto3" json:"revision_count,omitempty"`
+	DocumentsWithCommentsCount          uint64                 `protobuf:"varint,17,opt,name=documents_with_comments_count,json=documentsWithCommentsCount,proto3" json:"documents_with_comments_count,omitempty"`
+	DocumentsWithUnresolvedThreadsCount uint64                 `protobuf:"varint,18,opt,name=documents_with_unresolved_threads_count,json=documentsWithUnresolvedThreadsCount,proto3" json:"documents_with_unresolved_threads_count,omitempty"`
+	unknownFields                       protoimpl.UnknownFields
+	sizeCache                           protoimpl.SizeCache
 }
 
 func (x *DatabaseStatisticsDetails) Reset() {
@@ -348,13 +337,6 @@ func (x *DatabaseStatisticsDetails) GetResolvedThreadCount() uint64 {
 	return 0
 }
 
-func (x *DatabaseStatisticsDetails) GetStaleThreadCount() uint64 {
-	if x != nil {
-		return x.StaleThreadCount
-	}
-	return 0
-}
-
 func (x *DatabaseStatisticsDetails) GetReplyCount() *CommentCount {
 	if x != nil {
 		return x.ReplyCount
@@ -369,88 +351,18 @@ func (x *DatabaseStatisticsDetails) GetRevisionCount() uint64 {
 	return 0
 }
 
-func (x *DatabaseStatisticsDetails) GetDocumentsWithRevisionsCount() uint64 {
+func (x *DatabaseStatisticsDetails) GetDocumentsWithCommentsCount() uint64 {
 	if x != nil {
-		return x.DocumentsWithRevisionsCount
+		return x.DocumentsWithCommentsCount
 	}
 	return 0
 }
 
-func (x *DatabaseStatisticsDetails) GetLastRevisionAt() string {
+func (x *DatabaseStatisticsDetails) GetDocumentsWithUnresolvedThreadsCount() uint64 {
 	if x != nil {
-		return x.LastRevisionAt
-	}
-	return ""
-}
-
-func (x *DatabaseStatisticsDetails) GetTaggedDocumentCount() uint64 {
-	if x != nil {
-		return x.TaggedDocumentCount
+		return x.DocumentsWithUnresolvedThreadsCount
 	}
 	return 0
-}
-
-func (x *DatabaseStatisticsDetails) GetTagCount() uint64 {
-	if x != nil {
-		return x.TagCount
-	}
-	return 0
-}
-
-func (x *DatabaseStatisticsDetails) GetMemoryCount() uint64 {
-	if x != nil {
-		return x.MemoryCount
-	}
-	return 0
-}
-
-func (x *DatabaseStatisticsDetails) GetDocumentInstructionCount() uint64 {
-	if x != nil {
-		return x.DocumentInstructionCount
-	}
-	return 0
-}
-
-func (x *DatabaseStatisticsDetails) GetGlobalInstructionCount() uint64 {
-	if x != nil {
-		return x.GlobalInstructionCount
-	}
-	return 0
-}
-
-func (x *DatabaseStatisticsDetails) GetReusablePageBytes() uint64 {
-	if x != nil {
-		return x.ReusablePageBytes
-	}
-	return 0
-}
-
-func (x *DatabaseStatisticsDetails) GetDatabasePath() string {
-	if x != nil {
-		return x.DatabasePath
-	}
-	return ""
-}
-
-func (x *DatabaseStatisticsDetails) GetSqliteVersion() string {
-	if x != nil {
-		return x.SqliteVersion
-	}
-	return ""
-}
-
-func (x *DatabaseStatisticsDetails) GetLastMigrationVersion() string {
-	if x != nil {
-		return x.LastMigrationVersion
-	}
-	return ""
-}
-
-func (x *DatabaseStatisticsDetails) GetLastMigrationAt() string {
-	if x != nil {
-		return x.LastMigrationAt
-	}
-	return ""
 }
 
 type CommentCount struct {
@@ -4765,26 +4677,14 @@ const file_sadoku_preview_v1_preview_proto_rawDesc = "" +
 	"\rdatabase_size\x18\x02 \x01(\x04H\x00R\fdatabaseSize\x88\x01\x01\x12%\n" +
 	"\x0edocument_count\x18\x03 \x01(\x04R\rdocumentCount\x12F\n" +
 	"\adetails\x18\x04 \x01(\v2,.sadoku.preview.v1.DatabaseStatisticsDetailsR\adetailsB\x10\n" +
-	"\x0e_database_size\"\x9f\x06\n" +
+	"\x0e_database_size\"\xdd\x02\n" +
 	"\x19DatabaseStatisticsDetails\x122\n" +
-	"\x15resolved_thread_count\x18\x01 \x01(\x04R\x13resolvedThreadCount\x12,\n" +
-	"\x12stale_thread_count\x18\x02 \x01(\x04R\x10staleThreadCount\x12@\n" +
+	"\x15resolved_thread_count\x18\x01 \x01(\x04R\x13resolvedThreadCount\x12@\n" +
 	"\vreply_count\x18\x03 \x01(\v2\x1f.sadoku.preview.v1.CommentCountR\n" +
 	"replyCount\x12%\n" +
-	"\x0erevision_count\x18\x04 \x01(\x04R\rrevisionCount\x12C\n" +
-	"\x1edocuments_with_revisions_count\x18\x05 \x01(\x04R\x1bdocumentsWithRevisionsCount\x12(\n" +
-	"\x10last_revision_at\x18\x06 \x01(\tR\x0elastRevisionAt\x122\n" +
-	"\x15tagged_document_count\x18\a \x01(\x04R\x13taggedDocumentCount\x12\x1b\n" +
-	"\ttag_count\x18\b \x01(\x04R\btagCount\x12!\n" +
-	"\fmemory_count\x18\t \x01(\x04R\vmemoryCount\x12<\n" +
-	"\x1adocument_instruction_count\x18\n" +
-	" \x01(\x04R\x18documentInstructionCount\x128\n" +
-	"\x18global_instruction_count\x18\v \x01(\x04R\x16globalInstructionCount\x12.\n" +
-	"\x13reusable_page_bytes\x18\f \x01(\x04R\x11reusablePageBytes\x12#\n" +
-	"\rdatabase_path\x18\r \x01(\tR\fdatabasePath\x12%\n" +
-	"\x0esqlite_version\x18\x0e \x01(\tR\rsqliteVersion\x124\n" +
-	"\x16last_migration_version\x18\x0f \x01(\tR\x14lastMigrationVersion\x12*\n" +
-	"\x11last_migration_at\x18\x10 \x01(\tR\x0flastMigrationAt\"6\n" +
+	"\x0erevision_count\x18\x04 \x01(\x04R\rrevisionCount\x12A\n" +
+	"\x1ddocuments_with_comments_count\x18\x11 \x01(\x04R\x1adocumentsWithCommentsCount\x12T\n" +
+	"'documents_with_unresolved_threads_count\x18\x12 \x01(\x04R#documentsWithUnresolvedThreadsCountJ\x04\b\x02\x10\x03J\x04\b\x05\x10\x11\"6\n" +
 	"\fCommentCount\x12\x10\n" +
 	"\x03bot\x18\x01 \x01(\x04R\x03bot\x12\x14\n" +
 	"\x05human\x18\x02 \x01(\x04R\x05human\"T\n" +

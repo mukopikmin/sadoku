@@ -1,5 +1,4 @@
 import {
-  Box,
   CloseButton,
   Dialog,
   Flex,
@@ -24,15 +23,22 @@ const formatSize = (bytes: number | undefined): string => {
   return `${value.toFixed(value < 10 ? 1 : 0)} ${unit}`;
 };
 
-const formatDate = (value: string): string => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Unavailable" : date.toLocaleString();
-};
-
 const formatCount = (value: number) => value.toLocaleString();
 
-const formatAuthors = ({ human, bot }: DatabaseStatistics["commentCount"]) =>
-  `${formatCount(human)} human · ${formatCount(bot)} bot`;
+const formatCountByAuthor = ({
+  total,
+  human,
+  bot,
+}: DatabaseStatistics["commentCount"]) =>
+  `${formatCount(total)} (Human ${formatCount(human)} · Bot ${formatCount(bot)})`;
+
+const formatResolutionRate = (resolved: number, total: number): string => {
+  if (total === 0) return "—";
+  const rate = (resolved / total).toLocaleString(undefined, {
+    style: "percent",
+  });
+  return `${rate} (${formatCount(resolved)} of ${formatCount(total)} resolved)`;
+};
 
 const StatisticsRows = ({ rows }: { rows: [string, string][] }) => (
   <Flex as="dl" direction="column" gap="3">
@@ -60,104 +66,49 @@ const StatisticsRows = ({ rows }: { rows: [string, string][] }) => (
   </Flex>
 );
 
-const StatisticsDetails = ({
-  commentCount,
-  details,
-}: {
-  commentCount: DatabaseStatistics["commentCount"];
-  details: NonNullable<DatabaseStatistics["details"]>;
-}) => {
-  const latestMigration = details.lastMigrationVersion
-    ? `${details.lastMigrationVersion} · ${formatDate(details.lastMigrationAt)}`
-    : "Unavailable";
-  const sections: { title: string; rows: [string, string][] }[] = [
-    {
-      title: "Review",
-      rows: [
-        ["Thread authors", formatAuthors(commentCount)],
-        [
-          "Thread status",
-          `${formatCount(details.unresolvedThreadCount)} unresolved · ${formatCount(details.resolvedThreadCount)} resolved`,
-        ],
-        ["Stale threads", formatCount(details.staleThreadCount)],
-        [
-          "Replies",
-          `${formatCount(details.replyCount.total)} (${formatAuthors(details.replyCount)})`,
-        ],
-      ],
-    },
-    {
-      title: "Saved data",
-      rows: [
-        ["Tags", formatCount(details.tagCount)],
-        ["Tagged documents", formatCount(details.taggedDocumentCount)],
-        [
-          "Documents with revisions",
-          formatCount(details.documentsWithRevisionsCount),
-        ],
-        [
-          "Latest revision",
-          details.revisionCount === 0
-            ? "No revisions yet"
-            : formatDate(details.lastRevisionAt),
-        ],
-        ["Memories", formatCount(details.memoryCount)],
-        [
-          "Instructions",
-          `${formatCount(details.documentInstructionCount)} document · ${formatCount(details.globalInstructionCount)} global`,
-        ],
-      ],
-    },
-    {
-      title: "SQLite",
-      rows: [
-        ["Database path", details.databasePath || "Unavailable"],
-        ["SQLite version", details.sqliteVersion || "Unavailable"],
-        ["Reusable page space", formatSize(details.reusablePageBytes)],
-        ["Latest migration", latestMigration],
-      ],
-    },
-  ];
-  return (
-    <Box as="details">
-      <Box as="summary" cursor="pointer" fontWeight="semibold">
-        Details
-      </Box>
-      <Flex direction="column" gap="5" pt="3">
-        {sections.map(({ title, rows }) => (
-          <Flex as="section" direction="column" gap="2" key={title}>
-            <Text as="h3" textStyle="label">
-              {title}
-            </Text>
-            <StatisticsRows rows={rows} />
-          </Flex>
-        ))}
-      </Flex>
-    </Box>
-  );
-};
-
 const StatisticsContent = ({
   commentCount,
   databaseSize,
   documentCount,
   details,
 }: DatabaseStatistics) => {
-  const rows: [string, string][] = [
-    ["Registered documents", formatCount(documentCount)],
-    ["Comment threads", formatCount(commentCount.total)],
+  const documents: [string, string] = [
+    "Registered documents",
+    formatCount(documentCount),
   ];
-  if (details) {
-    rows.push(["Saved revisions", formatCount(details.revisionCount)]);
+  const threads: [string, string] = [
+    "Comment threads",
+    formatCountByAuthor(commentCount),
+  ];
+  const size: [string, string] = [
+    "Database file size",
+    formatSize(databaseSize),
+  ];
+  if (!details) {
+    return <StatisticsRows rows={[documents, threads, size]} />;
   }
-  rows.push(["Database file size", formatSize(databaseSize)]);
   return (
-    <Flex direction="column" gap="4">
-      <StatisticsRows rows={rows} />
-      {details && (
-        <StatisticsDetails commentCount={commentCount} details={details} />
-      )}
-    </Flex>
+    <StatisticsRows
+      rows={[
+        documents,
+        [
+          "Documents with comments",
+          formatCount(details.documentsWithCommentsCount),
+        ],
+        [
+          "Documents with unresolved threads",
+          formatCount(details.documentsWithUnresolvedThreadsCount),
+        ],
+        threads,
+        [
+          "Resolution rate",
+          formatResolutionRate(details.resolvedThreadCount, commentCount.total),
+        ],
+        ["Replies", formatCountByAuthor(details.replyCount)],
+        ["Saved revisions", formatCount(details.revisionCount)],
+        size,
+      ]}
+    />
   );
 };
 
@@ -177,7 +128,6 @@ export const StatisticsDialog = ({
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
       scrollBehavior="inside"
-      unmountOnExit
     >
       <Portal>
         <Dialog.Backdrop />

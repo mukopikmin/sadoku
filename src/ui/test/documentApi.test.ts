@@ -194,14 +194,19 @@ describe("statistics API conversion", () => {
   it("allows an unavailable file size and rejects inconsistent thread counts", () => {
     const stats = create(GetStatisticsResponseSchema, {
       commentCount: { human: 1n },
+      documentCount: 3n,
       details: {
+        documentsWithCommentsCount: 1n,
         replyCount: {},
         resolvedThreadCount: 1n,
-        staleThreadCount: 1n,
       },
     });
     expect(toDatabaseStatistics(stats)).toMatchObject({
-      details: { unresolvedThreadCount: 0, resolvedThreadCount: 1 },
+      details: {
+        documentsWithCommentsCount: 1,
+        documentsWithUnresolvedThreadsCount: 0,
+        resolvedThreadCount: 1,
+      },
     });
     expect(toDatabaseStatistics(stats).databaseSize).toBeUndefined();
     expect(() =>
@@ -209,6 +214,23 @@ describe("statistics API conversion", () => {
         create(GetStatisticsResponseSchema, {
           commentCount: { human: 1n },
           details: { replyCount: {}, resolvedThreadCount: 2n },
+        }),
+      ),
+    ).toThrow("Invalid statistics response.");
+  });
+
+  it("rejects a document with unresolved threads when all threads are resolved", () => {
+    expect(() =>
+      toDatabaseStatistics(
+        create(GetStatisticsResponseSchema, {
+          commentCount: { human: 2n },
+          documentCount: 1n,
+          details: {
+            documentsWithCommentsCount: 1n,
+            documentsWithUnresolvedThreadsCount: 1n,
+            replyCount: {},
+            resolvedThreadCount: 2n,
+          },
         }),
       ),
     ).toThrow("Invalid statistics response.");

@@ -108,22 +108,11 @@ type DatabaseStatistics struct {
 }
 
 type DatabaseStatisticsDetails struct {
-	ResolvedThreadCount         uint64       `json:"resolvedThreadCount"`
-	StaleThreadCount            uint64       `json:"staleThreadCount"`
-	ReplyCount                  CommentCount `json:"replyCount"`
-	RevisionCount               uint64       `json:"revisionCount"`
-	DocumentsWithRevisionsCount uint64       `json:"documentsWithRevisionsCount"`
-	LastRevisionAt              string       `json:"lastRevisionAt"`
-	TaggedDocumentCount         uint64       `json:"taggedDocumentCount"`
-	TagCount                    uint64       `json:"tagCount"`
-	MemoryCount                 uint64       `json:"memoryCount"`
-	DocumentInstructionCount    uint64       `json:"documentInstructionCount"`
-	GlobalInstructionCount      uint64       `json:"globalInstructionCount"`
-	ReusablePageBytes           uint64       `json:"reusablePageBytes"`
-	DatabasePath                string       `json:"databasePath"`
-	SQLiteVersion               string       `json:"sqliteVersion"`
-	LastMigrationVersion        string       `json:"lastMigrationVersion"`
-	LastMigrationAt             string       `json:"lastMigrationAt"`
+	ResolvedThreadCount                 uint64       `json:"resolvedThreadCount"`
+	ReplyCount                          CommentCount `json:"replyCount"`
+	RevisionCount                       uint64       `json:"revisionCount"`
+	DocumentsWithCommentsCount          uint64       `json:"documentsWithCommentsCount"`
+	DocumentsWithUnresolvedThreadsCount uint64       `json:"documentsWithUnresolvedThreadsCount"`
 }
 
 // Repository is the persistence port shared by HTTP and command-line use cases.

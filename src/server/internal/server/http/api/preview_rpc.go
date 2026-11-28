@@ -1,10 +1,8 @@
 package api
 
 import (
-	"context"
-	"net"
-
 	"connectrpc.com/connect"
+	"context"
 	pb "github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1"
 )
 
@@ -21,12 +19,6 @@ func (s *Service) GetStatistics(ctx context.Context, req *connect.Request[pb.Get
 	out := new(pb.GetStatisticsResponse)
 	if err := invoke(ctx, s, "GetStatistics", req.Msg, out); err != nil {
 		return nil, err
-	}
-	if out.Details != nil {
-		host, _, _ := net.SplitHostPort(req.Peer().Addr)
-		if s.HideDatabasePath || !net.ParseIP(host).IsLoopback() {
-			out.Details.DatabasePath = ""
-		}
 	}
 	res := connect.NewResponse(out)
 	res.Header().Set("Cache-Control", "no-store")

@@ -17,53 +17,35 @@ func (r *Repository) Statistics(ctx context.Context, includeDetails bool) (u.Dat
 		err := r.DB.QueryRowContext(ctx, `
 			SELECT
 				(SELECT COUNT(*) FROM comment_document),
-				threads.human, threads.bot, threads.resolved, threads.stale,
+				threads.human, threads.bot, threads.resolved,
+				threads.documents_with_comments, threads.documents_with_unresolved_threads,
 				replies.human, replies.bot,
-				history.revision_count, history.document_count, history.last_recorded_at,
-				(SELECT COUNT(DISTINCT document_id) FROM document_tag_link),
-				(SELECT COUNT(*) FROM document_tag),
-				(SELECT COUNT(*) FROM document_memory),
-				(SELECT COUNT(*) FROM document_instruction),
-				(SELECT COUNT(*) FROM global_instruction),
-				(SELECT freelist_count FROM pragma_freelist_count) *
-					(SELECT page_size FROM pragma_page_size),
-				COALESCE((SELECT file FROM pragma_database_list WHERE name = 'main'), ''),
-				sqlite_version(), COALESCE(migration.version, ''), COALESCE(migration.finished_at, '')
+				(SELECT COUNT(*) FROM document_revision),
+				COALESCE((SELECT file FROM pragma_database_list WHERE name = 'main'), '')
 			FROM (
 				SELECT COUNT(CASE WHEN author_type = 'human' THEN 1 END) AS human,
 					COUNT(CASE WHEN author_type = 'bot' THEN 1 END) AS bot,
 					COUNT(CASE WHEN resolved = 1 THEN 1 END) AS resolved,
-					COUNT(CASE WHEN stale = 1 THEN 1 END) AS stale
+					COUNT(DISTINCT document_id) AS documents_with_comments,
+					COUNT(DISTINCT CASE WHEN resolved = 0 THEN document_id END)
+						AS documents_with_unresolved_threads
 				FROM comment
 			) AS threads
 			CROSS JOIN (
 				SELECT COUNT(CASE WHEN author_type = 'human' THEN 1 END) AS human,
 					COUNT(CASE WHEN author_type = 'bot' THEN 1 END) AS bot
 				FROM comment_reply
-			) AS replies
-			CROSS JOIN (
-				SELECT COUNT(*) AS revision_count, COUNT(DISTINCT document_id) AS document_count,
-					COALESCE(MAX(recorded_at), '') AS last_recorded_at
-				FROM document_revision
-			) AS history
-			LEFT JOIN (
-				SELECT version, finished_at FROM schema_migration
-				WHERE state = 'applied' ORDER BY finished_at DESC, version DESC LIMIT 1
-			) AS migration ON TRUE`).Scan(
+			) AS replies`).Scan(
 			&statistics.DocumentCount,
 			&statistics.CommentCount.Human, &statistics.CommentCount.Bot,
-			&details.ResolvedThreadCount, &details.StaleThreadCount,
+			&details.ResolvedThreadCount,
+			&details.DocumentsWithCommentsCount, &details.DocumentsWithUnresolvedThreadsCount,
 			&details.ReplyCount.Human, &details.ReplyCount.Bot,
-			&details.RevisionCount, &details.DocumentsWithRevisionsCount, &details.LastRevisionAt,
-			&details.TaggedDocumentCount, &details.TagCount, &details.MemoryCount,
-			&details.DocumentInstructionCount, &details.GlobalInstructionCount,
-			&details.ReusablePageBytes, &databasePath, &details.SQLiteVersion,
-			&details.LastMigrationVersion, &details.LastMigrationAt,
+			&details.RevisionCount, &databasePath,
 		)
 		if err != nil {
 			return u.DatabaseStatistics{}, err
 		}
-		details.DatabasePath = databasePath
 		statistics.Details = &details
 	} else {
 		err := r.DB.QueryRowContext(ctx, `
