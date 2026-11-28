@@ -125,9 +125,9 @@ describe("DocumentTree", () => {
       screen.getByText("No documents match the current filters."),
     ).toBeTruthy();
 
-    const clear = screen.getByRole("button", { name: "Clear filters" });
-    clear.focus();
-    fireEvent.click(clear);
+    const reset = screen.getByRole("button", { name: "Reset filters" });
+    reset.focus();
+    fireEvent.click(reset);
     expect(input).toHaveProperty("value", "");
     expect(document.activeElement).toBe(input);
     expect(screen.getByRole("status")).toBe(resultCount);
@@ -298,12 +298,44 @@ describe("DocumentTree", () => {
       expect(within(tree).getByText("reference.md")).toBeTruthy();
       expect(within(tree).getByText("start.md")).toBeTruthy();
       expect(
-        screen.queryByRole("button", { name: "Clear filters" }),
+        screen.queryByRole("button", { name: "Reset filters" }),
       ).toBeNull();
     });
   });
 
-  it("combines document search and tags and clears all filters", async () => {
+  it("resets the tag search before a tag has been selected", async () => {
+    render(
+      <DocumentTree
+        documents={[
+          {
+            id: 1,
+            deleted: false,
+            relativePath: "guide.md",
+            tags: [{ backgroundColor: "#abcdef", id: 1, name: "Guide" }],
+            title: "Guide",
+          },
+        ]}
+        onSelectDocument={vi.fn()}
+      />,
+    );
+
+    const filters = within(
+      screen.getByRole("form", { name: "Document filters" }),
+    );
+    const input = filters.getByRole("combobox", { name: "Search tags" });
+    fireEvent.click(input);
+    await screen.findByRole("listbox");
+    fireEvent.change(input, { target: { value: "gu" } });
+    const reset = await filters.findByRole("button", { name: "Reset filters" });
+    expect(reset).toHaveProperty("type", "reset");
+    expect(filters.queryByText(/Showing .* documents/)).toBeNull();
+    fireEvent.click(reset);
+
+    expect(input).toHaveProperty("value", "");
+    expect(filters.queryByRole("button", { name: "Reset filters" })).toBeNull();
+  });
+
+  it("combines document search and tags and resets all filters", async () => {
     render(
       <DocumentTree
         documents={[
@@ -333,7 +365,7 @@ describe("DocumentTree", () => {
       />,
     );
 
-    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reset filters" })).toBeNull();
     const input = screen.getByRole("combobox", { name: "Search tags" });
     for (const name of ["API", "Guide"]) {
       fireEvent.click(input);
@@ -356,7 +388,7 @@ describe("DocumentTree", () => {
 
     fireEvent.change(input, { target: { value: "gu" } });
     await waitFor(() => expect((input as HTMLInputElement).value).toBe("gu"));
-    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset filters" }));
 
     await waitFor(() => {
       const tree = screen.getByRole("tree", { name: "Documents" });
@@ -367,7 +399,7 @@ describe("DocumentTree", () => {
       expect((input as HTMLInputElement).value).toBe("");
       expect(screen.queryByText(/Showing .* documents/)).toBeNull();
       expect(
-        screen.queryByRole("button", { name: "Clear filters" }),
+        screen.queryByRole("button", { name: "Reset filters" }),
       ).toBeNull();
     });
   });
@@ -432,7 +464,7 @@ describe("DocumentTree", () => {
       expect(within(tree).getByText("guide.md")).toBeTruthy();
       expect(within(tree).getByText("untagged.md")).toBeTruthy();
       expect(
-        screen.queryByRole("button", { name: "Clear filters" }),
+        screen.queryByRole("button", { name: "Reset filters" }),
       ).toBeNull();
     });
   });

@@ -38,6 +38,8 @@ export const DocumentTree = ({
     tagSearch,
   } = tree.state;
   const hasFilters = searchQuery !== "" || selectedTags.length > 0;
+  const canReset =
+    documentSearch !== "" || tagSearch !== "" || selectedTags.length > 0;
   let emptyMessage = "No Markdown documents found.";
   if (documents.length > 0) {
     emptyMessage = searchQuery
@@ -48,54 +50,65 @@ export const DocumentTree = ({
   return (
     <VStack align="stretch" gap="3">
       {documents.length > 0 && (
-        <Grid
-          alignItems="start"
+        <VStack
+          as="form"
+          align="stretch"
+          aria-label="Document filters"
           gap="3"
-          maxW="calc(2 * {sizes.xs} + {spacing.3})"
-          templateColumns="repeat(auto-fit, minmax(min(100%, {sizes.2xs}), 1fr))"
+          onReset={(event) => {
+            event.preventDefault();
+            tree.clear();
+            searchInput.current?.focus();
+          }}
+          onSubmit={(event) => event.preventDefault()}
         >
-          <Field.Root maxW="xs">
-            <Field.Label>Search documents</Field.Label>
-            <Input
-              ref={searchInput}
-              type="search"
-              placeholder="Relative path or title"
-              value={documentSearch}
-              onChange={(event) =>
-                tree.setDocumentSearch(event.currentTarget.value)
-              }
-            />
-          </Field.Root>
-          {tags.length > 0 && (
-            <DocumentTagFilter
-              onSearchChange={tree.setTagSearch}
-              onSelectTag={tree.selectTag}
-              onRemoveTag={tree.removeTag}
-              searchValue={tagSearch}
-              selectedTags={selectedTags}
-              matchingTags={matchingTags}
-            />
-          )}
-        </Grid>
-      )}
-      <HStack gap="2" wrap="wrap" srOnly={!hasFilters}>
-        <Text role="status" color="fg.muted" fontSize="sm">
-          {hasFilters &&
-            `Showing ${filteredDocuments.length} of ${documents.length} documents`}
-        </Text>
-        {hasFilters && (
-          <Button
-            onClick={() => {
-              tree.clear();
-              searchInput.current?.focus();
-            }}
-            size="sm"
-            variant="outline"
+          <Grid
+            alignItems="start"
+            gap="3"
+            maxW="calc(2 * {sizes.xs} + {spacing.3})"
+            templateColumns="repeat(auto-fit, minmax(min(100%, {sizes.2xs}), 1fr))"
           >
-            Clear filters
-          </Button>
-        )}
-      </HStack>
+            <Field.Root maxW="xs">
+              <Field.Label>Search documents</Field.Label>
+              <Input
+                ref={searchInput}
+                type="search"
+                placeholder="Relative path or title"
+                value={documentSearch}
+                onChange={(event) =>
+                  tree.setDocumentSearch(event.currentTarget.value)
+                }
+              />
+            </Field.Root>
+            {tags.length > 0 && (
+              <DocumentTagFilter
+                onSearchChange={tree.setTagSearch}
+                onSelectTag={tree.selectTag}
+                onRemoveTag={tree.removeTag}
+                searchValue={tagSearch}
+                selectedTags={selectedTags}
+                matchingTags={matchingTags}
+              />
+            )}
+          </Grid>
+          <HStack gap="2" wrap="wrap" srOnly={!canReset}>
+            <Text
+              role="status"
+              color="fg.muted"
+              fontSize="sm"
+              srOnly={!hasFilters}
+            >
+              {hasFilters &&
+                `Showing ${filteredDocuments.length} of ${documents.length} documents`}
+            </Text>
+            {canReset && (
+              <Button type="reset" size="sm" variant="outline">
+                Reset filters
+              </Button>
+            )}
+          </HStack>
+        </VStack>
+      )}
       <VStack
         align="stretch"
         borderColor="border.muted"
