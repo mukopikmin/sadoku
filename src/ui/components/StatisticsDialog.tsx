@@ -60,6 +60,83 @@ const StatisticsRows = ({ rows }: { rows: [string, string][] }) => (
   </Flex>
 );
 
+const StatisticsDetails = ({
+  commentCount,
+  details,
+}: {
+  commentCount: DatabaseStatistics["commentCount"];
+  details: NonNullable<DatabaseStatistics["details"]>;
+}) => {
+  const latestMigration = details.lastMigrationVersion
+    ? `${details.lastMigrationVersion} · ${formatDate(details.lastMigrationAt)}`
+    : "Unavailable";
+  const sections: { title: string; rows: [string, string][] }[] = [
+    {
+      title: "Review",
+      rows: [
+        ["Thread authors", formatAuthors(commentCount)],
+        [
+          "Thread status",
+          `${formatCount(details.unresolvedThreadCount)} unresolved · ${formatCount(details.resolvedThreadCount)} resolved`,
+        ],
+        ["Stale threads", formatCount(details.staleThreadCount)],
+        [
+          "Replies",
+          `${formatCount(details.replyCount.total)} (${formatAuthors(details.replyCount)})`,
+        ],
+      ],
+    },
+    {
+      title: "Saved data",
+      rows: [
+        ["Tags", formatCount(details.tagCount)],
+        ["Tagged documents", formatCount(details.taggedDocumentCount)],
+        [
+          "Documents with revisions",
+          formatCount(details.documentsWithRevisionsCount),
+        ],
+        [
+          "Latest revision",
+          details.revisionCount === 0
+            ? "No revisions yet"
+            : formatDate(details.lastRevisionAt),
+        ],
+        ["Memories", formatCount(details.memoryCount)],
+        [
+          "Instructions",
+          `${formatCount(details.documentInstructionCount)} document · ${formatCount(details.globalInstructionCount)} global`,
+        ],
+      ],
+    },
+    {
+      title: "SQLite",
+      rows: [
+        ["Database path", details.databasePath || "Unavailable"],
+        ["SQLite version", details.sqliteVersion || "Unavailable"],
+        ["Reusable page space", formatSize(details.reusablePageBytes)],
+        ["Latest migration", latestMigration],
+      ],
+    },
+  ];
+  return (
+    <Box as="details">
+      <Box as="summary" cursor="pointer" fontWeight="semibold">
+        Details
+      </Box>
+      <Flex direction="column" gap="5" pt="3">
+        {sections.map(({ title, rows }) => (
+          <Flex as="section" direction="column" gap="2" key={title}>
+            <Text as="h3" textStyle="label">
+              {title}
+            </Text>
+            <StatisticsRows rows={rows} />
+          </Flex>
+        ))}
+      </Flex>
+    </Box>
+  );
+};
+
 const StatisticsContent = ({
   commentCount,
   databaseSize,
@@ -69,65 +146,16 @@ const StatisticsContent = ({
   const rows: [string, string][] = [
     ["Registered documents", formatCount(documentCount)],
     ["Comment threads", formatCount(commentCount.total)],
-    ["Thread authors", formatAuthors(commentCount)],
   ];
   if (details) {
-    rows.push(
-      [
-        "Thread status",
-        `${formatCount(details.unresolvedThreadCount)} unresolved · ${formatCount(details.resolvedThreadCount)} resolved`,
-      ],
-      ["Replies", formatCount(details.replyCount.total)],
-      ["Saved revisions", formatCount(details.revisionCount)],
-    );
+    rows.push(["Saved revisions", formatCount(details.revisionCount)]);
   }
   rows.push(["Database file size", formatSize(databaseSize)]);
   return (
     <Flex direction="column" gap="4">
       <StatisticsRows rows={rows} />
       {details && (
-        <Box as="details">
-          <Box as="summary" cursor="pointer" fontWeight="semibold">
-            Details
-          </Box>
-          <Box mt="3">
-            <StatisticsRows
-              rows={[
-                ["Tagged documents", formatCount(details.taggedDocumentCount)],
-                ["Stale threads", formatCount(details.staleThreadCount)],
-                ["Reply authors", formatAuthors(details.replyCount)],
-                [
-                  "Documents with revisions",
-                  formatCount(details.documentsWithRevisionsCount),
-                ],
-                [
-                  "Latest revision",
-                  details.revisionCount === 0
-                    ? "No revisions yet"
-                    : formatDate(details.lastRevisionAt),
-                ],
-                ["Tags", formatCount(details.tagCount)],
-                ["Memories", formatCount(details.memoryCount)],
-                [
-                  "Document instructions",
-                  formatCount(details.documentInstructionCount),
-                ],
-                [
-                  "Global instructions",
-                  formatCount(details.globalInstructionCount),
-                ],
-                ["Reusable page space", formatSize(details.reusablePageBytes)],
-                ["Database path", details.databasePath || "Unavailable"],
-                ["SQLite version", details.sqliteVersion || "Unavailable"],
-                [
-                  "Latest migration",
-                  details.lastMigrationVersion || "Unavailable",
-                ],
-                ["Migration applied at", formatDate(details.lastMigrationAt)],
-              ]}
-            />
-          </Box>
-        </Box>
+        <StatisticsDetails commentCount={commentCount} details={details} />
       )}
     </Flex>
   );
@@ -149,6 +177,7 @@ export const StatisticsDialog = ({
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
       scrollBehavior="inside"
+      unmountOnExit
     >
       <Portal>
         <Dialog.Backdrop />

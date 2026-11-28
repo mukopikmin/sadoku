@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "./testUtils";
 import { afterEach, expect, it, vi } from "vitest";
 import { create, toJson } from "@bufbuild/protobuf";
@@ -9,7 +10,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("shows database-wide counts and lets the user reveal diagnostic details", async () => {
+it("shows four overview counts and lets the user reveal related details", async () => {
   const response = create(GetStatisticsResponseSchema, {
     commentCount: { bot: 4n, human: 12n },
     databaseSize: 1536n,
@@ -43,20 +44,21 @@ it("shows database-wide counts and lets the user reveal diagnostic details", asy
   );
 
   const onOpenChange = vi.fn();
-  render(<StatisticsDialog onOpenChange={onOpenChange} open />);
+  const { rerender } = render(
+    <StatisticsDialog onOpenChange={onOpenChange} open />,
+  );
 
   expect(
     await screen.findByRole("dialog", { name: "Database statistics" }),
   ).toBeTruthy();
-  await waitFor(() => expect(screen.getByText("1.5 KB")).toBeTruthy());
+  await screen.findByText("1.5 KB");
   for (const [label, value] of [
     ["Registered documents", "3"],
     ["Comment threads", "16"],
-    ["Thread authors", "12 human · 4 bot"],
-    ["Thread status", "11 unresolved · 5 resolved"],
-    ["Replies", "7"],
     ["Saved revisions", "8"],
+    ["Database file size", "1.5 KB"],
   ]) {
+    expect(screen.getByText(label)).toBeVisible();
     expect(screen.getByText(label).nextElementSibling).toHaveProperty(
       "textContent",
       value,
@@ -65,14 +67,26 @@ it("shows database-wide counts and lets the user reveal diagnostic details", asy
   const details = screen.getByText("Details");
   const disclosure = details.closest("details");
   expect(disclosure?.open).toBe(false);
+  for (const label of ["Thread status", "Replies", "Database path"]) {
+    expect(screen.getByText(label)).not.toBeVisible();
+  }
   fireEvent.click(details);
   expect(disclosure?.open).toBe(true);
+  for (const name of ["Review", "Saved data", "SQLite"]) {
+    expect(screen.getByRole("heading", { name })).toBeVisible();
+  }
   for (const [label, value] of [
+    ["Thread authors", "12 human · 4 bot"],
+    ["Thread status", "11 unresolved · 5 resolved"],
+    ["Replies", "7 (6 human · 1 bot)"],
     ["Stale threads", "2"],
-    ["Reply authors", "6 human · 1 bot"],
+    ["Instructions", "1 document · 3 global"],
     ["Reusable page space", "4.0 KB"],
     ["Database path", "/data/sadoku.sqlite3"],
-    ["Latest migration", "0018"],
+    [
+      "Latest migration",
+      `0018 · ${new Date("2026-11-27T00:00:00.000Z").toLocaleString()}`,
+    ],
   ]) {
     expect(screen.getByText(label).nextElementSibling).toHaveProperty(
       "textContent",
@@ -83,6 +97,12 @@ it("shows database-wide counts and lets the user reveal diagnostic details", asy
     screen.getByRole("button", { name: "Close database statistics" }),
   );
   await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  rerender(<StatisticsDialog onOpenChange={onOpenChange} open={false} />);
+  await waitFor(() => expect(screen.queryByText("Details")).toBeNull());
+  rerender(<StatisticsDialog onOpenChange={onOpenChange} open />);
+  expect((await screen.findByText("Details")).closest("details")?.open).toBe(
+    false,
+  );
 });
 
 it("distinguishes an unavailable file size from an empty revision history", async () => {
