@@ -6,6 +6,7 @@ import {
   Flex,
   Portal,
 } from "@chakra-ui/react";
+import { Database } from "lucide-react";
 import { useRef } from "react";
 import type { CodeWrapMode, ThemeMode } from "../models/theme";
 import type { PreviewSettingsState } from "../hooks/usePreviewSettings";
@@ -122,6 +123,7 @@ export const SettingsDialog = ({
                   type="button"
                   variant="outline"
                 >
+                  <Database aria-hidden="true" />
                   Database statistics
                 </Button>
                 <StatisticsDialog
