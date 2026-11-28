@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 var githubExportStatuses = map[string]int{
@@ -31,7 +31,7 @@ func githubExportError(w http.ResponseWriter, code string, status int) {
 }
 
 func respondGitHubExportError(w http.ResponseWriter, err error) {
-	var failure *u.Failure
+	var failure *usecase.Failure
 	var value struct{ Error struct{ Code string } }
 	if errors.As(err, &failure) && json.Unmarshal([]byte(failure.Message), &value) == nil {
 		if _, ok := githubExportStatuses[value.Error.Code]; ok {

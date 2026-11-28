@@ -4,12 +4,12 @@ import (
 	"context"
 	"maps"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 // Capture the request's immutable source and release Mu during GitHub I/O.
 // Local edits and head monitoring must remain available while export is pending.
-func (s *Session) exportOutsideLock(ctx context.Context, doc u.Document, in Input) (any, error) {
+func (s *Session) exportOutsideLock(ctx context.Context, doc model.Document, in Input) (any, error) {
 	pull := *s.GitHub
 	view := &Session{Repository: s.Repository, Sources: maps.Clone(s.Sources), CommentIDs: maps.Clone(s.CommentIDs), GitHub: &pull, ReadRemote: s.ReadRemote}
 	assertTarget := func() error {

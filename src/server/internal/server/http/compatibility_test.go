@@ -17,9 +17,9 @@ import (
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
 	httpadapter "github.com/mukopikmin/sadoku/internal/server/http"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 // Responses captured from the final TypeScript backend at the fixture's
@@ -128,7 +128,7 @@ func TestLegacyHTTPTranscripts(t *testing.T) {
 				if profile.GitHubResponses != nil {
 					break
 				}
-				if _, err := repo.SaveNote(t.Context(), "memory", u.Note{DocumentID: int64(id + 1), Content: content}); err != nil {
+				if _, err := repo.SaveNote(t.Context(), "memory", model.Note{DocumentID: int64(id + 1), Content: content}); err != nil {
 					t.Fatal(err)
 				}
 			}

@@ -15,8 +15,8 @@ import (
 	pb "github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1"
 	"github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1/previewv1connect"
 	"github.com/mukopikmin/sadoku/internal/server/config"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 func restRequest(ctx context.Context, t *testing.T, serverURL, method, path, body, contentType string, status int) []byte {
@@ -105,20 +105,20 @@ func TestRESTSettingsRejectInvalidBodiesWithoutChangingStoredSettings(t *testing
 
 func TestRESTTagConflictsAndPartialUpdates(t *testing.T) {
 	s, server, _ := setup(t)
-	one, err := s.Repository.SaveTag(t.Context(), u.Tag{Name: "One", BackgroundColor: "#123456"})
+	one, err := s.Repository.SaveTag(t.Context(), model.Tag{Name: "One", BackgroundColor: "#123456"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.Repository.SaveTag(t.Context(), u.Tag{Name: "Two", BackgroundColor: "#abcdef"}); err != nil {
+	if _, err = s.Repository.SaveTag(t.Context(), model.Tag{Name: "Two", BackgroundColor: "#abcdef"}); err != nil {
 		t.Fatal(err)
 	}
 	path := fmt.Sprintf("/__sadoku/tags/%d", one.ID)
-	for _, body := range []string{`{}`, `null`, `{"name":null}`, `{"backgroundColor":"red"}`, `{"name":5}`} {
+	for _, body := range []string{`{}`, `null`, `{"name":null}`, `{"backgroundColor":"red"}`, `{"name":5}`, `{"name":" "}`} {
 		restRequest(t.Context(), t, server.URL, "PATCH", path, body, "application/json", 400)
 	}
 	restRequest(t.Context(), t, server.URL, "PATCH", path, `{"name":"Two"}`, "application/json", 409)
 	b := restRequest(t.Context(), t, server.URL, "PATCH", path, `{"backgroundColor":"#AABBCC"}`, "application/json", 200)
-	var tag u.Tag
+	var tag model.Tag
 	if err = json.Unmarshal(b, &tag); err != nil || tag.Name != "One" || tag.BackgroundColor != "#aabbcc" {
 		t.Fatalf("partial update: %s %v", b, err)
 	}

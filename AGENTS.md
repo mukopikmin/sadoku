@@ -68,7 +68,7 @@ them when making changes.
 - The production server and CLI are implemented in Go. `src/server/cmd/sadoku/main.go` is
   the executable entry point and delegates to `src/server/internal/server/app.go`.
 - Keep native code under the corresponding `src/server/internal/server/` boundaries: `cli/`,
-  `http/` and `http/api/`, `session/`, `storage/`, `db/`, and `usecase/`.
+  `http/` and `http/api/`, `session/`, `storage/`, `db/`, `usecase/`, and `model/`.
 - Use Go's standard library for runtime facilities and chi for HTTP routing.
   Keep domain operations as functions and plain data with explicit persistence ports.
 - Run `make build-client` before Go builds or tests; `src/server/internal/ui/assets.go`
@@ -110,9 +110,11 @@ them when making changes.
   and the required Go checks for migration changes.
 - Generate Go and TypeScript RPC bindings together using
   `make proto-generate`.
-- Keep routing and API adaptation under `http/`, session preparation under
-  `session/`, persistence under `storage/` and `db/`, and shared business rules
-  and persistence ports under `usecase/`.
+- Keep routing and API adaptation under `http/`, session preparation and state
+  under `session/`, and persistence implementations under `storage/` and `db/`.
+  Keep operation workflows and persistence ports under `usecase/`. Keep shared
+  model types and rules under `model/`, which depends only on the Go standard
+  library.
 - Keep command dispatch and browser launching under `cli/`. The executable entry
   point stays thin and delegates application composition to `app.go`.
 - Preserve existing HTTP paths, status codes, and response fields. When changing

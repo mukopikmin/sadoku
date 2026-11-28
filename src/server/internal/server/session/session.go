@@ -15,7 +15,8 @@ import (
 	"time"
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 	whatwg "github.com/nlnwa/whatwg-url/url"
 	"golang.org/x/text/encoding/unicode"
 )
@@ -23,13 +24,13 @@ import (
 type Session struct {
 	Mu              sync.Mutex
 	Root            string
-	Documents       []u.Document
+	Documents       []model.Document
 	Sources         map[int64]string
 	CommentIDs      map[int64]int64
 	CanCreate       bool
 	PullRequest     any
 	GitHub          *Pull
-	Repository      u.Repository
+	Repository      usecase.Repository
 	invalidations   map[chan struct{}]struct{}
 	exporting       atomic.Bool
 	restoring       sync.Map
@@ -116,8 +117,8 @@ func decodeText(data []byte, remote bool) string {
 	text, _ := decoder.Bytes(data)
 	return string(text)
 }
-func New(ctx context.Context, input string, repo u.Repository, settings config.Settings) (*Session, error) {
-	s := &Session{Repository: repo, Sources: map[int64]string{}, Documents: []u.Document{}}
+func New(ctx context.Context, input string, repo usecase.Repository, settings config.Settings) (*Session, error) {
+	s := &Session{Repository: repo, Sources: map[int64]string{}, Documents: []model.Document{}}
 	if pull := ParsePull(input); pull != nil {
 		if err := s.preparePull(ctx, pull, settings); err != nil {
 			return nil, err
@@ -141,7 +142,7 @@ func New(ctx context.Context, input string, repo u.Repository, settings config.S
 			d.RelativePath = path.Base(parsed.Pathname())
 		}
 		d.Title = d.RelativePath
-		d.Tags = []u.Tag{}
+		d.Tags = []model.Tag{}
 		s.Documents = append(s.Documents, d)
 		s.Sources[d.ID] = source
 	} else {
@@ -156,21 +157,21 @@ func Within(root, path string) bool {
 	rel, err := filepath.Rel(root, path)
 	return err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel)
 }
-func (s *Session) Find(id int64) (u.Document, error) {
-	if err := u.PositiveID(id); err != nil {
-		return u.Document{}, u.Fail("not_found", "Document not found.")
+func (s *Session) Find(id int64) (model.Document, error) {
+	if err := usecase.PositiveID(id); err != nil {
+		return model.Document{}, usecase.Fail("not_found", "Document not found.")
 	}
 	for _, d := range s.Documents {
 		if d.ID == id {
 			return d, nil
 		}
 	}
-	return u.Document{}, u.Fail("not_found", "Document not found.")
+	return model.Document{}, usecase.Fail("not_found", "Document not found.")
 }
 func (s *Session) Read(ctx context.Context, id int64) (string, error) {
 	source, ok := s.Sources[id]
 	if !ok {
-		return "", u.Fail("not_found", "Document not found.")
+		return "", usecase.Fail("not_found", "Document not found.")
 	}
 	if s.ReadRemote != nil {
 		return s.ReadRemote(ctx, source)
@@ -193,7 +194,7 @@ func (s *Session) readOutsideLock(ctx context.Context, source string) (string, e
 // ResolveLocal canonicalizes the selected root and rejects symbolic links below it.
 func ResolveLocal(root, path string, allowMissing bool) (string, error) {
 	if !Within(root, path) {
-		return "", u.Fail("failed_precondition", "Choose a local file inside the open folder without symbolic links.")
+		return "", usecase.Fail("failed_precondition", "Choose a local file inside the open folder without symbolic links.")
 	}
 	realRoot, err := filepath.EvalSymlinks(root)
 	if err != nil {
@@ -216,7 +217,7 @@ func ResolveLocal(root, path string, allowMissing bool) (string, error) {
 			return "", err
 		}
 		if info.Mode()&os.ModeSymlink != 0 || (i < len(parts)-1 && !info.IsDir()) || (i == len(parts)-1 && !info.Mode().IsRegular()) {
-			return "", u.Fail("failed_precondition", "Choose a local file inside the open folder without symbolic links.")
+			return "", usecase.Fail("failed_precondition", "Choose a local file inside the open folder without symbolic links.")
 		}
 	}
 	return destination, nil
@@ -261,18 +262,33 @@ func (s *Session) commentStorage(ctx context.Context, id int64, create bool) (in
 	return 0, identity, err
 }
 
-func (s *Session) readComments(ctx context.Context, id int64) (u.Comments, error) {
+// commentAccess is used with Mu held. Markdown reads temporarily release it.
+func (s *Session) commentAccess(id int64) usecase.CommentAccess {
+	return usecase.CommentAccess{
+		Read: func(ctx context.Context) (model.Comments, error) {
+			return s.readComments(ctx, id)
+		},
+		ReadMarkdown: func(ctx context.Context) (string, error) {
+			return s.readOutsideLock(ctx, s.Sources[id])
+		},
+		Save: func(ctx context.Context, comments model.Comments) error {
+			return s.saveComments(ctx, id, comments)
+		},
+	}
+}
+
+func (s *Session) readComments(ctx context.Context, id int64) (model.Comments, error) {
 	storageID, identity, err := s.commentStorage(ctx, id, false)
 	if err != nil {
-		return u.Comments{}, err
+		return model.Comments{}, err
 	}
 	if storageID == 0 {
-		return u.Comments{FilePath: identity, Comments: []u.Comment{}}, nil
+		return model.Comments{FilePath: identity, Comments: []model.Comment{}}, nil
 	}
 	return s.Repository.ReadComments(ctx, storageID)
 }
 
-func (s *Session) saveComments(ctx context.Context, id int64, comments u.Comments) error {
+func (s *Session) saveComments(ctx context.Context, id int64, comments model.Comments) error {
 	storageID, _, err := s.commentStorage(ctx, id, true)
 	if err != nil {
 		return err

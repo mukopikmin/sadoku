@@ -1,16 +1,9 @@
-package usecase
+package model
 
 import (
-	"context"
-	"fmt"
 	"unicode"
 	"unicode/utf8"
 )
-
-type Failure struct{ Kind, Message string }
-
-func (e *Failure) Error() string      { return e.Message }
-func Fail(kind, message string) error { return &Failure{kind, message} }
 
 type Document struct {
 	ID           int64   `json:"id"`
@@ -43,6 +36,7 @@ type Tag struct {
 type TagPatch struct {
 	Name, BackgroundColor *string
 }
+
 type TagReference struct {
 	ID   int64
 	Name string
@@ -95,59 +89,18 @@ type Comments struct {
 	GitHubHeadSHA          string    `json:"githubHeadSha,omitempty"`
 }
 
-// Repository is the persistence port shared by HTTP and command-line use cases.
-type Repository interface {
-	Ensure(context.Context, string) (Document, error)
-	FindDocument(context.Context, string) (Document, bool, error)
-	EnsureMany(context.Context, []string) ([]RegisteredDocument, error)
-	Documents(context.Context) ([]Document, error)
-	InitializeSnapshot(context.Context, int64, string) error
-	SetTitle(context.Context, int64, *string) error
-	Snapshot(context.Context, int64) (*string, *string, error)
-	SaveComments(context.Context, int64, Comments) error
-	ReadComments(context.Context, int64) (Comments, error)
-	CommentsNotificationPath(context.Context, int64) (string, error)
-	CommentsNotificationSourcePath(context.Context, string) (string, error)
-	Revisions(context.Context, int64) ([]Revision, error)
-	Revision(context.Context, int64, int64) (Revision, error)
-	RecordRevision(context.Context, int64, string) error
-	ReadTableLayouts(context.Context, int64) (TableLayoutState, error)
-	SaveTableLayouts(context.Context, int64, TableLayoutState) error
-	SaveTableColumnWidths(context.Context, int64, string, string, []float64) (TableLayout, error)
-	Tags(context.Context, int64) ([]Tag, error)
-	SaveTag(context.Context, Tag) (Tag, error)
-	UpdateTag(context.Context, int64, TagPatch) (Tag, error)
-	DeleteTag(context.Context, int64) error
-	ReplaceTags(context.Context, int64, []int64) error
-	ReplaceTagReferences(context.Context, int64, []TagReference) ([]Tag, error)
-	Notes(context.Context, string, int64) ([]Note, error)
-	SaveNote(context.Context, string, Note) (Note, error)
-	DeleteNote(context.Context, string, int64, int64) error
-	GlobalInstructions(context.Context) ([]Note, error)
-	SaveGlobalInstruction(context.Context, Note) (Note, error)
-	DeleteGlobalInstruction(context.Context, int64) error
-	Statistics(context.Context) (any, error)
-}
-
-func PositiveID(id int64) error {
-	if id < 1 || id > 9007199254740991 {
-		return Fail("not_found", fmt.Sprintf("Invalid resource ID: %d.", id))
-	}
-	return nil
-}
-
 func ValidateTagName(value string) error {
 	name := TrimSpace(value)
 	if name == "" {
-		return Fail("invalid_argument", "Tag name must not be empty.")
+		return &RuleError{InvalidInput, "Tag name must not be empty."}
 	}
 	for _, r := range name {
 		if unicode.IsControl(r) {
-			return Fail("invalid_argument", "Tag name must not contain control characters.")
+			return &RuleError{InvalidInput, "Tag name must not contain control characters."}
 		}
 	}
 	if utf8.RuneCountInString(name) > 50 {
-		return Fail("invalid_argument", "Tag name must not exceed 50 characters.")
+		return &RuleError{InvalidInput, "Tag name must not exceed 50 characters."}
 	}
 	return nil
 }

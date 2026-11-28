@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 // Validate in the original CLI's order so ambiguous mistakes retain their
@@ -189,7 +189,7 @@ func validate(o Options) error {
 				if !content {
 					return usageError("--content is required.")
 				}
-				if o.Values["content"] != "" && u.TrimSpace(o.Values["content"]) == "" {
+				if o.Values["content"] != "" && model.TrimSpace(o.Values["content"]) == "" {
 					return usageError("Instruction content must not contain only whitespace. Use --content \"\" to clear it.")
 				}
 				return nil

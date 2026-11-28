@@ -6,7 +6,7 @@ import (
 	"sort"
 	"unicode/utf16"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"golang.org/x/text/collate"
 	"golang.org/x/text/language"
 )
@@ -18,7 +18,7 @@ func sortRegistrationPaths(paths []string) {
 		return slices.Compare(utf16.Encode([]rune(filepath.ToSlash(paths[i]))), utf16.Encode([]rune(filepath.ToSlash(paths[j])))) < 0
 	})
 }
-func sortDocuments(documents []u.Document) {
+func sortDocuments(documents []model.Document) {
 	comparator := collate.New(language.English)
 	sort.SliceStable(documents, func(i, j int) bool {
 		return comparator.CompareString(documents[i].RelativePath, documents[j].RelativePath) < 0

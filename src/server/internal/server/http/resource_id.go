@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 var restDecimal = regexp.MustCompile(`^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$`)
@@ -16,7 +16,7 @@ var restRadix = regexp.MustCompile(`^(?:0[xX][0-9a-fA-F]+|0[oO][0-7]+|0[bB][01]+
 // Child resource routes used JavaScript Number(), while document routes also
 // require the canonical decimal spelling before calling this parser.
 func parseRESTResourceID(value string) (int64, error) {
-	value = u.TrimSpace(value)
+	value = model.TrimSpace(value)
 	if restRadix.MatchString(value) {
 		n, err := strconv.ParseUint(value, 0, 64)
 		if err == nil && n <= math.MaxInt64 {

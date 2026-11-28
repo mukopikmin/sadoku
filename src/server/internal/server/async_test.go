@@ -19,9 +19,10 @@ import (
 	"github.com/mukopikmin/sadoku/internal/server/cli"
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 func startAsyncTest(t *testing.T, start func(context.Context, io.Writer) error) (string, func()) {
@@ -113,7 +114,7 @@ func TestServerStartsBeforeRemoteSnapshotFetchAndCancelsIt(t *testing.T) {
 }
 
 type gatedDirectoryRepository struct {
-	u.Repository
+	usecase.Repository
 	registrationStarted, register, listed, publish chan struct{}
 	fail                                           error
 	statisticsStarted, statisticsRelease           chan struct{}
@@ -126,7 +127,7 @@ func (r *gatedDirectoryRepository) Statistics(ctx context.Context) (any, error) 
 	}
 	return r.Repository.Statistics(ctx)
 }
-func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []string) ([]u.RegisteredDocument, error) {
+func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []string) ([]model.RegisteredDocument, error) {
 	close(r.registrationStarted)
 	select {
 	case <-r.register:
@@ -138,7 +139,7 @@ func (r *gatedDirectoryRepository) EnsureMany(ctx context.Context, paths []strin
 	}
 	return r.Repository.EnsureMany(ctx, paths)
 }
-func (r *gatedDirectoryRepository) Documents(ctx context.Context) ([]u.Document, error) {
+func (r *gatedDirectoryRepository) Documents(ctx context.Context) ([]model.Document, error) {
 	close(r.listed)
 	select {
 	case <-r.publish:

@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 // Nil means omitted; a pointer to nil or an empty slice explicitly clears it.
@@ -20,7 +20,7 @@ func documentAttributes(o Options) (**string, *[]int64, error) {
 			return nil, nil, usageError("--title must be a single line without null characters.")
 		}
 		var value *string
-		if text = u.TrimSpace(text); text != "" {
+		if text = model.TrimSpace(text); text != "" {
 			value = &text
 		}
 		title = &value
@@ -55,9 +55,9 @@ func addDocument(ctx context.Context, repo *storage.Repository, source string, o
 		return err
 	}
 	identity, path, remote := session.Source(source)
-	var doc u.Document
+	var doc model.Document
 	if o.Flags["create"] {
-		if remote || u.TrimSpace(source) == "" || strings.HasSuffix(source, "/") || strings.HasSuffix(source, "\\") || filepath.Base(source) == "." || filepath.Base(source) == ".." {
+		if remote || model.TrimSpace(source) == "" || strings.HasSuffix(source, "/") || strings.HasSuffix(source, "\\") || filepath.Base(source) == "." || filepath.Base(source) == ".." {
 			return fmt.Errorf("--create requires a local Markdown filename.")
 		}
 		// Check tag references before creating a file that cannot be rolled back.

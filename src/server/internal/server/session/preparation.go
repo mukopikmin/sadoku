@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type DirectoryError struct {
@@ -23,8 +24,8 @@ type DirectoryStatus struct {
 }
 
 type directoryDiscovery struct {
-	documents        []u.Document
-	pendingSnapshots []u.Document
+	documents        []model.Document
+	pendingSnapshots []model.Document
 	status           DirectoryStatus
 }
 
@@ -65,7 +66,7 @@ func (s *Session) ReloadDocuments(ctx context.Context) error {
 	s.Mu.Lock()
 	if s.directoryStatus == nil || s.directoryStatus.State == "loading" {
 		s.Mu.Unlock()
-		return u.Fail("failed_precondition", "Reloading documents is unavailable in this preview.")
+		return usecase.Fail("failed_precondition", "Reloading documents is unavailable in this preview.")
 	}
 	result, err := s.discoverDirectory(ctx, s.directoryConfig, s.createdPaths, nil)
 	if err == nil {
@@ -73,7 +74,7 @@ func (s *Session) ReloadDocuments(ctx context.Context) error {
 	}
 	s.Mu.Unlock()
 	if err != nil {
-		return u.Fail("internal", "Could not rescan the open folder: "+err.Error())
+		return usecase.Fail("internal", "Could not rescan the open folder: "+err.Error())
 	}
 	sources := make(map[int64]string, len(result.pendingSnapshots))
 	for _, document := range result.pendingSnapshots {
@@ -115,7 +116,7 @@ func (s *Session) discoverDirectory(ctx context.Context, settings config.Setting
 	if err = ctx.Err(); err != nil {
 		return result, err
 	}
-	result.documents = make([]u.Document, 0, len(registrations))
+	result.documents = make([]model.Document, 0, len(registrations))
 	registered := make(map[int64]bool, len(registrations))
 	for _, registration := range registrations {
 		doc := s.directoryDocument(registration.Document)
@@ -157,16 +158,16 @@ func (s *Session) discoverDirectory(ctx context.Context, settings config.Setting
 	return result, nil
 }
 
-func (s *Session) directoryDocument(doc u.Document) u.Document {
+func (s *Session) directoryDocument(doc model.Document) model.Document {
 	rel, _ := filepath.Rel(s.Root, doc.FilePath)
 	doc.RelativePath = filepath.ToSlash(rel)
 	doc.Title = filepath.Base(doc.FilePath)
-	doc.Tags = []u.Tag{}
+	doc.Tags = []model.Tag{}
 	return doc
 }
 
 // The caller holds Mu so readers see the documents and their sources together.
-func (s *Session) publishDirectory(documents []u.Document, status DirectoryStatus) {
+func (s *Session) publishDirectory(documents []model.Document, status DirectoryStatus) {
 	s.Documents = documents
 	s.Sources = make(map[int64]string, len(documents))
 	for _, d := range documents {
@@ -181,7 +182,7 @@ type SnapshotProgress struct{ Target, Completed, Failed int }
 // mutex over filesystem/network I/O. Failed files do not stop later files.
 func (s *Session) InitializeSnapshots(ctx context.Context) SnapshotProgress {
 	s.Mu.Lock()
-	documents := append([]u.Document{}, s.Documents...)
+	documents := append([]model.Document{}, s.Documents...)
 	sources := map[int64]string{}
 	for id, source := range s.Sources {
 		sources[id] = source
@@ -194,7 +195,7 @@ func (s *Session) InitializeSnapshots(ctx context.Context) SnapshotProgress {
 	return s.initializeSnapshots(ctx, documents, sources, read)
 }
 
-func (s *Session) initializeSnapshots(ctx context.Context, documents []u.Document, sources map[int64]string, read func(context.Context, string) (string, error)) SnapshotProgress {
+func (s *Session) initializeSnapshots(ctx context.Context, documents []model.Document, sources map[int64]string, read func(context.Context, string) (string, error)) SnapshotProgress {
 	progress := SnapshotProgress{}
 	for _, d := range documents {
 		if !d.Deleted {

@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
-func (r *Repository) ReadTableLayouts(ctx context.Context, documentID int64) (u.TableLayoutState, error) {
-	state := u.TableLayoutState{Tables: []u.TableLayout{}}
+func (r *Repository) ReadTableLayouts(ctx context.Context, documentID int64) (model.TableLayoutState, error) {
+	state := model.TableLayoutState{Tables: []model.TableLayout{}}
 	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return state, err
@@ -20,13 +21,13 @@ func (r *Repository) ReadTableLayouts(ctx context.Context, documentID int64) (u.
 	var markdown *string
 	err = tx.QueryRowContext(ctx, `SELECT table_layout_revision_id,(SELECT markdown FROM document_revision WHERE id=d.table_layout_revision_id AND document_id=d.id) FROM comment_document d WHERE id=?`, documentID).Scan(&revisionID, &markdown)
 	if errors.Is(err, sql.ErrNoRows) {
-		return u.TableLayoutState{}, nil
+		return model.TableLayoutState{}, nil
 	}
 	if err != nil {
 		return state, err
 	}
 	if revisionID == nil {
-		return u.TableLayoutState{}, nil
+		return model.TableLayoutState{}, nil
 	}
 	if markdown == nil {
 		return state, fmt.Errorf("table layout revision does not belong to document %d", documentID)
@@ -38,7 +39,7 @@ func (r *Repository) ReadTableLayouts(ctx context.Context, documentID int64) (u.
 	}
 	defer func() { _ = rows.Close() }()
 	for rows.Next() {
-		var table u.TableLayout
+		var table model.TableLayout
 		var index *int
 		var width *float64
 		if err = rows.Scan(&table.ID, &table.StartLine, &table.EndLine, &table.ColumnCount, &index, &width); err != nil {
@@ -68,7 +69,7 @@ func (r *Repository) ReadTableLayouts(ctx context.Context, documentID int64) (u.
 	return state, tx.Commit()
 }
 
-func (r *Repository) SaveTableLayouts(ctx context.Context, documentID int64, state u.TableLayoutState) error {
+func (r *Repository) SaveTableLayouts(ctx context.Context, documentID int64, state model.TableLayoutState) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -118,8 +119,8 @@ func (r *Repository) SaveTableLayouts(ctx context.Context, documentID int64, sta
 		}
 		retained[table.ID] = true
 		lastEnd = table.EndLine
-		if err = u.ValidateColumnWidths(table.ColumnWidths, table.ColumnCount); err != nil {
-			return err
+		if err = model.ValidateColumnWidths(table.ColumnWidths, table.ColumnCount); err != nil {
+			return usecase.FromModelError(err)
 		}
 		result, e := tx.ExecContext(ctx, `INSERT INTO markdown_table_layout(id,document_id,start_line,end_line,column_count) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET start_line=excluded.start_line,end_line=excluded.end_line,column_count=excluded.column_count WHERE markdown_table_layout.document_id=excluded.document_id AND (start_line<>excluded.start_line OR end_line<>excluded.end_line OR column_count<>excluded.column_count)`, table.ID, documentID, table.StartLine, table.EndLine, table.ColumnCount)
 		if e != nil {
@@ -154,8 +155,8 @@ func (r *Repository) SaveTableLayouts(ctx context.Context, documentID int64, sta
 }
 
 // Width-only edits neither reconcile other tables nor rewrite revision metadata.
-func (r *Repository) SaveTableColumnWidths(ctx context.Context, documentID int64, tableID, markdown string, widths []float64) (u.TableLayout, error) {
-	var table u.TableLayout
+func (r *Repository) SaveTableColumnWidths(ctx context.Context, documentID int64, tableID, markdown string, widths []float64) (model.TableLayout, error) {
+	var table model.TableLayout
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return table, err
@@ -167,17 +168,17 @@ func (r *Repository) SaveTableColumnWidths(ctx context.Context, documentID int64
 		return table, err
 	}
 	if source == nil || *source != markdown {
-		return table, u.Fail("aborted", "The table layout changed. Reload the preview to identify the table again.")
+		return table, usecase.Fail("aborted", "The table layout changed. Reload the preview to identify the table again.")
 	}
 	err = tx.QueryRowContext(ctx, `SELECT id,start_line,end_line,column_count FROM markdown_table_layout WHERE id=? AND document_id=?`, tableID, documentID).Scan(&table.ID, &table.StartLine, &table.EndLine, &table.ColumnCount)
 	if errors.Is(err, sql.ErrNoRows) {
-		return table, u.Fail("not_found", "Table layout not found. Reload the preview to identify the table again.")
+		return table, usecase.Fail("not_found", "Table layout not found. Reload the preview to identify the table again.")
 	}
 	if err != nil {
 		return table, err
 	}
-	if err = u.ValidateColumnWidths(widths, table.ColumnCount); err != nil {
-		return table, err
+	if err = model.ValidateColumnWidths(widths, table.ColumnCount); err != nil {
+		return table, usecase.FromModelError(err)
 	}
 	if err = saveColumnWidths(ctx, tx, tableID, widths); err != nil {
 		return table, err
