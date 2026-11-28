@@ -44,10 +44,11 @@ Run `sadoku --help` for all commands and options.
   arrows in the bottom toolbar to move between visible comment locations.
 - Use **Changes** to compare with the previous saved snapshot, or **Revisions**
   to browse history and restore a local file. Remote documents are read-only.
-- Directory previews let you browse and create Markdown files. Use **Reload
-  document list** next to **Documents** to detect files added, removed, or
-  restored on disk. Discovery limits can be changed in **Settings → Directory
-  discovery**.
+- Directory previews let you browse and create Markdown files. Use **Search
+  documents** to filter by a title or a path relative to the preview root.
+  Search works alongside tag filters. Use **Reload document list** next to
+  **Documents** to detect files added, removed, or restored on disk. Discovery
+  limits can be changed in **Settings → Directory discovery**.
 - For GitHub PRs, install the [GitHub CLI](https://cli.github.com/) and run
   `gh auth login`. **Save to GitHub review** adds a comment to your pending review;
   finish or discard it on GitHub. Nothing is submitted automatically.

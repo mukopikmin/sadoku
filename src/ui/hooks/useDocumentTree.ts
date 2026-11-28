@@ -8,9 +8,14 @@ import {
   reconcileSelectedTagIds,
 } from "../models/documentTree";
 
+const normalizeSearchText = (value: string) =>
+  value.normalize("NFC").toLowerCase();
+
 export const useDocumentTree = (documents: DocumentSummary[]) => {
+  const [documentSearch, setDocumentSearch] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [tagSearch, setTagSearch] = useState("");
+  const searchQuery = normalizeSearchText(documentSearch.trim());
   const tags = useMemo(() => collectDocumentTags(documents), [documents]);
   const activeTagIds = useMemo(
     () => reconcileSelectedTagIds(selectedTagIds, tags),
@@ -24,10 +29,24 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
     () => filterTagsBySearch(tags, tagSearch),
     [tags, tagSearch],
   );
-  const filteredDocuments = useMemo(
-    () => filterDocumentsByTags(documents, activeTagIds),
-    [activeTagIds, documents],
-  );
+  const filteredDocuments = useMemo(() => {
+    const taggedDocuments = filterDocumentsByTags(documents, activeTagIds);
+    if (!searchQuery) return taggedDocuments;
+    const fromRoot =
+      searchQuery.startsWith("./") || searchQuery.startsWith(".\\");
+    const pathQuery = fromRoot ? searchQuery.slice(2) : searchQuery;
+    const slashPathQuery = pathQuery.replaceAll("\\", "/");
+    const matchesPath = (path: string, query: string) =>
+      fromRoot ? path.startsWith(query) : path.includes(query);
+    return taggedDocuments.filter(({ relativePath, title, displayTitle }) => {
+      const path = normalizeSearchText(relativePath);
+      return (
+        matchesPath(path, pathQuery) ||
+        (slashPathQuery !== pathQuery && matchesPath(path, slashPathQuery)) ||
+        normalizeSearchText(displayTitle ?? title).includes(searchQuery)
+      );
+    });
+  }, [activeTagIds, documents, searchQuery]);
   const rootNode = useMemo(
     () => createDocumentTree(filteredDocuments),
     [filteredDocuments],
@@ -43,8 +62,11 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
       matchingTags,
       filteredDocuments,
       rootNode,
+      documentSearch,
+      searchQuery,
       tagSearch,
     },
+    setDocumentSearch,
     selectTag: (id: number) => {
       setSelectedTagIds((current) => {
         const active = reconcileSelectedTagIds(current, tags);
@@ -58,6 +80,7 @@ export const useDocumentTree = (documents: DocumentSummary[]) => {
     },
     setTagSearch,
     clear: () => {
+      setDocumentSearch("");
       setSelectedTagIds([]);
       setTagSearch("");
     },

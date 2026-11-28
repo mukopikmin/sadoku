@@ -44,6 +44,50 @@ it("filters documents, reconciles removed tags and clears search with filters", 
   expect(result.current.state.status).toBe("empty");
 });
 
+it("matches directory names and nested paths relative to the document root", () => {
+  const nested = {
+    id: 4,
+    relativePath: "docs/setup/guide.md",
+    title: "Guide",
+    deleted: false,
+    tags: [],
+  };
+  const docs = [...documents, nested];
+  const { result } = renderHook(() => useDocumentTree(docs));
+
+  act(() => result.current.setDocumentSearch(" DOCS "));
+  expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
+    1, 2, 4,
+  ]);
+
+  act(() => result.current.setDocumentSearch("setup/guide.md"));
+  expect(result.current.state.filteredDocuments).toEqual([nested]);
+});
+
+it("accepts root-relative prefixes and platform path separators", () => {
+  const docs = [
+    ...documents,
+    { ...documents[0], id: 4, relativePath: "archive/docs/one.md" },
+    { ...documents[0], id: 5, relativePath: "docs\\one.md" },
+  ];
+  const { result } = renderHook(() => useDocumentTree(docs));
+
+  act(() => result.current.setDocumentSearch("./docs/one.md"));
+  expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
+    1,
+  ]);
+
+  act(() => result.current.setDocumentSearch(".\\docs\\one.md"));
+  expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
+    1, 5,
+  ]);
+
+  act(() => result.current.setDocumentSearch("docs\\one.md"));
+  expect(result.current.state.filteredDocuments.map(({ id }) => id)).toEqual([
+    1, 4, 5,
+  ]);
+});
+
 it("searches tag choices, combines selections and removes only the requested filter", () => {
   const urgent = { ...tag, id: 2, name: "urgent" };
   const docs = documents.map((document) => {
