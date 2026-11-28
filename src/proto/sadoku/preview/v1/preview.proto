@@ -58,12 +58,25 @@ message PullRequest {
   string url = 4;
 }
 
-message GetStatisticsRequest {}
+message GetStatisticsRequest {
+  bool include_details = 1;
+}
 
 message GetStatisticsResponse {
   CommentCount comment_count = 1;
-  uint64 database_size = 2;
+  optional uint64 database_size = 2;
   uint64 document_count = 3;
+  DatabaseStatisticsDetails details = 4;
+}
+
+message DatabaseStatisticsDetails {
+  reserved 2, 5 to 16;
+
+  uint64 resolved_thread_count = 1;
+  CommentCount reply_count = 3;
+  uint64 revision_count = 4;
+  uint64 documents_with_comments_count = 17;
+  uint64 documents_with_unresolved_threads_count = 18;
 }
 
 message CommentCount {

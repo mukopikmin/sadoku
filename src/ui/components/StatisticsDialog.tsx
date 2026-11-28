@@ -7,9 +7,11 @@ import {
   Text,
 } from "@chakra-ui/react";
 import type { RefObject } from "react";
+import type { DatabaseStatistics } from "../api/statistics";
 import { useStatisticsQuery } from "../hooks/useStatistics";
 
-const formatSize = (bytes: number): string => {
+const formatSize = (bytes: number | undefined): string => {
+  if (bytes === undefined) return "Unavailable";
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB"];
   let value = bytes / 1024;
@@ -19,6 +21,95 @@ const formatSize = (bytes: number): string => {
     unit = units[index];
   }
   return `${value.toFixed(value < 10 ? 1 : 0)} ${unit}`;
+};
+
+const formatCount = (value: number) => value.toLocaleString();
+
+const formatCountByAuthor = ({
+  total,
+  human,
+  bot,
+}: DatabaseStatistics["commentCount"]) =>
+  `${formatCount(total)} (Human ${formatCount(human)} · Bot ${formatCount(bot)})`;
+
+const formatResolutionRate = (resolved: number, total: number): string => {
+  if (total === 0) return "—";
+  const rate = (resolved / total).toLocaleString(undefined, {
+    style: "percent",
+  });
+  return `${rate} (${formatCount(resolved)} of ${formatCount(total)} resolved)`;
+};
+
+const StatisticsRows = ({ rows }: { rows: [string, string][] }) => (
+  <Flex as="dl" direction="column" gap="3">
+    {rows.map(([label, value]) => (
+      <Flex
+        justifyContent="space-between"
+        alignItems="baseline"
+        gap="4"
+        key={label}
+      >
+        <Text as="dt" color="fg.muted">
+          {label}
+        </Text>
+        <Text
+          as="dd"
+          minW="0"
+          overflowWrap="anywhere"
+          textAlign="end"
+          fontWeight="semibold"
+        >
+          {value}
+        </Text>
+      </Flex>
+    ))}
+  </Flex>
+);
+
+const StatisticsContent = ({
+  commentCount,
+  databaseSize,
+  documentCount,
+  details,
+}: DatabaseStatistics) => {
+  const documents: [string, string] = [
+    "Registered documents",
+    formatCount(documentCount),
+  ];
+  const threads: [string, string] = [
+    "Comment threads",
+    formatCountByAuthor(commentCount),
+  ];
+  const size: [string, string] = [
+    "Database file size",
+    formatSize(databaseSize),
+  ];
+  if (!details) {
+    return <StatisticsRows rows={[documents, threads, size]} />;
+  }
+  return (
+    <StatisticsRows
+      rows={[
+        documents,
+        [
+          "Documents with comments",
+          formatCount(details.documentsWithCommentsCount),
+        ],
+        [
+          "Documents with unresolved threads",
+          formatCount(details.documentsWithUnresolvedThreadsCount),
+        ],
+        threads,
+        [
+          "Resolution rate",
+          formatResolutionRate(details.resolvedThreadCount, commentCount.total),
+        ],
+        ["Replies", formatCountByAuthor(details.replyCount)],
+        ["Saved revisions", formatCount(details.revisionCount)],
+        size,
+      ]}
+    />
+  );
 };
 
 export const StatisticsDialog = ({
@@ -36,6 +127,7 @@ export const StatisticsDialog = ({
       finalFocusEl={() => finalFocusRef?.current ?? null}
       onOpenChange={({ open }) => onOpenChange(open)}
       open={open}
+      scrollBehavior="inside"
     >
       <Portal>
         <Dialog.Backdrop />
@@ -53,32 +145,7 @@ export const StatisticsDialog = ({
               ) : statistics.error ? (
                 <Text color="fg.error">{statistics.error.message}</Text>
               ) : (
-                <Flex as="dl" direction="column" gap="3">
-                  {[
-                    [
-                      "Documents",
-                      statistics.data.documentCount.toLocaleString(),
-                    ],
-                    ["Database size", formatSize(statistics.data.databaseSize)],
-                    [
-                      "Human comments",
-                      statistics.data.commentCount.human.toLocaleString(),
-                    ],
-                    [
-                      "Bot comments",
-                      statistics.data.commentCount.bot.toLocaleString(),
-                    ],
-                  ].map(([label, value]) => (
-                    <Flex justifyContent="space-between" gap="6" key={label}>
-                      <Text as="dt" color="fg.muted">
-                        {label}
-                      </Text>
-                      <Text as="dd" fontWeight="semibold">
-                        {value}
-                      </Text>
-                    </Flex>
-                  ))}
-                </Flex>
+                <StatisticsContent {...statistics.data} />
               )}
             </Dialog.Body>
           </Dialog.Content>

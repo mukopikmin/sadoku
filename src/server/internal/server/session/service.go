@@ -54,6 +54,7 @@ type Input struct {
 	TableID           string            `json:"tableId"`
 	ColumnWidths      []float64         `json:"columnWidths"`
 	CreatedAt         string            `json:"createdAt"`
+	IncludeDetails    bool              `json:"includeDetails"`
 	config.Settings
 }
 
@@ -68,7 +69,7 @@ func (s *Session) Invoke(ctx context.Context, operation string, in Input) (any, 
 	// slow statistics query or GitHub command must not serialize progress RPCs.
 	switch operation {
 	case "GetStatistics":
-		return s.Repository.Statistics(ctx)
+		return s.Repository.Statistics(ctx, in.IncludeDetails)
 
 	case "GetSettings":
 		settings, _, err := config.Read()
