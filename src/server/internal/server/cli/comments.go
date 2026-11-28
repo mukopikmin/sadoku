@@ -8,29 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/mukopikmin/sadoku/internal/server/db"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
-func validateTagName(value string) error {
-	name := u.TrimSpace(value)
-	if name == "" {
-		return fmt.Errorf("Tag name must not be empty.")
-	}
-	for _, r := range name {
-		if unicode.IsControl(r) {
-			return fmt.Errorf("Tag name must not contain control characters.")
-		}
-	}
-	if utf8.RuneCountInString(name) > 50 {
-		return fmt.Errorf("Tag name must not exceed 50 characters.")
-	}
-	return nil
-}
 func commandError(command string, err error) error {
 	if command == "instruction" || command == "memory" {
 		kind := strings.ToUpper(command[:1]) + command[1:]
@@ -43,17 +26,18 @@ func commandError(command string, err error) error {
 	}
 	return err
 }
-func commentError(err error, in u.CommentInput) error {
+func commentError(err error, in model.CommentInput) error {
 	if err == nil {
 		return nil
+	}
+	if errors.Is(err, model.ErrCommentRange) {
+		return fmt.Errorf("Comment range does not exist.")
 	}
 	switch err.Error() {
 	case "Comment not found.":
 		return fmt.Errorf("Comment not found: %d", in.CommentID)
 	case "Reply not found.":
 		return fmt.Errorf("Reply not found: %d", in.ReplyID)
-	case "Comment range is outside the Markdown source.":
-		return fmt.Errorf("Comment range does not exist.")
 	case "Review requests require a bot author.":
 		return fmt.Errorf("Review requests require a bot reply.")
 	}
@@ -91,7 +75,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 				}
 			}
 		}
-		comments = u.ResolveComments(comments, markdown)
+		comments = model.ResolveComments(comments, markdown)
 		if changed && len(comments.Comments) > 0 {
 			if err = repo.SaveComments(ctx, id, comments); err != nil {
 				return err
@@ -103,7 +87,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 		}
 		return printJSON(out, object{{"comments", list}, {"filePath", comments.FilePath}})
 	}
-	in := u.CommentInput{Body: o.Values["body"], AsBot: o.Flags["as-bot"], RequestReview: o.Flags["request-review"]}
+	in := model.CommentInput{Body: o.Values["body"], AsBot: o.Flags["as-bot"], RequestReview: o.Flags["request-review"]}
 	op := ""
 	markdown := ""
 	if comments.SourceSnapshot != nil {
@@ -136,7 +120,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 		now := db.Now()
 		for _, c := range comments.Comments {
 			if wanted[c.ID] {
-				comments, _, err = u.ChangeComment("SetCommentResolution", comments, u.CommentInput{CommentID: c.ID, Resolved: operation == "resolve", AsBot: in.AsBot}, markdown, now)
+				comments, _, err = model.ChangeComment("SetCommentResolution", comments, model.CommentInput{CommentID: c.ID, Resolved: operation == "resolve", AsBot: in.AsBot}, markdown, now)
 				if err != nil {
 					return err
 				}
@@ -194,7 +178,7 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 			op = strings.ToUpper(action[:1]) + action[1:] + "Reply"
 		}
 	}
-	updated, result, err := u.ChangeComment(op, comments, in, markdown, db.Now())
+	updated, result, err := model.ChangeComment(op, comments, in, markdown, db.Now())
 	if err != nil {
 		return commentError(err, in)
 	}
@@ -209,17 +193,14 @@ func executeComments(ctx context.Context, s *session.Session, o Options, out io.
 		_, err = fmt.Fprintf(out, "Deleted reply %d.\n", in.ReplyID)
 		return err
 	}
-	c := result.(u.Comment)
-	if op != "CreateComment" && !c.Stale && comments.SourceSnapshot != nil {
-		c.CurrentSourceText = u.RangeText(*comments.SourceSnapshot, c.StartLine, c.EndLine)
-	}
+	c := result.(model.Comment)
 	if op == "CreateReply" {
 		current, err := readCLI(ctx, s, id)
 		if err != nil {
 			return err
 		}
 		text := c.CurrentSourceText
-		c = u.ResolveComments(u.Comments{Comments: []u.Comment{c}}, current).Comments[0]
+		c = model.ResolveComments(model.Comments{Comments: []model.Comment{c}}, current).Comments[0]
 		c.CurrentSourceText = text
 	}
 	return printJSON(out, commentOutput(c, op))

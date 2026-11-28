@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/mukopikmin/sadoku/internal/server/db"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 func TestTableLayoutsSurviveReopenAndCascadeWithDocument(t *testing.T) {
@@ -14,7 +14,7 @@ func TestTableLayoutsSurviveReopenAndCascadeWithDocument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	state, err := u.ResolveTableLayouts(u.TableLayoutState{}, "| A | B |\n| - | - |", []u.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 2}})
+	state, err := model.ResolveTableLayouts(model.TableLayoutState{}, "| A | B |\n| - | - |", []model.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 2}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func TestNormalizedTableWidthUpdatesReuseRevisionAndRollbackAtomically(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	state, err := u.ResolveTableLayouts(u.TableLayoutState{}, "| A | B |\n| - | - |", []u.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 2}})
+	state, err := model.ResolveTableLayouts(model.TableLayoutState{}, "| A | B |\n| - | - |", []model.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 2}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func TestTableLayoutsCannotReuseAnotherDocumentsIdentityOrRevision(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	state, err := u.ResolveTableLayouts(u.TableLayoutState{}, "| A |\n| - |", []u.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 1}})
+	state, err := model.ResolveTableLayouts(model.TableLayoutState{}, "| A |\n| - |", []model.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 1}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func TestWidthOnlySaveDoesNotTouchOtherTablesOrRevisionMetadata(t *testing.T) {
 		t.Fatal(err)
 	}
 	markdown := "| A |\n| - |\n\n| B |\n| - |"
-	state, err := u.ResolveTableLayouts(u.TableLayoutState{}, markdown, []u.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 1}, {StartLine: 4, EndLine: 5, ColumnCount: 1}})
+	state, err := model.ResolveTableLayouts(model.TableLayoutState{}, markdown, []model.TablePosition{{StartLine: 1, EndLine: 2, ColumnCount: 1}, {StartLine: 4, EndLine: 5, ColumnCount: 1}})
 	if err != nil {
 		t.Fatal(err)
 	}

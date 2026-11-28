@@ -17,8 +17,8 @@ import (
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 // Run the real gh subprocess boundary with deterministic, local responses.
@@ -240,7 +240,7 @@ func newGitHubFixture(t *testing.T) *githubFixture {
 	}
 	f.s.ReadRemote = func(context.Context, string) (string, error) { return f.in.DisplayedMarkdown, nil }
 	f.in.DocumentID = ID(f.s.Documents[0].ID)
-	comments, _, err := u.ChangeComment("CreateComment", u.Comments{Comments: []u.Comment{}}, u.CommentInput{StartLine: 2, EndLine: 2, Body: "Review"}, f.in.DisplayedMarkdown, f.in.CreatedAt)
+	comments, _, err := model.ChangeComment("CreateComment", model.Comments{Comments: []model.Comment{}}, model.CommentInput{StartLine: 2, EndLine: 2, Body: "Review"}, f.in.DisplayedMarkdown, f.in.CreatedAt)
 	if err != nil {
 		t.Fatal(err)
 	}

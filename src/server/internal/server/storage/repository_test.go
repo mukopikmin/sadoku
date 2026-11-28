@@ -11,7 +11,8 @@ import (
 
 	"github.com/mattn/go-sqlite3"
 	"github.com/mukopikmin/sadoku/internal/server/db"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 func TestCanceledSaveRollsBackCommentsAndRevisionsWithoutNotification(t *testing.T) {
@@ -23,7 +24,7 @@ func TestCanceledSaveRollsBackCommentsAndRevisionsWithoutNotification(t *testing
 	if err := r.InitializeSnapshot(t.Context(), doc.ID, "original"); err != nil {
 		t.Fatal(err)
 	}
-	comments, _, err := u.ChangeComment("CreateComment", u.Comments{FilePath: doc.FilePath}, u.CommentInput{StartLine: 1, EndLine: 1, Body: "original review"}, "original", db.Now())
+	comments, _, err := model.ChangeComment("CreateComment", model.Comments{FilePath: doc.FilePath}, model.CommentInput{StartLine: 1, EndLine: 1, Body: "original review"}, "original", db.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +105,7 @@ func TestCommittedSavePublishesNotificationAfterCancellation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	comments, _, err := u.ChangeComment("CreateComment", u.Comments{FilePath: doc.FilePath}, u.CommentInput{StartLine: 1, EndLine: 1, Body: "review"}, "original", db.Now())
+	comments, _, err := model.ChangeComment("CreateComment", model.Comments{FilePath: doc.FilePath}, model.CommentInput{StartLine: 1, EndLine: 1, Body: "review"}, "original", db.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +157,7 @@ func TestCommentsAndRevisionsRollbackTogether(t *testing.T) {
 	if err = r.InitializeSnapshot(t.Context(), doc.ID, "ignored"); err != nil {
 		t.Fatal(err)
 	}
-	comments, _, err := u.ChangeComment("CreateComment", u.Comments{FilePath: doc.FilePath}, u.CommentInput{StartLine: 1, EndLine: 1, Body: "review"}, "original", db.Now())
+	comments, _, err := model.ChangeComment("CreateComment", model.Comments{FilePath: doc.FilePath}, model.CommentInput{StartLine: 1, EndLine: 1, Body: "review"}, "original", db.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,17 +217,17 @@ func TestScopedNotesAndAtomicTagReplacement(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, kind := range []string{"instruction", "memory"} {
-		note, err := r.SaveNote(t.Context(), kind, u.Note{DocumentID: one.ID, Content: "first"})
+		note, err := r.SaveNote(t.Context(), kind, model.Note{DocumentID: one.ID, Content: "first"})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err = r.SaveNote(t.Context(), kind, u.Note{ID: note.ID, DocumentID: two.ID, Content: "wrong document"}); err == nil {
+		if _, err = r.SaveNote(t.Context(), kind, model.Note{ID: note.ID, DocumentID: two.ID, Content: "wrong document"}); err == nil {
 			t.Fatal("updated another document's note")
 		}
 		if err = r.DeleteNote(t.Context(), kind, two.ID, note.ID); err == nil {
 			t.Fatal("deleted another document's note")
 		}
-		updated, err := r.SaveNote(t.Context(), kind, u.Note{ID: note.ID, DocumentID: one.ID, Content: "second"})
+		updated, err := r.SaveNote(t.Context(), kind, model.Note{ID: note.ID, DocumentID: one.ID, Content: "second"})
 		if err != nil || updated.CreatedAt != note.CreatedAt || updated.Content != "second" {
 			t.Fatalf("updated note: %+v %v", updated, err)
 		}
@@ -238,18 +239,18 @@ func TestScopedNotesAndAtomicTagReplacement(t *testing.T) {
 			t.Fatal("note deletion failed", err)
 		}
 	}
-	tags, err := r.ReplaceTagReferences(t.Context(), one.ID, []u.TagReference{{Name: "API"}})
+	tags, err := r.ReplaceTagReferences(t.Context(), one.ID, []model.TagReference{{Name: "API"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = r.ReplaceTagReferences(t.Context(), two.ID, []u.TagReference{{ID: tags[0].ID}}); err != nil {
+	if _, err = r.ReplaceTagReferences(t.Context(), two.ID, []model.TagReference{{ID: tags[0].ID}}); err != nil {
 		t.Fatal(err)
 	}
 	all, err := r.Tags(t.Context(), 0)
 	if err != nil || len(all) != 1 || all[0].DocumentCount != 2 {
 		t.Fatalf("tag count %+v %v", all, err)
 	}
-	if _, err = r.ReplaceTagReferences(t.Context(), one.ID, []u.TagReference{{Name: "must rollback"}, {ID: 9999}}); err == nil {
+	if _, err = r.ReplaceTagReferences(t.Context(), one.ID, []model.TagReference{{Name: "must rollback"}, {ID: 9999}}); err == nil {
 		t.Fatal("accepted nonexistent tag")
 	}
 	all, err = r.Tags(t.Context(), 0)
@@ -323,7 +324,7 @@ func TestDirectoryRegistrationIsAtomicAndCancellable(t *testing.T) {
 
 func TestUnchangedTagUpdatePreservesItsTimestamp(t *testing.T) {
 	r := testRepository(t)
-	tag, err := r.SaveTag(t.Context(), u.Tag{Name: "Review", BackgroundColor: "#123456"})
+	tag, err := r.SaveTag(t.Context(), model.Tag{Name: "Review", BackgroundColor: "#123456"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,7 +356,7 @@ func TestSaveCommentsRejectsStaleChangesAcrossConnections(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	read := func(repo *Repository) u.Comments {
+	read := func(repo *Repository) model.Comments {
 		t.Helper()
 		comments, err := repo.ReadComments(ctx, doc.ID)
 		if err != nil {
@@ -363,9 +364,9 @@ func TestSaveCommentsRejectsStaleChangesAcrossConnections(t *testing.T) {
 		}
 		return comments
 	}
-	add := func(comments u.Comments, body string) u.Comments {
+	add := func(comments model.Comments, body string) model.Comments {
 		t.Helper()
-		next, _, err := u.ChangeComment("CreateComment", comments, u.CommentInput{StartLine: 1, EndLine: 1, Body: body}, "source", db.Now())
+		next, _, err := model.ChangeComment("CreateComment", comments, model.CommentInput{StartLine: 1, EndLine: 1, Body: body}, "source", db.Now())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -376,7 +377,7 @@ func TestSaveCommentsRejectsStaleChangesAcrossConnections(t *testing.T) {
 	if err := second.SaveComments(ctx, doc.ID, preview); err != nil {
 		t.Fatal(err)
 	}
-	var failure *u.Failure
+	var failure *usecase.Failure
 	if err := first.SaveComments(ctx, doc.ID, cli); !errors.As(err, &failure) || failure.Kind != "aborted" {
 		t.Fatalf("stale save returned %v", err)
 	}

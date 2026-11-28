@@ -9,7 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/jsoncompat"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 // CLI output has its own contract; API and storage models include extra fields.
@@ -52,11 +53,11 @@ func printJSON(out io.Writer, value any) error {
 	}
 	// JSON.stringify emits these Unicode characters literally. Only replace JSON
 	// escapes, leaving user strings containing a literal backslash untouched.
-	_, err := io.WriteString(out, u.UnescapeJSONSeparators(b.String()))
+	_, err := io.WriteString(out, jsoncompat.UnescapeJSONSeparators(b.String()))
 	return err
 }
 
-func documentOutput(d u.Document, withTags bool) object {
+func documentOutput(d model.Document, withTags bool) object {
 	o := object{{"filePath", d.FilePath}, {"id", d.ID}}
 	if d.DisplayTitle != nil {
 		o = append(o, field{"displayTitle", *d.DisplayTitle})
@@ -70,17 +71,17 @@ func documentOutput(d u.Document, withTags bool) object {
 	}
 	return o
 }
-func tagOutput(t u.Tag, summary bool) object {
+func tagOutput(t model.Tag, summary bool) object {
 	o := object{{"id", t.ID}, {"name", t.Name}, {"backgroundColor", t.BackgroundColor}, {"createdAt", t.CreatedAt}, {"updatedAt", t.UpdatedAt}}
 	if summary {
 		o = append(o, field{"documentCount", t.DocumentCount})
 	}
 	return o
 }
-func noteOutput(n u.Note) object {
+func noteOutput(n model.Note) object {
 	return object{{"content", n.Content}, {"createdAt", n.CreatedAt}, {"documentId", n.DocumentID}, {"id", n.ID}, {"updatedAt", n.UpdatedAt}}
 }
-func replyOutput(r u.Reply, created bool) object {
+func replyOutput(r model.Reply, created bool) object {
 	o := object{{"author", r.Author}, {"body", r.Body}, {"createdAt", r.CreatedAt}, {"id", r.ID}}
 	if !created && r.ReviewRequested {
 		o = append(o, field{"reviewRequested", true})
@@ -91,7 +92,7 @@ func replyOutput(r u.Reply, created bool) object {
 	}
 	return o
 }
-func commentOutput(c u.Comment, operation string) object {
+func commentOutput(c model.Comment, operation string) object {
 	replies := []object{}
 	for i, r := range c.Replies {
 		replies = append(replies, replyOutput(r, operation == "CreateReply" && i == len(c.Replies)-1))
@@ -154,8 +155,8 @@ func WriteError(out io.Writer, err error) {
 	}
 }
 
-func sortedTags(tags []u.Tag) []u.Tag {
-	result := append([]u.Tag{}, tags...)
+func sortedTags(tags []model.Tag) []model.Tag {
+	result := append([]model.Tag{}, tags...)
 	sort.SliceStable(result, func(i, j int) bool { return result[i].Name < result[j].Name })
 	return result
 }

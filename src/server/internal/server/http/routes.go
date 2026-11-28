@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mukopikmin/sadoku/internal/server/session"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 func (r *router) registerREST(m chi.Router) {
@@ -77,19 +77,19 @@ func (r *router) validateRESTPath(w http.ResponseWriter, req *http.Request) bool
 	if tail, ok := strings.CutPrefix(req.URL.Path, "/__sadoku/documents/"); ok {
 		value, _, _ := strings.Cut(tail, "/")
 		id, err := parseRESTResourceID(value)
-		if err != nil || !documentIDPattern.MatchString(value) || u.PositiveID(id) != nil {
+		if err != nil || !documentIDPattern.MatchString(value) || usecase.PositiveID(id) != nil {
 			if req.Method == "POST" && exportPathPattern.MatchString(req.URL.Path) {
 				githubExportError(w, "export_document_not_found", 0)
 			} else {
-				respondError(w, u.Fail("not_found", "Document not found."))
+				respondError(w, usecase.Fail("not_found", "Document not found."))
 			}
 			return false
 		}
 	}
 	if value, ok := strings.CutPrefix(req.URL.Path, "/__sadoku/global-instructions/"); ok && !strings.Contains(value, "/") {
 		id, err := parseRESTResourceID(value)
-		if err != nil || u.PositiveID(id) != nil {
-			respondError(w, u.Fail("not_found", "Instruction not found."))
+		if err != nil || usecase.PositiveID(id) != nil {
+			respondError(w, usecase.Fail("not_found", "Instruction not found."))
 			return false
 		}
 	}

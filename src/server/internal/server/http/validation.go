@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"math"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 const invalidSettingsMessage = "Request body must contain valid theme, codeWrap, fontScale, maxDepth, maxFiles, excludedDirectories, markdownExtensions, and showHtmlComments settings."
 
 func validateRESTFields(operation string, fields map[string]json.RawMessage) error {
-	invalid := func(message string) error { return u.Fail("invalid_argument", message) }
+	invalid := func(message string) error { return usecase.Fail("invalid_argument", message) }
 	value := func(name string) any {
 		var result any
 		// Missing or invalid values stay nil and fail the operation's type checks below.
@@ -57,8 +58,8 @@ func validateRESTFields(operation string, fields map[string]json.RawMessage) err
 				if !hasName || !ok {
 					return invalid("Tag name must be a string.")
 				}
-				if err := u.ValidateTagName(text); err != nil {
-					return err
+				if err := model.ValidateTagName(text); err != nil {
+					return usecase.FromModelError(err)
 				}
 			}
 		}

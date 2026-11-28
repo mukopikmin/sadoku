@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"encoding/json"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -189,7 +189,7 @@ func TestRebuildFillsOnlyMissingSourceValues(t *testing.T) {
 					t.Fatalf("source values: %q %q", text, hash)
 				}
 				if hash == "" {
-					doc := u.ResolveComments(u.Comments{Comments: []u.Comment{{StartLine: 1, EndLine: 1, SourceText: &text, SourceHash: &hash}}}, "\noriginal")
+					doc := model.ResolveComments(model.Comments{Comments: []model.Comment{{StartLine: 1, EndLine: 1, SourceText: &text, SourceHash: &hash}}}, "\noriginal")
 					if !doc.Comments[0].Stale {
 						t.Fatal("placeholder matched a source line")
 					}

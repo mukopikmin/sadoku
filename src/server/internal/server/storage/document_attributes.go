@@ -7,20 +7,20 @@ import (
 	"fmt"
 
 	"github.com/mukopikmin/sadoku/internal/server/db"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
-func (r *Repository) RegisterDocument(ctx context.Context, path string, title **string, tags *[]int64) (u.Document, error) {
+func (r *Repository) RegisterDocument(ctx context.Context, path string, title **string, tags *[]int64) (model.Document, error) {
 	return r.saveDocumentAttributes(ctx, 0, path, title, tags)
 }
 
 // Omitted attributes are preserved, and all specified attributes commit together.
-func (r *Repository) UpdateDocumentAttributes(ctx context.Context, id int64, title **string, tags *[]int64) (u.Document, error) {
+func (r *Repository) UpdateDocumentAttributes(ctx context.Context, id int64, title **string, tags *[]int64) (model.Document, error) {
 	return r.saveDocumentAttributes(ctx, id, "", title, tags)
 }
 
-func (r *Repository) saveDocumentAttributes(ctx context.Context, id int64, path string, title **string, tags *[]int64) (u.Document, error) {
-	var doc u.Document
+func (r *Repository) saveDocumentAttributes(ctx context.Context, id int64, path string, title **string, tags *[]int64) (model.Document, error) {
+	var doc model.Document
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return doc, err

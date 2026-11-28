@@ -11,11 +11,11 @@ import (
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type snapshotRepository struct {
-	u.Repository
+	usecase.Repository
 	failID int64
 }
 

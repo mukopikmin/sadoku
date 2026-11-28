@@ -9,9 +9,9 @@ import (
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 var Version = "0.0.0-dev"
@@ -319,9 +319,9 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	operation := words[1]
 	if command == "tag" {
 		s := &session.Session{Repository: repo}
-		in := session.Input{Name: u.TrimSpace(o.Values["name"])}
+		in := session.Input{Name: model.TrimSpace(o.Values["name"])}
 		if operation == "add" {
-			if err := validateTagName(in.Name); err != nil {
+			if err := model.ValidateTagName(in.Name); err != nil {
 				return err
 			}
 		}
@@ -360,12 +360,12 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		}
 		if operation == "list" {
 			tags := []object{}
-			for _, tag := range sortedTags(result.(map[string]any)["tags"].([]u.Tag)) {
+			for _, tag := range sortedTags(result.(map[string]any)["tags"].([]model.Tag)) {
 				tags = append(tags, tagOutput(tag, true))
 			}
 			return printJSON(tags)
 		}
-		return printJSON(tagOutput(result.(u.Tag), false))
+		return printJSON(tagOutput(result.(model.Tag), false))
 	}
 	if command != "comment" && command != "instruction" && command != "memory" {
 		return fmt.Errorf("invalid command: %s", command)
@@ -382,7 +382,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	if err != nil {
 		return err
 	}
-	var selected *u.Document
+	var selected *model.Document
 	if hasDocument {
 		id, e := number(document, "document ID", 1)
 		if e != nil {
@@ -423,7 +423,7 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	if hasSource {
 		_, fetch, _ = session.Source(source)
 	}
-	s := &session.Session{Root: filepath.Dir(selected.FilePath), Documents: []u.Document{*selected}, Sources: map[int64]string{selected.ID: fetch}, Repository: repo}
+	s := &session.Session{Root: filepath.Dir(selected.FilePath), Documents: []model.Document{*selected}, Sources: map[int64]string{selected.ID: fetch}, Repository: repo}
 	in := session.Input{DocumentID: session.ID(selected.ID), Body: o.Values["body"], Content: o.Values["content"], AsBot: o.Flags["as-bot"], RequestReview: o.Flags["request-review"]}
 	op := ""
 	if command == "instruction" {
@@ -453,10 +453,10 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	if command == "memory" && (operation == "add" || operation == "update") {
 		content := strings.ReplaceAll(strings.ReplaceAll(in.Content, "\r\n", "\n"), "\r", "\n")
 		content = strings.TrimRight(content, "\n")
-		if u.TrimSpace(content) == "" {
+		if model.TrimSpace(content) == "" {
 			return commandError(command, fmt.Errorf("Content must not be empty."))
 		}
-		n, err := repo.SaveNote(ctx, command, u.Note{ID: int64(in.MemoryID), DocumentID: selected.ID, Content: content})
+		n, err := repo.SaveNote(ctx, command, model.Note{ID: int64(in.MemoryID), DocumentID: selected.ID, Content: content})
 		if err != nil {
 			return commandError(command, err)
 		}
@@ -468,14 +468,14 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 	}
 	if op == "ListMemories" {
 		notes := []object{}
-		for _, n := range result.(map[string]any)["memories"].([]u.Note) {
+		for _, n := range result.(map[string]any)["memories"].([]model.Note) {
 			notes = append(notes, noteOutput(n))
 		}
 		return printJSON(object{{"document", documentOutput(*selected, false)}, {"memories", notes}})
 	}
 	if op == "ReplaceDocumentTags" {
 		tags := []object{}
-		for _, tag := range sortedTags(result.(map[string]any)["tags"].([]u.Tag)) {
+		for _, tag := range sortedTags(result.(map[string]any)["tags"].([]model.Tag)) {
 			tags = append(tags, object{{"id", tag.ID}, {"name", tag.Name}, {"backgroundColor", tag.BackgroundColor}})
 		}
 		return printJSON(tags)
@@ -484,5 +484,5 @@ func Execute(ctx context.Context, args []string, out io.Writer, start Start) err
 		_, err = fmt.Fprintf(out, "Deleted %s %d.\n", command, in.MemoryID)
 		return err
 	}
-	return printJSON(noteOutput(result.(u.Note)))
+	return printJSON(noteOutput(result.(model.Note)))
 }

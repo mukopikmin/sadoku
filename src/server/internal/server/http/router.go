@@ -18,8 +18,9 @@ import (
 	"github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1/previewv1connect"
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/http/api"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 	"github.com/mukopikmin/sadoku/internal/ui"
 )
 
@@ -90,7 +91,7 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if r.options.TrustForwardedPrefix {
 		prefix := req.Header.Get("X-Forwarded-Prefix")
 		if prefix != "" && (len(prefix) > 2048 || !prefixPattern.MatchString(prefix)) {
-			respondError(w, u.Fail("invalid_argument", "Invalid public base path."))
+			respondError(w, usecase.Fail("invalid_argument", "Invalid public base path."))
 			return
 		}
 	}
@@ -125,7 +126,7 @@ func textError(w http.ResponseWriter, message string, status int) {
 	_, _ = io.WriteString(w, message)
 }
 func respondError(w http.ResponseWriter, err error) {
-	var failure *u.Failure
+	var failure *usecase.Failure
 	status, message := 500, "Internal Server Error"
 	if errors.As(err, &failure) {
 		message = failure.Message
@@ -201,7 +202,7 @@ func (r *router) asset(w http.ResponseWriter, req *http.Request) {
 }
 func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string, status int) {
 	input := restParameters(req)
-	var tagPatch u.TagPatch
+	var tagPatch model.TagPatch
 	method := req.Method
 	export := operation == "ExportCommentToGitHub"
 	if export {
@@ -221,7 +222,7 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string
 			githubExportError(w, "export_unavailable", 404)
 			return
 		}
-		if u.PositiveID(int64(input.CommentID)) != nil {
+		if usecase.PositiveID(int64(input.CommentID)) != nil {
 			githubExportError(w, "export_comment_not_found", 0)
 			return
 		}
@@ -327,14 +328,14 @@ func (r *router) rest(w http.ResponseWriter, req *http.Request, operation string
 		return
 	}
 	if operation == "UpdateTag" {
-		tag := result.(u.Tag)
+		tag := result.(model.Tag)
 		result = map[string]any{"id": tag.ID, "name": tag.Name, "backgroundColor": tag.BackgroundColor, "createdAt": tag.CreatedAt, "updatedAt": tag.UpdatedAt}
 	}
 	if operation == "ListTags" || operation == "ReplaceDocumentTags" {
 		result = result.(map[string]any)["tags"]
 		if operation == "ReplaceDocumentTags" {
 			tags := []map[string]any{}
-			for _, tag := range result.([]u.Tag) {
+			for _, tag := range result.([]model.Tag) {
 				tags = append(tags, map[string]any{"id": tag.ID, "name": tag.Name, "backgroundColor": tag.BackgroundColor, "createdAt": tag.CreatedAt, "updatedAt": tag.UpdatedAt})
 			}
 			result = tags
@@ -358,7 +359,7 @@ type documentSummary struct {
 	Tags         []documentTag `json:"tags"`
 }
 
-func publicDocumentTags(tags []u.Tag) []documentTag {
+func publicDocumentTags(tags []model.Tag) []documentTag {
 	result := make([]documentTag, 0, len(tags))
 	for _, tag := range tags {
 		result = append(result, documentTag{tag.ID, tag.Name, tag.BackgroundColor})

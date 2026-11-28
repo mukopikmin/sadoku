@@ -1,4 +1,4 @@
-package usecase
+package model
 
 import (
 	"fmt"
@@ -266,11 +266,11 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 	}
 	if operation == "CreateComment" {
 		if body == "" {
-			return doc, nil, Fail("invalid_argument", "Comment body is required.")
+			return doc, nil, &RuleError{InvalidInput, "Comment body is required."}
 		}
 		text := RangeText(markdown, in.StartLine, in.EndLine)
 		if text == nil {
-			return doc, nil, Fail("invalid_argument", "Comment range is outside the Markdown source.")
+			return doc, nil, ErrCommentRange
 		}
 		id := int64(1)
 		for _, c := range doc.Comments {
@@ -290,7 +290,7 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		}
 	}
 	if index < 0 {
-		return doc, nil, Fail("not_found", "Comment not found.")
+		return doc, nil, &RuleError{MissingItem, "Comment not found."}
 	}
 	c := doc.Comments[index]
 	switch operation {
@@ -299,7 +299,7 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		return doc, struct{}{}, nil
 	case "UpdateComment":
 		if body == "" {
-			return doc, nil, Fail("invalid_argument", "Comment body is required.")
+			return doc, nil, &RuleError{InvalidInput, "Comment body is required."}
 		}
 		c.Body = body
 	case "SetCommentResolution":
@@ -312,13 +312,13 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 		}
 	case "CreateReply":
 		if body == "" {
-			return doc, nil, Fail("invalid_argument", "Reply body is required.")
+			return doc, nil, &RuleError{InvalidInput, "Reply body is required."}
 		}
 		if in.RequestReview && c.Resolved {
-			return doc, nil, Fail("invalid_argument", "Cannot request review on a resolved comment.")
+			return doc, nil, &RuleError{InvalidInput, "Cannot request review on a resolved comment."}
 		}
 		if in.RequestReview && !in.AsBot {
-			return doc, nil, Fail("invalid_argument", "Review requests require a bot author.")
+			return doc, nil, &RuleError{InvalidInput, "Review requests require a bot author."}
 		}
 		id := int64(1)
 		for _, r := range c.Replies {
@@ -334,27 +334,29 @@ func ChangeComment(operation string, doc Comments, in CommentInput, markdown, no
 			}
 		}
 		if i < 0 {
-			return doc, nil, Fail("not_found", "Reply not found.")
+			return doc, nil, &RuleError{MissingItem, "Reply not found."}
 		}
 		if operation == "DeleteReply" {
 			c.Replies = append(c.Replies[:i], c.Replies[i+1:]...)
 		} else {
 			if body == "" {
-				return doc, nil, Fail("invalid_argument", "Reply body is required.")
+				return doc, nil, &RuleError{InvalidInput, "Reply body is required."}
 			}
 			c.Replies[i].Body = body
 			c.Replies[i].UpdatedAt = now
 		}
 	default:
-		return doc, nil, Fail("unimplemented", "Unknown comment operation.")
+		return doc, nil, &RuleError{UnknownOperation, "Unknown comment operation."}
 	}
 	c.UpdatedAt = now
 	doc.Comments[index] = c
-	var result any = c
 	if operation == "DeleteReply" {
-		result = struct{}{}
+		return doc, struct{}{}, nil
 	}
-	return doc, result, nil
+	if !c.Stale && doc.SourceSnapshot != nil {
+		c.CurrentSourceText = RangeText(*doc.SourceSnapshot, c.StartLine, c.EndLine)
+	}
+	return doc, c, nil
 }
 
 // TrimSpace follows ECMAScript String.trim, including BOM and excluding NEL.

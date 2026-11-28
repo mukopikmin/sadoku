@@ -12,8 +12,8 @@ import (
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T) {
@@ -40,7 +40,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	comments, _, err := u.ChangeComment("CreateComment", u.Comments{FilePath: canonical, Comments: []u.Comment{}}, u.CommentInput{StartLine: 2, EndLine: 2, Body: "Review"}, markdown, "2026-10-25T00:00:00.000Z")
+	comments, _, err := model.ChangeComment("CreateComment", model.Comments{FilePath: canonical, Comments: []model.Comment{}}, model.CommentInput{StartLine: 2, EndLine: 2, Body: "Review"}, markdown, "2026-10-25T00:00:00.000Z")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func TestPullPreservesCanonicalCommentsAndCreatesOnlyPendingReviews(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := result.(u.Comments); len(got.Comments) != 1 || got.Comments[0].Body != "Review" {
+	if got := result.(model.Comments); len(got.Comments) != 1 || got.Comments[0].Body != "Review" {
 		t.Fatal(got)
 	}
 	in := Input{DocumentID: ID(doc.ID), CommentID: 1, HeadSHA: sha, DisplayedMarkdown: markdown, CreatedAt: "2026-10-25T00:00:00.000Z", Body: "Review", StartLine: 2, EndLine: 2}

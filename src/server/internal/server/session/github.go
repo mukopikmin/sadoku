@@ -17,7 +17,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/jsoncompat"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 	whatwg "github.com/nlnwa/whatwg-url/url"
 )
 
@@ -88,7 +90,7 @@ func gh(ctx context.Context, endpoint string, payload any, raw bool) ([]byte, er
 		if errors.Is(err, exec.ErrNotFound) {
 			return nil, fmt.Errorf("GitHub pull request previews require the GitHub CLI. Install gh, then run `gh auth login --hostname github.com`.")
 		}
-		return nil, &githubCommandError{u.TrimSpace(decodeText(stderr.Bytes(), true))}
+		return nil, &githubCommandError{model.TrimSpace(decodeText(stderr.Bytes(), true))}
 	}
 	return out, nil
 }
@@ -177,7 +179,7 @@ func (s *Session) preparePullSnapshot(ctx context.Context, p *Pull, settings con
 		}
 		doc.RelativePath = file.Filename
 		doc.Title = filepath.Base(file.Filename)
-		doc.Tags = []u.Tag{}
+		doc.Tags = []model.Tag{}
 		s.Documents = append(s.Documents, doc)
 		s.Sources[doc.ID] = fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s?ref=%s", encodeComponent(p.Owner), encodeComponent(p.Repo), encoded, encodeComponent(p.HeadSHA))
 		identity, _, _ := Source(s.Sources[doc.ID])
@@ -235,7 +237,7 @@ func exportFailure(code string) error {
 	if code == "export_failed" {
 		kind = "internal"
 	}
-	return u.Fail(kind, `{"error":{"code":"`+code+`"}}`)
+	return usecase.Fail(kind, `{"error":{"code":"`+code+`"}}`)
 }
 
 type review struct {
@@ -272,7 +274,7 @@ func graphql(ctx context.Context, query string, variables map[string]any, out an
 	}
 	return json.Unmarshal(result.Data, out)
 }
-func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, assertTarget func() error) (any, error) {
+func (s *Session) exportComment(ctx context.Context, doc model.Document, in Input, assertTarget func() error) (any, error) {
 	if err := assertTarget(); err != nil {
 		return nil, err
 	}
@@ -295,13 +297,13 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, a
 		return nil, err
 	}
 	changed := comments.SourceSnapshot == nil || *comments.SourceSnapshot != markdown
-	comments = u.ResolveComments(comments, markdown)
+	comments = model.ResolveComments(comments, markdown)
 	if changed && len(comments.Comments) > 0 {
 		if err = s.saveComments(ctx, doc.ID, comments); err != nil {
 			return nil, err
 		}
 	}
-	var target *u.Comment
+	var target *model.Comment
 	for i := range comments.Comments {
 		if comments.Comments[i].ID == int64(in.CommentID) {
 			target = &comments.Comments[i]
@@ -322,7 +324,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, a
 	if err = encoder.Encode([]any{p.exportURL(), doc.RelativePath, target.ID, target.CreatedAt}); err != nil {
 		return nil, err
 	}
-	keyBytes := []byte(u.UnescapeJSONSeparators(strings.TrimSuffix(keyBuffer.String(), "\n")))
+	keyBytes := []byte(jsoncompat.UnescapeJSONSeparators(strings.TrimSuffix(keyBuffer.String(), "\n")))
 	marker := fmt.Sprintf("<!-- sadoku-comment:%x -->", sha256.Sum256(keyBytes))
 	body := in.Body + "\n\n" + marker
 	var user struct{ Login string }
@@ -346,7 +348,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, a
 			pending = rev
 		}
 	}
-	if pending != nil && (pending.NodeID == "" || pending.CommitID == nil || u.PositiveID(pending.ID) != nil) {
+	if pending != nil && (pending.NodeID == "" || pending.CommitID == nil || usecase.PositiveID(pending.ID) != nil) {
 		return nil, fmt.Errorf("GitHub returned an invalid pending review")
 	}
 	var existing *remoteComment
@@ -410,7 +412,7 @@ func (s *Session) exportComment(ctx context.Context, doc u.Document, in Input, a
 	if err != nil {
 		return nil, err
 	}
-	latest = u.ResolveComments(latest, markdown)
+	latest = model.ResolveComments(latest, markdown)
 	found := false
 	for _, c := range latest.Comments {
 		if c.ID == target.ID && c.CreatedAt == target.CreatedAt && c.Body == in.Body && c.StartLine == in.StartLine && c.EndLine == in.EndLine && !c.Resolved && !c.Stale && c.Author.Type == "human" {
@@ -549,7 +551,7 @@ func (s *Session) Monitor(ctx context.Context, settings config.Settings, logErro
 		}
 		pull.HeadSHA = latest.Head.SHA
 		pull.Details.Head.SHA = latest.Head.SHA
-		next := &Session{Repository: s.Repository, Sources: map[int64]string{}, Documents: []u.Document{}}
+		next := &Session{Repository: s.Repository, Sources: map[int64]string{}, Documents: []model.Document{}}
 		if err := next.preparePullSnapshot(ctx, &pull, settings); err != nil {
 			if ctx.Err() == nil {
 				logError(err)

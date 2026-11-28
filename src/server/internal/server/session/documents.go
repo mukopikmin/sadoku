@@ -9,20 +9,21 @@ import (
 	"strings"
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type DocumentPreview struct {
-	u.Document
+	model.Document
 	FileURL, Markdown               string
 	CanRestore                      bool
 	PreviousMarkdown, GitHubHeadSHA *string
 }
 
-func (s *Session) ListDocuments(ctx context.Context) ([]u.Document, error) {
+func (s *Session) ListDocuments(ctx context.Context) ([]model.Document, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
-	docs := append([]u.Document{}, s.Documents...)
+	docs := append([]model.Document{}, s.Documents...)
 	for i := range docs {
 		tags, err := s.Repository.Tags(ctx, docs[i].ID)
 		if err != nil {
@@ -33,23 +34,23 @@ func (s *Session) ListDocuments(ctx context.Context) ([]u.Document, error) {
 	return docs, nil
 }
 
-func (s *Session) UpdateDocumentTitle(ctx context.Context, id int64, titleInput string) (u.Document, error) {
+func (s *Session) UpdateDocumentTitle(ctx context.Context, id int64, titleInput string) (model.Document, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	doc, err := s.Find(id)
 	if err != nil {
-		return u.Document{}, err
+		return model.Document{}, err
 	}
 	if strings.ContainsAny(titleInput, "\r\n\x00") {
-		return u.Document{}, u.Fail("invalid_argument", "Enter a single-line title.")
+		return model.Document{}, usecase.Fail("invalid_argument", "Enter a single-line title.")
 	}
-	title := u.TrimSpace(titleInput)
+	title := model.TrimSpace(titleInput)
 	var value *string
 	if title != "" {
 		value = &title
 	}
 	if err = s.Repository.SetTitle(ctx, id, value); err != nil {
-		return u.Document{}, err
+		return model.Document{}, err
 	}
 	doc.DisplayTitle = value
 	for i := range s.Documents {
@@ -84,7 +85,7 @@ func (s *Session) GetDocument(ctx context.Context, id int64) (DocumentPreview, e
 			return DocumentPreview{}, e
 		}
 		if snapshot == nil {
-			return DocumentPreview{}, u.Fail("not_found", "Saved Markdown snapshot not found.")
+			return DocumentPreview{}, usecase.Fail("not_found", "Saved Markdown snapshot not found.")
 		}
 		markdown = *snapshot
 		err = nil
@@ -142,7 +143,7 @@ func (s *Session) GetDocument(ctx context.Context, id int64) (DocumentPreview, e
 	return result, nil
 }
 
-func (s *Session) ListDocumentRevisions(ctx context.Context, documentID int64) ([]u.Revision, error) {
+func (s *Session) ListDocumentRevisions(ctx context.Context, documentID int64) ([]model.Revision, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	if _, err := s.Find(documentID); err != nil {
@@ -151,11 +152,11 @@ func (s *Session) ListDocumentRevisions(ctx context.Context, documentID int64) (
 	return s.Repository.Revisions(ctx, documentID)
 }
 
-func (s *Session) GetDocumentRevision(ctx context.Context, documentID, revisionID int64) (u.Revision, error) {
+func (s *Session) GetDocumentRevision(ctx context.Context, documentID, revisionID int64) (model.Revision, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	if _, err := s.Find(documentID); err != nil {
-		return u.Revision{}, err
+		return model.Revision{}, err
 	}
 	return s.Repository.Revision(ctx, documentID, revisionID)
 }
@@ -164,13 +165,13 @@ var invalidFilename = regexp.MustCompile(`[\\/\x00-\x1f<>:"|?*]`)
 var reservedFilename = regexp.MustCompile(`(?i)^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)`)
 var invalidDirectoryComponent = regexp.MustCompile(`[\\:\x00-\x1f]`)
 
-func (s *Session) CreateDocument(ctx context.Context, directory, filename, titleInput string) (u.Document, error) {
+func (s *Session) CreateDocument(ctx context.Context, directory, filename, titleInput string) (model.Document, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	if !s.CanCreate || (s.directoryStatus != nil && s.directoryStatus.State != "ready") {
-		return u.Document{}, u.Fail("failed_precondition", "File creation is unavailable in this preview.")
+		return model.Document{}, usecase.Fail("failed_precondition", "File creation is unavailable in this preview.")
 	}
-	name, title := u.TrimSpace(filename), u.TrimSpace(titleInput)
+	name, title := model.TrimSpace(filename), model.TrimSpace(titleInput)
 	invalid := name == "" || name == "." || name == ".." || invalidFilename.MatchString(name) || reservedFilename.MatchString(name) || strings.HasSuffix(name, ".") || strings.HasSuffix(name, " ") || strings.ContainsAny(title, "\r\n\x00")
 	if directory != "" {
 		for _, part := range strings.Split(directory, "/") {
@@ -180,14 +181,14 @@ func (s *Session) CreateDocument(ctx context.Context, directory, filename, title
 		}
 	}
 	if invalid {
-		return u.Document{}, u.Fail("invalid_argument", "Enter a valid filename, directory, and single-line title.")
+		return model.Document{}, usecase.Fail("invalid_argument", "Enter a valid filename, directory, and single-line title.")
 	}
 	if !strings.Contains(name, ".") {
 		name += ".md"
 	}
 	settings, _, err := config.Read()
 	if err != nil {
-		return u.Document{}, err
+		return model.Document{}, err
 	}
 	valid := false
 	for _, ext := range settings.MarkdownExtensions {
@@ -196,11 +197,11 @@ func (s *Session) CreateDocument(ctx context.Context, directory, filename, title
 		}
 	}
 	if !valid {
-		return u.Document{}, u.Fail("invalid_argument", "Use a configured Markdown file extension.")
+		return model.Document{}, usecase.Fail("invalid_argument", "Use a configured Markdown file extension.")
 	}
 	path := filepath.Join(s.Root, filepath.FromSlash(directory), name)
 	if err := createLocalDocument(s.Root, directory, name); err != nil {
-		return u.Document{}, err
+		return model.Document{}, err
 	}
 	if s.createdPaths == nil {
 		s.createdPaths = make(map[string]struct{})
@@ -209,22 +210,22 @@ func (s *Session) CreateDocument(ctx context.Context, directory, filename, title
 
 	doc, err := s.Repository.Ensure(ctx, path)
 	if err != nil {
-		return u.Document{}, createdDocumentRegistrationFailure()
+		return model.Document{}, createdDocumentRegistrationFailure()
 	}
 	doc.DisplayTitle = nil
 	if title != "" {
 		doc.DisplayTitle = &title
 	}
 	if err = s.Repository.SetTitle(ctx, doc.ID, doc.DisplayTitle); err != nil {
-		return u.Document{}, createdDocumentRegistrationFailure()
+		return model.Document{}, createdDocumentRegistrationFailure()
 	}
 	if err = s.Repository.InitializeSnapshot(ctx, doc.ID, ""); err != nil {
-		return u.Document{}, createdDocumentRegistrationFailure()
+		return model.Document{}, createdDocumentRegistrationFailure()
 	}
 	rel, _ := filepath.Rel(s.Root, path)
 	doc.RelativePath = filepath.ToSlash(rel)
 	doc.Title = name
-	doc.Tags = []u.Tag{}
+	doc.Tags = []model.Tag{}
 	found := false
 	for i, d := range s.Documents {
 		if d.ID == doc.ID {
@@ -241,12 +242,12 @@ func (s *Session) CreateDocument(ctx context.Context, directory, filename, title
 }
 
 func createdDocumentRegistrationFailure() error {
-	return u.Fail("internal", "The file was created, but could not be added to the preview. Reload the document list to load it.")
+	return usecase.Fail("internal", "The file was created, but could not be added to the preview. Reload the document list to load it.")
 }
 func (s *Session) RestoreDocumentRevision(ctx context.Context, id, revisionID int64, expectedMarkdown *string) error {
-	if u.PositiveID(id) == nil && u.PositiveID(revisionID) == nil {
+	if usecase.PositiveID(id) == nil && usecase.PositiveID(revisionID) == nil {
 		if _, busy := s.restoring.LoadOrStore(id, struct{}{}); busy {
-			return u.Fail("aborted", "A restore is already in progress.")
+			return usecase.Fail("aborted", "A restore is already in progress.")
 		}
 		defer s.restoring.Delete(id)
 	}
@@ -258,7 +259,7 @@ func (s *Session) RestoreDocumentRevision(ctx context.Context, id, revisionID in
 	}
 	_, _, remote := Source(s.Sources[doc.ID])
 	if remote || s.GitHub != nil {
-		return u.Fail("failed_precondition", "Only local files can be restored.")
+		return usecase.Fail("failed_precondition", "Only local files can be restored.")
 	}
 	revision, err := s.Repository.Revision(ctx, doc.ID, revisionID)
 	if err != nil {
@@ -274,7 +275,7 @@ func (s *Session) RestoreDocumentRevision(ctx context.Context, id, revisionID in
 		return err
 	}
 	if (expectedMarkdown == nil && exists) || (expectedMarkdown != nil && (!exists || *expectedMarkdown != decodeText(contents, false))) {
-		return u.Fail("aborted", "The file has changed. Reload the document before restoring.")
+		return usecase.Fail("aborted", "The file has changed. Reload the document before restoring.")
 	}
 	if exists {
 		if err = s.Repository.RecordRevision(ctx, doc.ID, decodeText(contents, false)); err != nil {
@@ -287,7 +288,7 @@ func (s *Session) RestoreDocumentRevision(ctx context.Context, id, revisionID in
 	}
 	latest, readErr := os.ReadFile(destination)
 	if (readErr == nil) != exists || (exists && decodeText(latest, false) != decodeText(contents, false)) {
-		return u.Fail("aborted", "The file has changed. Reload the document before restoring.")
+		return usecase.Fail("aborted", "The file has changed. Reload the document before restoring.")
 	}
 	mode := os.FileMode(0600)
 	if info, e := os.Stat(destination); e == nil {
@@ -305,7 +306,7 @@ func (s *Session) RestoreDocumentRevision(ctx context.Context, id, revisionID in
 	if err != nil {
 		return err
 	}
-	comments = u.ResolveComments(comments, revision.Markdown)
+	comments = model.ResolveComments(comments, revision.Markdown)
 	if err = s.Repository.SaveComments(ctx, doc.ID, comments); err != nil {
 		return err
 	}

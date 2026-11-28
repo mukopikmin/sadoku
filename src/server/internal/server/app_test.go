@@ -15,9 +15,9 @@ import (
 	"github.com/mukopikmin/sadoku/internal/server/cli"
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/session"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type previewOutput struct {
@@ -41,7 +41,7 @@ func TestGitHubPreviewLogsCanonicalTargetAndImmutableSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := &session.Session{Repository: repo, GitHub: &session.Pull{URL: target}, Documents: []u.Document{doc}, Sources: map[int64]string{doc.ID: contentURL}, ReadRemote: func(context.Context, string) (string, error) { return "# Test\n", nil }}
+	s := &session.Session{Repository: repo, GitHub: &session.Pull{URL: target}, Documents: []model.Document{doc}, Sources: map[int64]string{doc.ID: contentURL}, ReadRemote: func(context.Context, string) (string, error) { return "# Test\n", nil }}
 	output := &previewOutput{ready: make(chan string, 1)}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

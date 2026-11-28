@@ -8,7 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/session"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -60,7 +60,7 @@ func invoke(ctx context.Context, s *Service, operation string, in, out proto.Mes
 	return nil
 }
 func rpcError(err error) error {
-	var failure *u.Failure
+	var failure *usecase.Failure
 	if errors.As(err, &failure) {
 		code := connect.CodeInternal
 		switch failure.Kind {

@@ -7,7 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 	pb "github.com/mukopikmin/sadoku/internal/gen/sadoku/preview/v1"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 func documentResponse[T any](value *T) *connect.Response[T] {
@@ -23,7 +23,7 @@ func documentWireID(id int64) (uint64, error) {
 	return uint64(id), nil
 }
 
-func documentTags(tags []u.Tag) ([]*pb.Tag, error) {
+func documentTags(tags []model.Tag) ([]*pb.Tag, error) {
 	result := make([]*pb.Tag, 0, len(tags))
 	for _, tag := range tags {
 		id, err := documentWireID(tag.ID)
@@ -35,7 +35,7 @@ func documentTags(tags []u.Tag) ([]*pb.Tag, error) {
 	return result, nil
 }
 
-func documentSummary(doc u.Document) (*pb.DocumentSummary, error) {
+func documentSummary(doc model.Document) (*pb.DocumentSummary, error) {
 	id, err := documentWireID(doc.ID)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func documentSummary(doc u.Document) (*pb.DocumentSummary, error) {
 	}, nil
 }
 
-func documentSummaryResponse(doc u.Document, err error) (*connect.Response[pb.DocumentSummary], error) {
+func documentSummaryResponse(doc model.Document, err error) (*connect.Response[pb.DocumentSummary], error) {
 	if err != nil {
 		return nil, rpcError(err)
 	}

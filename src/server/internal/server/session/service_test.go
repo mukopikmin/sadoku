@@ -12,12 +12,13 @@ import (
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
 	"github.com/mukopikmin/sadoku/internal/server/db"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 	"github.com/mukopikmin/sadoku/internal/server/storage"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type failedRegistration struct {
-	u.Repository
+	usecase.Repository
 	stage string
 }
 
@@ -46,9 +47,9 @@ func TestInvokeCancelsWhileWaitingForDatabaseConnection(t *testing.T) {
 	}
 }
 
-func (r failedRegistration) Ensure(ctx context.Context, path string) (u.Document, error) {
+func (r failedRegistration) Ensure(ctx context.Context, path string) (model.Document, error) {
 	if r.stage == "ensure" {
-		return u.Document{}, errors.New("registration failed")
+		return model.Document{}, errors.New("registration failed")
 	}
 	return r.Repository.Ensure(ctx, path)
 }
@@ -87,7 +88,7 @@ func TestCreationReportsTheSavedFileWhenRegistrationFails(t *testing.T) {
 			s.Prepare(context.Background(), config.Defaults())
 			s.Repository = failedRegistration{s.Repository, stage}
 			_, err = s.CreateDocument(context.Background(), "", "saved", "Title")
-			var failure *u.Failure
+			var failure *usecase.Failure
 			if !errors.As(err, &failure) || failure.Kind != "internal" || failure.Message != "The file was created, but could not be added to the preview. Reload the document list to load it." {
 				t.Fatalf("registration failure: %v", err)
 			}
@@ -103,11 +104,11 @@ func TestCreationReportsTheSavedFileWhenRegistrationFails(t *testing.T) {
 }
 
 type blockedRevision struct {
-	u.Repository
+	usecase.Repository
 	entered, release chan struct{}
 }
 
-func (r blockedRevision) Revision(ctx context.Context, documentID, revisionID int64) (u.Revision, error) {
+func (r blockedRevision) Revision(ctx context.Context, documentID, revisionID int64) (model.Revision, error) {
 	close(r.entered)
 	<-r.release
 	return r.Repository.Revision(ctx, documentID, revisionID)
@@ -150,7 +151,7 @@ func TestConcurrentRestoreReportsBusyAndClearsAfterCompletion(t *testing.T) {
 	}()
 	select {
 	case err := <-second:
-		var failure *u.Failure
+		var failure *usecase.Failure
 		if !errors.As(err, &failure) || failure.Kind != "aborted" || failure.Message != "A restore is already in progress." {
 			t.Fatalf("second restore: %v", err)
 		}
@@ -172,7 +173,17 @@ func TestConcurrentRestoreReportsBusyAndClearsAfterCompletion(t *testing.T) {
 func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 	for _, operation := range []string{"GetDocument", "ListComments", "CreateComment"} {
 		t.Run(operation, func(t *testing.T) {
-			s, _ := snapshotSession(t, 2)
+			s, repo := snapshotSession(t, 2)
+			const markdown = "# Title\n"
+			if operation == "CreateComment" {
+				comments, _, err := model.ChangeComment("CreateComment", model.Comments{}, model.CommentInput{StartLine: 1, EndLine: 1, Body: "Original"}, markdown, db.Now())
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := repo.SaveComments(t.Context(), 1, comments); err != nil {
+					t.Fatal(err)
+				}
+			}
 			entered, release := make(chan struct{}), make(chan struct{})
 			var once sync.Once
 			unblock := func() { once.Do(func() { close(release) }) }
@@ -182,7 +193,7 @@ func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 					close(entered)
 					<-release
 				}
-				return "# Title\n", nil
+				return markdown, nil
 			}
 			first := make(chan error, 1)
 			go func() {
@@ -217,9 +228,23 @@ func TestSlowMarkdownReadsAllowOtherRequests(t *testing.T) {
 			if _, err := s.UpdateDocumentTitle(context.Background(), 1, "Updated while reading"); err != nil {
 				t.Fatal(err)
 			}
+			if operation == "CreateComment" {
+				if _, err := s.Invoke(t.Context(), "UpdateComment", Input{DocumentID: 1, CommentID: 1, Body: "Updated while reading"}); err != nil {
+					t.Fatal(err)
+				}
+			}
 			unblock()
 			if err := <-first; err != nil {
 				t.Fatal(err)
+			}
+			if operation == "CreateComment" {
+				comments, err := repo.ReadComments(t.Context(), 1)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(comments.Comments) != 2 || comments.Comments[0].Body != "Updated while reading" || comments.Comments[1].Body != "Review" {
+					t.Fatalf("comments after concurrent update: %+v", comments.Comments)
+				}
 			}
 		})
 	}

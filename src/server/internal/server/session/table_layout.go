@@ -3,9 +3,8 @@ package session
 import (
 	"context"
 	"os"
-	"reflect"
 
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 // Called with Mu held, like document and comment operations.
@@ -25,7 +24,7 @@ func (s *Session) tableLayouts(ctx context.Context, operation string, in Input) 
 		return nil, err
 	}
 	if markdown != in.DisplayedMarkdown {
-		return nil, u.Fail("aborted", "The document changed. Reload it before changing column widths.")
+		return nil, usecase.Fail("aborted", "The document changed. Reload it before changing column widths.")
 	}
 	storageID, _, err := s.commentStorage(ctx, id, true)
 	if err != nil {
@@ -34,21 +33,9 @@ func (s *Session) tableLayouts(ctx context.Context, operation string, in Input) 
 	if operation == "UpdateTableLayout" {
 		return s.Repository.SaveTableColumnWidths(ctx, storageID, in.TableID, markdown, in.ColumnWidths)
 	}
-	state, err := s.Repository.ReadTableLayouts(ctx, storageID)
+	tables, err := usecase.ListTableLayouts(ctx, s.Repository, storageID, markdown, in.Tables)
 	if err != nil {
 		return nil, err
 	}
-	if operation == "GetTableLayouts" {
-		next, err := u.ResolveTableLayouts(state, markdown, in.Tables)
-		if err != nil {
-			return nil, err
-		}
-		if !reflect.DeepEqual(state, next) {
-			if err = s.Repository.SaveTableLayouts(ctx, storageID, next); err != nil {
-				return nil, err
-			}
-		}
-		return map[string]any{"tables": next.Tables}, nil
-	}
-	return nil, u.Fail("unimplemented", "Unknown table layout operation.")
+	return map[string]any{"tables": tables}, nil
 }

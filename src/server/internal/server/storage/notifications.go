@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 // The filename matches the original TypeScript backend, so changes made by
@@ -26,7 +26,7 @@ func (r *Repository) CommentsNotificationSourcePath(ctx context.Context, source 
 	if err := os.MkdirAll(directory, 0700); err != nil {
 		return "", err
 	}
-	return filepath.Join(directory, u.HashSource(source)+".changed"), nil
+	return filepath.Join(directory, model.HashSource(source)+".changed"), nil
 }
 
 func (r *Repository) CommentsNotificationPath(ctx context.Context, id int64) (string, error) {

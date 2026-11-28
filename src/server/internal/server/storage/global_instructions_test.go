@@ -1,13 +1,14 @@
 package storage
 
 import (
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
 	"testing"
+
+	"github.com/mukopikmin/sadoku/internal/server/model"
 )
 
 func TestGlobalInstructionsRemainIndependentOfDocuments(t *testing.T) {
 	r := testRepository(t)
-	global, err := r.SaveGlobalInstruction(t.Context(), u.Note{Content: "Shared guidance"})
+	global, err := r.SaveGlobalInstruction(t.Context(), model.Note{Content: "Shared guidance"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -15,7 +16,7 @@ func TestGlobalInstructionsRemainIndependentOfDocuments(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	local, err := r.SaveNote(t.Context(), "instruction", u.Note{DocumentID: doc.ID, Content: "Local guidance"})
+	local, err := r.SaveNote(t.Context(), "instruction", model.Note{DocumentID: doc.ID, Content: "Local guidance"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,14 +61,14 @@ func TestSavingInstructionReplacesOnlyItsScope(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	save := func(docID int64, content string) u.Note {
+	save := func(docID int64, content string) model.Note {
 		t.Helper()
-		var n u.Note
+		var n model.Note
 		var err error
 		if docID == 0 {
-			n, err = r.SaveGlobalInstruction(t.Context(), u.Note{Content: content})
+			n, err = r.SaveGlobalInstruction(t.Context(), model.Note{Content: content})
 		} else {
-			n, err = r.SaveNote(t.Context(), "instruction", u.Note{DocumentID: docID, Content: content})
+			n, err = r.SaveNote(t.Context(), "instruction", model.Note{DocumentID: docID, Content: content})
 		}
 		if err != nil {
 			t.Fatal(err)
@@ -82,7 +83,7 @@ func TestSavingInstructionReplacesOnlyItsScope(t *testing.T) {
 		}
 	}
 	for _, docID := range []int64{0, one.ID, two.ID} {
-		var notes []u.Note
+		var notes []model.Note
 		if docID == 0 {
 			notes, err = r.GlobalInstructions(t.Context())
 		} else {
@@ -93,7 +94,7 @@ func TestSavingInstructionReplacesOnlyItsScope(t *testing.T) {
 		}
 	}
 	for _, content := range []string{"First memory", "Second memory"} {
-		if _, err := r.SaveNote(t.Context(), "memory", u.Note{DocumentID: one.ID, Content: content}); err != nil {
+		if _, err := r.SaveNote(t.Context(), "memory", model.Note{DocumentID: one.ID, Content: content}); err != nil {
 			t.Fatal(err)
 		}
 	}

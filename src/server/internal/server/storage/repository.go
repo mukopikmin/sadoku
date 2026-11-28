@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/mukopikmin/sadoku/internal/server/db"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type Repository struct {
@@ -17,8 +18,8 @@ type Repository struct {
 	Path string
 }
 
-func (r *Repository) FindDocument(ctx context.Context, path string) (u.Document, bool, error) {
-	var document u.Document
+func (r *Repository) FindDocument(ctx context.Context, path string) (model.Document, bool, error) {
+	var document model.Document
 	err := r.DB.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&document.ID, &document.FilePath, &document.DisplayTitle)
 	if errors.Is(err, sql.ErrNoRows) {
 		return document, false, nil
@@ -26,29 +27,29 @@ func (r *Repository) FindDocument(ctx context.Context, path string) (u.Document,
 	return document, err == nil, err
 }
 
-func (r *Repository) Ensure(ctx context.Context, path string) (u.Document, error) {
+func (r *Repository) Ensure(ctx context.Context, path string) (model.Document, error) {
 	now := db.Now()
 	_, err := r.DB.ExecContext(ctx, "INSERT INTO comment_document(file_path,created_at,updated_at) VALUES(?,?,?) ON CONFLICT(file_path) DO NOTHING", path, now, now)
 	if err != nil {
-		return u.Document{}, err
+		return model.Document{}, err
 	}
-	var d u.Document
+	var d model.Document
 	err = r.DB.QueryRowContext(ctx, "SELECT id,file_path,title FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle)
 	return d, err
 }
-func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.RegisteredDocument, error) {
+func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]model.RegisteredDocument, error) {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback() }()
-	documents := []u.RegisteredDocument{}
+	documents := []model.RegisteredDocument{}
 	now := db.Now()
 	for _, path := range paths {
 		if _, err = tx.ExecContext(ctx, "INSERT INTO comment_document(file_path,created_at,updated_at) VALUES(?,?,?) ON CONFLICT(file_path) DO NOTHING", path, now, now); err != nil {
 			return nil, err
 		}
-		var d u.RegisteredDocument
+		var d model.RegisteredDocument
 		if err = tx.QueryRowContext(ctx, "SELECT id,file_path,title,source_revision_id IS NOT NULL FROM comment_document WHERE file_path=?", path).Scan(&d.ID, &d.FilePath, &d.DisplayTitle, &d.HasSnapshot); err != nil {
 			return nil, err
 		}
@@ -60,15 +61,15 @@ func (r *Repository) EnsureMany(ctx context.Context, paths []string) ([]u.Regist
 	return documents, nil
 }
 
-func (r *Repository) Documents(ctx context.Context) ([]u.Document, error) {
+func (r *Repository) Documents(ctx context.Context) ([]model.Document, error) {
 	rows, err := r.DB.QueryContext(ctx, "SELECT id,file_path,title FROM comment_document ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	docs := []u.Document{}
+	docs := []model.Document{}
 	for rows.Next() {
-		var d u.Document
+		var d model.Document
 		if err = rows.Scan(&d.ID, &d.FilePath, &d.DisplayTitle); err != nil {
 			return nil, err
 		}
@@ -85,15 +86,15 @@ func (r *Repository) Snapshot(ctx context.Context, id int64) (*string, *string, 
 	err := r.DB.QueryRowContext(ctx, `SELECT (SELECT markdown FROM document_revision WHERE id=d.source_revision_id),(SELECT markdown FROM document_revision WHERE id=d.previous_source_revision_id) FROM comment_document d WHERE id=?`, id).Scan(&current, &previous)
 	return current, previous, err
 }
-func (r *Repository) Revisions(ctx context.Context, id int64) ([]u.Revision, error) {
+func (r *Repository) Revisions(ctx context.Context, id int64) ([]model.Revision, error) {
 	rows, err := r.DB.QueryContext(ctx, "SELECT id,recorded_at FROM document_revision WHERE document_id=? ORDER BY id DESC LIMIT 20", id)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	list := []u.Revision{}
+	list := []model.Revision{}
 	for rows.Next() {
-		var rev u.Revision
+		var rev model.Revision
 		if err = rows.Scan(&rev.ID, &rev.RecordedAt); err != nil {
 			return nil, err
 		}
@@ -101,11 +102,11 @@ func (r *Repository) Revisions(ctx context.Context, id int64) ([]u.Revision, err
 	}
 	return list, rows.Err()
 }
-func (r *Repository) Revision(ctx context.Context, id, revID int64) (u.Revision, error) {
-	var rev u.Revision
+func (r *Repository) Revision(ctx context.Context, id, revID int64) (model.Revision, error) {
+	var rev model.Revision
 	err := r.DB.QueryRowContext(ctx, `SELECT id,recorded_at,markdown,(SELECT markdown FROM document_revision p WHERE p.document_id=r.document_id AND p.id<r.id ORDER BY p.id DESC LIMIT 1) FROM document_revision r WHERE document_id=? AND id=?`, id, revID).Scan(&rev.ID, &rev.RecordedAt, &rev.Markdown, &rev.PreviousMarkdown)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = u.Fail("not_found", "Document revision not found.")
+		err = usecase.Fail("not_found", "Document revision not found.")
 	}
 	return rev, err
 }
@@ -159,8 +160,8 @@ func (r *Repository) InitializeSnapshot(ctx context.Context, id int64, markdown 
 	}
 	return tx.Commit()
 }
-func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, error) {
-	doc := u.Comments{Comments: []u.Comment{}}
+func (r *Repository) ReadComments(ctx context.Context, id int64) (model.Comments, error) {
+	doc := model.Comments{Comments: []model.Comment{}}
 	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return doc, err
@@ -180,7 +181,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 	defer func() { _ = rows.Close() }()
 	ids := []int64{}
 	for rows.Next() {
-		var c u.Comment
+		var c model.Comment
 		var internal int64
 		var resolver *string
 		err = rows.Scan(&internal, &c.ID, &c.Body, &c.Author.Type, &c.StartLine, &c.EndLine, &c.OriginalStartLine, &c.OriginalEndLine, &c.CreatedAt, &c.UpdatedAt, &c.Resolved, &c.Stale, &c.ResolvedAt, &resolver, &c.SourceHash, &c.SourceText, &c.SourceDeleted)
@@ -188,9 +189,9 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 			return doc, err
 		}
 		if resolver != nil {
-			c.ResolvedBy = &u.Author{Type: *resolver}
+			c.ResolvedBy = &model.Author{Type: *resolver}
 		}
-		c.Replies = []u.Reply{}
+		c.Replies = []model.Reply{}
 		ids = append(ids, internal)
 		doc.Comments = append(doc.Comments, c)
 	}
@@ -207,7 +208,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 			}
 			defer func() { _ = replies.Close() }()
 			for replies.Next() {
-				var reply u.Reply
+				var reply model.Reply
 				if err := replies.Scan(&reply.ID, &reply.Body, &reply.Author.Type, &reply.CreatedAt, &reply.UpdatedAt, &reply.ReviewRequested); err != nil {
 					return err
 				}
@@ -220,7 +221,7 @@ func (r *Repository) ReadComments(ctx context.Context, id int64) (u.Comments, er
 	}
 	return doc, tx.Commit()
 }
-func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments) error {
+func (r *Repository) SaveComments(ctx context.Context, id int64, doc model.Comments) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -234,7 +235,7 @@ func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments)
 		WHERE id=? AND comment_version=?
 		RETURNING file_path,(SELECT markdown FROM document_revision WHERE id=source_revision_id)`, id, doc.Version).Scan(&source, &old)
 	if errors.Is(err, sql.ErrNoRows) {
-		return u.Fail("aborted", "Comments changed. Reload them and retry.")
+		return usecase.Fail("aborted", "Comments changed. Reload them and retry.")
 	}
 	if err != nil {
 		return err
@@ -282,7 +283,7 @@ func (r *Repository) SaveComments(ctx context.Context, id int64, doc u.Comments)
 	return r.notifyCommentsChanged(notificationCtx, source)
 }
 
-func (r *Repository) Tags(ctx context.Context, documentID int64) ([]u.Tag, error) {
+func (r *Repository) Tags(ctx context.Context, documentID int64) ([]model.Tag, error) {
 	query := `SELECT t.id,t.name,t.background_color,COUNT(l.document_id),t.created_at,t.updated_at FROM document_tag t LEFT JOIN document_tag_link l ON l.tag_id=t.id GROUP BY t.id ORDER BY t.name`
 	args := []any{}
 	if documentID != 0 {
@@ -294,9 +295,9 @@ func (r *Repository) Tags(ctx context.Context, documentID int64) ([]u.Tag, error
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	list := []u.Tag{}
+	list := []model.Tag{}
 	for rows.Next() {
-		var t u.Tag
+		var t model.Tag
 		if err = rows.Scan(&t.ID, &t.Name, &t.BackgroundColor, &t.DocumentCount, &t.CreatedAt, &t.UpdatedAt); err != nil {
 			return nil, err
 		}
@@ -304,9 +305,9 @@ func (r *Repository) Tags(ctx context.Context, documentID int64) ([]u.Tag, error
 	}
 	return list, rows.Err()
 }
-func (r *Repository) SaveTag(ctx context.Context, t u.Tag) (u.Tag, error) {
+func (r *Repository) SaveTag(ctx context.Context, t model.Tag) (model.Tag, error) {
 	if t.ID != 0 {
-		return r.UpdateTag(ctx, t.ID, u.TagPatch{Name: &t.Name, BackgroundColor: &t.BackgroundColor})
+		return r.UpdateTag(ctx, t.ID, model.TagPatch{Name: &t.Name, BackgroundColor: &t.BackgroundColor})
 	}
 	now := db.Now()
 	t.CreatedAt, t.UpdatedAt = now, now
@@ -315,8 +316,8 @@ func (r *Repository) SaveTag(ctx context.Context, t u.Tag) (u.Tag, error) {
 	return t, err
 }
 
-func (r *Repository) UpdateTag(ctx context.Context, id int64, patch u.TagPatch) (u.Tag, error) {
-	tag := u.Tag{ID: id}
+func (r *Repository) UpdateTag(ctx context.Context, id int64, patch model.TagPatch) (model.Tag, error) {
+	tag := model.Tag{ID: id}
 	err := r.DB.QueryRowContext(ctx, `UPDATE document_tag SET
 		updated_at=CASE WHEN name COLLATE BINARY != COALESCE(?1,name) OR background_color != COALESCE(?2,background_color)
 			THEN ?3 ELSE updated_at END,
@@ -324,7 +325,7 @@ func (r *Repository) UpdateTag(ctx context.Context, id int64, patch u.TagPatch) 
 		WHERE id=?4 RETURNING name,background_color,created_at,updated_at`,
 		patch.Name, patch.BackgroundColor, db.Now(), id).Scan(&tag.Name, &tag.BackgroundColor, &tag.CreatedAt, &tag.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = u.Fail("not_found", "Tag not found.")
+		err = usecase.Fail("not_found", "Tag not found.")
 	}
 	return tag, err
 }
@@ -348,7 +349,7 @@ func (r *Repository) ReplaceTags(ctx context.Context, id int64, ids []int64) err
 	return tx.Commit()
 }
 
-func (r *Repository) ReplaceTagReferences(ctx context.Context, id int64, references []u.TagReference) ([]u.Tag, error) {
+func (r *Repository) ReplaceTagReferences(ctx context.Context, id int64, references []model.TagReference) ([]model.Tag, error) {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -374,14 +375,14 @@ func (r *Repository) ReplaceTagReferences(ctx context.Context, id int64, referen
 			var found int64
 			err = tx.QueryRowContext(ctx, "SELECT id FROM document_tag WHERE id=?", tagID).Scan(&found)
 			if errors.Is(err, sql.ErrNoRows) {
-				return nil, u.Fail("not_found", fmt.Sprintf("Tag %d not found.", tagID))
+				return nil, usecase.Fail("not_found", fmt.Sprintf("Tag %d not found.", tagID))
 			}
 			if err != nil {
 				return nil, err
 			}
 		}
 		if ids[tagID] {
-			return nil, u.Fail("already_exists", "Tag is already added.")
+			return nil, usecase.Fail("already_exists", "Tag is already added.")
 		}
 		ids[tagID] = true
 	}
@@ -404,15 +405,15 @@ func noteTable(kind string) string {
 	}
 	return "document_instruction"
 }
-func (r *Repository) Notes(ctx context.Context, kind string, id int64) ([]u.Note, error) {
+func (r *Repository) Notes(ctx context.Context, kind string, id int64) ([]model.Note, error) {
 	rows, err := r.DB.QueryContext(ctx, "SELECT id,document_id,content,created_at,updated_at FROM "+noteTable(kind)+" WHERE document_id=? ORDER BY id", id) // #nosec G202 -- The table identifier comes from a fixed internal allowlist; values use SQL parameters.
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	list := []u.Note{}
+	list := []model.Note{}
 	for rows.Next() {
-		var n u.Note
+		var n model.Note
 		if err = rows.Scan(&n.ID, &n.DocumentID, &n.Content, &n.CreatedAt, &n.UpdatedAt); err != nil {
 			return nil, err
 		}
@@ -420,7 +421,7 @@ func (r *Repository) Notes(ctx context.Context, kind string, id int64) ([]u.Note
 	}
 	return list, rows.Err()
 }
-func (r *Repository) SaveNote(ctx context.Context, kind string, n u.Note) (u.Note, error) {
+func (r *Repository) SaveNote(ctx context.Context, kind string, n model.Note) (model.Note, error) {
 	now := db.Now()
 	if kind == "instruction" && n.ID == 0 {
 		err := r.DB.QueryRowContext(ctx, `INSERT INTO document_instruction(document_id,content,created_at,updated_at) VALUES(?,?,?,?)
@@ -442,7 +443,7 @@ func (r *Repository) SaveNote(ctx context.Context, kind string, n u.Note) (u.Not
 		if err == nil {
 			count, _ := res.RowsAffected()
 			if count == 0 {
-				return n, u.Fail("not_found", "Note not found.")
+				return n, usecase.Fail("not_found", "Note not found.")
 			}
 		}
 	}
@@ -458,7 +459,7 @@ func (r *Repository) SaveNote(ctx context.Context, kind string, n u.Note) (u.Not
 			return saved, nil
 		}
 	}
-	return n, u.Fail("not_found", "Note not found.")
+	return n, usecase.Fail("not_found", "Note not found.")
 }
 func remove(ctx context.Context, database *sql.DB, query string, args []any, name string) error {
 	res, err := database.ExecContext(ctx, query, args...)
@@ -467,7 +468,7 @@ func remove(ctx context.Context, database *sql.DB, query string, args []any, nam
 	}
 	n, err := res.RowsAffected()
 	if err == nil && n == 0 {
-		return u.Fail("not_found", name+" not found.")
+		return usecase.Fail("not_found", name+" not found.")
 	}
 	return err
 }

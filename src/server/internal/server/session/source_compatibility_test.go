@@ -8,17 +8,18 @@ import (
 	"testing"
 
 	"github.com/mukopikmin/sadoku/internal/server/config"
-	u "github.com/mukopikmin/sadoku/internal/server/usecase"
+	"github.com/mukopikmin/sadoku/internal/server/model"
+	"github.com/mukopikmin/sadoku/internal/server/usecase"
 )
 
 type sourceRepository struct {
-	u.Repository
+	usecase.Repository
 	ensured string
 }
 
-func (r *sourceRepository) Ensure(ctx context.Context, path string) (u.Document, error) {
+func (r *sourceRepository) Ensure(ctx context.Context, path string) (model.Document, error) {
 	r.ensured = path
-	return u.Document{ID: 1, FilePath: path}, nil
+	return model.Document{ID: 1, FilePath: path}, nil
 }
 
 func TestLegacySourceTranscripts(t *testing.T) {
