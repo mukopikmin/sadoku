@@ -1,7 +1,7 @@
 import {
   Button,
   Field,
-  Grid,
+  Flex,
   HStack,
   Input,
   Text,
@@ -62,11 +62,11 @@ export const DocumentTree = ({
           }}
           onSubmit={(event) => event.preventDefault()}
         >
-          <Grid
-            alignItems="start"
+          <Flex
+            align="start"
             gap="3"
-            maxW="calc(2 * {sizes.xs} + {spacing.3})"
-            templateColumns="repeat(auto-fit, minmax(min(100%, {sizes.2xs}), 1fr))"
+            wrap="wrap"
+            css={{ "& > *": { flexBasis: "3xs", flexGrow: 1, minW: "0" } }}
           >
             <Field.Root maxW="xs">
               <Field.Label>Search documents</Field.Label>
@@ -90,7 +90,7 @@ export const DocumentTree = ({
                 matchingTags={matchingTags}
               />
             )}
-          </Grid>
+          </Flex>
           <HStack gap="2" wrap="wrap" srOnly={!canReset}>
             <Text
               role="status"
